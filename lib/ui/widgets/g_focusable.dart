@@ -14,6 +14,7 @@ class GFocusable extends ConsumerStatefulWidget {
     this.onActivate,
     this.onLongActivate,
     this.onDetail,
+    this.onFavorite,
     this.autofocus = false,
     this.focusNode,
     this.borderRadius = GRadius.card,
@@ -26,6 +27,7 @@ class GFocusable extends ConsumerStatefulWidget {
   final VoidCallback? onActivate;
   final VoidCallback? onLongActivate;
   final VoidCallback? onDetail;
+  final VoidCallback? onFavorite;
   final bool autofocus;
   final FocusNode? focusNode;
   final double borderRadius;
@@ -63,6 +65,7 @@ class _GFocusableState extends ConsumerState<GFocusable> {
           if (widget.onLongActivate != null)
             LongActivateIntent: CallbackAction<LongActivateIntent>(onInvoke: (_) => widget.onLongActivate!()),
           if (widget.onDetail != null) DetailIntent: CallbackAction<DetailIntent>(onInvoke: (_) => widget.onDetail!()),
+          if (widget.onFavorite != null) FavoriteIntent: CallbackAction<FavoriteIntent>(onInvoke: (_) => widget.onFavorite!()),
         },
         child: GestureDetector(
           onTap: widget.onActivate,

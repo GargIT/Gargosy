@@ -28,6 +28,8 @@ It is built on code copied from Freegosy (MIT, © 2026 abduznik). There is no sh
 - ROM name sanitization includes `!` in the regex, the same in every service that builds a ROM folder name.
 - Windows games are folder-based: `findMainRomInFolder()` returns the folder for `windows`/`pc`/`win`.
 - A save strategy that needs a game id (serial, title id) takes RomM's `Game.titleId`/`saveTarget` through `GameIdResolver` before reading the ROM itself; with RomM's id it never opens the disc.
+- RomM calls from UI go through the providers in `lib/providers/` (which use `RommService` / `LibraryApi`).
+- Downloads stage in `userdata\app\temp`; `roms\` only ever receives complete ROMs.
 - Write files with LF line endings (`.gitattributes` normalizes). From Python, use `open(..., 'w', newline='\n')`.
 
 ## Layout on disk
@@ -77,6 +79,21 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `ui/shell/app_shell.dart` (tabs Home/Platforms/Collections/Search, LB/RB, Start), `top_bar.dart` (v2 top bar; glass once scrolled), `user_menu.dart`, `destination_page.dart`, `backdrop.dart`.
 - `ui/screens/profile_picker_screen.dart` ("Who is playing?": PIN, re-login, X = options/delete), `add_profile_screen.dart` (server → login → name/colour → PIN), `login_step.dart` (pairing QR or password; refuses another RomM user on re-login), `profile_options_dialog.dart`, `startup_error_app.dart`.
 
+### Library (milestone B)
+- `core/romm/romm_service.dart` (adapted copy, ~1060 lines: one cohesive client, kept close to Freegosy) — every RomM call; token only, no password code. `dio` / `authOptions` getters for the library API.
+- `core/romm/romm_state.dart` (copied) — save states on RomM; `core/constants/app_constants.dart` (copied) — app version.
+- `core/romm/romm_library_api.dart` — `LibraryApi` / `RommLibraryApi`: gallery pages (`GalleryQuery`: platform / collection / favourites / search, `GallerySort`, genre and region filters, `FilterValues`), collections (`RommCollection`), favourites (the user's own `is_favorite` collection, created once when missing).
+- `providers/romm_providers.dart` — `rommServiceProvider` and `libraryApiProvider`, built from the active profile's server and token.
+- `providers/library_providers.dart` — platforms, collections, favourite ids, Home shelves, a game, its saves, states and notes, RA progress; `coverUrlFor`, `assetUrl`, `toggleFavourite`.
+- `library/rom_files.dart` — a game's ROM at `roms\<platform>\<fs_name>` (file or folder), names made safe; downloaded?; delete.
+- `library/download_service.dart` — download staged in `userdata\app\temp`, then moved into `roms\`; multi-file zips unpacked through `PathGuard.join` (no zip-slip); a single file is never unpacked.
+- `providers/download_providers.dart` — `downloadsProvider` (progress, cancel, delete), `watchDownloaded`.
+- `ui/input/wrap_grid_policy.dart` — grid focus wraps row to row.
+- `ui/widgets/cover_image.dart` (`coverImageBuilderProvider`, cached covers), `game_card.dart`, `shelf.dart`, `cover_grid.dart` (paging, wrapping focus), `error_retry.dart`, `format.dart`.
+- `ui/pages/home_page.dart`, `platforms_page.dart`, `collections_page.dart`, `search_page.dart` — the shell's tabs.
+- `ui/screens/gallery_view.dart` (paged grid; X = sort and filters), `gallery_screen.dart`, `filter_sheet.dart`.
+- `ui/screens/game/` — `game_screen.dart` (cover column, actions, tabs via LB/RB), `game_header.dart` (Download / Play / Delete, favourite), `overview_tab.dart`, `save_data_tab.dart` (read-only), `achievements_tab.dart`, `notes_tab.dart` (new notes private), `details_tab.dart`, `open_game.dart`.
+
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
 - To change it, edit the SVG and render again.
@@ -86,6 +103,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 
 ## Testing
 - `flutter_test` + `mockito` (`@GenerateMocks` + `build_runner`) + `fake_async`. HTTP is faked with `test/helpers/fake_dio_adapter.dart`.
+- `test/helpers/widget_env.dart`: `testApp()` frames a widget (theme, input, covers as boxes, a Gargosy folder that doesn't exist unless `root:` is given) and `press()` sends a controller button (the D-pad moves focus like GamepadService). Fakes: `fake_library_api.dart`, `fake_download_service.dart`, `game_fixtures.dart`.
 - `test/helpers/app_harness.dart` builds the whole app with fakes (protector, PC identity, RomM auth); its `settle()` lets file IO and timers finish (one round per sequential async step).
 - `test/unit/` holds logic; `test/widgets/` holds widgets, including focus and controller navigation.
 - Required tests:

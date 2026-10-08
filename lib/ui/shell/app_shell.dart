@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../profiles/profile_providers.dart';
 import '../input/gargosy_intents.dart';
+import '../pages/collections_page.dart';
+import '../pages/home_page.dart';
+import '../pages/platforms_page.dart';
+import '../pages/search_page.dart';
 import '../widgets/hint_bar.dart';
 import 'backdrop.dart';
-import 'destination_page.dart';
 import 'top_bar.dart';
 import 'user_menu.dart';
 
@@ -61,10 +64,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final ctx = ref.watch(activeProfileProvider);
     if (ctx == null) return const SizedBox.shrink();
     final pages = [
-      DestinationPage(title: 'Home', message: 'Welcome, ${ctx.profile.name}'),
-      const DestinationPage(title: 'Platforms', message: 'Platforms'),
-      const DestinationPage(title: 'Collections', message: 'Collections'),
-      const DestinationPage(title: 'Search', message: 'Search'),
+      HomePage(name: ctx.profile.name),
+      const PlatformsPage(),
+      const CollectionsPage(),
+      const SearchPage(),
     ];
     return Actions(
       actions: {
@@ -78,6 +81,8 @@ class _AppShellState extends ConsumerState<AppShell> {
           child: Stack(children: [
             NotificationListener<ScrollNotification>(
               onNotification: (n) {
+                // Only the page scrolling down counts, not a shelf scrolled sideways.
+                if (n.metrics.axis != Axis.vertical) return false;
                 final s = n.metrics.pixels > 8;
                 if (s != _scrolled) setState(() => _scrolled = s);
                 return false;

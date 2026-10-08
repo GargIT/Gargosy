@@ -1,0 +1,70 @@
+import 'dart:async';
+
+import 'package:gargosy/core/romm/romm_library_api.dart';
+import 'package:gargosy/core/romm/romm_models.dart';
+
+/// A library of [all] games; records each query.
+class FakeLibraryApi implements LibraryApi {
+  FakeLibraryApi(this.all, {this.values = const FilterValues(genres: ['Action', 'Racing'], regions: ['USA'])});
+
+  final List<Game> all;
+  final FilterValues values;
+  final queries = <(GalleryQuery, int)>[];
+  Object? failWith;
+
+  /// Pages from this offset on fail (the server went away mid-scroll).
+  int? failFromOffset;
+
+  @override
+  Future<GalleryPage> page(GalleryQuery q, {int offset = 0, int limit = RommLibraryApi.pageSize, bool withFilterValues = false}) async {
+    queries.add((q, offset));
+    if (failWith != null) throw failWith!;
+    if (failFromOffset != null && offset >= failFromOffset!) throw Exception('SocketException: connection reset');
+    var list = all.where((g) => q.search == null || g.name.toLowerCase().contains(q.search!.toLowerCase())).toList();
+    if (q.genres.isNotEmpty) list = list.where((g) => g.genres.any(q.genres.contains)).toList();
+    final slice = list.skip(offset).take(limit).toList();
+    return GalleryPage(games: slice, total: list.length, filters: withFilterValues ? values : null);
+  }
+
+  @override
+  Future<List<RommCollection>> collections() async => const [];
+
+  @override
+  Future<Game?> randomGame() async => all.isEmpty ? null : all.first;
+
+  final notesById = <String, List<RomNote>>{};
+
+  @override
+  Future<List<RomNote>> notes(String gameId) async {
+    if (failWith != null) throw failWith!;
+    return notesById[gameId] ?? const [];
+  }
+
+  @override
+  Future<void> addNote(String gameId, String title, String content) async {
+    if (failWith != null) throw failWith!;
+    (notesById[gameId] ??= []).add(RomNote(id: 99, title: title, content: content));
+  }
+
+  @override
+  Future<void> deleteNote(String gameId, int noteId) async {
+    if (failWith != null) throw failWith!;
+    notesById[gameId]?.removeWhere((n) => n.id == noteId);
+  }
+
+  final favouriteCalls = <String>[];
+
+  @override
+  Future<RommCollection> setFavourite(String gameId, bool favourite, {required int userId}) async =>
+      _favourite(gameId, favourite, userId);
+
+  Future<RommCollection> _favourite(String gameId, bool favourite, int userId) async {
+    favouriteCalls.add(gameId);
+    if (failWith != null) throw failWith!;
+    if (favouriteDelay != null) await favouriteDelay!.future;
+    return RommCollection(id: 1, name: 'Favorites', isFavorite: true, userId: userId, romIds: favourite ? {int.parse(gameId)} : const {});
+  }
+
+  /// When set, setFavourite waits for it (a slow server).
+  Completer<void>? favouriteDelay;
+}

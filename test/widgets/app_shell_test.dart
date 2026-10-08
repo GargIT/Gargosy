@@ -7,10 +7,13 @@ import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
+import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
+import 'package:gargosy/ui/widgets/cover_image.dart';
 
+import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
 void main() {
@@ -25,6 +28,15 @@ void main() {
     c = ProviderContainer(overrides: [
       appRootProvider.overrideWithValue(root!),
       appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+      // The real pages, with a library that never touches RomM.
+      coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+      recentlyPlayedProvider.overrideWith((ref) async => [for (var i = 21; i <= 30; i++) game(i, 'G$i')]),
+      recentlyAddedProvider.overrideWith((ref) async => [for (var i = 1; i <= 20; i++) game(i, 'G$i')]),
+      favouriteGamesProvider.overrideWith((ref) async => [for (var i = 31; i <= 40; i++) game(i, 'G$i')]),
+      randomGameProvider.overrideWith((ref) async => game(41, 'Pick')),
+      platformsProvider.overrideWith((ref) async => const []),
+      collectionsProvider.overrideWith((ref) async => const []),
+      favouriteIdsProvider.overrideWithValue(const {}),
     ]);
     addTearDown(c.dispose);
     final anna = await tester.runAsync(() => c.read(profileStoreProvider).create(
@@ -102,5 +114,12 @@ void main() {
     await tester.drag(find.byKey(const Key('page-Home')), const Offset(0, -400));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('top-bar-glass')), findsOneWidget);
+  });
+
+  testWidgets('scrolling a shelf sideways does not turn the bar to glass', (tester) async {
+    await pump(tester);
+    await tester.drag(find.text('G1'), const Offset(-600, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('top-bar-glass')), findsNothing);
   });
 }
