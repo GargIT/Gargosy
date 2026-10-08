@@ -1,0 +1,45 @@
+name: gargosy
+description: "A RomM desktop client for Windows, controller-first, in the look of RomM's v2 UI."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.9
+  dio: ^5.4.0
+  path: ^1.9.0
+  crypto: ^3.0.3
+  synchronized: ^3.1.0+1
+  uuid: ^4.5.1
+  intl: ^0.20.2
+  gamepads: ^0.1.10+5
+  window_manager: ^0.5.2
+  win32: ^5.15.0
+  ffi: ^2.2.0
+  shared_preferences: ^2.2.2
+  shared_preferences_platform_interface: ^2.4.1
+  path_provider: ^2.1.2
+  path_provider_platform_interface: ^2.1.0
+  package_info_plus: ^9.0.1
+  qr_flutter: ^4.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.9
+  fake_async: ^1.3.1
+  plugin_platform_interface: ^2.1.0
+  gamepads_platform_interface: ^0.1.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/branding/gargosy_logo.png
+    - thirdparty/gamecontrollerdb.txt
+    - thirdparty/gamecontrollerdb_license.txt
