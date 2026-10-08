@@ -57,6 +57,22 @@ class ProfileStore {
   }) async {
     final paths = ProfilePaths(root, _newId());
     final guard = paths.guard;
+    try {
+      return await _create(paths, guard, name, colorIndex, serverUrl, rommUserId, rommUsername, pin, trustSelfSigned);
+    } on Object {
+      // No half-made profile stays behind.
+      final dir = io.Directory(guard.check(paths.dir));
+      try {
+        if (dir.existsSync()) dir.deleteSync(recursive: true);
+      } on io.FileSystemException catch (e) {
+        debugPrint('[Profiles] Could not remove the half-made ${paths.id}: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<Profile> _create(ProfilePaths paths, PathGuard guard, String name, int colorIndex, String serverUrl,
+      int rommUserId, String rommUsername, PinHash? pin, bool trustSelfSigned) async {
     for (final d in [paths.dir, paths.emulatorsDir, paths.backups, paths.cache]) {
       await io.Directory(guard.check(d)).create(recursive: true);
     }

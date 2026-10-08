@@ -20,6 +20,12 @@ class FakeDioAdapter implements HttpClientAdapter {
       throw DioException.connectionError(requestOptions: options, reason: 'offline');
     }
     final body = reply.body;
+    if (body is String) {
+      // A web page, as a server that isn't RomM would answer.
+      return ResponseBody.fromString(body, reply.status, headers: {
+        Headers.contentTypeHeader: ['text/html; charset=utf-8'],
+      });
+    }
     if (body is List<int>) {
       return ResponseBody.fromBytes(body, reply.status, headers: {
         Headers.contentTypeHeader: ['image/png'],

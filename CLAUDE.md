@@ -44,17 +44,38 @@ Gargosy\
 ```
 
 ## File Map
-Update this section as files are created.
+Update this section as files are created. Milestone A (log in) is in; B (browse) and C (play and sync) add to it.
 
-- `lib/core/` — copied from Freegosy, trimmed:
-  - RomM API and models;
-  - save sync, formats and catalog;
-  - save and emulator strategies;
-  - CHD/serial reading, downloads, extraction;
-  - controller input.
-- `lib/profiles/` — `Profile`, `ProfileStore`, `ProfileContext`, `ProfilePaths`, `PathGuard`, PIN, login flows (device pairing, password fallback).
-- `lib/emulators/` — `EmulatorInstaller`, templates, per-emulator `ProfileLaunchConfig`.
-- `lib/ui/` — `theme/` (v2 tokens → `ThemeData`), shell (v2-style top bar with tab pill, user menu, background art), focus system and input mode, screens, widgets, on-screen keyboard.
+### Entry points
+- `lib/main.dart` — finds the root (`AppRoot.fromArgs`; `--root=<dir>` for `flutter run`), checks it can be written (else `StartupErrorApp`), points `path_provider` and `shared_preferences` into `userdata\`, starts the window, runs `GargosyApp`.
+- `lib/app.dart` — `GargosyApp`: theme, `InputRouter`, F11; the profile picker when no profile is active, else `AppShell`. A profile switch pops every pushed page.
+
+### Core (copied from Freegosy unless marked new)
+- `core/platform/platform_info.dart`, `window_service.dart` — platform abstraction; fullscreen (`launch_fullscreen` pref, `--fullscreen`).
+- `core/storage/app_preferences.dart` + `shared_preferences_app_preferences.dart` — prefs interface; `logger_service.dart`, `ini_file.dart`, `safe_fs.dart`.
+- `core/storage/json_file_preferences_store.dart` (adapted) — `SharedPreferences` in `userdata\settings.json`, atomic writes, damaged file kept aside.
+- `core/storage/gargosy_path_provider.dart` (adapted) — `path_provider` folders in `userdata\app\`.
+- `core/security/dpapi.dart` (adapted) — `DataProtector`, DPAPI, `readMachineGuid()`.
+- `core/romm/romm_models.dart`, `save_target_layout.dart`, `core/retroachievements/retroachievements_game_models.dart` — RomM models.
+- `core/romm/romm_auth_client.dart` (new) — `RommAuth`: device pairing (`/api/auth/device/init|token`), password → never-expiring client token (Basic auth, `/api/client-tokens`), `/api/users/me`, avatar. `gargosyScopes`. Never follows redirects.
+- `core/input/` — `gamepad_service.dart` (moves focus with the D-pad, sets gamepad mode), `input_action_bus.dart`, mappings, SDL DB, deadzone. `providers/ui_provider.dart` (trimmed): `InputMode`, `inputModeProvider`, `navigationLockedProvider`.
+
+### Profiles (new)
+- `profiles/app_root.dart` — the layout on disk; `ensureLayout()` throws when the folder can't be written.
+- `profiles/path_guard.dart` — `PathGuard.check/join/forProfile`: the only writable places.
+- `profiles/json_file.dart` — `readJsonObject(Sync)`, `writeJsonObject`, `writeBytesAtomic` (tmp + rename, through the guard).
+- `profiles/pbkdf2.dart`, `pin.dart` — `PinHash` (PBKDF2-SHA256, 60 000 rounds, verify in an isolate), `PinGate` (5 tries, then 30 s).
+- `profiles/profile.dart`, `profile_paths.dart`, `profile_store.dart` — a profile, its paths, create (copies `templates\`) / list (sync reads) / save / delete / last used.
+- `profiles/pc_identity.dart`, `login_store.dart` — `login.<PC>-<user>-<id8>.dpapi` per profile; `ProfileLogin { token, kind: device|client-token, deviceId }`.
+- `profiles/device_login.dart` — `DeviceLoginFlow`: polls at the server's interval, +5 s on `slow_down`, keeps going through network errors, stops at expiry.
+- `profiles/profile_providers.dart` — root/prefs/protector/PC/auth-factory providers (overridable in tests), `profilesProvider`, `activeProfileProvider` (`ProfileContext`), `pinGatesProvider`.
+
+### UI (new)
+- `ui/theme/tokens.dart` (RomM v2 values: `GColors`, `GSpace`, `GRadius`, `GFont`, `GMotion`, `GFocusRing`, `GLayout`), `gargosy_theme.dart`.
+- `ui/input/gargosy_intents.dart`, `input_router.dart` — controller actions → intents on the focused widget (A, hold A, B, X, Y, LB/RB, Start); Escape/PgUp/PgDn/F11; mouse/keyboard mode. An unhandled `BackIntent` pops the route.
+- `ui/widgets/g_focusable.dart` (focus ring for pad/keyboard, hover for mouse), `hint_bar.dart`, `profile_badge.dart`, `on_screen_keyboard.dart` (+ `showOnScreenKeyboard`), `pin_pad.dart` (+ `showPinEntry`).
+- `ui/shell/app_shell.dart` (tabs Home/Platforms/Collections/Search, LB/RB, Start), `top_bar.dart` (v2 top bar; glass once scrolled), `user_menu.dart`, `destination_page.dart`, `backdrop.dart`.
+- `ui/screens/profile_picker_screen.dart` ("Who is playing?": PIN, re-login, X = options/delete), `add_profile_screen.dart` (server → login → name/colour → PIN), `login_step.dart` (pairing QR or password; refuses another RomM user on re-login), `profile_options_dialog.dart`, `startup_error_app.dart`.
 
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
@@ -64,7 +85,8 @@ Update this section as files are created.
 - Never use RomM's circle, its diagonal split or its logo.
 
 ## Testing
-- `flutter_test` + `mockito` (`@GenerateMocks` + `build_runner`) + `http_mock_adapter` + `fake_async`.
+- `flutter_test` + `mockito` (`@GenerateMocks` + `build_runner`) + `fake_async`. HTTP is faked with `test/helpers/fake_dio_adapter.dart`.
+- `test/helpers/app_harness.dart` builds the whole app with fakes (protector, PC identity, RomM auth); its `settle()` lets file IO and timers finish (one round per sequential async step).
 - `test/unit/` holds logic; `test/widgets/` holds widgets, including focus and controller navigation.
 - Required tests:
   - profiles never share a path;

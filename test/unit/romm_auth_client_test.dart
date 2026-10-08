@@ -125,4 +125,48 @@ void main() {
     expect(c.dioForTest.options.validateStatus(302), isFalse);
     expect(Dio().options.followRedirects, isTrue); // sanity: default differs
   });
+
+  group('a server that is not RomM (an HTML page with 200)', () {
+    const html = '<!doctype html><html><body>Welcome to nginx!</body></html>';
+    Matcher notRomm() => throwsA(isA<RommAuthException>()
+        .having((e) => e.failure, 'failure', RommAuthFailure.notRomm));
+
+    test('startDeviceAuth', () {
+      final a = FakeDioAdapter((r) => (status: 200, body: html));
+      expect(() => client(a).startDeviceAuth(deviceIdentifier: 'i', deviceName: 'n'), notRomm());
+    });
+
+    test('a JSON answer missing a field', () {
+      final a = FakeDioAdapter((r) => (status: 201, body: {'device_code': 'dc'}));
+      expect(() => client(a).startDeviceAuth(deviceIdentifier: 'i', deviceName: 'n'), notRomm());
+    });
+
+    test('loginWithPassword', () {
+      final a = FakeDioAdapter((r) => (status: 200, body: html));
+      expect(() => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'), notRomm());
+    });
+
+    test('pollDeviceAuth and fetchMe', () {
+      final a = FakeDioAdapter((r) => (status: 200, body: html));
+      expect(() => client(a).pollDeviceAuth('dc'), notRomm());
+      expect(() => client(a).fetchMe('t'), notRomm());
+    });
+  });
+
+  test('a 5xx or 408 is a server failure (worth retrying), not "other"', () async {
+    for (final status in [500, 502, 503, 504, 408]) {
+      final a = FakeDioAdapter((r) => (status: status, body: {'detail': 'Bad gateway'}));
+      expect(() => client(a).pollDeviceAuth('dc'),
+          throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.server)), reason: '$status');
+    }
+  });
+
+  test('password re-login as another RomM user is refused before any token is made', () async {
+    final a = FakeDioAdapter((r) => r.path == '/api/users/me' ? (status: 200, body: meJson) : (status: 201, body: {'raw_token': 't'}));
+    await expectLater(client(a).loginWithPassword(username: 'anna', password: 'p', tokenName: 'n', expectedUserId: 8),
+        throwsA(isA<RommAuthException>()
+            .having((e) => e.failure, 'failure', RommAuthFailure.wrongUser)
+            .having((e) => e.message, 'message', 'anna')));
+    expect(a.requests.map((r) => r.path), ['/api/users/me']);
+  });
 }

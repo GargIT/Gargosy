@@ -12,7 +12,11 @@ class FakeRommAuth implements RommAuth {
     this.passwordToken = 'rmm_pw',
     this.startError,
     this.passwordError,
+    this.avatar,
   });
+
+  /// What [fetchAvatar] returns; null is "no avatar".
+  Uint8List? avatar;
 
   final List<Object> polls;
   final DeviceAuthStart? start;
@@ -37,8 +41,12 @@ class FakeRommAuth implements RommAuth {
   }
 
   @override
-  Future<String> loginWithPassword({required String username, required String password, required String tokenName}) async {
+  Future<String> loginWithPassword(
+      {required String username, required String password, required String tokenName, int? expectedUserId}) async {
     if (passwordError != null) throw passwordError!;
+    if (expectedUserId != null && me.id != expectedUserId) {
+      throw RommAuthException(RommAuthFailure.wrongUser, me.username);
+    }
     passwordLogins.add(username);
     return passwordToken;
   }
@@ -47,5 +55,5 @@ class FakeRommAuth implements RommAuth {
   Future<RommUser> fetchMe(String token) async => me;
 
   @override
-  Future<Uint8List?> fetchAvatar(String token, int userId) async => null;
+  Future<Uint8List?> fetchAvatar(String token, int userId) async => avatar;
 }

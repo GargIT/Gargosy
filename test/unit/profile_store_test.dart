@@ -110,4 +110,13 @@ void main() {
       expect(() => ProfilePaths(root, bad), throwsArgumentError, reason: bad);
     }
   });
+
+  test('a create that fails partway removes the half-made folder', () async {
+    // A file where the new profile's emulators folder should go makes create fail after the profile folder exists.
+    io.File(p.join(root.profiles, 'p1', 'emulators'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('');
+    await expectLater(anna(), throwsA(isA<io.FileSystemException>()));
+    expect(io.Directory(p.join(root.profiles, 'p1')).existsSync(), isFalse);
+  });
 }

@@ -16,7 +16,8 @@ class DeviceLoginFlow {
   void cancel() => _cancelled = true;
 
   Future<DevicePoll> run() async {
-    var interval = Duration(seconds: start.interval);
+    // Never faster than once a second, whatever the server says.
+    var interval = Duration(seconds: start.interval < 1 ? 1 : start.interval);
     final deadline = _now().add(Duration(seconds: start.expiresIn));
     while (true) {
       await _delay(interval);
@@ -26,7 +27,7 @@ class DeviceLoginFlow {
       try {
         result = await auth.pollDeviceAuth(start.deviceCode);
       } on RommAuthException catch (e) {
-        if (e.failure == RommAuthFailure.network) continue;
+        if (e.failure == RommAuthFailure.network || e.failure == RommAuthFailure.server) continue;
         rethrow;
       }
       switch (result) {

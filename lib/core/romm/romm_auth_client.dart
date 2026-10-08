@@ -80,7 +80,22 @@ class DeviceApproved extends DevicePoll {
   final String deviceId;
 }
 
-enum RommAuthFailure { badCredentials, serverTooOld, insufficientScope, network, other }
+enum RommAuthFailure {
+  badCredentials,
+  serverTooOld,
+  insufficientScope,
+  network,
+
+  /// 5xx or 408: RomM (or the proxy in front of it) failed for now; worth retrying.
+  server,
+
+  /// The answer isn't RomM's (a web page, a missing field): probably the wrong address.
+  notRomm,
+
+  /// Logged in as another RomM user than the profile's; [RommAuthException.message] is that username.
+  wrongUser,
+  other,
+}
 
 class RommAuthException implements Exception {
   const RommAuthException(this.failure, this.message);
@@ -98,7 +113,11 @@ abstract class RommAuth {
   Future<DevicePoll> pollDeviceAuth(String deviceCode);
 
   /// Logs in with a password once and returns a long-lived client token.
-  Future<String> loginWithPassword({required String username, required String password, required String tokenName});
+  ///
+  /// With [expectedUserId], another RomM user is refused (`wrongUser`) before
+  /// any token is made.
+  Future<String> loginWithPassword(
+      {required String username, required String password, required String tokenName, int? expectedUserId});
   Future<RommUser> fetchMe(String token);
   Future<Uint8List?> fetchAvatar(String token, int userId);
 }
@@ -138,6 +157,18 @@ class RommAuthClient implements RommAuth {
     return u;
   }
 
+  /// Reads a RomM answer with [read]; anything that isn't the JSON RomM sends
+  /// (a web page, a missing field) is [RommAuthFailure.notRomm].
+  static T _parse<T>(Object? data, T Function(Map<String, dynamic> json) read) {
+    try {
+      if (data is! Map<String, dynamic>) throw const FormatException();
+      return read(data);
+    } on Object catch (e) {
+      if (e is RommAuthException) rethrow;
+      throw const RommAuthException(RommAuthFailure.notRomm, 'This does not look like a RomM server');
+    }
+  }
+
   static Options _bearer(String token) => Options(headers: {'Authorization': 'Bearer $token'});
 
   static Never _fail(DioException e, {RommAuthFailure on404 = RommAuthFailure.other}) {
@@ -145,6 +176,7 @@ class RommAuthClient implements RommAuth {
     if (status == null) throw RommAuthException(RommAuthFailure.network, e.message ?? 'The server could not be reached');
     if (status == 401) throw const RommAuthException(RommAuthFailure.badCredentials, 'Wrong username or password');
     if (status == 404 || status == 405) throw RommAuthException(on404, 'The server does not support this');
+    if (status >= 500 || status == 408) throw RommAuthException(RommAuthFailure.server, 'RomM answered $status');
     final detail = e.response?.data is Map ? (e.response!.data as Map)['detail'] : null;
     throw RommAuthException(RommAuthFailure.other, 'RomM answered $status${detail != null ? ': $detail' : ''}');
   }
@@ -159,14 +191,13 @@ class RommAuthClient implements RommAuth {
         'platform': 'windows',
         'requested_scopes': gargosyScopes,
       });
-      final d = r.data as Map<String, dynamic>;
-      return DeviceAuthStart(
-        deviceCode: d['device_code'] as String,
-        userCode: d['user_code'] as String,
-        verificationUrl: '$baseUrl${d['verification_path_complete']}',
-        expiresIn: d['expires_in'] as int,
-        interval: d['interval'] as int,
-      );
+      return _parse<DeviceAuthStart>(r.data, (d) => DeviceAuthStart(
+            deviceCode: d['device_code'] as String,
+            userCode: d['user_code'] as String,
+            verificationUrl: '$baseUrl${d['verification_path_complete'] as String}',
+            expiresIn: d['expires_in'] as int,
+            interval: d['interval'] as int,
+          ));
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 404 || status == 405) return null;
@@ -178,8 +209,7 @@ class RommAuthClient implements RommAuth {
   Future<DevicePoll> pollDeviceAuth(String deviceCode) async {
     try {
       final r = await _dio.post('/api/auth/device/token', data: {'device_code': deviceCode});
-      final d = r.data as Map<String, dynamic>;
-      return DeviceApproved(token: d['access_token'] as String, deviceId: d['device_id'] as String);
+      return _parse<DevicePoll>(r.data, (d) => DeviceApproved(token: d['access_token'] as String, deviceId: d['device_id'] as String));
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 429) return const DeviceSlowDown();
@@ -201,13 +231,17 @@ class RommAuthClient implements RommAuth {
   }
 
   @override
-  Future<String> loginWithPassword({required String username, required String password, required String tokenName}) async {
+  Future<String> loginWithPassword(
+      {required String username, required String password, required String tokenName, int? expectedUserId}) async {
     final basic = Options(headers: {'Authorization': 'Basic ${base64Encode(utf8.encode('$username:$password'))}'});
     final RommUser me;
     try {
-      me = RommUser.fromJson((await _dio.get('/api/users/me', options: basic)).data as Map<String, dynamic>);
+      me = _parse((await _dio.get('/api/users/me', options: basic)).data, RommUser.fromJson);
     } on DioException catch (e) {
       _fail(e);
+    }
+    if (expectedUserId != null && me.id != expectedUserId) {
+      throw RommAuthException(RommAuthFailure.wrongUser, me.username);
     }
     if (!me.oauthScopes.contains('me.write')) {
       throw const RommAuthException(RommAuthFailure.insufficientScope, 'This RomM user may not create device tokens');
@@ -216,7 +250,7 @@ class RommAuthClient implements RommAuth {
     try {
       final r = await _dio.post('/api/client-tokens',
           data: {'name': tokenName, 'scopes': scopes, 'expires_in': null}, options: basic);
-      return (r.data as Map<String, dynamic>)['raw_token'] as String;
+      return _parse<String>(r.data, (d) => d['raw_token'] as String);
     } on DioException catch (e) {
       _fail(e, on404: RommAuthFailure.serverTooOld);
     }
@@ -225,7 +259,7 @@ class RommAuthClient implements RommAuth {
   @override
   Future<RommUser> fetchMe(String token) async {
     try {
-      return RommUser.fromJson((await _dio.get('/api/users/me', options: _bearer(token))).data as Map<String, dynamic>);
+      return _parse<RommUser>((await _dio.get('/api/users/me', options: _bearer(token))).data, RommUser.fromJson);
     } on DioException catch (e) {
       _fail(e);
     }

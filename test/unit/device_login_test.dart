@@ -50,4 +50,20 @@ void main() {
     expect(await flow.run(), isA<DeviceCancelled>());
     expect(auth.pollCount, 0);
   });
+
+  test('a 5xx from a proxy while RomM restarts does not end the pairing', () async {
+    final auth = FakeRommAuth(polls: [
+      const RommAuthException(RommAuthFailure.server, 'RomM answered 502'),
+      const DeviceApproved(token: 't', deviceId: 'd'),
+    ]);
+    expect(await DeviceLoginFlow(auth, start, delay: (_) async {}).run(), isA<DeviceApproved>());
+  });
+
+  test('an interval of 0 from the server still waits a second between polls', () async {
+    final waits = <Duration>[];
+    const fast = DeviceAuthStart(deviceCode: 'dc', userCode: 'U', verificationUrl: 'u', expiresIn: 60, interval: 0);
+    await DeviceLoginFlow(FakeRommAuth(polls: [const DeviceApproved(token: 't', deviceId: 'd')]), fast,
+        delay: (d) async => waits.add(d)).run();
+    expect(waits, [const Duration(seconds: 1)]);
+  });
 }
