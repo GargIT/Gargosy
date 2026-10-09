@@ -3,19 +3,75 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
+import '../../library/platform_covers.dart';
 import '../../providers/library_providers.dart';
 import '../input/wrap_grid_policy.dart';
 import '../screens/gallery_screen.dart';
 import '../theme/tokens.dart';
 import '../widgets/error_retry.dart';
-import '../widgets/g_focusable.dart';
+import '../widgets/g_dropdown.dart';
+import 'platform_card.dart';
 
-/// All platforms with games; A opens a platform's gallery.
-class PlatformsPage extends ConsumerWidget {
+/// All platforms with games, as cover-strip cards: as many per row as fit;
+/// the Covers setting picks what each card fans. A opens a platform's gallery.
+class PlatformsPage extends ConsumerStatefulWidget {
   const PlatformsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlatformsPage> createState() => _PlatformsPageState();
+}
+
+class _PlatformsPageState extends ConsumerState<PlatformsPage> {
+  final _coversField = GlobalKey();
+  bool _coversOpen = false;
+
+  Future<void> _pickCovers() async {
+    final current = ref.read(platformCoversChoiceProvider);
+    setState(() => _coversOpen = true);
+    final i = await showDropdown(context,
+        field: _coversField, labels: [for (final c in PlatformCovers.values) c.label], current: current.index);
+    if (!mounted) return;
+    setState(() => _coversOpen = false);
+    if (i != null) await ref.read(platformCoversChoiceProvider.notifier).pick(PlatformCovers.values[i]);
+  }
+
+  Widget _heading(List<Platform> list) {
+    final games = list.fold<int>(0, (n, p) => n + p.gamesCount);
+    final choice = ref.watch(platformCoversChoiceProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s5),
+      child: Row(children: [
+        const Text('Platforms', style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800)),
+        const SizedBox(width: GSpace.s3),
+        Expanded(
+          child: Text(
+            '${list.length} platforms · $games games',
+            key: const ValueKey('platforms-heading'),
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: GColors.fgMuted),
+          ),
+        ),
+        KeyedSubtree(
+          key: _coversField,
+          child: GDropdownField(
+            key: const ValueKey('platforms-covers'),
+            icon: Icons.photo_library_outlined,
+            text: 'Covers: ${choice.label}',
+            onPress: _pickCovers,
+            open: _coversOpen,
+            compact: true,
+          ),
+        ),
+      ]),
+    );
+  }
+
+  void _openGallery(BuildContext context, Platform p) => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => GalleryScreen(title: p.nameForDisplay, query: GalleryQuery(platformId: p.id)),
+      ));
+
+  @override
+  Widget build(BuildContext context) {
     final platforms = ref.watch(platformsProvider);
     return Padding(
       key: const Key('page-Platforms'),
@@ -25,46 +81,30 @@ class PlatformsPage extends ConsumerWidget {
         error: (e, _) => ErrorRetry(message: describeLoadError(e), onRetry: () => ref.invalidate(platformsProvider)),
         data: (list) => list.isEmpty
             ? const Center(child: Text('No platforms with games yet.', style: TextStyle(color: GColors.fgMuted)))
-            : FocusTraversalGroup(
-                policy: WrapGridTraversalPolicy(),
-                child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s14),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 300,
-                    mainAxisExtent: 120,
-                    mainAxisSpacing: GSpace.s4,
-                    crossAxisSpacing: GSpace.s4,
+            : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                _heading(list),
+                Expanded(
+                  child: FocusTraversalGroup(
+                    policy: WrapGridTraversalPolicy(),
+                    child: GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s14),
+                      // About 260–300 px a card: 6 / 4 / 3 per row at 1920 / 1280 / 900 px.
+                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 300,
+                        mainAxisExtent: PlatformCard.height,
+                        mainAxisSpacing: GSpace.s4,
+                        crossAxisSpacing: GSpace.s4,
+                      ),
+                      itemCount: list.length,
+                      itemBuilder: (context, i) => PlatformCard(
+                        platform: list[i],
+                        autofocus: i == 0,
+                        onOpen: () => _openGallery(context, list[i]),
+                      ),
+                    ),
                   ),
-                  itemCount: list.length,
-                  itemBuilder: (context, i) => _PlatformTile(platform: list[i], autofocus: i == 0),
                 ),
-              ),
-      ),
-    );
-  }
-}
-
-class _PlatformTile extends StatelessWidget {
-  const _PlatformTile({required this.platform, this.autofocus = false});
-
-  final Platform platform;
-  final bool autofocus;
-
-  @override
-  Widget build(BuildContext context) {
-    return GFocusable(
-      autofocus: autofocus,
-      onActivate: () => Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => GalleryScreen(title: platform.nameForDisplay, query: GalleryQuery(platformId: platform.id)),
-      )),
-      child: Container(
-        padding: const EdgeInsets.all(GSpace.s4),
-        decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.card)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.end, children: [
-          Text(platform.nameForDisplay,
-              maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
-          Text('${platform.gamesCount} games', style: const TextStyle(color: GColors.fgMuted)),
-        ]),
+              ]),
       ),
     );
   }

@@ -1,6 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../library/library_snapshot.dart';
+import '../library/platform_covers.dart';
+import 'engine_providers.dart';
 import 'download_providers.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
@@ -133,3 +137,27 @@ Future<String?> toggleFavourite(WidgetRef ref, Game g) async {
     busy.state = {...busy.state}..remove(g.id);
   }
 }
+
+/// The Platforms page's Covers setting, per profile.
+final platformCoversChoiceProvider = StateNotifierProvider<PlatformCoversChoice, PlatformCovers>(
+    (ref) => PlatformCoversChoice(ref.watch(profilePrefsProvider)));
+
+/// One Random per run: Random covers change each time Gargosy starts, not each time the page opens.
+final _coversRandom = Random();
+
+/// A card's covers, once per platform and choice for the session; none when
+/// RomM can't give them, and then tried again once RomM is back.
+final platformCoversProvider = FutureProvider.family<List<Game>, PlatformCoversKey>((ref, key) async {
+  final api = ref.watch(libraryApiProvider);
+  if (api == null) return const [];
+  var failed = false;
+  ref.listen<bool>(rommOfflineProvider, (was, now) {
+    if (failed && was == true && !now) ref.invalidateSelf();
+  });
+  try {
+    return await coversFor(api, key.platform, key.choice, _coversRandom);
+  } catch (_) {
+    failed = true;
+    return const [];
+  }
+});

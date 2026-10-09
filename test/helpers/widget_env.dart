@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/ui/widgets/platform_logo.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/profiles/app_root.dart';
@@ -18,6 +19,7 @@ Widget testApp(Widget child, {List<Override> overrides = const [], GlobalKey<Nav
   return ProviderScope(
     overrides: [
       coverImageBuilderProvider.overrideWithValue((url) => ColoredBox(key: ValueKey('cover:$url'), color: Colors.grey)),
+      platformLogoBuilderProvider.overrideWithValue((url, size, fallback) => fallback),
       appRootProvider.overrideWithValue(root ?? AppRoot(r'C:\gargosy-tests-nowhere')),
       ...overrides,
     ],
