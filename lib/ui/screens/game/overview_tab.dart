@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../widgets/save_list/save_labels.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
@@ -16,6 +17,10 @@ class OverviewTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final shots = [for (final s in game.mergedScreenshots) assetUrl(ref, s)].whereType<String>().toList();
     return ListView(padding: const EdgeInsets.only(bottom: GSpace.s14), children: [
+      if (game.lastPlayed case final played?) ...[
+        Text('Last played ${formatSaveTime(played)}', style: const TextStyle(color: GColors.fgMuted)),
+        const SizedBox(height: GSpace.s3),
+      ],
       if (game.summary != null && game.summary!.isNotEmpty)
         Text(game.summary!, style: const TextStyle(fontSize: GFont.lg, height: 1.6, color: GColors.fgSecondary)),
       const SizedBox(height: GSpace.s5),

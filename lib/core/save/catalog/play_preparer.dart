@@ -38,13 +38,31 @@ class PlayPreparer {
       throw SaveChoiceException("${target.emulatorId} keeps its saves in the game's folder, which holds only games. "
           'Set its save folder first.');
     }
-    await backUp(game, romPath, target);
+    // Gargosy: the chosen backup is copied aside first. The backup made just
+    // below can rotate the oldest of the 8 out (its zip deleted), and that
+    // may be the very one being restored.
+    io.File? chosenCopy;
+    if (save.source == SaveSource.backup) {
+      final zip = io.File(save.backup!.localZipPath);
+      if (!zip.existsSync()) throw SaveChoiceException("The backup from ${save.savedAt} isn't on this PC any more.");
+      final tmp = io.Directory.systemTemp.createTempSync('gargosy_restore');
+      chosenCopy = zip.copySync(p.join(tmp.path, p.basename(zip.path)));
+    }
+    try {
+      await backUp(game, romPath, target);
+      await _putInPlace(game, romPath, save, target, chosenCopy?.path);
+    } finally {
+      if (chosenCopy != null && chosenCopy.parent.existsSync()) chosenCopy.parent.deleteSync(recursive: true);
+    }
+  }
+
+  Future<void> _putInPlace(Game game, String romPath, SaveEntry save, SaveMaker target, String? backupZip) async {
     switch (save.source) {
       case SaveSource.romm:
         await sync.restoreChosenSave(game, romPath, save.rommSave!,
             emulatorId: target.emulatorId, coreOverride: target.coreId);
       case SaveSource.backup:
-        final ok = await backups.restore(save.backup!.localZipPath, game, romPath, sync,
+        final ok = await backups.restore(backupZip ?? save.backup!.localZipPath, game, romPath, sync,
             emulatorId: target.emulatorId, coreOverride: _coreOverride(target));
         if (!ok) throw SaveChoiceException("The backup from ${save.savedAt} couldn't be restored.");
       case SaveSource.local:

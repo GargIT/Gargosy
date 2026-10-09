@@ -16,6 +16,7 @@ import '../library/rom_files.dart';
 import '../profiles/app_root.dart';
 import '../profiles/profile_paths.dart';
 import 'emulator_layout.dart';
+import 'fullscreen.dart';
 import 'profile_launch_config.dart';
 
 /// Starts a process; tests pass a recorder.
@@ -124,7 +125,8 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
     final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
     final pre = await config.prepare(c);
-    final process = await _start(exePath, [...pre, ...args, romPath], workingDirectory: c.exeDir);
+    final process = await _start(exePath, [...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]), romPath],
+        workingDirectory: c.exeDir);
     // Drained, as Freegosy does: a full pipe would freeze the emulator.
     process.stdout.drain<void>();
     process.stderr.drain<void>();
@@ -155,6 +157,7 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
         raLogin: raLogin,
         roms: root.roms,
         gameFolders: gameFoldersFor(emulatorId),
+        fullscreen: Fullscreen.isOn(prefs, emulatorId),
       );
 
   /// Takes the RetroAchievements login out of the profile's emulator

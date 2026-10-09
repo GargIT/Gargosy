@@ -1,3 +1,5 @@
+import 'dart:io';
+
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
@@ -40,9 +42,12 @@ class _Sync extends SaveSyncService {
 }
 
 class _Backups extends BackupService {
-  _Backups(this.log, {this.restoreOk = true});
+  _Backups(this.log, {this.restoreOk = true, this.needsFile = false});
   final List<String> log;
   final bool restoreOk;
+
+  /// Restore fails when the zip isn't there (as the real one does).
+  final bool needsFile;
   @override
   Future<BackupResult?> createImmediate(Game game, String romPath, SaveSyncService syncService,
       {String? emulatorId, String? coreOverride}) async {
@@ -53,19 +58,26 @@ class _Backups extends BackupService {
   @override
   Future<bool> restore(String localZipPath, Game game, String romPath, SaveSyncService syncService,
       {String? emulatorId, String? coreOverride}) async {
-    log.add(coreOverride == null ? 'restore $localZipPath -> $emulatorId' : 'restore $localZipPath -> $emulatorId/$coreOverride');
+    log.add(coreOverride == null ? 'restore -> $emulatorId' : 'restore -> $emulatorId/$coreOverride');
+    if (needsFile && !File(localZipPath).existsSync()) return false;
     return restoreOk;
   }
 }
 
 class _Repo extends BackupRepository {
-  _Repo(this.added, {this.existing = const []});
+  _Repo(this.added, {this.existing = const [], this.rotateOut});
   final List<BackupEntry> added;
   final List<BackupEntry> existing;
+
+  /// A zip the 8-backup cap deletes when a backup is added.
+  final String? rotateOut;
   @override
   List<BackupEntry> getEntries(String romId) => [...added.reversed, ...existing];
   @override
-  Future<void> addEntry(String romId, BackupEntry entry) async => added.add(entry);
+  Future<void> addEntry(String romId, BackupEntry entry) async {
+    added.add(entry);
+    if (rotateOut != null && File(rotateOut!).existsSync()) File(rotateOut!).deleteSync();
+  }
 }
 
 void main() {
@@ -76,7 +88,12 @@ void main() {
   late List<BackupEntry> added;
 
   Future<PlayPreparer> preparer(
-      {bool fail = false, bool restoreOk = true, List<BackupEntry> existing = const [], Map<String, String> saveDirs = const {}}) async {
+      {bool fail = false,
+      bool restoreOk = true,
+      List<BackupEntry> existing = const [],
+      Map<String, String> saveDirs = const {},
+      String? rotateOut,
+      bool needsFile = false}) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     final dirs = DirectoryService(prefs);
@@ -84,8 +101,8 @@ void main() {
     final romm = RommService(RomMConfig(baseUrl: '', username: '', password: ''));
     return PlayPreparer(
       sync: _Sync(romm, dirs, registry, prefs, log, fail: fail, saveDirs: saveDirs),
-      backups: _Backups(log, restoreOk: restoreOk),
-      repository: _Repo(added, existing: existing),
+      backups: _Backups(log, restoreOk: restoreOk, needsFile: needsFile),
+      repository: _Repo(added, existing: existing, rotateOut: rotateOut),
     );
   }
 
@@ -135,11 +152,17 @@ void main() {
     expect(log, ['backup ares', 'convert retroarch/mupen64plus_next -> ares']);
   });
 
+  String zipFile() {
+    final dir = Directory.systemTemp.createTempSync('prep');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    return (File('${dir.path}/old.zip')..writeAsStringSync('zip')).path;
+  }
+
   test('a backup is restored into the target', () async {
-    final p = await preparer();
-    final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: '/backups/old.zip', emulatorId: 'ares');
+    final p = await preparer(needsFile: true);
+    final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: zipFile(), emulatorId: 'ares');
     await p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.backup, fileName: 'old.zip', savedAt: DateTime(2026), maker: ares, backup: backup), target: ares);
-    expect(log, ['backup ares', 'restore /backups/old.zip -> ares']);
+    expect(log, ['backup ares', 'restore -> ares']);
   });
 
   test('RetroArch\'s core goes with the download', () async {
@@ -184,10 +207,32 @@ void main() {
 
   test('a backup that can\'t be restored throws', () async {
     final p = await preparer(restoreOk: false);
-    final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: '/backups/old.zip');
+    final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: zipFile());
     await expectLater(
       p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.backup, fileName: 'old.zip', savedAt: DateTime(2026), backup: backup), target: ares),
       throwsA(isA<SaveChoiceException>()),
     );
+  });
+
+  test("restoring the oldest backup works even when the backup made first rotates it out of the 8", () async {
+    final dir = Directory.systemTemp.createTempSync('prep');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final oldest = File('${dir.path}/oldest.zip')..writeAsStringSync('zip');
+    final p = await preparer(rotateOut: oldest.path, needsFile: true);
+    final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: oldest.path, emulatorId: 'ares');
+    await p.prepare(game, '/r/mk.z64',
+        SaveEntry(source: SaveSource.backup, fileName: 'oldest.zip', savedAt: DateTime(2026), maker: ares, backup: backup),
+        target: ares);
+    expect(log, ['backup ares', 'restore -> ares']);
+  });
+
+  test("a backup that's gone from this PC says so, and nothing is backed up or changed", () async {
+    final p = await preparer();
+    final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: '/nowhere/gone.zip');
+    await expectLater(
+      p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.backup, fileName: 'gone.zip', savedAt: DateTime(2026), backup: backup), target: ares),
+      throwsA(isA<SaveChoiceException>()),
+    );
+    expect(log, isEmpty);
   });
 }

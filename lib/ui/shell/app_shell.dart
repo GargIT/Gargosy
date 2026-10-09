@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+export 'shell_menu.dart' show shellTabs, shellTabProvider;
+
 import '../../core/input/gamepad_service.dart';
 import '../../library/upload_queue.dart';
-import '../../play/play_controller.dart';
 import '../../providers/romm_providers.dart';
 import '../../profiles/profile_providers.dart';
 import '../input/gargosy_intents.dart';
@@ -11,17 +12,13 @@ import '../pages/collections_page.dart';
 import '../pages/home_page.dart';
 import '../pages/platforms_page.dart';
 import '../pages/search_page.dart';
-import '../screens/emulators_screen.dart';
-import '../screens/settings/settings_screen.dart';
 import '../theme/tokens.dart';
 import '../widgets/hint_bar.dart';
-import '../widgets/sync_wait.dart';
 import '../widgets/toast.dart';
 import 'backdrop.dart';
+import 'shell_menu.dart';
 import 'top_bar.dart';
-import 'user_menu.dart';
 
-const shellTabs = ['Home', 'Platforms', 'Collections', 'Search'];
 
 /// The signed-in app: v2's top bar over the current tab's page (spec §7).
 class AppShell extends ConsumerStatefulWidget {
@@ -32,7 +29,6 @@ class AppShell extends ConsumerStatefulWidget {
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  int _index = 0;
   bool _scrolled = false;
   final _tabNodes = [for (final t in shellTabs) FocusNode(debugLabel: 'tab-$t')];
 
@@ -44,39 +40,16 @@ class _AppShellState extends ConsumerState<AppShell> {
     super.dispose();
   }
 
+  int get _index => ref.read(shellTabProvider);
+
   void _go(int i) {
     if (i < 0 || i >= shellTabs.length) return;
-    setState(() {
-      _index = i;
-      _scrolled = false;
-    });
+    ref.read(shellTabProvider.notifier).state = i;
+    setState(() => _scrolled = false);
     _tabNodes[i].requestFocus();
   }
 
-  Future<void> _menu() async {
-    final ctx = ref.read(activeProfileProvider);
-    if (ctx == null) return;
-    final choice = await showUserMenu(context, name: ctx.profile.name);
-    switch (choice) {
-      case UserMenuChoice.switchProfile:
-        // The game runs on this profile's emulator data; it must close first.
-        if (ref.read(playControllerProvider).runningGameId != null) {
-          if (mounted) showToast(context, "Close the game first: a profile can't change while a game runs.");
-          return;
-        }
-        // A sync still running belongs to this profile: it finishes first.
-        if (!mounted || !await waitForSyncIdle(context, ref)) return;
-        ref.read(activeProfileProvider.notifier).signOut();
-      case UserMenuChoice.settings:
-        if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
-      case UserMenuChoice.emulators:
-        if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmulatorsScreen()));
-      case UserMenuChoice.fullscreen:
-        await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
-      case null:
-        break;
-    }
-  }
+  Future<void> _menu() => openUserMenu(context, ref);
 
   @override
   void initState() {
@@ -98,6 +71,14 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final ctx = ref.watch(activeProfileProvider);
     if (ctx == null) return const SizedBox.shrink();
+    final index = ref.watch(shellTabProvider);
+    // A page's top bar chose a tab: its focus follows.
+    ref.listen<int>(shellTabProvider, (_, i) {
+      if (mounted) setState(() => _scrolled = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && i < _tabNodes.length) _tabNodes[i].requestFocus();
+      });
+    });
     final offline = ref.watch(rommOfflineProvider);
     // RomM is back: what waited goes up.
     ref.listen<bool>(rommOfflineProvider, (was, now) {
@@ -127,7 +108,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 if (s != _scrolled) setState(() => _scrolled = s);
                 return false;
               },
-              child: IndexedStack(index: _index, children: pages),
+              child: IndexedStack(index: index, children: pages),
             ),
             Positioned(
               left: 0,
@@ -135,7 +116,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               top: 0,
               child: TopBar(
                 tabs: shellTabs,
-                index: _index,
+                index: index,
                 onTab: _go,
                 scrolled: _scrolled,
                 context_: ctx,

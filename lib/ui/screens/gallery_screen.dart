@@ -1,3 +1,8 @@
+import '../shell/shell_menu.dart';
+import '../shell/page_top_bar.dart';
+import '../input/gargosy_intents.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/input/gamepad_service.dart';
@@ -8,27 +13,56 @@ import '../widgets/hint_bar.dart';
 import 'gallery_view.dart';
 
 /// A platform's, a collection's or the favourites' games (spec §2).
-class GalleryScreen extends StatelessWidget {
+class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({super.key, required this.title, required this.query});
 
   final String title;
   final GalleryQuery query;
 
   @override
+  ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
+}
+
+class _GalleryScreenState extends ConsumerState<GalleryScreen> {
+  bool _scrolled = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Backdrop(
-        child: Column(children: [
-          const SizedBox(height: GSpace.s8),
-          Expanded(child: GalleryView(title: title, query: query)),
-          const HintBar(hints: [
-            Hint(GameAction.confirm, 'Open'),
-            Hint(GameAction.favorite, 'Favourite'),
-            Hint(GameAction.detail, 'Sort & filter'),
-            Hint(GameAction.back, 'Back'),
-          ]),
-        ]),
+    return Actions(
+      actions: {MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => openUserMenu(context, ref))},
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Backdrop(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  const SizedBox(height: GLayout.navHeight),
+                  Expanded(
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (n) {
+                        if (n.metrics.axis != Axis.vertical) return false;
+                        final s = n.metrics.pixels > 8;
+                        if (s != _scrolled) setState(() => _scrolled = s);
+                        return false;
+                      },
+                      child: GalleryView(title: widget.title, query: widget.query),
+                    ),
+                  ),
+                  const HintBar(
+                    hints: [
+                      Hint(GameAction.confirm, 'Open'),
+                      Hint(GameAction.favorite, 'Favourite'),
+                      Hint(GameAction.detail, 'Sort & filter'),
+                      Hint(GameAction.back, 'Back'),
+                    ],
+                  ),
+                ],
+              ),
+              Positioned(top: 0, left: 0, right: 0, child: PageTopBar(scrolled: _scrolled)),
+            ],
+          ),
+        ),
       ),
     );
   }

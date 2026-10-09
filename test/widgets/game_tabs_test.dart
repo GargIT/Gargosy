@@ -1,46 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gargosy/core/save/backup_entry.dart';
-import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
-import 'package:gargosy/core/romm/romm_state.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/screens/game/achievements_tab.dart';
 import 'package:gargosy/ui/screens/game/notes_tab.dart';
-import 'package:gargosy/ui/screens/game/save_data_tab.dart';
 
 import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/widget_env.dart';
 
 void main() {
-  testWidgets('Save data lists RomM saves and states', (tester) async {
-    final g = game(1, 'Okami');
-    await tester.pumpWidget(testApp(SaveDataTab(game: g), overrides: [
-      romSavesProvider.overrideWith((ref, id) async => [
-            {'id': 3, 'file_name': 'okami.ps2', 'emulator': 'pcsx2', 'updated_at': '2026-10-01T10:00:00Z', 'file_size_bytes': 8388608},
-          ]),
-      romStatesProvider.overrideWith((ref, id) async => [
-            RommState.fromJson({'id': 9, 'file_name': 'okami.p2s', 'emulator': 'pcsx2', 'updated_at': '2026-10-02T10:00:00Z'}),
-          ]),
-    ]));
-    await tester.pumpAndSettle();
-    expect(find.text('okami.ps2'), findsOneWidget);
-    expect(find.textContaining('8.0 MB'), findsOneWidget);
-    expect(find.text('okami.p2s'), findsOneWidget);
-  });
-
-  testWidgets('Save data says so when there are none, and shows errors with retry', (tester) async {
-    final g = game(1, 'Okami');
-    await tester.pumpWidget(testApp(SaveDataTab(game: g), overrides: [
-      romSavesProvider.overrideWith((ref, id) async => throw StateError('RomM did not answer')),
-      romStatesProvider.overrideWith((ref, id) async => const []),
-    ]));
-    await tester.pumpAndSettle();
-    expect(find.text('Retry'), findsOneWidget);
-    expect(find.textContaining('No states'), findsOneWidget);
-  });
-
   testWidgets('Achievements show unlocks from RomM progress', (tester) async {
     final g = Game.fromJson({
       ...gameJson(1, 'Okami'),
@@ -90,14 +59,4 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
-  testWidgets('a save waiting to upload shows on Save Data', (tester) async {
-    final g = game(7, 'Burnout 3');
-    await tester.pumpWidget(testApp(SaveDataTab(game: g), overrides: [
-      romSavesProvider.overrideWith((ref, id) async => const []),
-      romStatesProvider.overrideWith((ref, id) async => const []),
-      uploadsWaitingProvider.overrideWith((ref, id) => [BackupEntry(timestamp: DateTime(2026, 10, 9, 21), md5Hash: 'h', localZipPath: 'z.zip')]),
-    ]));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Waiting to upload'), findsOneWidget);
-  });
 }

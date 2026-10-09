@@ -22,6 +22,7 @@ class LaunchContext {
     this.raLogin,
     this.roms = '',
     this.gameFolders = const [],
+    this.fullscreen = true,
   });
 
   final String data;
@@ -42,6 +43,9 @@ class LaunchContext {
   /// to the emulator's own game list (it's never needed to play from
   /// Gargosy, but the emulator opened on its own shows the games).
   final List<String> gameFolders;
+
+  /// The play screen's Full screen switch for this emulator.
+  final bool fullscreen;
 }
 
 class UnsupportedEmulatorException implements Exception {
@@ -227,6 +231,8 @@ class _RetroArch extends ProfileLaunchConfig {
       'log_dir': p.join(c.data, 'logs'),
       'core_info_cache_enable': 'false',
       'config_save_on_exit': 'true',
+      // On is --fullscreen at launch; off has no flag, so it goes here.
+      if (!c.fullscreen) 'video_fullscreen': 'false',
       // The profile's RetroAchievements login, in its own config (Gargosy
       // owns it, so RetroArch may save it on exit).
       if (c.raLogin case final ra?) ...{

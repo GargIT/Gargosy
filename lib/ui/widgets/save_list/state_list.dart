@@ -4,13 +4,13 @@ import '../../../core/save/catalog/play_choice.dart';
 import '../../../core/save/resume_service.dart';
 import '../../../core/save/save_state_info.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/g_focusable.dart';
-import '../../widgets/save_labels.dart';
+import '../g_focusable.dart';
+import 'save_labels.dart';
 
 /// The play screen's save states: newest first, with where each one is.
 /// A chooses one; Start resumes it in the emulator that made it.
-class StateRows extends StatelessWidget {
-  const StateRows({super.key, required this.states, required this.chosen, required this.onChoose, required this.loading});
+class StateList extends StatelessWidget {
+  const StateList({super.key, required this.states, required this.chosen, required this.onChoose, required this.loading});
 
   final List<ResumeEntry> states;
   final PlayItem? chosen;

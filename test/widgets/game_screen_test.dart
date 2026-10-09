@@ -3,6 +3,9 @@ import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/ui/widgets/game_transition.dart';
+import 'package:gargosy/ui/widgets/hint_bar.dart';
+import 'package:gargosy/ui/widgets/g_focusable.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/download_service.dart';
@@ -18,8 +21,14 @@ import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/play/play_menu.dart';
 import 'package:gargosy/ui/screens/play/play_screen.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
+import 'package:gargosy/ui/screens/game/overview_tab.dart';
+import 'package:gargosy/ui/screens/game/game_cover_column.dart';
+import 'package:gargosy/core/save/save_state_info.dart';
+import 'package:gargosy/core/save/resume_service.dart';
+import 'package:gargosy/core/save/catalog/save_entry.dart';
 
 import '../helpers/fake_download_service.dart';
+import 'play_screen_test.dart' show gamePageCoverOffset;
 import '../unit/play_controller_test.dart' show FakeEngine;
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
@@ -37,18 +46,42 @@ void main() {
     'regions': ['USA'],
   });
 
-  Future<void> pump(WidgetTester tester, {Set<String> favourites = const {}}) async {
+  final opened = <String>[];
+  var gameReads = 0;
+  Game? fresh;
+
+  Future<void> pump(WidgetTester tester,
+      {Set<String> favourites = const {}, PlayMenu? menu, List<ResumeEntry> states = const [], bool downloaded = false}) async {
     await setDesktopSize(tester);
     root = (await tester.runAsync(tempAppRoot))!;
-    addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
+    final mine = root.root;
+    addTearDown(() => io.Directory(mine).deleteSync(recursive: true));
     downloads = FakeDownloadService(RomFiles(root), PathGuard(root));
-    engine = FakeEngine();
+    engine = FakeEngine()
+      ..menu = menu ??
+          const PlayMenu(
+            emulators: [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+            platformDefault: SaveMaker('pcsx2'),
+            catalog: SaveCatalog(thisPc: [], backups: [], romm: [], rommOffline: false),
+          )
+      ..states = states;
+    opened.clear();
+    gameReads = 0;
+    if (downloaded) {
+      io.File(RomFiles(root).pathFor(burnout))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('rom');
+    }
     await tester.pumpWidget(testApp(GameScreen(game: burnout), root: root, overrides: [
       appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-      gameProvider.overrideWith((ref, id) async => burnout),
+      gameProvider.overrideWith((ref, id) async {
+        gameReads++;
+        return fresh ?? burnout;
+      }),
       favouriteIdsProvider.overrideWithValue(favourites),
       downloadServiceProvider.overrideWithValue(downloads),
       playEngineProvider.overrideWithValue(engine),
+      folderOpenerProvider.overrideWithValue(opened.add),
       romSavesProvider.overrideWith((ref, id) async => [{'id': 1, 'file_name': 'burnout.ps2', 'emulator': 'pcsx2'}]),
       romStatesProvider.overrideWith((ref, id) async => const []),
       romNotesProvider.overrideWith((ref, id) async => const []),
@@ -89,8 +122,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(downloads.started, ['7564']);
     expect(RomFiles(root).isDownloaded(burnout), isTrue);
-    expect(find.text('Delete from this PC'), findsOneWidget);
-    await tester.tap(find.text('Delete from this PC'));
+    expect(find.text('Delete from this PC…'), findsNothing, reason: 'it is in the ⋯ menu');
+    await tester.tap(find.byKey(const ValueKey('game-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete from this PC…'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Delete Burnout 3: Takedown from this PC?'), findsOneWidget);
     await tester.tap(find.text('Delete'));
@@ -118,8 +153,8 @@ void main() {
 
   testWidgets('LB/RB keep working after switching tabs from inside a tab', (tester) async {
     await pump(tester);
-    await press(tester, GameAction.r1); // Save data
-    Focus.of(tester.element(find.text('burnout.ps2'))).requestFocus();
+    await press(tester, GameAction.r1); // Saves
+    Focus.of(tester.element(find.text('Upload to RomM'))).requestFocus();
     await tester.pumpAndSettle();
     await press(tester, GameAction.r1); // Achievements
     await press(tester, GameAction.r1); // Notes
@@ -149,5 +184,231 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Save synced to RomM.'), findsOneWidget);
     expect(find.text('Play'), findsOneWidget);
+  });
+
+  testWidgets('the cover column: the cover is 240 × 324; Play, ♥ and ⋯; Delete is in ⋯, in red, last', (tester) async {
+    await pump(tester, downloaded: true);
+    expect(tester.getSize(find.byKey(const ValueKey('game-cover'))), const Size(240, 324));
+    expect(find.text('Play'), findsOneWidget);
+    expect(find.byKey(const ValueKey('game-fav')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-more')));
+    await tester.pumpAndSettle();
+    final items = ["Open the game's folder", 'Sync save states now', 'Delete from this PC…'];
+    for (final i in items) {
+      expect(find.text(i), findsOneWidget, reason: i);
+    }
+    expect(tester.getTopLeft(find.text('Delete from this PC…')).dy,
+        greaterThan(tester.getTopLeft(find.text("Open the game's folder")).dy));
+    await tester.tap(find.text("Open the game's folder"));
+    await tester.pumpAndSettle();
+    expect(opened.single, contains('ps2'));
+  });
+
+  testWidgets('⋯ offers Forget "Always in PCSX2" only when one is remembered', (tester) async {
+    await pump(tester, downloaded: true);
+    await tester.tap(find.byKey(const ValueKey('game-more')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Forget'), findsNothing);
+    await press(tester, GameAction.back);
+    await pump(tester,
+        downloaded: true,
+        menu: const PlayMenu(
+          emulators: [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+          remembered: SaveMaker('pcsx2'),
+          platformDefault: SaveMaker('pcsx2'),
+          catalog: SaveCatalog(thisPc: [], backups: [], romm: [], rommOffline: false),
+        ));
+    await tester.tap(find.byKey(const ValueKey('game-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Forget "Always in PCSX2"'));
+    await tester.pumpAndSettle();
+    expect(engine.remembered['7564'], isNull);
+    expect(engine.remembered.containsKey('7564'), isTrue);
+  });
+
+  testWidgets('⋯ Sync save states now only when state sync is on; it says what moved', (tester) async {
+    await pump(tester, downloaded: true);
+    engine.stateSyncOn = false;
+    await tester.tap(find.byKey(const ValueKey('game-more')));
+    await tester.pumpAndSettle();
+    expect(find.text('Sync save states now'), findsNothing);
+    await press(tester, GameAction.back);
+    await tester.pumpAndSettle();
+    engine.stateSyncOn = true;
+    await tester.tap(find.byKey(const ValueKey('game-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sync save states now'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 state down, 0 up'), findsOneWidget);
+  });
+
+  testWidgets('♥ toggles favourite', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byKey(const ValueKey('game-fav')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+  });
+
+  testWidgets('Y resumes the newest save state', (tester) async {
+    await pump(tester, downloaded: true, states: [
+      ResumeEntry(emulatorId: 'pcsx2', emulatorName: 'PCSX2', fileName: 'auto.p2s', slot: const AutoStateSlot(), savedAt: DateTime(2026, 10, 9), where: ResumeWhere.thisPc),
+    ]);
+    await press(tester, GameAction.favorite);
+    expect(engine.steps, containsAllInOrder(['check', 'launch']));
+  });
+
+  testWidgets('tab badges: the number of saves, achievements earned/total, notes', (tester) async {
+    await pump(tester, menu: PlayMenu(
+      emulators: const [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+      platformDefault: const SaveMaker('pcsx2'),
+      catalog: SaveCatalog(thisPc: const [], backups: const [], rommOffline: false, romm: [
+        RommSaveGroup(slot: 's', tag: 'pcsx2', newest: SaveEntry(source: SaveSource.romm, fileName: 'a', savedAt: DateTime(2026), maker: const SaveMaker('pcsx2'), tag: 'pcsx2', slot: 's'), older: [
+          SaveEntry(source: SaveSource.romm, fileName: 'b', savedAt: DateTime(2025), maker: const SaveMaker('pcsx2'), tag: 'pcsx2', slot: 's'),
+        ]),
+      ]),
+    ));
+    expect(find.descendant(of: find.byKey(const ValueKey('tab-badge-1')), matching: find.text('2')), findsOneWidget);
+  });
+
+  testWidgets('the pills write status, rating and completion', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byKey(const ValueKey('pill-status')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finished'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pill-rating')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('8').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pill-completion')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('40 %').last);
+    await tester.pumpAndSettle();
+    expect(engine.rommUserCalls, [
+      {'status': 'finished'},
+      {'rating': 8},
+      {'completion': 40},
+    ]);
+    expect(find.descendant(of: find.byKey(const ValueKey('pill-status')), matching: find.text('Finished')), findsOneWidget);
+  });
+
+  testWidgets('a refused rating goes back and says why', (tester) async {
+    await pump(tester);
+    engine.rommUserOk = false;
+    await tester.tap(find.byKey(const ValueKey('pill-rating')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('8').last);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('pill-rating')), matching: find.textContaining('8')), findsNothing);
+    expect(find.textContaining("RomM didn't save"), findsOneWidget);
+  });
+
+  testWidgets('Overview says when the game was last played', (tester) async {
+    await pump(tester);
+    expect(find.textContaining('Last played'), findsNothing);
+  });
+
+  testWidgets('Overview: last played, from RomM', (tester) async {
+    final played = Game.fromJson({
+      ...gameJson(7564, 'Burnout 3: Takedown', fsName: 'Burnout 3 (USA).chd'),
+      'rom_user': {'last_played': '2026-10-01T18:40:00Z'},
+    });
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(OverviewTab(game: played)));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Last played 1 Oct'), findsOneWidget);
+  });
+
+  testWidgets('Y on a state older than the newest save asks first; Cancel starts nothing', (tester) async {
+    await pump(tester,
+        downloaded: true,
+        menu: PlayMenu(
+          emulators: const [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+          platformDefault: const SaveMaker('pcsx2'),
+          catalog: SaveCatalog(thisPc: const [], backups: const [], rommOffline: false, romm: [
+            RommSaveGroup(
+                slot: 's',
+                tag: 'pcsx2',
+                newest: SaveEntry(source: SaveSource.romm, fileName: 'wed.ps2', savedAt: DateTime(2026, 10, 8), maker: const SaveMaker('pcsx2'), tag: 'pcsx2', slot: 's'),
+                older: const []),
+          ]),
+        ),
+        states: [
+          ResumeEntry(emulatorId: 'pcsx2', emulatorName: 'PCSX2', fileName: 'mon.p2s', slot: const AutoStateSlot(), savedAt: DateTime(2026, 10, 6), where: ResumeWhere.thisPc),
+        ]);
+    await press(tester, GameAction.favorite);
+    expect(find.text('Resume an older state?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(engine.steps, isNot(contains('launch')));
+  });
+
+  testWidgets("the pills show RomM's values once the game's details arrive", (tester) async {
+    fresh = Game.fromJson({
+      ...gameJson(7564, 'Burnout 3: Takedown', fsName: 'Burnout 3 (USA).chd'),
+      'rom_user': {'status': 'finished', 'rating': 7},
+    });
+    addTearDown(() => fresh = null);
+    await pump(tester);
+    expect(find.descendant(of: find.byKey(const ValueKey('pill-status')), matching: find.text('Finished')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const ValueKey('pill-rating')), matching: find.text('7 / 10')), findsOneWidget);
+  });
+
+  testWidgets('a pill change that RomM took reads the game again (no stale value next time)', (tester) async {
+    await pump(tester);
+    final before = gameReads;
+    await tester.tap(find.byKey(const ValueKey('pill-status')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finished'));
+    await tester.pumpAndSettle();
+    expect(gameReads, greaterThan(before));
+  });
+
+  testWidgets("the game page's cover sits where the play screen's does", (tester) async {
+    await pump(tester);
+    expect(tester.getTopLeft(find.byKey(const ValueKey('game-cover'))), gamePageCoverOffset);
+  });
+
+  testWidgets('Play fades to the play screen: the cover stays put and the same art is behind', (tester) async {
+    await pump(tester);
+    engine.menu = const PlayMenu(
+      emulators: [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+      platformDefault: SaveMaker('pcsx2'),
+      catalog: SaveCatalog(thisPc: [], backups: [], romm: [], rommOffline: false),
+    );
+    await press(tester, GameAction.confirm); // Download
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Play'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100)); // halfway
+    expect(tester.getTopLeft(find.byKey(const ValueKey('play-cover'))), gamePageCoverOffset);
+    expect(tester.getTopLeft(find.text(burnout.displayName).last).dx, greaterThan(gamePageCoverOffset.dx + 240));
+    await tester.pumpAndSettle();
+    expect(find.byType(PlayScreen), findsOneWidget);
+    expect(find.descendant(of: find.byType(PlayScreen), matching: find.byType(GameArtBackdrop)), findsOneWidget);
+  });
+
+  testWidgets('Back is at the bottom of the cover column, as wide as Play, outlined, clear of the hints', (tester) async {
+    await pump(tester, downloaded: true);
+    final play = tester.getRect(find.ancestor(of: find.text('Play'), matching: find.byType(GFocusable)).first);
+    final back = tester.getRect(find.byKey(const ValueKey('game-back')));
+    expect(back.width, play.width);
+    expect(back.top, greaterThan(play.bottom));
+    expect(back.bottom, lessThanOrEqualTo(tester.getRect(find.byType(HintBar)).top));
+    final boxes = tester
+        .widgetList<Container>(find.descendant(of: find.byKey(const ValueKey('game-back')), matching: find.byType(Container)))
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>();
+    expect(boxes.any((d) => d.border != null && d.color == null), isTrue, reason: 'outlined, not filled');
+
+    // Opened from somewhere, Back goes there.
+    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(builder: (_) => GameScreen(game: burnout)));
+    await tester.pumpAndSettle();
+    expect(find.byType(GameScreen), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('game-back')));
+    await tester.pumpAndSettle();
+    expect(find.byType(GameScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('game-back')), findsOneWidget);
   });
 }

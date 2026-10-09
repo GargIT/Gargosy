@@ -177,7 +177,16 @@ void main() {
       },
     );
     await dirs.launchGameWithHandle(game(1, 'G'), r'D:\roms\gc\g.iso', 'dolphin', exe.path, args: ['-b', '-e']);
-    expect(started.single, [exe.path, '--user=${paths.emulatorDir('dolphin')}', '-b', '-e', r'D:\roms\gc\g.iso']);
+    // The full screen flag first (on by default), then the profile's, the strategy's, the ROM.
+    expect(started.single, [
+      exe.path,
+      '-C',
+      'Dolphin.Display.Fullscreen=True',
+      '--user=${paths.emulatorDir('dolphin')}',
+      '-b',
+      '-e',
+      r'D:\roms\gc\g.iso',
+    ]);
   });
 
   test('an emulator Gargosy can\'t point at a profile is refused', () async {

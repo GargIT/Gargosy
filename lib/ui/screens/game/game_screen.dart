@@ -1,37 +1,81 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/input/gamepad_service.dart';
+import '../../../core/retroachievements/retroachievements_game_models.dart';
 import '../../../core/romm/romm_models.dart';
+import '../../../core/save/resume_service.dart';
+import '../../../core/save/catalog/play_view.dart';
+import '../../../core/save/catalog/play_choice.dart';
+import '../../../play/play_controller.dart';
 import '../../../providers/library_providers.dart';
 import '../../input/gargosy_intents.dart';
+import '../../shell/page_top_bar.dart';
+import '../../shell/shell_menu.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/cover_image.dart';
-import '../../widgets/g_focusable.dart';
+import '../../widgets/controller_dialogs.dart';
+import '../../widgets/game_transition.dart';
 import '../../widgets/hint_bar.dart';
+import '../../widgets/save_list/save_labels.dart';
+import '../../widgets/toast.dart';
 import 'achievements_tab.dart';
 import 'details_tab.dart';
-import 'game_header.dart';
+import 'game_cover_column.dart';
+import 'game_personal_pills.dart';
+import 'game_tabs.dart';
 import 'notes_tab.dart';
 import 'overview_tab.dart';
-import 'save_data_tab.dart';
-import '../../widgets/favourite.dart';
+import 'saves_tab.dart';
 
-/// The game page, after v2's GameDetails (spec §7): background art, the cover
-/// column with the actions, then the title and the tabs. LB/RB switch tabs.
+/// The game page (spec Part 1), after Freegosy's in the v2 style: the art
+/// behind the page, the cover column (▶ Play, ♥, ⋯), the title, the
+/// player's pills and the tabs with their badges. LB/RB switch tabs; Y
+/// resumes the newest save state.
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key, required this.game});
 
   final Game game;
 
-  static const tabs = ['Overview', 'Save data', 'Achievements', 'Notes', 'Details'];
+  static const tabs = ['Overview', 'Saves', 'Achievements', 'Notes', 'Details'];
+
+  /// Where the page starts below the top bar; the play screen uses the same,
+  /// so the cover doesn't move between the two.
+  static const padding = EdgeInsets.fromLTRB(GSpace.rowPad, GLayout.navHeight + GSpace.s4, GSpace.rowPad, 0);
+
+  /// The title and "platform · year · ★ rating", as the page and the play
+  /// screen show them beside the cover.
+  static Widget titleBlock(Game game) {
+    final released = game.firstReleaseDate == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!).year;
+    final meta = [
+      game.platformDisplayName,
+      if (released != null) '$released',
+      if (game.averageRating != null) '★ ${game.averageRating!.toStringAsFixed(1)}',
+    ].whereType<String>().join('  ·  ');
+    return titleHero(
+      game,
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            game.displayName,
+            style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1),
+          ),
+          const SizedBox(height: GSpace.s2),
+          Text(
+            meta,
+            style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// The tab bodies, in the order of [tabs].
   static final List<Widget Function(Game)> tabBuilders = [
     (g) => OverviewTab(game: g),
-    (g) => SaveDataTab(game: g),
+    (g) => SavesTab(game: g),
     (g) => AchievementsTab(game: g),
     (g) => NotesTab(game: g),
     (g) => DetailsTab(game: g),
@@ -43,99 +87,179 @@ class GameScreen extends ConsumerStatefulWidget {
 
 class _GameScreenState extends ConsumerState<GameScreen> {
   int _tab = 0;
+  bool _scrolled = false;
+
+  PlayMenuKey get _key => PlayMenuKey(widget.game);
 
   void _go(int i) {
     if (i < 0 || i >= GameScreen.tabs.length) return;
     setState(() => _tab = i);
   }
 
+  ResumeEntry? _newestState() {
+    final states = ref.read(playStatesProvider(_key)).valueOrNull ?? const <ResumeEntry>[];
+    ResumeEntry? newest;
+    for (final s in states) {
+      if (newest == null || s.savedAt.isAfter(newest.savedAt)) newest = s;
+    }
+    return newest;
+  }
+
+  /// Y: the newest save state, with the play screen's version question.
+  Future<void> _resumeNewest(Game game) async {
+    final entry = _newestState();
+    if (entry == null) return;
+    // As on the play screen: a state older than the newest save may roll it back.
+    final menu = ref.read(playMenuProvider(_key)).valueOrNull;
+    if (menu != null) {
+      final view = buildPlayView(
+        catalog: menu.catalog,
+        states: ref.read(playStatesProvider(_key)).valueOrNull ?? const [],
+        platformSlug: game.platformSlug ?? '',
+        picked: menu.forThisGame,
+        platformDefault: menu.platformDefault,
+        installed: menu.installedIds,
+      );
+      if (view.promptFor(StatePlay(entry)) != null) {
+        final ok = await showConfirm(
+          context,
+          title: 'Resume an older state?',
+          body:
+              'This state is from ${formatSaveTime(entry.savedAt)}, but your save is from '
+              '${formatSaveTime(view.newestSave!)}. Resuming may roll your save back.',
+          yes: 'Resume anyway',
+          focusYes: false,
+        );
+        if (!ok || !mounted) return;
+      }
+    }
+    final reason = await ref
+        .read(playControllerProvider.notifier)
+        .resume(
+          game,
+          entry,
+          confirmVersion: (v, i) => showConfirm(
+            context,
+            title: 'Load a state from another version?',
+            body:
+                '${entry.slot.label} was made by ${entry.emulatorName} $v; you have $i. '
+                'It may not load, or the game may misbehave.',
+            yes: 'Load it',
+            focusYes: false,
+          ),
+          onNotice: (m) {
+            if (mounted) showToast(context, m);
+          },
+        );
+    if (reason != null && mounted) showToast(context, reason);
+  }
+
+  Map<int, String> _badges(Game game) {
+    final badges = <int, String>{};
+    final catalog = ref.watch(playMenuProvider(_key)).valueOrNull?.catalog;
+    if (catalog != null) {
+      final n =
+          catalog.thisPc.length +
+          catalog.backups.length +
+          catalog.romm.fold<int>(0, (sum, g) => sum + 1 + g.older.length);
+      if (n > 0) badges[1] = '$n';
+    }
+    if (game.raId != null && game.raAchievements.isNotEmpty) {
+      final progression = ref.watch(raProgressionProvider).valueOrNull?[game.raId];
+      if (progression != null) {
+        final p = RetroAchievementsGameProgress.fromRomm(
+          gameId: game.raId!,
+          achievements: game.raAchievements,
+          progression: progression,
+        );
+        badges[2] = '${p.unlockedCount}/${p.totalCount}';
+      } else {
+        badges[2] = '${game.raAchievements.length}';
+      }
+    }
+    final notes = ref.watch(romNotesProvider(game.id)).valueOrNull?.length ?? 0;
+    if (notes > 0) badges[3] = '$notes';
+    return badges;
+  }
+
   @override
   Widget build(BuildContext context) {
     final game = ref.watch(gameProvider(widget.game.id)).valueOrNull ?? widget.game;
-    final art = assetUrl(ref, game.fanartUrl ?? game.screenshotUrl) ?? coverUrlFor(ref, game);
-    final released = game.firstReleaseDate == null ? null : DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!).year;
-    final meta = [game.platformDisplayName, if (released != null) '$released', if (game.averageRating != null) '★ ${game.averageRating!.toStringAsFixed(1)}']
-        .whereType<String>()
-        .join('  ·  ');
+    ref.watch(playStatesProvider(_key)); // Y needs the states ready
+    final hasStates = _newestState() != null;
     return Actions(
       actions: {
         PrevTabIntent: CallbackAction<PrevTabIntent>(onInvoke: (_) => _go(_tab - 1)),
         NextTabIntent: CallbackAction<NextTabIntent>(onInvoke: (_) => _go(_tab + 1)),
-        FavoriteIntent: CallbackAction<FavoriteIntent>(onInvoke: (_) => favourite(context, ref, game)),
+        FavoriteIntent: CallbackAction<FavoriteIntent>(onInvoke: (_) => _resumeNewest(game)),
+        MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => openUserMenu(context, ref)),
       },
       child: Scaffold(
         backgroundColor: GColors.bg,
-        body: Stack(children: [
-          if (art != null)
-            Positioned.fill(
-              child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                child: Opacity(opacity: 0.35, child: CoverImage(url: art, radius: 0)),
-              ),
-            ),
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x6607070F), GColors.bg],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s10, GSpace.rowPad, 0),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Column(children: [
-                CoverImage(url: coverUrlFor(ref, game), title: game.displayName, width: 240, height: 324),
-                const SizedBox(height: GSpace.s5),
-                GameActions(game: game),
-              ]),
-              const SizedBox(width: GSpace.s10),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(game.displayName, style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1)),
-                  const SizedBox(height: GSpace.s2),
-                  Text(meta, style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary)),
-                  const SizedBox(height: GSpace.s5),
-                  Row(children: [
-                    for (var i = 0; i < GameScreen.tabs.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: GSpace.s2),
-                        child: GFocusable(
-                          borderRadius: GRadius.pill,
-                          onActivate: () => _go(i),
-                          child: AnimatedContainer(
-                            duration: GMotion.fast,
-                            padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
-                            decoration: BoxDecoration(
-                              color: i == _tab ? GColors.fg : GColors.surface,
-                              borderRadius: BorderRadius.circular(GRadius.pill),
+        body: GameArtBackdrop(
+          game: game,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (n) {
+                        if (n.metrics.axis != Axis.vertical) return false;
+                        final s = n.metrics.pixels > 8;
+                        if (s != _scrolled) setState(() => _scrolled = s);
+                        return false;
+                      },
+                      child: Padding(
+                        padding: GameScreen.padding,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GameCoverColumn(game: game),
+                            const SizedBox(width: GSpace.s10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  GameScreen.titleBlock(game),
+                                  const SizedBox(height: GSpace.s4),
+                                  GamePersonalPills(
+                                    // New values from RomM (the game's details arriving) start the pills afresh.
+                                    key: ValueKey(
+                                      'pills-${game.id}-${game.status}-${game.userRating}-'
+                                      '${game.completion}-${game.backlogged}-${game.nowPlaying}',
+                                    ),
+                                    game: game,
+                                  ),
+                                  const SizedBox(height: GSpace.s5),
+                                  GameTabs(tabs: GameScreen.tabs, index: _tab, onTab: _go, badges: _badges(game)),
+                                  const SizedBox(height: GSpace.s5),
+                                  Expanded(
+                                    child: KeyedSubtree(key: ValueKey(_tab), child: GameScreen.tabBuilders[_tab](game)),
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: Text(GameScreen.tabs[i],
-                                style: TextStyle(fontWeight: FontWeight.w600, color: i == _tab ? GColors.bg : GColors.fgSecondary)),
-                          ),
+                          ],
                         ),
                       ),
-                  ]),
-                  const SizedBox(height: GSpace.s5),
-                  Expanded(child: KeyedSubtree(key: ValueKey(_tab), child: GameScreen.tabBuilders[_tab](game))),
-                ]),
+                    ),
+                  ),
+                  // Below the page, as on the play screen, so it never covers Back.
+                  HintBar(
+                    hints: [
+                      const Hint(GameAction.back, 'Back'),
+                      const Hint(GameAction.l1, 'Previous tab'),
+                      const Hint(GameAction.r1, 'Next tab'),
+                      if (hasStates) const Hint(GameAction.favorite, 'Resume'),
+                    ],
+                  ),
+                ],
               ),
-            ]),
+              Positioned(top: 0, left: 0, right: 0, child: PageTopBar(scrolled: _scrolled)),
+            ],
           ),
-          const Positioned(
-            left: 0,
-            bottom: 0,
-            child: HintBar(hints: [
-              Hint(GameAction.back, 'Back'),
-              Hint(GameAction.l1, 'Previous tab'),
-              Hint(GameAction.r1, 'Next tab'),
-              Hint(GameAction.favorite, 'Favourite'),
-            ]),
-          ),
-        ]),
+        ),
       ),
     );
   }

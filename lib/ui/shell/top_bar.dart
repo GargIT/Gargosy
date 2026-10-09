@@ -18,16 +18,17 @@ class TopBar extends StatelessWidget {
     required this.scrolled,
     required this.context_,
     required this.onMenu,
-    required this.tabFocusNodes,
+    this.tabFocusNodes,
   });
 
   final List<String> tabs;
-  final int index;
+  /// The lit tab; null on pages opened over the shell (none lit).
+  final int? index;
   final ValueChanged<int> onTab;
   final bool scrolled;
   final ProfileContext context_;
   final VoidCallback onMenu;
-  final List<FocusNode> tabFocusNodes;
+  final List<FocusNode>? tabFocusNodes;
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +48,12 @@ class TopBar extends StatelessWidget {
             child: Row(children: [
               for (var i = 0; i < tabs.length; i++)
                 GFocusable(
-                  focusNode: tabFocusNodes[i],
+                  focusNode: tabFocusNodes?[i],
                   autofocus: i == index,
                   borderRadius: GRadius.pill,
                   onActivate: () => onTab(i),
                   child: AnimatedContainer(
+                    key: i == index ? const Key('top-bar-tab-lit') : null,
                     duration: GMotion.fast,
                     padding: const EdgeInsets.symmetric(horizontal: GSpace.s4),
                     alignment: Alignment.center,

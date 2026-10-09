@@ -1,3 +1,5 @@
+import '../emulators/fullscreen.dart';
+import '../core/save/catalog/save_entry.dart';
 import '../profiles/profile_providers.dart';
 import '../profiles/path_guard.dart';
 import '../core/emulator/strategies/retroarch_strategy.dart';
@@ -10,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/emulator/emulator_strategy.dart';
 import '../core/emulator/game_launch_service.dart';
+import '../core/emulator/retroarch_core_list.dart';
 import '../core/romm/romm_models.dart';
 import '../core/save/catalog/play_preparer.dart';
 import '../core/save/catalog/play_request.dart';
@@ -91,9 +94,34 @@ abstract class PlayEngine {
   Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy strategy,
       {String? coreOverride, String? loadStatePath});
 
+  /// Puts a RomM save or a backup on this PC for [target] without launching
+  /// (backs up the current save first). Throws SaveChoiceException.
+  Future<void> restore(Game game, SaveEntry save, SaveMaker target);
+
+  /// Deletes a RomM save on RomM, or a backup from this PC.
+  Future<void> deleteSave(Game game, SaveEntry save);
+
+  /// Uploads this PC's save of [who] to RomM; true when RomM took it.
+  Future<bool> upload(Game game, SaveMaker who);
+
+  /// A backup of this PC's save of [who], now.
+  Future<void> backUpNow(Game game, SaveMaker who);
+
+  /// State sync is on for [game]'s emulator.
+  bool stateSyncAvailable(Game game);
+
+  /// Brings states down from RomM and up to it; says what moved.
+  Future<String> syncStatesNow(Game game);
+
+  /// The player's own RomM fields for [game]; true when RomM took them.
+  Future<bool> setRommUser(Game game, {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying});
+
   /// Downloads the RetroArch core [missing] names into the RetroArch install
   /// (shared by every profile). Throws when it can't.
   Future<void> installCore(EmulatorStrategy strategy, MissingRetroArchCoreException missing);
+
+  /// The play screen's Full screen switch, for every game in [emulatorId].
+  Future<void> setFullscreen(String emulatorId, bool on);
 }
 
 /// [PlayEngine] on the active profile's copy of Freegosy's engine.
@@ -113,6 +141,7 @@ class GargosyPlayEngine implements PlayEngine {
     final registry = _ref.read(strategyRegistryProvider);
     final sync = _ref.read(saveSyncServiceProvider);
     final repo = await _ref.read(backupRepositoryProvider.future);
+    final prefs = _ref.read(profilePrefsProvider);
     if (registry == null || sync == null || repo == null) return null;
     final installed = {
       for (final e in await _ref.read(emulatorsProvider.future)) e.id: e.supported && e.installedExe != null,
@@ -128,7 +157,12 @@ class GargosyPlayEngine implements PlayEngine {
     return PlayMenu(
       emulators: [
         for (final s in choices.emulators)
-          EmulatorOption(choices.makerFor(s.emulatorId), choices.nameOf(choices.makerFor(s.emulatorId))),
+          EmulatorOption(
+            choices.makerFor(s.emulatorId),
+            s.emulatorId == 'retroarch' ? s.name : choices.nameOf(choices.makerFor(s.emulatorId)),
+            cores: s.emulatorId == 'retroarch' ? getCoresForSlug(game.platformSlug ?? '') : const [],
+            fullscreen: prefs != null && Fullscreen.supports(s.emulatorId) ? Fullscreen.isOn(prefs, s.emulatorId) : null,
+          ),
       ],
       remembered: choices.remembered,
       platformDefault: choices.platformDefault,
@@ -248,6 +282,86 @@ class GargosyPlayEngine implements PlayEngine {
     );
   }
 
+  Future<String> _romPath(Game game) async =>
+      await romPathFor(game) ?? (throw StateError('the game is not on this PC'));
+
+  Future<PlayPreparer> _preparer() async {
+    final sync = _ref.read(saveSyncServiceProvider);
+    final backups = _ref.read(backupServiceProvider);
+    final repo = await _ref.read(backupRepositoryProvider.future);
+    if (sync == null || backups == null || repo == null) throw StateError('no profile is active');
+    return PlayPreparer(sync: sync, backups: backups, repository: repo);
+  }
+
+  static String? _core(SaveMaker who) => who.coreId == null ? null : '${who.coreId}_libretro';
+
+  @override
+  Future<void> restore(Game game, SaveEntry save, SaveMaker target) async =>
+      (await _preparer()).prepare(game, await _romPath(game), save, target: target);
+
+  @override
+  Future<void> deleteSave(Game game, SaveEntry save) async {
+    switch (save.source) {
+      case SaveSource.romm:
+        final id = save.rommSave?['id'];
+        final romm = _ref.read(rommServiceProvider);
+        if (id is! int || romm == null) throw StateError('RomM has no id for this save');
+        if (!await romm.deleteSaves([id])) throw StateError('RomM refused');
+      case SaveSource.backup:
+        final entry = save.backup;
+        final repo = await _ref.read(backupRepositoryProvider.future);
+        if (entry == null || repo == null) throw StateError('the backup is gone');
+        await repo.removeEntry(game.id, entry);
+        final zip = io.File(entry.localZipPath);
+        if (zip.existsSync()) zip.deleteSync();
+      case SaveSource.local:
+        throw StateError("this PC's own save isn't deleted from here");
+    }
+  }
+
+  @override
+  Future<bool> upload(Game game, SaveMaker who) async {
+    final sync = _ref.read(saveSyncServiceProvider);
+    if (sync == null) return false;
+    return sync.pushSaves(game, await _romPath(game), emulatorId: who.emulatorId, coreOverride: _core(who));
+  }
+
+  @override
+  Future<void> backUpNow(Game game, SaveMaker who) async => (await _preparer()).backUp(game, await _romPath(game), who);
+
+  String? _emulatorIdOf(Game game) {
+    final slug = game.platformSlug;
+    return slug == null ? null : _ref.read(strategyRegistryProvider)?.getStrategyForSlug(slug, gameId: game.id)?.emulatorId;
+  }
+
+  @override
+  bool stateSyncAvailable(Game game) {
+    final states = _ref.read(stateSyncServiceProvider);
+    final id = _emulatorIdOf(game);
+    return states != null && id != null && states.isAvailableFor(game, emulatorId: id);
+  }
+
+  @override
+  Future<String> syncStatesNow(Game game) async {
+    final states = _ref.read(stateSyncServiceProvider);
+    final id = _emulatorIdOf(game);
+    if (states == null || id == null) return "Save states can't be synced for this game.";
+    final romPath = await _romPath(game);
+    final down = await states.pullStates(game, romPath, emulatorId: id);
+    final up = await states.pushStates(game, romPath, emulatorId: id);
+    if (down.skipped && up.skipped) return "Save states can't be synced for this game.";
+    String n(int k) => k == 1 ? '1 state' : '$k states';
+    return '${n(down.downloaded)} down, ${up.uploaded} up';
+  }
+
+  @override
+  Future<bool> setRommUser(Game game, {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying}) async {
+    final romm = _ref.read(rommServiceProvider);
+    if (romm == null) return false;
+    return romm.updateRomProps(game.id,
+        status: status, rating: rating, completion: completion, backlogged: backlogged, nowPlaying: nowPlaying);
+  }
+
   @override
   Future<void> installCore(EmulatorStrategy strategy, MissingRetroArchCoreException missing) async {
     if (strategy is! RetroArchStrategy) throw StateError('${strategy.name} has no cores');
@@ -255,6 +369,12 @@ class GargosyPlayEngine implements PlayEngine {
     final core = PathGuard(_ref.read(appRootProvider)).check(missing.corePath);
     await strategy.downloadCore(missing.coreName, p.dirname(core), Dio());
     if (!io.File(core).existsSync()) throw StateError("The ${coreLabel(missing.coreName)} core couldn't be downloaded");
+  }
+
+  @override
+  Future<void> setFullscreen(String emulatorId, bool on) async {
+    final prefs = _ref.read(profilePrefsProvider);
+    if (prefs != null) await Fullscreen.set(prefs, emulatorId, on);
   }
 
   static const _syncMode = 'both';

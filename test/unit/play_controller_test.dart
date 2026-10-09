@@ -8,6 +8,7 @@ import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/core/save/catalog/play_request.dart';
+import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/core/save/resume_service.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
@@ -35,9 +36,64 @@ class FakeEngine implements PlayEngine {
   String? launchedIn;
   String? coreOverride;
   final remembered = <String, String?>{};
+  final fullscreen = <String, bool>{};
 
   @override
-  Future<PlayMenu?> menuFor(Game game) async => menu;
+  Future<void> setFullscreen(String emulatorId, bool on) async => fullscreen[emulatorId] = on;
+
+  int menuReads = 0;
+  bool failDelete = false;
+  bool rommUserOk = true;
+  bool stateSyncOn = true;
+  final rommUserCalls = <Map<String, Object?>>[];
+
+  Object? menuError;
+
+  @override
+  Future<PlayMenu?> menuFor(Game game) async {
+    menuReads++;
+    if (menuError != null) throw menuError!;
+    return menu;
+  }
+
+  @override
+  Future<void> restore(Game game, SaveEntry save, SaveMaker target) async => steps.add('restore');
+
+  @override
+  Future<void> deleteSave(Game game, SaveEntry save) async {
+    if (failDelete) throw StateError('RomM refused');
+    steps.add('delete');
+  }
+
+  @override
+  Future<bool> upload(Game game, SaveMaker who) async {
+    steps.add('upload');
+    return true;
+  }
+
+  @override
+  Future<void> backUpNow(Game game, SaveMaker who) async => steps.add('backup');
+
+  @override
+  bool stateSyncAvailable(Game game) => stateSyncOn;
+
+  @override
+  Future<String> syncStatesNow(Game game) async {
+    steps.add('sync states');
+    return '1 state down, 0 up';
+  }
+
+  @override
+  Future<bool> setRommUser(Game game, {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying}) async {
+    rommUserCalls.add({
+      'status': ?status,
+      'rating': ?rating,
+      'completion': ?completion,
+      'backlogged': ?backlogged,
+      'nowPlaying': ?nowPlaying,
+    });
+    return rommUserOk;
+  }
   @override
   Future<EmulatorStrategy?> emulatorFor(Game game, {String? emulatorId}) async => _Strategy(emulatorId ?? 'pcsx2');
   @override
