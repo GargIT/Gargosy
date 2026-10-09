@@ -3,3 +3,8 @@
 *.ico binary
 *.exe binary
 *.dll binary
+*.gz binary
+*.zip binary
+*.p2s binary
+*.ps2 binary
+*.mcd binary

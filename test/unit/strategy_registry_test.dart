@@ -1,0 +1,91 @@
+// Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/emulator/strategy_registry.dart';
+import 'package:gargosy/core/storage/directory_service.dart';
+import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
+import 'package:mockito/annotations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'strategy_registry_test.mocks.dart';
+
+@GenerateMocks([DirectoryService])
+void main() {
+  late StrategyRegistry registry;
+  late DirectoryService mockDirectoryService;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
+    mockDirectoryService = MockDirectoryService();
+    registry = StrategyRegistry(mockDirectoryService, prefs);
+  });
+
+  group('StrategyRegistry', () {
+    test('getStrategyById() returns correct strategy', () {
+      expect(registry.getStrategyById('eden')?.emulatorId, 'eden');
+      expect(registry.getStrategyById('retroarch')?.emulatorId, 'retroarch');
+    });
+
+    test('getStrategyForSlug() resolves slugs correctly', () {
+      expect(registry.getStrategyForSlug('ps3')?.emulatorId, 'rpcs3');
+      expect(registry.getStrategyForSlug('playstation-3')?.emulatorId, 'rpcs3');
+      expect(registry.getStrategyForSlug('nintendo-switch')?.emulatorId, 'eden');
+      // retroarch is first in allPossibleStrategies and supports gba, so it's the default
+      expect(registry.getStrategyForSlug('gba')?.emulatorId, 'retroarch');
+    });
+
+    test('setNdsCore updates RetroArchStrategy core', () {
+      registry.setNdsCore('desmume');
+      // This is hard to test directly without exposing internal state, 
+      // but we can at least call it to ensure it doesn't crash.
+      registry.setNdsCore('melonds');
+    });
+
+    test('No two strategies share the same slug', () {
+      final allSlugs = <String, String>{}; // slug -> emulatorId
+      final overlaps = <String>[];
+      
+      final strategyIds = [
+        'retroarch', 'dolphin', 'eden', 'rpcs3', 'pcsx2', 'azahar', 
+        'cemu', 'duckstation', 'flycast', 'melonds', 'ppsspp', 'mgba', 
+        'mame', 'xemu', 'xenia_canary', 'scummvm', 'windows_native'
+      ];
+      
+      for (final id in strategyIds) {
+        final strategy = registry.getStrategyById(id);
+        if (strategy != null) {
+          for (final slug in strategy.supportedSlugs) {
+            if (id != 'retroarch') {
+              if (allSlugs.containsKey(slug) && allSlugs[slug] != 'retroarch') {
+                overlaps.add('Slug "$slug" is used by "${allSlugs[slug]}" and "$id"');
+              }
+              allSlugs[slug] = id;
+            }
+          }
+        }
+      }
+      
+      expect(overlaps, isEmpty, reason: overlaps.join('\n'));
+    });
+
+    test('getAllStrategiesForSlug returns multiple strategies for GBA', () {
+      final strategies = registry.getAllStrategiesForSlug('gba');
+      expect(strategies.length, greaterThanOrEqualTo(2));
+    });
+
+    test('getAllStrategiesForSlug returns empty for unknown slug', () {
+      final strategies = registry.getAllStrategiesForSlug('unknown_xyz');
+      expect(strategies, isEmpty);
+    });
+
+    test('getStrategyForSlug with gameId uses per-game preference', () async {
+      await registry.setGameEmulatorPreference('test-game', 'mgba');
+      final strategy = registry.getStrategyForSlug('gba', gameId: 'test-game');
+      expect(strategy?.emulatorId, 'mgba');
+    });
+
+    test('coreOverrides getter returns map', () {
+      expect(registry.coreOverrides, isA<Map<String, String>>());
+    });
+  });
+}

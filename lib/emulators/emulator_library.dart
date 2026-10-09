@@ -1,0 +1,127 @@
+import 'dart:io' as io;
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+
+import '../core/emulator/emulator_strategy.dart';
+import '../profiles/app_root.dart';
+import '../profiles/path_guard.dart';
+import '../profiles/profile_providers.dart';
+import '../providers/engine_providers.dart';
+import 'profile_launch_config.dart';
+
+class EmulatorInfo {
+  const EmulatorInfo({required this.id, required this.name, required this.exe, required this.supported, this.installedExe});
+
+  final String id;
+  final String name;
+  final String exe;
+
+  /// Gargosy can start it on a profile's own data (docs/emulator-profiles.md).
+  final bool supported;
+
+  /// The exe under `emulators\<id>\`, when installed.
+  final String? installedExe;
+}
+
+/// The emulators Gargosy owns (spec §6), in `emulators\<id>\`.
+class EmulatorLibrary {
+  EmulatorLibrary(this.root, this.strategies);
+
+  final AppRoot root;
+  final List<EmulatorStrategy> strategies;
+
+  /// What an install keeps besides the program: left out on import.
+  static const dataNames = <String, Set<String>>{
+    'pcsx2': {'memcards', 'sstates', 'inis', 'logs', 'cache', 'snaps', 'covers', 'videos', 'textures', 'gamesettings', 'cheats', 'patches', 'bios', 'portable.txt', 'portable.ini'},
+    'dolphin': {'user', 'portable.txt'},
+    'ppsspp': {'memstick', 'installed.txt'},
+    'duckstation': {'memcards', 'savestates', 'settings.ini', 'portable.txt', 'cache', 'covers', 'screenshots', 'gamesettings', 'inputprofiles', 'shaders', 'videos', 'textures', 'cheats', 'patches', 'subchannels', 'gameicons', 'bios'},
+    'retroarch': {'saves', 'states', 'retroarch.cfg', 'playlists', 'logs', 'screenshots', 'config', 'thumbnails', 'downloads', 'system'},
+    'xenia_canary': {'content', 'cache', 'storage', 'xenia.log', 'xenia-canary.config.toml', 'portable.txt'},
+    'ares': {'settings.bml'},
+    'mgba': {'config.ini', 'qt.ini', 'portable.ini'},
+    'flycast': {'emu.cfg', 'data'},
+    'mame': {'cfg', 'nvram', 'sta', 'inp', 'snap', 'diff', 'comments', 'ini', 'mame.ini', 'ui.ini'},
+    'xemu': {'xemu.toml'},
+  };
+
+  PathGuard get _guard => PathGuard(root);
+
+  String? _findExe(String dir, String exe) {
+    final d = io.Directory(dir);
+    if (!d.existsSync()) return null;
+    for (final e in d.listSync(recursive: true)) {
+      if (e is io.File && p.basename(e.path).toLowerCase() == exe.toLowerCase() && p.split(p.relative(e.path, from: dir)).length <= 4) {
+        return e.path;
+      }
+    }
+    return null;
+  }
+
+  Future<List<EmulatorInfo>> list() async {
+    final seen = <String>{};
+    final out = <EmulatorInfo>[];
+    for (final s in strategies) {
+      if (s.emulatorId == 'windows_native' || s.windowsExecutable.isEmpty || !seen.add(s.emulatorId)) continue;
+      out.add(EmulatorInfo(
+        id: s.emulatorId,
+        name: s.name,
+        exe: s.windowsExecutable,
+        supported: ProfileLaunchConfig.supported.contains(s.emulatorId),
+        installedExe: _findExe(p.join(root.emulators, s.emulatorId), s.windowsExecutable),
+      ));
+    }
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return out;
+  }
+
+  /// Copies the program from an existing install in [folder] (never changing
+  /// it), leaving its own user data and portable markers behind.
+  Future<void> importFrom(String id, String folder) async {
+    final strategy = strategies.firstWhere((s) => s.emulatorId == id);
+    if (_findExe(folder, strategy.windowsExecutable) == null) {
+      throw StateError('${strategy.windowsExecutable} was not found in $folder');
+    }
+    final target = _guard.check(p.join(root.emulators, id));
+    final staging = _guard.check(p.join(root.emulators, '.$id.importing'));
+    if (io.Directory(staging).existsSync()) io.Directory(staging).deleteSync(recursive: true);
+    final skip = dataNames[id] ?? const <String>{};
+    void copyDir(io.Directory from, String to) {
+      io.Directory(to).createSync(recursive: true);
+      for (final e in from.listSync()) {
+        final name = p.basename(e.path);
+        if (skip.contains(name.toLowerCase())) continue;
+        final dest = _guard.join(to, name);
+        if (e is io.Directory) {
+          copyDir(e, dest);
+        } else if (e is io.File) {
+          e.copySync(dest);
+        }
+      }
+    }
+
+    try {
+      copyDir(io.Directory(folder), staging);
+      if (io.Directory(target).existsSync()) io.Directory(target).deleteSync(recursive: true);
+      io.Directory(staging).renameSync(target);
+    } finally {
+      if (io.Directory(staging).existsSync()) io.Directory(staging).deleteSync(recursive: true);
+    }
+  }
+
+  Future<void> remove(String id) async {
+    final dir = io.Directory(_guard.check(p.join(root.emulators, id)));
+    if (dir.existsSync()) dir.deleteSync(recursive: true);
+  }
+}
+
+final emulatorLibraryProvider = Provider<EmulatorLibrary?>((ref) {
+  final registry = ref.watch(strategyRegistryProvider);
+  return registry == null ? null : EmulatorLibrary(ref.watch(appRootProvider), registry.allStrategies);
+});
+
+final emulatorsProvider = FutureProvider<List<EmulatorInfo>>((ref) async {
+  final lib = ref.watch(emulatorLibraryProvider);
+  return lib == null ? const [] : lib.list();
+});

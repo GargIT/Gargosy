@@ -1,0 +1,333 @@
+// Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:io';
+import 'package:archive/archive_io.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import '../storage/directory_service.dart';
+import '../platform/platform_info.dart';
+
+Future<void> _extractZipIsolate(List<dynamic> args) async {
+  final bytes = args[0] as Uint8List;
+  final destDir = args[1] as String;
+  final archive = ZipDecoder().decodeBytes(bytes);
+  extractArchiveToDisk(archive, destDir);
+}
+
+class ExtractionService {
+  final DirectoryService directoryService;
+  final PlatformInfo _platform;
+
+  ExtractionService(this.directoryService, {PlatformInfo? platform})
+      : _platform = platform ?? PlatformInfo.current;
+
+  Future<void> extract(String archivePath, String destDir) async {
+    final pathLower = archivePath.toLowerCase();
+
+    try {
+      if (pathLower.endsWith('.dmg')) {
+        await _handleDmg(archivePath, destDir);
+      } else if (pathLower.endsWith('.tar.gz') || pathLower.endsWith('.tgz') || 
+                 pathLower.endsWith('.tar.xz') || pathLower.endsWith('.tar')) {
+        await _handleTar(archivePath, destDir);
+      } else if (pathLower.endsWith('.zip')) {
+        await _handleZip(archivePath, destDir);
+      } else if (pathLower.endsWith('.7z')) {
+        await _handleSevenZip(archivePath, destDir);
+      } else if (pathLower.endsWith('.rar')) {
+        await _handleRar(archivePath, destDir);
+      } else if (pathLower.endsWith('.exe') && !_platform.isLinux) {
+        await _handleExe(archivePath, destDir);
+      } else if (pathLower.endsWith('.appimage') || pathLower.endsWith('.flatpak')) {
+        await _handleAppImage(archivePath, destDir);
+      } else {
+        await _handleGeneric(archivePath, destDir);
+      }
+    } catch (e) {
+      debugPrint('Extraction failed for $archivePath: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _handleAppImage(String archivePath, String destDir) async {
+    if (!_platform.isLinux) {
+      throw Exception('AppImage is only supported on Linux');
+    }
+    // For AppImage, we don't necessarily extract it, but we move it to the destDir
+    // and make it executable.
+    final fileName = p.basename(archivePath);
+    final destPath = p.join(destDir, fileName);
+    
+    final file = File(archivePath);
+    await file.copy(destPath);
+    await Process.run('chmod', ['+x', destPath]);
+  }
+
+  Future<void> _handleTar(String archivePath, String destDir) async {
+    if (_platform.isMacOS || _platform.isLinux || _platform.isWindows) {
+      try {
+        final result = await Process.run(
+          'tar',
+          ['-xf', archivePath, '-C', destDir],
+          runInShell: _platform.isWindows,
+        );
+        if (result.exitCode != 0) {
+          throw Exception('tar failed: ${result.stderr}');
+        }
+
+        if (_platform.isMacOS) {
+          await _postExtractSanitize(destDir);
+        }
+      } catch (e) {
+        debugPrint('Error during tar extraction: $e');
+        rethrow;
+      }
+    } else {
+      throw Exception('tar extraction is not supported on this platform');
+    }
+  }
+
+  Future<void> _handleDmg(String archivePath, String destDir) async {
+    if (!_platform.isMacOS) {
+      throw Exception('DMG extraction is only supported on macOS');
+    }
+
+    final mountResult = await Process.run(
+      'hdiutil',
+      ['attach', archivePath, '-nobrowse', '-readonly'],
+    );
+    if (mountResult.exitCode != 0) {
+      throw Exception('Failed to mount DMG: ${mountResult.stderr}');
+    }
+
+    String? mountPoint;
+    final lines = mountResult.stdout.toString().split('\n');
+    for (final line in lines) {
+      if (line.contains('/Volumes/')) {
+        mountPoint = line.substring(line.indexOf('/Volumes/')).trim();
+        break;
+      }
+    }
+
+    if (mountPoint == null) {
+      final lastLine = lines.where((l) => l.trim().isNotEmpty).last;
+      if (lastLine.contains('/Volumes/')) {
+        mountPoint = lastLine.substring(lastLine.indexOf('/Volumes/')).trim();
+      }
+    }
+
+    if (mountPoint == null) {
+      throw Exception('Could not determine DMG mount point');
+    }
+
+    try {
+      final volume = Directory(mountPoint);
+      await for (final entity in volume.list()) {
+        if (entity is Directory && entity.path.endsWith('.app')) {
+          final cpResult = await Process.run('cp', ['-R', entity.path, destDir]);
+          if (cpResult.exitCode != 0) {
+            throw Exception('Failed to copy .app bundle: ${cpResult.stderr}');
+          }
+          
+          await _postExtractSanitize(destDir);
+          break;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error copying from DMG: $e');
+      rethrow;
+    } finally {
+      await Process.run('hdiutil', ['detach', mountPoint, '-force']);
+    }
+  }
+
+  Future<void> _handleZip(String archivePath, String destDir) async {
+    if (_platform.isMacOS || _platform.isLinux) {
+      final result = await Process.run(
+        'unzip',
+        ['-o', archivePath, '-d', destDir],
+        runInShell: false,
+      );
+      if (result.exitCode != 0) {
+        throw Exception('unzip failed: ${result.stderr}');
+      }
+      
+      if (_platform.isMacOS) {
+        await _postExtractSanitize(destDir);
+      }
+    } else if (_platform.isWindows) {
+      try {
+        // Modern Windows 10/11 has tar built-in which handles ZIPs perfectly.
+        final result = await Process.run(
+          'tar',
+          ['-xf', archivePath, '-C', destDir],
+          runInShell: true, // tar might be a shim or in System32
+        );
+        if (result.exitCode == 0) return;
+        
+        debugPrint('tar failed with exit code ${result.exitCode}, falling back to archive package');
+      } catch (e) {
+        debugPrint('tar not found or failed: $e, falling back to archive package');
+      }
+
+      // Fallback to archive package
+      final fileBytes = await File(archivePath).readAsBytes();
+      await compute(_extractZipIsolate, [fileBytes, destDir]);
+    } else {
+      final fileBytes = await File(archivePath).readAsBytes();
+      await compute(_extractZipIsolate, [fileBytes, destDir]);
+    }
+  }
+
+  Future<void> _handleSevenZip(String archivePath, String destDir) async {
+    final sevenZipExe = await directoryService.resolveSevenZipPath();
+    if (sevenZipExe == null) {
+      throw Exception('7zr.exe could not be initialized. Try reinstalling Freegosy.');
+    }
+    final result = await Process.run(
+      sevenZipExe,
+      ['x', archivePath, '-o$destDir', '-y'],
+      runInShell: false,
+    );
+    if (result.exitCode != 0) {
+      throw Exception('7z extraction failed: ${result.stderr}');
+    }
+
+    if (_platform.isMacOS) {
+      await _postExtractSanitize(destDir);
+    }
+  }
+
+  /// Programs on Windows that can unpack a RAR, tried in order: an installed
+  /// 7-Zip or WinRAR's `UnRAR.exe`. (The `7zr.exe` Freegosy bundles reads only
+  /// 7z, so it can't do RAR.) Only ones that exist are returned, each with
+  /// the arguments for unpacking [archivePath] into [destDir].
+  Future<List<({String exe, List<String> args})>> _windowsRarTools(String archivePath, String destDir) async {
+    final roots = <String>{
+      for (final key in ['ProgramFiles', 'ProgramW6432', 'ProgramFiles(x86)'])
+        if ((_platform.environment[key] ?? '').isNotEmpty) _platform.environment[key]!,
+    };
+    final tools = <({String exe, List<String> args})>[];
+    for (final root in roots) {
+      tools.add((exe: p.join(root, '7-Zip', '7z.exe'), args: ['x', archivePath, '-o$destDir', '-y']));
+    }
+    for (final root in roots) {
+      // UnRAR takes the destination as a trailing folder, with a separator.
+      tools.add((exe: p.join(root, 'WinRAR', 'UnRAR.exe'), args: ['x', '-y', '-o+', archivePath, '$destDir${p.separator}']));
+    }
+    return [for (final tool in tools) if (await File(tool.exe).exists()) tool];
+  }
+
+  /// RAR. Linux and macOS use the bundled 7-Zip (`7zz` reads RAR). Windows has
+  /// only `7zr`, which doesn't, so it tries an installed 7-Zip or WinRAR, then
+  /// the `tar` built into Windows 10/11 (libarchive reads most RAR files, RAR5
+  /// from newer builds), and says what to install if none can.
+  Future<void> _handleRar(String archivePath, String destDir) async {
+    if (!_platform.isWindows) {
+      await _handleSevenZip(archivePath, destDir);
+      return;
+    }
+    final failures = <String>[];
+    for (final tool in await _windowsRarTools(archivePath, destDir)) {
+      try {
+        final result = await Process.run(tool.exe, tool.args, runInShell: false);
+        if (result.exitCode == 0) return;
+        failures.add('${p.basename(tool.exe)}: ${result.stderr}'.trim());
+      } catch (e) {
+        failures.add('${p.basename(tool.exe)}: $e');
+      }
+    }
+    try {
+      final result = await Process.run('tar', ['-xf', archivePath, '-C', destDir], runInShell: true);
+      if (result.exitCode == 0) return;
+      failures.add('tar: ${result.stderr}'.trim());
+    } catch (e) {
+      failures.add('tar: $e');
+    }
+    throw Exception("Couldn't extract the RAR archive. Install 7-Zip (7-zip.org) or WinRAR and download the game again, "
+        'or extract the file by hand. (${failures.join('; ')})');
+  }
+
+  Future<void> _handleExe(String archivePath, String destDir) async {
+    var result = await Process.run(
+      archivePath,
+      ['-o$destDir', '-y'],
+      runInShell: false,
+    );
+    if (result.exitCode != 0) {
+      result = await Process.run(
+        archivePath,
+        [],
+        workingDirectory: destDir,
+      );
+    }
+  }
+
+  Future<void> _handleGeneric(String archivePath, String destDir) async {
+    bool isZip = false;
+    try {
+      final raf = await File(archivePath).open();
+      final header = await raf.read(4);
+      await raf.close();
+      isZip = header.length >= 2 && header[0] == 0x50 && header[1] == 0x4B;
+    } catch (_) {}
+
+    if (isZip) {
+      await _handleZip(archivePath, destDir);
+    } else {
+      throw Exception('Unsupported archive format: $archivePath');
+    }
+  }
+
+  Future<void> _postExtractSanitize(String destDir) async {
+    if (!_platform.isMacOS) return;
+
+    // Find all .app bundles (case-insensitive)
+    final findResult = await Process.run(
+      'find', [destDir, '-iname', '*.app', '-maxdepth', '3'],
+      runInShell: false,
+    );
+    
+    final appPaths = findResult.stdout.toString().trim().split('\n').where((p) => p.isNotEmpty);
+    
+    for (final appPath in appPaths) {
+      String finalAppPath = appPath;
+      final name = p.basename(appPath);
+      
+      // Feature: Rename versioned apps to canonical names (e.g. PCSX2-v2.6.3.app -> PCSX2.app)
+      // Standard versioning patterns like -v1.0, _v2.0, or just -2.0
+      if (name.contains('-') || name.contains('_') || RegExp(r'\d').hasMatch(name)) {
+        final baseNameMatch = name.split(RegExp(r'[-_v]'))[0];
+        if (baseNameMatch.length > 3) {
+          final canonicalName = '$baseNameMatch.app';
+          final newPath = p.join(p.dirname(appPath), canonicalName);
+          if (finalAppPath != newPath && !await Directory(newPath).exists()) {
+            try {
+              await Directory(appPath).rename(newPath);
+              finalAppPath = newPath;
+              debugPrint('[Extraction] Renamed versioned bundle: $name -> $canonicalName');
+            } catch (e) {
+              debugPrint('[Extraction] Failed to rename $name to $canonicalName: $e');
+            }
+          }
+        }
+      }
+
+      await _sanitizeAppBundle(finalAppPath);
+    }
+  }
+
+  Future<void> _sanitizeAppBundle(String appPath) async {
+    if (!_platform.isMacOS) return;
+    
+    try {
+      // Ensure it's executable
+      await Process.run('chmod', ['-R', '+x', appPath]);
+      // Remove quarantine
+      await Process.run('xattr', ['-rd', 'com.apple.quarantine', appPath]);
+      // deep self-sign
+      await Process.run('codesign', ['--force', '--deep', '--sign', '-', appPath]);
+    } catch (e) {
+      debugPrint('Warning: Could not sanitize app bundle at $appPath: $e');
+    }
+  }
+}

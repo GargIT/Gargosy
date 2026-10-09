@@ -49,7 +49,7 @@ Gargosy\
 Update this section as files are created. Milestone A (log in) is in; B (browse) and C (play and sync) add to it.
 
 ### Entry points
-- `lib/main.dart` — finds the root (`AppRoot.fromArgs`; `--root=<dir>` for `flutter run`), checks it can be written (else `StartupErrorApp`), points `path_provider` and `shared_preferences` into `userdata\`, starts the window, runs `GargosyApp`.
+- `lib/main.dart` — finds the root (`AppRoot.fromArgs`; `--root=<dir>` for `flutter run`), checks it can be written (else `StartupErrorApp`), points `path_provider`, `shared_preferences` and TMP/TEMP (`profiles/portable_temp.dart`) into `userdata\`, starts the window, runs `GargosyApp`.
 - `lib/app.dart` — `GargosyApp`: theme, `InputRouter`, F11; the profile picker when no profile is active, else `AppShell`. A profile switch pops every pushed page.
 
 ### Core (copied from Freegosy unless marked new)
@@ -94,6 +94,18 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `ui/screens/gallery_view.dart` (paged grid; X = sort and filters), `gallery_screen.dart`, `filter_sheet.dart`.
 - `ui/screens/game/` — `game_screen.dart` (cover column, actions, tabs via LB/RB), `game_header.dart` (Download / Play / Delete, favourite), `overview_tab.dart`, `save_data_tab.dart` (read-only), `achievements_tab.dart`, `notes_tab.dart` (new notes private), `details_tab.dart`, `open_game.dart`.
 
+### Play and save sync (milestone C1)
+- `core/` also holds Freegosy's save and launch engine, copied unchanged apart from the lines below: `core/save/` (sync, formats, catalog, backups, state sync, strategies), `core/emulator/` (strategies, registry, `game_launch_service.dart`, downloads), `core/disc/`, `core/extraction/`, `core/windows/`. Gargosy's patches: `backup_repository.dart` / `backup_service.dart` take the profile's box and folder; `mgba_save_strategy.dart` uses the profile's `saves\` when the folder service is `ProfileRootedDirectories`; `secure_storage_service.dart` keeps DPAPI blobs in prefs.
+- `profiles/profile_preferences.dart` — `ProfilePreferences`: the profile's own `prefs.json` (emulator choices, sync records); the engine never reads app-wide prefs.
+- `profiles/portable_temp.dart` — `usePortableTemp()`: TMP/TEMP into `userdata\app\temp` (the save code's working copies stay in the Gargosy folder).
+- `emulators/emulator_layout.dart` — per emulator: the folder its save strategy treats as the install (`saveView`), app-support name, `seed` folders made before the first pull.
+- `emulators/profile_directories.dart` — `sandboxedPlatform()` (APPDATA/LOCALAPPDATA/USERPROFILE inside the profile), `ProfileSaveDirectories` (what save strategies see), `ProfileLaunchDirectories` (finds the real exe under `emulators\<id>`, launches with the profile's `ProfileLaunchConfig`, `repoint()` before a pull). `core/storage/profile_rooted.dart` is the marker interface.
+- `emulators/profile_launch_config.dart` — per emulator, how it's pointed at `profiles\<id>\emulators\<emu>`: arguments (Dolphin, PCSX2, MAME, Xenia, ares, xemu), RetroArch's profile cfg (own `system\` with the BIOS copied in), PPSSPP `installed.txt`, or settings files swapped in for the session (DuckStation, mGBA, Flycast; `.gargosy-swap` marker, put back to the owner after a crash). `repoint()` rewrites stored folder paths. `config_files.dart`: `setRetroArchKeys`, `setTomlKeys`.
+- `emulators/emulator_library.dart` — `EmulatorLibrary` (list, import from a folder, remove), `emulatorsProvider`. `ui/screens/emulators_screen.dart`: Import / Download / Remove.
+- `providers/engine_providers.dart` — the engine for the active profile: prefs, both directory views, `StrategyRegistry`, `SaveSyncService`, backups (Hive box in the profile folder), `GameLaunchService`.
+- `play/play_engine.dart` — `PlayEngine` (the seam tests fake) and `GargosyPlayEngine`: repoint, back up + pull (`pre_launch_pull.dart`: `SaveRestoreGuard`, 20 s wait for shared cards, never refuses the launch), launch, sync after exit → `PlayResult` message.
+- `play/play_controller.dart` — `PlayController.play`: one game at a time (claimed before the first await), reasons it can't start, the session's end message; the shell refuses a profile switch while a game runs.
+
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
 - To change it, edit the SVG and render again.
@@ -110,7 +122,8 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
   - profiles never share a path;
   - `PathGuard` rejects anything outside the allowed folders;
   - each emulator's `ProfileLaunchConfig` arguments or written keys;
-  - device pairing states.
+  - device pairing states;
+  - the pre-launch pull (late pull writes nothing, failures don't block).
 - Gate: `flutter analyze && flutter test` (also what CI runs, on `windows-latest`).
 
 ## Release

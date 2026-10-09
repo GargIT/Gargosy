@@ -6,7 +6,7 @@ import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
 
-enum UserMenuChoice { switchProfile, fullscreen }
+enum UserMenuChoice { switchProfile, emulators, fullscreen }
 
 /// The user menu (Start, or the profile badge). Milestone A: switch profile
 /// and fullscreen; settings arrive later.
@@ -43,6 +43,7 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name
                   child: Text(name, style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
                 ),
                 item(c, 'Switch profile', Icons.people_alt_outlined, UserMenuChoice.switchProfile, autofocus: true),
+                item(c, 'Emulators', Icons.videogame_asset_outlined, UserMenuChoice.emulators),
                 item(c, 'Fullscreen (F11)', Icons.fullscreen, UserMenuChoice.fullscreen),
                 const HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Close')]),
               ]),

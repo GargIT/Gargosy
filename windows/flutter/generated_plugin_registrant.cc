@@ -9,6 +9,7 @@
 #include <gamepads_windows/gamepads_windows_plugin_c_api.h>
 #include <screen_retriever_windows/screen_retriever_windows_plugin_c_api.h>
 #include <window_manager/window_manager_plugin.h>
+#include <zstandard_windows/zstandard_windows_plugin_c_api.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
   GamepadsWindowsPluginCApiRegisterWithRegistrar(
@@ -17,4 +18,6 @@ void RegisterPlugins(flutter::PluginRegistry* registry) {
       registry->GetRegistrarForPlugin("ScreenRetrieverWindowsPluginCApi"));
   WindowManagerPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("WindowManagerPlugin"));
+  ZstandardWindowsPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("ZstandardWindowsPluginCApi"));
 }

@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/romm/romm_models.dart';
 import '../../../library/download_service.dart';
+import '../../../play/play_controller.dart';
 import '../../../providers/download_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/format.dart';
 import '../../widgets/favourite.dart';
+import '../../widgets/toast.dart';
 
 /// The game page's actions: Download, or Play and Delete once downloaded, and
-/// the favourite heart. Play arrives with milestone C (the play screen).
+/// the favourite heart.
 class GameActions extends ConsumerWidget {
   const GameActions({super.key, required this.game});
 
@@ -64,11 +66,25 @@ class GameActions extends ConsumerWidget {
     if (ok == true) await ref.read(downloadsProvider.notifier).delete(game);
   }
 
+  Future<void> _play(BuildContext context, WidgetRef ref) async {
+    final reason = await ref.read(playControllerProvider.notifier).play(game, onNotice: (m) {
+      if (context.mounted) showToast(context, m);
+    });
+    if (reason != null && context.mounted) showToast(context, reason);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = ref.watch(downloadsProvider)[game.id];
     final downloaded = watchDownloaded(ref, game);
     final isFavourite = ref.watch(favouriteIdsProvider).contains(game.id);
+    final playing = ref.watch(playControllerProvider.select((s) => s.runningGameId == game.id));
+    // When this game's session ends, say how its saves went.
+    ref.listen(playControllerProvider, (prev, next) {
+      if (prev?.runningGameId == game.id && next.runningGameId == null && next.message != null) {
+        showToast(context, next.message!);
+      }
+    });
     final children = <Widget>[];
     if (progress != null && progress.phase != DownloadPhase.failed) {
       final pct = progress.fraction == null ? '' : ' ${(progress.fraction! * 100).round()} %';
@@ -85,7 +101,8 @@ class GameActions extends ConsumerWidget {
       ]);
     } else if (downloaded) {
       children.addAll([
-        _button('Play', Icons.play_arrow, null, autofocus: true, primary: true),
+        _button(playing ? 'Playing…' : 'Play', Icons.play_arrow, playing ? null : () => _play(context, ref),
+            autofocus: true, primary: true),
         const SizedBox(height: GSpace.s3),
         _button('Delete from this PC', Icons.delete_outline, () => _confirmDelete(context, ref)),
       ]);

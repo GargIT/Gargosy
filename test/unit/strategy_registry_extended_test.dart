@@ -1,0 +1,147 @@
+// Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gargosy/core/emulator/strategy_registry.dart';
+import 'package:gargosy/core/storage/directory_service.dart';
+import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
+
+void main() {
+  group('StrategyRegistry extended', () {
+    late StrategyRegistry registry;
+    late SharedPreferences rawPrefs;
+    late SharedPreferencesAppPreferences prefs;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      rawPrefs = await SharedPreferences.getInstance();
+      prefs = SharedPreferencesAppPreferences(rawPrefs);
+      // Create a minimal DirectoryService for the registry
+      final dirService = DirectoryService(prefs);
+      registry = StrategyRegistry(dirService, prefs);
+    });
+
+    group('getDefinition', () {
+      test('returns definition for known emulator', () {
+        final def = registry.getDefinition('retroarch');
+        expect(def, isNotNull);
+        expect(def!['id'], 'retroarch');
+      });
+
+      test('returns null for unknown emulator', () {
+        final def = registry.getDefinition('nonexistent_emulator');
+        expect(def, isNull);
+      });
+
+      test('known emulators have required fields', () {
+        final knownIds = [
+          'retroarch', 'dolphin', 'pcsx2', 'rpcs3', 'duckstation',
+          'melonds', 'ppsspp', 'mgba', 'cemu',
+        ];
+        for (final id in knownIds) {
+          final def = registry.getDefinition(id);
+          expect(def, isNotNull, reason: 'Definition for $id should exist');
+          expect(def!['id'], id, reason: 'Definition id should match');
+        }
+      });
+    });
+
+    group('getStrategyById', () {
+      test('returns strategy for known id', () {
+        final strategy = registry.getStrategyById('retroarch');
+        expect(strategy, isNotNull);
+        expect(strategy!.emulatorId, 'retroarch');
+      });
+
+      test('returns null for unknown id', () {
+        final strategy = registry.getStrategyById('nonexistent');
+        expect(strategy, isNull);
+      });
+    });
+
+    group('getStrategyForSlug', () {
+      test('returns strategy for known platform slug', () {
+        final strategy = registry.getStrategyForSlug('gba');
+        expect(strategy, isNotNull);
+      });
+
+      test('returns null for unknown slug', () {
+        final strategy = registry.getStrategyForSlug('unknown_platform_xyz');
+        expect(strategy, isNull);
+      });
+
+      test('nds slug returns a strategy', () {
+        final strategy = registry.getStrategyForSlug('nds');
+        expect(strategy, isNotNull);
+      });
+    });
+
+    group('setPreference and clearPreferences', () {
+      test('setPreference then getStrategyForSlug uses preferred', () async {
+        // Get the current strategy for gba
+        final original = registry.getStrategyForSlug('gba');
+        expect(original, isNotNull);
+
+        // Find an alternative emulator id that's different
+        final retroarch = registry.getStrategyById('retroarch');
+        if (retroarch != null && original!.emulatorId != 'retroarch') {
+          await registry.setPreference('gba', 'retroarch');
+          final preferred = registry.getStrategyForSlug('gba');
+          expect(preferred!.emulatorId, 'retroarch');
+        }
+      });
+
+      test('clearPreferences removes overrides', () async {
+        await registry.setPreference('gba', 'retroarch');
+        await registry.clearPreferences();
+        // After clear, should fall back to first-supported
+        final strategy = registry.getStrategyForSlug('gba');
+        expect(strategy, isNotNull);
+      });
+
+      test('preference persists in SharedPreferences', () async {
+        await registry.setPreference('test_slug', 'test_emu');
+        final stored = rawPrefs.getString('emulator_pref_test_slug');
+        expect(stored, 'test_emu');
+      });
+    });
+
+    group('detectConflicts', () {
+      test('returns non-empty map when conflicts exist', () {
+        final conflicts = registry.detectConflicts();
+        expect(conflicts, isA<Map<String, dynamic>>());
+      });
+
+      test('conflict values have strategies and mergedSlugs', () {
+        final conflicts = registry.detectConflicts();
+        for (final entry in conflicts.entries) {
+          expect(entry.value.strategies, isA<List>());
+          expect(entry.value.strategies.length, greaterThan(1),
+              reason: 'Conflict for ${entry.key} should have >1 strategy');
+          expect(entry.value.mergedSlugs, isA<List<String>>());
+        }
+      });
+
+      test('Game Boy slugs have identical strategy sets', () {
+        final gbSlugs = ['gba', 'gbc', 'gb', 'game-boy-advance', 'game-boy-color', 'game-boy'];
+        final strategySets = <String, Set<String>>{};
+        for (final slug in gbSlugs) {
+          final strategies = registry.getAllStrategiesForSlug(slug);
+          strategySets[slug] = strategies.map((s) => s.emulatorId).toSet();
+        }
+        // All should have the same set
+        final first = strategySets.values.first;
+        for (final entry in strategySets.entries) {
+          expect(entry.value, first,
+              reason: 'Slug ${entry.key} has different strategy set: ${entry.value} vs $first');
+        }
+      });
+    });
+
+    group('setNdsCore', () {
+      test('does not throw', () {
+        expect(() => registry.setNdsCore('desmume'), returnsNormally);
+        expect(() => registry.setNdsCore('melonds'), returnsNormally);
+      });
+    });
+  });
+}

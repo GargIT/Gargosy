@@ -12,9 +12,11 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/download_providers.dart';
 import 'package:gargosy/providers/library_providers.dart';
+import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
 
 import '../helpers/fake_download_service.dart';
+import '../unit/play_controller_test.dart' show FakeEngine;
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
@@ -22,6 +24,7 @@ import '../helpers/widget_env.dart';
 void main() {
   late AppRoot root;
   late FakeDownloadService downloads;
+  late FakeEngine engine;
 
   final burnout = Game.fromJson({
     ...gameJson(7564, 'Burnout 3: Takedown', fsName: 'Burnout 3 (USA).chd'),
@@ -35,11 +38,13 @@ void main() {
     root = (await tester.runAsync(tempAppRoot))!;
     addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
     downloads = FakeDownloadService(RomFiles(root), PathGuard(root));
+    engine = FakeEngine();
     await tester.pumpWidget(testApp(GameScreen(game: burnout), root: root, overrides: [
       appPreferencesProvider.overrideWithValue(MemoryPrefs()),
       gameProvider.overrideWith((ref, id) async => burnout),
       favouriteIdsProvider.overrideWithValue(favourites),
       downloadServiceProvider.overrideWithValue(downloads),
+      playEngineProvider.overrideWithValue(engine),
       romSavesProvider.overrideWith((ref, id) async => [{'id': 1, 'file_name': 'burnout.ps2', 'emulator': 'pcsx2'}]),
       romStatesProvider.overrideWith((ref, id) async => const []),
       romNotesProvider.overrideWith((ref, id) async => const []),
@@ -115,5 +120,20 @@ void main() {
     await press(tester, GameAction.r1); // Achievements
     await press(tester, GameAction.r1); // Notes
     expect(find.text('Add a note'), findsOneWidget);
+  });
+
+  testWidgets('once downloaded, Play starts the game and shows it is playing', (tester) async {
+    await pump(tester);
+    await press(tester, GameAction.confirm); // Download
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Play'));
+    await tester.pumpAndSettle();
+    expect(engine.steps, ['pull', 'launch']);
+    expect(find.text('Playing…'), findsOneWidget);
+    engine.running!.complete(const PlayResult('Save synced to RomM.'));
+    await tester.pumpAndSettle();
+    expect(find.text('Save synced to RomM.'), findsOneWidget);
+    expect(find.text('Play'), findsOneWidget);
   });
 }

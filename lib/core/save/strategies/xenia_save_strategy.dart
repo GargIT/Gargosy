@@ -1,0 +1,114 @@
+// Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:io';
+import 'package:archive/archive_io.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import '../../platform/platform_info.dart';
+import '../../romm/game_id_resolver.dart';
+import '../../romm/romm_models.dart';
+import '../../storage/directory_service.dart';
+import '../save_strategy.dart';
+
+/// Save strategy for Xenia Canary (Xbox 360).
+/// Saves: {emulatorDir}\content\{titleId}\00000001\
+class XeniaSaveStrategy extends SaveStrategy {
+  final DirectoryService _directoryService;
+  // ignore: unused_field
+  final PlatformInfo _platform;
+
+  XeniaSaveStrategy(this._directoryService, {PlatformInfo? platform})
+      : _platform = platform ?? PlatformInfo.current;
+
+  @override
+  String get strategyId => 'xenia_canary';
+
+  /// Xbox 360 title id, 8 hex characters e.g. 4D5307E6: RomM's (`title_id`,
+  /// RomM 5.3+), else from the file name.
+  @visibleForTesting
+  static String? titleIdFor(Game game) {
+    final fromRomm =
+        GameIdResolver.server('Xenia ${game.name}', game.titleId?.toUpperCase(), shape: RegExp(r'^[0-9A-F]{8}$'));
+    if (fromRomm != null) return fromRomm;
+    final name = game.fsName ?? game.fileName ?? game.name;
+    final match = RegExp(r'[0-9A-Fa-f]{8}').firstMatch(name);
+    return match?.group(0)?.toUpperCase();
+  }
+
+  Future<String?> _getContentDir() async {
+    final exePath = await _directoryService.findEmulatorExecutable(
+        'xenia_canary', 'xenia_canary.exe');
+    if (exePath == null) return null;
+    return p.join(File(exePath).parent.path, 'content');
+  }
+
+  @override
+  Future<String?> getSaveDir(Game game, String romPath) async {
+    final contentDir = await _getContentDir();
+    if (contentDir == null) return null;
+    final titleId = titleIdFor(game);
+    if (titleId == null) return null;
+    return '$contentDir\\$titleId\\00000001';
+  }
+
+  @override
+  Future<List<File>> getSaveFiles(Game game, String romPath,
+      {DateTime? sessionStart, String syncMode = 'both'}) async {
+    final saveDir = await getSaveDir(game, romPath);
+    if (saveDir == null) return [];
+
+    final dir = Directory(saveDir);
+    if (!await dir.exists()) return [];
+
+    bool hasFiles = false;
+    await for (final entity in dir.list(recursive: true)) {
+      if (entity is! File) continue;
+      if (sessionStart != null) {
+        final stat = await entity.stat();
+        if (stat.modified.isBefore(sessionStart.subtract(const Duration(seconds: 2)))) continue;
+      }
+      hasFiles = true;
+      break;
+    }
+    if (!hasFiles) return [];
+
+    // Return the directory itself
+    return [File(dir.path)];
+  }
+
+  @override
+  Future<bool> restoreSave(
+      Game game, String destPath, Uint8List data, String filename) async {
+    try {
+      final saveDir = await getSaveDir(game, destPath);
+      if (saveDir == null) return false;
+
+      final rootDir = Directory(saveDir);
+      if (!await rootDir.exists()) await rootDir.create(recursive: true);
+
+      if (filename.toLowerCase().endsWith('.zip')) {
+        final archive = ZipDecoder().decodeBytes(data);
+        for (final entry in archive) {
+          if (entry.name == 'freegosy_sync.txt' || entry.name.contains('.bak')) continue;
+          
+          final entryPath = p.normalize(p.join(saveDir, entry.name));
+          if (entry.isFile) {
+            await backupSave(entryPath);
+            final outFile = File(entryPath);
+            await outFile.parent.create(recursive: true);
+            await outFile.writeAsBytes(entry.content as List<int>);
+          } else {
+            await Directory(entryPath).create(recursive: true);
+          }
+        }
+        return true;
+      }
+
+      final targetPath = p.normalize(p.join(saveDir, filename));
+      await backupSave(targetPath);
+      await File(targetPath).writeAsBytes(data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+}

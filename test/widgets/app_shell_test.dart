@@ -7,6 +7,7 @@ import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
+import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
@@ -121,5 +122,21 @@ void main() {
     await tester.drag(find.text('G1'), const Offset(-600, 0));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('top-bar-glass')), findsNothing);
+  });
+
+  testWidgets('the user menu opens the emulators screen', (tester) async {
+    await pump(tester);
+    await send(tester, GameAction.start);
+    expect(find.text('Emulators'), findsOneWidget);
+  });
+
+  testWidgets('switching profile during a game is refused', (tester) async {
+    await pump(tester);
+    c.read(playControllerProvider.notifier).state = const PlayState(runningGameId: '1');
+    await send(tester, GameAction.start);
+    await tester.tap(find.text('Switch profile'));
+    await tester.pumpAndSettle();
+    expect(c.read(activeProfileProvider), isNotNull);
+    expect(find.textContaining('Close the game first'), findsOneWidget);
   });
 }

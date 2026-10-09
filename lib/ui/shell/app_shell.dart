@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/input/gamepad_service.dart';
+import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
 import '../input/gargosy_intents.dart';
 import '../pages/collections_page.dart';
 import '../pages/home_page.dart';
 import '../pages/platforms_page.dart';
 import '../pages/search_page.dart';
+import '../screens/emulators_screen.dart';
 import '../widgets/hint_bar.dart';
+import '../widgets/toast.dart';
 import 'backdrop.dart';
 import 'top_bar.dart';
 import 'user_menu.dart';
@@ -51,7 +54,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     final choice = await showUserMenu(context, name: ctx.profile.name);
     switch (choice) {
       case UserMenuChoice.switchProfile:
+        // The game runs on this profile's emulator data; it must close first.
+        if (ref.read(playControllerProvider).runningGameId != null) {
+          if (mounted) showToast(context, "Close the game first: a profile can't change while a game runs.");
+          return;
+        }
         ref.read(activeProfileProvider.notifier).signOut();
+      case UserMenuChoice.emulators:
+        if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmulatorsScreen()));
       case UserMenuChoice.fullscreen:
         await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
       case null:

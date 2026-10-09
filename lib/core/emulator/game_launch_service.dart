@@ -1,0 +1,447 @@
+// Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:async';
+import 'dart:developer' as dev;
+import 'dart:io' as io;
+import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart';
+import '../storage/app_preferences.dart';
+import '../romm/activity_session_tracker.dart';
+import '../romm/romm_models.dart';
+import '../romm/romm_service.dart';
+import '../romm/rom_constants.dart';
+import '../storage/directory_service.dart';
+import '../save/backup_entry.dart';
+import '../save/backup_repository.dart';
+import '../save/backup_service.dart';
+import '../save/save_sync_service.dart';
+import '../save/save_strategy.dart';
+import '../save/state_sync_service.dart';
+import 'emulator_strategy.dart';
+import 'strategies/retroarch_strategy.dart';
+import 'strategy_registry.dart';
+
+/// Result of resolving a game's ROM path when the on-disk location is
+/// ambiguous (e.g. a directory containing multiple disc images).
+/// If [candidates] is non-empty, the caller must let the user pick one and
+/// join it onto the original directory path; otherwise [resolvedPath] is
+/// the final path to launch.
+class RomResolution {
+  final String? resolvedPath;
+  final List<Map<String, dynamic>> candidates;
+
+  const RomResolution({this.resolvedPath, this.candidates = const []});
+}
+
+/// A launched game process plus the timestamp launch began, needed to scope
+/// which save files count as part of this play session. [emulatorId]
+/// records which emulator actually launched the game, so the post-exit
+/// save sync uses the same emulator's strategy rather than whatever the
+/// platform's global preference happens to be (see issue #79).
+///
+/// [activityTrackerFuture] is started in [GameLaunchService.launch] before
+/// the emulator is even launched, not after — most strategies'
+/// `launchWithHandle` don't return until the emulator has already exited,
+/// so starting it any later would give it no window to run during the
+/// actual play session (issue #93).
+class GameSession {
+  final io.Process? process;
+  final DateTime sessionStart;
+  final String emulatorId;
+  final Future<ActivitySessionTracker?> activityTrackerFuture;
+
+  const GameSession({
+    required this.process,
+    required this.sessionStart,
+    required this.emulatorId,
+    required this.activityTrackerFuture,
+  });
+}
+
+/// Outcome of awaiting a launched game's exit and running the post-exit
+/// save-sync/backup/play-session pipeline.
+class LaunchResult {
+  final bool syncOk;
+  final String? backupZipPath;
+  final bool playSessionRecorded;
+
+  /// Save states that changed both locally and on RomM during this session
+  /// and were left untouched pending the user's choice.
+  final int stateConflictCount;
+
+  /// Why the saves could not be synced with the emulator set up as it is
+  /// (see [SaveSyncNotPossibleException]), or null.
+  final String? saveSyncBlocked;
+
+  /// The save is the one RomM has, so nothing was uploaded.
+  final bool saveUnchanged;
+
+  /// RomM refused the upload: it has a newer save (from another device)
+  /// than the one this session started from. Nothing was uploaded.
+  final SaveConflictException? saveConflict;
+
+  const LaunchResult({
+    required this.syncOk,
+    this.saveSyncBlocked,
+    this.backupZipPath,
+    this.playSessionRecorded = false,
+    this.stateConflictCount = 0,
+    this.saveUnchanged = false,
+    this.saveConflict,
+  });
+}
+
+/// Orchestrates the non-UI portions of launching a game: ROM path
+/// resolution, process launch, and the post-exit save-sync/backup/
+/// play-session pipeline. Extracted from the widget layer so the same
+/// pipeline can be reused outside Flutter (e.g. a future CLI).
+class GameLaunchService {
+  final DirectoryService directoryService;
+  final StrategyRegistry strategyRegistry;
+  final SaveSyncService saveSyncService;
+  final BackupService backupService;
+  final BackupRepository backupRepository;
+  final RommService? rommService;
+  final AppPreferences prefs;
+  final StateSyncService? stateSyncService;
+
+  GameLaunchService({
+    required this.directoryService,
+    required this.strategyRegistry,
+    required this.saveSyncService,
+    required this.backupService,
+    required this.backupRepository,
+    required this.prefs,
+    this.rommService,
+    this.stateSyncService,
+  });
+
+  /// Disc-image extensions [scanForDiscFiles] recognises (playlists aside).
+  static const List<String> discImageExtensions = [
+    '.rvz', '.gcm', '.iso', '.cso', '.wbfs', '.bin', '.img', '.chd', '.pbp', '.ccd',
+  ];
+
+  /// True when [fileName] is a disc image (see [discImageExtensions]).
+  static bool isDiscImageName(String fileName) {
+    final name = fileName.toLowerCase();
+    return discImageExtensions.any(name.endsWith);
+  }
+
+  /// Scans [existingRomPath] (a directory) for `.m3u` playlists or known
+  /// disc-image files. Used when RomM doesn't correctly report
+  /// `hasMultipleFiles` for multi-disc games (e.g. GameCube with `.m3u`).
+  Future<List<Map<String, dynamic>>> scanForDiscFiles(String existingRomPath) async {
+    final discFiles = <Map<String, dynamic>>[];
+    final dir = io.Directory(existingRomPath);
+    await for (final entity in dir.list()) {
+      if (entity is! io.File) continue;
+      final name = p.basename(entity.path).toLowerCase();
+      if (name.endsWith('.m3u')) {
+        final stat = await entity.stat();
+        discFiles.add({'file_name': p.basename(entity.path), 'file_size_bytes': stat.size});
+      } else if (isDiscImageName(name)) {
+        final stat = await entity.stat();
+        discFiles.add({'file_name': p.basename(entity.path), 'file_size_bytes': stat.size});
+      }
+    }
+    return discFiles;
+  }
+
+  /// Returns the game's full file list (fetching from RomM if [game.files]
+  /// is empty, since paginated API responses omit it) alongside the subset
+  /// filtered to launchable files via [RomConstants.filterLaunchableFiles].
+  Future<({List<Map<String, dynamic>> files, List<Map<String, dynamic>> launchableFiles})> launchableFilesFor(Game game) async {
+    List<Map<String, dynamic>> files = game.files;
+    if (files.isEmpty && rommService != null) {
+      try {
+        final response = await rommService!.getGame(game.id);
+        if (response != null) files = response.files;
+      } catch (e) {
+        debugPrint('[GameLaunchService] Failed to fetch game details: $e');
+      }
+    }
+    if (files.isEmpty) return (files: const <Map<String, dynamic>>[], launchableFiles: const <Map<String, dynamic>>[]);
+    return (files: files, launchableFiles: RomConstants.filterLaunchableFiles(files));
+  }
+
+  /// If [romPath] points to a directory, searches it for a file matching
+  /// the platform's known extensions (skipped for Windows/PC, which are
+  /// folder-based games). Returns the original path unchanged if no match
+  /// is found or [romPath] is not a directory.
+  Future<String> resolveRomFileInDirectory(String romPath, String? platformSlug) async {
+    if (!await io.Directory(romPath).exists()) return romPath;
+    final lowerPlatformSlug = (platformSlug ?? '').toLowerCase();
+    if (['windows', 'pc', 'win'].contains(lowerPlatformSlug)) return romPath;
+    if (RomConstants.isFolderGamePlatform(lowerPlatformSlug)) return romPath;
+
+    final knownExtensions = RomConstants.platformExtensions[lowerPlatformSlug] ?? [];
+    final dir = io.Directory(romPath);
+    await for (final entity in dir.list()) {
+      if (entity is! io.File) continue;
+      final name = p.basename(entity.path).toLowerCase();
+      if (knownExtensions.any((ext) => name.endsWith(ext))) {
+        return entity.path;
+      }
+    }
+    return romPath;
+  }
+
+  /// True if [game]'s platform is a 3DS variant and the emulator's
+  /// aes_keys.txt is missing from its system directory.
+  Future<bool> needs3dsKeysWarning(Game game, EmulatorStrategy strategy) async {
+    const slugs = ['3ds', 'n3ds', 'nintendo-3ds', 'nintendo3ds', 'new-nintendo-3ds', 'new-nintendo-3ds-xl'];
+    if (!slugs.contains(game.platformSlug?.toLowerCase())) return false;
+    final systemDir = await directoryService.getEmulatorSystemDirectory(strategy.emulatorId);
+    final keysPath = '$systemDir/${strategy.emulatorId == 'retroarch' ? 'citra/sysdata/aes_keys.txt' : 'sysdata/aes_keys.txt'}';
+    return !await io.File(keysPath).exists();
+  }
+
+  /// Launches [game] via [strategy], returning the process handle (if any)
+  /// and the session start time. Mirrors the exact launchWithHandle/launch
+  /// fallback used previously in the UI layer — behavior-preserving.
+  ///
+  /// [loadStatePath], if given, is a save state the emulator boots straight
+  /// into (only when [EmulatorStrategy.supportsStateLoadOnLaunch]; ignored
+  /// otherwise). Nothing passes it yet: a plain launch never loads a state.
+  Future<GameSession> launch(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    String? overrideCoreId,
+    String? loadStatePath,
+  }) async {
+    final sessionStart = DateTime.now();
+    final activityTrackerFuture = _maybeStartActivityTracker(game);
+    io.Process? process;
+    // Resolved into locals and passed down as arguments: the strategy is one
+    // shared instance per emulator and launches can overlap, so nothing about
+    // this launch may be stored on it.
+    final extraArgs = loadStatePath != null && strategy.supportsStateLoadOnLaunch
+        ? strategy.stateLoadArgs(loadStatePath)
+        : const <String>[];
+    try {
+      if (extraArgs.isNotEmpty) {
+        process = strategy is RetroArchStrategy
+            ? await strategy.launchWithHandleAndExtraArgs(game, romPath, extraArgs: extraArgs, coreName: overrideCoreId)
+            : await strategy.launchWithHandleAndExtraArgs(game, romPath, extraArgs: extraArgs);
+      } else if (strategy is RetroArchStrategy && overrideCoreId != null) {
+        process = await strategy.launchWithHandle(game, romPath, coreName: overrideCoreId);
+      } else {
+        process = await strategy.launchWithHandle(game, romPath);
+      }
+      if (process == null) {
+        if (extraArgs.isNotEmpty) {
+          await strategy.launchWithExtraArgs(game, romPath, extraArgs: extraArgs);
+        } else {
+          await strategy.launch(game, romPath);
+        }
+        // Fire-and-forget path: callers never call awaitExitAndSync without
+        // a process handle, so nothing else will ever stop this tracker —
+        // and we have no exit signal for it anyway, so stop it right away
+        // instead of leaving it to expire via the server's heartbeat TTL.
+        await (await activityTrackerFuture)?.stop();
+      }
+    } catch (_) {
+      // A failed launch (e.g. emulator not installed) never yields a
+      // GameSession, so nothing would ever stop the already-started tracker.
+      await (await activityTrackerFuture)?.stop();
+      rethrow;
+    }
+    return GameSession(
+      process: process,
+      sessionStart: sessionStart,
+      emulatorId: strategy.emulatorId,
+      activityTrackerFuture: activityTrackerFuture,
+    );
+  }
+
+  /// Starts an [ActivitySessionTracker] for [game] if active-session sync
+  /// (issue #93) is enabled, the connected RomM server supports it, and a
+  /// device is registered — else returns null. Non-fatal on any RomM error.
+  Future<ActivitySessionTracker?> _maybeStartActivityTracker(Game game) async {
+    if (rommService == null) {
+      debugPrint('[ActivitySync] skipped: no RommService configured');
+      return null;
+    }
+    if (!(prefs.getBool('romm_active_session_sync') ?? true)) {
+      debugPrint('[ActivitySync] skipped: disabled in Settings');
+      return null;
+    }
+    try {
+      final caps = await rommService!.fetchCapabilities();
+      if (!caps.hasActivitySync) {
+        debugPrint('[ActivitySync] skipped: server capabilities=$caps');
+        return null;
+      }
+      final deviceId = prefs.getString('romm_device_id');
+      if (deviceId == null) {
+        debugPrint('[ActivitySync] skipped: no romm_device_id registered yet');
+        return null;
+      }
+      debugPrint('[ActivitySync] starting for rom ${game.id}, device $deviceId');
+      final tracker = ActivitySessionTracker(rommService!);
+      await tracker.start(romId: game.id, deviceId: deviceId);
+      return tracker;
+    } catch (e) {
+      dev.log('Activity session start failed (non-fatal)', error: e);
+      return null;
+    }
+  }
+
+  /// Pushes the states written during [session] (if state sync is on for the
+  /// game) and returns how many conflicts were found. Never throws: a failure
+  /// here must not break the backup or play-session report that follow, so it
+  /// is logged and counted as no conflicts.
+  @visibleForTesting
+  Future<int> pushStatesAfterExit(
+      GameSession session, Game game, String romPath, {String? coreOverride}) async {
+    if (stateSyncService == null) {
+      debugPrint('[StateSync] post-exit push skipped: state sync service not available');
+    } else {
+      debugPrint('[StateSync] post-exit push for ${game.name} '
+          '(emulator ${session.emulatorId})');
+    }
+    try {
+      final result = await stateSyncService?.pushStates(
+        game,
+        romPath,
+        sessionStart: session.sessionStart,
+        emulatorId: session.emulatorId,
+        coreOverride: coreOverride,
+      );
+      return result?.conflicts.length ?? 0;
+    } catch (e) {
+      dev.log('Post-exit state push failed (non-fatal)', error: e);
+      return 0;
+    }
+  }
+
+  /// Awaits the launched process's exit (no-op if [session.process] is
+  /// null, i.e. the fire-and-forget `launch` path was used), then runs the
+  /// post-exit pipeline: push saves, push save states (if enabled), create a
+  /// local backup, and report the play session to RomM (best-effort,
+  /// non-fatal on failure). [onExited] runs right after the process exits,
+  /// before anything is pushed (e.g. to refresh a list that depends on the
+  /// files the emulator just wrote); an exception from it is logged and
+  /// ignored.
+  Future<LaunchResult?> awaitExitAndSync(
+    GameSession session,
+    Game game,
+    String romPath, {
+    required String syncMode,
+    String? overrideCoreId,
+    void Function()? onExited,
+  }) async {
+    final process = session.process;
+    if (process == null) return null;
+
+    await process.exitCode;
+    final sessionEnd = DateTime.now();
+    try {
+      onExited?.call();
+    } catch (e) {
+      dev.log('onExited listener failed (non-fatal)', error: e);
+    }
+
+    final activityTracker = await session.activityTrackerFuture;
+    if (activityTracker != null) await activityTracker.stop();
+
+    var syncOk = false;
+    var saveUnchanged = false;
+    String? saveSyncBlocked;
+    SaveConflictException? saveConflict;
+    try {
+      // One hold of the save lock for the check, the upload and the mark, so
+      // nothing reads the save in between (e.g. the Saves tab seeing it
+      // uploaded but not yet marked as RomM's).
+      await saveSyncService.exclusive(() async {
+        // A save RomM already has (pulled or chosen before the game started,
+        // and not changed since) is not uploaded again: an older RomM save
+        // played without saving must not become the newest.
+        if (await saveSyncService.saveIsSynced(game, romPath,
+            emulatorId: session.emulatorId, syncMode: syncMode, coreOverride: overrideCoreId)) {
+          dev.log('${game.displayName}: the save is the one RomM has — not uploading');
+          saveUnchanged = true;
+          syncOk = true;
+        } else {
+          syncOk = await saveSyncService.pushSaves(
+            game,
+            romPath,
+            sessionStart: session.sessionStart,
+            syncMode: syncMode,
+            coreOverride: overrideCoreId,
+            emulatorId: session.emulatorId,
+          );
+          if (syncOk) {
+            await saveSyncService.markSaveSynced(game, romPath,
+                emulatorId: session.emulatorId, syncMode: syncMode, coreOverride: overrideCoreId);
+          }
+        }
+      }, doing: "Syncing ${game.displayName}'s save");
+    } on SaveSyncNotPossibleException catch (e) {
+      saveSyncBlocked = e.message;
+    } on SaveConflictException catch (e) {
+      // Reported, not thrown: the backup and state sync below still run.
+      saveConflict = e;
+    }
+
+    // Save states sync separately from game saves; see [pushStatesAfterExit].
+    final stateConflictCount = await pushStatesAfterExit(session, game, romPath, coreOverride: overrideCoreId);
+
+    String? backupZipPath;
+    try {
+      final postBackup = await backupService.createImmediate(game, romPath, saveSyncService,
+          emulatorId: session.emulatorId, coreOverride: overrideCoreId);
+      // A session that left the save as it was adds no backup.
+      if (postBackup != null &&
+          await backupRepository.addUnlessSameAsNewest(
+            game.id,
+            BackupEntry(
+                timestamp: DateTime.now(),
+                md5Hash: postBackup.md5,
+                localZipPath: postBackup.zipPath,
+                emulatorId: session.emulatorId,
+                coreId: postBackup.coreId,
+                // RomM answered the push (took it, has it, refused it as
+                // older, or it can't be synced): not for the offline queue,
+                // which uploads without asking and would put a save RomM
+                // refused over the newer one.
+                isSynced: syncOk || saveConflict != null || saveSyncBlocked != null),
+          )) {
+        backupZipPath = postBackup.zipPath;
+      }
+    } catch (e) {
+      dev.log('Post-exit backup failed', error: e);
+    }
+
+    var playSessionRecorded = false;
+    try {
+      if (rommService != null) {
+        final caps = await rommService!.fetchCapabilities();
+        if (caps.hasPlaySessionTracking) {
+          final deviceId = prefs.getString('romm_device_id');
+          if (deviceId != null) {
+            await rommService!.recordPlaySession(
+              romId: game.id,
+              deviceId: deviceId,
+              startTime: session.sessionStart,
+              endTime: sessionEnd,
+            );
+            playSessionRecorded = true;
+          }
+        }
+      }
+    } catch (e) {
+      dev.log('Play session record failed (non-fatal)', error: e);
+    }
+
+    return LaunchResult(
+      syncOk: syncOk,
+      saveSyncBlocked: saveSyncBlocked,
+      backupZipPath: backupZipPath,
+      playSessionRecorded: playSessionRecorded,
+      stateConflictCount: stateConflictCount,
+      saveUnchanged: saveUnchanged,
+      saveConflict: saveConflict,
+    );
+  }
+}
