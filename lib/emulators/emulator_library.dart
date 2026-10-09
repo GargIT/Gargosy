@@ -141,6 +141,15 @@ class EmulatorLibrary {
     }
   }
 
+  /// Before a download: a folder that holds no program (a download that
+  /// failed, or the wrong file) is emptied, so nothing of it stays behind.
+  /// An install with its program is left for the download to update.
+  Future<void> clearIfNoProgram(String id) async {
+    final exe = strategies.where((s) => s.emulatorId == id).firstOrNull?.windowsExecutable;
+    if (exe == null || _findExe(p.join(root.emulators, id), exe) != null) return;
+    await remove(id);
+  }
+
   Future<void> remove(String id) async {
     final dir = io.Directory(_guard.check(p.join(root.emulators, id)));
     if (dir.existsSync()) dir.deleteSync(recursive: true);

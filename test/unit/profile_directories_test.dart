@@ -115,4 +115,14 @@ void main() {
     expect(ini.readAsStringSync(), contains(p.join(l.dataDir('duckstation'), 'memcards')));
     l.repoint('nothing-known'); // no config: nothing to do
   });
+
+  test("an emulator's game folders are the roms folders of the platforms it plays that exist", () {
+    for (final d in ['ps2', 'psx', 'snes']) {
+      io.Directory(p.join(root.roms, d)).createSync(recursive: true);
+    }
+    final l = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    expect(l.gameFoldersFor('pcsx2'), [p.join(root.roms, 'ps2')]);
+    expect(l.gameFoldersFor('duckstation'), [p.join(root.roms, 'psx')]);
+    expect(l.gameFoldersFor('dolphin'), isEmpty);
+  });
 }

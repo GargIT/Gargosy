@@ -1,3 +1,8 @@
+import '../core/storage/ini_file.dart';
+import 'config_files.dart';
+import '../core/emulator/platform_slugs.dart';
+import '../core/emulator/emulator_registry_data.dart';
+import '../core/retroachievements/retroachievements_emulator_login.dart';
 import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
@@ -117,7 +122,7 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
       {List<String> args = const []}) async {
     final config = ProfileLaunchConfig.of(emulatorId);
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
-    final c = _context(emulatorId, p.dirname(exePath));
+    final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
     final pre = await config.prepare(c);
     final process = await _start(exePath, [...pre, ...args, romPath], workingDirectory: c.exeDir);
     // Drained, as Freegosy does: a full pipe would freeze the emulator.
@@ -127,14 +132,54 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     return process;
   }
 
-  LaunchContext _context(String emulatorId, String exeDir) => LaunchContext(
+  /// The `roms\<platform>` folders that exist for the platforms
+  /// [emulatorId] plays (its definition's slugs; aliases count).
+  List<String> gameFoldersFor(String emulatorId) {
+    final def = kEmulatorDefinitions.where((d) => d['id'] == emulatorId).firstOrNull;
+    final slugs = {for (final s in List<String>.from(def?['platform_slugs'] ?? const [])) canonicalPlatformSlug(s)};
+    final roms = io.Directory(root.roms);
+    if (slugs.isEmpty || !roms.existsSync()) return const [];
+    return [
+      for (final d in roms.listSync()..sort((a, b) => a.path.compareTo(b.path)))
+        if (d is io.Directory && slugs.contains(canonicalPlatformSlug(p.basename(d.path)))) d.path,
+    ];
+  }
+
+  LaunchContext _context(String emulatorId, String exeDir, {RetroAchievementsEmulatorLogin? raLogin}) => LaunchContext(
         data: dataDir(emulatorId),
         exeDir: exeDir,
         bios: root.bios,
         profileId: paths.id,
         profilesDir: root.profiles,
         guard: paths.guard,
+        raLogin: raLogin,
+        roms: root.roms,
+        gameFolders: gameFoldersFor(emulatorId),
       );
+
+  /// Takes the RetroAchievements login out of the profile's emulator
+  /// settings (RetroArch's cfg; PCSX2's ini and secrets).
+  void signOutRetroAchievements() {
+    final cfg = io.File(paths.guard.check(p.join(dataDir('retroarch'), 'retroarch.cfg')));
+    if (cfg.existsSync()) {
+      cfg.writeAsStringSync(setRetroArchKeys(cfg.readAsStringSync(),
+          {'cheevos_enable': 'false', 'cheevos_username': '', 'cheevos_token': ''}));
+    }
+    final inis = p.join(dataDir('pcsx2'), 'PCSX2', 'inis');
+    final secrets = io.File(paths.guard.check(p.join(inis, 'secrets.ini')));
+    if (secrets.existsSync()) {
+      final ini = IniFile(secrets.readAsStringSync())..remove('Achievements', 'Token');
+      secrets.writeAsStringSync(ini.toText());
+    }
+    final pcsx2 = io.File(paths.guard.check(p.join(inis, 'PCSX2.ini')));
+    if (pcsx2.existsSync()) {
+      final ini = IniFile(pcsx2.readAsStringSync())
+        ..set('Achievements', 'Enabled', 'false')
+        ..remove('Achievements', 'Username')
+        ..remove('Achievements', 'LoginTimestamp');
+      pcsx2.writeAsStringSync(ini.toText());
+    }
+  }
 
   /// Before the save pull: the profile's stored settings point at where its
   /// folders are now (see ProfileLaunchConfig.repoint).

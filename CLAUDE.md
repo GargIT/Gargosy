@@ -120,6 +120,8 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `retroachievements/ra_account.dart` — `RaAccount`: the profile's RA login (password exchanged once for the Connect token via the copied `core/retroachievements/retroachievements_service.dart`; never stored). RetroArch signs in with it at launch.
 - `emulators/emulator_installer.dart` — `EmulatorInstaller` (`latestUrl`, `install`), `InstallProgress`; `EmulatorLibrary.recordInstall` notes the source in `emulators\<id>\.gargosy-install.json`, `EmulatorInfo.version` is the exe's file version. Update installs only when the newest download differs.
 - `profiles/profile_providers.dart` also: `ActiveProfileNotifier.update` (rename, PIN).
+- `emulators/bios_sync.dart` — `BiosSync`: RomM's firmware into the shared `bios\` through the copied `FirmwareService` (patched: in a profile PCSX2/DuckStation files go in `bios\` itself, and a server file name never leaves the folder); runs after an emulator installs and from Settings → Emulators.
+- Launch settings also fill the emulators' own game lists from `roms\<platform>` (`ProfileLaunchDirectories.gameFoldersFor`, `IniFile.add` for repeated keys), set PCSX2's BIOS folder and its RA login (`LaunchContext.raLogin`). The engine's strategies run on `sandboxedPlatform` too, and their own RA writers are off in a profile.
 - `ui/widgets/sync_wait.dart` — `waitForSyncIdle`: switching or deleting a profile waits for its save lock and upload queue, saying what it waits for (both are refused while a game runs).
 - `tool/make_release.ps1` — builds and packs `dist\Gargosy-<version>.zip`. `thirdparty/7zr.exe` is bundled (LGPL, see `NOTICE.md`) to unpack `.7z` emulator downloads.
 

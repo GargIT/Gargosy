@@ -13,11 +13,15 @@ typedef RaTokenFetcher = Future<({String username, String token})> Function(Stri
 /// never stored; the token is kept DPAPI-protected in the profile's prefs.
 /// RetroArch signs in with it at launch (`--appendconfig`).
 class RaAccount {
-  RaAccount(this._prefs, {required this.fetchToken});
+  RaAccount(this._prefs, {required this.fetchToken, this.signOutEmulators});
 
   final AppPreferences _prefs;
   /// Exchanges the password for RA's Connect token.
   final RaTokenFetcher fetchToken;
+
+  /// Takes the login out of the profile's emulator settings (RetroArch's
+  /// and PCSX2's keep it once written).
+  final Future<void> Function()? signOutEmulators;
 
   /// Null when no account is connected.
   String? get username {
@@ -41,6 +45,7 @@ class RaAccount {
     await _prefs.remove(kRaUsernameKey);
     await SecureStorageService.delete(kRaConnectTokenSecureKey, _prefs);
     await RetroAchievementsEmulatorLogin.deleteEmulatorFiles();
+    await signOutEmulators?.call();
   }
 }
 
@@ -48,5 +53,8 @@ class RaAccount {
 final raAccountProvider = Provider<RaAccount?>((ref) {
   final prefs = ref.watch(profilePrefsProvider);
   if (prefs == null) return null;
-  return RaAccount(prefs, fetchToken: (u, p) => RetroAchievementsService().fetchConnectToken(u, p));
+  final dirs = ref.watch(launchDirectoriesProvider);
+  return RaAccount(prefs,
+      fetchToken: (u, p) => RetroAchievementsService().fetchConnectToken(u, p),
+      signOutEmulators: dirs == null ? null : () async => dirs.signOutRetroAchievements());
 });

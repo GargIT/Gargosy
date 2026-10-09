@@ -1,3 +1,5 @@
+import '../core/emulator/strategies/retroarch_strategy.dart';
+import '../core/emulator/emulator_strategy.dart';
 import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,11 +61,13 @@ class PlayController extends StateNotifier<PlayState> {
       if (request != null) await engine.remember(game, request);
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
-      final session = await engine.launch(game, romPath, emulator, coreOverride: coreOverride);
+      final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
       session.finished.then((result) => _ended(game, result.message, synced: result.synced), onError: (Object e) => _ended(game, 'Saves not synced: $e'));
       return null;
     } on SaveChoiceException catch (e) {
       return refuse("Couldn't start with that save: ${e.message}");
+    } on StateError catch (e) {
+      return refuse("Couldn't start ${game.displayName}: ${e.message}");
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
     }
@@ -108,11 +112,24 @@ class PlayController extends StateNotifier<PlayState> {
           loadPath = path;
       }
       await engine.prepare(game, romPath, emulator, onProblem: onNotice);
-      final session = await engine.launch(game, romPath, emulator, loadStatePath: loadPath);
+      final session = await _launch(engine, game, romPath, emulator, loadStatePath: loadPath, onNotice: onNotice);
       session.finished.then((result) => _ended(game, result.message, synced: result.synced), onError: (Object e) => _ended(game, 'Saves not synced: $e'));
       return null;
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
+    }
+  }
+
+  /// Launches; a RetroArch core that isn't installed yet is downloaded first
+  /// (RetroArch's download brings only a few), then the launch runs again.
+  Future<PlaySession> _launch(PlayEngine engine, Game game, String romPath, EmulatorStrategy emulator,
+      {String? coreOverride, String? loadStatePath, void Function(String)? onNotice}) async {
+    try {
+      return await engine.launch(game, romPath, emulator, coreOverride: coreOverride, loadStatePath: loadStatePath);
+    } on MissingRetroArchCoreException catch (missing) {
+      onNotice?.call('Downloading the ${coreLabel(missing.coreName)} core for RetroArch…');
+      await engine.installCore(emulator, missing);
+      return engine.launch(game, romPath, emulator, coreOverride: coreOverride, loadStatePath: loadStatePath);
     }
   }
 

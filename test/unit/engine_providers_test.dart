@@ -52,6 +52,12 @@ void main() {
     expect(launch!.stateSyncService, same(c.read(stateSyncServiceProvider)));
     expect(c.read(resumeServiceProvider), isNotNull);
     expect(c.read(strategyRegistryProvider)!.getStrategyForSlug('ps2')?.emulatorId, isNotNull);
+    // The emulator code sees the profile's folders as Windows' user folders,
+    // never the PC's own Documents or AppData.
+    // ignore: invalid_use_of_protected_member
+    final env = c.read(strategyRegistryProvider)!.getStrategyById('dolphin')!.platform.environment;
+    expect(p.isWithin(paths.dir, env['APPDATA']!), isTrue);
+    expect(p.isWithin(paths.dir, env['USERPROFILE']!), isTrue);
 
     c.read(activeProfileProvider.notifier).signOut();
     expect(c.read(saveSyncServiceProvider), isNull);

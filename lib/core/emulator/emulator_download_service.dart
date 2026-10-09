@@ -37,7 +37,18 @@ class EmulatorDownloadService {
 
   Future<List<Map<String, String>>> getLatestAssetsForEmulator(String emulatorId) async {
     final definition = kEmulatorDefinitions.firstWhere((d) => d['id'] == emulatorId);
-    final repo = definition['github_repo'] as String? ?? definition['gitea_repo'] as String? ?? '';
+    // Gargosy: a direct link is the latest there is.
+    if (typeFor(definition, _platform, fallback: 'github') == 'direct') {
+      final key = _platform.isWindows ? 'windows_url' : (_platform.isMacOS ? 'macos_url' : 'linux_url');
+      final url = definition[key] as String?;
+      return url == null ? const [] : [{'name': url.split('/').last, 'url': url}];
+    }
+    final os = _platform.isWindows ? 'windows' : (_platform.isMacOS ? 'macos' : 'linux');
+    // Gargosy: an OS-specific repo, as downloadEmulator uses.
+    final repo = definition['github_repo_$os'] as String? ??
+        definition['github_repo'] as String? ??
+        definition['gitea_repo'] as String? ??
+        '';
     final type = typeFor(definition, _platform, fallback: 'github');
     final platform = type == 'github' || type == 'github_multi' ? ReleasePlatform.github : (type == 'dolphin' ? ReleasePlatform.dolphin : ReleasePlatform.gitea);
     
@@ -52,7 +63,11 @@ class EmulatorDownloadService {
       requiredKey = 'asset_required_${_platform.isWindows ? 'windows' : (_platform.isMacOS ? 'macos' : 'linux')}';
       excludedKey = 'asset_excluded';
     } else {
-      requiredKey = _platform.isWindows ? 'github_asset_required_windows' : 'github_asset_required_linux';
+      // Gargosy: the same keys as downloadEmulator — an OS-specific key when
+      // the definition has one, else the plain one (PCSX2 and DuckStation keep
+      // their Windows filters there). Without this the release's first file,
+      // a Linux AppImage, was taken.
+      requiredKey = definition.containsKey('github_asset_required_$os') ? 'github_asset_required_$os' : 'github_asset_required';
       excludedKey = 'github_asset_excluded';
     }
     
@@ -62,7 +77,13 @@ class EmulatorDownloadService {
       platform: platform,
       repo: repo,
       requiredFilters: List<String>.from(definition[requiredKey] ?? []),
-      excludedFilters: List<String>.from(definition[excludedKey] ?? []),
+      // Gargosy: the plain exclusions and the OS's own (PCSX2: debug and sse4,
+      // and arm64 on Windows), and never a debug-symbols package.
+      excludedFilters: {
+        ...List<String>.from(definition[excludedKey] ?? []),
+        ...List<String>.from(definition['github_asset_excluded_$os'] ?? []),
+        'symbols',
+      }.toList(),
       baseUrl: baseUrl,
     );
   }

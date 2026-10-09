@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../emulators/bios_sync.dart';
 import '../../emulators/emulator_installer.dart';
 import '../../emulators/emulator_library.dart';
 import '../../core/input/gamepad_service.dart';
@@ -56,11 +57,12 @@ class _EmulatorsScreenState extends ConsumerState<EmulatorsScreen> {
       } else if (url == e.installedFrom) {
         showToast(context, '${e.name} is already the newest.');
       } else {
+        await ref.read(emulatorLibraryProvider)?.clearIfNoProgram(e.id);
         await for (final pr in installer.install(e.id, url)) {
           if (!mounted) return;
           if (pr.error != null) error = pr.error;
           if (pr.status == 'done' && pr.error == null) installed = true;
-          setState(() => _busy[e.id] = pr.status == 'extracting' ? 'Unpacking…' : 'Downloading ${(pr.percent * 100).round()} %');
+          setState(() => _busy[e.id] = pr.status.startsWith('Extracting') ? 'Unpacking…' : 'Downloading ${(pr.percent * 100).round()} %');
         }
       }
     } on Object catch (err) {
@@ -72,8 +74,21 @@ class _EmulatorsScreenState extends ConsumerState<EmulatorsScreen> {
     if (!mounted) return;
     if (error != null) {
       showToast(context, "Couldn't download ${e.name}: $error");
-    } else if (installed) {
-      showToast(context, '${e.name} is installed.');
+      return;
+    }
+    if (!installed) return;
+    showToast(context, '${e.name} is installed.');
+    // Its BIOS files from RomM, into the shared bios folder.
+    final bios = ref.read(biosSyncProvider);
+    if (bios == null) return;
+    setState(() => _busy[e.id] = 'Getting BIOS files…');
+    try {
+      final n = await bios.forEmulator(e.id);
+      if (mounted && n > 0) showToast(context, n == 1 ? 'Got 1 BIOS file from RomM.' : 'Got $n BIOS files from RomM.');
+    } on Object {
+      // RomM may have none, or be out of reach: the emulator is installed anyway.
+    } finally {
+      if (mounted) setState(() => _busy.remove(e.id));
     }
   }
 

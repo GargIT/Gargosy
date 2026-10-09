@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
+import '../../storage/profile_rooted.dart';
 import 'dart:io' as io;
 import 'dart:io' show Process;
 import 'package:flutter/foundation.dart';
@@ -14,6 +15,11 @@ import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/emulator/platform_slugs.dart';
+
+/// A core file's name as people say it: `mupen64plus_next_libretro.dll` is
+/// `mupen64plus_next`. Gargosy.
+String coreLabel(String coreName) =>
+    coreName.replaceAll(RegExp(r'\.(dll|so|dylib)$'), '').replaceAll(RegExp(r'_libretro$'), '');
 
 class MissingRetroArchCoreException implements Exception {
   final String coreName;
@@ -273,6 +279,8 @@ class RetroArchStrategy extends EmulatorStrategy {
   /// never fails a launch.
   @visibleForTesting
   Future<List<String>> retroAchievementsLaunchArgs() async {
+    // Gargosy: a profile's login is in its own retroarch.cfg (ProfileLaunchConfig).
+    if (_directoryService is ProfileRootedDirectories) return const [];
     try {
       final login = await (_raLoginLoader ?? () => RetroAchievementsEmulatorLogin.load(_directoryService.prefs))();
       if (login == null) return const [];
@@ -446,7 +454,8 @@ class RetroArchStrategy extends EmulatorStrategy {
       for (final entry in archive) {
         debugPrint('[RetroArch] Zip entry: ${entry.name}');
         if (entry.isFile && entry.name.endsWith('.$ext')) {
-          final outFile = io.File(p.join(coresDir, entry.name));
+          // Gargosy: the file name only; a zip's paths never leave coresDir.
+          final outFile = io.File(p.join(coresDir, p.basename(entry.name)));
           await outFile.parent.create(recursive: true);
           await outFile.writeAsBytes(entry.content as List<int>);
           debugPrint('[RetroArch] Extracted: ${entry.name} to ${outFile.path}');

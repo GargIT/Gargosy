@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
@@ -65,6 +66,12 @@ String describeLoadError(Object error) {
   final text = error.toString();
   if (text.contains('SocketException') || text.contains('connection')) {
     return "Can't reach RomM. Check your network.";
+  }
+  if (error is DioException) {
+    final status = error.response?.statusCode;
+    final path = error.requestOptions.path;
+    if (status != null && status >= 500) return 'RomM had a problem answering (error $status for $path). Try again in a moment.';
+    if (status != null) return 'RomM said no (error $status for $path).';
   }
   return 'RomM could not be read ($text).';
 }

@@ -43,4 +43,12 @@ void main() {
     expect(account.username, isNull);
     expect(await RetroAchievementsEmulatorLogin.load(prefs), isNull);
   });
+
+  test("disconnect also signs the profile's emulators out", () async {
+    var signedOut = 0;
+    final a = RaAccount(prefs, fetchToken: (u, p) async => (username: u, token: 't'), signOutEmulators: () async => signedOut++);
+    await a.connect('anna', 'pw');
+    await a.disconnect();
+    expect(signedOut, 1);
+  });
 }

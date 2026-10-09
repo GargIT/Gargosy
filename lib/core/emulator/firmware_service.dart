@@ -1,4 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+import '../storage/profile_rooted.dart';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -244,7 +245,24 @@ class FirmwareService {
       relativePath = firmware.fileName;
     }
 
-    final destPath = p.join(biosDir, relativePath);
+    // Gargosy: a profile's BIOS folder is the shared bios\ itself, which
+    // PCSX2 and DuckStation are pointed at, so their registry's `bios`
+    // subfolder is left out (RetroArch's core subfolders stay: bios\ is
+    // copied into each profile's system folder as it is).
+    var placed = relativePath;
+    final parts = p.split(relativePath);
+    if (_directoryService is ProfileRootedDirectories &&
+        emulatorId != 'retroarch' &&
+        parts.length > 1 &&
+        parts.first.toLowerCase() == 'bios') {
+      placed = p.joinAll(parts.skip(1));
+    }
+    final destPath = p.normalize(p.join(biosDir, placed));
+    // Gargosy: a file name from the server never leaves the BIOS folder.
+    if (!p.isWithin(p.normalize(biosDir), destPath)) {
+      debugPrint('[Firmware] ${firmware.fileName} would land outside $biosDir; skipped');
+      return;
+    }
     final destFile = File(destPath);
     debugPrint('[Firmware] relativePath=$relativePath, destPath=$destPath');
 

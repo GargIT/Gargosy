@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
+import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/library/upload_queue.dart';
@@ -80,8 +81,24 @@ class FakeEngine implements PlayEngine {
     return check;
   }
 
+  /// The core the next launch says is missing (once).
+  String? missingCore;
+  bool coreDownloadFails = false;
+
+  @override
+  Future<void> installCore(EmulatorStrategy s, MissingRetroArchCoreException missing) async {
+    steps.add('core ${missing.coreName}');
+    if (coreDownloadFails) throw StateError("The ${missing.coreName} core couldn't be downloaded");
+  }
+
   @override
   Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy s, {String? coreOverride, String? loadStatePath}) async {
+    final missing = missingCore;
+    if (missing != null) {
+      missingCore = null;
+      steps.add('launch (no core)');
+      throw MissingRetroArchCoreException(coreName: missing, corePath: r'D:\G\emulators\retroarch\cores\' + missing, exePath: 'ra.exe');
+    }
     steps.add('launch');
     this.loadStatePath = loadStatePath;
     launchedIn = s.emulatorId;
@@ -228,5 +245,22 @@ void main() {
     engine.running!.complete(const PlayResult('Save synced to RomM.', synced: true));
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(waiting, isEmpty);
+  });
+
+  test('a RetroArch core that is not installed yet is downloaded, then the game starts', () async {
+    engine.missingCore = 'mupen64plus_next_libretro.dll';
+    final told = <String>[];
+    expect(await c.read(playControllerProvider.notifier).play(game(1, 'G'), onNotice: told.add), isNull);
+    expect(engine.steps, ['states', 'prepare', 'launch (no core)', 'core mupen64plus_next_libretro.dll', 'launch']);
+    expect(told.single, contains('mupen64plus_next'));
+    expect(c.read(playControllerProvider).runningGameId, '1');
+  });
+
+  test("a core that can't be downloaded says so, and nothing runs", () async {
+    engine
+      ..missingCore = 'mupen64plus_next_libretro.dll'
+      ..coreDownloadFails = true;
+    expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), contains("couldn't be downloaded"));
+    expect(c.read(playControllerProvider).runningGameId, isNull);
   });
 }

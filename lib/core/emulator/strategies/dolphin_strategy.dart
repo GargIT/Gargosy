@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
+import '../../storage/profile_rooted.dart';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -138,6 +139,9 @@ class DolphinStrategy extends EmulatorStrategy {
   @override
   Future<void> preLaunch(Game game, String romPath) async {
     try {
+      // Gargosy: a profile's login goes into the profile's own settings
+      // (ProfileLaunchConfig); from here it would reach the shared install.
+      if (_directoryService is ProfileRootedDirectories) return;
       final login = await (_raLoginLoader ?? () => RetroAchievementsEmulatorLogin.load(_directoryService.prefs))();
       if (login != null) await applyRetroAchievementsLogin(login);
     } catch (e) {

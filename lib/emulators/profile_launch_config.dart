@@ -1,3 +1,4 @@
+import '../core/retroachievements/retroachievements_emulator_login.dart';
 import 'dart:convert';
 import 'dart:io' as io;
 
@@ -5,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
+import 'bios_links.dart';
 import 'config_files.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
@@ -17,6 +19,9 @@ class LaunchContext {
     required this.profileId,
     required this.profilesDir,
     required this.guard,
+    this.raLogin,
+    this.roms = '',
+    this.gameFolders = const [],
   });
 
   final String data;
@@ -25,6 +30,18 @@ class LaunchContext {
   final String profileId;
   final String profilesDir;
   final PathGuard guard;
+
+  /// The profile's RetroAchievements login, for emulators that sign in from
+  /// their settings; null when none is connected.
+  final RetroAchievementsEmulatorLogin? raLogin;
+
+  /// The Gargosy `roms\` folder.
+  final String roms;
+
+  /// `roms\<platform>` folders of the platforms this emulator plays: added
+  /// to the emulator's own game list (it's never needed to play from
+  /// Gargosy, but the emulator opened on its own shows the games).
+  final List<String> gameFolders;
 }
 
 class UnsupportedEmulatorException implements Exception {
@@ -53,8 +70,11 @@ abstract class ProfileLaunchConfig {
   void repoint(LaunchContext c) {}
 
   static final Map<String, ProfileLaunchConfig> _configs = {
-    'dolphin': _Args((c) => ['--user=${c.data}']),
-    'pcsx2': _Args((c) => ['-datapath', c.data], before: (c) => _turnOff(c, const ['portable.txt', 'portable.ini'])),
+    'dolphin': _Args((c) => ['--user=${c.data}'], before: (c) async => _dolphinGameFolders(c)),
+    'pcsx2': _Args((c) => ['-datapath', c.data], before: (c) async {
+      await _turnOff(c, const ['portable.txt', 'portable.ini']);
+      _pcsx2Settings(c);
+    }),
     'retroarch': const _RetroArch(),
     'mame': _Args((c) => [
           '-inipath', c.data,
@@ -98,6 +118,55 @@ abstract class ProfileLaunchConfig {
   static ProfileLaunchConfig? of(String emulatorId) => _configs[emulatorId];
 }
 
+/// PCSX2 looks for BIOS files in the shared `bios\` (spec §6), not in the
+/// profile's own `PCSX2\bios`, and signs in with the profile's
+/// RetroAchievements login (the `[Achievements]` keys, the token in
+/// secrets.ini, as Freegosy's PCSX2 strategy writes them). Only those keys
+/// change; a new profile's file starts the way PCSX2 writes its own
+/// (SettingsVersion 1), so PCSX2 keeps it instead of resetting it.
+void _pcsx2Settings(LaunchContext c) {
+  final inis = p.join(c.data, 'PCSX2', 'inis');
+  final ini = io.File(c.guard.check(p.join(inis, 'PCSX2.ini')));
+  final settings = IniFile(ini.existsSync() ? ini.readAsStringSync() : '');
+  if (!ini.existsSync()) settings.set('UI', 'SettingsVersion', '1');
+  settings.set('Folders', 'Bios', c.bios);
+  for (final f in c.gameFolders) {
+    settings.add('GameList', 'RecursivePaths', f);
+  }
+  final ra = c.raLogin;
+  io.Directory(inis).createSync(recursive: true);
+  if (ra != null) {
+    final newUser = settings.get('Achievements', 'Username') != ra.username;
+    settings.set('Achievements', 'Enabled', 'true');
+    settings.set('Achievements', 'Username', ra.username);
+    if (newUser || settings.get('Achievements', 'LoginTimestamp') == null) {
+      settings.set('Achievements', 'LoginTimestamp', '${DateTime.now().millisecondsSinceEpoch ~/ 1000}');
+    }
+    settings.set('Achievements', 'ChallengeMode', '${ra.hardcore ?? false}');
+    final secretsFile = io.File(c.guard.check(p.join(inis, 'secrets.ini')));
+    final secrets = IniFile(secretsFile.existsSync() ? secretsFile.readAsStringSync() : '');
+    secrets.set('Achievements', 'Token', ra.token);
+    secretsFile.writeAsStringSync(secrets.toText());
+  }
+  ini.writeAsStringSync(settings.toText());
+}
+
+/// Dolphin's ISO folders (`Config\Dolphin.ini`, `[General] ISOPathN`):
+/// Gargosy's, searched recursively, unless the player set their own.
+void _dolphinGameFolders(LaunchContext c) {
+  if (c.gameFolders.isEmpty) return;
+  final file = io.File(c.guard.check(p.join(c.data, 'Config', 'Dolphin.ini')));
+  final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '');
+  if ((int.tryParse(ini.get('General', 'ISOPaths') ?? '') ?? 0) > 0) return;
+  ini.set('General', 'ISOPaths', '${c.gameFolders.length}');
+  for (var i = 0; i < c.gameFolders.length; i++) {
+    ini.set('General', 'ISOPath$i', c.gameFolders[i]);
+  }
+  ini.set('General', 'RecursiveISOPaths', 'True');
+  file.parent.createSync(recursive: true);
+  file.writeAsStringSync(ini.toText());
+}
+
 Future<void> _ensure(LaunchContext c) => io.Directory(c.guard.check(c.data)).create(recursive: true);
 
 /// Renames files next to the exe that would make the emulator ignore the
@@ -133,7 +202,7 @@ class _RetroArch extends ProfileLaunchConfig {
   Future<List<String>> prepare(LaunchContext c) async {
     await _ensure(c);
     final cfg = _write(c);
-    _copyBios(c.bios, systemDir(c), c.guard);
+    linkBiosInto(c.bios, systemDir(c), c.guard);
     return ['--config=${cfg.path}'];
   }
 
@@ -150,6 +219,7 @@ class _RetroArch extends ProfileLaunchConfig {
       'savefile_directory': p.join(c.data, 'saves'),
       'savestate_directory': p.join(c.data, 'states'),
       'system_directory': systemDir(c),
+      if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
       'playlist_directory': p.join(c.data, 'playlists'),
       'content_history_directory': p.join(c.data, 'playlists'),
       'input_remapping_directory': p.join(c.data, 'config', 'remaps'),
@@ -157,22 +227,17 @@ class _RetroArch extends ProfileLaunchConfig {
       'log_dir': p.join(c.data, 'logs'),
       'core_info_cache_enable': 'false',
       'config_save_on_exit': 'true',
+      // The profile's RetroAchievements login, in its own config (Gargosy
+      // owns it, so RetroArch may save it on exit).
+      if (c.raLogin case final ra?) ...{
+        'cheevos_enable': 'true',
+        'cheevos_username': ra.username,
+        'cheevos_password': '',
+        'cheevos_token': ra.token,
+        'cheevos_hardcore_mode_enable': '${ra.hardcore ?? false}',
+      },
     }));
     return cfg;
-  }
-}
-
-/// Copies the shared BIOS files into [to] where they are missing or differ
-/// in size. Nothing in [to] is removed (a core's own files stay).
-void _copyBios(String from, String to, PathGuard guard) {
-  final src = io.Directory(from);
-  if (!src.existsSync()) return;
-  for (final e in src.listSync(recursive: true)) {
-    if (e is! io.File) continue;
-    final dest = io.File(guard.check(p.join(to, p.relative(e.path, from: from))));
-    if (dest.existsSync() && dest.lengthSync() == e.lengthSync()) continue;
-    dest.parent.createSync(recursive: true);
-    e.copySync(dest.path);
   }
 }
 
@@ -208,6 +273,9 @@ class _Ppsspp extends ProfileLaunchConfig {
 /// DuckStation's folder keys, all inside the profile, and the shared BIOS.
 IniFile _duckstationFolders(IniFile ini, LaunchContext c) {
   ini.set('MemoryCards', 'Directory', p.join(c.data, 'memcards'));
+  for (final f in c.gameFolders) {
+    ini.add('GameList', 'RecursivePaths', f);
+  }
   ini.set('BIOS', 'SearchDirectory', c.bios);
   for (final key in const [
     'Cache', 'Cheats', 'Covers', 'GameIcons', 'GameSettings', 'InputProfiles', 'Patches',

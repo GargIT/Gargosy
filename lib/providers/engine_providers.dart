@@ -41,10 +41,16 @@ final launchDirectoriesProvider = Provider<ProfileLaunchDirectories?>((ref) {
   return ProfileLaunchDirectories(root: ref.watch(appRootProvider), paths: paths, prefs: prefs);
 });
 
+/// The emulator strategies, seeing the profile's folders as Windows' user
+/// folders (as the save code does): no copied code can reach the PC's own
+/// Documents or AppData.
 final strategyRegistryProvider = Provider<StrategyRegistry?>((ref) {
   final dirs = ref.watch(launchDirectoriesProvider);
   final prefs = ref.watch(profilePrefsProvider);
-  return dirs == null || prefs == null ? null : StrategyRegistry(dirs, prefs);
+  final paths = ref.watch(_profilePathsProvider);
+  return dirs == null || prefs == null || paths == null
+      ? null
+      : StrategyRegistry(dirs, prefs, platform: sandboxedPlatform(paths));
 });
 
 final saveSyncServiceProvider = Provider<SaveSyncService?>((ref) {

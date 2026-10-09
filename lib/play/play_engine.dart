@@ -1,3 +1,9 @@
+import '../profiles/profile_providers.dart';
+import '../profiles/path_guard.dart';
+import '../core/emulator/strategies/retroarch_strategy.dart';
+import 'package:path/path.dart' as p;
+import 'package:dio/dio.dart';
+import 'dart:io' as io;
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -84,6 +90,10 @@ abstract class PlayEngine {
       {PlayRequest? request, String? coreOverride, void Function(String)? onProblem});
   Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy strategy,
       {String? coreOverride, String? loadStatePath});
+
+  /// Downloads the RetroArch core [missing] names into the RetroArch install
+  /// (shared by every profile). Throws when it can't.
+  Future<void> installCore(EmulatorStrategy strategy, MissingRetroArchCoreException missing);
 }
 
 /// [PlayEngine] on the active profile's copy of Freegosy's engine.
@@ -236,6 +246,15 @@ class GargosyPlayEngine implements PlayEngine {
       mustFinish: () async => true,
       onProblem: onProblem,
     );
+  }
+
+  @override
+  Future<void> installCore(EmulatorStrategy strategy, MissingRetroArchCoreException missing) async {
+    if (strategy is! RetroArchStrategy) throw StateError('${strategy.name} has no cores');
+    // Only ever into the RetroArch install under emulators\.
+    final core = PathGuard(_ref.read(appRootProvider)).check(missing.corePath);
+    await strategy.downloadCore(missing.coreName, p.dirname(core), Dio());
+    if (!io.File(core).existsSync()) throw StateError("The ${coreLabel(missing.coreName)} core couldn't be downloaded");
   }
 
   static const _syncMode = 'both';

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/emulators/bios_sync.dart';
 import 'package:gargosy/emulators/emulator_installer.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
 import 'package:gargosy/ui/screens/emulators_screen.dart';
@@ -40,11 +41,13 @@ void main() {
     expect(installer.installed, isEmpty);
   });
 
-  testWidgets('Update installs a newer build', (tester) async {
+  testWidgets('Update installs a newer build, then fetches its BIOS files from RomM', (tester) async {
     final installer = _FakeInstaller('https://example/dolphin-3.zip');
+    final biosFor = <String>[];
     await setDesktopSize(tester);
     await tester.pumpWidget(testApp(const EmulatorsScreen(), overrides: [
       emulatorInstallerProvider.overrideWithValue(installer),
+      biosSyncProvider.overrideWithValue(_Bios(biosFor)),
       emulatorsProvider.overrideWith((ref) async => const [
             EmulatorInfo(id: 'dolphin', name: 'Dolphin', exe: 'Dolphin.exe', supported: true,
                 installedExe: r'C:\G\emulators\dolphin\Dolphin.exe', installedFrom: 'https://example/dolphin-2.zip'),
@@ -54,6 +57,7 @@ void main() {
     await tester.tap(find.text('Update'));
     await tester.pumpAndSettle();
     expect(installer.installed, ['dolphin https://example/dolphin-3.zip']);
+    expect(biosFor, ['dolphin']);
     expect(find.textContaining('Dolphin is installed'), findsOneWidget);
   });
 }
@@ -71,4 +75,18 @@ class _FakeInstaller implements EmulatorInstaller {
     installed.add('$id $url');
     yield const InstallProgress('done', 1);
   }
+}
+
+class _Bios implements BiosSync {
+  _Bios(this.calls);
+  final List<String> calls;
+
+  @override
+  Future<int> forEmulator(String emulatorId) async {
+    calls.add(emulatorId);
+    return 0;
+  }
+
+  @override
+  Future<int> forAll(Set<String> installed) async => 0;
 }

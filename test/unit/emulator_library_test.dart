@@ -86,4 +86,13 @@ void main() {
     await library().importFrom('dolphin', source.path);
     expect((await library().list()).firstWhere((e) => e.id == 'dolphin').installedFrom, EmulatorLibrary.imported);
   });
+
+  test('a folder without the program (a failed or wrong download) is cleared before a download; a real install is not', () async {
+    final junk = io.File(p.join(root.emulators, 'pcsx2', 'pcsx2-qt.pdb'))..createSync(recursive: true);
+    await library().clearIfNoProgram('pcsx2');
+    expect(junk.existsSync(), isFalse);
+    final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin.exe'))..createSync(recursive: true);
+    await library().clearIfNoProgram('dolphin');
+    expect(exe.existsSync(), isTrue);
+  });
 }

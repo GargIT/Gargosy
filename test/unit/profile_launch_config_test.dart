@@ -16,7 +16,7 @@ void main() {
   setUp(() async => root = await tempAppRoot());
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  LaunchContext ctx(String emulator, {String profile = 'aaa', String? subfolder}) {
+  LaunchContext ctx(String emulator, {String profile = 'aaa', String? subfolder, List<String> gameFolders = const []}) {
     final paths = ProfilePaths(root, profile);
     final exeDir = p.join(root.emulators, emulator, subfolder ?? '');
     io.Directory(exeDir).createSync(recursive: true);
@@ -27,6 +27,8 @@ void main() {
       profileId: profile,
       profilesDir: root.profiles,
       guard: PathGuard(root, activeProfileId: profile),
+      roms: root.roms,
+      gameFolders: gameFolders,
     );
   }
 
@@ -55,6 +57,22 @@ void main() {
     expect(mameArgs.sublist(0, 2), ['-inipath', m.data]);
     expect(mameArgs, containsAllInOrder(['-nvram_directory', p.join(m.data, 'nvram')]));
     expect(io.Directory(d.data).existsSync(), isTrue);
+  });
+
+  test("pcsx2: the profile's PCSX2 looks for BIOS files in the shared bios folder", () async {
+    final c = ctx('pcsx2');
+    final ini = io.File(p.join(c.data, 'PCSX2', 'inis', 'PCSX2.ini'));
+    // A new profile: PCSX2 hasn't written its settings yet.
+    await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
+    expect(ini.readAsStringSync(), contains('SettingsVersion = 1'));
+    expect(ini.readAsStringSync(), contains('Bios = ${root.bios}'));
+    // PCSX2's own settings: only the BIOS folder changes.
+    ini.writeAsStringSync('[UI]\nSettingsVersion = 1\nSetupWizardIncomplete = true\n[Folders]\nBios = bios\nMemoryCards = memcards\n');
+    await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
+    final text = ini.readAsStringSync();
+    expect(text, contains('Bios = ${root.bios}'));
+    expect(text, contains('MemoryCards = memcards'));
+    expect(text, contains('SetupWizardIncomplete = true'));
   });
 
   test('pcsx2: -datapath, and portable markers next to the exe are turned off', () async {
@@ -200,5 +218,77 @@ void main() {
       ..writeAsStringSync('savefile_directory = "E:\\OldGargosy\\saves"\n');
     ProfileLaunchConfig.of('retroarch')!.repoint(r);
     expect(io.File(p.join(r.data, 'retroarch.cfg')).readAsStringSync(), contains(p.join(r.data, 'saves')));
+  });
+
+  group("the emulator's own game list shows Gargosy's ROM folders", () {
+    test('PCSX2: added to its game folders; one the player added stays', () async {
+      final c = ctx('pcsx2', gameFolders: [p.join(root.roms, 'ps2')]);
+      await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
+      final ini = io.File(p.join(c.data, 'PCSX2', 'inis', 'PCSX2.ini'));
+      expect(ini.readAsStringSync(), contains('RecursivePaths = ${p.join(root.roms, 'ps2')}'));
+      ini.writeAsStringSync('[UI]\nSettingsVersion = 1\n[GameList]\nRecursivePaths = D:\\Mine\n');
+      await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
+      final text = ini.readAsStringSync();
+      expect(text, contains('RecursivePaths = D:\\Mine'));
+      expect(text, contains('RecursivePaths = ${p.join(root.roms, 'ps2')}'));
+      await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
+      expect(RegExp(RegExp.escape(p.join(root.roms, 'ps2'))).allMatches(ini.readAsStringSync()).length, 1,
+          reason: 'never added twice');
+    });
+
+    test("DuckStation: in its settings.ini's game folders", () async {
+      final c = ctx('duckstation', gameFolders: [p.join(root.roms, 'psx')]);
+      await ProfileLaunchConfig.of('duckstation')!.prepare(c);
+      expect(io.File(p.join(c.exeDir, 'settings.ini')).readAsStringSync(),
+          contains('RecursivePaths = ${p.join(root.roms, 'psx')}'));
+    });
+
+    test("Dolphin: its ISO folders (searched recursively), unless the player set their own", () async {
+      final c = ctx('dolphin', gameFolders: [p.join(root.roms, 'ngc'), p.join(root.roms, 'wii')]);
+      await ProfileLaunchConfig.of('dolphin')!.prepare(c);
+      final ini = io.File(p.join(c.data, 'Config', 'Dolphin.ini'));
+      final text = ini.readAsStringSync();
+      expect(text, contains('ISOPaths = 2'));
+      expect(text, contains('ISOPath0 = ${p.join(root.roms, 'ngc')}'));
+      expect(text, contains('ISOPath1 = ${p.join(root.roms, 'wii')}'));
+      expect(text, contains('RecursiveISOPaths = True'));
+      ini.writeAsStringSync('[General]\nISOPaths = 1\nISOPath0 = D:\\Mine\n');
+      await ProfileLaunchConfig.of('dolphin')!.prepare(c);
+      expect(ini.readAsStringSync(), contains('ISOPath0 = D:\\Mine'));
+    });
+
+    test("RetroArch: its file browser starts in roms", () async {
+      final c = ctx('retroarch');
+      await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+      expect(io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync(), contains('rgui_browser_directory = "${root.roms}"'));
+    });
+  });
+
+  group("RetroArch: the shared BIOS files reach each core's own folder", () {
+    test('PS2 BIOS dumps in bios\\ reach the PS2 core (pcsx2\\bios); others stay at the system root', () async {
+      io.File(p.join(root.bios, 'ps2-0230a-20080220.bin')).writeAsBytesSync(List.filled(4 * 1024 * 1024, 7));
+      io.File(p.join(root.bios, 'scph1001.bin')).writeAsBytesSync(List.filled(512 * 1024, 1));
+      final c = ctx('retroarch');
+      await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+      final system = p.join(c.data, 'system');
+      expect(io.File(p.join(system, 'pcsx2', 'bios', 'ps2-0230a-20080220.bin')).existsSync(), isTrue);
+      expect(io.File(p.join(system, 'scph1001.bin')).existsSync(), isTrue);
+      expect(io.File(p.join(system, 'pcsx2', 'bios', 'scph1001.bin')).existsSync(), isFalse);
+    });
+
+    test("a core's named BIOS (Flycast's dc_boot.bin) reaches its folder (dc)", () async {
+      io.File(p.join(root.bios, 'dc_boot.bin')).writeAsBytesSync([1, 2, 3]);
+      final c = ctx('retroarch');
+      await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+      expect(io.File(p.join(c.data, 'system', 'dc', 'dc_boot.bin')).existsSync(), isTrue);
+    });
+
+    test('the files are hard links: no extra space for each profile', () async {
+      final src = io.File(p.join(root.bios, 'scph1001.bin'))..writeAsBytesSync([1, 2, 3]);
+      final c = ctx('retroarch');
+      await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+      src.writeAsBytesSync([9, 9, 9], mode: io.FileMode.writeOnly);
+      expect(io.File(p.join(c.data, 'system', 'scph1001.bin')).readAsBytesSync(), [9, 9, 9]);
+    });
   });
 }

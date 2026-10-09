@@ -78,6 +78,32 @@ class IniFile {
     return true;
   }
 
+  /// Every value of [key] in [section] (a list written as the key repeated,
+  /// as PCSX2 and DuckStation keep their game folders). Gargosy.
+  List<String> getAll(String section, String key) {
+    final range = _range(section);
+    if (range == null) return const [];
+    return [
+      for (var i = range.start; i < range.end; i++)
+        if (_keyPattern.firstMatch(_lines[i]) case final m? when m.group(1) == key) m.group(2)!.trim(),
+    ];
+  }
+
+  /// Adds [value] to the list [key] in [section] (after its last entry),
+  /// unless it's there already. Returns whether it was added. Gargosy.
+  bool add(String section, String key, String value) {
+    if (getAll(section, key).contains(value)) return false;
+    final range = _range(section);
+    if (range == null) return set(section, key, value);
+    var last = -1;
+    for (var i = range.start; i < range.end; i++) {
+      if (_keyPattern.firstMatch(_lines[i])?.group(1) == key) last = i;
+    }
+    if (last < 0) return set(section, key, value);
+    _lines.insert(last + 1, '$key = $value');
+    return true;
+  }
+
   /// Removes [key] from [section]. Returns whether it was there.
   bool remove(String section, String key) {
     final line = _keyLine(section, key);

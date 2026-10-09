@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
 import '../core/romm/romm_service.dart';
+import '../core/romm/server_error_retry.dart';
 import '../profiles/profile_providers.dart';
 
 /// The active profile's RomM client (spec §4: every RomM call goes through the
@@ -16,6 +17,8 @@ final rommServiceProvider = Provider<RommService?>((ref) {
     RomMConfig(baseUrl: url, username: '', password: '', token: token, trustSelfSigned: trust),
     skipConnectivityCheck: true,
   );
+  // A read RomM answers with a passing server error is asked again.
+  service.dio.interceptors.add(ServerErrorRetry(service.dio));
   ref.onDispose(service.stopHeartbeat);
   return service;
 });

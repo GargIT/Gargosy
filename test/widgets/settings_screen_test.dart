@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/core/save/state_sync_service.dart';
+import 'package:gargosy/emulators/bios_sync.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/play/play_controller.dart';
@@ -35,7 +36,7 @@ Future<void> settleIo(WidgetTester tester) async {
 void main() {
   late ProviderContainer c;
 
-  Future<void> pump(WidgetTester tester, {PinHash? pin, UploadQueue? queue}) async {
+  Future<void> pump(WidgetTester tester, {PinHash? pin, UploadQueue? queue, BiosSync? bios}) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -47,6 +48,7 @@ void main() {
       coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
       rommHeartbeatEnabledProvider.overrideWithValue(false),
       uploadQueueProvider.overrideWith((ref) async => queue),
+      biosSyncProvider.overrideWithValue(bios),
       platformsProvider.overrideWith((ref) async => [Platform(id: 1, name: 'PlayStation', slug: 'psx')]),
       emulatorsProvider.overrideWith((ref) async => const [
             EmulatorInfo(id: 'duckstation', name: 'DuckStation', exe: 'duckstation-qt-x64-ReleaseLTCG.exe', supported: true, installedExe: r'C:\G\e\d.exe'),
@@ -140,4 +142,33 @@ void main() {
     expect(find.textContaining('Close the game first'), findsOneWidget);
     expect(find.textContaining('Delete Anna?'), findsNothing);
   });
+
+  testWidgets('Emulators: BIOS files come from RomM for every installed emulator', (tester) async {
+    final bios = _FakeBios(found: 3);
+    await pump(tester, bios: bios);
+    await tester.tap(find.text('Emulators'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get BIOS files from RomM'));
+    await tester.pumpAndSettle();
+    expect(bios.calls, ['all duckstation,retroarch']);
+    expect(find.textContaining('Got 3 BIOS files from RomM'), findsOneWidget);
+  });
+}
+
+class _FakeBios implements BiosSync {
+  _FakeBios({this.found = 0});
+  final int found;
+  final calls = <String>[];
+
+  @override
+  Future<int> forEmulator(String emulatorId) async {
+    calls.add('one $emulatorId');
+    return found;
+  }
+
+  @override
+  Future<int> forAll(Set<String> installed) async {
+    calls.add('all ${(installed.toList()..sort()).join(',')}');
+    return found;
+  }
 }

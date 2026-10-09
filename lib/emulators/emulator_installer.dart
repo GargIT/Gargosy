@@ -37,12 +37,23 @@ class GargosyEmulatorInstaller implements EmulatorInstaller {
 
   @override
   Stream<InstallProgress> install(String id, String url) async* {
-    String? error;
+    var finished = false;
     await for (final pr in _service.downloadEmulator(id, urlOverride: url)) {
-      if (pr.error != null) error = pr.error;
-      yield InstallProgress(pr.status, pr.percent, error: pr.error);
+      if (pr.error != null) {
+        yield InstallProgress('error', pr.percent, error: pr.error);
+        return;
+      }
+      if (pr.status == 'selection_required') {
+        yield const InstallProgress('error', 0, error: 'more than one download matches; nothing was installed');
+        return;
+      }
+      if (pr.isComplete) finished = true;
+      yield InstallProgress(pr.status, pr.percent);
     }
-    if (error != null) return;
+    if (!finished) {
+      yield const InstallProgress('error', 0, error: 'the download stopped before it finished');
+      return;
+    }
     await _library.recordInstall(id, from: url);
     yield const InstallProgress('done', 1);
   }
