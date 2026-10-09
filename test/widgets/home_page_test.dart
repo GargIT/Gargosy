@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/library/library_snapshot.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
@@ -80,5 +81,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining("Can't reach RomM"), findsOneWidget);
     expect(find.textContaining('No games yet'), findsNothing);
+  });
+
+  testWidgets("offline, Home shows the games on this PC, which still play", (tester) async {
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
+      ...overrides,
+      rommOfflineProvider.overrideWithValue(true),
+      gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez')]),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('On this PC'), findsOneWidget);
+    expect(find.text('Rez'), findsWidgets);
+  });
+
+  testWidgets('online, the games on this PC are not a shelf of their own', (tester) async {
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
+      ...overrides,
+      rommOfflineProvider.overrideWithValue(false),
+      gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez')]),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('On this PC'), findsNothing);
   });
 }

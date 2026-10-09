@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/save/backup_entry.dart';
+import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/romm_state.dart';
 import 'package:gargosy/providers/library_providers.dart';
@@ -86,5 +88,16 @@ void main() {
     ]));
     await tester.pumpAndSettle();
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('a save waiting to upload shows on Save Data', (tester) async {
+    final g = game(7, 'Burnout 3');
+    await tester.pumpWidget(testApp(SaveDataTab(game: g), overrides: [
+      romSavesProvider.overrideWith((ref, id) async => const []),
+      romStatesProvider.overrideWith((ref, id) async => const []),
+      uploadsWaitingProvider.overrideWith((ref, id) => [BackupEntry(timestamp: DateTime(2026, 10, 9, 21), md5Hash: 'h', localZipPath: 'z.zip')]),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Waiting to upload'), findsOneWidget);
   });
 }

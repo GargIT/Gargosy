@@ -1,12 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/emulator/emulator_download_service.dart';
-import '../../core/extraction/extraction_service.dart';
+import '../../emulators/emulator_installer.dart';
 import '../../emulators/emulator_library.dart';
-import '../../providers/engine_providers.dart';
 import '../../core/input/gamepad_service.dart';
 import '../shell/backdrop.dart';
 import '../theme/tokens.dart';
@@ -44,18 +41,27 @@ class _EmulatorsScreenState extends ConsumerState<EmulatorsScreen> {
     }
   }
 
+  /// Download, or Update: the newest build, unless it's the one installed.
   Future<void> _download(EmulatorInfo e) async {
-    final dirs = ref.read(launchDirectoriesProvider);
-    final registry = ref.read(strategyRegistryProvider);
-    if (dirs == null || registry == null) return;
-    final service = EmulatorDownloadService(Dio(), dirs, ExtractionService(dirs), registry);
-    setState(() => _busy[e.id] = 'Downloading…');
+    final installer = ref.read(emulatorInstallerProvider);
+    if (installer == null) return;
+    setState(() => _busy[e.id] = 'Looking for the newest…');
     String? error;
+    var installed = false;
     try {
-      await for (final pr in service.downloadEmulator(e.id)) {
-        if (!mounted) return;
-        if (pr.error != null) error = pr.error;
-        setState(() => _busy[e.id] = pr.status == 'extracting' ? 'Unpacking…' : 'Downloading ${(pr.percent * 100).round()} %');
+      final url = await installer.latestUrl(e.id);
+      if (!mounted) return;
+      if (url == null) {
+        error = "no download was found";
+      } else if (url == e.installedFrom) {
+        showToast(context, '${e.name} is already the newest.');
+      } else {
+        await for (final pr in installer.install(e.id, url)) {
+          if (!mounted) return;
+          if (pr.error != null) error = pr.error;
+          if (pr.status == 'done' && pr.error == null) installed = true;
+          setState(() => _busy[e.id] = pr.status == 'extracting' ? 'Unpacking…' : 'Downloading ${(pr.percent * 100).round()} %');
+        }
       }
     } on Object catch (err) {
       error = '$err';
@@ -64,7 +70,11 @@ class _EmulatorsScreenState extends ConsumerState<EmulatorsScreen> {
       ref.invalidate(emulatorsProvider);
     }
     if (!mounted) return;
-    showToast(context, error == null ? '${e.name} is installed.' : "Couldn't download ${e.name}: $error");
+    if (error != null) {
+      showToast(context, "Couldn't download ${e.name}: $error");
+    } else if (installed) {
+      showToast(context, '${e.name} is installed.');
+    }
   }
 
   Future<void> _remove(EmulatorInfo e) async {
@@ -109,7 +119,9 @@ class _EmulatorsScreenState extends ConsumerState<EmulatorsScreen> {
 
   Widget _row(EmulatorInfo e, bool first) {
     final busy = _busy[e.id];
-    final state = !e.supported ? 'Not supported yet' : (e.installedExe != null ? 'Installed' : 'Not installed');
+    final state = !e.supported
+        ? 'Not supported yet'
+        : (e.installedExe == null ? 'Not installed' : (e.version == null ? 'Installed' : 'Installed · ${e.version}'));
     return Container(
       margin: const EdgeInsets.only(bottom: GSpace.s2),
       padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
@@ -125,7 +137,7 @@ class _EmulatorsScreenState extends ConsumerState<EmulatorsScreen> {
             style: TextStyle(color: e.installedExe != null && e.supported ? GColors.success : GColors.fgSecondary)),
         if (busy == null && e.supported) ...[
           _button('Import from folder', () => _import(e), autofocus: first),
-          _button('Download', () => _download(e)),
+          _button(e.installedExe == null ? 'Download' : 'Update', () => _download(e)),
           if (e.installedExe != null) _button('Remove', () => _remove(e)),
         ],
       ]),

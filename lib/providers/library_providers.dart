@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../library/library_snapshot.dart';
+import 'download_providers.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
 import '../core/romm/romm_state.dart';
@@ -58,7 +60,18 @@ final favouriteGamesProvider = FutureProvider<List<Game>>((ref) async {
 
 final randomGameProvider = FutureProvider<Game?>((ref) async => ref.watch(libraryApiProvider)?.randomGame());
 
-final gameProvider = FutureProvider.family<Game?, String>((ref, id) async => ref.watch(rommServiceProvider)?.getGame(id));
+final gameProvider = FutureProvider.family<Game?, String>((ref, id) async {
+  final snap = ref.watch(librarySnapshotProvider);
+  Game? game;
+  try {
+    game = await ref.watch(rommServiceProvider)?.getGame(id);
+  } on Object {
+    game = null;
+  }
+  if (game == null) return snap?.find(id); // RomM unreachable: as it was when downloaded
+  if (snap != null && ref.read(romFilesProvider).isDownloaded(game)) await snap.remember(game);
+  return game;
+});
 
 /// RomM's saves of a game, newest first. Throws when they can't be read.
 final romSavesProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, id) async {

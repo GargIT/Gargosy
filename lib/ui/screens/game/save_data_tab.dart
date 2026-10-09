@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/romm/romm_models.dart';
 import '../../../providers/library_providers.dart';
+import '../../../library/upload_queue.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/format.dart';
@@ -37,7 +38,20 @@ class SaveDataTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final saves = ref.watch(romSavesProvider(game.id));
     final states = ref.watch(romStatesProvider(game.id));
+    final waiting = ref.watch(uploadsWaitingProvider(game.id));
     return ListView(padding: const EdgeInsets.only(bottom: GSpace.s14), children: [
+      if (waiting.isNotEmpty) ...[
+        Container(
+          padding: const EdgeInsets.all(GSpace.s4),
+          decoration: BoxDecoration(
+              color: GColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(GRadius.lg)),
+          child: Text(
+              'Waiting to upload: your save from ${_when(waiting.first.timestamp.toUtc().toIso8601String())} '
+              "isn't on RomM yet. It goes up when RomM can be reached.",
+              style: const TextStyle(color: GColors.accent)),
+        ),
+        const SizedBox(height: GSpace.s5),
+      ],
       const Text('Saves', style: TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
       const SizedBox(height: GSpace.s3),
       ...saves.when(

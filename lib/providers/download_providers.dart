@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/romm/romm_models.dart';
 import '../library/download_service.dart';
+import '../library/library_snapshot.dart';
 import '../library/rom_files.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/profile_providers.dart';
@@ -64,6 +65,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
       });
       if (!mounted) return;
       _set(game.id, null);
+      await _ref.read(librarySnapshotProvider)?.remember(game);
     } on DioException catch (e) {
       if (!mounted) return;
       _set(game.id, CancelToken.isCancel(e) ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
@@ -88,6 +90,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
 
   Future<void> delete(Game game) async {
     await _ref.read(romFilesProvider).delete(game, PathGuard(_ref.read(appRootProvider)));
+    await _ref.read(librarySnapshotProvider)?.forget(game.id);
     _ref.read(romFilesVersionProvider.notifier).state++;
   }
 }

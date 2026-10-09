@@ -87,6 +87,16 @@ class ActiveProfileNotifier extends StateNotifier<ProfileContext?> {
 
   /// Back to the profile picker. The login stays on this PC.
   void signOut() => state = null;
+
+  /// Saves [profile] (renamed, PIN changed) and keeps it open.
+  Future<void> update(Profile profile) async {
+    final current = state;
+    if (current == null || current.profile.id != profile.id) return;
+    await _ref.read(profileStoreProvider).save(profile);
+    if (!mounted) return;
+    state = ProfileContext(profile: profile, paths: current.paths, guard: current.guard, login: current.login);
+    _ref.invalidate(profilesProvider);
+  }
 }
 
 final activeProfileProvider =

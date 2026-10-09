@@ -6,10 +6,10 @@ import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
 
-enum UserMenuChoice { switchProfile, emulators, fullscreen }
+enum UserMenuChoice { switchProfile, settings, emulators, fullscreen }
 
-/// The user menu (Start, or the profile badge). Milestone A: switch profile
-/// and fullscreen; settings arrive later.
+/// The user menu (Start, or the profile badge): switch profile, settings,
+/// emulators and fullscreen.
 Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name}) {
   Widget item(BuildContext c, String label, IconData icon, UserMenuChoice choice, {bool autofocus = false}) => GFocusable(
         autofocus: autofocus,
@@ -43,6 +43,7 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name
                   child: Text(name, style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
                 ),
                 item(c, 'Switch profile', Icons.people_alt_outlined, UserMenuChoice.switchProfile, autofocus: true),
+                item(c, 'Settings', Icons.settings_outlined, UserMenuChoice.settings),
                 item(c, 'Emulators', Icons.videogame_asset_outlined, UserMenuChoice.emulators),
                 item(c, 'Fullscreen (F11)', Icons.fullscreen, UserMenuChoice.fullscreen),
                 const HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Close')]),

@@ -50,3 +50,6 @@ app.*.map.json
 # Local editor/devtools files
 .vscode/
 devtools_options.yaml
+
+# Release builds (tool/make_release.ps1)
+/dist/

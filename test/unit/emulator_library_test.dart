@@ -65,4 +65,25 @@ void main() {
     expect(io.Directory(p.join(root.emulators, 'dolphin')).existsSync(), isFalse);
     expect(io.File(p.join(root.emulators, 'pcsx2', 'pcsx2-qt.exe')).existsSync(), isTrue);
   });
+
+  test('an install records where it came from, and an update keeps every profile\'s data', () async {
+    final lib = library();
+    io.File(p.join(root.emulators, 'duckstation', 'duckstation-qt-x64-ReleaseLTCG.exe')).createSync(recursive: true);
+    final mine = io.File(p.join(ProfilePaths(root, 'aaa').emulatorDir('duckstation'), 'memcards', 'shared_card_1.mcd'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('card');
+    await lib.recordInstall('duckstation', from: 'https://example/duckstation-1.zip');
+    var info = (await lib.list()).firstWhere((e) => e.id == 'duckstation');
+    expect(info.installedFrom, 'https://example/duckstation-1.zip');
+    await lib.recordInstall('duckstation', from: 'https://example/duckstation-2.zip');
+    info = (await lib.list()).firstWhere((e) => e.id == 'duckstation');
+    expect(info.installedFrom, 'https://example/duckstation-2.zip');
+    expect(mine.readAsStringSync(), 'card');
+  });
+
+  test('an imported install says so', () async {
+    io.File(p.join(source.path, 'Dolphin.exe')).createSync(recursive: true);
+    await library().importFrom('dolphin', source.path);
+    expect((await library().list()).firstWhere((e) => e.id == 'dolphin').installedFrom, EmulatorLibrary.imported);
+  });
 }

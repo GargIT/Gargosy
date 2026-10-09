@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_models.dart';
+import '../../library/library_snapshot.dart';
+import '../../providers/romm_providers.dart';
 import '../../providers/download_providers.dart';
 import '../../providers/library_providers.dart';
 import '../screens/game/open_game.dart';
@@ -25,6 +27,8 @@ class HomePage extends ConsumerWidget {
     final favourites = ref.watch(favouriteGamesProvider);
     final random = ref.watch(randomGameProvider).valueOrNull;
     final favIds = ref.watch(favouriteIdsProvider);
+    final offline = ref.watch(rommOfflineProvider);
+    final onThisPc = offline ? ref.watch(gamesOnThisPcProvider) : const <Game>[];
     final loading = played.isLoading || added.isLoading;
     final error = played.error ?? added.error;
 
@@ -52,6 +56,8 @@ class HomePage extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
           child: Text('Welcome, $name', style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800)),
         ),
+        // RomM unreachable: what's on this PC still plays (spec §8).
+        if (onThisPc.isNotEmpty) shelf('On this PC', onThisPc, first: true),
         if (loading) const Padding(padding: EdgeInsets.all(GSpace.rowPad), child: LinearProgressIndicator()),
         if (error != null)
           SizedBox(

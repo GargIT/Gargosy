@@ -12,7 +12,11 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/download_providers.dart';
 import 'package:gargosy/providers/library_providers.dart';
+import 'package:gargosy/core/save/catalog/save_catalog.dart';
+import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/play/play_engine.dart';
+import 'package:gargosy/play/play_menu.dart';
+import 'package:gargosy/ui/screens/play/play_screen.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
 
 import '../helpers/fake_download_service.dart';
@@ -122,14 +126,24 @@ void main() {
     expect(find.text('Add a note'), findsOneWidget);
   });
 
-  testWidgets('once downloaded, Play starts the game and shows it is playing', (tester) async {
+  testWidgets('once downloaded, Play opens the play screen; Start plays and the page shows it is playing', (tester) async {
     await pump(tester);
+    engine.menu = const PlayMenu(
+      emulators: [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+      platformDefault: SaveMaker('pcsx2'),
+      catalog: SaveCatalog(thisPc: [], backups: [], romm: [], rommOffline: false),
+    );
     await press(tester, GameAction.confirm); // Download
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Play'));
     await tester.pumpAndSettle();
-    expect(engine.steps, ['pull', 'launch']);
+    expect(find.byType(PlayScreen), findsOneWidget);
+    expect(engine.steps, isEmpty);
+    await tester.tap(find.byKey(const ValueKey('play-start')));
+    await tester.pumpAndSettle();
+    expect(engine.steps, ['states', 'prepare', 'launch']);
+    expect(find.byType(PlayScreen), findsNothing);
     expect(find.text('Playing…'), findsOneWidget);
     engine.running!.complete(const PlayResult('Save synced to RomM.'));
     await tester.pumpAndSettle();

@@ -25,3 +25,17 @@ final libraryApiProvider = Provider<LibraryApi?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   return romm == null ? null : RommLibraryApi(romm.dio, () => romm.authOptions);
 });
+
+/// Whether RomM's heartbeat runs (every 5 s). Off in tests: no timers.
+final rommHeartbeatEnabledProvider = Provider<bool>((ref) => true);
+
+/// RomM can't be reached (its heartbeat fails). Starts the heartbeat.
+final rommOfflineProvider = Provider<bool>((ref) {
+  final romm = ref.watch(rommServiceProvider);
+  if (romm == null) return false;
+  if (ref.watch(rommHeartbeatEnabledProvider)) romm.startHeartbeat();
+  void changed() => ref.invalidateSelf();
+  romm.isOffline.addListener(changed);
+  ref.onDispose(() => romm.isOffline.removeListener(changed));
+  return romm.isOffline.value;
+});

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/input/gamepad_service.dart';
+import '../../library/upload_queue.dart';
 import '../../play/play_controller.dart';
+import '../../providers/romm_providers.dart';
 import '../../profiles/profile_providers.dart';
 import '../input/gargosy_intents.dart';
 import '../pages/collections_page.dart';
@@ -10,7 +12,10 @@ import '../pages/home_page.dart';
 import '../pages/platforms_page.dart';
 import '../pages/search_page.dart';
 import '../screens/emulators_screen.dart';
+import '../screens/settings/settings_screen.dart';
+import '../theme/tokens.dart';
 import '../widgets/hint_bar.dart';
+import '../widgets/sync_wait.dart';
 import '../widgets/toast.dart';
 import 'backdrop.dart';
 import 'top_bar.dart';
@@ -59,7 +64,11 @@ class _AppShellState extends ConsumerState<AppShell> {
           if (mounted) showToast(context, "Close the game first: a profile can't change while a game runs.");
           return;
         }
+        // A sync still running belongs to this profile: it finishes first.
+        if (!mounted || !await waitForSyncIdle(context, ref)) return;
         ref.read(activeProfileProvider.notifier).signOut();
+      case UserMenuChoice.settings:
+        if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
       case UserMenuChoice.emulators:
         if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EmulatorsScreen()));
       case UserMenuChoice.fullscreen:
@@ -70,9 +79,30 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Saves left waiting by an earlier session go up when the profile opens.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _upload());
+  }
+
+  Future<void> _upload() async {
+    final queue = await ref.read(uploadQueueProvider.future);
+    if (queue == null || !mounted) return;
+    final n = await queue.run();
+    if (!mounted) return;
+    ref.read(uploadQueueVersionProvider.notifier).state++;
+    if (n > 0) showToast(context, n == 1 ? 'Uploaded 1 save that was waiting.' : 'Uploaded $n saves that were waiting.');
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ctx = ref.watch(activeProfileProvider);
     if (ctx == null) return const SizedBox.shrink();
+    final offline = ref.watch(rommOfflineProvider);
+    // RomM is back: what waited goes up.
+    ref.listen<bool>(rommOfflineProvider, (was, now) {
+      if (was == true && !now) _upload();
+    });
     final pages = [
       HomePage(name: ctx.profile.name),
       const PlatformsPage(),
@@ -113,6 +143,23 @@ class _AppShellState extends ConsumerState<AppShell> {
                 tabFocusNodes: _tabNodes,
               ),
             ),
+            if (offline)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: GLayout.navHeight,
+                child: Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: GSpace.s2),
+                    padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s2),
+                    decoration: BoxDecoration(
+                        color: GColors.accent.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(GRadius.pill)),
+                    child: const Text(
+                        "RomM can't be reached. Games on this PC still play; saves upload when it's back.",
+                        style: TextStyle(color: GColors.accent, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ),
             const Positioned(
               left: 0,
               bottom: 0,

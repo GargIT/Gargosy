@@ -1,3 +1,5 @@
+import '../core/emulator/pe_version_reader.dart';
+import '../profiles/json_file.dart';
 import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +13,8 @@ import '../providers/engine_providers.dart';
 import 'profile_launch_config.dart';
 
 class EmulatorInfo {
-  const EmulatorInfo({required this.id, required this.name, required this.exe, required this.supported, this.installedExe});
+  const EmulatorInfo(
+      {required this.id, required this.name, required this.exe, required this.supported, this.installedExe, this.installedFrom, this.version});
 
   final String id;
   final String name;
@@ -22,6 +25,12 @@ class EmulatorInfo {
 
   /// The exe under `emulators\<id>\`, when installed.
   final String? installedExe;
+
+  /// The download it was installed from, or [EmulatorLibrary.imported].
+  final String? installedFrom;
+
+  /// The exe's own file version, when it records one.
+  final String? version;
 }
 
 /// The emulators Gargosy owns (spec §6), in `emulators\<id>\`.
@@ -48,6 +57,24 @@ class EmulatorLibrary {
 
   PathGuard get _guard => PathGuard(root);
 
+  /// [EmulatorInfo.installedFrom] of an install copied from a folder.
+  static const imported = 'import';
+
+  static const _installFile = '.gargosy-install.json';
+
+  /// Notes where the install in `emulators\<id>\` came from (a download's
+  /// URL, or [imported]), so an update can tell whether it's the newest.
+  Future<void> recordInstall(String id, {required String from}) => writeJsonObject(
+      _guard, p.join(root.emulators, id, _installFile), {'from': from, 'at': DateTime.now().toUtc().toIso8601String()});
+
+  String? _installedFrom(String id) {
+    try {
+      return readJsonObjectSync(p.join(root.emulators, id, _installFile))?['from'] as String?;
+    } on Object {
+      return null;
+    }
+  }
+
   String? _findExe(String dir, String exe) {
     final d = io.Directory(dir);
     if (!d.existsSync()) return null;
@@ -64,12 +91,15 @@ class EmulatorLibrary {
     final out = <EmulatorInfo>[];
     for (final s in strategies) {
       if (s.emulatorId == 'windows_native' || s.windowsExecutable.isEmpty || !seen.add(s.emulatorId)) continue;
+      final exe = _findExe(p.join(root.emulators, s.emulatorId), s.windowsExecutable);
       out.add(EmulatorInfo(
         id: s.emulatorId,
         name: s.name,
         exe: s.windowsExecutable,
         supported: ProfileLaunchConfig.supported.contains(s.emulatorId),
-        installedExe: _findExe(p.join(root.emulators, s.emulatorId), s.windowsExecutable),
+        installedExe: exe,
+        installedFrom: exe == null ? null : _installedFrom(s.emulatorId),
+        version: exe == null ? null : await PeVersionReader.fileVersion(exe),
       ));
     }
     out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -105,6 +135,7 @@ class EmulatorLibrary {
       copyDir(io.Directory(folder), staging);
       if (io.Directory(target).existsSync()) io.Directory(target).deleteSync(recursive: true);
       io.Directory(staging).renameSync(target);
+      await recordInstall(id, from: imported);
     } finally {
       if (io.Directory(staging).existsSync()) io.Directory(staging).deleteSync(recursive: true);
     }

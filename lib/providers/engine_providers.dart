@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
@@ -5,7 +6,9 @@ import '../core/emulator/game_launch_service.dart';
 import '../core/emulator/strategy_registry.dart';
 import '../core/save/backup_repository.dart';
 import '../core/save/backup_service.dart';
+import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
+import '../core/save/state_sync_service.dart';
 import '../emulators/profile_directories.dart';
 import '../profiles/profile_paths.dart';
 import '../profiles/profile_preferences.dart';
@@ -54,10 +57,17 @@ final saveSyncServiceProvider = Provider<SaveSyncService?>((ref) {
   return SaveSyncService(romm, dirs, registry, prefs, platform: sandboxedPlatform(paths));
 });
 
+/// What the profile's save sync is busy with ("Uploading Okami's save"),
+/// null when idle.
+final syncActivityProvider = Provider<ValueListenable<String?>?>((ref) => ref.watch(saveSyncServiceProvider)?.activity);
+
+/// The Hive box of a profile's backups (in its own folder).
+String backupsBoxName(String profileId) => 'backups_${profileId.replaceAll('-', '_')}';
+
 final backupRepositoryProvider = FutureProvider<BackupRepository?>((ref) async {
   final paths = ref.watch(_profilePathsProvider);
   if (paths == null) return null;
-  final name = 'backups_${paths.id.replaceAll('-', '_')}';
+  final name = backupsBoxName(paths.id);
   final box = await Hive.openBox<List>(name, path: paths.dir);
   ref.onDispose(box.close);
   return BackupRepository(boxName: name)..initBox();
@@ -66,6 +76,33 @@ final backupRepositoryProvider = FutureProvider<BackupRepository?>((ref) async {
 final backupServiceProvider = Provider<BackupService?>((ref) {
   final paths = ref.watch(_profilePathsProvider);
   return paths == null ? null : BackupService(backupsDir: () async => paths.backups);
+});
+
+/// Save states on the profile's RomM account (on per emulator in Settings).
+final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
+  final romm = ref.watch(rommServiceProvider);
+  final sync = ref.watch(saveSyncServiceProvider);
+  final prefs = ref.watch(profilePrefsProvider);
+  if (romm == null || sync == null || prefs == null) return null;
+  return StateSyncService(romm, prefs, sync.strategyForGame,
+      exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'));
+});
+
+/// The states a game can be resumed from (this PC and RomM).
+final resumeServiceProvider = Provider<ResumeService?>((ref) {
+  final registry = ref.watch(strategyRegistryProvider);
+  final sync = ref.watch(saveSyncServiceProvider);
+  final prefs = ref.watch(profilePrefsProvider);
+  if (registry == null || sync == null || prefs == null) return null;
+  final romm = ref.watch(rommServiceProvider);
+  return ResumeService(
+    emulatorsFor: registry.getAllStrategiesForSlug,
+    resolveSaveStrategy: sync.strategyForGame,
+    exclusive: sync.exclusive,
+    prefs: prefs,
+    api: romm,
+    isOffline: () => romm?.isOffline.value == true,
+  );
 });
 
 final gameLaunchServiceProvider = FutureProvider<GameLaunchService?>((ref) async {
@@ -84,5 +121,6 @@ final gameLaunchServiceProvider = FutureProvider<GameLaunchService?>((ref) async
     backupRepository: repo,
     prefs: prefs,
     rommService: ref.watch(rommServiceProvider),
+    stateSyncService: ref.watch(stateSyncServiceProvider),
   );
 });

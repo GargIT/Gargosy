@@ -106,6 +106,23 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `play/play_engine.dart` — `PlayEngine` (the seam tests fake) and `GargosyPlayEngine`: repoint, back up + pull (`pre_launch_pull.dart`: `SaveRestoreGuard`, 20 s wait for shared cards, never refuses the launch), launch, sync after exit → `PlayResult` message.
 - `play/play_controller.dart` — `PlayController.play`: one game at a time (claimed before the first await), reasons it can't start, the session's end message; the shell refuses a profile switch while a game runs.
 
+### Play screen, states, offline, settings (milestone C2)
+- `play/play_menu.dart` — `PlayMenu` (installed emulators for the game, remembered/default one, `SaveCatalog`) and `EmulatorOption`; built by `PlayEngine.menuFor`.
+- `play/play_engine.dart` also: `StatePull`, `statesFor`, `pullStates` (when state sync is on and RomM reachable; conflicts keep this PC's copy), `checkResume`, launch with `loadStatePath`. `play/pre_launch_pull.dart` also has `placeChosenSave` (the play screen's choice put in place, a RomM save marked synced).
+- `play/play_controller.dart` also: `resume(game, ResumeEntry)`, `playMenuProvider` / `playStatesProvider` (`PlayMenuKey`).
+- `core/save/catalog/play_request.dart` (copied), `ui/play/emulator_choices.dart` (copied), `ui/widgets/save_labels.dart` (copied: sizes and times as RomM shows them), `ui/widgets/controller_dialogs.dart` (`showConfirm`, `showChoice`).
+- `ui/screens/play/play_screen.dart` (Saves / States tabs, Y emulator, X start; prompts for an older save or state and for a state from another build), `save_rows.dart`, `state_rows.dart`. The game page's Play opens it.
+- `providers/engine_providers.dart` also: `stateSyncServiceProvider`, `resumeServiceProvider`, `syncActivityProvider` (what the save lock is busy with), `backupsBoxName`.
+- `library/library_snapshot.dart` — `LibrarySnapshot` (`profiles\<id>\cache\library.json`: the profile's downloaded games as RomM described them), `gamesOnThisPcProvider`. `gameProvider` falls back to it offline.
+- `library/upload_queue.dart` — `UploadQueue`: sessions RomM didn't take, retried through the normal push (newest per game, oldest game first, stops at a failure); runs when the profile opens and when RomM is back. `uploadsWaitingProvider` feeds the Save Data tab.
+- `providers/romm_providers.dart` also: `rommOfflineProvider` (starts RomM's 5 s heartbeat; `rommHeartbeatEnabledProvider` turns it off in tests). The shell shows a banner while offline; Home shows "On this PC".
+- `ui/screens/settings/` — `settings_screen.dart` (sections left, LB/RB), `profile_section.dart` (rename, PIN, delete with waiting uploads named), `device_sections.dart` (controller deadzone, fullscreen), `emulators_section.dart` (emulator per platform, state sync per emulator), `ra_section.dart`, `settings_rows.dart`.
+- `retroachievements/ra_account.dart` — `RaAccount`: the profile's RA login (password exchanged once for the Connect token via the copied `core/retroachievements/retroachievements_service.dart`; never stored). RetroArch signs in with it at launch.
+- `emulators/emulator_installer.dart` — `EmulatorInstaller` (`latestUrl`, `install`), `InstallProgress`; `EmulatorLibrary.recordInstall` notes the source in `emulators\<id>\.gargosy-install.json`, `EmulatorInfo.version` is the exe's file version. Update installs only when the newest download differs.
+- `profiles/profile_providers.dart` also: `ActiveProfileNotifier.update` (rename, PIN).
+- `ui/widgets/sync_wait.dart` — `waitForSyncIdle`: switching or deleting a profile waits for its save lock and upload queue, saying what it waits for (both are refused while a game runs).
+- `tool/make_release.ps1` — builds and packs `dist\Gargosy-<version>.zip`. `thirdparty/7zr.exe` is bundled (LGPL, see `NOTICE.md`) to unpack `.7z` emulator downloads.
+
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
 - To change it, edit the SVG and render again.
@@ -127,4 +144,4 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - Gate: `flutter analyze && flutter test` (also what CI runs, on `windows-latest`).
 
 ## Release
-A zip that unpacks to `Gargosy\` with empty `roms\`, `emulators\`, `bios\` and `userdata\`. There is no installer. An update replaces only the app files.
+`pwsh tool/make_release.ps1` builds and writes `dist\Gargosy-<version>.zip`: it unpacks to `Gargosy\` with the app, empty `roms\`, `emulators\`, `bios\` and `userdata\`, and the licence files. There is no installer. An update replaces only the app files.

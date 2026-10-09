@@ -3,6 +3,8 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/library/upload_queue.dart';
+import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/app.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
@@ -43,6 +45,9 @@ class AppHarness {
       dataProtectorProvider.overrideWithValue(protector),
       pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
       rommAuthFactoryProvider.overrideWithValue((url, trust) => auth),
+      // No timers and no Hive in app tests.
+      rommHeartbeatEnabledProvider.overrideWithValue(false),
+      uploadQueueProvider.overrideWith((ref) async => null),
     ]);
     addTearDown(container.dispose);
   }

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../core/save/catalog/play_request.dart';
+import '../core/save/catalog/save_entry.dart';
 import '../core/save/save_strategy.dart';
 
 /// Freegosy's pre-launch pull: back up this PC's save, then pull the
@@ -41,4 +43,22 @@ Future<void> pullBeforeLaunch({
     onProblem?.call("The save from RomM didn't arrive in time, so the game starts with the save on this PC.");
     return false;
   });
+}
+
+/// The play screen's choice put in place before launch: [putInPlace] the
+/// chosen save (it backs up the current one first; a failure stops the
+/// launch). With no save, the emulator's own save on this PC stays as it
+/// is. RomM is told when it has a copy of that save ([confirmRommCopy]); a
+/// save from RomM is what RomM has, so it's [markSynced] and an unchanged
+/// save isn't uploaded again at exit.
+Future<void> placeChosenSave(
+  PlayRequest request, {
+  required Future<void> Function(SaveEntry save) putInPlace,
+  required Future<void> Function(Map<String, dynamic> save) confirmRommCopy,
+  required Future<void> Function() markSynced,
+}) async {
+  final save = request.save;
+  if (save != null) await putInPlace(save);
+  if (request.rommCopy != null) await confirmRommCopy(request.rommCopy!);
+  if (save?.source == SaveSource.romm) await markSynced();
 }

@@ -47,6 +47,10 @@ void main() {
 
     final launch = await c.read(gameLaunchServiceProvider.future);
     expect(launch, isNotNull);
+    // Save states sync through the same profile's RomM account and prefs.
+    expect(c.read(stateSyncServiceProvider), isNotNull);
+    expect(launch!.stateSyncService, same(c.read(stateSyncServiceProvider)));
+    expect(c.read(resumeServiceProvider), isNotNull);
     expect(c.read(strategyRegistryProvider)!.getStrategyForSlug('ps2')?.emulatorId, isNotNull);
 
     c.read(activeProfileProvider.notifier).signOut();

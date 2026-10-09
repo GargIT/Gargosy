@@ -260,11 +260,13 @@ class RommService implements RommStatesApi {
         final raEnabled = response.data?['METADATA_SOURCES']?['RA_API_ENABLED'];
         _capabilities = RommCapabilities(version: version, retroAchievementsEnabled: raEnabled is bool ? raEnabled : null);
         debugPrint('[RomM] Detected version: $version → $_capabilities');
+        // Gargosy: kept only when RomM answered. A profile opened while RomM
+        // was down asks again, instead of syncing the legacy way for good.
+        _capabilitiesFetched = true;
       }
     } catch (e) {
-      debugPrint('[RomM] fetchCapabilities failed, defaulting to legacy: $e');
+      debugPrint('[RomM] fetchCapabilities failed, defaulting to legacy for now: $e');
     }
-    _capabilitiesFetched = true;
     return _capabilities;
   }
 

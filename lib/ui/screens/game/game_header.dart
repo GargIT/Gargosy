@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../library/download_service.dart';
 import '../../../play/play_controller.dart';
+import '../play/play_screen.dart';
 import '../../../providers/download_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
@@ -66,12 +67,13 @@ class GameActions extends ConsumerWidget {
     if (ok == true) await ref.read(downloadsProvider.notifier).delete(game);
   }
 
-  Future<void> _play(BuildContext context, WidgetRef ref) async {
-    final reason = await ref.read(playControllerProvider.notifier).play(game, onNotice: (m) {
-      if (context.mounted) showToast(context, m);
-    });
-    if (reason != null && context.mounted) showToast(context, reason);
-  }
+  /// The play screen: choose the save and emulator, then start. What the
+  /// player should know afterwards is told here, on the game page.
+  Future<void> _play(BuildContext context, WidgetRef ref) => Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => PlayScreen(game: game, onNotice: (m) {
+          if (context.mounted) showToast(context, m);
+        }),
+      ));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

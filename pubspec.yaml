@@ -51,3 +51,5 @@ flutter:
     - assets/branding/gargosy_logo.png
     - thirdparty/gamecontrollerdb.txt
     - thirdparty/gamecontrollerdb_license.txt
+    - thirdparty/7zr.exe
+    - thirdparty/7zip_license.txt
