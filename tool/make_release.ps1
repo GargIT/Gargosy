@@ -28,7 +28,7 @@ Copy-Item -Recurse (Join-Path $built '*') $stage
 foreach ($d in 'roms', 'emulators', 'bios', 'userdata') {
     New-Item -ItemType Directory -Force (Join-Path $stage $d) | Out-Null
 }
-Copy-Item LICENSE, NOTICE.md, README.md $stage
+Copy-Item LICENSE, NOTICE.md, README.md, CHANGELOG.md $stage
 Copy-Item -Recurse LICENSES (Join-Path $stage 'LICENSES')
 
 $zip = Join-Path $dist "Gargosy-$version.zip"

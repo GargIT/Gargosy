@@ -30,6 +30,11 @@ always portable, with a profile per player. Built on code from
 
 Unpack `Gargosy-<version>.zip` anywhere you can write (a USB stick works too). The folder holds
 everything: the app, `roms\`, `emulators\`, `bios\` and `userdata\`. Nothing goes in AppData.
+Download it from [Releases](https://github.com/GargIT/Gargosy/releases); what changed is in
+`CHANGELOG.md`.
+
+Gargosy.exe isn't code-signed, so the first start may show Windows' "Windows protected your PC".
+Choose **More info**, then **Run anyway**.
 
 - **Profiles.** Each player adds a profile with their own RomM account (pair with a phone, or
   username and password). A profile's saves, states and emulator settings are its own.
@@ -50,3 +55,10 @@ flutter analyze && flutter test
 flutter run -d windows -a --root=<a scratch folder>
 pwsh tool/make_release.ps1        # dist\Gargosy-<version>.zip
 ```
+
+`sigil.dll` comes from the `third_party/argosy-sigil` submodule: clone with
+`--recurse-submodules`, and run `pwsh tool/build_sigil.ps1` once before `flutter test`.
+
+To release: set the version in `pubspec.yaml`, give its section in `CHANGELOG.md` a date, commit,
+then push a tag `v<version>`. The Release workflow tests, builds the zip and publishes it with that
+section as the notes.
