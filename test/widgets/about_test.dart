@@ -89,9 +89,12 @@ void main() {
 
   testWidgets('a controller can focus a row, press A and go back with B', (tester) async {
     await pump(tester);
+    // About opens on its first link, so A works at once; down moves on.
+    await press(tester, GameAction.confirm);
+    expect(opened.single, 'https://github.com/GargIT/Gargosy');
     await press(tester, GameAction.down);
     await press(tester, GameAction.confirm);
-    expect(opened, isNotEmpty);
+    expect(opened.last, 'https://github.com/GargIT/Gargosy/releases');
     await press(tester, GameAction.back);
     await tester.pumpAndSettle();
     expect(find.byType(AboutScreen), findsNothing);

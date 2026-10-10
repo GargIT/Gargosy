@@ -12,7 +12,10 @@ const gargosyRepoUrl = 'https://github.com/GargIT/Gargosy';
 /// About: versions, links and licences. Shared by Settings → About and the
 /// user menu's About page.
 class AboutSection extends ConsumerWidget {
-  const AboutSection({super.key});
+  const AboutSection({super.key, this.autofocus = false});
+
+  /// Focus the first link when shown: the About page has no other focus.
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,8 +24,8 @@ class AboutSection extends ConsumerWidget {
     final romm = ref.watch(rommServerVersionProvider);
     final version = AppConstants.version;
 
-    Widget link(String label, String url) =>
-        SettingsRow(label: label, value: url.replaceFirst('https://', ''), onActivate: () => open(url));
+    Widget link(String label, String url, {bool focus = false}) => SettingsRow(
+        label: label, value: url.replaceFirst('https://', ''), onActivate: () => open(url), autofocus: focus);
     Widget file(String label, String name) =>
         SettingsRow(label: label, onActivate: () => open(p.join(root.root, name)));
 
@@ -31,10 +34,10 @@ class AboutSection extends ConsumerWidget {
       SettingsRow(label: 'Gargosy', value: 'v$version'),
       SettingsRow(
         label: 'RomM server',
-        value: romm.when(data: (v) => v == null ? 'Not reachable' : 'v$v', loading: () => '…', error: (_, __) => 'Not reachable'),
+        value: romm.when(data: (v) => v == null ? 'Not reachable' : 'v$v', loading: () => '…', error: (_, _) => 'Not reachable'),
       ),
       const SettingsHeading('Links'),
-      link('Repository', gargosyRepoUrl),
+      link('Repository', gargosyRepoUrl, focus: autofocus),
       link('Releases', '$gargosyRepoUrl/releases'),
       link('Report a bug', '$gargosyRepoUrl/issues'),
       link('Security policy', '$gargosyRepoUrl/blob/main/SECURITY.md'),

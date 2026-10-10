@@ -20,7 +20,7 @@ class AboutScreen extends StatelessWidget {
               child: Text('About', style: TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800)),
             ),
             const Expanded(
-              child: Padding(padding: EdgeInsets.symmetric(horizontal: GSpace.rowPad), child: AboutSection()),
+              child: Padding(padding: EdgeInsets.symmetric(horizontal: GSpace.rowPad), child: AboutSection(autofocus: true)),
             ),
             const HintBar(hints: [Hint(GameAction.confirm, 'Open'), Hint(GameAction.back, 'Back')]),
           ]),

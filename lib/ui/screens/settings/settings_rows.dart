@@ -24,19 +24,22 @@ class SettingsHeading extends StatelessWidget {
 
 /// One setting: its label, what it is now, and A to change it.
 class SettingsRow extends StatelessWidget {
-  const SettingsRow({super.key, required this.label, this.value, this.onActivate, this.danger = false, this.trailing});
+  const SettingsRow(
+      {super.key, required this.label, this.value, this.onActivate, this.danger = false, this.trailing, this.autofocus = false});
 
   final String label;
   final String? value;
   final VoidCallback? onActivate;
   final bool danger;
   final Widget? trailing;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: GSpace.s2),
         child: GFocusable(
           borderRadius: GRadius.lg,
+          autofocus: autofocus,
           onActivate: onActivate,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
