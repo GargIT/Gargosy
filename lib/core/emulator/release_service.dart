@@ -86,24 +86,30 @@ class ReleaseService {
         return await _htmlScrape('$base/$repo/releases/latest', base, requiredFilters, excludedFilters);
       }
 
-      // GitHub: use Atom feed to get latest tag, then construct asset URLs
-      final feedUrl = 'https://github.com/$repo/releases.atom';
-      final feedResponse = await http.get(Uri.parse(feedUrl), headers: {'User-Agent': 'Gargosy'});
-      if (feedResponse.statusCode < 200 || feedResponse.statusCode >= 300) return [];
+      // GitHub (the API's hourly quota is used up): the website's
+      // /releases/latest redirects to the latest release, as the API's
+      // releases/latest would. Gargosy: the Atom feed listed pre-releases and
+      // nightlies first, so a fallback picked those (or nothing, for xemu).
+      final latest = await _dio.get<String>('https://github.com/$repo/releases/latest',
+          options: Options(
+            headers: {'User-Agent': 'Gargosy'},
+            followRedirects: false,
+            responseType: ResponseType.plain,
+            validateStatus: (s) => s != null && s < 400,
+          ));
+      final location = latest.headers.value('location') ?? '';
+      final tagAt = location.indexOf('/releases/tag/');
+      if (tagAt < 0) return [];
+      final tag = location.substring(tagAt + '/releases/tag/'.length);
 
-      // Extract latest release tag from Atom feed
-      final tagRegex = RegExp(r'<id>tag:github\.com,2008:Repository/\d+/([^<]+)</id>');
-      final tagMatch = tagRegex.firstMatch(feedResponse.body);
-      if (tagMatch == null) return [];
-      final tag = tagMatch.group(1)!;
+      // The release's files, as its page lists them.
+      final pageResponse = await _dio.get<String>('https://github.com/$repo/releases/expanded_assets/$tag',
+          options: Options(headers: {'User-Agent': 'Gargosy'}, responseType: ResponseType.plain));
+      if ((pageResponse.statusCode ?? 0) < 200 || (pageResponse.statusCode ?? 0) >= 300) return [];
 
-      // Now fetch the release page for that specific tag to get asset links
-      final releasePage = 'https://github.com/$repo/releases/expanded_assets/$tag';
-      final pageResponse = await http.get(Uri.parse(releasePage), headers: {'User-Agent': 'Gargosy'});
-      if (pageResponse.statusCode < 200 || pageResponse.statusCode >= 300) return [];
-
-      return _parseHtmlAssets(pageResponse.body, 'https://github.com', requiredFilters, excludedFilters);
+      return _parseHtmlAssets(pageResponse.data ?? '', 'https://github.com', requiredFilters, excludedFilters);
     } catch (e) {
+      debugPrint('[Release] fallback for $repo failed: $e');
       return [];
     }
   }
@@ -137,40 +143,31 @@ class ReleaseService {
     return matchingAssets;
   }
 
+  /// The newest Dolphin release's files that match the filters, from the
+  /// update API Dolphin's own updater reads (`/update/latest/beta` is its
+  /// release channel). Gargosy: the download page is behind a bot check that
+  /// answers programs with a 403 page, so it isn't scraped any more.
   Future<List<Map<String, String>>> _scrapeDolphin(List<String> requiredFilters, List<String> excludedFilters) async {
     try {
-      final response = await http.get(Uri.parse('https://dolphin-emu.org/download/'), headers: {'User-Agent': 'Gargosy', 'Accept-Language': 'en-US'});
-      // Accept any 2xx status; Dolphin's site may 302-redirect based on locale.
-      if (response.statusCode < 200 || response.statusCode >= 300) return [];
-
-      final html = response.body;
-      // Scrape for dl.dolphin-emu.org links within the "download-releases" section
-      // The links look like: https://dl.dolphin-emu.org/releases/2603a/dolphin-2603a-x64.7z
-      final regex = RegExp(r'href="(https://dl\.dolphin-emu\.org/releases/[^"]+)"');
-      final matches = regex.allMatches(html);
+      final response = await _dio.get<dynamic>('https://dolphin-emu.org/update/latest/beta',
+          options: Options(headers: {'User-Agent': 'Gargosy'}));
+      final artifacts = response.data is Map ? (response.data['artifacts'] as List? ?? const []) : const [];
       final List<Map<String, String>> matchingAssets = [];
-
-      for (final match in matches) {
-        final fullUrl = match.group(1)!;
+      for (final artifact in artifacts.whereType<Map>()) {
+        final fullUrl = artifact['url']?.toString() ?? '';
+        if (!fullUrl.startsWith('https://dl.dolphin-emu.org/')) continue;
         final name = fullUrl.split('/').last;
 
         final matchesRequired = requiredFilters.isEmpty ||
             requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
         final matchesExcluded = excludedFilters.any((f) => name.toLowerCase().contains(f.toLowerCase()));
-
-        if (matchesRequired && !matchesExcluded) {
-          // Check if we already added this URL (prevent duplicates from different sections)
-          if (!matchingAssets.any((a) => a['url'] == fullUrl)) {
-            matchingAssets.add({'name': name, 'url': fullUrl});
-          }
+        if (matchesRequired && !matchesExcluded && !matchingAssets.any((a) => a['url'] == fullUrl)) {
+          matchingAssets.add({'name': name, 'url': fullUrl});
         }
       }
-      
-      // Sort to get the most recent version first (if there are multiple versions on page)
-      // Usually the latest is first in the HTML anyway.
       return matchingAssets;
     } catch (e) {
-      debugPrint('[Dolphin Scrape] Error: $e');
+      debugPrint('[Dolphin] update API error: $e');
       return [];
     }
   }

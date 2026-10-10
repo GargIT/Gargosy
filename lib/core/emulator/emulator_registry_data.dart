@@ -165,6 +165,8 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
     'type': 'github',
     'github_repo': 'stenzek/duckstation',
     'github_asset_required': ['windows', 'x64'],
+    // Gargosy: the portable zip; the release also has installers and SSE2 builds.
+    'github_asset_required_windows': ['windows-x64-release.zip'],
     'github_asset_required_macos': ['mac', 'release'],
     'github_asset_required_linux': ['x64', '.AppImage'],
     'github_asset_excluded': ['nogui', 'debug', 'arm64'],

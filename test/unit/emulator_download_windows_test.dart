@@ -46,6 +46,58 @@ void main() {
     expect(await service.resolveCurrentDownloadUrl('retroarch'), contains('/windows/x86_64/RetroArch.7z'));
   });
 
+  test("Dolphin's download is its Windows x64 build, from the update API Dolphin's own updater reads", () async {
+    // dolphin-emu.org/download/ is behind a bot check that answers programs with a 403 page.
+    adapter.onGet('https://dolphin-emu.org/update/latest/beta', (s) => s.reply(200, {
+          'shortrev': '2609a',
+          'artifacts': [
+            for (final (system, file) in [
+              ('Linux x86_64 (Flatpak)', 'dolphin-2609a-x86_64.flatpak'),
+              ('Android', 'dolphin-2609a.apk'),
+              ('macOS (ARM/Intel Universal)', 'dolphin-2609a-universal.dmg'),
+              ('Windows arm64', 'dolphin-2609a-arm64.7z'),
+              ('Windows x64', 'dolphin-2609a-x64.7z'),
+            ])
+              {'system': system, 'url': 'https://dl.dolphin-emu.org/releases/2609a/$file'},
+          ],
+        }));
+    expect(await service.resolveCurrentDownloadUrl('dolphin'), 'https://dl.dolphin-emu.org/releases/2609a/dolphin-2609a-x64.7z');
+  });
+
+  test("DuckStation's download is the portable x64 zip, not the installer or the SSE2 build", () async {
+    // In the release's own order: the installer comes first.
+    adapter.onGet('https://api.github.com/repos/stenzek/duckstation/releases/latest', (s) => s.reply(200, {
+          'assets': [
+            asset('duckstation-windows-x64-installer.exe'),
+            asset('duckstation-windows-x64-release.zip'),
+            asset('duckstation-windows-x64-sse2-installer.exe'),
+            asset('duckstation-windows-x64-sse2-release.zip'),
+            asset('duckstation-windows-arm64-release.zip'),
+          ],
+        }));
+    expect(await service.resolveCurrentDownloadUrl('duckstation'), 'https://dl/duckstation-windows-x64-release.zip');
+  });
+
+  test("with GitHub's API quota used up, the download is still the latest release, never a pre-release", () async {
+    adapter.onGet('https://api.github.com/repos/xemu-project/xemu/releases/latest', (s) => s.reply(403, {'message': 'API rate limit exceeded'}));
+    // The website's /releases/latest points at the latest real release (the
+    // feed would list the newer "pre-release" first).
+    adapter.onGet('https://github.com/xemu-project/xemu/releases/latest',
+        (s) => s.reply(302, '', headers: {'location': ['https://github.com/xemu-project/xemu/releases/tag/v0.8.136']}));
+    // The release's files as its page lists them, as plain HTML (the mock
+    // adapter would JSON-encode a text reply).
+    dio.interceptors.add(InterceptorsWrapper(onRequest: (o, h) {
+      if (o.uri.toString() != 'https://github.com/xemu-project/xemu/releases/expanded_assets/v0.8.136') return h.next(o);
+      h.resolve(Response(requestOptions: o, statusCode: 200, data: '''
+        <a href="/xemu-project/xemu/releases/download/v0.8.136/xemu-v0.8.136-x86_64.AppImage">AppImage</a>
+        <a href="/xemu-project/xemu/releases/download/v0.8.136/xemu-win-x86_64-release.zip">zip</a>
+        <a href="/xemu-project/xemu/releases/download/v0.8.136/xemu-win-x86_64-release-pdb.zip">pdb</a>
+        '''));
+    }));
+    expect(await service.resolveCurrentDownloadUrl('xemu'),
+        'https://github.com/xemu-project/xemu/releases/download/v0.8.136/xemu-win-x86_64-release.zip');
+  });
+
   test('a symbols package is never the download', () async {
     adapter.onGet('https://api.github.com/repos/stenzek/duckstation/releases/latest', (s) => s.reply(200, {
           'assets': [asset('duckstation-windows-x64-release-symbols.zip'), asset('duckstation-windows-x64-release.zip')],
