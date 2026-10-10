@@ -6,6 +6,16 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Dolphin can be downloaded again: its download page now turns programs away,
+  so Gargosy reads the update API Dolphin's own updater uses.
+- DuckStation's download is its portable zip, not the installer.
+- When GitHub's hourly limit for programs is used up, emulator downloads and
+  updates still get the latest release, never a preview or nightly build.
+- Emulator downloads show their progress while they run, instead of
+  "Downloading 0 %" until done.
+
 ## [0.1.0] - 2026-10-10
 
 The first release: a RomM client for Windows in the look of RomM's v2 web UI,
