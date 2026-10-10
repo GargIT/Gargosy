@@ -6,7 +6,7 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-10
 
 The first release: a RomM client for Windows in the look of RomM's v2 web UI,
 played with a controller, portable, with a profile per player.
@@ -20,6 +20,7 @@ played with a controller, portable, with a profile per player.
 - An optional four-digit PIN per profile (a family lock, not security).
 - Logins are encrypted for this PC's Windows user; on another PC a profile
   logs in again once.
+- The user menu (Start) shows Gargosy's version beside the profile name.
 
 ### Library
 
