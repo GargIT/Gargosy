@@ -64,6 +64,10 @@ abstract class ProfileLaunchConfig {
   /// Readies [c] and returns the arguments that go before the strategy's own.
   Future<List<String>> prepare(LaunchContext c);
 
+  /// The arguments that name the game, last on the command line: the ROM
+  /// path for every emulator but MAME.
+  List<String> gameArgs(LaunchContext c, String romPath) => [romPath];
+
   /// After the emulator exits.
   Future<void> finish(LaunchContext c) async {}
 
@@ -80,7 +84,7 @@ abstract class ProfileLaunchConfig {
       _pcsx2Settings(c);
     }),
     'retroarch': const _RetroArch(),
-    'mame': _Args((c) => [
+    'mame': _Mame((c) => [
           '-inipath', c.data,
           '-homepath', c.data,
           '-cfg_directory', p.join(c.data, 'cfg'),
@@ -193,6 +197,18 @@ class _Args extends ProfileLaunchConfig {
     if (before != null) await before!(c);
     return args(c);
   }
+}
+
+/// MAME finds a game by its set name in its rompath, never by a file path:
+/// given `D:\roms\arcade\1943.zip` it looks for a set called `1943` in its
+/// own `roms\` and quits. So the ROM's folder goes first in `-rompath`
+/// (MAME's `roms\` after it, for BIOS sets kept there) and the set name last.
+class _Mame extends _Args {
+  const _Mame(super.args);
+
+  @override
+  List<String> gameArgs(LaunchContext c, String romPath) =>
+      ['-rompath', '${p.dirname(romPath)};${p.join(c.exeDir, 'roms')}', p.basenameWithoutExtension(romPath)];
 }
 
 class _RetroArch extends ProfileLaunchConfig {

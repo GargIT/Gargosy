@@ -17,6 +17,8 @@ What changed in each release of Gargosy. The format follows
   "Downloading 0 %" until done.
 - Emulators that come as a zip (PPSSPP, xemu, ares, DuckStation) unpacked
   only their first file, so they never counted as installed.
+- MAME games start: MAME is given the game's set name and its folder
+  (`-rompath`), not the zip's path, which made it close at once.
 
 ## [0.1.0] - 2026-10-10
 

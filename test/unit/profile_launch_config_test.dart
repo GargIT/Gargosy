@@ -189,6 +189,26 @@ void main() {
     ]);
   });
 
+  test('mame gets the set name and its folder as -rompath, not the zip path (MAME only looks in its rompath)', () async {
+    final paths = ProfilePaths(root, 'aaa');
+    final exe = io.File(p.join(root.emulators, 'mame', 'mame.exe'))..createSync(recursive: true);
+    final started = <List<String>>[];
+    final dirs = ProfileLaunchDirectories(
+      root: root,
+      paths: paths,
+      prefs: MemoryPrefs(),
+      start: (exePath, args, {workingDirectory}) async {
+        started.add(args);
+        return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
+      },
+    );
+    await dirs.launchGameWithHandle(game(1, '1943'), r'D:\roms\arcade\1943.zip', 'mame', exe.path);
+    // MAME's own roms folder stays on the path, for BIOS sets kept there.
+    expect(started.single.sublist(started.single.length - 3),
+        ['-rompath', '${r'D:\roms\arcade'};${p.join(p.dirname(exe.path), 'roms')}', '1943']);
+    expect(started.single, isNot(contains(r'D:\roms\arcade\1943.zip')));
+  });
+
   test('an emulator Gargosy can\'t point at a profile is refused', () async {
     final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
     expect(() => dirs.launchGameWithHandle(game(1, 'G'), 'x', 'ryujinx', r'C:\x\Ryujinx.exe'),

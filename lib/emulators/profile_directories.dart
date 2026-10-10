@@ -125,7 +125,7 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
     final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
     final pre = await config.prepare(c);
-    final process = await _start(exePath, [...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]), romPath],
+    final process = await _start(exePath, [...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]), ...config.gameArgs(c, romPath)],
         workingDirectory: c.exeDir);
     // Drained, as Freegosy does: a full pipe would freeze the emulator.
     process.stdout.drain<void>();
