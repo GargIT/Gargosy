@@ -21,11 +21,7 @@ void main() {
 
   test('every engine part belongs to the active profile', () async {
     final root = await tempAppRoot();
-    addTearDown(() async {
-      // Disposing closes the backups box without waiting; Windows won't delete an open file.
-      await Hive.close();
-      await deleteTempDir(root.root);
-    });
+    addTearDown(() => deleteTempDir(root.root));
     final c = ProviderContainer(overrides: [
       appRootProvider.overrideWithValue(root),
       appPreferencesProvider.overrideWithValue(MemoryPrefs()),
@@ -65,5 +61,13 @@ void main() {
 
     c.read(activeProfileProvider.notifier).signOut();
     expect(c.read(saveSyncServiceProvider), isNull);
+    // Signing out closes the backups box without waiting, and Hive deletes the
+    // box's lock file last. Closing it again (Hive.close) would race that
+    // delete, and so would deleting the folder before it's done.
+    final lock = io.File(p.join(paths.dir, '${backupsBoxName(anna.id)}.lock'));
+    for (var i = 0; i < 100 && lock.existsSync(); i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    expect(lock.existsSync(), isFalse, reason: 'the backups box closed on sign-out');
   });
 }
