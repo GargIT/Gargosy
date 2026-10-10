@@ -7,11 +7,11 @@ import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
 
-enum UserMenuChoice { switchProfile, settings, emulators, fullscreen }
+enum UserMenuChoice { switchProfile, settings, emulators, fullscreen, about }
 
 /// The user menu (Start, or the profile badge): the profile's name with
-/// Gargosy's version beside it, then switch profile, settings, emulators and
-/// fullscreen.
+/// Gargosy's version beside it, then switch profile, settings, emulators,
+/// fullscreen and About.
 Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name}) {
   Widget item(BuildContext c, String label, IconData icon, UserMenuChoice choice, {bool autofocus = false}) => GFocusable(
         autofocus: autofocus,
@@ -56,6 +56,7 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name
                 item(c, 'Settings', Icons.settings_outlined, UserMenuChoice.settings),
                 item(c, 'Emulators', Icons.videogame_asset_outlined, UserMenuChoice.emulators),
                 item(c, 'Fullscreen (F11)', Icons.fullscreen, UserMenuChoice.fullscreen),
+                item(c, 'About', Icons.info_outline, UserMenuChoice.about),
                 const HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Close')]),
               ]),
             ),

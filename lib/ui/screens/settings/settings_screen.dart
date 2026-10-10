@@ -6,10 +6,12 @@ import '../../shell/backdrop.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
+import 'about_section.dart';
 import 'device_sections.dart';
 import 'emulators_section.dart';
 import 'profile_section.dart';
 import 'ra_section.dart';
+import 'settings_rows.dart';
 
 /// Settings (spec §2): Profile, Controller, Display, Emulators and
 /// RetroAchievements. The sections on the left, the chosen one on the
@@ -22,7 +24,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _sections = ['Profile', 'Controller', 'Display', 'Emulators', 'RetroAchievements'];
+  static const _sections = ['Profile', 'Controller', 'Display', 'Emulators', 'RetroAchievements', 'About'];
   int _section = 0;
 
   Widget _content() => switch (_section) {
@@ -30,7 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         1 => const ControllerSection(),
         2 => const DisplaySection(),
         3 => const EmulatorsSection(),
-        _ => const RaSection(),
+        4 => const RaSection(),
+        _ => ListView(children: const [SettingsHeading('About'), AboutSection()]),
       };
 
   void _go(int i) {

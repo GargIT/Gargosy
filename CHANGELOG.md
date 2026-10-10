@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- About (user menu, and Settings → About): Gargosy's and the RomM server's
+  version, and the documents that come with Gargosy.
+- A reader for those documents — what's new, read me, licences, security
+  policy — inside Gargosy, scrolled with the D-pad; X lists a document's links.
+
 ### Fixed
 
 - Dolphin can be downloaded again: its download page now turns programs away,

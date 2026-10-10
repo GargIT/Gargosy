@@ -21,10 +21,12 @@ class HintBar extends ConsumerWidget {
   static const _pad = {
     GameAction.confirm: 'A', GameAction.back: 'B', GameAction.detail: 'X', GameAction.favorite: 'Y',
     GameAction.l1: 'LB', GameAction.r1: 'RB', GameAction.start: 'Start', GameAction.confirmHold: 'Hold A',
+    GameAction.verticalAxis: 'D-pad',
   };
   static const _keys = {
     GameAction.confirm: 'Enter', GameAction.back: 'Esc', GameAction.detail: 'Right-click', GameAction.favorite: 'F',
     GameAction.l1: 'PgUp', GameAction.r1: 'PgDn', GameAction.start: 'Menu', GameAction.confirmHold: 'Hold Enter',
+    GameAction.verticalAxis: '↑ ↓',
   };
 
   @override
