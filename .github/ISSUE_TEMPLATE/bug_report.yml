@@ -1,0 +1,69 @@
+name: Bug report
+description: Something in Gargosy doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! A security problem goes privately instead: see SECURITY.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you saw, and what you expected instead. Messages on screen word for word help most.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen
+      placeholder: |
+        1. Open a profile
+        2. Go to …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Gargosy version
+      description: From the zip you unpacked, e.g. Gargosy-0.1.0.zip → 0.1.0.
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: romm
+    attributes:
+      label: RomM version
+      description: "Open https://<your RomM server>/api/heartbeat: it's under SYSTEM → VERSION."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in Gargosy
+      options:
+        - Profiles and login
+        - Library (Home, Platforms, Collections, Search, game page)
+        - Downloading games
+        - Emulators (download, import, launch)
+        - Saves and states
+        - Controller
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: emulator
+    attributes:
+      label: Emulator, and the game's platform
+      description: If it's about playing a game or its saves.
+      placeholder: PCSX2 2.4.0, PlayStation 2
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, the emulator's own log, a save file that won't sync (zip it; leave out anything private).

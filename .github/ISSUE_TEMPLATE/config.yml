@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/GargIT/Gargosy/security/policy
+    about: Report it privately, as SECURITY.md says, not in a public issue.
+  - name: A problem in RomM itself
+    url: https://github.com/rommapp/romm/issues
+    about: The server, its web UI and its API are RomM's project.

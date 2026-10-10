@@ -1,0 +1,23 @@
+name: Idea
+description: Something Gargosy could do, or do better.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What you'd like Gargosy to do.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What you're trying to do, and what's in the way today.
+    validations:
+      required: true
+  - type: textarea
+    id: romm
+    attributes:
+      label: RomM's web UI
+      description: If RomM's web UI already does this, how does it look or work there?
