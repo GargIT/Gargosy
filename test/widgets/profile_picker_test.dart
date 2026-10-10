@@ -70,7 +70,7 @@ void main() {
     for (final k in [LogicalKeyboardKey.digit4, LogicalKeyboardKey.digit7, LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit1]) {
       await tester.sendKeyEvent(k);
     }
-    await h.settle(tester);
+    await h.settle(tester, until: find.byType(AppShell));
     expect(find.byType(AppShell), findsOneWidget);
   });
 

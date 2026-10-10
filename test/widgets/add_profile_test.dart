@@ -51,7 +51,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('No PIN'));
-    await h.settle(tester);
+    await h.settle(tester, until: find.byType(AppShell));
     expect(find.byType(AppShell), findsOneWidget);
     final ctx = h.container.read(activeProfileProvider)!;
     expect(ctx.profile.rommUserId, 7);
@@ -166,7 +166,7 @@ void main() {
     expect(io.Directory(h.root.profiles).listSync(), isEmpty);
     h.protector.failProtect = false;
     await tester.tap(find.text('No PIN'));
-    await h.settle(tester);
+    await h.settle(tester, until: find.byType(AppShell));
     expect(find.byType(AppShell), findsOneWidget);
     expect(io.Directory(h.root.profiles).listSync(), hasLength(1));
   });

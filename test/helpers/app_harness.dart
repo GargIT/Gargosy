@@ -66,9 +66,12 @@ class AppHarness {
   /// the real event loop ([WidgetTester.runAsync]); their continuations, and
   /// timers such as the device-pairing poll, need the fake clock
   /// ([WidgetTester.pump]). Each round gives both; one sequential async step
-  /// takes one round, and creating a profile is about forty.
-  Future<void> settle(WidgetTester tester, {int rounds = 100}) async {
-    for (var i = 0; i < rounds; i++) {
+  /// takes one round, and creating a profile is about forty. With [until], it
+  /// keeps going (up to 1000 rounds) until that finds something: a slow
+  /// machine's file IO can need more rounds than [rounds].
+  Future<void> settle(WidgetTester tester, {int rounds = 100, Finder? until}) async {
+    for (var i = 0; i < (until == null ? rounds : 1000); i++) {
+      if (until != null && i >= rounds && until.evaluate().isNotEmpty) break;
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
       await tester.pump(const Duration(milliseconds: 200));
     }
