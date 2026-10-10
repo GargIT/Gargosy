@@ -75,8 +75,8 @@ void main() {
 
       final text = IniFile(await raIni().readAsString());
       expect(text.get('Achievements', 'DiscordPresenceEnabled'), 'True');
-      expect(text.get('Achievements', 'HardcoreEnabled'), 'False', reason: 'Freegosy owns hardcore, default off');
-      expect(await io.File('${raIni().path}.freegosy.bak').readAsString(), before);
+      expect(text.get('Achievements', 'HardcoreEnabled'), 'False', reason: 'Gargosy owns hardcore, default off');
+      expect(await io.File('${raIni().path}.gargosy.bak').readAsString(), before);
     });
 
     test('hardcore on in Settings turns HardcoreEnabled on', () async {
@@ -124,7 +124,7 @@ void main() {
   });
 
   group('clearRetroAchievementsLogin', () {
-    test('takes Freegosy\'s login out: token, username, and achievements off', () async {
+    test('takes Gargosy\'s login out: token, username, and achievements off', () async {
       await givenDolphinRan();
       final strategy = await build();
       await strategy.applyRetroAchievementsLogin(login);

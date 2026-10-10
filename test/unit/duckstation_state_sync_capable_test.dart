@@ -49,8 +49,8 @@ void main() {
 
     expect(matches('SLUS-00594_resume.sav'), isFalse, reason: 'another game');
     expect(matches('SLES-03508_resume.sav.backup'), isFalse, reason: 'DuckStation backup');
-    expect(matches('SLES-03508_1.sav.bak'), isFalse, reason: 'Freegosy backup');
-    expect(matches('SLES-03508_1.sav.freegosy_tmp'), isFalse);
+    expect(matches('SLES-03508_1.sav.bak'), isFalse, reason: 'Gargosy backup');
+    expect(matches('SLES-03508_1.sav.gargosy_tmp'), isFalse);
     expect(matches('savestate_1.sav'), isFalse, reason: 'global slot, not tied to a game');
     expect(matches('SLES-03508_1.mcd'), isFalse);
     expect(matches(r'..\SLES-03508_resume.sav'), isFalse, reason: 'path traversal');

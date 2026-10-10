@@ -4,20 +4,20 @@ import 'package:gargosy/core/emulator/platform_slugs.dart';
 import 'package:gargosy/core/emulator/retroarch_core_list.dart';
 
 /// RomM names platforms by IGDB's slugs (`pc-fx`, `famicom`,
-/// `neo-geo-pocket-color`, ...), which Freegosy's lists didn't have, so their
+/// `neo-geo-pocket-color`, ...), which Gargosy's lists didn't have, so their
 /// games failed with "No Emulator Configured" (as #120 did for
 /// `turbografx-cd`).
 void main() {
   test('every alias leads to a system a RetroArch core runs', () {
-    for (final MapEntry(key: romm, value: freegosy) in kPlatformSlugAliases.entries) {
-      expect(getDefaultCoreForSlug(freegosy), isNotNull, reason: '$romm → $freegosy has no default core');
+    for (final MapEntry(key: romm, value: own) in kPlatformSlugAliases.entries) {
+      expect(getDefaultCoreForSlug(own), isNotNull, reason: '$romm → $own has no default core');
     }
   });
 
-  test('RomM\'s slug gets the same core as Freegosy\'s', () {
-    for (final MapEntry(key: romm, value: freegosy) in kPlatformSlugAliases.entries) {
-      expect(getDefaultCoreForSlug(romm), getDefaultCoreForSlug(freegosy), reason: romm);
-      expect(getCoresForSlug(romm).map((c) => c.id), getCoresForSlug(freegosy).map((c) => c.id), reason: romm);
+  test('RomM\'s slug gets the same core as Gargosy\'s', () {
+    for (final MapEntry(key: romm, value: own) in kPlatformSlugAliases.entries) {
+      expect(getDefaultCoreForSlug(romm), getDefaultCoreForSlug(own), reason: romm);
+      expect(getCoresForSlug(romm).map((c) => c.id), getCoresForSlug(own).map((c) => c.id), reason: romm);
     }
   });
 
@@ -29,7 +29,7 @@ void main() {
     expect(getDefaultCoreForSlug('wonderswan-color'), 'mednafen_wswan_libretro');
   });
 
-  test('aliases never shadow a slug Freegosy already knows', () {
+  test('aliases never shadow a slug Gargosy already knows', () {
     for (final romm in kPlatformSlugAliases.keys) {
       final listed = kRetroArchCores.any((c) => c.platforms.contains(romm));
       expect(listed, isFalse, reason: '$romm is already a core platform');

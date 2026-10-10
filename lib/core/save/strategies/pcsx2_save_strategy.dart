@@ -384,9 +384,9 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   // cards, LRPS2 and Argosy use, and come back onto the card without
   // touching the other games' saves.
 
-  String get _fileCardTempRoot => p.join(io.Directory.systemTemp.path, 'freegosy_pcsx2');
+  String get _fileCardTempRoot => p.join(io.Directory.systemTemp.path, 'gargosy_pcsx2');
 
-  static const _noSerialMessage = "Freegosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how "
+  static const _noSerialMessage = "Gargosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how "
       "it tells this game's saves from the others on PCSX2's memory card, so its saves weren't synced.";
 
   /// PCSX2's memory cards in [memcardsDir]: `.ps2` files (file cards) and
@@ -444,7 +444,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
         saves = await Isolate.run(
             () => Ps2MemoryCard.parse(bytes).saves.where((s) => Ps2SaveFolders.isSaveOf(s.name, serial)).toList());
       } on FormatException catch (e) {
-        debugPrint('[PCSX2]   ${card.path} is not a card Freegosy can read, skipped: $e');
+        debugPrint('[PCSX2]   ${card.path} is not a card Gargosy can read, skipped: $e');
         continue;
       }
       for (final save in saves) {
@@ -471,7 +471,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
       incoming = Ps2SaveFolders.savesFromUpload(data, filename);
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "The PS2 memory card from RomM ($filename) isn't one Freegosy can read ($e). Nothing was changed.");
+          "The PS2 memory card from RomM ($filename) isn't one Gargosy can read ($e). Nothing was changed.");
     }
     if (incoming.isEmpty) return false;
     final incomingIsCard = Ps2MemoryCard.looksLikeCard(data);
@@ -542,7 +542,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
           () => Ps2SaveFolders.merge(existing, mine, (name) => Ps2SaveFolders.isSaveOf(name, serial)));
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "PCSX2's memory card (${p.basename(card.path)}) doesn't look like a PS2 memory card Freegosy can safely "
+          "PCSX2's memory card (${p.basename(card.path)}) doesn't look like a PS2 memory card Gargosy can safely "
           'change ($e), so it was left as it is.');
     } on Ps2CardFullException catch (e) {
       throw SaveSyncNotPossibleException(
@@ -552,7 +552,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
     }
     await card.parent.create(recursive: true);
     if (await card.exists()) await backupSave(card.path);
-    final temp = io.File('${card.path}.freegosy_tmp');
+    final temp = io.File('${card.path}.gargosy_tmp');
     await temp.writeAsBytes(merged, flush: true);
     await temp.rename(card.path);
     debugPrint('[PCSX2]   put ${mine.map((s) => s.name).toList()} on file card ${card.path}');

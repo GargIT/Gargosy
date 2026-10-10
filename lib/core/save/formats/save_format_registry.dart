@@ -6,7 +6,7 @@ import 'save_format.dart';
 
 export 'save_format.dart';
 
-/// Every system whose saves Freegosy converts between emulators.
+/// Every system whose saves Gargosy converts between emulators.
 final List<SaveSystem<Object>> kSaveSystems = [ps1SaveSystem, ...kRawSaveSystems];
 
 /// [files], downloaded from RomM for a game on [platformSlug], in the format
@@ -30,7 +30,7 @@ SaveConversion convertSave({
         ?.convert(files: files, sourceTag: sourceTag, targetTag: targetTag, stem: stem, existing: existing) ??
     const SaveAsIs();
 
-/// The save system of games on [platformSlug], if Freegosy converts them.
+/// The save system of games on [platformSlug], if Gargosy converts them.
 SaveSystem<Object>? saveSystemFor(String platformSlug, {List<SaveSystem<Object>>? systems}) {
   final slug = canonicalPlatformSlug(platformSlug.toLowerCase());
   for (final system in systems ?? kSaveSystems) {

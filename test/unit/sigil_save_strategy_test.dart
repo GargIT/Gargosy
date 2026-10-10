@@ -205,7 +205,7 @@ void main() {
     await s.getSaveFiles(_game('gba'), r'D:\roms\gba\Game.gba');
     await s.restoreSave(_game('gba'), r'D:\roms\gba\Game.gba', Uint8List(10), 'Game.sav');
     expect(base.calls, ['getSaveFiles gba', 'restoreSave gba']);
-    expect(s.uploadSlotFor(_game('gba')), 'freegosy');
+    expect(s.uploadSlotFor(_game('gba')), 'gargosy');
   });
 
   test('a state-capable old strategy keeps its save states (the wrapper is StateSyncCapable)', () async {

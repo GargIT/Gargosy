@@ -52,12 +52,12 @@ void main() {
 
   test('coreIdFor: the core as RomM\'s player and Argosy name it', () {
     expect(strategy.coreIdFor(game('gba', 'x.gba')), 'mgba');
-    expect(strategy.coreIdFor(game('psx', 'x.cue')), 'mednafen_psx_hw', reason: 'the core Freegosy launches PS1 games with');
+    expect(strategy.coreIdFor(game('psx', 'x.cue')), 'mednafen_psx_hw', reason: 'the core Gargosy launches PS1 games with');
     expect(strategy.coreIdFor(game('n64', 'x.z64')), 'mupen64plus_next');
     expect(strategy.coreIdFor(game('nds', 'x.nds')), 'melonds');
     expect(strategy.coreIdFor(game('turbografx-cd', 'x.cue')), 'mednafen_pce');
     expect(strategy.coreIdFor(game('unknown-platform', 'x.bin')), isNull);
-    // RomM's slugs for systems Freegosy knows by another name.
+    // RomM's slugs for systems Gargosy knows by another name.
     expect(strategy.coreIdFor(game('famicom', 'x.nes')), strategy.coreIdFor(game('nes', 'x.nes')));
     expect(strategy.coreIdFor(game('neo-geo-pocket-color', 'x.ngc')), 'mednafen_ngp');
 
@@ -126,7 +126,7 @@ void main() {
     expect(await strategy.getSaveDir(g, romPath(g.fsName!)), rearmed.path);
   });
 
-  test('every platform a core runs gets the folder of the core Freegosy launches it with', () async {
+  test('every platform a core runs gets the folder of the core Gargosy launches it with', () async {
     // The save folder used to come from a table of its own, which picked
     // other cores than the launch (PCSX-ReARMed for PS1 while Beetle PSX HW
     // was launched, mGBA for Game Boy while Gambatte was) and left out 117

@@ -5,7 +5,7 @@
 /// folders after it, e.g. `saves/Beetle PSX HW/`.
 ///
 /// Covers every core in kRetroArchCores that has an .info file, plus other
-/// cores Freegosy recognises in retroarch.cfg.
+/// cores Gargosy recognises in retroarch.cfg.
 const Map<String, String> kRetroArchCoreLibraryNames = {
   'mgba_libretro':                      'mGBA',
   'gambatte_libretro':                  'Gambatte',

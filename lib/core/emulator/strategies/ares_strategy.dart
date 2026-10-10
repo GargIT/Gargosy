@@ -7,7 +7,7 @@ import 'package:gargosy/core/save/strategies/ares_save_strategy.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/emulator/platform_slugs.dart';
 
-/// Maps Freegosy platform slugs to Ares --system full display names.
+/// Maps Gargosy platform slugs to Ares --system full display names.
 /// Source: mia.cpp media[] vector + mia/medium/*.cpp name() overrides.
 const Map<String, String> kAresSystemNames = {
   'atari2600':       'Atari 2600',
@@ -83,7 +83,7 @@ class AresStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => true;
 
-  /// Returns the Ares --system flag for a given Freegosy platform slug.
+  /// Returns the Ares --system flag for a given Gargosy platform slug.
   String? getSystemNameForSlug(String? slug) {
     if (slug == null) return null;
     return kAresSystemNames[canonicalPlatformSlug(slug.toLowerCase())];

@@ -95,7 +95,7 @@ void main() {
       final strategy = await build();
       await strategy.applyRetroAchievementsLogin(login);
       await strategy.applyRetroAchievementsLogin(const RetroAchievementsEmulatorLogin(username: 'Other', token: 'x'));
-      expect(await io.File('${ini().path}.freegosy.bak').readAsString(), _iniBefore);
+      expect(await io.File('${ini().path}.gargosy.bak').readAsString(), _iniBefore);
     });
 
     test('a changed token is rewritten', () async {
@@ -145,7 +145,7 @@ void main() {
   });
 
   group('clearRetroAchievementsLogin', () {
-    test('takes Freegosy\'s login out: token file, username, and achievements off', () async {
+    test('takes Gargosy\'s login out: token file, username, and achievements off', () async {
       await givenPpssppIni();
       final strategy = await build();
       await strategy.applyRetroAchievementsLogin(login);

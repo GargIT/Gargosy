@@ -274,7 +274,7 @@ class RommService implements RommStatesApi {
   // Device registration (RomM 4.9+)
   // ---------------------------------------------------------------------------
 
-  /// Registers this Freegosy install as a device and returns the persistent UUID.
+  /// Registers this Gargosy install as a device and returns the persistent UUID.
   /// [allowExisting] = true recovers an existing registration on re-install.
   Future<String?> registerDevice({
     required String name,
@@ -286,7 +286,7 @@ class RommService implements RommStatesApi {
       final body = {
         'name': name,
         'platform': platform,
-        'client': 'freegosy',
+        'client': 'Gargosy',
         'client_version': clientVersion ?? AppConstants.version,
       };
       final response = await _dio.post(
@@ -599,7 +599,7 @@ class RommService implements RommStatesApi {
   /// [emulator] is the emulator that made the save, as RomM and other
   /// clients name it (a RetroArch core like `pcsx_rearmed`, or an emulator
   /// like `duckstation`); RomM's in-browser player only offers saves tagged
-  /// with its core. `freegosy` when unknown.
+  /// with its core. `gargosy` when unknown.
   /// [saved]: RomM's record of the uploaded save (its `id`), when it sent one.
   Future<({bool ok, Map<String, dynamic>? conflict, Map<String, dynamic>? saved})> uploadSave(
     String gameId,
@@ -616,15 +616,16 @@ class RommService implements RommStatesApi {
     try {
       final uploadFilename = overrideFilename ?? saveFile.uri.pathSegments.last;
 
-      // Slot naming: always use 'freegosy' for consistency.
+      // Slot naming: always use 'gargosy' for consistency (Freegosy, which this
+      // code comes from, used 'freegosy'; those saves still show and restore).
       // Previously used timestamped slots like 'freegosy-srm_2026-07-11_08-45-38'
       // which created duplicate records on RomM and caused the filename to be
       // corrupted with timestamps. RomM's autocleanup handles version pruning.
       // Do NOT add timestamps to the slot — it breaks save sync (issues #42, #28).
       final queryParams = <String, dynamic>{
         'rom_id': gameId,
-        'emulator': emulator ?? 'freegosy',
-        'slot': slot ?? 'freegosy',
+        'emulator': emulator ?? 'gargosy',
+        'slot': slot ?? 'gargosy',
       };
       // Autocleanup and overwrite are now available for ALL paths (not just 4.9+).
       // This ensures legacy RomM instances also get proper save management.
@@ -709,12 +710,12 @@ class RommService implements RommStatesApi {
   Future<void> pruneOldSaves(String gameId, {int keepCount = 5}) async {
     try {
       final saves = await getSavesList(gameId);
-      // Freegosy's saves are the ones in its slot; their emulator tag names
-      // the emulator that made them.
-      final freegosySaves = saves.where((s) => (s['slot']?.toString() ?? '') == 'freegosy').toList();
-      if (freegosySaves.length <= keepCount) return;
-      
-      final toDelete = freegosySaves.sublist(keepCount);
+      // Gargosy's saves are the ones in its slot; their emulator tag names
+      // the emulator that made them. Saves in Freegosy's slot are never pruned.
+      final ownSaves = saves.where((s) => (s['slot']?.toString() ?? '') == 'gargosy').toList();
+      if (ownSaves.length <= keepCount) return;
+
+      final toDelete = ownSaves.sublist(keepCount);
       final idsToDelete = toDelete
           .map((s) => int.tryParse(s['id']?.toString() ?? ''))
           .whereType<int>()

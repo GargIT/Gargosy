@@ -113,7 +113,7 @@ void main() {
       final newerGt4 = save('BESCES-52438GAMEDATA', {'BESCES-52438GAMEDATA': pattern(12, 124880)});
       mcd(1).writeAsBytesSync(card([ac5, newerGt4]));
 
-      expect(await env.strategy.restoreBackup(game, romPath(), backup, 'freegosy_77_backup.zip'), isTrue);
+      expect(await env.strategy.restoreBackup(game, romPath(), backup, 'gargosy_77_backup.zip'), isTrue);
       final after = cardContents(mcd(1));
       expect(after['BASLUS-20851AC5'], filesOf(olderAc5), reason: 'this game: back to the backup');
       expect(after['BESCES-52438GAMEDATA'], filesOf(newerGt4), reason: 'another game: untouched');

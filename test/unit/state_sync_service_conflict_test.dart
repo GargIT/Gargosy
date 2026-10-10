@@ -105,7 +105,7 @@ void main() {
     expect(ok, isFalse);
     expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(3),
         reason: 'no backup, no replace');
-    expect(env.stateFile('$stateFileA.freegosy_tmp').existsSync(), isFalse,
+    expect(env.stateFile('$stateFileA.gargosy_tmp').existsSync(), isFalse,
         reason: 'a failed write must not leave its temp file behind');
 
     final again = await env.service.pullStates(env.game, env.romPath);

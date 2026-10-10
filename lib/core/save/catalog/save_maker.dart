@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../emulator/emulator_registry_data.dart';
 import '../../emulator/retroarch_core_list.dart';
 
-/// Who made a save: a Freegosy emulator and, for RetroArch, the core.
+/// Who made a save: a Gargosy emulator and, for RetroArch, the core.
 @immutable
 class SaveMaker {
   const SaveMaker(this.emulatorId, {this.coreId});
@@ -15,7 +15,7 @@ class SaveMaker {
   /// for any other emulator, or RetroArch with an unknown core.
   final String? coreId;
 
-  /// The RomM `emulator` tag Freegosy uploads this maker's saves with (see
+  /// The RomM `emulator` tag Gargosy uploads this maker's saves with (see
   /// SaveSyncService._saveEmulatorTag) and the save formats are keyed by.
   String get tag => coreId ?? emulatorId;
 
@@ -29,7 +29,7 @@ class SaveMaker {
   String toString() => coreId == null ? emulatorId : '$emulatorId/$coreId';
 }
 
-/// Every emulator id Freegosy knows.
+/// Every emulator id Gargosy knows.
 Set<String> get kKnownEmulatorIds => {for (final def in kEmulatorDefinitions) def['id'] as String};
 
 String _stripLibretro(String id) => id.replaceAll(RegExp(r'_libretro$'), '');
@@ -40,12 +40,12 @@ String? bareCoreId(String? core) =>
     core == null ? null : _stripLibretro(core.replaceAll(RegExp(r'\.(dll|so|dylib)$'), ''));
 
 /// The maker of a save RomM tagged [tag]; null when it can't be told
-/// (`freegosy`, empty, or a name Freegosy doesn't know). A name that is both
+/// (`gargosy`, Freegosy's `freegosy`, empty, or a name Gargosy doesn't know). A name that is both
 /// a standalone emulator and a RetroArch core (`mgba`) is the standalone
-/// emulator: Freegosy uploads that emulator's saves under its id.
+/// emulator: Gargosy uploads that emulator's saves under its id.
 SaveMaker? resolveSaveMaker(String? tag, {required Set<String> emulatorIds}) {
   final t = tag?.trim().toLowerCase() ?? '';
-  if (t.isEmpty || t == 'freegosy' || t == 'retroarch') return null;
+  if (t.isEmpty || t == 'gargosy' || t == 'freegosy' || t == 'retroarch') return null;
   if (emulatorIds.contains(t)) return SaveMaker(t);
   final core = _stripLibretro(t);
   for (final c in kRetroArchCores) {

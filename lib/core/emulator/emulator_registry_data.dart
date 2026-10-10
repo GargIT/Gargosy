@@ -286,7 +286,7 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
   {
     // No download source: ScummVM publishes its builds on scummvm.org, not
     // as GitHub release assets. Install it yourself (or set a download URL
-    // override) and Freegosy finds it like any other emulator, including the
+    // override) and Gargosy finds it like any other emulator, including the
     // Flatpak and distribution packages on Linux.
     'id': 'scummvm',
     'name': 'ScummVM',

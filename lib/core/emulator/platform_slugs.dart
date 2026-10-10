@@ -1,12 +1,12 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 /// RomM's platform slugs (IGDB's, in `backend/utils/platform_slugs.py`, plus
-/// the hardware variants its player maps to a core) for systems Freegosy
+/// the hardware variants its player maps to a core) for systems Gargosy
 /// already emulates under another slug. Without these, a game on such a
 /// platform found no emulator ("No Emulator Configured"), no RetroArch core,
 /// save folder or BIOS entry.
 ///
 /// Only systems a listed core actually runs are here. A slug for a system
-/// Freegosy has no core for stays unknown.
+/// Gargosy has no core for stays unknown.
 const Map<String, String> kPlatformSlugAliases = {
   // Nintendo
   'famicom': 'nes',
@@ -75,6 +75,6 @@ const Map<String, String> kPlatformSlugAliases = {
   'uzebox': 'uzem',
 };
 
-/// The slug Freegosy knows [slug]'s system by: [slug] itself unless it's one
+/// The slug Gargosy knows [slug]'s system by: [slug] itself unless it's one
 /// of RomM's names in [kPlatformSlugAliases].
 String canonicalPlatformSlug(String slug) => kPlatformSlugAliases[slug] ?? slug;

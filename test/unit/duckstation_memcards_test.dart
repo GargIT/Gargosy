@@ -476,7 +476,7 @@ void main() {
           ZipEncoder().encode(Archive()..addFile(ArchiveFile('shared_card_1.mcd', backedUp.length, backedUp))),
         );
 
-        expect(await env.strategy.restoreBackup(game, romPath(), backup, 'freegosy_g1_backup.zip'), isTrue);
+        expect(await env.strategy.restoreBackup(game, romPath(), backup, 'gargosy_g1_backup.zip'), isTrue);
 
         final after = shared.readAsBytesSync();
         expect(Ps1MemoryCard.parse(after).saves.map((s) => s.name).toSet(), {otherGame.name, 'BESLES-02605-OLDER'});

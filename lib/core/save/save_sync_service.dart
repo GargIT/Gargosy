@@ -66,7 +66,7 @@ class SaveConflictException implements Exception {
 }
 
 /// Gargosy: replaces an emulator's save strategy ([base]; null for an
-/// emulator Freegosy has none for, such as Flycast). Returning [base] keeps it.
+/// emulator Gargosy has none for, such as Flycast). Returning [base] keeps it.
 typedef SaveStrategyWrapper = SaveStrategy? Function(String emulatorId, SaveStrategy? base);
 
 class SaveSyncService {
@@ -570,28 +570,10 @@ class SaveSyncService {
     if (meta == null) return;
     // Scoped to this call's bundleToken: a shared file name would race with a
     // concurrent push/pull in the same temp folder.
-    final metaFile = io.File(p.join(tempDir, 'freegosy_sync.$bundleToken.txt'));
+    final metaFile = io.File(p.join(tempDir, 'gargosy_sync.$bundleToken.txt'));
     await metaFile.writeAsString(meta);
     await encoder.addFile(metaFile, 'freegosy_sync.txt');
     await metaFile.delete();
-  }
-
-  /// Reads the `contentHash` field out of a downloaded bundle's
-  /// `freegosy_sync.txt` (bundles uploaded before plain zips), if [bytes] is
-  /// a zip and that entry/field exists.
-  /// Returns null for anything else (not a zip, no metadata entry, or a
-  /// legacy timeStamp-only metadata format) so callers can fall through to
-  /// an unconditional restore.
-  String? _readBundleContentHash(Uint8List bytes) {
-    try {
-      final archive = ZipDecoder().decodeBytes(bytes);
-      for (final entry in archive) {
-        if (!entry.isFile || p.basename(entry.name) != 'freegosy_sync.txt') continue;
-        final meta = jsonDecode(utf8.decode(entry.content as List<int>)) as Map<String, dynamic>;
-        return meta['contentHash'] as String?;
-      }
-    } catch (_) {}
-    return null;
   }
 
   String _pullKey(String gameId) =>
@@ -750,7 +732,7 @@ class SaveSyncService {
       }
       try {
         final raw = await Rzip.unpack(bytes, zstd: _zstd);
-        final dir = io.Directory(p.join(io.Directory.systemTemp.path, 'freegosy_unrzip',
+        final dir = io.Directory(p.join(io.Directory.systemTemp.path, 'gargosy_unrzip',
             game.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')));
         await dir.create(recursive: true);
         final copy = io.File(p.join(dir.path, p.basename(file.path)));
@@ -797,7 +779,7 @@ class SaveSyncService {
     return true;
   }
 
-  /// The one save file in [zipBytes], leaving out Freegosy's sync metadata,
+  /// The one save file in [zipBytes], leaving out Gargosy's sync metadata,
   /// screenshots and save states; null when there are none, several, or the
   /// zip can't be read.
   static SaveBlob? _singleSaveInZip(Uint8List zipBytes) {
@@ -847,7 +829,7 @@ class SaveSyncService {
   Future<void> _restoreChosenSaveUnlocked(Game game, String romPath, Map<String, dynamic> save,
       {required String emulatorId, String? coreOverride}) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
-    if (strategy == null) throw SaveChoiceException("$emulatorId saves can't be set up by Freegosy.");
+    if (strategy == null) throw SaveChoiceException("$emulatorId saves can't be set up by Gargosy.");
     final url = save['download_path'] as String? ?? save['url'] as String?;
     final filename = save['file_name']?.toString() ?? url?.split('/').last ?? 'save';
     if (url == null) throw SaveChoiceException("RomM didn't say where to download $filename.");
@@ -1339,26 +1321,6 @@ class SaveSyncService {
 
       final adjustedFilename = _adjustFilenameForFormat(bytes, normalizeSaveFilename(filename));
       debugPrint('[SaveSync] [pull] Downloaded ${bytes.length} bytes → restoring as "$adjustedFilename"');
-
-      // Skip the restore entirely when the cloud bundle's freegosy_sync.txt
-      // carries a contentHash that already matches what's on disk. Only
-      // bundles uploaded before plain zips have one (bundles now carry no
-      // metadata, or only a Windows savePath); a bundle without the key falls
-      // through to the RomM-hash check and the restore below.
-      if (adjustedFilename.toLowerCase().endsWith('.zip')) {
-        final cloudContentHash = _readBundleContentHash(bytes);
-        if (cloudContentHash != null) {
-          final localFilesMap =
-              await _unrzipFiles(game, await strategy.getSaveFilesWithScreenshots(game, romPath, syncMode: 'both'));
-          if (localFilesMap.isNotEmpty) {
-            final localContentHash = await saveContentHash(localFilesMap);
-            if (localContentHash == cloudContentHash) {
-              debugPrint('[SaveSync] [pull] Local save content already matches cloud — skipping restore');
-              return false;
-            }
-          }
-        }
-      }
 
       if (SaveRestoreGuard.restoreTooLate) {
         debugPrint('[SaveSync] [pull] The launch went ahead without this pull — not restoring "$adjustedFilename"');

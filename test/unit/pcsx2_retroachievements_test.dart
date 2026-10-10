@@ -101,7 +101,7 @@ void main() {
       await givenPcsx2Ini();
       final strategy = await build();
       await strategy.applyRetroAchievementsLogin(login);
-      final backup = io.File('${ini().path}.freegosy.bak');
+      final backup = io.File('${ini().path}.gargosy.bak');
       expect(await backup.readAsString(), _iniBefore);
 
       await strategy.applyRetroAchievementsLogin(const RetroAchievementsEmulatorLogin(username: 'Other', token: 'x'));
@@ -160,7 +160,7 @@ void main() {
   });
 
   group('clearRetroAchievementsLogin', () {
-    test('takes Freegosy\'s login out: token, username, timestamp, and Enabled off', () async {
+    test('takes Gargosy\'s login out: token, username, timestamp, and Enabled off', () async {
       await givenPcsx2Ini();
       final strategy = await build();
       await strategy.applyRetroAchievementsLogin(login);

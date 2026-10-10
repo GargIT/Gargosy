@@ -24,7 +24,7 @@ class FlatpakSandboxAccessException implements Exception {
       '(or grant access to a parent directory) and try again.';
 }
 
-/// Common Flatpak package IDs mapped to Freegosy emulator IDs.
+/// Common Flatpak package IDs mapped to Gargosy emulator IDs.
 /// Used by [detectFlatpakEmulators] so we can match installed Flatpaks
 /// to built-in emulators automatically.
 const Map<String, String> kEmulatorFlatpakPackages = {
@@ -57,7 +57,7 @@ abstract class LinuxEnvironmentStrategy {
   ///
   /// `flatpak` is resolved to its absolute path (see
   /// [resolveFlatpakExecutable]) so the launch doesn't depend on the PATH
-  /// Freegosy inherited.
+  /// Gargosy inherited.
   static (String, List<String>) splitCommand(String exePath) {
     if (exePath.startsWith('flatpak ')) {
       final parts = exePath.split(' ');
@@ -71,12 +71,12 @@ abstract class LinuxEnvironmentStrategy {
   static const flatpakFallbackLocations = ['/usr/bin/flatpak', '/usr/local/bin/flatpak', '/bin/flatpak'];
 
   /// Environment variables to set when launching [emulatorId] as a plain
-  /// program (not a Flatpak), given the [parent] environment Freegosy runs in;
+  /// program (not a Flatpak), given the [parent] environment Gargosy runs in;
   /// empty for nothing. Only variables whose value would change are returned.
   ///
   /// Dolphin's AppImage crashes (SIGSEGV in NVIDIA's EGL Wayland library,
   /// `eplWlDisplayInstanceCreate`) as soon as a game opens its render window
-  /// in a Wayland session on the NVIDIA driver, with or without Freegosy.
+  /// in a Wayland session on the NVIDIA driver, with or without Gargosy.
   /// Asking for an X11 EGL platform and Qt's xcb backend (through XWayland)
   /// avoids it. Both are set together, replacing what the session has: many
   /// Wayland sessions export `EGL_PLATFORM=wayland` for every program, which
@@ -102,7 +102,7 @@ abstract class LinuxEnvironmentStrategy {
   static bool isFlatpakExecutable(String exe) => p.basename(exe) == 'flatpak';
 
   /// The absolute path of the `flatpak` binary, or the bare `flatpak` when it
-  /// can't be found. Process.start looks a bare name up in the PATH Freegosy
+  /// can't be found. Process.start looks a bare name up in the PATH Gargosy
   /// inherited, which on some sessions (Steam Deck game mode, launched as an
   /// AppImage or from Steam) doesn't hold `/usr/bin`, so the launch failed
   /// with "ProcessException: No such file or directory" although `flatpak`
@@ -151,7 +151,7 @@ abstract class LinuxEnvironmentStrategy {
   Future<void> launchStandalone(String emulatorId, String exePath, {List<String> args = const []});
 
   /// Detects installed Flatpak applications and returns a mapping from
-  /// Freegosy emulator IDs to the Flatpak package ID.
+  /// Gargosy emulator IDs to the Flatpak package ID.
   ///
   /// Runs `flatpak list --app --columns=application` and matches known
   /// emulator package names from [kEmulatorFlatpakPackages].

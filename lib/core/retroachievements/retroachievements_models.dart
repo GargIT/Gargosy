@@ -13,7 +13,7 @@ class RetroAchievementsCredentials {
   /// True when the Web API can't be called (both fields are required there).
   bool get isEmpty => username.isEmpty || webApiKey.isEmpty;
 
-  /// The Web API key is optional in Settings: without it Freegosy can still
+  /// The Web API key is optional in Settings: without it Gargosy can still
   /// sign emulators in and show progress RomM synced, just not live data.
   bool get hasWebApiKey => webApiKey.isNotEmpty;
 }
@@ -66,7 +66,7 @@ class RommRetroAchievementsStatus {
 
   bool isLinkedTo(String username) => linkedUsername?.toLowerCase() == username.toLowerCase();
 
-  /// Freegosy can offer to link [username] on the RomM profile.
+  /// Gargosy can offer to link [username] on the RomM profile.
   bool canLink(String username) => serverEnabled == true && rommUserId != null && !isLinkedTo(username);
 }
 

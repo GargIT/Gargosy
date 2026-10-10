@@ -203,7 +203,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   /// Save and state folders for [coreId] (`mgba`, `mgba_libretro` or
   /// `mgba_libretro.dll`): named after its library_name, or its own layout.
-  /// With [fallback], a core Freegosy doesn't know keeps its bare name.
+  /// With [fallback], a core Gargosy doesn't know keeps its bare name.
   static _CoreInfo? _infoForCore(String coreId, {bool fallback = false}) {
     final base = _bare(coreId);
     final core = '${base}_libretro';
@@ -505,10 +505,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return shared ? null : (_) => true;
   }
 
-  static const _lrps2NoSerial = "Freegosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how it "
+  static const _lrps2NoSerial = "Gargosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how it "
       "tells this game's saves from the others on LRPS2's shared memory cards, so its saves weren't synced.";
 
-  String get _lrps2TempRoot => p.join(io.Directory.systemTemp.path, 'freegosy_lrps2');
+  String get _lrps2TempRoot => p.join(io.Directory.systemTemp.path, 'gargosy_lrps2');
 
   /// This game's saves on LRPS2's cards, written out as save folders to
   /// upload (`BASLUS-20851AC5/…`). Nothing when no card changed since
@@ -569,7 +569,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       incoming = Ps2SaveFolders.savesFromUpload(data, filename);
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "The PS2 memory card from RomM ($filename) isn't one Freegosy can read ($e). Nothing was changed.");
+          "The PS2 memory card from RomM ($filename) isn't one Gargosy can read ($e). Nothing was changed.");
     }
     final setup = await _lrps2Cards(game, romPath);
     final belongs = await _lrps2SavesOf(game, romPath, setup.shared);
@@ -605,7 +605,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       merged = await Isolate.run(() => Ps2SaveFolders.merge(source, mine, belongs));
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "LRPS2's memory card (${p.basename(target.path)}) doesn't look like a PS2 memory card Freegosy can "
+          "LRPS2's memory card (${p.basename(target.path)}) doesn't look like a PS2 memory card Gargosy can "
           'safely change ($e), so it was left as it is.');
     } on Ps2CardFullException catch (e) {
       throw SaveSyncNotPossibleException(
@@ -619,7 +619,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
     await target.parent.create(recursive: true);
     if (await target.exists()) await backupSave(target.path);
-    final temp = io.File('${target.path}.freegosy_tmp');
+    final temp = io.File('${target.path}.gargosy_tmp');
     await temp.writeAsBytes(merged, flush: true);
     await temp.rename(target.path);
     debugPrint('[SaveSync] [retroarch] LRPS2: put ${mine.map((s) => s.name).toList()} on ${target.path}');
@@ -888,7 +888,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// Forgets everything read from retroarch.cfg and the install found, so the
   /// next lookup starts from what is on disk now (RetroArch rewrites its
   /// config on exit, and the emulator can be installed or switched while
-  /// Freegosy runs).
+  /// Gargosy runs).
   void _forgetConfig() {
     _appImageResolved = false;
     _appImageConfig = null;

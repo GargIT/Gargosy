@@ -168,7 +168,7 @@ void main() {
     });
   });
 
-  /// With no saves path, ares keeps saves next to the ROMs. Freegosy sets
+  /// With no saves path, ares keeps saves next to the ROMs. Gargosy sets
   /// one before ares starts: ares reads its settings once, at start, and
   /// writes them back later, so setting it during the pull is too late.
 

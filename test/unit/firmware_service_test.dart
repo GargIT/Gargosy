@@ -443,7 +443,7 @@ void main() {
       // used: its subfolders and MD5 checks do nothing.
       final coreKeys = kRetroArchCores.map((c) => c.id.replaceAll(RegExp(r'_libretro$'), '')).toSet();
       final emulatorIds = kEmulatorDefinitions.map((e) => e['id'] as String).toSet();
-      // No core or emulator for these in Freegosy yet.
+      // No core or emulator for these in Gargosy yet.
       const noCoreYet = {'gearcoleco', 'emuscv', 'hatarib'};
       final unreachable = registeredEmulatorIds
           .where((k) => !coreKeys.contains(k) && !emulatorIds.contains(k) && !noCoreYet.contains(k))

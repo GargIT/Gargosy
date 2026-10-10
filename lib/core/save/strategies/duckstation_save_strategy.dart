@@ -166,7 +166,7 @@ class DuckstationSaveStrategy extends SaveStrategy with StateSyncCapable {
   // (`[MemoryCards] CardNType`, overridable per game in
   // `gamesettings/<SERIAL>.ini`): `<serial>_N.mcd`, `<title>_N.mcd` (the
   // `saveName` in its own gamedb.yaml) or `<ROM file name>_N.mcd`, N being
-  // the port. Freegosy reads that setting, uploads exactly those cards, and
+  // the port. Gargosy reads that setting, uploads exactly those cards, and
   // restores a card under the name *this* PC's DuckStation will open, so PCs
   // set to different types still share the save.
   //
@@ -452,7 +452,7 @@ class DuckstationSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// Writes [bytes] as [name] in this game's temporary upload folder.
   static Future<File> _writeUpload(Game game, String name, List<int> bytes) async {
     final dir = Directory(
-      p.join(Directory.systemTemp.path, 'freegosy_duckstation', game.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')),
+      p.join(Directory.systemTemp.path, 'gargosy_duckstation', game.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')),
     );
     await dir.create(recursive: true);
     final out = File(p.join(dir.path, name));
@@ -596,7 +596,7 @@ class DuckstationSaveStrategy extends SaveStrategy with StateSyncCapable {
       incoming = Ps1MemoryCard.parse(bytes);
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-        "The memory card from RomM ($name) isn't a PS1 memory card Freegosy can read ($e). "
+        "The memory card from RomM ($name) isn't a PS1 memory card Gargosy can read ($e). "
         'Nothing was changed.',
       );
     }
@@ -606,7 +606,7 @@ class DuckstationSaveStrategy extends SaveStrategy with StateSyncCapable {
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
         "DuckStation's shared memory card (${p.basename(shared.path)}) doesn't look like a PS1 "
-        'memory card Freegosy can safely change ($e), so it was left as it is.',
+        'memory card Gargosy can safely change ($e), so it was left as it is.',
       );
     }
     final Uint8List? merged;
@@ -629,7 +629,7 @@ class DuckstationSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
     await shared.parent.create(recursive: true);
     if (await shared.exists()) await backupSave(shared.path);
-    final temp = File('${shared.path}.freegosy_tmp');
+    final temp = File('${shared.path}.gargosy_tmp');
     await temp.writeAsBytes(merged, flush: true);
     await temp.rename(shared.path);
     debugPrint(

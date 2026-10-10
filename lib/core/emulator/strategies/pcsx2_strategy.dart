@@ -139,7 +139,7 @@ class Pcsx2Strategy extends EmulatorStrategy {
   /// its files: `Enabled`, `Username`, `LoginTimestamp` and `ChallengeMode`
   /// (hardcore, off unless turned on in Settings) in PCSX2.ini's
   /// `[Achievements]`, and the token in secrets.ini beside it. Only the lines
-  /// that differ are changed, PCSX2.ini is copied to `PCSX2.ini.freegosy.bak`
+  /// that differ are changed, PCSX2.ini is copied to `PCSX2.ini.gargosy.bak`
   /// first (once), and nothing is written before PCSX2 has run once (its
   /// first-run setup would otherwise find a half-made config).
   @override

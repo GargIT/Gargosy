@@ -220,7 +220,7 @@ class SigilSaveStrategy extends SaveStrategy {
   bool get shouldZip => base?.shouldZip ?? false;
 
   @override
-  String uploadSlotFor(Game game) => _covers(game) ? 'autosave' : (base?.uploadSlotFor(game) ?? 'freegosy');
+  String uploadSlotFor(Game game) => _covers(game) ? 'autosave' : (base?.uploadSlotFor(game) ?? 'gargosy');
 
   @override
   bool restoresUnitsItselfFor(Game game) => _covers(game) || (base?.restoresUnitsItselfFor(game) ?? false);

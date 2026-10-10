@@ -15,7 +15,7 @@ void main() {
   test("a new profile's PCSX2 gets a formatted folder memory card before the first save goes in", () {
     EmulatorLayout.of('pcsx2').ensureFolders(data.path);
     final folder = io.Directory(card(r'PCSX2\memcards\Mcd001.ps2'));
-    expect(folder.existsSync(), isTrue, reason: 'a folder card, as PCSX2 and Freegosy keep them');
+    expect(folder.existsSync(), isTrue, reason: 'a folder card, as PCSX2 and Gargosy keep them');
     final sb = io.File(p.join(folder.path, '_pcsx2_superblock')).readAsBytesSync();
     expect(sb.length, 8192);
     expect(String.fromCharCodes(sb.sublist(0, 28)), 'Sony PS2 Memory Card Format ');

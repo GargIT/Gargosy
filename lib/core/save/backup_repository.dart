@@ -11,7 +11,7 @@ class BackupRepository {
   // Gargosy: one box per profile, so profiles never see each other's backups.
   BackupRepository({this.boxName = _defaultBoxName});
 
-  static const String _defaultBoxName = 'freegosy_backups';
+  static const String _defaultBoxName = 'gargosy_backups';
   final String boxName;
   static const int _maxBackups = 8;
 

@@ -79,7 +79,7 @@ bool _isLogOnlyPlatform(String platformName) {
 /// `<Saves path>/<Platform Full Name>/<ROM file name without extension>.<ext>`,
 /// in the Settings → Paths → Saves folder ares uses when it
 /// is set (desktop-ui `Emulator::locate`). Unset, ares keeps saves next to
-/// the game file; Freegosy never writes there (ROM folders hold ROMs), so
+/// the game file; Gargosy never writes there (ROM folders hold ROMs), so
 /// before restoring a save it sets Paths → Saves to `<ares folder>/Saves/`.
 /// Until then, saves ares made next to the game file are still read, to be
 /// uploaded.
@@ -104,7 +104,7 @@ class AresSaveStrategy extends SaveStrategy {
   @override
   bool get shouldZip => false;
 
-  /// Maps Freegosy platform slugs to Ares save folder names.
+  /// Maps Gargosy platform slugs to Ares save folder names.
   static const Map<String, String> _platformFolderNames = {
     'atari2600':       'Atari 2600',
     'nes':             'Famicom',
@@ -318,7 +318,7 @@ class AresSaveStrategy extends SaveStrategy {
       final bytes = await zipFile.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
       // In the system temp folder: the zip may sit next to the ROMs.
-      final extractDir = io.Directory(p.join(io.Directory.systemTemp.path, 'freegosy_ares_extract',
+      final extractDir = io.Directory(p.join(io.Directory.systemTemp.path, 'gargosy_ares_extract',
           p.basenameWithoutExtension(zipFile.path).replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')));
       await extractDir.create(recursive: true);
 

@@ -63,8 +63,8 @@ void main() {
 
     expect(matches('Pokemon Emerald 2.state1'), isFalse, reason: 'another game');
     expect(matches('Pokemon Emerald.state1.png'), isFalse, reason: 'thumbnail');
-    expect(matches('Pokemon Emerald.state1.bak'), isFalse, reason: 'Freegosy backup');
-    expect(matches('Pokemon Emerald.state1.freegosy_tmp'), isFalse);
+    expect(matches('Pokemon Emerald.state1.bak'), isFalse, reason: 'Gargosy backup');
+    expect(matches('Pokemon Emerald.state1.gargosy_tmp'), isFalse);
     expect(matches('Pokemon Emerald.srm'), isFalse, reason: 'a game save');
     expect(matches('../Pokemon Emerald.state1'), isFalse);
     expect(matches(r'..\Pokemon Emerald.state1'), isFalse);

@@ -842,7 +842,7 @@ void main() {
       });
     }
 
-    test('the upload is tagged with the emulator that made the save, in the freegosy slot', () async {
+    test('the upload is tagged with the emulator that made the save, in the gargosy slot', () async {
       final tempDir = await setUpPcsx2Fixture('SAVE_DATA_V1');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       stubUpload((file) async => Uint8List(0));
@@ -860,7 +860,7 @@ void main() {
         screenshotFile: anyNamed('screenshotFile'),
         overrideFilename: anyNamed('overrideFilename'),
       )).captured;
-      expect(captured, ['pcsx2', 'freegosy']);
+      expect(captured, ['pcsx2', 'gargosy']);
 
       await tempDir.delete(recursive: true);
     });
@@ -927,7 +927,7 @@ void main() {
       await tempDir.delete(recursive: true);
     });
 
-    test('pull: an old bundle whose freegosy_sync.txt hash matches is still skipped', () async {
+    test('pull: an old bundle with a freegosy_sync.txt hash is put back like any other, without that file', () async {
       final tempDir = await setUpPcsx2Fixture('LOCAL_UNCHANGED');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       // An upload from before plain zips: freegosy_sync.txt holds the
@@ -945,8 +945,10 @@ void main() {
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
           .thenAnswer((_) async => Uint8List.fromList(ZipEncoder().encode(old)));
 
-      expect(await service.pullSave(pcsx2Game(), romPath), isFalse);
-      expect(await File(await localSaveFilePath(tempDir)).readAsString(), 'LOCAL_UNCHANGED');
+      expect(await service.pullSave(pcsx2Game(), romPath), isTrue);
+      final saved = File(await localSaveFilePath(tempDir));
+      expect(await saved.readAsString(), 'LOCAL_UNCHANGED');
+      expect(saved.parent.listSync(recursive: true).map((e) => p.basename(e.path)), isNot(contains('freegosy_sync.txt')));
       await tempDir.delete(recursive: true);
     });
 
@@ -1061,7 +1063,7 @@ void main() {
     Game n64Game() =>
         Game(id: 'n64game', name: 'Mario Kart 64', fsName: '$romName.z64', platformSlug: 'n64', fileSize: 0);
     String romPath() => p.join(tempDir.path, 'roms', '$romName.z64');
-    // ares' settings.bml has no saves path, so Freegosy sets <ares folder>/Saves/.
+    // ares' settings.bml has no saves path, so Gargosy sets <ares folder>/Saves/.
     String aresDir() => p.join(tempDir.path, '.local', 'share', 'ares');
     String aresSaves() => p.join(aresDir(), 'Saves', 'Nintendo 64');
     List<String> filesIn(String dir) => Directory(dir).existsSync()
@@ -1491,7 +1493,7 @@ class _SharedCardStrategy implements SaveStrategy {
   @override
   String get strategyId => 'card';
   @override
-  String uploadSlotFor(Game game) => 'freegosy';
+  String uploadSlotFor(Game game) => 'gargosy';
   @override
   Future<void> afterUpload(Game game, String romPath) async {}
   @override

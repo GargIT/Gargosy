@@ -341,7 +341,7 @@ void main() {
 
   /// ares keeps a game's saves in `<Settings → Paths → Saves>/<system>/`,
   /// named after the game file without its extension (desktop-ui
-  /// Emulator::locate); with no saves path, next to the game file. Freegosy
+  /// Emulator::locate); with no saves path, next to the game file. Gargosy
   /// never writes in the ROM folder: it sets a saves path first.
   group('Where ares keeps saves', () {
     late Directory home;
@@ -372,7 +372,7 @@ void main() {
     String aresDir() => p.join(home.path, '.local', 'share', 'ares');
     List<String> romFolder() => roms.listSync().map((f) => p.basename(f.path)).toList()..sort();
 
-    test('with no saves path, Freegosy sets <ares folder>/Saves/ and restores there, under the ROM\'s exact name',
+    test('with no saves path, Gargosy sets <ares folder>/Saves/ and restores there, under the ROM\'s exact name',
         () async {
       await writeSettings('  Home\n  Firmware\n  Saves\n');
 

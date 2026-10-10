@@ -51,7 +51,7 @@ class SaveSystem<N> {
 
   final String name;
 
-  /// Freegosy's platform slugs for the system (after canonicalPlatformSlug).
+  /// Gargosy's platform slugs for the system (after canonicalPlatformSlug).
   final Set<String> slugs;
   final List<SaveFormat<N>> formats;
 

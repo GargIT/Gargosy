@@ -16,7 +16,7 @@ void main() {
   });
 
   test('a name that is both a standalone emulator and a core is the standalone emulator', () {
-    // Freegosy uploads standalone mGBA saves tagged `mgba`.
+    // Gargosy uploads standalone mGBA saves tagged `mgba`.
     expect(resolveSaveMaker('mgba', emulatorIds: ids), const SaveMaker('mgba'));
   });
 

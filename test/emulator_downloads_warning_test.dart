@@ -52,7 +52,7 @@ void main() {
           final repo = definition['gitea_repo'] as String;
           try {
             final request = await client.getUrl(Uri.parse('https://$host/api/v1/repos/$repo/releases/latest'));
-            request.headers.add('User-Agent', 'Freegosy-Test-Suite');
+            request.headers.add('User-Agent', 'Gargosy-Test-Suite');
             final response = await request.close();
             
             if (response.statusCode == 200) {
@@ -97,7 +97,7 @@ void main() {
           final repo = definition['github_repo'] as String;
           try {
             final request = await client.getUrl(Uri.parse('https://api.github.com/repos/$repo/releases/latest'));
-            request.headers.add('User-Agent', 'Freegosy-Test-Suite');
+            request.headers.add('User-Agent', 'Gargosy-Test-Suite');
             request.headers.add('Accept', 'application/vnd.github.v3+json');
             final response = await request.close();
             
@@ -145,7 +145,7 @@ void main() {
             // Test the scraper
             final List<Map<String, String>> assets = [];
             final request = await client.getUrl(Uri.parse('https://dolphin-emu.org/download/'));
-            request.headers.add('User-Agent', 'Freegosy-Test-Suite');
+            request.headers.add('User-Agent', 'Gargosy-Test-Suite');
             final response = await request.close();
             
             if (response.statusCode != 200) {
@@ -201,7 +201,7 @@ void main() {
             final repo = repos[platform] as String;
             try {
               final request = await client.getUrl(Uri.parse('https://api.github.com/repos/$repo/releases/latest'));
-              request.headers.add('User-Agent', 'Freegosy-Test-Suite');
+              request.headers.add('User-Agent', 'Gargosy-Test-Suite');
               request.headers.add('Accept', 'application/vnd.github.v3+json');
               final response = await request.close();
 

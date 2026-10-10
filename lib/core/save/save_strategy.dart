@@ -45,7 +45,7 @@ class SaveSyncBlockedException extends SaveSyncNotPossibleException {
 /// [run] makes the guard [current] for everything [body] starts, so the
 /// check reaches the save strategies without passing it through every call.
 class SaveRestoreGuard {
-  static const _zoneKey = #freegosySaveRestoreGuard;
+  static const _zoneKey = #gargosySaveRestoreGuard;
 
   bool _tooLate = false;
 
@@ -78,7 +78,7 @@ abstract class SaveStrategy {
 
   /// RomM's slot [game]'s uploads go to. Gargosy: sigil's units go
   /// to `autosave`, where Argosy and RomM keep a game's latest save.
-  String uploadSlotFor(Game game) => 'freegosy';
+  String uploadSlotFor(Game game) => 'gargosy';
 
   /// Called once an upload of [game]'s save succeeded (Gargosy: sigil
   /// commits its sync state here, never before).

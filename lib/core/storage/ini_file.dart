@@ -118,7 +118,7 @@ class IniFile {
 
 /// Reads [file] (an empty ini when it is missing and [create]), runs [edit] on
 /// it and writes it back only if [edit] reports a change; returns whether it
-/// did. [backup] copies an existing file to `<name>.freegosy.bak` first, once.
+/// did. [backup] copies an existing file to `<name>.gargosy.bak` first, once.
 /// A [private] file is made readable by its owner alone (`chmod 600`, not on
 /// [windows]) before anything secret goes into it.
 Future<bool> updateIniFile(
@@ -134,7 +134,7 @@ Future<bool> updateIniFile(
   final ini = IniFile(exists ? await file.readAsString() : '');
   if (!edit(ini)) return false;
   if (backup && exists) {
-    final copy = io.File('${file.path}.freegosy.bak');
+    final copy = io.File('${file.path}.gargosy.bak');
     if (!await copy.exists()) await file.copy(copy.path);
   }
   if (!exists) {

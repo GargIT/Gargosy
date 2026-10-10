@@ -13,7 +13,7 @@ void main() {
     late Directory tempDir;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('freegosy_n3ds_test_');
+      tempDir = await Directory.systemTemp.createTemp('gargosy_n3ds_test_');
       SharedPreferences.setMockInitialValues({});
     });
 

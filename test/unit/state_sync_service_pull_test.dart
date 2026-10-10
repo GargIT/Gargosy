@@ -119,7 +119,7 @@ void main() {
     expect(result.downloaded, 0);
     expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(1),
         reason: 'no backup, no replace');
-    expect(env.stateFile('$stateFileA.freegosy_tmp').existsSync(), isFalse,
+    expect(env.stateFile('$stateFileA.gargosy_tmp').existsSync(), isFalse,
         reason: 'a failed write must not leave its temp file behind');
   });
 

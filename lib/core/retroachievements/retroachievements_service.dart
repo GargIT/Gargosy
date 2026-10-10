@@ -6,16 +6,16 @@ import 'retroachievements_game_models.dart';
 import 'retroachievements_models.dart';
 
 /// Thin HTTP client for the read-only parts of the RetroAchievements Web API
-/// (https://api-docs.retroachievements.org/) that Freegosy needs: verifying
+/// (https://api-docs.retroachievements.org/) that Gargosy needs: verifying
 /// a username/API-key pair, fetching that user's profile summary, and
 /// fetching their progress through a single game.
 ///
 /// This deliberately does NOT attempt to award/unlock achievements during
 /// play — that requires the rcheevos client library watching live emulator
-/// memory from inside the emulator process, which Freegosy (an external
+/// memory from inside the emulator process, which Gargosy (an external
 /// launcher) has no access to. Emulators like RetroArch, Dolphin, and
 /// PCSX2 already have their own built-in RetroAchievements support for
-/// that; Freegosy's role here is limited to showing profile/progress data.
+/// that; Gargosy's role here is limited to showing profile/progress data.
 class RetroAchievementsService {
   static const String _baseUrl = 'https://retroachievements.org/API';
   static const String _connectUrl = 'https://retroachievements.org/dorequest.php';
@@ -30,7 +30,7 @@ class RetroAchievementsService {
               receiveTimeout: const Duration(seconds: 15),
               headers: {
                 // RA asks Connect API clients for "{Name}/{version} ({platform})".
-                'User-Agent': 'Freegosy/${AppConstants.version} (${defaultTargetPlatform.name})',
+                'User-Agent': 'Gargosy/${AppConstants.version} (${defaultTargetPlatform.name})',
                 'Accept': 'application/json',
               },
             ));
@@ -116,7 +116,7 @@ class RetroAchievementsService {
   }
 
   /// Exchanges the user's RA password for a Connect API token — the same
-  /// token emulators obtain when you log in inside them — so Freegosy can
+  /// token emulators obtain when you log in inside them — so Gargosy can
   /// sign emulators in on the user's behalf. The password is sent once, in
   /// the POST body (never the URL), and is not stored.
   ///

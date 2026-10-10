@@ -13,7 +13,7 @@ void main() {
     tmp = await Directory.systemTemp.createTemp('backup_repo_emulator');
     Hive.init(tmp.path);
     if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
-    await Hive.openBox<List>('freegosy_backups');
+    await Hive.openBox<List>('gargosy_backups');
   });
 
   tearDown(() async {

@@ -10,7 +10,7 @@ import 'package:path/path.dart' as p;
 import 'save_sync_regression_test.mocks.dart';
 
 /// Save sync must not crash when RetroArch has no retroarch.cfg and no
-/// executable can be found (not installed, or installed somewhere Freegosy
+/// executable can be found (not installed, or installed somewhere Gargosy
 /// doesn't know about).
 ///
 /// Reported in issue #94: a PS2 push fell back to the RetroArch strategy and

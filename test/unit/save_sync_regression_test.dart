@@ -93,7 +93,7 @@ void main() {
   });
 
   group('Save sync slot naming', () {
-    test('pushSaves() uses slot "freegosy" not timestamped slot', () async {
+    test('pushSaves() uses slot "gargosy" not timestamped slot', () async {
       final tempDir = await Directory.systemTemp.createTemp('slot_test');
       final romPath = p.join(tempDir.path, 'game.gba');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
@@ -116,7 +116,7 @@ void main() {
 
       await service.pushSaves(game, romPath);
 
-      // Verify uploadSave was called — the slot defaults to 'freegosy'
+      // Verify uploadSave was called — the slot defaults to 'gargosy'
       // inside romm_service.dart when null is passed
       verify(mockRommService.uploadSave(
         'slot1',

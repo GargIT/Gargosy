@@ -43,8 +43,8 @@ void main() {
 
     expect(matches('SLUS-20312 (A1B2C3D4).01.p2s'), isFalse, reason: 'another game');
     expect(matches('SCUS-97113 (A1B2C3D4).01.p2s.backup'), isFalse, reason: 'PCSX2 backup');
-    expect(matches('SCUS-97113 (A1B2C3D4).01.p2s.bak'), isFalse, reason: 'Freegosy backup');
-    expect(matches('SCUS-97113 (A1B2C3D4).01.p2s.freegosy_tmp'), isFalse);
+    expect(matches('SCUS-97113 (A1B2C3D4).01.p2s.bak'), isFalse, reason: 'Gargosy backup');
+    expect(matches('SCUS-97113 (A1B2C3D4).01.p2s.gargosy_tmp'), isFalse);
     expect(matches('SCUS-97113 (A1B2C3D4).01.png'), isFalse);
     expect(matches(r'..\SCUS-97113 (A1B2C3D4).01.p2s'), isFalse, reason: 'path traversal');
     expect(matches('../SCUS-97113 (A1B2C3D4).01.p2s'), isFalse, reason: 'path traversal');

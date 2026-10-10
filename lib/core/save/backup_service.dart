@@ -22,7 +22,7 @@ class BackupService {
   // Gargosy: backups are written to the profile's backups\ folder.
   BackupService({this.backupsDir});
 
-  /// The folder backups are written to; Freegosy's app-support folder when null.
+  /// The folder backups are written to; Gargosy's app-support folder when null.
   final Future<String> Function()? backupsDir;
 
   // ---------------------------------------------------------------------------
@@ -86,9 +86,9 @@ class BackupService {
       final bytes = await zipFile.readAsBytes();
       final digest = rommHashOfUpload(bytes) ?? md5.convert(bytes).toString();
 
-      // Rename to final convention: freegosy_[romId]_[timestamp]_[md5].zip
+      // Rename to final convention: gargosy_[romId]_[timestamp]_[md5].zip
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final finalName = 'freegosy_${game.id}_${timestamp}_$digest.zip';
+      final finalName = 'gargosy_${game.id}_${timestamp}_$digest.zip';
       final finalPath = p.join(backupsDir.path, finalName);
       await zipFile.rename(finalPath);
 

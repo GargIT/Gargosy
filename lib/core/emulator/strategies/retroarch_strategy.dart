@@ -274,7 +274,7 @@ class RetroArchStrategy extends EmulatorStrategy {
   // ── Launch ───────────────────────────────────────────────────
 
   /// Signs RetroArch in to RetroAchievements with the token saved in
-  /// Settings, via a Freegosy-owned `--appendconfig` file so the user's
+  /// Settings, via a Gargosy-owned `--appendconfig` file so the user's
   /// retroarch.cfg is left alone. Empty when no emulator login is saved;
   /// never fails a launch.
   @visibleForTesting

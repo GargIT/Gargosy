@@ -3,7 +3,7 @@ import 'dart:io' as io;
 import 'dart:typed_data';
 
 /// A save state stored on RomM (`/api/states`). States belong to one RomM
-/// user and are private unless the owner flips `is_public` — Freegosy never
+/// user and are private unless the owner flips `is_public` — Gargosy never
 /// does.
 class RommState {
   final int id;
@@ -14,7 +14,7 @@ class RommState {
   /// so it says "something happened", not "the bytes are newer".
   final String? updatedAt;
 
-  /// The `emulator` value the state was uploaded with, if any. Freegosy sends
+  /// The `emulator` value the state was uploaded with, if any. Gargosy sends
   /// its emulator id; other clients may send anything.
   final String? emulator;
 

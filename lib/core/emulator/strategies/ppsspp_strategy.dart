@@ -117,7 +117,7 @@ class PPSSPPStrategy extends EmulatorStrategy {
   /// `AchievementsChallengeMode` (hardcore, off unless turned on in Settings)
   /// in ppsspp.ini's `[Achievements]`, and the token in its own file beside
   /// it. Only differing lines change, and an existing ppsspp.ini is copied to
-  /// `ppsspp.ini.freegosy.bak` first (once).
+  /// `ppsspp.ini.gargosy.bak` first (once).
   @override
   Future<void> applyRetroAchievementsLogin(RetroAchievementsEmulatorLogin login) async {
     try {

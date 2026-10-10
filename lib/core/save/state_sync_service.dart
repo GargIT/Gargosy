@@ -759,7 +759,7 @@ class StateSyncService {
   /// is thrown. The temp file never outlives a failed write.
   Future<void> _writeStateFile(_Ctx ctx, String path, Uint8List bytes) async {
     await io.File(path).parent.create(recursive: true);
-    final temp = io.File('$path.freegosy_tmp');
+    final temp = io.File('$path.gargosy_tmp');
     try {
       final existed = await io.File(path).exists();
       await temp.writeAsBytes(bytes, flush: true);

@@ -181,7 +181,7 @@ class ExtractionService {
   Future<void> _handleSevenZip(String archivePath, String destDir) async {
     final sevenZipExe = await directoryService.resolveSevenZipPath();
     if (sevenZipExe == null) {
-      throw Exception('7zr.exe could not be initialized. Try reinstalling Freegosy.');
+      throw Exception('7zr.exe could not be initialized. Try reinstalling Gargosy.');
     }
     final result = await Process.run(
       sevenZipExe,
@@ -198,7 +198,7 @@ class ExtractionService {
   }
 
   /// Programs on Windows that can unpack a RAR, tried in order: an installed
-  /// 7-Zip or WinRAR's `UnRAR.exe`. (The `7zr.exe` Freegosy bundles reads only
+  /// 7-Zip or WinRAR's `UnRAR.exe`. (The `7zr.exe` Gargosy bundles reads only
   /// 7z, so it can't do RAR.) Only ones that exist are returned, each with
   /// the arguments for unpacking [archivePath] into [destDir].
   Future<List<({String exe, List<String> args})>> _windowsRarTools(String archivePath, String destDir) async {

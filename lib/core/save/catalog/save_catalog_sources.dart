@@ -51,7 +51,7 @@ Future<SaveCatalog> loadSaveCatalog(Game game, String romPath, SaveCatalogSource
   );
 }
 
-/// The saves Freegosy's services know about.
+/// The saves Gargosy's services know about.
 class LiveSaveCatalogSources implements SaveCatalogSources {
   LiveSaveCatalogSources({
     required this.sync,

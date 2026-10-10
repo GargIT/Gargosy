@@ -18,7 +18,7 @@ const kRaHardcoreKey = 'retroAchievementsHardcore';
 const kRetroArchAchievementsConfigFileName = 'retroarch_achievements.cfg';
 
 /// What an emulator needs to sign in to RetroAchievements: the username and
-/// the Connect API token RA issued when the user gave Freegosy their password
+/// the Connect API token RA issued when the user gave Gargosy their password
 /// once. The password itself is never stored.
 class RetroAchievementsEmulatorLogin {
   final String username;
@@ -61,7 +61,7 @@ class RetroAchievementsEmulatorLogin {
   }
 
   /// RetroArch config overrides, passed via `--appendconfig` so the user's
-  /// own retroarch.cfg is never edited by Freegosy.
+  /// own retroarch.cfg is never edited by Gargosy.
   ///
   /// Also forces `config_save_on_exit = "false"` for the session: RetroArch
   /// merges `--appendconfig` into its in-memory config, and with the user's

@@ -72,7 +72,7 @@ class DownloadService {
     return ext.length > 1 && ext.length <= 6 && !ext.contains(' ');
   }
 
-  /// Whether [path] is an archive Freegosy unpacks after downloading (a Windows
+  /// Whether [path] is an archive Gargosy unpacks after downloading (a Windows
   /// game, or a ROM for a platform whose emulator can't read archives).
   @visibleForTesting
   static bool isExtractableArchive(String path) {
