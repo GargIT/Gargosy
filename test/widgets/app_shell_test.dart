@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/constants/app_constants.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/profiles/login_store.dart';
@@ -98,6 +99,20 @@ void main() {
     await tester.tap(find.text('Switch profile'));
     await tester.pumpAndSettle();
     expect(c.read(activeProfileProvider), isNull);
+  });
+
+  testWidgets("the user menu shows Gargosy's version to the right of the profile name", (tester) async {
+    final was = AppConstants.version;
+    addTearDown(() => AppConstants.version = was);
+    AppConstants.version = '1.2.3';
+    await pump(tester);
+    await send(tester, GameAction.start);
+    final version = find.text('v1.2.3');
+    expect(version, findsOneWidget);
+    // The menu's name heading: the last one built (the menu is on top).
+    final nameBox = tester.getRect(find.text(c.read(activeProfileProvider)!.profile.name).last);
+    expect(tester.getRect(version).left, greaterThan(nameBox.right));
+    expect(tester.getCenter(version).dy, closeTo(nameBox.center.dy, 8));
   });
 
   testWidgets('B closes the user menu', (tester) async {

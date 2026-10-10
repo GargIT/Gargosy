@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../core/platform/window_service.dart';
 import '../theme/tokens.dart';
@@ -8,8 +9,9 @@ import '../widgets/hint_bar.dart';
 
 enum UserMenuChoice { switchProfile, settings, emulators, fullscreen }
 
-/// The user menu (Start, or the profile badge): switch profile, settings,
-/// emulators and fullscreen.
+/// The user menu (Start, or the profile badge): the profile's name with
+/// Gargosy's version beside it, then switch profile, settings, emulators and
+/// fullscreen.
 Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name}) {
   Widget item(BuildContext c, String label, IconData icon, UserMenuChoice choice, {bool autofocus = false}) => GFocusable(
         autofocus: autofocus,
@@ -40,7 +42,15 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Padding(
                   padding: const EdgeInsets.all(GSpace.s3),
-                  child: Text(name, style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
+                  child: Row(children: [
+                    Expanded(
+                      child: Text(name,
+                          style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: GSpace.s3),
+                    Text('v${AppConstants.version}', style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary)),
+                  ]),
                 ),
                 item(c, 'Switch profile', Icons.people_alt_outlined, UserMenuChoice.switchProfile, autofocus: true),
                 item(c, 'Settings', Icons.settings_outlined, UserMenuChoice.settings),
