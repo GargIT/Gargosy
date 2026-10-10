@@ -33,6 +33,10 @@ everything: the app, `roms\`, `emulators\`, `bios\` and `userdata\`. Nothing goe
 Download it from [Releases](https://github.com/GargIT/Gargosy/releases); what changed is in
 `CHANGELOG.md`.
 
+**RomM version.** Gargosy needs RomM 4.8 or newer, and works best with 5.3 or newer (tested on 5.3.1).
+Pairing with a phone needs 5.0; before that you log in with username and password. Before 5.3, RomM
+doesn't send game ids (disc serials, title ids), so Gargosy reads them from the ROM itself.
+
 Gargosy.exe isn't code-signed, so the first start may show Windows' "Windows protected your PC".
 Choose **More info**, then **Run anyway**.
 
