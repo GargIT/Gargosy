@@ -38,6 +38,7 @@ void main() {
       encoder.create(zipPath);
       for (final entry in files.entries) {
         final file = File(p.join(tempDir.path, entry.key));
+        await file.parent.create(recursive: true);
         await file.writeAsString(entry.value);
         await encoder.addFile(file, entry.key);
       }
@@ -55,6 +56,29 @@ void main() {
         final service = createService('windows');
         await service.extract(zipPath, destDir.path);
         expect(File(p.join(destDir.path, 'test.txt')).existsSync(), isTrue);
+      });
+
+      // Emulator zips (PPSSPP, xemu, ares, DuckStation) kept only their first
+      // file: the fallback didn't wait for the extraction to finish, and a
+      // `tar` other than Windows' own (Git's) sent every zip to that fallback.
+      final many = {for (var i = 0; i < 40; i++) 'dir${i % 4}/file$i.txt': 'content $i' * 200, 'App.exe': 'MZ' * 5000};
+
+      test('every file of a zip is unpacked on Windows, not just the first', () async {
+        final zipPath = await createZip(many);
+        final destDir = Directory(p.join(tempDir.path, 'ext_many'))..createSync();
+        await createService('windows').extract(zipPath, destDir.path);
+        for (final name in many.keys) {
+          expect(File(p.join(destDir.path, name)).readAsStringSync(), many[name], reason: name);
+        }
+      });
+
+      test('the fallback unpacker waits until every file is out', () async {
+        final zipPath = await createZip(many);
+        final destDir = Directory(p.join(tempDir.path, 'ext_fallback'))..createSync();
+        await ExtractionService.extractZipWithArchive(zipPath, destDir.path);
+        for (final name in many.keys) {
+          expect(File(p.join(destDir.path, name)).readAsStringSync(), many[name], reason: name);
+        }
       });
     });
 

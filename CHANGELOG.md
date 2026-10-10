@@ -15,6 +15,8 @@ What changed in each release of Gargosy. The format follows
   updates still get the latest release, never a preview or nightly build.
 - Emulator downloads show their progress while they run, instead of
   "Downloading 0 %" until done.
+- Emulators that come as a zip (PPSSPP, xemu, ares, DuckStation) unpacked
+  only their first file, so they never counted as installed.
 
 ## [0.1.0] - 2026-10-10
 

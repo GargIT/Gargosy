@@ -10,7 +10,9 @@ Future<void> _extractZipIsolate(List<dynamic> args) async {
   final bytes = args[0] as Uint8List;
   final destDir = args[1] as String;
   final archive = ZipDecoder().decodeBytes(bytes);
-  extractArchiveToDisk(archive, destDir);
+  // Gargosy: awaited. archive 4 made this async; unawaited, the isolate ended
+  // after the first file and emulator zips kept only that.
+  await extractArchiveToDisk(archive, destDir);
 }
 
 class ExtractionService {
@@ -19,6 +21,14 @@ class ExtractionService {
 
   ExtractionService(this.directoryService, {PlatformInfo? platform})
       : _platform = platform ?? PlatformInfo.current;
+
+  /// Unpacks the zip at [archivePath] into [destDir] with the archive package,
+  /// in an isolate.
+  @visibleForTesting
+  static Future<void> extractZipWithArchive(String archivePath, String destDir) async {
+    final fileBytes = await File(archivePath).readAsBytes();
+    await compute(_extractZipIsolate, [fileBytes, destDir]);
+  }
 
   Future<void> extract(String archivePath, String destDir) async {
     final pathLower = archivePath.toLowerCase();
@@ -157,21 +167,23 @@ class ExtractionService {
     } else if (_platform.isWindows) {
       try {
         // Modern Windows 10/11 has tar built-in which handles ZIPs perfectly.
+        // Gargosy: Windows' own, by its path. A plain `tar` can find Git's GNU
+        // tar first, which reads `C:\...` as a remote host and fails.
+        final systemRoot = _platform.environment['SystemRoot'] ?? r'C:\Windows';
+        final windowsTar = p.join(systemRoot, 'System32', 'tar.exe');
         final result = await Process.run(
-          'tar',
+          File(windowsTar).existsSync() ? windowsTar : 'tar',
           ['-xf', archivePath, '-C', destDir],
-          runInShell: true, // tar might be a shim or in System32
         );
         if (result.exitCode == 0) return;
-        
-        debugPrint('tar failed with exit code ${result.exitCode}, falling back to archive package');
+
+        debugPrint('tar failed with exit code ${result.exitCode} (${result.stderr}), falling back to archive package');
       } catch (e) {
         debugPrint('tar not found or failed: $e, falling back to archive package');
       }
 
       // Fallback to archive package
-      final fileBytes = await File(archivePath).readAsBytes();
-      await compute(_extractZipIsolate, [fileBytes, destDir]);
+      await extractZipWithArchive(archivePath, destDir);
     } else {
       final fileBytes = await File(archivePath).readAsBytes();
       await compute(_extractZipIsolate, [fileBytes, destDir]);
