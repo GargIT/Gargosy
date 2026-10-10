@@ -4,6 +4,28 @@ A RomM client for Windows that looks and feels like RomM's v2 web UI: controller
 always portable, with a profile per player. Built on code from
 [Freegosy](https://github.com/abduznik/Freegosy) (see `NOTICE.md`).
 
+## Screenshots
+
+**Who is playing?** Pick a profile.
+
+![The profile picker](docs/screenshots/1-profiles.png)
+
+**Home.** A random pick and the games you were playing.
+
+![Home](docs/screenshots/2-home.png)
+
+**Platforms.** Each platform with a strip of its covers.
+
+![Platforms](docs/screenshots/3-platforms.png)
+
+**A game's page.** Status, rating, saves, achievements and notes, as on RomM.
+
+![A game's page](docs/screenshots/4-game-page.png)
+
+**The play screen.** Choose the save or state and the emulator the game starts with.
+
+![The play screen](docs/screenshots/5-play-screen.png)
+
 ## Using it
 
 Unpack `Gargosy-<version>.zip` anywhere you can write (a USB stick works too). The folder holds
