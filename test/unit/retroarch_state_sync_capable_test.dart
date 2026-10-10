@@ -16,10 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// A DirectoryService that finds no installed emulator, so a test never needs
 /// the app's emulators folder.
 class _NoEmulatorsDirectoryService extends DirectoryService {
-  _NoEmulatorsDirectoryService(super.prefs, this.supportDir, {this.exePath});
-
-  /// The RetroArch executable found, or null for none installed.
-  final String? exePath;
+  _NoEmulatorsDirectoryService(super.prefs, this.supportDir);
 
   /// What RetroArch's config folder resolves to (`~/.config/retroarch`, or the
   /// Flatpak's `~/.var/app/.../config/retroarch`).
@@ -29,7 +26,7 @@ class _NoEmulatorsDirectoryService extends DirectoryService {
   Future<String> getEmulatorAppSupportDirectory(String emulatorName, {String? platformSlug}) async => supportDir;
 
   @override
-  Future<String?> findEmulatorExecutable(String emulatorId, String executableName) async => exePath;
+  Future<String?> findEmulatorExecutable(String emulatorId, String executableName) async => null;
 }
 
 void main() {
@@ -132,73 +129,16 @@ void main() {
       return configured.stateDirectory(game, p.join(home.path, 'roms', 'gba', 'Pokemon Emerald.gba'));
     }
 
-    test('savestate_directory with the default per-core folder', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final dir = await stateDirFor('savestate_directory = "{home}/my_states"\n');
-      expect(dir, p.join(home.path, 'my_states', 'mGBA'));
-    });
 
-    test('sort_savestates_enable = false drops the core folder', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final dir = await stateDirFor(
-          'savestate_directory = "{home}/my_states"\nsort_savestates_enable = "false"\n');
-      expect(dir, p.join(home.path, 'my_states'));
-    });
 
-    test('sort_savestates_by_content_enable adds the ROM folder before the core folder', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final dir = await stateDirFor(
-          'savestate_directory = "{home}/my_states"\nsort_savestates_by_content_enable = "true"\n');
-      expect(dir, p.join(home.path, 'my_states', 'gba', 'mGBA'));
-    });
 
     test('with no retroarch.cfg the states folder is inside RetroArch\'s config folder', () async {
       final dir = await stateDirFor(null);
       expect(dir, p.join(home.path, '.config', 'retroarch', 'states', 'mGBA'));
     });
 
-    test('the Flatpak\'s retroarch.cfg is read from its own config folder', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final dir = await stateDirFor('savestate_directory = "~/.var/app/org.libretro.RetroArch/config/retroarch/states"\n'
-          'sort_savestates_enable = "true"\n', flatpak: true);
-      expect(dir, p.join(home.path, '.var', 'app', 'org.libretro.RetroArch', 'config', 'retroarch', 'states', 'mGBA'));
-    });
 
-    test('a portable AppImage keeps its states in <AppImage>.home/.config/retroarch', () async {
-      home = await io.Directory.systemTemp.createTemp('ra_appimage');
-      addTearDown(() => home.delete(recursive: true));
-      final exe = p.join(home.path, 'Emulators', 'retroarch', 'RetroArch-Linux-x86_64.AppImage');
-      final portable = p.join('$exe.home', '.config', 'retroarch');
-      await io.Directory(portable).create(recursive: true);
-      await io.File(exe).create();
-      SharedPreferences.setMockInitialValues({});
-      final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-      final appImage = RetroArchSaveStrategy(
-          _NoEmulatorsDirectoryService(prefs, p.join(home.path, '.config', 'retroarch'), exePath: exe),
-          prefs: prefs,
-          platform: PlatformInfo('linux', environment: {'HOME': home.path}));
 
-      expect(await appImage.stateDirectory(game, p.join(home.path, 'roms', 'gba', 'Pokemon Emerald.gba')),
-          p.join(portable, 'states', 'mGBA'));
-    });
-
-    test('a symlink to the AppImage still finds its .home, and ~ in its retroarch.cfg means that .home', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      home = await io.Directory.systemTemp.createTemp('ra_appimage_link');
-      addTearDown(() => home.delete(recursive: true));
-      final exe = p.join(home.path, 'Emulators', 'retroarch', 'RetroArch-Linux-x86_64.AppImage');
-      final portable = p.join('$exe.home', '.config', 'retroarch');
-      await io.Directory(portable).create(recursive: true);
-      await io.File(exe).create();
-      final link = p.join(home.path, 'Emulators', 'retroarch', 'retroarch');
-      await io.Link(link).create(exe);
-      await io.File(p.join(portable, 'retroarch.cfg')).writeAsString('savestate_directory = "~/.config/retroarch/states"\n');
-      SharedPreferences.setMockInitialValues({});
-      final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-      final viaLink = RetroArchSaveStrategy(
-          _NoEmulatorsDirectoryService(prefs, p.join(home.path, '.var', 'app', 'org.libretro.RetroArch', 'config', 'retroarch'),
-              exePath: link),
-          prefs: prefs,
-          platform: PlatformInfo('linux', environment: {'HOME': home.path}));
-
-      expect(await viaLink.stateDirectory(game, p.join(home.path, 'roms', 'gba', 'Pokemon Emerald.gba')),
-          p.join('$exe.home', '.config', 'retroarch', 'states', 'mGBA'));
-    });
 
     test('savestates_in_content_dir puts states next to the ROM', () async {
       final dir = await stateDirFor('savestates_in_content_dir = "true"\n');

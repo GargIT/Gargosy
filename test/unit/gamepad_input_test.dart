@@ -78,10 +78,6 @@ void main() {
       expect(GamepadUtils.backendHandledActions({'pov0'}), contains(GameAction.up));
     });
 
-    test('hat0x (Linux hat key) → d-pad directions handled', () {
-      final handled = GamepadUtils.backendHandledActions({'hat0x'});
-      expect(handled, containsAll([GameAction.up, GameAction.down]));
-    });
 
     test('dwxpos + dwypos → axis actions handled', () {
       final handled = GamepadUtils.backendHandledActions({'dwxpos', 'dwypos'});

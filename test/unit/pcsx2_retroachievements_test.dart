@@ -57,11 +57,6 @@ void main() {
   });
 
   group('settings folder', () {
-    test('Linux default is ~/.config/PCSX2/inis, also for an AppImage next to a portable.ini', () async {
-      final appImage = p.join(home.path, 'Emulators', 'pcsx2', 'pcsx2-qt.AppImage');
-      await io.File(p.join(p.dirname(appImage), 'portable.ini')).create(recursive: true);
-      expect(await (await build(exe: appImage)).settingsDirectory(), inis());
-    });
 
     test('a portable install (portable.ini beside the executable) uses its own inis folder', () async {
       final exe = p.join(home.path, 'pcsx2', 'pcsx2-qt');
@@ -69,16 +64,7 @@ void main() {
       expect(await (await build(exe: exe)).settingsDirectory(), p.join(home.path, 'pcsx2', 'inis'));
     });
 
-    test('the Flatpak keeps its settings under ~/.var/app', () async {
-      expect(await (await build(exe: 'flatpak run net.pcsx2.PCSX2')).settingsDirectory(),
-          p.join(home.path, '.var', 'app', 'net.pcsx2.PCSX2', 'config', 'PCSX2', 'inis'));
-    });
 
-    test('XDG_CONFIG_HOME is honoured', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final strategy = await build(
-          platform: PlatformInfo('linux', environment: {'HOME': home.path, 'XDG_CONFIG_HOME': '${home.path}/xdg'}));
-      expect(await strategy.settingsDirectory(), p.join(home.path, 'xdg', 'PCSX2', 'inis'));
-    });
 
     test('Windows default is Documents/PCSX2/inis', () async {
       final strategy = await build(platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path}));

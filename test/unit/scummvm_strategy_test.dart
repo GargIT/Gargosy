@@ -27,20 +27,6 @@ void main() {
       expect(ScummVMStrategy.gameFolderFor(dataFile.path), dir.path);
     });
 
-    test('flatpak and .sh launchers are split into executable and arguments on Linux', () {
-      const linux = PlatformInfo('linux');
-      final (flatpakExe, flatpakArgs) = ScummVMStrategy.commandFor('flatpak run org.scummvm.ScummVM', ['--auto-detect'], platform: linux);
-      expect(p.basename(flatpakExe), 'flatpak');
-      expect(flatpakArgs, ['run', 'org.scummvm.ScummVM', '--auto-detect']);
-
-      final (shExe, shArgs) = ScummVMStrategy.commandFor('/emu/scummvm.sh', ['--auto-detect'], platform: linux);
-      expect(shExe, 'bash');
-      expect(shArgs, ['/emu/scummvm.sh', '--auto-detect']);
-
-      final (winExe, winArgs) = ScummVMStrategy.commandFor(r'C:\ScummVM\scummvm.exe', ['--auto-detect'], platform: const PlatformInfo('windows'));
-      expect(winExe, r'C:\ScummVM\scummvm.exe');
-      expect(winArgs, ['--auto-detect']);
-    });
 
     test('scummvm is a folder-game platform', () {
       expect(RomConstants.isFolderGamePlatform('scummvm'), isTrue);

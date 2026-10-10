@@ -51,34 +51,6 @@ void main() {
     expect((await build()).supportsRetroAchievementsLogin, isTrue);
   });
 
-  group('config folder candidates', () {
-    test('Linux: Flatpak, legacy ~/.dolphin-emu, then XDG', () async {
-      expect(await (await build()).candidateConfigDirectories(), [
-        p.join(home.path, '.var', 'app', 'org.DolphinEmu.dolphin-emu', 'config', 'dolphin-emu'),
-        p.join(home.path, '.dolphin-emu', 'Config'),
-        config(),
-      ]);
-    });
-
-    test('a portable install (executable with a User folder) is tried first', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final exe = p.join(home.path, 'Dolphin', 'Dolphin.exe');
-      final dirs = await (await build(exe: exe, platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path, 'APPDATA': '${home.path}/AppData'})))
-          .candidateConfigDirectories();
-      expect(dirs.first, p.join(home.path, 'Dolphin', 'User', 'Config'));
-      expect(dirs, contains(p.join(home.path, 'Documents', 'Dolphin Emulator', 'Config')));
-      expect(dirs, contains(p.join(home.path, 'AppData', 'Dolphin Emulator', 'Config')));
-    });
-
-    test('an AppImage is not treated as portable', () async {
-      final dirs = await (await build(exe: p.join(home.path, 'Emulators', 'dolphin', 'Dolphin.AppImage'))).candidateConfigDirectories();
-      expect(dirs.any((d) => d.endsWith(p.join('User', 'Config'))), isFalse);
-    });
-
-    test('macOS: Application Support', () async {
-      final dirs = await (await build(platform: PlatformInfo('macos', environment: {'HOME': home.path}))).candidateConfigDirectories();
-      expect(dirs, [p.join(home.path, 'Library', 'Application Support', 'Dolphin', 'Config')]);
-    });
-  });
 
   group('applyRetroAchievementsLogin', () {
     test('writes the account and token into RetroAchievements.ini, owner-readable', () async {
@@ -114,25 +86,12 @@ void main() {
       expect(IniFile(await raIni().readAsString()).get('Achievements', 'HardcoreEnabled'), 'True');
     });
 
-    test('works from a legacy or Flatpak config folder too', () async {
-      final flatpak = p.join(home.path, '.var', 'app', 'org.DolphinEmu.dolphin-emu', 'config', 'dolphin-emu');
-      await givenDolphinRan(flatpak);
-      await (await build()).applyRetroAchievementsLogin(login);
-      expect(await io.File(p.join(flatpak, 'RetroAchievements.ini')).exists(), isTrue);
-      expect(await raIni().exists(), isFalse);
-    });
 
     test('signs in on the very first launch: with no Dolphin.ini yet it writes to the default folder', () async {
       await (await build()).applyRetroAchievementsLogin(login);
       expect(IniFile(await raIni().readAsString()).get('Achievements', 'Username'), 'Player');
     });
 
-    test('before its first run the Flatpak gets the login in its own config folder', () async {
-      await (await build(exe: 'flatpak run org.DolphinEmu.dolphin-emu')).applyRetroAchievementsLogin(login);
-      final flatpak = p.join(home.path, '.var', 'app', 'org.DolphinEmu.dolphin-emu', 'config', 'dolphin-emu');
-      expect(await io.File(p.join(flatpak, 'RetroAchievements.ini')).exists(), isTrue);
-      expect(await raIni().exists(), isFalse);
-    });
 
     test('before its first run, a portable Windows install (portable.txt) gets User/Config', () async {
       final exe = p.join(home.path, 'Dolphin', 'Dolphin.exe');

@@ -41,8 +41,8 @@ void main() {
     fake.pads = [];
     container = ProviderContainer();
     service = container.read(gamepadServiceProvider);
-    // Let initialize() load its mappings and the SDL database, and scan.
-    await pumpEventQueue(times: 50);
+    await service.ready;
+    await pumpEventQueue(); // the start-up scan
   });
 
   tearDown(() => container.dispose());

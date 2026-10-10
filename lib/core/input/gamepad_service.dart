@@ -62,6 +62,11 @@ class GamepadService extends WidgetsBindingObserver {
 
   GamepadService(this._ref);
 
+  final _ready = Completer<void>();
+
+  /// Completes when [initialize] has loaded the mappings and listens for input.
+  Future<void> get ready => _ready.future;
+
   void initialize() async {
     debugPrint('[Controller] initialize: starting');
 
@@ -89,6 +94,7 @@ class GamepadService extends WidgetsBindingObserver {
       },
       onError: (err) => debugPrint('[Controller] stream error: $err'),
     );
+    _ready.complete();
   }
 
   @override

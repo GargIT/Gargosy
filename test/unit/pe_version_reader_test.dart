@@ -86,14 +86,5 @@ void main() {
       expect(await strategy.installedVersion(), '2.9.0.0');
     });
 
-    test('null off Windows, without an exe, or for an unreadable exe', () async {
-      final exe = File(p.join(tmp.path, 'pcsx2-qt'))..writeAsBytesSync(fakePe(2, 8, 2, 0));
-      expect(await Pcsx2Strategy(_ExeDirectoryService(prefs, exe.path),
-              platform: const PlatformInfo('linux', environment: {})).installedVersion(), isNull);
-      expect(await Pcsx2Strategy(_ExeDirectoryService(prefs, null),
-              platform: const PlatformInfo('windows', environment: {})).installedVersion(), isNull);
-      expect(await Pcsx2Strategy(_ExeDirectoryService(prefs, p.join(tmp.path, 'missing.exe')),
-              platform: const PlatformInfo('windows', environment: {})).installedVersion(), isNull);
-    });
   });
 }

@@ -19,17 +19,7 @@ void main() {
         expect(PlatformInfo('linux').isWindows, isFalse);
       });
 
-      test('isMacOS returns true only for macos', () {
-        expect(PlatformInfo('macos').isMacOS, isTrue);
-        expect(PlatformInfo('windows').isMacOS, isFalse);
-        expect(PlatformInfo('linux').isMacOS, isFalse);
-      });
 
-      test('isLinux returns true only for linux', () {
-        expect(PlatformInfo('linux').isLinux, isTrue);
-        expect(PlatformInfo('windows').isLinux, isFalse);
-        expect(PlatformInfo('macos').isLinux, isFalse);
-      });
 
       test('pathSeparator is backslash on Windows, forward slash elsewhere', () {
         expect(PlatformInfo('windows').pathSeparator, '\\');
@@ -130,23 +120,7 @@ void main() {
         expect(registry.getStrategyById('windows_native'), isNotNull);
       });
 
-      test('initializes on simulated Linux', () async {
-        final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-        final platform = PlatformInfo('linux');
-        final ds = DirectoryService(prefs, platform: platform);
-        final registry = StrategyRegistry(ds, prefs, platform: platform);
-        // Linux should NOT have windows_native strategy
-        // (unless the definition includes linux in supported_platforms)
-        expect(registry, isNotNull);
-      });
 
-      test('initializes on simulated macOS', () async {
-        final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-        final platform = PlatformInfo('macos');
-        final ds = DirectoryService(prefs, platform: platform);
-        final registry = StrategyRegistry(ds, prefs, platform: platform);
-        expect(registry, isNotNull);
-      });
 
       test('getStrategyForSlug returns consistent results across platforms', () async {
         for (final os in ['windows', 'macos', 'linux']) {

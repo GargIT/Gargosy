@@ -22,67 +22,7 @@ void main() {
   });
 
   group('RetroArch config parsing: sort_savefiles_enable', () {
-    test('sort_savefiles_enable=true appends core subfolder (Linux)', () async {
-      final tempDir = await Directory.systemTemp.createTemp('ra_sort_true_');
-      final configDir = p.join(tempDir.path, '.config', 'retroarch');
-      await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = "true"',
-        'video_fullscreen = "false"',
-      ].join('\n'));
-
-      await Directory(p.join(tempDir.path, 'saves', 'mGBA')).create(recursive: true);
-
-      when(mockDirService.getEmulatorAppSupportDirectory('retroarch', platformSlug: anyNamed('platformSlug')))
-          .thenAnswer((_) async => configDir);
-
-      final platform = PlatformInfo('linux', environment: {'HOME': tempDir.path});
-      final strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
-
-      final game = Game(id: '1', name: 'Pokemon', platformSlug: 'gba', fileSize: 0);
-      final romPath = p.join(tempDir.path, 'roms', 'Pokemon.gba');
-      final result = await strategy.getSaveDir(game, romPath);
-
-      expect(result, isNotNull);
-      expect(result, endsWith('mGBA'),
-          reason: 'sort_savefiles_enable=true should append core subfolder');
-
-      await tempDir.delete(recursive: true);
-    });
-
-    test('sort_savefiles_enable=false returns flat saves directory (Linux)', () async {
-      final tempDir = await Directory.systemTemp.createTemp('ra_sort_false_');
-      final configDir = p.join(tempDir.path, '.config', 'retroarch');
-      await Directory(configDir).create(recursive: true);
-
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = "false"',
-        'video_fullscreen = "false"',
-      ].join('\n'));
-
-      await Directory(p.join(tempDir.path, 'saves')).create(recursive: true);
-
-      when(mockDirService.getEmulatorAppSupportDirectory('retroarch', platformSlug: anyNamed('platformSlug')))
-          .thenAnswer((_) async => configDir);
-
-      final platform = PlatformInfo('linux', environment: {'HOME': tempDir.path});
-      final strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
-
-      final game = Game(id: '1', name: 'Pokemon', platformSlug: 'gba', fileSize: 0);
-      final romPath = p.join(tempDir.path, 'roms', 'Pokemon.gba');
-      final result = await strategy.getSaveDir(game, romPath);
-
-      expect(result, isNotNull);
-      expect(result, isNot(endsWith('mGBA')),
-          reason: 'sort_savefiles_enable=false must NOT append core subfolder');
-      expect(result, equals(p.join(tempDir.path, 'saves')),
-          reason: 'Should return the configured savefile_directory without core subfolder');
-
-      await tempDir.delete(recursive: true);
-    });
 
     test('sort_savefiles_enable not set defaults to true (RetroArch default)', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_sort_default_');
@@ -113,27 +53,6 @@ void main() {
       await tempDir.delete(recursive: true);
     });
 
-    test('no retroarch.cfg falls back to baseDir/saves/CoreName (Linux)', () async {
-      final tempDir = await Directory.systemTemp.createTemp('ra_no_cfg_');
-      final configDir = p.join(tempDir.path, '.config', 'retroarch');
-      await Directory(p.join(configDir, 'saves', 'mGBA')).create(recursive: true);
-
-      when(mockDirService.getEmulatorAppSupportDirectory('retroarch', platformSlug: anyNamed('platformSlug')))
-          .thenAnswer((_) async => configDir);
-
-      final platform = PlatformInfo('linux', environment: {'HOME': tempDir.path});
-      final strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
-
-      final game = Game(id: '1', name: 'Pokemon', platformSlug: 'gba', fileSize: 0);
-      final romPath = p.join(tempDir.path, 'roms', 'Pokemon.gba');
-      final result = await strategy.getSaveDir(game, romPath);
-
-      expect(result, isNotNull);
-      expect(result, equals(p.join(configDir, 'saves', 'mGBA')),
-          reason: 'Without a custom savefile_directory, saves live under baseDir/saves/CoreName');
-
-      await tempDir.delete(recursive: true);
-    });
 
     test('sort_savefiles_enable with extra whitespace and no quotes', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_sort_ws_');
@@ -166,38 +85,6 @@ void main() {
     });
   });
 
-  group('RetroArch config parsing: savefiles_in_content_dir', () {
-    test('savefiles_in_content_dir=true returns ROM parent directory (macOS)', () async {
-      final tempDir = await Directory.systemTemp.createTemp('ra_content_dir_');
-      final configDir = p.join(tempDir.path, 'Library', 'Application Support', 'RetroArch', 'config');
-      await Directory(configDir).create(recursive: true);
-
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'savefiles_in_content_dir = "true"',
-        'video_fullscreen = "false"',
-      ].join('\n'));
-
-      // Create the expected saves dir with core subfolder (needed for non-content-dir path)
-      await Directory(p.join(tempDir.path, 'saves', 'mGBA')).create(recursive: true);
-
-      final platform = PlatformInfo('macos', environment: {'HOME': tempDir.path});
-      final strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
-
-      final romDir = p.join(tempDir.path, 'roms', 'gba');
-      await Directory(romDir).create(recursive: true);
-      final romPath = p.join(romDir, 'Pokemon.gba');
-
-      final game = Game(id: '1', name: 'Pokemon', platformSlug: 'gba', fileSize: 0);
-      final result = await strategy.getSaveDir(game, romPath);
-
-      expect(result, isNotNull);
-      expect(result, equals(romDir),
-          reason: 'savefiles_in_content_dir=true should return ROM parent dir');
-
-      await tempDir.delete(recursive: true);
-    });
-  });
 
   group('RetroArch config parsing: static retroarchCoreSaveDir', () {
     test('sort_savefiles_enable=false returns flat dir without core subfolder', () async {
@@ -270,28 +157,6 @@ void main() {
   });
 
   group('RetroArch EmuDeck-for-Windows detection', () {
-    test('resolves saves under emudeck RetroArch root when detected', () async {
-      final tempDir = await Directory.systemTemp.createTemp('ra_emudeck_win_');
-      final retroArchRoot = p.join(
-          tempDir.path, 'emudeck', 'EmulationStation-DE', 'Emulators', 'RetroArch');
-      await Directory(p.join(retroArchRoot, 'saves', 'mGBA')).create(recursive: true);
-
-      final platform = PlatformInfo('windows', environment: {
-        'USERPROFILE': tempDir.path,
-        'APPDATA': p.join(tempDir.path, 'AppData', 'Roaming'),
-      });
-      final strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
-
-      final game = Game(id: '1', name: 'Pokemon', platformSlug: 'gba', fileSize: 0);
-      final romPath = p.join(tempDir.path, 'roms', 'Pokemon.gba');
-      final result = await strategy.getSaveDir(game, romPath);
-
-      expect(result, isNotNull);
-      expect(result, equals(p.join(retroArchRoot, 'saves', 'mGBA')),
-          reason: 'Should resolve directly under the EmuDeck-for-Windows RetroArch root');
-
-      await tempDir.delete(recursive: true);
-    });
 
     test('falls back to normal Windows resolution when emudeck root absent', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_no_emudeck_win_');

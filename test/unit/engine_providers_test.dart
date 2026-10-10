@@ -21,7 +21,11 @@ void main() {
 
   test('every engine part belongs to the active profile', () async {
     final root = await tempAppRoot();
-    addTearDown(() => io.Directory(root.root).delete(recursive: true));
+    addTearDown(() async {
+      // Disposing closes the backups box without waiting; Windows won't delete an open file.
+      await Hive.close();
+      await deleteTempDir(root.root);
+    });
     final c = ProviderContainer(overrides: [
       appRootProvider.overrideWithValue(root),
       appPreferencesProvider.overrideWithValue(MemoryPrefs()),

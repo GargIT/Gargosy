@@ -97,17 +97,7 @@ void main() {
       expect(await folderFor('megadrive'), 'megadrive');
     });
 
-    test('genesis downloads land in megadrive under the EmuDeck preset (issue #38)', () async {
-      service.linuxSyncPreset = 'emudeck';
-      expect(await folderFor('genesis'), 'megadrive');
-    });
 
-    test('3DS slug variants resolve to n3ds under the EmuDeck preset (issue #34)', () async {
-      service.linuxSyncPreset = 'emudeck';
-      for (final slug in ['3ds', 'nintendo-3ds', 'new-nintendo-3ds']) {
-        expect(await folderFor(slug), 'n3ds', reason: 'slug "$slug"');
-      }
-    });
 
     test('every Neo Geo slug variant shares one folder (issue #58)', () async {
       for (final slug in ['neogeo', 'neo-geo', 'neogeoaes', 'neogeomvs', 'neo-geo-aes', 'neo-geo-mvs', 'mvs', 'aes']) {

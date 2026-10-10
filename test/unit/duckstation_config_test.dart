@@ -87,18 +87,7 @@ Card2Type = None
       expect(duckstationSafeFileName('Tab\there', windows), 'Tab_here');
     });
 
-    test('Linux: only slashes, asterisks and control characters', () {
-      expect(duckstationSafeFileName('Castlevania: Symphony of the Night', linux),
-          'Castlevania: Symphony of the Night');
-      expect(duckstationSafeFileName('A: B/C\\D?*"<>|.', linux), 'A: B_C\\D?_"<>|.');
-      expect(duckstationSafeFileName('Tab\there', linux), 'Tab_here');
-    });
 
-    test('macOS: the Linux set plus colons', () {
-      expect(duckstationSafeFileName('Castlevania: Symphony of the Night', macos),
-          'Castlevania_ Symphony of the Night');
-      expect(duckstationSafeFileName('A/B*C?.', macos), 'A_B_C?.');
-    });
   });
 
   group('DuckstationGameDb', () {

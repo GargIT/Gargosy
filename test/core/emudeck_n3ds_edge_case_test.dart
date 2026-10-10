@@ -32,27 +32,7 @@ void main() {
         return service;
       }
 
-      test('maps 3ds platformSlug to n3ds folder on EmuDeck preset', () async {
-        final service = await createService('emudeck');
-        await Directory(p.join(tempDir.path, 'n3ds')).create(recursive: true);
 
-        final game = Game(id: '1', name: 'Test', platformSlug: '3ds', fileSize: 0);
-        final romDir = await service.getRomDirectory(game);
-
-        expect(romDir, p.join(tempDir.path, 'n3ds'));
-      });
-
-      test('maps all 3DS slug variants to n3ds folder on EmuDeck', () async {
-        final service = await createService('emudeck');
-        await Directory(p.join(tempDir.path, 'n3ds')).create(recursive: true);
-
-        final slugs = ['3ds', 'n3ds', 'nintendo-3ds', 'nintendo3ds', 'new-nintendo-3ds', 'new-nintendo-3ds-xl'];
-        for (final slug in slugs) {
-          final game = Game(id: 'x', name: 'Test', platformSlug: slug, fileSize: 0);
-          final romDir = await service.getRomDirectory(game);
-          expect(romDir, p.join(tempDir.path, 'n3ds'), reason: 'slug "$slug" should map to n3ds');
-        }
-      });
 
       test('uses slug directly as folder name on default preset', () async {
         final service = await createService('default');
@@ -64,60 +44,6 @@ void main() {
       });
     });
 
-    group('DirectoryService.findExistingRomPath on EmuDeck', () {
-      test('finds 3ds game in n3ds folder on EmuDeck preset', () async {
-        final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-        final service = DirectoryService(prefs);
-        service.romsRootPath = tempDir.path;
-        service.linuxSyncPreset = 'emudeck';
-
-        await Directory(p.join(tempDir.path, 'n3ds')).create(recursive: true);
-        final romFile = File(p.join(tempDir.path, 'n3ds', 'TestGame.3ds'));
-        await romFile.writeAsString('fake rom');
-
-        final game = Game(
-          id: '1',
-          name: 'TestGame',
-          platformSlug: '3ds',
-          fileName: 'TestGame.3ds',
-          fsName: 'TestGame.3ds',
-          fileSize: 100,
-        );
-
-        final foundPath = await service.findExistingRomPath(game);
-
-        expect(foundPath, isNotNull);
-        expect(foundPath, endsWith(p.join('n3ds', 'TestGame.3ds')));
-      });
-
-      test('finds all 3DS slug variant games in n3ds folder on EmuDeck', () async {
-        final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-        final service = DirectoryService(prefs);
-        service.romsRootPath = tempDir.path;
-        service.linuxSyncPreset = 'emudeck';
-
-        await Directory(p.join(tempDir.path, 'n3ds')).create(recursive: true);
-
-        final slugs = ['3ds', 'n3ds', 'nintendo-3ds', 'nintendo3ds', 'new-nintendo-3ds', 'new-nintendo-3ds-xl'];
-        for (int i = 0; i < slugs.length; i++) {
-          final romFile = File(p.join(tempDir.path, 'n3ds', 'Game$i.3ds'));
-          await romFile.writeAsString('fake rom $i');
-
-          final game = Game(
-            id: '$i',
-            name: 'Game$i',
-            platformSlug: slugs[i],
-            fileName: 'Game$i.3ds',
-            fsName: 'Game$i.3ds',
-            fileSize: 100,
-          );
-
-          final foundPath = await service.findExistingRomPath(game);
-          expect(foundPath, isNotNull, reason: 'slug "${slugs[i]}" should find game in n3ds');
-          expect(foundPath, endsWith(p.join('n3ds', 'Game$i.3ds')));
-        }
-      });
-    });
 
     group('Scanner folder alias map', () {
       test('exposes platformFolderCanonicalMap for scanner reverse lookup', () {

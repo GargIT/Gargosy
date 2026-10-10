@@ -96,6 +96,10 @@ void main() {
     await tester.pumpAndSettle();
     await settleIo(tester); // the profile's prefs file is written with real IO
     expect(c.read(strategyRegistryProvider)!.getPreferredEmulatorId('psx'), 'duckstation');
+    // The row shows the choice once its provider has read it back; give a slow machine time.
+    for (var i = 0; i < 100 && find.text('DuckStation').evaluate().isEmpty; i++) {
+      await settleIo(tester);
+    }
     expect(find.text('DuckStation'), findsWidgets);
   });
 

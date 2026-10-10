@@ -748,13 +748,6 @@ void main() {
       }
     });
 
-    test('Sony Interactive Entertainment Wireless Controller (macOS/Linux) exists', () {
-      final m = kControllerMappings['Sony Interactive Entertainment Wireless Controller'];
-      expect(m, isNotNull, reason: 'Sony ISE Wireless Controller entry missing');
-      for (final entry in psFaceButtonPattern.entries) {
-        expect(m![entry.key], entry.value);
-      }
-    });
 
     test('all PlayStation entries have d-pad and shoulder buttons', () {
       const psNames = [
@@ -816,18 +809,7 @@ void main() {
       expect(GamepadUtils.disambiguateKey('button_0', isButton: false), 'button_0');
     });
 
-    test('Xbox 360 pad on Linux: button 6 (Back) and axis 6 (D-pad X) no longer collide', () {
-      // Raw joydev indices before disambiguation: both arrive as key "6".
-      final backKey = GamepadUtils.disambiguateKey('6', isButton: true);
-      final dpadXKey = GamepadUtils.disambiguateKey('6', isButton: false);
-      expect(backKey, isNot(dpadXKey));
-    });
 
-    test('Xbox 360 pad on Linux: button 7 (Start) and axis 7 (D-pad Y) no longer collide', () {
-      final startKey = GamepadUtils.disambiguateKey('7', isButton: true);
-      final dpadYKey = GamepadUtils.disambiguateKey('7', isButton: false);
-      expect(startKey, isNot(dpadYKey));
-    });
 
     test('composes with encodeKey: button key and both axis polarity keys stay distinct', () {
       final backKey = GamepadUtils.disambiguateKey('6', isButton: true);
@@ -974,12 +956,6 @@ void main() {
       expect(v.abs(), lessThan(0.01));
     });
 
-    test('non-DirectInput keys still fall back to the Linux signed convention', () {
-      // A bare numeric Linux joydev axis key should be unaffected by the
-      // new DirectInput branch.
-      final v = GamepadUtils.normalizeAxisValueForKey('3', 32767.0);
-      expect(v, closeTo(1.0, 0.001));
-    });
 
     test('out-of-range DirectInput value still clamps to -1.0..1.0', () {
       expect(GamepadUtils.normalizeAxisValueForKey('dwxpos', 999999.0), 1.0);

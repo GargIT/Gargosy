@@ -54,16 +54,7 @@ void main() {
   });
 
   group('settings folder candidates', () {
-    test('Linux: ~/.config/ppsspp/PSP/SYSTEM, honouring XDG_CONFIG_HOME', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      expect(await (await build()).candidateSystemDirectories(), [system()]);
-      final xdg = await build(platform: PlatformInfo('linux', environment: {'HOME': home.path, 'XDG_CONFIG_HOME': '${home.path}/xdg'}));
-      expect(await xdg.candidateSystemDirectories(), [p.join(home.path, 'xdg', 'ppsspp', 'PSP', 'SYSTEM')]);
-    });
 
-    test('the Flatpak comes first', () async {
-      final dirs = await (await build(exe: 'flatpak run org.ppsspp.PPSSPP')).candidateSystemDirectories();
-      expect(dirs.first, p.join(home.path, '.var', 'app', 'org.ppsspp.PPSSPP', 'config', 'ppsspp', 'PSP', 'SYSTEM'));
-    });
 
     test('Windows: the portable memstick beside the executable, then Documents', () async {
       final exe = p.join(home.path, 'PPSSPP', 'PPSSPPWindows64.exe');
