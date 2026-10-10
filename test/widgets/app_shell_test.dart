@@ -14,7 +14,7 @@ import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/engine_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
-import 'package:gargosy/ui/screens/about_screen.dart';
+import 'package:gargosy/ui/screens/settings/about_section.dart';
 import 'package:gargosy/ui/screens/settings/settings_screen.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
@@ -205,12 +205,12 @@ void main() {
     expect(find.byType(SettingsScreen), findsOneWidget);
   });
 
-  testWidgets('Start → About opens the About page', (tester) async {
+  testWidgets('Start → About opens the About dialog', (tester) async {
     await pump(tester);
     await send(tester, GameAction.start);
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
-    expect(find.byType(AboutScreen), findsOneWidget);
+    expect(find.byType(AboutSection), findsOneWidget);
   });
 
   testWidgets('switching profile waits for a running sync, saying what it waits for', (tester) async {

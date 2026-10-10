@@ -11,6 +11,7 @@ import 'device_sections.dart';
 import 'emulators_section.dart';
 import 'profile_section.dart';
 import 'ra_section.dart';
+import 'settings_rows.dart';
 
 /// Settings (spec §2): Profile, Controller, Display, Emulators and
 /// RetroAchievements. The sections on the left, the chosen one on the
@@ -32,7 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         2 => const DisplaySection(),
         3 => const EmulatorsSection(),
         4 => const RaSection(),
-        _ => const AboutSection(),
+        _ => ListView(children: const [SettingsHeading('About'), AboutSection()]),
       };
 
   void _go(int i) {

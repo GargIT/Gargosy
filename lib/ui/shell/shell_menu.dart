@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
-import '../screens/about_screen.dart';
+import '../screens/settings/about_section.dart';
 import '../screens/emulators_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../widgets/sync_wait.dart';
@@ -38,7 +38,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     case UserMenuChoice.emulators:
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EmulatorsScreen()));
     case UserMenuChoice.about:
-      await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AboutScreen()));
+      await showAboutGargosy(context);
     case UserMenuChoice.fullscreen:
       await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
     case null:
