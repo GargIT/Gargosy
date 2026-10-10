@@ -4,7 +4,7 @@ import 'dart:isolate';
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../disc/serial_extraction_service.dart';
+import '../../../sigil/rom_game_ids.dart';
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -17,7 +17,6 @@ import '../save_strategy.dart';
 import '../state_sync_capable.dart';
 import '../state_sync_service.dart';
 import 'ps2_save_folders.dart';
-import 'pcsx2_save_strategy.dart';
 import 'package:path/path.dart' as p; // Import path package
 import '../../emulator/platform_slugs.dart';
 import '../../emulator/retroarch_core_list.dart';
@@ -109,7 +108,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   Future<String> _linuxBaseDir(String? slug) async =>
       await _appImageConfigDir() ?? await _directoryService.getEmulatorAppSupportDirectory('retroarch', platformSlug: slug);
 
-  final SerialExtractionService? _serials;
+  final RomGameIds? _gameIds;
 
   // Test-only override to skip reading the real retroarch.cfg.
   @visibleForTesting
@@ -120,11 +119,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   Future<String?> Function(String romPath)? ps2SerialOverride;
 
   RetroArchSaveStrategy(this._directoryService,
-      {PlatformInfo? platform, AppPreferences? prefs, SerialExtractionService? serialExtractionService})
+      {PlatformInfo? platform, AppPreferences? prefs, RomGameIds? gameIds})
       : _platform = platform ?? PlatformInfo.current,
         _prefs = prefs,
-        _serials = serialExtractionService ??
-            (prefs == null ? null : SerialExtractionService(_directoryService, prefs, platform: platform));
+        _gameIds = gameIds ?? (prefs == null ? null : RomGameIds(prefs));
 
   /// The core [game]'s saves come from, as RomM and other clients name it:
   /// its id without `_libretro` (e.g. `pcsx_rearmed`), or null when unknown.
@@ -494,8 +492,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       label: 'LRPS2 ${game.name}',
       server: GameIdResolver.discSerial(game, romPath),
       shape: GameIdResolver.ps1ps2Serial,
-      local: () async => ps2SerialOverride != null ? ps2SerialOverride!(romPath) : _serials?.extractSerial(
-          romPath: romPath, bootLinePattern: Pcsx2SaveStrategy.bootLinePattern, chdmanCandidates: const []));
+      local: () async => ps2SerialOverride != null
+          ? ps2SerialOverride!(romPath)
+          : _gameIds?.discSerial(romPath, platform: 'ps2'));
 
   /// Which saves on LRPS2's cards are [romPath]'s: those named after its
   /// serial; every save on a per-game card when the serial is unknown. Null

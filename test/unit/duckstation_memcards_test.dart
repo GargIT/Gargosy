@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
@@ -22,11 +23,12 @@ void main() {
   late Directory base;
   late DuckstationTestEnv env;
   final game = Game(
-      id: 'g1',
-      name: 'Colin McRae Rally 2.0',
-      fsName: 'Colin McRae Rally 2.0 (Europe) (SLES-02605).chd',
-      platformSlug: 'psx',
-      fileSize: 0);
+    id: 'g1',
+    name: 'Colin McRae Rally 2.0',
+    fsName: 'Colin McRae Rally 2.0 (Europe) (SLES-02605).chd',
+    platformSlug: 'psx',
+    fileSize: 0,
+  );
   const saveName = 'Colin McRae Rally 2.0 (Europe) (En,Fr,De,Es,It)';
   const gamedb = 'SLES-02605:\n  name: "Colin McRae Rally 2.0"\n  saveName: "$saveName"\n';
 
@@ -46,13 +48,15 @@ void main() {
   Future<void> cardTypes(String types) => env.writeSettings('[MemoryCards]\n$types\n');
   Future<List<String>> saveFiles() async =>
       (await env.strategy.getSaveFiles(game, romPath())).map((f) => p.basename(f.path)).toList();
+
   /// The memory cards on disk (not the .bak copies made before overwriting).
-  List<String> cardsOnDisk() => Directory(env.memcardsDir)
-      .listSync()
-      .map((e) => p.basename(e.path))
-      .where((name) => name.endsWith('.mcd'))
-      .toList()
-    ..sort();
+  List<String> cardsOnDisk() =>
+      Directory(env.memcardsDir)
+          .listSync()
+          .map((e) => p.basename(e.path))
+          .where((name) => name.endsWith('.mcd'))
+          .toList()
+        ..sort();
 
   Uint8List zip(Map<String, List<int>> entries) {
     final archive = Archive();
@@ -61,6 +65,31 @@ void main() {
     }
     return Uint8List.fromList(ZipEncoder().encode(archive));
   }
+
+  group('for sigil (Gargosy): the card name, folder and types DuckStation uses', () {
+    test("by title (DuckStation's default): the game database's save title, not the ROM name", () async {
+      await cardTypes('Card1Type = PerGameTitle');
+      await env.writeGameDb(gamedb);
+      final card = await env.strategy.sigilCard(game, romPath());
+      expect(card.stem, saveName);
+      expect(card.root, p.dirname(env.memcardsDir));
+      expect(card.options, {'Card1Type': 'PerGameTitle', 'Card2Type': 'None'});
+    });
+
+    test("a per-game setting wins, and by serial needs no title", () async {
+      await cardTypes('Card1Type = PerGameTitle');
+      await env.writeGameSettings('SLES-02605', '[MemoryCards]\nCard1Type = PerGame\n');
+      final card = await env.strategy.sigilCard(game, romPath());
+      expect(card.stem, isNull);
+      expect(card.options['Card1Type'], 'PerGame');
+    });
+
+    test('by title, unknown to the database: the card found by its name', () async {
+      await cardTypes('Card1Type = PerGameTitle');
+      await env.writeCard('Colin McRae Rally 2.0 (Europe)_1.mcd');
+      expect((await env.strategy.sigilCard(game, romPath())).stem, 'Colin McRae Rally 2.0 (Europe)');
+    });
+  });
 
   group('which cards are uploaded', () {
     setUp(() async {
@@ -88,7 +117,8 @@ void main() {
     });
 
     group('by title, a multi-disc game', () {
-      const discsets = '- name: "Colin Set"\n  saveName: "Colin Set Save"\n  serials:\n    - SLES-02605\n    - SLES-12605\n';
+      const discsets =
+          '- name: "Colin Set"\n  saveName: "Colin Set Save"\n  serials:\n    - SLES-02605\n    - SLES-12605\n';
       const discCard = '${saveName}_1.mcd';
       setUp(() async {
         await cardTypes('Card1Type = PerGameTitle');
@@ -157,8 +187,7 @@ void main() {
       Future<List<File>> uploads() async =>
           (await env.strategy.getSaveFilesWithScreenshots(game, romPath())).keys.toList();
 
-      test('the port-1 card goes up as <ROM name>.srm, the same bytes, outside DuckStation\'s folder',
-          () async {
+      test('the port-1 card goes up as <ROM name>.srm, the same bytes, outside DuckStation\'s folder', () async {
         await cardTypes('Card1Type = PerGame');
 
         final file = (await uploads()).single;
@@ -188,8 +217,10 @@ void main() {
 
         await env.strategy.restoreSave(game, romPath(), bytes, p.basename(file.path));
 
-        expect(File(p.join(env.memcardsDir, 'Colin McRae Rally 2.0 (Europe) (SLES-02605)_1.mcd')).readAsBytesSync(),
-            bytes);
+        expect(
+          File(p.join(env.memcardsDir, 'Colin McRae Rally 2.0 (Europe) (SLES-02605)_1.mcd')).readAsBytesSync(),
+          bytes,
+        );
       });
     });
 
@@ -208,8 +239,12 @@ void main() {
   group('restoring under this PC\'s names', () {
     test('a card made by serial is written under the title this PC uses', () async {
       await env.writeGameDb(gamedb); // default settings: by title
-      final ok = await env.strategy
-          .restoreSave(game, romPath(), Uint8List.fromList(List.filled(64, 7)), 'SLES-02605_1.mcd');
+      final ok = await env.strategy.restoreSave(
+        game,
+        romPath(),
+        Uint8List.fromList(List.filled(64, 7)),
+        'SLES-02605_1.mcd',
+      );
 
       expect(ok, isTrue);
       expect(cardsOnDisk(), ['${saveName}_1.mcd']);
@@ -248,8 +283,7 @@ void main() {
     });
 
     test('by title with no game database and no card yet: named after the ROM without tags', () async {
-      await env.strategy
-          .restoreSave(game, romPath(), Uint8List.fromList(List.filled(64, 1)), 'SLES-02605_1.mcd');
+      await env.strategy.restoreSave(game, romPath(), Uint8List.fromList(List.filled(64, 1)), 'SLES-02605_1.mcd');
 
       expect(cardsOnDisk(), ['Colin McRae Rally 2.0_1.mcd']);
     });
@@ -257,8 +291,7 @@ void main() {
     test('by title with no game database: an existing card is updated in place', () async {
       await env.writeCard('Colin McRae Rally 2.0 (Europe)_1.mcd', fill: 1);
 
-      await env.strategy
-          .restoreSave(game, romPath(), Uint8List.fromList(List.filled(64, 5)), 'SLES-02605_1.mcd');
+      await env.strategy.restoreSave(game, romPath(), Uint8List.fromList(List.filled(64, 5)), 'SLES-02605_1.mcd');
 
       expect(cardsOnDisk(), ['Colin McRae Rally 2.0 (Europe)_1.mcd']);
       expect(File(p.join(env.memcardsDir, 'Colin McRae Rally 2.0 (Europe)_1.mcd')).readAsBytesSync().first, 5);
@@ -268,8 +301,12 @@ void main() {
       await cardTypes('Card1Type = PerGame');
       final unknown = Game(id: 'g2', name: 'No Serial', platformSlug: 'psx', fileSize: 0);
 
-      final ok = await env.strategy.restoreSave(unknown, p.join(base.path, 'No Serial.iso'),
-          Uint8List.fromList(List.filled(64, 1)), 'SLES-02605_1.mcd');
+      final ok = await env.strategy.restoreSave(
+        unknown,
+        p.join(base.path, 'No Serial.iso'),
+        Uint8List.fromList(List.filled(64, 1)),
+        'SLES-02605_1.mcd',
+      );
 
       expect(ok, isTrue);
       expect(Directory(env.memcardsDir).listSync(), isEmpty);
@@ -308,10 +345,14 @@ void main() {
       final romm = MockRommService();
       final sync = SaveSyncService(romm, env.directoryService, StrategyRegistry(env.directoryService, prefs), prefs);
 
-      await expectLater(sync.pushSaves(game, romPath(), emulatorId: 'duckstation'),
-          throwsA(isA<SaveSyncNotPossibleException>()));
-      await expectLater(sync.pullSave(game, romPath(), emulatorId: 'duckstation'),
-          throwsA(isA<SaveSyncNotPossibleException>()));
+      await expectLater(
+        sync.pushSaves(game, romPath(), emulatorId: 'duckstation'),
+        throwsA(isA<SaveSyncNotPossibleException>()),
+      );
+      await expectLater(
+        sync.pullSave(game, romPath(), emulatorId: 'duckstation'),
+        throwsA(isA<SaveSyncNotPossibleException>()),
+      );
       verifyNever(romm.fetchCapabilities());
     });
   });
@@ -332,9 +373,7 @@ void main() {
     }
 
     Future<List<File>> syncFiles({DateTime? sessionStart}) async =>
-        (await env.strategy.getSaveFilesWithScreenshots(game, romPath(), sessionStart: sessionStart))
-            .keys
-            .toList();
+        (await env.strategy.getSaveFilesWithScreenshots(game, romPath(), sessionStart: sessionStart)).keys.toList();
 
     group('push', () {
       test('uploads a card holding only this game\'s saves, named like a RetroArch card', () async {
@@ -343,7 +382,11 @@ void main() {
         final file = (await syncFiles()).single;
 
         expect(p.basename(file.path), srmName);
-        expect(p.isWithin(env.memcardsDir, file.path), isFalse, reason: 'a temporary copy, not a card of DuckStation\'s');
+        expect(
+          p.isWithin(env.memcardsDir, file.path),
+          isFalse,
+          reason: 'a temporary copy, not a card of DuckStation\'s',
+        );
         final card = Ps1MemoryCard.parse(file.readAsBytesSync());
         expect(card.saves.map((s) => s.name), [colinSetting.name, colinGame.name]);
         expect(file.readAsBytesSync(), Ps1MemoryCard.parse(shared.readAsBytesSync()).extract(colin));
@@ -383,7 +426,11 @@ void main() {
 
       test('a multi-disc game takes the saves of all its discs', () async {
         await env.writeGameDb('', discsets: '- name: "Two Discs"\n  serials:\n    - SLES-02605\n    - SLES-12605\n');
-        await writeShared([colinSetting, (name: 'BESLES-12605DISC2', blocks: [9], fill: 0x44), otherGame]);
+        await writeShared([
+          colinSetting,
+          (name: 'BESLES-12605DISC2', blocks: [9], fill: 0x44),
+          otherGame,
+        ]);
 
         final card = Ps1MemoryCard.parse((await syncFiles()).single.readAsBytesSync());
 
@@ -400,7 +447,9 @@ void main() {
       test('replaces this game\'s saves on the card and leaves the other games\' bytes alone', () async {
         final shared = await writeShared([otherGame, colinSetting]);
         final before = shared.readAsBytesSync();
-        final incoming = buildPs1Card([(name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66)]);
+        final incoming = buildPs1Card([
+          (name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66),
+        ]);
 
         final ok = await env.strategy.restoreSave(game, romPath(), incoming, 'SLES-02605_1.mcd');
 
@@ -419,9 +468,13 @@ void main() {
         final newerOther = (name: otherGame.name, blocks: otherGame.blocks, fill: 0x55);
         final shared = await writeShared([newerOther, colinSetting]);
         final before = shared.readAsBytesSync();
-        final backedUp = buildPs1Card([otherGame, (name: 'BESLES-02605-OLDER', blocks: [3], fill: 0x77)]);
+        final backedUp = buildPs1Card([
+          otherGame,
+          (name: 'BESLES-02605-OLDER', blocks: [3], fill: 0x77),
+        ]);
         final backup = Uint8List.fromList(
-            ZipEncoder().encode(Archive()..addFile(ArchiveFile('shared_card_1.mcd', backedUp.length, backedUp))));
+          ZipEncoder().encode(Archive()..addFile(ArchiveFile('shared_card_1.mcd', backedUp.length, backedUp))),
+        );
 
         expect(await env.strategy.restoreBackup(game, romPath(), backup, 'freegosy_g1_backup.zip'), isTrue);
 
@@ -435,7 +488,9 @@ void main() {
       test('once DuckStation has started without this pull, the card is left as it is', () async {
         final shared = await writeShared([otherGame, colinSetting]);
         final before = shared.readAsBytesSync();
-        final incoming = buildPs1Card([(name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66)]);
+        final incoming = buildPs1Card([
+          (name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66),
+        ]);
 
         final guard = SaveRestoreGuard()..markTooLate();
         await guard.run(() => env.strategy.restoreSave(game, romPath(), incoming, 'SLES-02605_1.mcd'));
@@ -444,9 +499,10 @@ void main() {
         expect(File('${shared.path}.bak').existsSync(), isFalse);
 
         await SaveRestoreGuard().run(() => env.strategy.restoreSave(game, romPath(), incoming, 'SLES-02605_1.mcd'));
-        expect(Ps1MemoryCard.parse(shared.readAsBytesSync()).saves.map((s) => s.name).toSet(),
-            {otherGame.name, 'BESLES-02605NEW'},
-            reason: 'a pull in time is written as before');
+        expect(Ps1MemoryCard.parse(shared.readAsBytesSync()).saves.map((s) => s.name).toSet(), {
+          otherGame.name,
+          'BESLES-02605NEW',
+        }, reason: 'a pull in time is written as before');
       });
 
       test('creates the shared card when there is none yet', () async {
@@ -468,16 +524,21 @@ void main() {
       });
 
       test('a full card: nothing is written, and the user is told why', () async {
-        final shared = await writeShared([
-          (name: 'BASLUS-00594BIG', blocks: List.generate(14, (i) => i + 1), fill: 3),
-        ]);
+        final shared = await writeShared([(name: 'BASLUS-00594BIG', blocks: List.generate(14, (i) => i + 1), fill: 3)]);
         final before = shared.readAsBytesSync();
-        final incoming = buildPs1Card([(name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66)]);
+        final incoming = buildPs1Card([
+          (name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66),
+        ]);
 
         await expectLater(
           env.strategy.restoreSave(game, romPath(), incoming, 'SLES-02605_1.mcd'),
-          throwsA(isA<SaveSyncNotPossibleException>()
-              .having((e) => e.message, 'message', allOf(contains('2 blocks'), contains('1 free')))),
+          throwsA(
+            isA<SaveSyncNotPossibleException>().having(
+              (e) => e.message,
+              'message',
+              allOf(contains('2 blocks'), contains('1 free')),
+            ),
+          ),
         );
         expect(shared.readAsBytesSync(), before);
       });
@@ -505,7 +566,10 @@ void main() {
         final uploaded = uploadedFile.readAsBytesSync();
 
         // The other PC: a shared card with a different game and an older save.
-        await writeShared([(name: 'BASCUS-94163FF7', blocks: [4], fill: 0x77), (name: 'BESLES-02605OLD', blocks: [8], fill: 1)]);
+        await writeShared([
+          (name: 'BASCUS-94163FF7', blocks: [4], fill: 0x77),
+          (name: 'BESLES-02605OLD', blocks: [8], fill: 1),
+        ]);
         await env.strategy.restoreSave(game, romPath(), uploaded, p.basename(uploadedFile.path));
 
         final pushedBack = (await syncFiles()).single.readAsBytesSync();
@@ -542,17 +606,22 @@ void main() {
 
         await env.strategy.restoreSave(game, romPath(), buildPs1Card([colinSetting]), argosyName);
 
-        expect(Ps1MemoryCard.parse(shared.readAsBytesSync()).saves.map((s) => s.name).toSet(),
-            {otherGame.name, colinSetting.name});
+        expect(Ps1MemoryCard.parse(shared.readAsBytesSync()).saves.map((s) => s.name).toSet(), {
+          otherGame.name,
+          colinSetting.name,
+        });
       });
 
       test('an .srm that is not a PS1 memory card is ignored', () async {
         await cardTypes('Card1Type = PerGame');
 
-        final wrongSize = await env.strategy
-            .restoreSave(game, romPath(), Uint8List.fromList(List.filled(8192, 1)), argosyName);
-        final noHeader = await env.strategy
-            .restoreSave(game, romPath(), Uint8List(128 * 1024), argosyName);
+        final wrongSize = await env.strategy.restoreSave(
+          game,
+          romPath(),
+          Uint8List.fromList(List.filled(8192, 1)),
+          argosyName,
+        );
+        final noHeader = await env.strategy.restoreSave(game, romPath(), Uint8List(128 * 1024), argosyName);
 
         expect([wrongSize, noHeader], [true, true]);
         expect(Directory(env.memcardsDir).existsSync() ? cardsOnDisk() : <String>[], isEmpty);

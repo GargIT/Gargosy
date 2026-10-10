@@ -16,16 +16,16 @@ void main() {
   tearDown(() => base.delete(recursive: true));
 
   group('PCSX2', () {
-    Future<(Pcsx2SaveStrategy, SpySerialExtractionService)> strategy() async {
+    Future<(Pcsx2SaveStrategy, SpyRomGameIds)> strategy() async {
       final exeDir = p.join(base.path, 'pcsx2');
       await Directory(p.join(exeDir, 'memcards')).create(recursive: true);
       final exe = p.join(exeDir, 'pcsx2-qt.exe');
       await File(exe).writeAsString('');
       final ds = await StubDirectoryService.create(exePath: exe);
-      final spy = SpySerialExtractionService(ds, await ds.appPrefs());
+      final spy = SpyRomGameIds(await ds.appPrefs());
       return (
         Pcsx2SaveStrategy(ds, await ds.appPrefs(),
-            platform: const PlatformInfo('windows', environment: {}), serialExtractionService: spy),
+            platform: const PlatformInfo('windows', environment: {}), gameIds: spy),
         spy
       );
     }
@@ -68,9 +68,9 @@ void main() {
   group('DuckStation', () {
     test('the state matcher uses RomM\'s serial, without reading the ROM', () async {
       final ds = await StubDirectoryService.create(appSupport: base.path);
-      final spy = SpySerialExtractionService(ds, await ds.appPrefs());
+      final spy = SpyRomGameIds(await ds.appPrefs());
       final duck = DuckstationSaveStrategy(ds, await ds.appPrefs(),
-          platform: const PlatformInfo('windows', environment: {}), serialExtractionService: spy);
+          platform: const PlatformInfo('windows', environment: {}), gameIds: spy);
 
       final matches = await duck.stateFileMatcher(
         Game(id: 'd1', name: 'Chrono Cross', platformSlug: 'psx', fileSize: 0, titleId: 'SLUS-01041'),
@@ -85,16 +85,16 @@ void main() {
   });
 
   group('RomM serial: where the ROM is still read', () {
-    Future<(Pcsx2SaveStrategy, SpySerialExtractionService)> strategy() async {
+    Future<(Pcsx2SaveStrategy, SpyRomGameIds)> strategy() async {
       final exeDir = p.join(base.path, 'pcsx2');
       await Directory(p.join(exeDir, 'memcards')).create(recursive: true);
       final exe = p.join(exeDir, 'pcsx2-qt.exe');
       await File(exe).writeAsString('');
       final ds = await StubDirectoryService.create(exePath: exe);
-      final spy = SpySerialExtractionService(ds, await ds.appPrefs());
+      final spy = SpyRomGameIds(await ds.appPrefs());
       return (
         Pcsx2SaveStrategy(ds, await ds.appPrefs(),
-            platform: const PlatformInfo('windows', environment: {}), serialExtractionService: spy),
+            platform: const PlatformInfo('windows', environment: {}), gameIds: spy),
         spy
       );
     }
@@ -147,16 +147,16 @@ void main() {
   });
 
   group('RomM serial and the disc that is launched', () {
-    Future<(Pcsx2SaveStrategy, SpySerialExtractionService)> strategy() async {
+    Future<(Pcsx2SaveStrategy, SpyRomGameIds)> strategy() async {
       final exeDir = p.join(base.path, 'pcsx2');
       await Directory(p.join(exeDir, 'memcards')).create(recursive: true);
       final exe = p.join(exeDir, 'pcsx2-qt.exe');
       await File(exe).writeAsString('');
       final ds = await StubDirectoryService.create(exePath: exe);
-      final spy = SpySerialExtractionService(ds, await ds.appPrefs());
+      final spy = SpyRomGameIds(await ds.appPrefs());
       return (
         Pcsx2SaveStrategy(ds, await ds.appPrefs(),
-            platform: const PlatformInfo('windows', environment: {}), serialExtractionService: spy),
+            platform: const PlatformInfo('windows', environment: {}), gameIds: spy),
         spy
       );
     }

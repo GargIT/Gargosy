@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io' as io;
 import 'dart:typed_data';
+
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 
@@ -64,6 +65,28 @@ class SaveRestoreGuard {
 /// Abstract base for all save-file strategies.
 abstract class SaveStrategy {
   String get strategyId;
+
+  static const _chosenKey = #gargosyChosenRestore;
+
+  /// Gargosy: runs [body] as a restore the user chose (a save picked on the
+  /// play screen, a backup, a conversion), which may replace a save changed
+  /// on this PC. An automatic pull never does.
+  static Future<T> chosenRestore<T>(Future<T> Function() body) => runZoned(body, zoneValues: {_chosenKey: true});
+
+  /// Whether the running restore is one the user chose ([chosenRestore]).
+  static bool get isChosenRestore => Zone.current[_chosenKey] == true;
+
+  /// RomM's slot [game]'s uploads go to. Gargosy: sigil's units go
+  /// to `autosave`, where Argosy and RomM keep a game's latest save.
+  String uploadSlotFor(Game game) => 'freegosy';
+
+  /// Called once an upload of [game]'s save succeeded (Gargosy: sigil
+  /// commits its sync state here, never before).
+  Future<void> afterUpload(Game game, String romPath) async {}
+
+  /// Downloads go to [restoreSave] as they came, never through the save
+  /// format conversion (Gargosy: sigil reads other emulators' shapes itself).
+  bool restoresUnitsItselfFor(Game game) => false;
 
   /// Whether this strategy supports save synchronization.
   bool get supportsSaveSync => false;
@@ -128,7 +151,12 @@ abstract class SaveStrategy {
   /// same files as [getSaveFiles]; a strategy may upload something narrower
   /// than it backs up (e.g. one game's saves out of a card shared by all).
   /// If [sessionStart] is provided, only files modified after that time are returned.
-  Future<Map<io.File, io.File?>> getSaveFilesWithScreenshots(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<Map<io.File, io.File?>> getSaveFilesWithScreenshots(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final files = await getSaveFiles(game, romPath, sessionStart: sessionStart, syncMode: syncMode);
     return {for (var f in files) f: null};
   }
@@ -204,7 +232,11 @@ abstract class SaveStrategy {
   /// `/Users/xyz/Documents/RetroArch/saves/mGBA`) when `sort_savefiles_enable`
   /// is true (the default), or the flat save directory when it is false.
   /// Returns `null` if the config is not found.
-  static Future<String?> retroarchCoreSaveDir(DirectoryService directoryService, String coreSaveFolder, {PlatformInfo? platform}) async {
+  static Future<String?> retroarchCoreSaveDir(
+    DirectoryService directoryService,
+    String coreSaveFolder, {
+    PlatformInfo? platform,
+  }) async {
     final p_ = platform ?? PlatformInfo.current;
     final List<String> configCandidates = [];
 

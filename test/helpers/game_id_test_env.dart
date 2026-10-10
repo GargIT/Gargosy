@@ -1,5 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
-import 'package:gargosy/core/disc/serial_extraction_service.dart';
+import 'package:gargosy/sigil/rom_game_ids.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,18 +29,14 @@ class StubDirectoryService extends DirectoryService {
 }
 
 /// Counts reads of the ROM; a test that expects none checks [reads] is 0.
-class SpySerialExtractionService extends SerialExtractionService {
-  SpySerialExtractionService(super.directoryService, super.prefs, {this.answer});
+class SpyRomGameIds extends RomGameIds {
+  SpyRomGameIds(super.prefs, {this.answer});
 
   final String? answer;
   int reads = 0;
 
   @override
-  Future<String?> extractSerial({
-    required String romPath,
-    required RegExp bootLinePattern,
-    required List<ChdmanCandidate> chdmanCandidates,
-  }) async {
+  Future<String?> discSerial(String romPath, {required String platform}) async {
     reads++;
     return answer;
   }

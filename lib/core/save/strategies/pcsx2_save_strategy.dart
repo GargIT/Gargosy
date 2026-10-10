@@ -5,7 +5,6 @@ import 'dart:math' as math;
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
-import '../../disc/serial_extraction_service.dart';
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -17,6 +16,7 @@ import '../save_strategy.dart';
 import '../state_sync_capable.dart';
 import 'pcsx2_state_file.dart';
 import 'ps2_save_folders.dart';
+import '../../../sigil/rom_game_ids.dart';
 
 /// Save strategy for PCSX2 (PlayStation 2).
 /// Memcards: {systemDir}/memcards/*.ps2
@@ -26,32 +26,23 @@ import 'ps2_save_folders.dart';
 class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
-  final SerialExtractionService _serialExtractionService;
-
-  /// PS2's `SYSTEM.CNF` boot line, e.g. `BOOT2 = cdrom0:\SLUS_123.45;1` —
-  /// the "2" distinguishes it from PS1's `BOOT =` line so a PS1 BIOS won't
-  /// try to boot a PS2 disc.
-  static final bootLinePattern = RegExp(
-      r'BOOT2\s*=\s*cdrom[^:]*:\\?([A-Z]{4}[_-]\d{3}[.]\d{2})',
-      caseSensitive: false);
+  final RomGameIds _gameIds;
 
   Pcsx2SaveStrategy(this._directoryService, AppPreferences prefs,
-      {PlatformInfo? platform, SerialExtractionService? serialExtractionService})
+      {PlatformInfo? platform, RomGameIds? gameIds})
       : _platform = platform ?? PlatformInfo.current,
-        _serialExtractionService = serialExtractionService ??
-            SerialExtractionService(_directoryService, prefs, platform: platform);
+        _gameIds = gameIds ?? RomGameIds(prefs);
 
   @override
   String get strategyId => 'pcsx2';
 
   /// The game's PS2 serial (e.g. "SLUS-12345"): RomM's, else read from the
-  /// ROM (see [SerialExtractionService]). Null if neither has it.
+  /// ROM through sigil ([RomGameIds]). Null if neither has it.
   Future<String?> _serial(Game game, String romPath) => GameIdResolver.resolve(
         label: 'PCSX2 ${game.name}',
         server: GameIdResolver.discSerial(game, romPath),
         shape: GameIdResolver.ps1ps2Serial,
-        local: () => _serialExtractionService.extractSerial(
-            romPath: romPath, bootLinePattern: bootLinePattern, chdmanCandidates: [(emulatorId: 'pcsx2', exeName: _getEmuExe())]),
+        local: () => _gameIds.discSerial(romPath, platform: 'ps2'),
       );
 
   String _normalizeMemcardFilename(String filename) {

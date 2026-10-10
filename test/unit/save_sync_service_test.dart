@@ -1491,6 +1491,12 @@ class _SharedCardStrategy implements SaveStrategy {
   @override
   String get strategyId => 'card';
   @override
+  String uploadSlotFor(Game game) => 'freegosy';
+  @override
+  Future<void> afterUpload(Game game, String romPath) async {}
+  @override
+  bool restoresUnitsItselfFor(Game game) => false;
+  @override
   Future<String?> saveSyncBlockedReason(Game game, String romPath) async => null;
   @override
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async => true;

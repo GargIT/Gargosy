@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 
+import '../sigil/sigil_profile.dart';
 import '../core/emulator/game_launch_service.dart';
 import '../core/emulator/strategy_registry.dart';
 import '../core/save/backup_repository.dart';
@@ -60,7 +61,14 @@ final saveSyncServiceProvider = Provider<SaveSyncService?>((ref) {
   final prefs = ref.watch(profilePrefsProvider);
   final paths = ref.watch(_profilePathsProvider);
   if (romm == null || dirs == null || registry == null || prefs == null || paths == null) return null;
-  return SaveSyncService(romm, dirs, registry, prefs, platform: sandboxedPlatform(paths));
+  return SaveSyncService(
+    romm,
+    dirs,
+    registry,
+    prefs,
+    platform: sandboxedPlatform(paths),
+    wrapSaves: sigilSavesFor(paths),
+  );
 });
 
 /// What the profile's save sync is busy with ("Uploading Okami's save"),
@@ -90,8 +98,12 @@ final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
   final sync = ref.watch(saveSyncServiceProvider);
   final prefs = ref.watch(profilePrefsProvider);
   if (romm == null || sync == null || prefs == null) return null;
-  return StateSyncService(romm, prefs, sync.strategyForGame,
-      exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'));
+  return StateSyncService(
+    romm,
+    prefs,
+    sync.strategyForGame,
+    exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'),
+  );
 });
 
 /// The states a game can be resumed from (this PC and RomM).

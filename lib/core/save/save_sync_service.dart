@@ -65,6 +65,10 @@ class SaveConflictException implements Exception {
   String toString() => 'Conflict detected for ${game.name}: Local ($localTime) vs Cloud ($cloudTime)';
 }
 
+/// Gargosy: replaces an emulator's save strategy ([base]; null for an
+/// emulator Freegosy has none for, such as Flycast). Returning [base] keeps it.
+typedef SaveStrategyWrapper = SaveStrategy? Function(String emulatorId, SaveStrategy? base);
+
 class SaveSyncService {
   final RommService _rommService;
   final DirectoryService _directoryService;
@@ -111,17 +115,18 @@ class SaveSyncService {
   static const int minValidSaveSizeBytes = 100;
 
   late final RetroArchSaveStrategy _retroarch;
-  late final DolphinSaveStrategy _dolphin;
+  late final SaveStrategy _dolphin;
   late final EdenSaveStrategy _eden;
   late final RyujinxSaveStrategy _ryujinx;
   late final WindowsSaveStrategy _windows;
-  late final Pcsx2SaveStrategy _pcsx2;
+  late final SaveStrategy _pcsx2;
   late final Rpcs3SaveStrategy _rpcs3;
   late final XeniaSaveStrategy _xenia;
-  late final DuckstationSaveStrategy _duckstation;
+  late final SaveStrategy _duckstation;
   late final MelonDsSaveStrategy _melonds;
-  late final MgbaSaveStrategy _mgba;
-  late final PpssppSaveStrategy _ppsspp;
+  late final SaveStrategy _mgba;
+  late final SaveStrategy _ppsspp;
+  late final SaveStrategy? _flycast;
   late final CemuSaveStrategy _cemu;
   late final AzaharSaveStrategy _azahar;
   late final AresSaveStrategy _ares;
@@ -129,20 +134,23 @@ class SaveSyncService {
   /// [platform] is the OS the strategies look for emulators on; tests pass
   /// one with a temporary home.
   SaveSyncService(this._rommService, this._directoryService, this._strategyRegistry, this._prefs,
-      {ZstdDecompressor? zstd, PlatformInfo? platform})
+      {ZstdDecompressor? zstd, PlatformInfo? platform, SaveStrategyWrapper? wrapSaves})
       : _zstd = zstd {
+    // Gargosy: sigil's strategies take over these emulators' saves (lib/sigil).
+    SaveStrategy wrap(String id, SaveStrategy base) => wrapSaves?.call(id, base) ?? base;
     _retroarch = RetroArchSaveStrategy(_directoryService, prefs: _prefs, platform: platform);
-    _dolphin = DolphinSaveStrategy(_directoryService, platform: platform);
+    _dolphin = wrap('dolphin', DolphinSaveStrategy(_directoryService, platform: platform));
     _eden = EdenSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
     _ryujinx = RyujinxSaveStrategy(onMappingResolved: saveMappedFolder, platform: platform);
     _windows = WindowsSaveStrategy(_prefs, platform: platform);
-    _pcsx2 = Pcsx2SaveStrategy(_directoryService, _prefs, platform: platform);
+    _pcsx2 = wrap('pcsx2', Pcsx2SaveStrategy(_directoryService, _prefs, platform: platform));
     _rpcs3 = Rpcs3SaveStrategy(_directoryService, platform: platform);
     _xenia = XeniaSaveStrategy(_directoryService, platform: platform);
-    _duckstation = DuckstationSaveStrategy(_directoryService, _prefs, platform: platform);
+    _duckstation = wrap('duckstation', DuckstationSaveStrategy(_directoryService, _prefs, platform: platform));
     _melonds = MelonDsSaveStrategy(_directoryService, platform: platform);
-    _mgba = MgbaSaveStrategy(_directoryService, platform: platform);
-    _ppsspp = PpssppSaveStrategy(_directoryService, platform: platform);
+    _mgba = wrap('mgba', MgbaSaveStrategy(_directoryService, platform: platform));
+    _ppsspp = wrap('ppsspp', PpssppSaveStrategy(_directoryService, platform: platform));
+    _flycast = wrapSaves?.call('flycast', null);
     _cemu = CemuSaveStrategy(_directoryService, platform: platform);
     _azahar = AzaharSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
     _ares = AresSaveStrategy(_directoryService, platform: platform);
@@ -370,6 +378,7 @@ class SaveSyncService {
     if (id == 'windows_native') return _windows;
     if (id == 'azahar') return _azahar;
     if (id == 'ares') return _ares;
+    if (id == 'flycast') return _flycast;
     return null;
   }
 
@@ -762,6 +771,7 @@ class SaveSyncService {
   /// [sourceTag] is the save's `emulator` on RomM.
   Future<bool> _restoreDownloaded(SaveStrategy strategy, Game game, String romPath, Uint8List bytes,
       String filename, {String? sourceTag, String? emulatorId}) async {
+    if (strategy.restoresUnitsItselfFor(game)) return strategy.restoreSave(game, romPath, bytes, filename);
     final platformSlug = game.platformSlug ?? '';
     final convertible = saveSystemFor(platformSlug) != null;
     // A zip holding one save file (as older uploads were) is restored as that
@@ -831,7 +841,8 @@ class SaveSyncService {
   Future<void> restoreChosenSave(Game game, String romPath, Map<String, dynamic> save,
           {required String emulatorId, String? coreOverride}) =>
       _lock.run(() => _doing("Downloading ${game.displayName}'s save",
-          () => _restoreChosenSaveUnlocked(game, romPath, save, emulatorId: emulatorId, coreOverride: coreOverride)));
+          () => SaveStrategy.chosenRestore(
+              () => _restoreChosenSaveUnlocked(game, romPath, save, emulatorId: emulatorId, coreOverride: coreOverride))));
 
   Future<void> _restoreChosenSaveUnlocked(Game game, String romPath, Map<String, dynamic> save,
       {required String emulatorId, String? coreOverride}) async {
@@ -855,8 +866,8 @@ class SaveSyncService {
   /// into [emulatorId]'s format and puts it in place.
   Future<void> convertLocalSave(Game game, String romPath,
           {required String fromEmulatorId, String? fromTag, required String emulatorId, String? coreOverride}) =>
-      _lock.run(() => _convertLocalSaveUnlocked(game, romPath,
-          fromEmulatorId: fromEmulatorId, fromTag: fromTag, emulatorId: emulatorId, coreOverride: coreOverride));
+      _lock.run(() => SaveStrategy.chosenRestore(() => _convertLocalSaveUnlocked(game, romPath,
+          fromEmulatorId: fromEmulatorId, fromTag: fromTag, emulatorId: emulatorId, coreOverride: coreOverride)));
 
   Future<void> _convertLocalSaveUnlocked(Game game, String romPath,
       {required String fromEmulatorId, String? fromTag, required String emulatorId, String? coreOverride}) async {
@@ -1209,7 +1220,7 @@ class SaveSyncService {
         finalUploadFile,
         emulator: _saveEmulatorTag(strategy, game, emulatorId),
         deviceId: deviceId,
-        slot: 'freegosy',
+        slot: strategy.uploadSlotFor(game),
         autocleanup: true,
         autocleanupLimit: 5,
         overwrite: force,
@@ -1240,6 +1251,7 @@ class SaveSyncService {
       if (result.ok) {
         await _storeHash(game.id, uploadFilename, localHash);
         await _recordSyncedRommId(game, strategy, result.saved?['id']);
+        await strategy.afterUpload(game, romPath);
         debugPrint('[SaveSync] [push] Upload OK — $uploadFilename ($fileLen bytes) saved to RomM');
       } else {
         debugPrint('[SaveSync] [push] Upload FAILED — server returned ok=false');
@@ -1551,6 +1563,7 @@ class SaveSyncService {
         game.id,
         finalUploadFile,
         emulator: _saveEmulatorTag(strategy, game, emulatorId),
+        slot: strategy.uploadSlotFor(game),
         screenshotFile: finalScreenshotFile,
         overrideFilename: uploadFilename,
         autocleanup: true,
@@ -1561,6 +1574,7 @@ class SaveSyncService {
       if (result.ok) {
         uploaded++;
         await _storeHash(game.id, uploadFilename, localHash);
+        await strategy.afterUpload(game, romPath);
         // RomM's newest save is now this PC's own: not a newer save from
         // elsewhere at the next push's conflict check.
         await _setLastPullTime(game.id);

@@ -52,6 +52,14 @@ add_subdirectory(${FLUTTER_MANAGED_DIR})
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 
+# argosy-sigil (third_party, pinned): game ids and save units. Compiled once,
+# then incrementally; sigil.dll is installed beside Gargosy.exe.
+set(SIGIL_BUILD_SHARED ON CACHE BOOL "" FORCE)
+set(SIGIL_BUILD_CLI OFF CACHE BOOL "" FORCE)
+set(SIGIL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/argosy-sigil" "${CMAKE_BINARY_DIR}/sigil")
+add_dependencies(${BINARY_NAME} sigil)
+
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
@@ -79,6 +87,9 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
   COMPONENT Runtime)
 
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
+
+install(FILES "$<TARGET_FILE:sigil>" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
 if(PLUGIN_BUNDLED_LIBRARIES)

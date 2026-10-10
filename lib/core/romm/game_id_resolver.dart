@@ -2,7 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
-import '../disc/serial_extraction_service.dart';
+import '../../sigil/rom_game_ids.dart';
 import 'romm_models.dart';
 
 /// Where a save strategy gets a game's id (a disc serial, a title id): the
@@ -74,7 +74,7 @@ abstract final class GameIdResolver {
   /// [romPath] is a later disc: that disc's own serial is read instead.
   static String? discSerial(Game game, String romPath) {
     final id = clean(game.titleId);
-    return id == null || isLaterDisc(game, romPath) ? null : SerialExtractionService.normalizeSerialText(id);
+    return id == null || isLaterDisc(game, romPath) ? null : RomGameIds.normalizeSerial(id);
   }
 
   static final _discNumber = RegExp(r'(?:[(\[]|\s-)\s*(?:disc|disk|cd)\s*(\d+)', caseSensitive: false);
