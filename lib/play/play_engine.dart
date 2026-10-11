@@ -25,6 +25,7 @@ import '../emulators/profile_launch_config.dart';
 import '../providers/download_providers.dart';
 import '../providers/engine_providers.dart';
 import '../providers/romm_providers.dart';
+import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
 import 'play_menu.dart';
 import 'pre_launch_pull.dart';
@@ -66,6 +67,11 @@ abstract class PlayEngine {
 
   /// The ROM to start, or null when the game isn't downloaded.
   Future<String?> romPathFor(Game game);
+
+  /// [romPath] made ready for [strategy], once (`RomPreparer`): a zip it
+  /// can't open is unpacked, an Xbox disc made an XISO for xemu. Returns
+  /// the ROM to start; throws with the reason when it can't be readied.
+  Future<String> readyRom(Game game, String romPath, EmulatorStrategy strategy, {void Function(String)? onProgress});
 
   /// Backs up this PC's save, then puts the profile's RomM save in place.
   /// The states [game] can be resumed from: this PC's first, then merged
@@ -244,6 +250,19 @@ class GargosyPlayEngine implements PlayEngine {
     final files = _ref.read(romFilesProvider);
     if (!files.isDownloaded(game)) return null;
     return (await _launch()).resolveRomFileInDirectory(files.pathFor(game), game.platformSlug);
+  }
+
+  @override
+  Future<String> readyRom(Game game, String romPath, EmulatorStrategy strategy, {void Function(String)? onProgress}) async {
+    final root = _ref.read(appRootProvider);
+    final preparer = RomPreparer(files: _ref.read(romFilesProvider), guard: PathGuard(root), tempDir: p.join(root.appData, 'temp'));
+    final unpacked = await preparer.ready(game, romPath, strategy.emulatorId, onProgress: onProgress);
+    if (unpacked == null) return romPath;
+    // The unpacked folder's main ROM, readied too (an Xbox disc unpacked
+    // as it is by another path still gets its XISO check).
+    final rom = await romPathFor(game) ?? (throw StateError('${game.displayName} is gone after unpacking'));
+    await preparer.ready(game, rom, strategy.emulatorId, onProgress: onProgress);
+    return rom;
   }
 
   @override

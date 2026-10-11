@@ -4,6 +4,8 @@ import 'package:path/path.dart' as p;
 class RomConstants {
   // Known extensions per platform slug
   static const Map<String, List<String>> platformExtensions = {
+    // Gargosy: original Xbox discs (XISO; RomPreparer converts Redump images).
+    'xbox': ['.iso', '.xiso'],
     'switch': ['.nsp', '.xci', '.nsz', '.xcz'],
     'nintendo-switch': ['.nsp', '.xci', '.nsz', '.xcz'],
     'ns': ['.nsp', '.xci', '.nsz', '.xcz'],

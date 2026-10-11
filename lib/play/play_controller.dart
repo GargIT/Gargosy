@@ -14,13 +14,17 @@ import 'play_engine.dart';
 import 'play_menu.dart';
 
 class PlayState {
-  const PlayState({this.runningGameId, this.message});
+  const PlayState({this.runningGameId, this.message, this.preparing});
 
   /// The game being played right now (one at a time, spec §6).
   final String? runningGameId;
 
   /// What the last session said when it ended.
   final String? message;
+
+  /// While the game's ROM is readied before launch (a zip unpacked, an
+  /// Xbox disc converted): what's happening, with a percentage.
+  final String? preparing;
 }
 
 /// Playing a game: the profile's save in place, the emulator on the profile's
@@ -49,12 +53,18 @@ class PlayController extends StateNotifier<PlayState> {
     try {
       final engine = _ref.read(playEngineProvider);
       if (engine == null) return refuse('No profile is active.');
-      final romPath = await engine.romPathFor(game);
-      if (romPath == null) return refuse('Download the game first.');
+      final foundRom = await engine.romPathFor(game);
+      if (foundRom == null) return refuse('Download the game first.');
       final emulator = await engine.emulatorFor(game, emulatorId: request?.emulator.emulatorId);
       if (emulator == null) return refuse('No emulator plays ${game.platformDisplayName ?? 'this platform'} yet.');
       if (!await engine.isInstalled(emulator)) {
         return refuse('${emulator.name} is needed. Install it under Emulators (Start → Emulators).');
+      }
+      final String romPath;
+      try {
+        romPath = await _ready(engine, game, foundRom, emulator);
+      } on Object catch (e) {
+        return refuse("Couldn't start ${game.displayName}: $e");
       }
       final core = request?.emulator.coreId;
       final coreOverride = core == null ? null : '${core}_libretro';
@@ -92,12 +102,13 @@ class PlayController extends StateNotifier<PlayState> {
       if (engine == null) return refuse('No profile is active.');
       // A state belongs to one disc: it boots the ROM file it was made with.
       final own = entry.romPath;
-      final romPath = own != null && io.File(own).existsSync() ? own : await engine.romPathFor(game);
-      if (romPath == null) return refuse('Download the game first.');
+      final foundRom = own != null && io.File(own).existsSync() ? own : await engine.romPathFor(game);
+      if (foundRom == null) return refuse('Download the game first.');
       final emulator = await engine.emulatorFor(game, emulatorId: entry.emulatorId);
       if (emulator == null || !await engine.isInstalled(emulator)) {
         return refuse('${entry.emulatorName} is needed. Install it under Emulators (Start → Emulators).');
       }
+      final romPath = await _ready(engine, game, foundRom, emulator);
       final pull = await engine.pullStates(game, romPath, emulator, priority: entry.fileName, onProblem: onNotice);
       final String loadPath;
       switch (await engine.checkResume(entry, game, romPath, pull)) {
@@ -117,6 +128,16 @@ class PlayController extends StateNotifier<PlayState> {
       return null;
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
+    }
+  }
+
+  /// [engine.readyRom] with its progress in [PlayState.preparing], cleared after.
+  Future<String> _ready(PlayEngine engine, Game game, String romPath, EmulatorStrategy emulator) async {
+    try {
+      return await engine.readyRom(game, romPath, emulator,
+          onProgress: (s) => state = PlayState(runningGameId: game.id, preparing: s));
+    } finally {
+      if (state.preparing != null) state = PlayState(runningGameId: game.id);
     }
   }
 

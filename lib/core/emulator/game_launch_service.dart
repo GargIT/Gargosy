@@ -175,14 +175,19 @@ class GameLaunchService {
 
     final knownExtensions = RomConstants.platformExtensions[lowerPlatformSlug] ?? [];
     final dir = io.Directory(romPath);
+    io.File? largest;
     await for (final entity in dir.list()) {
       if (entity is! io.File) continue;
       final name = p.basename(entity.path).toLowerCase();
       if (knownExtensions.any((ext) => name.endsWith(ext))) {
         return entity.path;
       }
+      if (largest == null || entity.lengthSync() > largest.lengthSync()) largest = entity;
     }
-    return romPath;
+    // Gargosy: a platform missing from the table (or a folder with none of
+    // its extensions) gets its largest file, never the folder: an emulator
+    // given a folder (xemu's -dvd_path) fails to load it.
+    return largest?.path ?? romPath;
   }
 
   /// True if [game]'s platform is a 3DS variant and the emulator's

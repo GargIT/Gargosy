@@ -7,6 +7,7 @@ import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/library/upload_queue.dart';
+import 'package:gargosy/library/xbox_disc.dart';
 import 'package:gargosy/core/save/catalog/play_request.dart';
 import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
@@ -103,6 +104,24 @@ class FakeEngine implements PlayEngine {
   }
   @override
   Future<bool> isInstalled(EmulatorStrategy s) async => installed;
+
+  /// What readyRom returns (the unpacked ROM), its progress line, a gate it
+  /// waits on, and what it throws.
+  String? readyPath;
+  String? readyProgress;
+  Completer<void>? readyGate;
+  Object? readyError;
+  String? readiedFor;
+  String? launchedRom;
+
+  @override
+  Future<String> readyRom(Game game, String romPath, EmulatorStrategy s, {void Function(String)? onProgress}) async {
+    readiedFor = s.emulatorId;
+    if (readyProgress != null) onProgress?.call(readyProgress!);
+    await readyGate?.future;
+    if (readyError != null) throw readyError!;
+    return readyPath ?? romPath;
+  }
   @override
   Future<String?> romPathFor(Game game) async {
     await Future<void>.delayed(Duration.zero); // lists a folder
@@ -156,6 +175,7 @@ class FakeEngine implements PlayEngine {
       throw MissingRetroArchCoreException(coreName: missing, corePath: r'D:\G\emulators\retroarch\cores\' + missing, exePath: 'ra.exe');
     }
     steps.add('launch');
+    launchedRom = romPath;
     this.loadStatePath = loadStatePath;
     launchedIn = s.emulatorId;
     this.coreOverride = coreOverride;
@@ -197,6 +217,33 @@ void main() {
       ..installed = false;
     expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), contains('PCSX2'));
     expect(engine.steps, isEmpty);
+  });
+
+  test("the ROM is readied for the emulator first (a zip unpacked), and the readied one launches", () async {
+    engine.readyPath = 'D:/G/roms/xbox/Halo/Halo.iso';
+    expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), isNull);
+    expect(engine.readiedFor, isNotNull);
+    expect(engine.launchedRom, 'D:/G/roms/xbox/Halo/Halo.iso');
+  });
+
+  test('while the ROM is readied, the play state says what is happening; it clears after', () async {
+    engine.readyProgress = 'Unpacking G… 40 %';
+    engine.readyGate = Completer<void>();
+    final started = c.read(playControllerProvider.notifier).play(game(1, 'G'));
+    await pumpEventQueue();
+    expect(c.read(playControllerProvider).preparing, 'Unpacking G… 40 %');
+    engine.readyGate!.complete();
+    expect(await started, isNull);
+    expect(c.read(playControllerProvider).preparing, isNull);
+    expect(c.read(playControllerProvider).runningGameId, '1');
+  });
+
+  test("a ROM that can't be readied stops the start, saying why", () async {
+    engine.readyError = const NotAnXboxDisc('G');
+    final reason = await c.read(playControllerProvider.notifier).play(game(1, 'G'));
+    expect(reason, contains("isn't an Xbox disc image"));
+    expect(engine.steps, isEmpty);
+    expect(c.read(playControllerProvider).runningGameId, isNull);
   });
 
   test('a quick second press while the first is still starting is refused', () async {

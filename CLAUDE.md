@@ -85,7 +85,8 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `core/romm/romm_library_api.dart` — `LibraryApi` / `RommLibraryApi`: gallery pages (`GalleryQuery`: platform / collection / favourites / search, `GallerySort`, genre and region filters, `FilterValues`), collections (`RommCollection`), favourites (the user's own `is_favorite` collection, created once when missing).
 - `providers/romm_providers.dart` — `rommServiceProvider` and `libraryApiProvider`, built from the active profile's server and token.
 - `providers/library_providers.dart` — platforms, collections, favourite ids, Home shelves, a game, its saves, states and notes, RA progress; `coverUrlFor`, `assetUrl`, `toggleFavourite`.
-- `library/rom_files.dart` — a game's ROM at `roms\<platform>\<fs_name>` (file or folder), names made safe; downloaded?; delete.
+- `library/rom_files.dart` — a game's ROM at `roms\<platform>\<fs_name>` (file or folder), names made safe; downloaded?; delete. A `.zip` game unpacked for an emulator sits in `<name without .zip>\` (`unpackedDirFor`), and `pathFor` finds it there.
+- `library/rom_preparer.dart` — `RomPreparer.ready` (via `PlayEngine.readyRom`, before launch; progress in `PlayState.preparing`): a zip the emulator can't open (`zipReaders`; never on arcade platforms) is unpacked once with Windows' `tar.exe` into the game's folder, and the zip goes; for xemu an original Xbox disc becomes an XISO. `library/xbox_disc.dart` — `detectXboxDisc`, `XisoWriter` (streams out of `tar -xO`, drops a Redump image's video partition at 0x18300000), `redumpToXiso`.
 - `library/download_service.dart` — download staged in `userdata\app\temp`, then moved into `roms\`; multi-file zips unpacked through `PathGuard.join` (no zip-slip); a single file is never unpacked.
 - `providers/download_providers.dart` — `downloadsProvider` (progress, cancel, delete), `watchDownloaded`.
 - `ui/input/wrap_grid_policy.dart` — grid focus wraps row to row.

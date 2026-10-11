@@ -12,6 +12,11 @@ What changed in each release of Gargosy. The format follows
   version, and the documents that come with Gargosy.
 - A reader for those documents — what's new, read me, licences, security
   policy — inside Gargosy, scrolled with the D-pad; X lists a document's links.
+- A zipped game is unpacked the first time it's played in an emulator that
+  can't open zips (xemu, PCSX2, Dolphin, DuckStation, …), with the progress
+  under the Play button. Arcade sets and emulators that read zips keep the zip.
+- Original Xbox discs in the Redump form are made XISO, which xemu needs: the
+  video partition is left out while unpacking, so it takes no extra room.
 
 ### Fixed
 
@@ -24,6 +29,12 @@ What changed in each release of Gargosy. The format follows
   "Downloading 0 %" until done.
 - Emulators that come as a zip (PPSSPP, xemu, ares, DuckStation) unpacked
   only their first file, so they never counted as installed.
+- xemu finds its hard disk: the first launch in a profile copies
+  `bios\xbox_hdd.qcow2` (from RomM's firmware) into the profile, where its
+  saves live, and points xemu at the boot and flash ROMs in `bios\`.
+- A game in a folder starts with its disc file, not the folder: xemu was
+  given the folder of an Xbox game and couldn't load it (the same for other
+  platforms Gargosy has no file list for).
 - MAME games start: MAME is given the game's set name and its folder
   (`-rompath`), not the zip's path, which made it close at once.
 

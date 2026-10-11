@@ -70,6 +70,20 @@ void main() {
     expect(p.basename(resolved), 'extras.zip');
   });
 
+  test("an Xbox game's folder resolves to its disc, not the folder (xemu's -dvd_path needs the file)", () async {
+    final xbox = await Directory(p.join(tmp.path, 'Crash')).create();
+    await File(p.join(xbox.path, 'readme.txt')).writeAsString('x' * 10);
+    await File(p.join(xbox.path, 'Crash.iso')).writeAsString('x' * 100);
+    expect(await launchService.resolveRomFileInDirectory(xbox.path, 'xbox'), p.join(xbox.path, 'Crash.iso'));
+  });
+
+  test('a platform missing from the extension table still gets a file: the largest', () async {
+    final dir = await Directory(p.join(tmp.path, 'Swan')).create();
+    await File(p.join(dir.path, 'notes.txt')).writeAsString('x' * 10);
+    await File(p.join(dir.path, 'game.wsc')).writeAsString('x' * 100);
+    expect(await launchService.resolveRomFileInDirectory(dir.path, 'some-new-platform'), p.join(dir.path, 'game.wsc'));
+  });
+
   test('ScummVM has no extension list, so its archives are extracted after download', () {
     expect(RomConstants.platformExtensions.containsKey('scummvm'), isFalse);
   });

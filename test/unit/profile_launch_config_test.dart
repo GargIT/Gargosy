@@ -113,6 +113,42 @@ void main() {
     expect(toml, contains("hdd_path = '${p.join(c.data, 'xbox_hdd.qcow2')}'"));
   });
 
+  test("xemu: the hard disk in bios\\ is copied into the profile once, and the ROMs come from bios\\", () async {
+    io.Directory(root.bios).createSync(recursive: true);
+    io.File(p.join(root.bios, 'xbox_hdd.qcow2')).writeAsBytesSync([1, 2, 3]);
+    io.File(p.join(root.bios, 'mcpx_1.0.bin')).writeAsBytesSync([4]);
+    io.File(p.join(root.bios, 'Complex_4627.bin')).writeAsBytesSync([5]);
+    final c = ctx('xemu');
+    await ProfileLaunchConfig.of('xemu')!.prepare(c);
+    final hdd = io.File(p.join(c.data, 'xbox_hdd.qcow2'));
+    expect(hdd.readAsBytesSync(), [1, 2, 3]);
+    final toml = io.File(p.join(c.data, 'xemu.toml')).readAsStringSync();
+    expect(toml, contains("bootrom_path = '${p.join(root.bios, 'mcpx_1.0.bin')}'"));
+    expect(toml, contains("flashrom_path = '${p.join(root.bios, 'Complex_4627.bin')}'"));
+
+    // The profile's disk holds its saves: a later launch never replaces it.
+    hdd.writeAsBytesSync([9, 9]);
+    await ProfileLaunchConfig.of('xemu')!.prepare(c);
+    expect(hdd.readAsBytesSync(), [9, 9]);
+    // A real copy, not a link: another profile's disk is its own.
+    expect(io.File(p.join(root.bios, 'xbox_hdd.qcow2')).readAsBytesSync(), [1, 2, 3]);
+  });
+
+  test('xemu: ROM paths the profile set itself stay, unless the file is gone', () async {
+    io.Directory(root.bios).createSync(recursive: true);
+    io.File(p.join(root.bios, 'mcpx_1.0.bin')).writeAsBytesSync([4]);
+    io.File(p.join(root.bios, 'Complex_4627.bin')).writeAsBytesSync([5]);
+    final own = io.File(p.join(root.root, 'my_flash.bin'))..writeAsBytesSync([6]);
+    final c = ctx('xemu');
+    io.Directory(c.data).createSync(recursive: true);
+    io.File(p.join(c.data, 'xemu.toml')).writeAsStringSync(
+        "[sys.files]\nflashrom_path = '${own.path}'\nbootrom_path = '${p.join(root.root, 'gone.bin')}'\n");
+    await ProfileLaunchConfig.of('xemu')!.prepare(c);
+    final toml = io.File(p.join(c.data, 'xemu.toml')).readAsStringSync();
+    expect(toml, contains("flashrom_path = '${own.path}'"));
+    expect(toml, contains("bootrom_path = '${p.join(root.bios, 'mcpx_1.0.bin')}'"));
+  });
+
   test('duckstation: the profile settings are swapped in with folders in the profile, and back after exit', () async {
     final a = ctx('duckstation');
     final cfg = ProfileLaunchConfig.of('duckstation')!;

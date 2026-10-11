@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
@@ -140,6 +141,31 @@ void main() {
       ),
     );
     expect(find.text('in PCSX2 · RomM save, today 21:00'), findsOneWidget);
+  });
+
+  testWidgets('while the ROM is unpacked for the emulator, the line under the button says how far', (tester) async {
+    await open(
+      tester,
+      catalog: SaveCatalog(
+        thisPc: const [],
+        backups: const [],
+        romm: [_g(_romm('burnout.ps2', _day(0, 21)))],
+        rommOffline: false,
+      ),
+    );
+    engine
+      ..readyProgress = 'Unpacking Burnout 3: Takedown… 40 %'
+      ..readyGate = Completer<void>();
+    await tester.tap(find.byKey(const ValueKey('play-start')));
+    // Play finds the ROM and the emulator first (a few async steps).
+    for (var i = 0; i < 20 && find.text('Unpacking Burnout 3: Takedown… 40 %').evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    expect(find.text('Unpacking Burnout 3: Takedown… 40 %'), findsOneWidget);
+    expect(find.text('Starting…'), findsOneWidget);
+    engine.readyGate!.complete();
+    await tester.pumpAndSettle();
+    expect(engine.steps, ['states', 'prepare', 'launch']);
   });
 
   testWidgets('Start plays the chosen save in the chosen emulator', (tester) async {

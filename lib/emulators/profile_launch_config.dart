@@ -271,11 +271,38 @@ class _Xemu extends ProfileLaunchConfig {
     await _ensure(c);
     final toml = io.File(c.guard.check(p.join(c.data, 'xemu.toml')));
     final text = toml.existsSync() ? toml.readAsStringSync() : '';
+    final hdd = p.join(c.data, 'xbox_hdd.qcow2');
+    _seedHdd(c, hdd);
+    final bootrom = _rom(c, text, 'bootrom_path', const ['mcpx_1.0.bin']);
+    final flashrom = _rom(c, text, 'flashrom_path', const ['Complex_4627.bin', 'Complex_4627v1.03.bin', 'Complex.bin']);
     toml.writeAsStringSync(setTomlKeys(text, 'sys.files', {
       'eeprom_path': p.join(c.data, 'eeprom.bin'),
-      'hdd_path': p.join(c.data, 'xbox_hdd.qcow2'),
+      'hdd_path': hdd,
+      'bootrom_path': ?bootrom,
+      'flashrom_path': ?flashrom,
     }));
     return ['-config_path', toml.path];
+  }
+
+  /// Xbox saves live on the hard disk image, so each profile has its own:
+  /// the first launch copies `bios\xbox_hdd.qcow2` (RomM's firmware) in. A
+  /// copy, never a link, and never again once the profile has one.
+  static void _seedHdd(LaunchContext c, String hdd) {
+    final blank = io.File(p.join(c.bios, 'xbox_hdd.qcow2'));
+    if (io.File(hdd).existsSync() || !blank.existsSync()) return;
+    blank.copySync(c.guard.check(hdd));
+  }
+
+  /// A boot or flash ROM from `bios\` for [key], unless the profile's toml
+  /// already names a file that exists; null leaves the key as it is.
+  static String? _rom(LaunchContext c, String text, String key, List<String> names) {
+    final set = getTomlKey(text, 'sys.files', key);
+    if (set != null && set.isNotEmpty && io.File(set).existsSync()) return null;
+    for (final n in names) {
+      final f = p.join(c.bios, n);
+      if (io.File(f).existsSync()) return f;
+    }
+    return null;
   }
 }
 

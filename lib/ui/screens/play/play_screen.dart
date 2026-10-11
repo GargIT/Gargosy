@@ -330,7 +330,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
           ),
           const SizedBox(height: GSpace.s2),
           Text(
-            _whatA(menu, chosen),
+            // While the ROM is readied (a zip unpacked, an Xbox disc
+            // converted), how far it is; else what A does.
+            ref.watch(playControllerProvider.select((s) => s.runningGameId == widget.game.id ? s.preparing : null)) ??
+                _whatA(menu, chosen),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
           ),

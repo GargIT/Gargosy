@@ -24,7 +24,26 @@ class RomFiles {
 
   String platformDir(Game g) => p.join(root.roms, safeName(g.platformSlug ?? 'unknown'));
 
-  String pathFor(Game g) => p.join(platformDir(g), safeName(g.fsName ?? g.fileName ?? g.name));
+  String _plainPath(Game g) => p.join(platformDir(g), safeName(g.fsName ?? g.fileName ?? g.name));
+
+  /// Where a `.zip` game sits once unpacked for an emulator that can't read
+  /// zips (`RomPreparer`): a folder named without `.zip`. Null for other games.
+  String? unpackedDirFor(Game g) {
+    final plain = _plainPath(g);
+    if (p.extension(plain).toLowerCase() != '.zip') return null;
+    return p.join(platformDir(g), safeName(p.basenameWithoutExtension(plain)));
+  }
+
+  /// The game on this PC: its file or folder, or for a zip game that was
+  /// unpacked, that folder. Where a download goes when it's on neither.
+  String pathFor(Game g) {
+    final plain = _plainPath(g);
+    if (io.FileSystemEntity.typeSync(plain) == io.FileSystemEntityType.notFound) {
+      final unpacked = unpackedDirFor(g);
+      if (unpacked != null && io.Directory(unpacked).existsSync()) return unpacked;
+    }
+    return plain;
+  }
 
   bool isDownloaded(Game g) {
     final path = pathFor(g);

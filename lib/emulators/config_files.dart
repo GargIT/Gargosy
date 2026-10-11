@@ -41,3 +41,20 @@ String setTomlKeys(String text, String section, Map<String, String> values) {
   }
   return '${lines.join('\n')}\n';
 }
+
+/// The value of `key = '…'` in one [section] of a TOML file (xemu's), or
+/// null when it isn't there.
+String? getTomlKey(String text, String section, String key) {
+  String? current;
+  for (final raw in text.split(RegExp(r'\r?\n'))) {
+    final line = raw.trim();
+    if (line.startsWith('[')) {
+      current = line;
+      continue;
+    }
+    if (current != '[$section]') continue;
+    final m = RegExp('^${RegExp.escape(key)}' r'''\s*=\s*(['"])(.*)\1\s*$''').firstMatch(line);
+    if (m != null) return m.group(2);
+  }
+  return null;
+}
