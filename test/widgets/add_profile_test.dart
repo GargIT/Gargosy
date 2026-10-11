@@ -160,7 +160,8 @@ void main() {
     await tester.pumpAndSettle();
     h.protector.failProtect = true;
     await tester.tap(find.text('No PIN'));
-    await h.settle(tester);
+    // Creating the profile is file IO; a slow runner needs more rounds.
+    await h.settle(tester, until: find.textContaining('could not be saved'));
     expect(find.textContaining('could not be saved'), findsOneWidget);
     expect(h.container.read(activeProfileProvider), isNull);
     expect(io.Directory(h.root.profiles).listSync(), isEmpty);
