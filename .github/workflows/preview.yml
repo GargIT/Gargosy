@@ -1,0 +1,83 @@
+name: Preview
+
+# A rolling pre-release per milestone: closing an issue of milestone 0.2.0 as
+# completed builds `main` into the pre-release v0.2.0-preview (the previous
+# one is replaced), versioned 0.2.0-preview.<run>. It never becomes "Latest".
+# Run it by hand from the Actions tab with a milestone's title too.
+on:
+  issues:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      milestone:
+        description: Milestone to build a preview for (e.g. 0.2.0)
+        required: true
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  # Issues closed close together: only the newest build finishes.
+  group: preview-${{ github.event.issue.milestone.title || inputs.milestone }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Build and publish the preview
+    # Issues only (a pull request is an issue too), with a milestone, closed as done.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.pull_request == null &&
+       github.event.issue.milestone != null &&
+       github.event.issue.state_reason == 'completed')
+    runs-on: windows-latest
+    env:
+      MILESTONE: ${{ github.event.issue.milestone.title || inputs.milestone }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Version from the milestone
+        shell: pwsh
+        run: |
+          if ($env:MILESTONE -notmatch '^\d+\.\d+\.\d+$') { throw "Milestone '$env:MILESTONE' isn't a version like 0.2.0" }
+          "VERSION=$env:MILESTONE-preview.${{ github.run_number }}" >> $env:GITHUB_ENV
+          "TAG=v$env:MILESTONE-preview" >> $env:GITHUB_ENV
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.2
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: powershell -File tool/build_sigil.ps1
+      - run: flutter test
+      - run: pwsh tool/make_release.ps1 -Version $env:VERSION
+      - name: Release notes
+        shell: pwsh
+        run: |
+          $ms = (gh api "repos/${{ github.repository }}/milestones?state=all" | ConvertFrom-Json) | Where-Object title -eq $env:MILESTONE
+          $done = $ms.closed_issues; $all = $ms.open_issues + $ms.closed_issues
+          $closed = gh issue list --repo ${{ github.repository }} --milestone $env:MILESTONE --state closed --limit 200 --json number,title | ConvertFrom-Json
+          # CHANGELOG.md's [Unreleased] section, up to the next release.
+          $lines = Get-Content CHANGELOG.md
+          $i = [array]::FindIndex([string[]]$lines, [Predicate[string]]{ param($l) $l -match '^## \[Unreleased\]' })
+          $unreleased = if ($i -ge 0) {
+            for ($j = $i + 1; $j -lt $lines.Count; $j++) { if ($lines[$j] -match '^## \[|^\[[^\]]+\]: ') { break }; $lines[$j] }
+          }
+          $notes = @(
+            "A preview of Gargosy $env:MILESTONE, built from ``main`` ($('${{ github.sha }}'.Substring(0, 7))). It replaces the previous preview; for everyday use, take the latest release.",
+            '',
+            "**Milestone $env:MILESTONE**: $done of $all done ($($ms.html_url))",
+            ''
+          ) + ($closed | Sort-Object number | ForEach-Object { "- #$($_.number) $($_.title)" }) + @('', '## Changes so far', '') + $unreleased
+          ($notes -join "`n").Trim() | Set-Content -Encoding utf8 preview_notes.md
+      - name: Replace the preview release
+        shell: pwsh
+        run: |
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -eq 0) { gh release delete $env:TAG --cleanup-tag --yes }
+          $global:LASTEXITCODE = 0
+          gh release create $env:TAG "dist/Gargosy-$env:VERSION.zip" --prerelease --target ${{ github.sha }} --title "Gargosy $env:VERSION (preview)" --notes-file preview_notes.md

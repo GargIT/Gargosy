@@ -5,7 +5,8 @@ name: Release
 # made with the zip and that version's CHANGELOG.md section as its notes.
 on:
   push:
-    tags: ['v*']
+    # Previews (v0.2.0-preview) are preview.yml's.
+    tags: ['v*', '!v*-*']
 
 permissions:
   contents: write

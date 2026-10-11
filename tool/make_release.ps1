@@ -2,17 +2,19 @@
 # with the app, empty roms\ emulators\ bios\ userdata\ folders and the
 # licence files. There is no installer.
 #
-#   pwsh tool/make_release.ps1            # build, then pack
-#   pwsh tool/make_release.ps1 -NoBuild   # pack the last build
-param([switch]$NoBuild)
+#   pwsh tool/make_release.ps1                            # build, then pack
+#   pwsh tool/make_release.ps1 -NoBuild                   # pack the last build
+#   pwsh tool/make_release.ps1 -Version 0.2.0-preview.4   # another version (previews)
+param([switch]$NoBuild, [string]$Version)
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 
-$version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^\s+]+)').Matches[0].Groups[1].Value
+$version = if ($Version) { $Version } else { (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^\s+]+)').Matches[0].Groups[1].Value }
 if (-not $NoBuild) {
-    flutter build windows --release
+    # --build-name puts the version in Gargosy.exe, where About reads it.
+    flutter build windows --release --build-name $version
     if ($LASTEXITCODE -ne 0) { throw 'flutter build failed' }
 }
 

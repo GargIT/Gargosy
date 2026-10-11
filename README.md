@@ -31,7 +31,9 @@ always portable, with a profile per player. Built on code from
 Unpack `Gargosy-<version>.zip` anywhere you can write (a USB stick works too). The folder holds
 everything: the app, `roms\`, `emulators\`, `bios\` and `userdata\`. Nothing goes in AppData.
 Download it from [Releases](https://github.com/GargIT/Gargosy/releases); what changed is in
-`CHANGELOG.md`.
+`CHANGELOG.md`. A *preview* of the next version (e.g. `0.2.0-preview.12`) is there too, marked
+pre-release: it's rebuilt each time an issue of that version's milestone is done. Take it to try
+what's coming; take the latest release for everyday use.
 
 **RomM version.** Gargosy needs RomM 4.8 or newer, and works best with 5.3 or newer (tested on 5.3.1).
 Pairing with a phone needs 5.0; before that you log in with username and password. Before 5.3, RomM
@@ -66,3 +68,8 @@ pwsh tool/make_release.ps1        # dist\Gargosy-<version>.zip
 To release: set the version in `pubspec.yaml`, give its section in `CHANGELOG.md` a date, commit,
 then push a tag `v<version>`. The Release workflow tests, builds the zip and publishes it with that
 section as the notes.
+
+Previews: closing an issue of a milestone (e.g. `0.2.0`) as completed runs the Preview workflow. It
+tests `main`, builds `Gargosy-0.2.0-preview.<run>.zip` and replaces the pre-release `v0.2.0-preview`,
+with the milestone's progress and the `[Unreleased]` changelog as notes. It can also be run by hand
+from the Actions tab.
