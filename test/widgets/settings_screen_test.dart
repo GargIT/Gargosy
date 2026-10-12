@@ -169,8 +169,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('DuckStation').last);
     await tester.pumpAndSettle();
-    await settleIo(tester); // the profile's prefs file is written with real IO
-    expect(c.read(strategyRegistryProvider)!.getPreferredEmulatorId('psx'), 'duckstation');
+    // The choice is kept once the profile's prefs file is written with real IO; give a slow machine time.
+    final registry = c.read(strategyRegistryProvider)!;
+    for (var i = 0; i < 100 && registry.getPreferredEmulatorId('psx') == null; i++) {
+      await settleIo(tester);
+    }
+    expect(registry.getPreferredEmulatorId('psx'), 'duckstation');
     // The field shows the choice once its provider has read it back; give a slow machine time.
     final shown = find.descendant(of: find.byKey(const ValueKey('emulator-for-psx')), matching: find.text('DuckStation'));
     for (var i = 0; i < 100 && shown.evaluate().isEmpty; i++) {
