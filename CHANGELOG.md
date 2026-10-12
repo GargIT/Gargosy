@@ -23,6 +23,13 @@ What changed in each release of Gargosy. The format follows
 - Original Xbox discs in the Redump form are made XISO, which xemu needs: the
   video partition is left out while unpacking, so it takes no extra room.
 
+### Changed
+
+- Settings and the user menu look and work like RomM v2's profile page and
+  user menu: sections in groups (Profile, Library, This PC, Gargosy), settings
+  in cards, and the menu opens Settings on the section you pick. The menu
+  also has the changelog, and Switch profile sits at the bottom.
+
 ### Fixed
 
 - Dolphin can be downloaded again: its download page now turns programs away,
