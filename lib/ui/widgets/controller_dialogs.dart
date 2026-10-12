@@ -60,6 +60,21 @@ Future<bool> showConfirm(BuildContext context,
 }
 
 /// Pick one of [labels]; null when closed with B. [current] has focus.
+/// A message with one button (OK); A or B closes it.
+Future<void> showNotice(BuildContext context, {required String title, required String body, String ok = 'OK'}) =>
+    showDialog<void>(
+      context: context,
+      builder: (c) => _panel(title: title, children: [
+        Text(body, style: const TextStyle(color: GColors.fgSecondary)),
+        const SizedBox(height: GSpace.s5),
+        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+          _dialogButton(ok, () => Navigator.of(c).pop(), autofocus: true, primary: true),
+        ]),
+        const SizedBox(height: GSpace.s3),
+        const HintBar(hints: [Hint(GameAction.confirm, 'OK')]),
+      ]),
+    );
+
 Future<int?> showChoice(BuildContext context, {required String title, required List<String> labels, int? current}) =>
     showDialog<int>(
       context: context,

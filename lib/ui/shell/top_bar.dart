@@ -6,6 +6,7 @@ import '../../profiles/profile_providers.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/profile_badge.dart';
+import '../widgets/update_dot.dart';
 
 /// v2's AppNav: the logo, a centred pill of tabs and the profile badge. The
 /// bar is clear at the top of a page and glass once it scrolls (spec §7).
@@ -72,12 +73,14 @@ class TopBar extends StatelessWidget {
             ]),
           ),
           const Spacer(),
-          ProfileBadge(
-            profile: context_.profile,
-            avatarPath: context_.paths.avatarFile,
-            size: 34,
-            showName: false,
-            onActivate: onMenu,
+          UpdateDot(
+            child: ProfileBadge(
+              profile: context_.profile,
+              avatarPath: context_.paths.avatarFile,
+              size: 34,
+              showName: false,
+              onActivate: onMenu,
+            ),
           ),
         ]),
       ),

@@ -11,8 +11,8 @@ enum UserMenuChoice { switchProfile, settings, emulators, fullscreen, about }
 
 /// The user menu (Start, or the profile badge): the profile's name with
 /// Gargosy's version beside it, then switch profile, settings, emulators,
-/// fullscreen and About.
-Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name}) {
+/// fullscreen and About; [update] ("Update available: 0.2.0") opens About too.
+Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name, String? update}) {
   Widget item(BuildContext c, String label, IconData icon, UserMenuChoice choice, {bool autofocus = false}) => GFocusable(
         autofocus: autofocus,
         borderRadius: GRadius.md,
@@ -57,6 +57,7 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required String name
                 item(c, 'Emulators', Icons.videogame_asset_outlined, UserMenuChoice.emulators),
                 item(c, 'Fullscreen (F11)', Icons.fullscreen, UserMenuChoice.fullscreen),
                 item(c, 'About', Icons.info_outline, UserMenuChoice.about),
+                if (update != null) item(c, update, Icons.system_update_alt, UserMenuChoice.about),
                 const HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Close')]),
               ]),
             ),

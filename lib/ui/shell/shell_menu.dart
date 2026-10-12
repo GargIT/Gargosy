@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
+import '../../providers/update_providers.dart';
 import '../screens/settings/about_section.dart';
 import '../screens/emulators_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -21,7 +22,9 @@ final shellTabProvider = StateProvider<int>((ref) => 0);
 Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
   final ctx = ref.read(activeProfileProvider);
   if (ctx == null) return;
-  final choice = await showUserMenu(context, name: ctx.profile.name);
+  final available = ref.read(updateStateProvider).available;
+  final choice = await showUserMenu(context,
+      name: ctx.profile.name, update: available == null ? null : 'Update available: ${available.release.version}');
   if (!context.mounted) return;
   switch (choice) {
     case UserMenuChoice.switchProfile:
