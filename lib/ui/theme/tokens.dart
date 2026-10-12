@@ -13,6 +13,8 @@ abstract final class GColors {
   static const borderStrong = Color(0x26FFFFFF); // 15 %
   static const focus = Color(0x73FFFFFF);
   static const panel = Color(0xF7100C1C); // rgba(16,12,28,.97)
+  static const card = Color(0x99141024); // a settings card: rgba(20,16,36,.6)
+  static const field = Color(0x128B74E8); // a field's box: primary at 7 %
   static const primary = Color(0xFF8B74E8);
   static const primaryHover = Color(0xFFA18FFF);
   static const primaryPressed = Color(0xFF6043C8);
@@ -20,6 +22,7 @@ abstract final class GColors {
   static const accent = Color(0xFFE1A38D);
   static const fav = Color(0xFFFF4F6B);
   static const danger = Color(0xFFFF5050);
+  static const dangerFill = Color(0xFFD83A3A); // a red button, white text on it
   static const success = Color(0xFF4ADE80);
   static const coverArtBase = Color(0xFF553E98);
   static const coverArtShade = Color(0xFF371F69);

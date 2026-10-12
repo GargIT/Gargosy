@@ -7,6 +7,7 @@ import '../../../emulators/bios_sync.dart';
 import '../../../emulators/emulator_library.dart';
 import '../../../providers/engine_providers.dart';
 import '../../../providers/library_providers.dart';
+import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
 import '../emulators_screen.dart';
@@ -73,39 +74,77 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
         ];
         if (options.length < 2) continue;
         final current = registry.getStrategyForSlug(pl.slug)?.emulatorId;
-        rows.add(SettingsRow(
+        rows.add(SettingsField(
+          key: ValueKey('emulator-for-${pl.slug}'),
           label: pl.nameForDisplay,
           value: installed[current] ?? options.first.name,
+          actionIcon: Icons.expand_more,
           onActivate: () => _choose(pl.slug, pl.nameForDisplay, options, current),
         ));
       }
     }
-    return ListView(children: [
-      const SettingsHeading('Emulators', note: 'Gargosy keeps its own copy of each emulator.'),
-      SettingsRow(
-        label: 'Install, update or remove emulators',
-        onActivate: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EmulatorsScreen())),
-      ),
-      SettingsRow(
-        label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
-        onActivate: _gettingBios ? null : () => _getBios(installed.keys.toSet()),
-      ),
-      const SettingsHeading('Which emulator plays', note: 'For platforms with more than one emulator installed. '
-          'A game can still be played in another one from its play screen.'),
-      if (rows.isEmpty) const SettingsRow(label: 'Only one emulator per platform is installed') else ...rows,
-      const SettingsHeading('Save states on RomM',
-          note: 'Upload save states after playing and bring them down before, like saves. Off by default.'),
+    final stateRows = [
       for (final id in _stateSyncEmulators)
         if (installed.containsKey(id) && prefs != null)
           SettingsToggle(
             key: ValueKey('state-sync-$id'),
-            label: '${installed[id]}: sync save states',
+            label: installed[id]!,
             on: prefs.getBool(StateSyncService.enabledKey(id)) ?? false,
             onChanged: (on) async {
               await prefs.setBool(StateSyncService.enabledKey(id), on);
               if (mounted) setState(() {});
             },
           ),
+    ];
+    return ListView(children: [
+      SettingsCard(
+        title: 'Emulators',
+        icon: Icons.videogame_asset,
+        note: 'Gargosy keeps its own copy of each emulator, in the Gargosy folder.',
+        children: [
+          Wrap(spacing: GSpace.s3, runSpacing: GSpace.s3, children: [
+            SettingsButton(
+              label: 'Install, update or remove',
+              icon: Icons.download_outlined,
+              kind: SettingsButtonKind.primary,
+              onActivate: () =>
+                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EmulatorsScreen())),
+            ),
+            SettingsButton(
+              label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
+              icon: Icons.memory,
+              onActivate: _gettingBios ? null : () => _getBios(installed.keys.toSet()),
+            ),
+          ]),
+        ],
+      ),
+      SettingsCard(
+        title: 'Which emulator plays',
+        icon: Icons.tune,
+        note: 'For platforms with more than one emulator installed. '
+            'A game can still be played in another one from its play screen.',
+        children: [
+          if (rows.isEmpty)
+            const Text('Only one emulator per platform is installed.', style: TextStyle(color: GColors.fgSecondary))
+          else
+            LayoutBuilder(builder: (context, box) {
+              // Two to a row when there's room, as RomM's settings grid.
+              final w = box.maxWidth >= 640 ? (box.maxWidth - GSpace.s4) / 2 : box.maxWidth;
+              return Wrap(spacing: GSpace.s4, runSpacing: GSpace.s4, children: [
+                for (final r in rows) SizedBox(width: w, child: r),
+              ]);
+            }),
+        ],
+      ),
+      SettingsCard(
+        title: 'Save states on RomM',
+        icon: Icons.cloud_upload,
+        rowPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        note: 'Upload save states after playing and bring them down before, like saves. Off by default.',
+        children: stateRows.isEmpty
+            ? const [Text('No emulator that syncs save states is installed.', style: TextStyle(color: GColors.fgSecondary))]
+            : stateRows,
+      ),
     ]);
   }
 }
