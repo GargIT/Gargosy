@@ -37,8 +37,7 @@ void main() {
 
       expect(pull.downloaded, 0);
       expect(push.uploaded, 0);
-      const line = "[StateSync] Ico (SCUS-97113): state sync is off for 'pcsx2': "
-          'switch it on in Settings > Emulators';
+      const line = '[StateSync] Ico (SCUS-97113): state sync is off: switch it on in Settings > Emulator settings';
       expect(logs.where((l) => l == line), hasLength(2), reason: 'one per operation: $logs');
     });
 
@@ -374,8 +373,8 @@ void main() {
     const cases = <(String, String?, String)>[
       ('enabled', null, 'available'),
       ('enabled', 'pcsx2', 'available'),
-      ('disabled', null, "state sync is off for 'pcsx2': switch it on in Settings > Emulators"),
-      ('disabled', 'pcsx2', "state sync is off for 'pcsx2': switch it on in Settings > Emulators"),
+      ('disabled', null, 'state sync is off: switch it on in Settings > Emulator settings'),
+      ('disabled', 'pcsx2', 'state sync is off: switch it on in Settings > Emulator settings'),
       ('incapable', null, "no state-sync support for emulator 'unknown' (strategy none)"),
       ('incapable', 'duckstation', "no state-sync support for emulator 'duckstation' (strategy none)"),
     ];
