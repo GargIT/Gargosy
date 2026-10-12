@@ -26,6 +26,9 @@ class Fullscreen {
     'flycast': (on: ['-config', 'window:fullscreen=yes'], off: ['-config', 'window:fullscreen=no']),
     'mgba': (on: ['-f'], off: []),
     'ares': (on: ['--fullscreen'], off: []),
+    // RPCS3's --fullscreen works only with --no-gui, which also ends RPCS3
+    // with the game (issue #10).
+    'rpcs3': (on: ['--no-gui', '--fullscreen'], off: ['--no-gui']),
   };
 
   static bool supports(String emulatorId) => _flags.containsKey(emulatorId);

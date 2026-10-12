@@ -34,7 +34,7 @@ These rows come from the emulators' documentation and from Freegosy, not from a 
 | eden | settings: a `user\` folder next to the exe makes it portable; per-profile needs the NAND/SDMC keys in `qt-config.ini`, or a data-folder argument if the build has one |
 | azahar | as eden: `user\` folder; per-profile through the SDMC/NAND keys in `qt-config.ini` |
 | melonds | settings: `melonDS.toml` next to the exe; save and state path keys |
-| rpcs3 | settings: `config\vfs.yml`, key `$(EmulatorDir)dev_hdd0/` pointing under `<data>` |
+| rpcs3 | **environment** (#10, built, not probed): `RPCS3_CONFIG_DIR=<data>\` (`Utilities/File.cpp` `fs::get_config_dir`; a `portable\` beside the exe would win, so it's renamed `.gargosy-off`). `$(EmulatorDir)` is then `<data>`: `config.yml`, `vfs.yml`, `dev_hdd0` (saves, licences, updates, DLC), `dev_flash2/3` per profile. `vfs.yml`'s `/dev_flash/` → the shared `emulators\rpcs3\dev_flash\`: the firmware is installed once (`rpcs3.exe --installfw <bios\…\PS3UPDAT.PUP>`, Settings → Emulators). Full screen `--no-gui --fullscreen` (`--fullscreen` needs `--no-gui`, `rpcs3/rpcs3.cpp`); windowed `--no-gui` |
 | scummvm | arg: `--config="<data>\scummvm.ini" --savepath="<data>\saves"` |
 
 ## Not supported in v1

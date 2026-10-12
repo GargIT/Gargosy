@@ -8,6 +8,11 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- RPCS3 (PS3) plays on each profile's own data and saves, through
+  `RPCS3_CONFIG_DIR`. The firmware is shared: Settings → Emulators installs
+  RomM's `PS3UPDAT.PUP` once for every profile (#10). Updates and DLC are
+  per profile.
+
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.
 - A reader for those documents — what's new, read me, licences, security

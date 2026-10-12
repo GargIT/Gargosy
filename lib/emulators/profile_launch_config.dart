@@ -8,6 +8,7 @@ import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
+import 'rpcs3_config.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
 /// emulator's install folder and the shared BIOS folder.
@@ -71,6 +72,10 @@ abstract class ProfileLaunchConfig {
   /// After the emulator exits.
   Future<void> finish(LaunchContext c) async {}
 
+  /// Environment variables the emulator is started with, added to
+  /// Gargosy's own (RPCS3: `RPCS3_CONFIG_DIR`, issue #10).
+  Map<String, String> environment(LaunchContext c) => const {};
+
   /// Rewrites the folder paths in the profile's stored settings to where
   /// they are now (the Gargosy folder may have moved), without starting
   /// anything. Runs before the save pull, so the save code reads this
@@ -113,6 +118,7 @@ abstract class ProfileLaunchConfig {
           '-C', 'savegamePath=${p.join(c.data, 'saves')}',
           '-C', 'savestatePath=${p.join(c.data, 'states')}',
         ]),
+    'rpcs3': const Rpcs3Config(),
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
           'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'

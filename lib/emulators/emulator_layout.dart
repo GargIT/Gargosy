@@ -67,7 +67,9 @@ class EmulatorLayout {
     'eden': EmulatorLayout('eden', saveView: '_view'),
     'azahar': EmulatorLayout('azahar', saveView: '_view'),
     'melonds': EmulatorLayout('melonds', saveView: '_view'),
-    'rpcs3': EmulatorLayout('rpcs3', saveView: '_view'),
+    // RPCS3_CONFIG_DIR=<data> (issue #10): $(EmulatorDir) is <data>, so the
+    // save code's <install>\dev_hdd0 is the profile's.
+    'rpcs3': EmulatorLayout('rpcs3', seed: ['dev_hdd0/home/00000001/savedata']),
     'ryujinx': EmulatorLayout('ryujinx', saveView: '_view'),
   };
 

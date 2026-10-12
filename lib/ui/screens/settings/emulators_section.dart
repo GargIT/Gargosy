@@ -5,6 +5,7 @@ import '../../../core/emulator/platform_slugs.dart';
 import '../../../core/save/state_sync_service.dart';
 import '../../../emulators/bios_sync.dart';
 import '../../../emulators/emulator_library.dart';
+import '../../../emulators/ps3_firmware.dart';
 import '../../../providers/engine_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../widgets/controller_dialogs.dart';
@@ -27,6 +28,24 @@ class EmulatorsSection extends ConsumerStatefulWidget {
 
 class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
   bool _gettingBios = false;
+  bool _installingFirmware = false;
+
+  /// RPCS3's firmware from bios\, installed once for every profile (issue #10).
+  Future<void> _installPs3Firmware(String exe) async {
+    final firmware = ref.read(ps3FirmwareProvider);
+    if (firmware == null || _installingFirmware) return;
+    setState(() => _installingFirmware = true);
+    try {
+      await firmware.install(exe);
+      if (mounted) showToast(context, 'The PS3 firmware is installed, for every profile.');
+    } on Ps3FirmwareException catch (e) {
+      if (mounted) showToast(context, e.message);
+    } on Object catch (e) {
+      if (mounted) showToast(context, "Couldn't install the PS3 firmware: $e");
+    } finally {
+      if (mounted) setState(() => _installingFirmware = false);
+    }
+  }
 
   Future<void> _getBios(Set<String> installed) async {
     final bios = ref.read(biosSyncProvider);
@@ -59,10 +78,13 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
   Widget build(BuildContext context) {
     final registry = ref.watch(strategyRegistryProvider);
     final prefs = ref.watch(profilePrefsProvider);
+    final emulators = ref.watch(emulatorsProvider).valueOrNull ?? const <EmulatorInfo>[];
     final installed = {
-      for (final e in ref.watch(emulatorsProvider).valueOrNull ?? const <EmulatorInfo>[])
+      for (final e in emulators)
         if (e.supported && e.installedExe != null) e.id: e.name,
     };
+    final rpcs3Exe = emulators.where((e) => e.id == 'rpcs3' && e.supported).firstOrNull?.installedExe;
+    final ps3Firmware = ref.watch(ps3FirmwareProvider);
     final platforms = ref.watch(platformsProvider).valueOrNull ?? const [];
     final rows = <Widget>[];
     if (registry != null) {
@@ -90,6 +112,13 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
         label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
         onActivate: _gettingBios ? null : () => _getBios(installed.keys.toSet()),
       ),
+      if (rpcs3Exe != null && ps3Firmware != null)
+        SettingsRow(
+          key: const Key('ps3-firmware'),
+          label: _installingFirmware ? 'Installing the PS3 firmware…' : 'Install PS3 firmware from bios\\',
+          value: ps3Firmware.installed ? 'Installed' : 'Not installed',
+          onActivate: _installingFirmware ? null : () => _installPs3Firmware(rpcs3Exe),
+        ),
       const SettingsHeading('Which emulator plays', note: 'For platforms with more than one emulator installed. '
           'A game can still be played in another one from its play screen.'),
       if (rows.isEmpty) const SettingsRow(label: 'Only one emulator per platform is installed') else ...rows,
