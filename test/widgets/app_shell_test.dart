@@ -14,10 +14,12 @@ import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/engine_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
+import 'package:gargosy/ui/screens/doc_reader_screen.dart';
 import 'package:gargosy/ui/screens/settings/about_section.dart';
 import 'package:gargosy/ui/screens/settings/settings_screen.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
+import 'package:gargosy/ui/shell/user_menu.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 
@@ -148,10 +150,11 @@ void main() {
     expect(find.byKey(const Key('top-bar-glass')), findsNothing);
   });
 
-  testWidgets('the user menu opens the emulators screen', (tester) async {
+  testWidgets('the user menu has Emulators and Emulator settings', (tester) async {
     await pump(tester);
     await send(tester, GameAction.start);
     expect(find.text('Emulators'), findsOneWidget);
+    expect(find.text('Emulator settings'), findsOneWidget);
   });
 
   testWidgets('switching profile during a game is refused', (tester) async {
@@ -197,20 +200,75 @@ void main() {
     expect(find.textContaining('1 save that was waiting'), findsOneWidget);
   });
 
-  testWidgets('Start → Settings opens the settings', (tester) async {
+  testWidgets('the menu opens with focus on Profile; A opens Settings on Profile', (tester) async {
     await pump(tester);
     await send(tester, GameAction.start);
-    await tester.tap(find.text('Settings'));
-    await tester.pumpAndSettle();
-    expect(find.byType(SettingsScreen), findsOneWidget);
+    await send(tester, GameAction.confirm);
+    expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).initial, SettingsPage.profile);
   });
 
-  testWidgets('Start → About opens the About dialog', (tester) async {
+  testWidgets('the menu has one item per Settings section, and each opens that section', (tester) async {
+    await pump(tester);
+    for (final page in SettingsPage.values) {
+      await send(tester, GameAction.start);
+      final item = find.byKey(ValueKey('user-menu-${page.name}'));
+      expect(item, findsOneWidget, reason: page.name);
+      expect(find.descendant(of: item, matching: find.text(page.label)), findsOneWidget, reason: page.name);
+      await tester.tap(item);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).initial, page, reason: page.name);
+      await send(tester, GameAction.back);
+      expect(find.byType(SettingsScreen), findsNothing, reason: page.name);
+    }
+  });
+
+  testWidgets('Start → About opens About in Settings', (tester) async {
     await pump(tester);
     await send(tester, GameAction.start);
     await tester.tap(find.text('About'));
     await tester.pumpAndSettle();
     expect(find.byType(AboutSection), findsOneWidget);
+  });
+
+  testWidgets('Changelog opens CHANGELOG.md in the reader', (tester) async {
+    await pump(tester);
+    await send(tester, GameAction.start);
+    await tester.tap(find.text('Changelog'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DocReaderScreen), findsOneWidget);
+  });
+
+  testWidgets('Switch profile is the last item, below the groups', (tester) async {
+    await pump(tester);
+    await send(tester, GameAction.start);
+    final last = tester.getRect(find.byKey(const ValueKey('user-menu-switchProfile')));
+    final others = [
+      for (final page in SettingsPage.values) page.name,
+      for (final a in UserMenuAction.values)
+        if (a != UserMenuAction.switchProfile) a.name,
+    ];
+    for (final name in others) {
+      expect(tester.getRect(find.byKey(ValueKey('user-menu-$name'))).bottom, lessThanOrEqualTo(last.top), reason: name);
+    }
+  });
+
+  testWidgets('the menu fits at 1280×720 and scrolls when the window is shorter', (tester) async {
+    await pump(tester);
+    tester.view.physicalSize = const Size(1280, 720);
+    await tester.pumpAndSettle();
+    await send(tester, GameAction.start);
+    expect(tester.getRect(find.byKey(const ValueKey('user-menu-switchProfile'))).bottom, lessThanOrEqualTo(720));
+    await send(tester, GameAction.back);
+    tester.view.physicalSize = const Size(1280, 480);
+    await tester.pumpAndSettle();
+    await send(tester, GameAction.start);
+    final item = find.byKey(const ValueKey('user-menu-switchProfile'));
+    expect(tester.getRect(item).top, greaterThan(480), reason: 'below the fold at first');
+    await tester.ensureVisible(item);
+    await tester.pumpAndSettle();
+    await tester.tap(item);
+    await tester.pumpAndSettle();
+    expect(c.read(activeProfileProvider), isNull);
   });
 
   testWidgets('switching profile waits for a running sync, saying what it waits for', (tester) async {
