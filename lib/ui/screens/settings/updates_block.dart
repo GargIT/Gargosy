@@ -39,14 +39,22 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
     final installer = ref.watch(updateInstallerProvider);
 
     return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SettingsHeading('Updates',
-          note: 'Latest: releases only. Preview: the next version while it is being made.'),
+      const Padding(
+        padding: EdgeInsets.fromLTRB(GSpace.s2, GSpace.s4, GSpace.s2, GSpace.s1),
+        child: Text('UPDATES',
+            style: TextStyle(fontSize: GFont.xs, fontWeight: FontWeight.w700, letterSpacing: 1, color: GColors.fgSecondary)),
+      ),
+      const Padding(
+        padding: EdgeInsets.fromLTRB(GSpace.s2, 0, GSpace.s2, GSpace.s2),
+        child: Text('Latest: releases only. Preview: the next version while it is being made.',
+            style: TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary)),
+      ),
       Padding(
         padding: const EdgeInsets.only(bottom: GSpace.s2),
         child: Row(children: [
           const Padding(
-            padding: EdgeInsets.only(left: GSpace.s4),
-            child: Text('Channel', style: TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600)),
+            padding: EdgeInsets.only(left: GSpace.s2),
+            child: Text('Channel', style: TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600)),
           ),
           const Spacer(),
           SizedBox(
@@ -65,35 +73,44 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
         on: checker.autoCheck,
         onChanged: (on) => ref.read(updateStateProvider.notifier).setAutoCheck(on),
       ),
-      SettingsRow(
+      SettingsLinkRow(
+        icon: Icons.refresh,
         label: 'Check now',
         value: state.checking ? 'Checking…' : null,
-        onActivate: state.checking ? null : () => ref.read(updateStateProvider.notifier).checkNow(),
+        onActivate: () {
+          if (!state.checking) ref.read(updateStateProvider.notifier).checkNow();
+        },
       ),
       Padding(
-        padding: const EdgeInsets.fromLTRB(GSpace.s4, GSpace.s1, GSpace.s4, GSpace.s3),
+        padding: const EdgeInsets.fromLTRB(GSpace.s2, GSpace.s1, GSpace.s2, GSpace.s3),
         child: Text(_status(state.result, installed.toString(), channel),
             key: const Key('update-status'), style: const TextStyle(color: GColors.fgSecondary)),
       ),
       if (available != null) ...[
         if (installer.canInstall)
-          SettingsRow(
+          SettingsLinkRow(
             key: const Key('update-now'),
+            icon: Icons.system_update_alt,
             label: 'Update now',
             value: 'v${available.version}',
             onActivate: () => runUpdate(context, ref, available),
           )
         else ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(GSpace.s4, 0, GSpace.s4, GSpace.s2),
+            padding: const EdgeInsets.fromLTRB(GSpace.s2, 0, GSpace.s2, GSpace.s2),
             child: Text(installer.whyNot ?? '', style: const TextStyle(color: GColors.fgMuted)),
           ),
-          SettingsRow(
+          SettingsLinkRow(
+            icon: Icons.open_in_new,
             label: 'Open the release page',
             onActivate: () => ref.read(externalOpenerProvider)(available.htmlUrl),
           ),
         ],
-        SettingsRow(label: "What's in ${available.version}", onActivate: () => openReleaseNotes(context, ref, available)),
+        SettingsLinkRow(
+          icon: Icons.notes,
+          label: "What's in ${available.version}",
+          onActivate: () => openReleaseNotes(context, ref, available),
+        ),
       ],
     ]);
   }

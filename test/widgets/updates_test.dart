@@ -13,12 +13,15 @@ import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/profiles/app_root.dart';
+import 'package:gargosy/profiles/profile.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/about_providers.dart';
 import 'package:gargosy/providers/update_providers.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/screens/settings/about_section.dart';
+import 'package:gargosy/ui/screens/settings/settings_pages.dart';
 import 'package:gargosy/ui/screens/settings/updates_block.dart';
+import 'package:gargosy/ui/shell/user_menu.dart';
 import 'package:gargosy/ui/widgets/update_dot.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/update/update_checker.dart';
@@ -269,5 +272,33 @@ void main() {
     await tester.runAsync(() => c.read(updateStateProvider.notifier).checkNow());
     await tester.pump();
     expect(find.byKey(const Key('update-dot')), findsOneWidget);
+  });
+
+  testWidgets("the user menu's Update available opens About", (tester) async {
+    final profile = Profile(
+        id: 'p1',
+        name: 'Ann',
+        colorIndex: 0,
+        serverUrl: 'https://romm.local',
+        rommUserId: 1,
+        rommUsername: 'ann',
+        createdAt: DateTime(2026));
+    UserMenuChoice? picked;
+    await tester.pumpWidget(ProviderScope(
+      child: MaterialApp(
+        theme: gargosyTheme(),
+        home: Builder(
+            builder: (context) => TextButton(
+                onPressed: () async =>
+                    picked = await showUserMenu(context, profile: profile, update: 'Update available: 0.2.0'),
+                child: const Text('open'))),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Update available: 0.2.0'));
+    await tester.tap(find.text('Update available: 0.2.0'));
+    await tester.pumpAndSettle();
+    expect(picked, const UserMenuChoice.settings(SettingsPage.about));
   });
 }

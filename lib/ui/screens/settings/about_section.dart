@@ -55,7 +55,8 @@ class AboutSection extends ConsumerWidget {
     final rommText =
         romm.when(data: (v) => v == null ? 'not reachable' : 'v$v', loading: () => '…', error: (_, _) => 'not reachable');
 
-    Widget doc(String label, String name, {bool focus = false}) => SettingsRow(
+    Widget doc(IconData icon, String label, String name, {bool focus = false}) => SettingsLinkRow(
+          icon: icon,
           label: label,
           value: name,
           autofocus: focus,
@@ -85,15 +86,17 @@ class AboutSection extends ConsumerWidget {
           ),
         ]),
       ),
-      doc("What's new", 'CHANGELOG.md', focus: autofocus),
-      doc('Read me', 'README.md'),
-      doc('Licences', 'NOTICE.md'),
-      doc('Security policy', 'SECURITY.md'),
-      SettingsRow(
+      doc(Icons.history, "What's new", 'CHANGELOG.md', focus: autofocus),
+      doc(Icons.description_outlined, 'Read me', 'README.md'),
+      doc(Icons.verified_outlined, 'Licences', 'NOTICE.md'),
+      doc(Icons.lock_outline, 'Security policy', 'SECURITY.md'),
+      SettingsLinkRow(
+        icon: Icons.inventory_2_outlined,
         label: 'Dart and Flutter packages',
         onActivate: () => showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$version'),
       ),
-      SettingsRow(
+      SettingsLinkRow(
+        icon: Icons.open_in_new,
         label: 'GitHub',
         value: gargosyRepoUrl.replaceFirst('https://', ''),
         onActivate: () => ref.read(externalOpenerProvider)(gargosyRepoUrl),
