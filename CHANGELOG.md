@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Ryujinx (Switch) plays on each profile's own data (`-r`), with the keys
+  from RomM's firmware in place, and downloads again: from Ryubing, which
+  carries Ryujinx on since its GitHub went away (#9).
+
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.
 - A reader for those documents — what's new, read me, licences, security

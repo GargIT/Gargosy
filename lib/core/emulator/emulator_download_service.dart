@@ -48,8 +48,19 @@ class EmulatorDownloadService {
     final repo = definition['github_repo_$os'] as String? ??
         definition['github_repo'] as String? ??
         definition['gitea_repo'] as String? ??
+        definition['gitlab_repo'] as String? ??
         '';
     final type = typeFor(definition, _platform, fallback: 'github');
+    // Gargosy: GitLab (Ryujinx's Ryubing).
+    if (type == 'gitlab') {
+      return _releaseService.getLatestReleaseAssets(
+        platform: ReleasePlatform.gitlab,
+        repo: repo,
+        requiredFilters: List<String>.from(definition['gitlab_asset_required_$os'] ?? const []),
+        excludedFilters: {...List<String>.from(definition['gitlab_asset_excluded'] ?? const []), 'symbols'}.toList(),
+        baseUrl: 'https://${definition['gitlab_host']}',
+      );
+    }
     final platform = type == 'github' || type == 'github_multi' ? ReleasePlatform.github : (type == 'dolphin' ? ReleasePlatform.dolphin : ReleasePlatform.gitea);
     
     String requiredKey;
@@ -305,6 +316,17 @@ class EmulatorDownloadService {
 
       if (assets.isEmpty) {
         yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on Gitea');
+        return;
+      } else if (assets.length > 1) {
+        yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'selection_required');
+        return;
+      }
+      downloadUrl = assets.first['url'];
+    } else if (downloadUrl == null && type == 'gitlab') {
+      // Gargosy: GitLab releases (Ryujinx's Ryubing, issue #9).
+      final assets = await getLatestAssetsForEmulator(emulatorId);
+      if (assets.isEmpty) {
+        yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on GitLab');
         return;
       } else if (assets.length > 1) {
         yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'selection_required');

@@ -29,7 +29,7 @@ These rows come from the emulators' documentation and from Freegosy, not from a 
 
 | emulatorId | Expected mechanism (to verify) |
 |---|---|
-| ryujinx | arg: `--root-data-dir "<data>"` (`-r`) |
+| ryujinx | **arg** (#9, built, not probed): `-r "<data>"` (Ryubing's `CommandLineState.cs`; without it, `portable\` next to the exe, else `%APPDATA%\Ryujinx`). `prod.keys`/`title.keys` from `bios\` into `<data>\system\`. Full screen `--fullscreen`. Downloaded from Ryubing's GitLab (`git.ryujinx.app`, `ryubing/ryujinx`, stable `win_x64.zip`): GitHub's `Ryujinx/Ryujinx` is gone. Firmware per profile for now |
 | cemu | arg: `-mlc "<data>\mlc01"` for saves; settings (`settings.xml`) likely stay next to the exe |
 | eden | settings: a `user\` folder next to the exe makes it portable; per-profile needs the NAND/SDMC keys in `qt-config.ini`, or a data-folder argument if the build has one |
 | azahar | as eden: `user\` folder; per-profile through the SDMC/NAND keys in `qt-config.ini` |

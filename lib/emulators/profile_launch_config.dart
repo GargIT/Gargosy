@@ -113,6 +113,9 @@ abstract class ProfileLaunchConfig {
           '-C', 'savegamePath=${p.join(c.data, 'saves')}',
           '-C', 'savestatePath=${p.join(c.data, 'states')}',
         ]),
+    // Ryujinx (Switch, issue #9): its whole data folder by argument (Ryubing's
+    // CommandLineState: -r / --root-data-dir), and the keys from bios\.
+    'ryujinx': _Args((c) => ['-r', c.data], before: (c) async => _ryujinxKeys(c)),
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
           'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'
@@ -316,6 +319,15 @@ class _Ppsspp extends ProfileLaunchConfig {
     if (memstick.existsSync()) memstick.renameSync(c.guard.check('${memstick.path}.gargosy-off'));
     io.File(c.guard.check(p.join(c.exeDir, 'installed.txt'))).writeAsStringSync(c.data);
     return const [];
+  }
+}
+
+/// Ryujinx's keys (RomM's firmware in `bios\`) into the profile's
+/// `system\`, where it reads them; a game can't start without prod.keys.
+void _ryujinxKeys(LaunchContext c) {
+  for (final name in const ['prod.keys', 'title.keys']) {
+    final file = findBiosFile(c.bios, [name]);
+    if (file != null) placeSharedFile(file, p.join(c.data, 'system', name), c.guard);
   }
 }
 

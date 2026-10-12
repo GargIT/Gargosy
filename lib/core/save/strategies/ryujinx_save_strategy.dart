@@ -14,8 +14,12 @@ class RyujinxSaveStrategy extends SaveStrategy {
   final PlatformInfo _platform;
   final Future<void> Function(String gameId, String titleId)? onMappingResolved;
 
-  RyujinxSaveStrategy({this.onMappingResolved, PlatformInfo? platform})
+  RyujinxSaveStrategy({this.onMappingResolved, PlatformInfo? platform, this.profileRoot})
       : _platform = platform ?? PlatformInfo.current;
+
+  /// Gargosy: the profile's Ryujinx folder (started with `-r` on it, issue
+  /// #9); null outside a profile, where %APPDATA%\Ryujinx is looked at.
+  final Future<String> Function()? profileRoot;
 
   @override
   String get strategyId => 'switch_ryujinx';
@@ -239,7 +243,9 @@ class RyujinxSaveStrategy extends SaveStrategy {
 
   Future<String> _getRyujinxSaveBase({String? platformSlug}) async {
     final String resolvedPath;
-    if (_platform.isMacOS) {
+    if (profileRoot != null) {
+      resolvedPath = await profileRoot!();
+    } else if (_platform.isMacOS) {
       final home = _platform.environment['HOME'] ?? '';
       resolvedPath = p.join(home, 'Library', 'Application Support', 'Ryujinx');
     } else if (_platform.isLinux) {

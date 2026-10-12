@@ -34,8 +34,9 @@ void main() {
 
   test('only the probed emulators are supported in v1', () {
     expect(ProfileLaunchConfig.supported,
-        {'dolphin', 'pcsx2', 'retroarch', 'mame', 'xenia_canary', 'ares', 'xemu', 'ppsspp', 'duckstation', 'mgba', 'flycast'});
-    expect(ProfileLaunchConfig.of('ryujinx'), isNull);
+        {'dolphin', 'pcsx2', 'retroarch', 'mame', 'xenia_canary', 'ares', 'xemu', 'ppsspp', 'duckstation', 'mgba', 'flycast',
+         'ryujinx'}); // -r (issue #9)
+    expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });
 
   test('dolphin, xenia, ares and mame get their data-folder arguments', () async {
@@ -247,7 +248,7 @@ void main() {
 
   test('an emulator Gargosy can\'t point at a profile is refused', () async {
     final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
-    expect(() => dirs.launchGameWithHandle(game(1, 'G'), 'x', 'ryujinx', r'C:\x\Ryujinx.exe'),
+    expect(() => dirs.launchGameWithHandle(game(1, 'G'), 'x', 'not_an_emulator', r'C:\x\x.exe'),
         throwsA(isA<UnsupportedEmulatorException>()));
   });
 
