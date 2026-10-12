@@ -4,7 +4,7 @@ Closes #
 <!-- What a user or a reviewer will notice, by area. -->
 
 ## Not in this PR
-<!-- What was left out on purpose, and where it goes instead. Delete if nothing. -->
+<!-- What was left out on purpose, and where it goes instead. Write "Nothing." if nothing was. -->
 
 ## Tests
 <!-- New or changed tests, and what they pin down. -->
