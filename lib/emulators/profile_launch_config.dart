@@ -237,6 +237,10 @@ class _RetroArch extends ProfileLaunchConfig {
     final text = cfg.existsSync() ? cfg.readAsStringSync() : '';
     cfg.writeAsStringSync(setRetroArchKeys(text, {
       'savefile_directory': p.join(c.data, 'saves'),
+      // Saves flat in saves\, never in a core or content subfolder: sigil's
+      // save root (issue #7) and the old strategy both read them there.
+      'sort_savefiles_enable': 'false',
+      'sort_savefiles_by_content_enable': 'false',
       'savestate_directory': p.join(c.data, 'states'),
       'system_directory': systemDir(c),
       if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,

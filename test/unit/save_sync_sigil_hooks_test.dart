@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/save_sync_service.dart';
+import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:mockito/mockito.dart';
 import 'package:path/path.dart' as p;
@@ -48,6 +49,16 @@ class _UnitStrategy extends SaveStrategy {
     chosen.add(SaveStrategy.isChosenRestore);
     return true;
   }
+}
+
+/// sigil's wrapper around RetroArch's strategy, as far as the service sees it.
+class _Wrapper extends _UnitStrategy {
+  _Wrapper(super.unit, this.base);
+  final SaveStrategy base;
+  @override
+  SaveStrategy? get wrapped => base;
+  @override
+  String get strategyId => 'retroarch';
 }
 
 void main() {
@@ -94,7 +105,11 @@ void main() {
       dirs,
       registry,
       prefs,
-      wrapSaves: (emulatorId, base) => emulatorId == 'mgba' ? unit : base,
+      wrapSaves: (emulatorId, base) => switch (emulatorId) {
+        'mgba' => unit,
+        'retroarch' => _Wrapper(unit.unit, base!),
+        _ => base,
+      },
     );
   });
   tearDown(() => tmp.deleteSync(recursive: true));
@@ -179,5 +194,39 @@ void main() {
     expect(unit.restored.single.$1, 'Tetris (World).srm');
     expect(unit.restored.single.$2, bytes);
     expect(unit.chosen, [true], reason: 'a restore picked on the play screen may replace a local change');
+  });
+
+  group('RetroArch through sigil (issue #7)', () {
+    final psx = Game(id: '42', name: 'FF7', platformSlug: 'psx', fileSize: 0);
+
+    test("the launch's core reaches RetroArch's own strategy under the wrapper", () async {
+      final core = await service.withStrategy(
+        psx,
+        (s) async => (s.unwrapped as RetroArchSaveStrategy).coreIdFor(psx),
+        emulatorId: 'retroarch',
+        coreOverride: 'swanstation_libretro',
+      );
+      expect(core, 'swanstation');
+    });
+
+    test("an upload is tagged with the game's core, as RomM's player names it, and goes to autosave", () async {
+      answerUpload(true);
+      await service.pushSaves(psx, p.join(tmp.path, 'FF7.chd'), emulatorId: 'retroarch', coreOverride: 'pcsx_rearmed_libretro');
+      final captured = verify(
+        romm.uploadSave(
+          '42',
+          any,
+          emulator: captureAnyNamed('emulator'),
+          slot: captureAnyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).captured;
+      expect(captured, ['pcsx_rearmed', 'autosave']);
+    });
   });
 }

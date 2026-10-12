@@ -96,6 +96,18 @@ void main() {
     expect(RegExp('^savefile_directory', multiLine: true).allMatches(again).length, 1);
   });
 
+  test("retroarch: saves stay flat in saves\\ (sigil's save root): sorting by core or content is put back off", () async {
+    final c = ctx('retroarch');
+    io.Directory(c.data).createSync(recursive: true);
+    io.File(p.join(c.data, 'retroarch.cfg'))
+        .writeAsStringSync('sort_savefiles_enable = "true"\nsort_savefiles_by_content_enable = "true"\n');
+    await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+    final cfg = io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync();
+    expect(cfg, contains('sort_savefiles_enable = "false"'));
+    expect(cfg, contains('sort_savefiles_by_content_enable = "false"'));
+    expect(RegExp(r'^sort_savefiles\w* = "true"', multiLine: true).hasMatch(cfg), isFalse);
+  });
+
   test('ppsspp: installed.txt points at the profile; a portable memstick is moved aside', () async {
     final c = ctx('ppsspp');
     io.Directory(p.join(c.exeDir, 'memstick', 'PSP')).createSync(recursive: true);

@@ -37,6 +37,20 @@ These rows come from the emulators' documentation and from Freegosy, not from a 
 | rpcs3 | settings: `config\vfs.yml`, key `$(EmulatorDir)dev_hdd0/` pointing under `<data>` |
 | scummvm | arg: `--config="<data>\scummvm.ini" --savepath="<data>\saves"` |
 
+## RetroArch saves through sigil (issue #7)
+
+Checked on 2026-10-12 against argosy-sigil v1.0.0 (`third_party/argosy-sigil`), built for the tests and called the way Gargosy calls it (`test/unit/sigil_retroarch_test.dart`, real save files, no emulator run). The layout is the game's core without `_libretro`.
+
+| System | Cores tried | Unit (what goes to RomM) | Restore writes | Result |
+|---|---|---|---|---|
+| Game Boy | `gambatte`, `sameboy`, `mgba`, a core sigil has no row for | `<stem>.srm`, raw | `<stem>.srm` | pass. An RZIP save (`save_file_compression`) gives the same raw unit and hash; restore writes it plain. A zip ROM (`x.zip#Tetris (World).gb`) saves under the member's name |
+| Game Boy Color, cart with a clock | `gambatte` | `<stem>.zip` with `save.sram` and `clock.rtc` (sigil's own form) | `<stem>.srm` and `<stem>.rtc` | pass. The clock is read from the ROM's header, so it needs the ROM file |
+| N64 | `mupen64plus_next` | `<stem>.zip` with `eeprom`, `pak1`–`pak4`, `sram`, `flash` | `<stem>.srm`, byte for byte | pass |
+| PS1 | `pcsx_rearmed` | the game's card `<stem>.srm` | `<stem>.srm` | pass |
+| PS2 (LRPS2) | `pcsx2`, root `system\pcsx2\memcards` | an 8 MB card with only this game's saves | shared `Mcd001.ps2`: this game's saves replaced, the other games' left; `pcsx2_shared_memory_cards=disabled`: `<stem>.ps2` | pass, on cards made by Gargosy's card writer, **not yet on a card LRPS2 made** |
+| SNES, GBA, Genesis, NES, NDS, arcade | `snes9x`, `mgba`, `genesis_plus_gx`, `fceumm`, `melonds`, `fbneo` | — | — | sigil's sync refuses them (`unsupported format`): RetroArch's own strategy keeps them |
+| Saturn, Sega CD, Dreamcast | — | — | — | not checked (needs real volumes): RetroArch's own strategy keeps them for now |
+
 ## Not supported in v1
 
 None so far. Every installed emulator passed with one of the two mechanisms.

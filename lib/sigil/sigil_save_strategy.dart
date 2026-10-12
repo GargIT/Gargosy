@@ -9,6 +9,7 @@ import '../core/romm/romm_models.dart';
 import '../core/save/save_state_info.dart';
 import '../core/save/save_strategy.dart';
 import '../core/save/state_sync_capable.dart';
+import '../core/save/strategies/retroarch_save_strategy.dart';
 import '../core/storage/ini_file.dart';
 import '../emulators/pcsx2_folder_card.dart';
 import 'rom_game_ids.dart';
@@ -25,6 +26,8 @@ class SigilEmulator {
     required this.platforms,
     this.options = _none,
     this.beforeRestore,
+    this.layoutFor,
+    this.saveRootFor,
   });
 
   final String id;
@@ -34,6 +37,15 @@ class SigilEmulator {
 
   /// The save root inside the profile's folder for the emulator.
   final String saveRoot;
+
+  /// The layout for [game] when it depends on the game (RetroArch: the
+  /// core it runs with, from [base]); null means sigil doesn't sync it and
+  /// [base] keeps it. Unset: [layout] for every game.
+  final String? Function(Game game, SaveStrategy? base)? layoutFor;
+
+  /// The save root for a game's [layout], when it isn't [saveRoot]
+  /// (RetroArch's LRPS2 keeps its cards in `system\pcsx2\memcards`).
+  final String Function(String layout)? saveRootFor;
 
   /// RomM's platform slugs it syncs → sigil's.
   final Map<String, String> platforms;
@@ -105,6 +117,26 @@ final sigilEmulators = <String, SigilEmulator>{
     platforms: const {'dc': 'dreamcast', 'dreamcast': 'dreamcast'},
     options: (dir) => _ini(p.join(dir, 'emu.cfg'), 'config', const ['PerGameVmu']),
   ),
+  // RetroArch (issue #7): the layout is the game's core without `_libretro`
+  // (sigil's rows are named so; a core with no row takes the libretro
+  // default, `{stem}.srm`). Only the systems sigil collects and restores
+  // for, and that were checked on real files (test/unit/sigil_retroarch_test):
+  // SNES, GBA, Genesis, NES, NDS and arcade are refused by sigil's sync and
+  // stay with RetroArchSaveStrategy.
+  'retroarch': SigilEmulator(
+    id: 'retroarch',
+    layout: '',
+    saveRoot: 'saves',
+    platforms: const {
+      'psx': 'psx', 'ps': 'psx', 'ps1': 'psx', 'playstation': 'psx',
+      'ps2': 'ps2', 'playstation-2': 'ps2', 'playstation2': 'ps2',
+      'n64': 'n64', 'nintendo-64': 'n64',
+      'gb': 'gb', 'game-boy': 'gb', 'gbc': 'gbc', 'game-boy-color': 'gbc',
+    },
+    layoutFor: (game, base) => base is RetroArchSaveStrategy ? base.coreIdFor(game) : null,
+    saveRootFor: (layout) => layout == 'pcsx2' ? p.join('system', 'pcsx2', 'memcards') : 'saves',
+    options: retroArchCoreOptions,
+  ),
   'mgba': const SigilEmulator(
     id: 'mgba',
     layout: 'mgba_standalone',
@@ -112,6 +144,23 @@ final sigilEmulators = <String, SigilEmulator>{
     platforms: {'gb': 'gb', 'game-boy': 'gb', 'gbc': 'gbc', 'game-boy-color': 'gbc'},
   ),
 };
+
+/// RetroArch's core options (`config\retroarch-core-options.cfg` in the
+/// profile's folder: `key = "value"` lines). sigil looks only at the keys
+/// its layout row names (`pcsx2_shared_memory_cards`, `pcsx_rearmed_memcard1`, …).
+Map<String, String> retroArchCoreOptions(String emulatorDir) {
+  final f = io.File(p.join(emulatorDir, 'config', 'retroarch-core-options.cfg'));
+  if (!f.existsSync()) return const {};
+  try {
+    final line = RegExp(r'^\s*([A-Za-z0-9_.-]+)\s*=\s*"([^"]*)"\s*$');
+    return {
+      for (final l in f.readAsLinesSync())
+        if (line.firstMatch(l) case final m?) m[1]!: m[2]!,
+    };
+  } catch (_) {
+    return const {};
+  }
+}
 
 typedef SigilCollectFn = Future<SigilCollected> Function(SigilSyncCall call);
 typedef SigilRestoreFn = Future<SigilRestored> Function(SigilSyncCall call, Uint8List unit);
@@ -205,8 +254,25 @@ class SigilSaveStrategy extends SaveStrategy {
   final _pending = <String, Uint8List>{};
 
   String? _sigilPlatform(Game game) => emulator.platforms[game.platformSlug?.toLowerCase()];
-  bool _covers(Game game) => _sigilPlatform(game) != null;
-  String get _root => p.normalize(p.join(emulatorDir(), emulator.saveRoot));
+
+  /// sigil's layout for [game]: the emulator's, or (RetroArch) its core's.
+  String? _layout(Game game) {
+    final of = emulator.layoutFor;
+    if (of == null) return emulator.layout;
+    final layout = of(game, base);
+    return layout == null || layout.isEmpty ? null : layout;
+  }
+
+  bool _covers(Game game) => _sigilPlatform(game) != null && _layout(game) != null;
+
+  String _root(Game game) {
+    final layout = _layout(game);
+    final rel = layout == null ? emulator.saveRoot : (emulator.saveRootFor?.call(layout) ?? emulator.saveRoot);
+    return p.normalize(p.join(emulatorDir(), rel));
+  }
+
+  @override
+  SaveStrategy? get wrapped => base;
 
   @override
   String get strategyId => emulator.id;
@@ -243,7 +309,7 @@ class SigilSaveStrategy extends SaveStrategy {
 
   @override
   Future<String?> getSaveDir(Game game, String romPath) async =>
-      _covers(game) ? _root : base?.getSaveDir(game, romPath);
+      _covers(game) ? _root(game) : base?.getSaveDir(game, romPath);
 
   @override
   Future<List<io.File>> getSaveFiles(
@@ -330,16 +396,17 @@ class SigilSaveStrategy extends SaveStrategy {
 
   Future<SigilSyncCall> _call(Game game, String romPath, {Uint8List? state, bool overwriteLocal = false}) async {
     final platform = _sigilPlatform(game)!;
+    final layout = _layout(game)!;
     final ids = await _ids(game, romPath, platform);
     final hint = await content?.call(game, romPath);
     final stem = hint?.stem;
     return SigilSyncCall(
-      layout: emulator.layout,
+      layout: layout,
       platform: platform,
       // sigil names a card from the content's file name: the emulator's own
       // card name, as sigil's README suggests (`<name>.cue`), when it has one.
       contentPath: stem == null ? romPath : p.join(p.dirname(romPath), '$stem.cue'),
-      saveRoot: hint?.root ?? _root,
+      saveRoot: hint?.root ?? _root(game),
       gameIds: ids.gameIds,
       titleId: ids.titleId,
       rawSerial: ids.rawSerial,
@@ -358,7 +425,7 @@ class SigilSaveStrategy extends SaveStrategy {
     String romPath,
     String platform,
   ) async {
-    if (platform == 'gb' || platform == 'gbc') {
+    if (platform == 'gb' || platform == 'gbc' || platform == 'n64') {
       return (titleId: null, rawSerial: null, saveId: null, usage: null, gameIds: const <String>[]);
     }
     final disc = platform == 'ps2' || platform == 'psx';
