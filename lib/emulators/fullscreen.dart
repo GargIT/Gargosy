@@ -26,6 +26,7 @@ class Fullscreen {
     'flycast': (on: ['-config', 'window:fullscreen=yes'], off: ['-config', 'window:fullscreen=no']),
     'mgba': (on: ['-f'], off: []),
     'ares': (on: ['--fullscreen'], off: []),
+    'scummvm': (on: ['-f'], off: ['-F']),
   };
 
   static bool supports(String emulatorId) => _flags.containsKey(emulatorId);

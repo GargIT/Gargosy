@@ -35,7 +35,7 @@ These rows come from the emulators' documentation and from Freegosy, not from a 
 | azahar | as eden: `user\` folder; per-profile through the SDMC/NAND keys in `qt-config.ini` |
 | melonds | settings: `melonDS.toml` next to the exe; save and state path keys |
 | rpcs3 | settings: `config\vfs.yml`, key `$(EmulatorDir)dev_hdd0/` pointing under `<data>` |
-| scummvm | arg: `--config="<data>\scummvm.ini" --savepath="<data>\saves"` |
+| scummvm | arg: `--config="<data>\scummvm.ini" --savepath="<data>\saves"`; before launch the ini's `[scummvm] savepath` and `screenshotpath` are set under `<data>` too. The game starts with `--auto-detect --path=<game folder>`; full screen `-f`, windowed `-F`. Import only (no download source). Save sync comes later (issue #11) |
 
 ## Not supported in v1
 

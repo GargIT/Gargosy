@@ -69,6 +69,8 @@ class EmulatorLayout {
     'melonds': EmulatorLayout('melonds', saveView: '_view'),
     'rpcs3': EmulatorLayout('rpcs3', saveView: '_view'),
     'ryujinx': EmulatorLayout('ryujinx', saveView: '_view'),
+    // --config and --savepath into the profile (issue #11).
+    'scummvm': EmulatorLayout('scummvm', seed: ['saves', 'screenshots']),
   };
 
   static EmulatorLayout of(String id) => _table[id] ?? EmulatorLayout(id);
