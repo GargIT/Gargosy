@@ -31,6 +31,7 @@ It is built on code copied from Freegosy (MIT, © 2026 abduznik). There is no sh
 - RomM calls from UI go through the providers in `lib/providers/` (which use `RommService` / `LibraryApi`).
 - Downloads stage in `userdata\app\temp`; `roms\` only ever receives complete ROMs.
 - Write files with LF line endings (`.gitattributes` normalizes). From Python, use `open(..., 'w', newline='\n')`.
+- Commit messages, PR titles and PR descriptions never contain a link to the session that made them (no `claude.ai/code/session_…` line).
 
 ## Layout on disk
 ```
