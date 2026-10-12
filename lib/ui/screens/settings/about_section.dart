@@ -35,7 +35,8 @@ Future<void> showAboutGargosy(BuildContext context) => showDialog<void>(
     );
 
 /// About: Gargosy's and RomM's versions, then the documents in the Gargosy
-/// folder (opened in the reader), the Flutter package licences and GitHub.
+/// folder (opened in the reader), the Flutter package licences, the log
+/// folder (for bug reports) and GitHub.
 /// The About dialog and Settings → About.
 class AboutSection extends ConsumerWidget {
   const AboutSection({super.key, this.autofocus = false});
@@ -84,6 +85,11 @@ class AboutSection extends ConsumerWidget {
       SettingsRow(
         label: 'Dart and Flutter packages',
         onActivate: () => showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$version'),
+      ),
+      SettingsRow(
+        label: 'Open log folder',
+        value: r'userdata\app\logs',
+        onActivate: () => ref.read(externalOpenerProvider)(root.logs),
       ),
       SettingsRow(
         label: 'GitHub',
