@@ -140,7 +140,6 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `ui/widgets/sync_wait.dart` — `waitForSyncIdle`: switching or deleting a profile waits for its save lock and upload queue, saying what it waits for (both are refused while a game runs).
 - `docs/state-sync-plan.md` — spec and plan for save-state sync on more emulators (one global switch; local states resumable with sync off; DuckStation's wiring traced; states never in save zips; PPSSPP → Dolphin → mGBA → MAME → Flycast → ares).
 - `tool/make_release.ps1` — builds and packs `dist\Gargosy-<version>.zip`. `tool/make_dev_release.ps1` — runs it (version `<pubspec>-dev`) and installs the zip into `C:\Retro\apps\gargosy` (`-Target`), replacing only the app files. `thirdparty/7zr.exe` is bundled (LGPL, see `NOTICE.md`) to unpack `.7z` emulator downloads.
-- `.github/pull_request_template.md` — every PR's description: Closes, What changes, Not in this PR, Tests, and a checklist of the rules above. Fill it in, don't drop its sections.
 
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
