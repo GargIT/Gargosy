@@ -14,9 +14,10 @@ class AppFiles {
   static const protected = ['roms', 'emulators', 'bios', 'userdata'];
 
   /// The paths in [text] (`\` separators, as Windows writes them). Throws a
-  /// [FormatException] naming the first line that's absolute, has `..`, or is
-  /// in a [protected] folder: the whole list is refused before anything
-  /// moves, as `GargosyUpdate.exe` does.
+  /// [FormatException] naming the first line that's absolute, has `..`, is
+  /// in a [protected] folder or has a name Windows would change: the whole
+  /// list is refused before anything moves, as `GargosyUpdate.exe` does
+  /// (`windows/updater/updater.cpp`, `IsSafeRelative`).
   static List<String> parse(String text) {
     final out = <String>[];
     for (final raw in text.split(RegExp(r'\r?\n'))) {
@@ -29,7 +30,12 @@ class AppFiles {
       if (parts.any((s) => s == '..' || s == '.' || s.isEmpty)) {
         throw FormatException('a path that leaves the Gargosy folder in $fileName', line);
       }
-      if (protected.contains(parts.first.toLowerCase())) {
+      // Windows drops a trailing dot or space ("userdata." is userdata), and
+      // an 8.3 name (USERDA~1) could be one of the user's folders too.
+      if (RegExp(r'[*?"<>|]').hasMatch(line) || parts.any((s) => s.endsWith('.') || s.endsWith(' '))) {
+        throw FormatException('a name Windows would change in $fileName', line);
+      }
+      if (protected.contains(parts.first.toLowerCase()) || parts.first.contains('~')) {
         throw FormatException("a path in the user's folders in $fileName", line);
       }
       out.add(parts.join(r'\'));

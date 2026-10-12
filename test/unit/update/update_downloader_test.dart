@@ -174,7 +174,10 @@ void main() {
           ['Gargosy.exe', r'data\flutter_assets\AssetManifest.bin']);
     });
 
-    for (final bad in [r'..\Gargosy.exe', r'C:\Windows\x.dll', r'\abs.dll', 'userdata\\settings.json', 'Roms\\a.iso', r'data\..\..\x', '']) {
+    for (final bad in [
+      r'..\Gargosy.exe', r'C:\Windows\x.dll', r'\abs.dll', 'userdata\\settings.json', 'Roms\\a.iso', r'data\..\..\x', '',
+      r'userdata.\settings.json', r'USERDA~1\settings.json', r'data\a?.dll', r'Gargosy.exe:stream',
+    ]) {
       test('refuses "$bad"', () => expect(() => AppFiles.parse(bad), throwsFormatException));
     }
   });

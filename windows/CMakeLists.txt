@@ -60,6 +60,10 @@ set(SIGIL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/argosy-sigil" "${CMAKE_BINARY_DIR}/sigil")
 add_dependencies(${BINARY_NAME} sigil)
 
+# GargosyUpdate.exe (issue #16): replaces the app files after Gargosy exits.
+add_subdirectory("updater")
+add_dependencies(${BINARY_NAME} GargosyUpdate)
+
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
@@ -90,6 +94,9 @@ install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
 install(FILES "$<TARGET_FILE:sigil>" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
+
+install(TARGETS GargosyUpdate RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 
 if(PLUGIN_BUNDLED_LIBRARIES)
