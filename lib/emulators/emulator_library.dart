@@ -10,6 +10,7 @@ import '../profiles/app_root.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
+import 'folder_link.dart';
 import 'profile_launch_config.dart';
 
 class EmulatorInfo {
@@ -78,7 +79,8 @@ class EmulatorLibrary {
   String? _findExe(String dir, String exe) {
     final d = io.Directory(dir);
     if (!d.existsSync()) return null;
-    for (final e in d.listSync(recursive: true)) {
+    // Never through a folder link (issue #8): it leads into a profile's data.
+    for (final e in d.listSync(recursive: true, followLinks: false)) {
       if (e is io.File && p.basename(e.path).toLowerCase() == exe.toLowerCase() && p.split(p.relative(e.path, from: dir)).length <= 4) {
         return e.path;
       }
@@ -133,6 +135,7 @@ class EmulatorLibrary {
 
     try {
       copyDir(io.Directory(folder), staging);
+      removeFolderLinksIn(target);
       if (io.Directory(target).existsSync()) io.Directory(target).deleteSync(recursive: true);
       io.Directory(staging).renameSync(target);
       await recordInstall(id, from: imported);
@@ -150,8 +153,14 @@ class EmulatorLibrary {
     await remove(id);
   }
 
+  /// Removes the folder links in `emulators\<id>\` (issue #8); the number removed.
+  int removeFolderLinks(String id) => removeFolderLinksIn(_guard.check(p.join(root.emulators, id)));
+
+  /// Deletes `emulators\<id>\`, its folder links first (issue #8), so the
+  /// delete can't reach a profile's data through one.
   Future<void> remove(String id) async {
     final dir = io.Directory(_guard.check(p.join(root.emulators, id)));
+    removeFolderLinksIn(dir.path);
     if (dir.existsSync()) dir.deleteSync(recursive: true);
   }
 }

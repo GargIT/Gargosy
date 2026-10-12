@@ -8,6 +8,12 @@ How Gargosy points each emulator at the profile's own folder (spec §6). That fo
 - **Mechanisms:**
   - `arg`: a command-line argument at launch.
   - `settings`: Gargosy writes a file or keys into the emulator's own folder just before launch. This is safe because only one emulator runs at a time.
+  - `link` (issue #8): for an emulator that only reads a folder **next to its exe** (else `%APPDATA%`, asked of Windows directly, so `sandboxedPlatform()` can't redirect it). Before each launch, and before a pull, that folder in `emulators\<emu>\` is a directory junction to the same folder in `<data>`; the emulator writes straight into the profile. `LinkedFolderConfig` in `lib/emulators/linked_folder_config.dart`, `pointFolderLink` in `folder_link.dart`.
+    - A junction needs no admin rights and works on any NTFS drive; on FAT32/exFAT the launch is refused, saying why (`FolderLinkUnsupported`).
+    - A real folder already there (an imported install with data) is moved once into `userdata\templates\<emu>\<folder>`, never deleted. A link pointing anywhere else is re-pointed.
+    - *Remove emulator*, *Update* and *Import* remove the links in the install first, so none can reach a profile's data; finding the exe never walks through a link.
+    - After a crash the link still points at the last profile, and the next launch re-points it. **Run outside Gargosy, the emulator uses the last profile's data.**
+    - Planned for: Eden and Azahar (`user\`), Cemu and melonDS (`portable\`): #12–#15.
 
 | emulatorId | Version | Mechanism | Exact args / file + keys | Settings follow profile | Saves land in | Evidence |
 |---|---|---|---|---|---|---|
