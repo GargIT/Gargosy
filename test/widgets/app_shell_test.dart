@@ -150,10 +150,11 @@ void main() {
     expect(find.byKey(const Key('top-bar-glass')), findsNothing);
   });
 
-  testWidgets('the user menu opens the emulators screen', (tester) async {
+  testWidgets('the user menu has Emulators and Emulator settings', (tester) async {
     await pump(tester);
     await send(tester, GameAction.start);
     expect(find.text('Emulators'), findsOneWidget);
+    expect(find.text('Emulator settings'), findsOneWidget);
   });
 
   testWidgets('switching profile during a game is refused', (tester) async {
@@ -206,23 +207,18 @@ void main() {
     expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).initial, SettingsPage.profile);
   });
 
-  testWidgets('each settings item opens Settings on its section', (tester) async {
+  testWidgets('the menu has one item per Settings section, and each opens that section', (tester) async {
     await pump(tester);
-    const items = {
-      'Profile': SettingsPage.profile,
-      'RetroAchievements': SettingsPage.retroAchievements,
-      'Emulator settings': SettingsPage.emulators,
-      'Controller': SettingsPage.controller,
-      'Display': SettingsPage.display,
-      'About': SettingsPage.about,
-    };
-    for (final MapEntry(key: label, value: page) in items.entries) {
+    for (final page in SettingsPage.values) {
       await send(tester, GameAction.start);
-      await tester.tap(find.text(label).last);
+      final item = find.byKey(ValueKey('user-menu-${page.name}'));
+      expect(item, findsOneWidget, reason: page.name);
+      expect(find.descendant(of: item, matching: find.text(page.label)), findsOneWidget, reason: page.name);
+      await tester.tap(item);
       await tester.pumpAndSettle();
-      expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).initial, page, reason: label);
+      expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).initial, page, reason: page.name);
       await send(tester, GameAction.back);
-      expect(find.byType(SettingsScreen), findsNothing, reason: label);
+      expect(find.byType(SettingsScreen), findsNothing, reason: page.name);
     }
   });
 
@@ -246,9 +242,13 @@ void main() {
     await pump(tester);
     await send(tester, GameAction.start);
     final last = tester.getRect(find.byKey(const ValueKey('user-menu-switchProfile')));
-    for (final choice in UserMenuChoice.values.where((c) => c != UserMenuChoice.switchProfile)) {
-      expect(tester.getRect(find.byKey(ValueKey('user-menu-${choice.name}'))).bottom, lessThanOrEqualTo(last.top),
-          reason: choice.name);
+    final others = [
+      for (final page in SettingsPage.values) page.name,
+      for (final a in UserMenuAction.values)
+        if (a != UserMenuAction.switchProfile) a.name,
+    ];
+    for (final name in others) {
+      expect(tester.getRect(find.byKey(ValueKey('user-menu-$name'))).bottom, lessThanOrEqualTo(last.top), reason: name);
     }
   });
 

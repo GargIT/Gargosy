@@ -3,32 +3,39 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/platform/window_service.dart';
 import '../../profiles/profile.dart';
+import '../screens/settings/settings_pages.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/profile_badge.dart';
 
-enum UserMenuChoice {
-  profile,
-  retroAchievements,
-  emulators,
-  emulatorSettings,
-  controller,
-  display,
-  fullscreen,
-  about,
-  changelog,
-  switchProfile,
+/// The menu's own items, beside the settings sections.
+enum UserMenuAction { fullscreen, changelog, switchProfile }
+
+/// What the user menu picked: a section of Settings, or one of its actions.
+class UserMenuChoice {
+  const UserMenuChoice.settings(SettingsPage this.page) : action = null;
+  const UserMenuChoice.action(UserMenuAction this.action) : page = null;
+
+  final SettingsPage? page;
+  final UserMenuAction? action;
+
+  @override
+  bool operator ==(Object other) => other is UserMenuChoice && other.page == page && other.action == action;
+
+  @override
+  int get hashCode => Object.hash(page, action);
 }
 
 /// The user menu (Start, or the profile badge), as RomM v2's: the profile
-/// with Gargosy's version beside its name, the settings in groups, About
-/// and the changelog, and Switch profile at the bottom (RomM's Logout).
+/// with Gargosy's version beside its name, every section of Settings in its
+/// group (one item each, from [SettingsPage]), Fullscreen, About and the
+/// changelog, and Switch profile at the bottom (RomM's Logout).
 /// Focus starts on Profile; the menu scrolls when the window is short.
 Future<UserMenuChoice?> showUserMenu(BuildContext context, {required Profile profile, String? avatarPath}) {
   Widget item(BuildContext c, String label, IconData icon, UserMenuChoice choice,
           {bool autofocus = false, Widget? trailing, Color? color}) =>
       GFocusable(
-        key: ValueKey('user-menu-${choice.name}'),
+        key: ValueKey('user-menu-${choice.page?.name ?? choice.action!.name}'),
         autofocus: autofocus,
         borderRadius: GRadius.chip,
         onActivate: () => Navigator.of(c).pop(choice),
@@ -103,21 +110,22 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required Profile pro
                   ]),
                 ),
                 const Divider(height: 1, thickness: 1, color: GColors.border, indent: 6, endIndent: 6),
-                heading('PROFILE'),
-                item(c, 'Profile', Icons.person_outline, UserMenuChoice.profile, autofocus: true),
-                item(c, 'RetroAchievements', Icons.emoji_events_outlined, UserMenuChoice.retroAchievements),
-                heading('LIBRARY'),
-                item(c, 'Emulators', Icons.download_outlined, UserMenuChoice.emulators),
-                item(c, 'Emulator settings', Icons.tune, UserMenuChoice.emulatorSettings),
-                heading('THIS PC'),
-                item(c, 'Controller', Icons.gamepad_outlined, UserMenuChoice.controller),
-                item(c, 'Display', Icons.desktop_windows_outlined, UserMenuChoice.display),
-                item(c, 'Fullscreen', Icons.fullscreen, UserMenuChoice.fullscreen, trailing: const _KeyChip('F11')),
+                // Every section of Settings, one item each, in its groups.
+                for (final group in SettingsGroup.values.where((g) => g != SettingsGroup.gargosy)) ...[
+                  heading(group.heading),
+                  for (final page in SettingsPage.values.where((p) => p.group == group))
+                    item(c, page.label, page.icon, UserMenuChoice.settings(page), autofocus: page == SettingsPage.values.first),
+                  if (group == SettingsGroup.thisPc)
+                    item(c, 'Fullscreen', Icons.fullscreen, const UserMenuChoice.action(UserMenuAction.fullscreen),
+                        trailing: const _KeyChip('F11')),
+                ],
                 line,
-                item(c, 'About', Icons.help_outline, UserMenuChoice.about),
-                item(c, 'Changelog', Icons.history, UserMenuChoice.changelog),
+                for (final page in SettingsPage.values.where((p) => p.group == SettingsGroup.gargosy))
+                  item(c, page.label, page.icon, UserMenuChoice.settings(page)),
+                item(c, 'Changelog', Icons.history, const UserMenuChoice.action(UserMenuAction.changelog)),
                 line,
-                item(c, 'Switch profile', Icons.swap_horiz, UserMenuChoice.switchProfile, color: GColors.danger),
+                item(c, 'Switch profile', Icons.swap_horiz, const UserMenuChoice.action(UserMenuAction.switchProfile),
+                    color: GColors.danger),
               ]),
             ),
           ),

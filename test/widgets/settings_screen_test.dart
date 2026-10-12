@@ -129,6 +129,8 @@ void main() {
     await press(tester, GameAction.r1);
     expect(find.text('Get BIOS files from RomM'), findsOneWidget, reason: 'Emulators');
     await press(tester, GameAction.r1);
+    expect(find.text('WHICH EMULATOR PLAYS'), findsOneWidget, reason: 'Emulator settings');
+    await press(tester, GameAction.r1);
     expect(find.textContaining('Stick deadzone'), findsOneWidget, reason: 'Controller');
     await press(tester, GameAction.r1);
     expect(find.text('Fullscreen (F11)'), findsOneWidget, reason: 'Display');
@@ -161,9 +163,7 @@ void main() {
   });
 
   testWidgets("a platform's emulator is chosen for this profile", (tester) async {
-    await pump(tester);
-    await tester.tap(find.text('Emulators'));
-    await tester.pumpAndSettle();
+    await pump(tester, initial: SettingsPage.emulatorSettings);
     expect(find.text('PlayStation'), findsOneWidget);
     await tester.tap(find.text('PlayStation'));
     await tester.pumpAndSettle();
@@ -180,9 +180,7 @@ void main() {
   });
 
   testWidgets('save-state sync is switched on per emulator, for this profile', (tester) async {
-    await pump(tester);
-    await tester.tap(find.text('Emulators'));
-    await tester.pumpAndSettle();
+    await pump(tester, initial: SettingsPage.emulatorSettings);
     await tester.tap(find.byKey(const ValueKey('state-sync-duckstation')));
     await tester.pumpAndSettle();
     expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey('duckstation')), isTrue);

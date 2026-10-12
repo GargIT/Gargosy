@@ -9,37 +9,14 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
 import 'about_section.dart';
 import 'device_sections.dart';
+import 'emulator_install_section.dart';
 import 'emulators_section.dart';
 import 'profile_section.dart';
 import 'ra_section.dart';
+import 'settings_pages.dart';
 import 'settings_rows.dart';
 
-/// The sidebar's groups, as RomM's profile page has them.
-enum SettingsGroup {
-  profile('PROFILE'),
-  library('LIBRARY'),
-  thisPc('THIS PC'),
-  gargosy('GARGOSY');
-
-  const SettingsGroup(this.heading);
-  final String heading;
-}
-
-/// A section of Settings, in the sidebar's order. The user menu opens
-/// Settings on one of them.
-enum SettingsPage {
-  profile(SettingsGroup.profile, 'Profile', Icons.person_outline),
-  retroAchievements(SettingsGroup.profile, 'RetroAchievements', Icons.emoji_events_outlined),
-  emulators(SettingsGroup.library, 'Emulators', Icons.videogame_asset_outlined),
-  controller(SettingsGroup.thisPc, 'Controller', Icons.gamepad_outlined),
-  display(SettingsGroup.thisPc, 'Display', Icons.desktop_windows_outlined),
-  about(SettingsGroup.gargosy, 'About', Icons.info_outline);
-
-  const SettingsPage(this.group, this.label, this.icon);
-  final SettingsGroup group;
-  final String label;
-  final IconData icon;
-}
+export 'settings_pages.dart';
 
 /// Settings in RomM v2's style: the top bar, the sections in groups on the
 /// left, the chosen one's cards on the right. LB/RB move between sections,
@@ -59,7 +36,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _content() => switch (_page) {
         SettingsPage.profile => const ProfileSection(),
         SettingsPage.retroAchievements => const RaSection(),
-        SettingsPage.emulators => const EmulatorsSection(),
+        SettingsPage.emulators => const EmulatorInstallSection(),
+        SettingsPage.emulatorSettings => const EmulatorsSection(),
         SettingsPage.controller => const ControllerSection(),
         SettingsPage.display => const DisplaySection(),
         SettingsPage.about => ListView(children: const [

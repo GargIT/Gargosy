@@ -3,20 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/emulator/platform_slugs.dart';
 import '../../../core/save/state_sync_service.dart';
-import '../../../emulators/bios_sync.dart';
 import '../../../emulators/emulator_library.dart';
 import '../../../providers/engine_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
-import '../../widgets/toast.dart';
-import '../emulators_screen.dart';
 import 'settings_rows.dart';
 
 /// The emulators whose save states can sync with RomM.
 const _stateSyncEmulators = ['duckstation', 'pcsx2', 'retroarch'];
 
-/// Settings → Emulators: which installed emulator plays each of the
+/// Settings → Emulator settings: which installed emulator plays each of the
 /// profile's platforms, and save-state sync per emulator. Both are this
 /// profile's own (its prefs).
 class EmulatorsSection extends ConsumerStatefulWidget {
@@ -27,27 +24,6 @@ class EmulatorsSection extends ConsumerStatefulWidget {
 }
 
 class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
-  bool _gettingBios = false;
-
-  Future<void> _getBios(Set<String> installed) async {
-    final bios = ref.read(biosSyncProvider);
-    if (bios == null || _gettingBios) return;
-    setState(() => _gettingBios = true);
-    try {
-      final n = await bios.forAll(installed);
-      if (!mounted) return;
-      showToast(context, switch (n) {
-        0 => 'No new BIOS files on RomM.',
-        1 => 'Got 1 BIOS file from RomM.',
-        _ => 'Got $n BIOS files from RomM.',
-      });
-    } on Object {
-      if (mounted) showToast(context, "Couldn't get BIOS files from RomM.");
-    } finally {
-      if (mounted) setState(() => _gettingBios = false);
-    }
-  }
-
   Future<void> _choose(String slug, String title, List<({String id, String name})> options, String? current) async {
     final i = await showChoice(context,
         title: 'Play $title in', labels: [for (final o in options) o.name], current: options.indexWhere((o) => o.id == current));
@@ -97,27 +73,6 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
           ),
     ];
     return ListView(children: [
-      SettingsCard(
-        title: 'Emulators',
-        icon: Icons.videogame_asset,
-        note: 'Gargosy keeps its own copy of each emulator, in the Gargosy folder.',
-        children: [
-          Wrap(spacing: GSpace.s3, runSpacing: GSpace.s3, children: [
-            SettingsButton(
-              label: 'Install, update or remove',
-              icon: Icons.download_outlined,
-              kind: SettingsButtonKind.primary,
-              onActivate: () =>
-                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const EmulatorsScreen())),
-            ),
-            SettingsButton(
-              label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
-              icon: Icons.memory,
-              onActivate: _gettingBios ? null : () => _getBios(installed.keys.toSet()),
-            ),
-          ]),
-        ],
-      ),
       SettingsCard(
         title: 'Which emulator plays',
         icon: Icons.tune,
