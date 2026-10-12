@@ -138,7 +138,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - Launch settings also fill the emulators' own game lists from `roms\<platform>` (`ProfileLaunchDirectories.gameFoldersFor`, `IniFile.add` for repeated keys), set PCSX2's BIOS folder and its RA login (`LaunchContext.raLogin`). The engine's strategies run on `sandboxedPlatform` too, and their own RA writers are off in a profile.
 - `ui/widgets/sync_wait.dart` — `waitForSyncIdle`: switching or deleting a profile waits for its save lock and upload queue, saying what it waits for (both are refused while a game runs).
 - `docs/state-sync-plan.md` — spec and plan for save-state sync on more emulators (one global switch; local states resumable with sync off; DuckStation's wiring traced; states never in save zips; PPSSPP → Dolphin → mGBA → MAME → Flycast → ares).
-- `tool/make_release.ps1` — builds and packs `dist\Gargosy-<version>.zip`. `thirdparty/7zr.exe` is bundled (LGPL, see `NOTICE.md`) to unpack `.7z` emulator downloads.
+- `tool/make_release.ps1` — builds and packs `dist\Gargosy-<version>.zip`. `tool/make_dev_release.ps1` — runs it (version `<pubspec>-dev`) and installs the zip into `C:\Retro\apps\gargosy` (`-Target`), replacing only the app files. `thirdparty/7zr.exe` is bundled (LGPL, see `NOTICE.md`) to unpack `.7z` emulator downloads.
 
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
