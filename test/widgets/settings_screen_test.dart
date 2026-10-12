@@ -186,7 +186,10 @@ void main() {
   testWidgets('one switch syncs save states for this profile; the note names who syncs', (tester) async {
     await pump(tester, initial: SettingsPage.emulatorSettings);
     expect(find.byKey(const ValueKey('state-sync')), findsOneWidget);
-    expect(find.textContaining('state-sync-'), findsNothing);
+    // The old per-emulator toggles are gone.
+    for (final id in ['duckstation', 'pcsx2', 'retroarch']) {
+      expect(find.byKey(ValueKey('state-sync-$id')), findsNothing, reason: id);
+    }
     // DuckStation and RetroArch are installed; both report supportsStateSync, PCSX2 isn't installed.
     expect(find.text('Syncs in DuckStation and RetroArch.'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('state-sync')));
