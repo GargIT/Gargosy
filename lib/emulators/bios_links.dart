@@ -42,6 +42,25 @@ Iterable<String> _coreFoldersFor(String name, int bytes) sync* {
   }
 }
 
+/// [from] (a file in the shared `bios\`) at [to], hard-linked where the
+/// drive allows it, else copied; a file of the same size there is kept.
+void placeSharedFile(io.File from, String to, PathGuard guard) => _place(from, to, guard);
+
+/// The first file named one of [names] (any case) in [bios] or its
+/// subfolders (RomM's firmware lands in `bios\` or a platform folder), or null.
+io.File? findBiosFile(String bios, List<String> names) {
+  final dir = io.Directory(bios);
+  if (!dir.existsSync()) return null;
+  final wanted = {for (final n in names) n.toLowerCase()};
+  final found = dir
+      .listSync(recursive: true, followLinks: false)
+      .whereType<io.File>()
+      .where((f) => wanted.contains(p.basename(f.path).toLowerCase()))
+      .toList()
+    ..sort((a, b) => p.split(a.path).length.compareTo(p.split(b.path).length)); // bios\ itself first
+  return found.firstOrNull;
+}
+
 void _place(io.File from, String to, PathGuard guard) {
   final dest = io.File(guard.check(to));
   final size = from.lengthSync();
@@ -58,6 +77,12 @@ final _createHardLink = DynamicLibrary.open('kernel32.dll').lookupFunction<
     int Function(Pointer<Utf16> newFile, Pointer<Utf16> existing, Pointer<Void> security)>('CreateHardLinkW');
 
 bool _hardLink(String existing, String newFile) {
+  // Windows' CreateHardLinkW; elsewhere (tests on Linux) a copy instead.
+  try {
+    _createHardLink;
+  } on Object {
+    return false;
+  }
   final a = newFile.toNativeUtf16();
   final b = existing.toNativeUtf16();
   try {

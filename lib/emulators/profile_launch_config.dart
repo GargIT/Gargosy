@@ -8,6 +8,7 @@ import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
+import 'linked_emulators.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
 /// emulator's install folder and the shared BIOS folder.
@@ -113,6 +114,8 @@ abstract class ProfileLaunchConfig {
           '-C', 'savegamePath=${p.join(c.data, 'saves')}',
           '-C', 'savestatePath=${p.join(c.data, 'states')}',
         ]),
+    // Eden, Azahar, Cemu, melonDS: a folder link (issues #8, #12–#15).
+    ...linkedEmulatorConfigs,
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
           'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'

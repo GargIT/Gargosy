@@ -36,10 +36,10 @@ These rows come from the emulators' documentation and from Freegosy, not from a 
 | emulatorId | Expected mechanism (to verify) |
 |---|---|
 | ryujinx | arg: `--root-data-dir "<data>"` (`-r`) |
-| cemu | arg: `-mlc "<data>\mlc01"` for saves; settings (`settings.xml`) likely stay next to the exe |
-| eden | settings: a `user\` folder next to the exe makes it portable; per-profile needs the NAND/SDMC keys in `qt-config.ini`, or a data-folder argument if the build has one |
-| azahar | as eden: `user\` folder; per-profile through the SDMC/NAND keys in `qt-config.ini` |
-| melonds | settings: `melonDS.toml` next to the exe; save and state path keys |
+| cemu | **link** (#14, built, not probed): `portable\` → `<data>\portable` (settings, graphic packs, `keys.txt` from `bios\`), plus arg `-m "<data>\mlc01"`: the MLC with the saves, never shared. A `settings.xml` next to the exe (pre-2.0) would win over `portable\`: renamed `.gargosy-off`. Game folders: `<GamePaths><Entry>` in `settings.xml` once Cemu made it. Full screen `-f` (all from `src/config/LaunchSettings.cpp`) |
+| eden | **link** (#12, built, not probed): `user\` → `<data>\user`; `prod.keys`/`title.keys` from `bios\` into `user\keys\`; game folders in `user\config\qt-config.ini` `[UI] Paths\gamedirs` once Eden made its list. Game as a plain argument, full screen `-f` (as in yuzu: Eden's source host isn't reachable from the cloud session, so check both) |
+| azahar | **link** (#13, built, not probed): `user\` → `<data>\user`; `aes_keys.txt`/`seeddb.bin` from `bios\` into `user\sysdata\`; game folders as Eden. Full screen `-f`, windowed `-w` (`src/citra_qt/citra_qt.cpp`) |
+| melonds | **link** (#15, built, not probed): `portable\` → `<data>\portable`, and in its `melonDS.toml` `[Instance0] SaveFilePath`/`SavestatePath` → `<data>\portable\saves`/`states` (never next to the ROM), `[DS] BIOS9Path`/`BIOS7Path`/`FirmwarePath` for the files in `bios\`. Full screen `-f` (`src/frontend/qt_sdl/Config.cpp`, `CLI.cpp`) |
 | rpcs3 | settings: `config\vfs.yml`, key `$(EmulatorDir)dev_hdd0/` pointing under `<data>` |
 | scummvm | arg: `--config="<data>\scummvm.ini" --savepath="<data>\saves"` |
 

@@ -8,6 +8,12 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Eden (Switch), Azahar (3DS), Cemu (Wii U) and melonDS (DS) play on each
+  profile's own data: their `user\` or `portable\` folder is a link to the
+  profile's (#8, #12–#15). Keys from RomM's firmware go into place, and
+  melonDS's saves stay out of `roms\`. Wii U updates and DLC are installed
+  per profile.
+
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.
 - A reader for those documents — what's new, read me, licences, security

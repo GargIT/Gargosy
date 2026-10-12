@@ -1,3 +1,5 @@
+import '../core/storage/ini_file.dart';
+
 /// Sets `key = "value"` lines in a RetroArch cfg, replacing an existing line
 /// for the key or appending one. Other lines are kept as they are.
 String setRetroArchKeys(String text, Map<String, String> values) {
@@ -57,4 +59,33 @@ String? getTomlKey(String text, String section, String key) {
     if (m != null) return m.group(2);
   }
   return null;
+}
+
+/// [ini] (a Qt settings file, Eden's and Azahar's `qt-config.ini`) with
+/// [paths] added to the array [array] in [section] (`Paths\gamedirs`):
+/// `<array>\<n>\path`, `deep_scan`, `expanded`, and `<array>\size`. Folders
+/// already listed (any case or slash) stay as they are, and so does every
+/// other key. False when the file has no such array yet (before the
+/// emulator's first run): its own defaults come first, then the folders on
+/// the next launch.
+bool addQtArrayPaths(IniFile ini, String section, String array, List<String> paths) {
+  final sizeKey = '$array\\size';
+  final size = int.tryParse(ini.get(section, sizeKey) ?? '');
+  if (size == null) return false;
+  String norm(String s) => s.replaceAll('\\', '/').replaceAll(RegExp(r'/+$'), '').toLowerCase();
+  final have = {
+    for (var i = 1; i <= size; i++)
+      if (ini.get(section, '$array\\$i\\path') case final v?) norm(v),
+  };
+  var n = size;
+  for (final path in paths) {
+    final qt = path.replaceAll('\\', '/');
+    if (!have.add(norm(qt))) continue;
+    n++;
+    ini.set(section, '$array\\$n\\deep_scan', 'false');
+    ini.set(section, '$array\\$n\\expanded', 'true');
+    ini.set(section, '$array\\$n\\path', qt);
+  }
+  if (n != size) ini.set(section, sizeKey, '$n');
+  return true;
 }
