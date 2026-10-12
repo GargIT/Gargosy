@@ -3,6 +3,8 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/input/gamepad_service.dart';
+import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/core/save/state_sync_service.dart';
@@ -16,13 +18,16 @@ import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/engine_providers.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
+import 'package:gargosy/retroachievements/ra_account.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/screens/settings/settings_screen.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
+import 'package:gargosy/ui/widgets/g_focusable.dart';
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/widget_env.dart';
 
 /// Lets file writes started from a tap finish: real IO and the test's
 /// clock take turns, one round per async step.
@@ -36,7 +41,8 @@ Future<void> settleIo(WidgetTester tester) async {
 void main() {
   late ProviderContainer c;
 
-  Future<void> pump(WidgetTester tester, {PinHash? pin, UploadQueue? queue, BiosSync? bios}) async {
+  Future<void> pump(WidgetTester tester,
+      {PinHash? pin, UploadQueue? queue, BiosSync? bios, SettingsPage initial = SettingsPage.profile}) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -66,7 +72,7 @@ void main() {
         navigatorKey: nav,
         theme: gargosyTheme(),
         builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: const SettingsScreen(),
+        home: SettingsScreen(initial: initial),
       ),
     ));
     await tester.pumpAndSettle();
@@ -85,10 +91,79 @@ void main() {
     expect(find.text('Connect'), findsOneWidget);
   });
 
-  testWidgets("a platform's emulator is chosen for this profile", (tester) async {
+  testWidgets('the sidebar groups the sections; the headings never take focus', (tester) async {
     await pump(tester);
-    await tester.tap(find.text('Emulators'));
+    for (final h in ['PROFILE', 'LIBRARY', 'THIS PC', 'GARGOSY']) {
+      final heading = find.descendant(of: find.byKey(const Key('settings-sidebar')), matching: find.text(h));
+      expect(heading, findsOneWidget, reason: h);
+      expect(find.ancestor(of: heading, matching: find.byType(GFocusable)), findsNothing, reason: h);
+    }
+    expect(find.text('Settings'), findsNothing, reason: 'the big title is gone');
+    // Down through the sidebar lands on each item in turn, never a heading.
+    final seen = <SettingsPage>[];
+    for (var i = 0; i < SettingsPage.values.length; i++) {
+      for (final page in SettingsPage.values) {
+        final item = find.byKey(ValueKey('settings-${page.name}'));
+        if (Focus.of(tester.element(find.descendant(of: item, matching: find.byType(Container)).first)).hasPrimaryFocus) {
+          seen.add(page);
+        }
+      }
+      await press(tester, GameAction.down);
+    }
+    expect(seen, SettingsPage.values);
+  });
+
+  testWidgets('initial opens that section with its item focused', (tester) async {
+    await pump(tester, initial: SettingsPage.controller);
+    expect(find.textContaining('Stick deadzone'), findsOneWidget);
+    final item = find.byKey(const ValueKey('settings-controller'));
+    expect(Focus.of(tester.element(find.descendant(of: item, matching: find.byType(Container)).first)).hasPrimaryFocus, isTrue);
+  });
+
+  testWidgets('LB/RB walk the sections in order and stop at the ends', (tester) async {
+    await pump(tester);
+    await press(tester, GameAction.l1);
+    expect(find.text('Rename'), findsOneWidget, reason: 'still Profile');
+    await press(tester, GameAction.r1);
+    expect(find.text('Connect'), findsOneWidget, reason: 'RetroAchievements');
+    await press(tester, GameAction.r1);
+    expect(find.text('Get BIOS files from RomM'), findsOneWidget, reason: 'Emulators');
+    await press(tester, GameAction.r1);
+    expect(find.text('WHICH EMULATOR PLAYS'), findsOneWidget, reason: 'Emulator settings');
+    await press(tester, GameAction.r1);
+    expect(find.textContaining('Stick deadzone'), findsOneWidget, reason: 'Controller');
+    await press(tester, GameAction.r1);
+    expect(find.text('Fullscreen (F11)'), findsOneWidget, reason: 'Display');
+    await press(tester, GameAction.r1);
+    expect(find.text('ABOUT'), findsOneWidget, reason: 'About');
+    await press(tester, GameAction.r1);
+    expect(find.text('ABOUT'), findsOneWidget, reason: 'the last one');
+  });
+
+  testWidgets('Rename goes through the Name field', (tester) async {
+    await pump(tester);
+    expect(find.textContaining('Profile created'), findsOneWidget);
+    expect(find.textContaining('anna on r'), findsWidgets);
+    await tester.tap(find.text('Rename'));
     await tester.pumpAndSettle();
+    expect(find.text('Profile name'), findsOneWidget);
+  });
+
+  testWidgets('RetroAchievements shows "Connected as" only when connected', (tester) async {
+    await pump(tester, initial: SettingsPage.retroAchievements);
+    expect(find.textContaining('Connected as'), findsNothing);
+    expect(find.text('Connect'), findsOneWidget);
+    await tester.runAsync(() => c.read(profilePrefsProvider)!.setString(kRaUsernameKey, 'GargIT'));
+    c.invalidate(raAccountProvider);
+    await tester.pumpAndSettle();
+    expect(find.text('Connected as @GargIT'), findsOneWidget);
+    expect(find.text('Hardcore mode'), findsOneWidget);
+    expect(find.text('Disconnect'), findsOneWidget);
+    expect(find.text('Connect'), findsNothing);
+  });
+
+  testWidgets("a platform's emulator is chosen for this profile", (tester) async {
+    await pump(tester, initial: SettingsPage.emulatorSettings);
     expect(find.text('PlayStation'), findsOneWidget);
     await tester.tap(find.text('PlayStation'));
     await tester.pumpAndSettle();
@@ -96,17 +171,16 @@ void main() {
     await tester.pumpAndSettle();
     await settleIo(tester); // the profile's prefs file is written with real IO
     expect(c.read(strategyRegistryProvider)!.getPreferredEmulatorId('psx'), 'duckstation');
-    // The row shows the choice once its provider has read it back; give a slow machine time.
-    for (var i = 0; i < 100 && find.text('DuckStation').evaluate().isEmpty; i++) {
+    // The field shows the choice once its provider has read it back; give a slow machine time.
+    final shown = find.descendant(of: find.byKey(const ValueKey('emulator-for-psx')), matching: find.text('DuckStation'));
+    for (var i = 0; i < 100 && shown.evaluate().isEmpty; i++) {
       await settleIo(tester);
     }
-    expect(find.text('DuckStation'), findsWidgets);
+    expect(shown, findsOneWidget);
   });
 
   testWidgets('save-state sync is switched on per emulator, for this profile', (tester) async {
-    await pump(tester);
-    await tester.tap(find.text('Emulators'));
-    await tester.pumpAndSettle();
+    await pump(tester, initial: SettingsPage.emulatorSettings);
     await tester.tap(find.byKey(const ValueKey('state-sync-duckstation')));
     await tester.pumpAndSettle();
     expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey('duckstation')), isTrue);
