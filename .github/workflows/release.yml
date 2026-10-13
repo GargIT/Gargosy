@@ -34,6 +34,7 @@ jobs:
       - run: flutter analyze
       - run: powershell -File tool/build_sigil.ps1
       - run: flutter test
+      - run: powershell -File tool/test_updater.ps1
       - run: pwsh tool/make_release.ps1
       - name: Release notes from CHANGELOG.md
         shell: pwsh

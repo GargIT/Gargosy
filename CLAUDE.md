@@ -9,7 +9,7 @@ It is built on code copied from Freegosy (MIT, © 2026 abduznik). There is no sh
 ## Rules (MANDATORY)
 - **Portable only.** Every path comes from the app root (the folder of `Gargosy.exe`): `roms\`, `emulators\`, `bios\`, `userdata\`. Never AppData, never `path_provider` application dirs.
 - **ROM folders hold only ROMs.** Never write saves, zips, backups or metadata into `roms\`.
-- **Every write goes through `PathGuard`** (`lib/profiles/path_guard.dart`). It allows only the active profile's folder, `userdata\templates\`, `userdata\settings.json`, `roms\`, `emulators\` and `bios\`. Paths from the server (file names, save targets) are checked the same way.
+- **Every write goes through `PathGuard`** (`lib/profiles/path_guard.dart`). It allows only the active profile's folder, `userdata\templates\`, `userdata\app\`, `userdata\settings.json`, `roms\`, `emulators\` and `bios\`. Paths from the server (file names, save targets) are checked the same way. **The one exception:** `GargosyUpdate.exe` (`windows/updater/`, native, after Gargosy exits) replaces the app files listed in the release's `app-files.txt` and nothing else; no Dart code writes the app files.
 - **The active profile is the only source of paths and of the RomM session.** Services take a `ProfileContext` through Riverpod; no global "current user", no static paths.
 - **One emulator process at a time.** Never launch while a game runs, and never switch profiles during a game or an unfinished sync.
 - **An emulator is pointed at the profile's data folder** by a command-line argument, by writing its folder settings just before launch, or, for one that only reads a folder next to its exe, by a folder link (a junction) from there to the profile, re-pointed per launch (`ProfileLaunchConfig`, `LinkedFolderConfig`). A link is a pointer, not a swap: nothing is copied. Never swap saves in and out of a shared folder. An emulator that can't be pointed is not supported. `docs/emulator-profiles.md` records how each one is done.
@@ -149,6 +149,16 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `tool/make_release.ps1` — builds and packs `dist\Gargosy-<version>.zip`. `tool/make_dev_release.ps1` — runs it (version `<pubspec>-dev`) and installs the zip into `C:\Retro\apps\gargosy` (`-Target`), replacing only the app files. `thirdparty/7zr.exe` is bundled (LGPL, see `NOTICE.md`) to unpack `.7z` emulator downloads.
 - `.github/pull_request_template.md` — every PR's description: Closes, What changes, Not in this PR, Tests, and a checklist of the rules above. Fill it in, don't drop its sections.
 
+### Updates (issue #16)
+- `update/update_version.dart` — `UpdateVersion`: the version from `Gargosy-<version>.zip`, semver order (`pub_semver`; `0.2.0-preview.3 < 0.2.0-preview.10 < 0.2.0`), never a downgrade.
+- `update/update_checker.dart` — `UpdateChecker`: GitHub Releases without a token (Latest: `releases/latest`; Preview: `releases?per_page=10`, newest of all), one check a start and none within 6 h unless forced, ETag/304, `UpToDate | UpdateAvailable(ReleaseInfo) | CheckFailed`. App-wide prefs `update.channel`, `update.autoCheck`, `update.lastCheck`, `update.etag`, `update.lastResult`.
+- `update/update_downloader.dart` — the zip into `userdata\app\update\` (size, SHA-256 `digest`), unpacked to `update\Gargosy\` without the user's folders, layout checked (`unpackUpdate`). `update/app_files.dart` — `AppFiles.parse` (the same rules as the updater's `IsSafeRelative`). `update/update_paths.dart`.
+- `update/update_installer.dart` — `UpdateInstaller`: `canInstall` (updater present, not under Program Files), `start` (copies `GargosyUpdate.exe` into `update\`, starts that copy detached with `--pid --root --from --version --old-version -- <args>`), `afterStart` (`--updated-from=` cleans up; `--update-failed` reads `update.log`'s last line).
+- `providers/update_providers.dart` — `launchArgsProvider`, `updateOutcomeProvider` (set in `main.dart`), `updateAutoCheckEnabledProvider` (off in `app_harness.dart`), `appQuitProvider`, `updateStateProvider` (check at start from `app.dart`, Check now, channel).
+- `ui/screens/settings/updates_block.dart` (About's Updates block, `updateOutcomeLine`), `ui/widgets/update_flow.dart` (`runUpdate`: refused while a game runs, `waitForSyncIdle`, confirm, download dialog (B cancels), Restarting…; `openReleaseNotes`), `ui/widgets/update_dot.dart` (the dot on the avatar in `TopBar`); the user menu's "Update available" line; `showNotice` in `controller_dialogs.dart` (a failed update, at start).
+- `windows/updater/` — `GargosyUpdate.exe` (Win32 C++, static CRT, built by `windows/CMakeLists.txt` and on its own): waits for the PID (60 s), moves the old listed files to `update\previous\`, copies the new ones, rolls back on any failure, starts Gargosy with `--updated-from=` / `--update-failed`. Exit codes: 0 updated, 1 rolled back, 2 Gargosy didn't exit, 3 bad arguments, 4 refused. `--silent` for tests. `tool/test_updater.ps1` (CI, release, preview) runs it against fake Gargosy folders.
+- `tool/make_release.ps1` writes `app-files.txt` (every app file, never the user's folders) and fails without `GargosyUpdate.exe`.
+
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
 - To change it, edit the SVG and render again.
@@ -167,7 +177,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
   - each emulator's `ProfileLaunchConfig` arguments or written keys;
   - device pairing states;
   - the pre-launch pull (late pull writes nothing, failures don't block).
-- Gate: `flutter analyze && flutter test` (also what CI runs, on `windows-latest`).
+- Gate: `flutter analyze && flutter test` (also what CI runs, on `windows-latest`). CI also runs `powershell -File tool/test_updater.ps1` (builds `windows/updater` with CMake and tests `GargosyUpdate.exe`).
 
 ## Release
 `pwsh tool/make_release.ps1` builds and writes `dist\Gargosy-<version>.zip`: it unpacks to `Gargosy\` with the app, empty `roms\`, `emulators\`, `bios\` and `userdata\`, and the licence files. There is no installer. An update replaces only the app files.

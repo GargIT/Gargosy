@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
+import '../../providers/update_providers.dart';
 import '../screens/doc_reader_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../widgets/sync_wait.dart';
@@ -22,7 +23,11 @@ final shellTabProvider = StateProvider<int>((ref) => 0);
 Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
   final ctx = ref.read(activeProfileProvider);
   if (ctx == null) return;
-  final choice = await showUserMenu(context, profile: ctx.profile, avatarPath: ctx.paths.avatarFile);
+  final available = ref.read(updateStateProvider).available;
+  final choice = await showUserMenu(context,
+      profile: ctx.profile,
+      avatarPath: ctx.paths.avatarFile,
+      update: available == null ? null : 'Update available: ${available.release.version}');
   if (!context.mounted) return;
   if (choice == null) return;
   final page = choice.page;

@@ -22,6 +22,9 @@ import 'profiles/app_root.dart';
 import 'profiles/path_guard.dart';
 import 'profiles/portable_temp.dart';
 import 'profiles/profile_providers.dart';
+import 'providers/update_providers.dart';
+import 'core/platform/platform_info.dart';
+import 'update/update_installer.dart';
 import 'ui/screens/startup_error_app.dart';
 
 Future<void> main(List<String> args) async {
@@ -44,12 +47,22 @@ Future<void> main(List<String> args) async {
   PathProviderPlatform.instance = GargosyPathProvider(appDataDir: root.appData, previous: PathProviderPlatform.instance);
   SharedPreferencesStorePlatform.instance = JsonFilePreferencesStore(io.File(root.settingsFile));
   final prefs = await SharedPreferences.getInstance();
+  // Started by GargosyUpdate.exe: clean up after the update, or say why it failed.
+  final updateOutcome = await UpdateInstaller(
+    root: root,
+    pid: io.pid,
+    args: args,
+    currentVersion: AppConstants.version,
+    platform: PlatformInfo.current,
+  ).afterStart(args);
   await WindowService.init(
       fullscreen: WindowService.shouldStartFullscreen(args, prefs.getBool(WindowService.launchFullscreenPrefKey)));
   runApp(ProviderScope(
     overrides: [
       appRootProvider.overrideWithValue(root),
       appPreferencesProvider.overrideWithValue(SharedPreferencesAppPreferences(prefs)),
+      launchArgsProvider.overrideWithValue(args),
+      updateOutcomeProvider.overrideWithValue(updateOutcome),
     ],
     child: const GargosyApp(),
   ));

@@ -40,6 +40,12 @@ What changed in each release of Gargosy. The format follows
   under the Play button. Arcade sets and emulators that read zips keep the zip.
 - Original Xbox discs in the Redump form are made XISO, which xemu needs: the
   video partition is left out while unpacking, so it takes no extra room.
+- Gargosy updates itself (#16): it checks GitHub at start, shows a dot on the
+  avatar when a new version is out, and About → Update now downloads it,
+  checks it, and swaps the app files with the new `GargosyUpdate.exe`. Your
+  games, emulators, BIOS files and `userdata\` are never touched. The channel
+  is *Latest* (releases) or *Preview* (the rolling preview too). Coming from
+  0.1.0, update by hand once.
 - ScummVM can play games: download it (or import one) in Settings →
   Emulators, and each profile keeps its own settings, saves, screenshots and
   log in its folder. Its saves don't sync with RomM yet.

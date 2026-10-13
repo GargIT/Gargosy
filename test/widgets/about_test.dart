@@ -16,6 +16,7 @@ import 'package:gargosy/ui/screens/settings/about_section.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
 void main() {
@@ -46,6 +47,7 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         appRootProvider.overrideWithValue(AppRoot(root.path)),
+        appPreferencesProvider.overrideWithValue(MemoryPrefs()),
         externalOpenerProvider.overrideWithValue(opened.add),
         rommServerVersionProvider.overrideWith((ref) async => rommVersion),
       ],

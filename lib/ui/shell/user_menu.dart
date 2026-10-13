@@ -29,13 +29,15 @@ class UserMenuChoice {
 /// The user menu (Start, or the profile badge), as RomM v2's: the profile
 /// with Gargosy's version beside its name, every section of Settings in its
 /// group (one item each, from [SettingsPage]), Fullscreen, About and the
-/// changelog, and Switch profile at the bottom (RomM's Logout).
+/// changelog, and Switch profile at the bottom (RomM's Logout). [update]
+/// ("Update available: 0.2.0") is an item of its own that opens About.
 /// Focus starts on Profile; the menu scrolls when the window is short.
-Future<UserMenuChoice?> showUserMenu(BuildContext context, {required Profile profile, String? avatarPath}) {
+Future<UserMenuChoice?> showUserMenu(BuildContext context,
+    {required Profile profile, String? avatarPath, String? update}) {
   Widget item(BuildContext c, String label, IconData icon, UserMenuChoice choice,
-          {bool autofocus = false, Widget? trailing, Color? color}) =>
+          {bool autofocus = false, Widget? trailing, Color? color, String? id}) =>
       GFocusable(
-        key: ValueKey('user-menu-${choice.page?.name ?? choice.action!.name}'),
+        key: ValueKey('user-menu-${id ?? choice.page?.name ?? choice.action!.name}'),
         autofocus: autofocus,
         borderRadius: GRadius.chip,
         onActivate: () => Navigator.of(c).pop(choice),
@@ -120,6 +122,9 @@ Future<UserMenuChoice?> showUserMenu(BuildContext context, {required Profile pro
                         trailing: const _KeyChip('F11')),
                 ],
                 line,
+                if (update != null)
+                  item(c, update, Icons.system_update_alt, const UserMenuChoice.settings(SettingsPage.about),
+                      color: GColors.primaryHover, id: 'update'),
                 for (final page in SettingsPage.values.where((p) => p.group == SettingsGroup.gargosy))
                   item(c, page.label, page.icon, UserMenuChoice.settings(page)),
                 item(c, 'Changelog', Icons.history, const UserMenuChoice.action(UserMenuAction.changelog)),

@@ -1,0 +1,31 @@
+#include <windows.h>
+
+// The app icon, as Gargosy.exe's.
+1 ICON "../runner/resources/app_icon.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_APP
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "CompanyName", "se.gargit"
+            VALUE "FileDescription", "Gargosy updater"
+            VALUE "FileVersion", "1.0.0"
+            VALUE "InternalName", "GargosyUpdate"
+            VALUE "LegalCopyright", "Copyright (C) 2026 se.gargit"
+            VALUE "OriginalFilename", "GargosyUpdate.exe"
+            VALUE "ProductName", "Gargosy"
+            VALUE "ProductVersion", "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END

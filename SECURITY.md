@@ -23,6 +23,24 @@ there is no promised response time.
 - A download or archive making Gargosy run something it shouldn't.
 - Certificates: a self-signed certificate trusted for more than the
   profile's own RomM server.
+- Updates making Gargosy install something that isn't a release of this
+  repository, or `GargosyUpdate.exe` writing a file that isn't on the
+  release's `app-files.txt`.
+
+## Updates
+
+- Gargosy looks for updates only on this repository's GitHub Releases
+  (`api.github.com/repos/GargIT/Gargosy`), over HTTPS, without a token.
+- A download must have the size GitHub gives for it and, when GitHub gives
+  one, the same SHA-256 (`digest`). Otherwise it's deleted and nothing
+  changes.
+- `GargosyUpdate.exe` replaces only the files on the release's
+  `app-files.txt`. A list naming an absolute path, a `..`, or a path in
+  `roms\`, `emulators\`, `bios\` or `userdata\` is refused before anything
+  moves. When a step fails, the old files are put back.
+- The zip and the exes aren't signed by Gargosy yet. A compromised GitHub
+  account could publish a bad release, and the checks above wouldn't catch
+  it. Signing is planned.
 
 ## What doesn't
 
