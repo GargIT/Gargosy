@@ -38,7 +38,8 @@ void main() {
          'ryujinx', // -r (issue #9)
          // a folder link (issues #8, #12–#15)
          'eden', 'azahar', 'cemu', 'melonds',
-         'rpcs3'}); // RPCS3_CONFIG_DIR (issue #10)
+         'rpcs3', // RPCS3_CONFIG_DIR (issue #10)
+         'scummvm'}); // --config, --savepath (issue #11)
     expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });
 

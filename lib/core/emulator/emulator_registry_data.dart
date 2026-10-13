@@ -301,6 +301,9 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
     'id': 'scummvm',
     'name': 'ScummVM',
     'type': 'direct',
+    // Gargosy: ScummVM's own Windows x64 zip (its GitHub releases carry no
+    // files). A fixed release: bump it with ScummVM's.
+    'windows_url': 'https://downloads.scummvm.org/frs/scummvm/2026.4.0/scummvm-2026.4.0-win32-x86_64.zip',
     'windows_executable': 'scummvm.exe',
     'linux_executable': 'scummvm',
     'macos_executable': 'ScummVM.app/Contents/MacOS/scummvm',

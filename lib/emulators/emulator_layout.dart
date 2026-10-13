@@ -74,6 +74,8 @@ class EmulatorLayout {
     // RPCS3_CONFIG_DIR=<data> (issue #10): $(EmulatorDir) is <data>, so the
     // save code's <install>\dev_hdd0 is the profile's.
     'rpcs3': EmulatorLayout('rpcs3', seed: ['dev_hdd0/home/00000001/savedata']),
+    // --config and --savepath into the profile (issue #11).
+    'scummvm': EmulatorLayout('scummvm', seed: ['saves', 'screenshots']),
   };
 
   static EmulatorLayout of(String id) => _table[id] ?? EmulatorLayout(id);

@@ -58,6 +58,8 @@ class EmulatorLibrary {
     'rpcs3': {'config', 'dev_hdd0', 'dev_hdd1', 'dev_flash', 'dev_flash2', 'dev_flash3', 'dev_usb000', 'dev_bdvd',
       'cache', 'captures', 'games', 'log', 'savestates', 'shaderlog', 'ppu_progs', 'spu_progs', 'patches', 'portable',
       'rpcs3.buf'},
+    // A portable ScummVM's own settings, saves and logs beside its exe.
+    'scummvm': {'scummvm.ini', 'saves', 'screenshots', 'logs', 'scummvm.log', 'icons'},
     // A portable Ryujinx keeps its saves, keys and firmware in portable\;
     // Gargosy starts it with -r on the profile's folder instead.
     'ryujinx': {'portable'},

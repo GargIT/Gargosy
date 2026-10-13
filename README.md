@@ -47,7 +47,8 @@ Choose **More info**, then **Run anyway**.
 - **PIN.** A profile can have a four-digit PIN. It's a family lock, not security: anyone using
   the same Windows account can open the Gargosy folder.
 - **Emulators.** Start → Emulators: download one, or import an install you already have
-  (it's copied; your install isn't changed). Put BIOS files in `bios\`.
+  (it's copied; your install isn't changed). Put BIOS files in `bios\`. ScummVM has no
+  download here: get it from scummvm.org and import it.
 - **Playing.** On a game's page: Download, then Play. The play screen picks the newest save;
   Y changes the emulator, RB shows the save states.
 - **Offline.** Games on this PC still play; saves upload when RomM can be reached again.
