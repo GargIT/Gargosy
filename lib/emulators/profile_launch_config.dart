@@ -9,7 +9,6 @@ import '../profiles/path_guard.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
 import 'linked_emulators.dart';
-import '../core/emulator/strategies/scummvm_strategy.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
 /// emulator's install folder and the shared BIOS folder.
@@ -125,6 +124,8 @@ abstract class ProfileLaunchConfig {
     'scummvm': _ScummVm((c) => [
           '--config=${p.join(c.data, 'scummvm.ini')}',
           '--savepath=${p.join(c.data, 'saves')}',
+          // Its log would go to %APPDATA%\ScummVM\Logs otherwise.
+          '--logfile=${p.join(c.data, 'scummvm.log')}',
         ], before: (c) async => _scummVmFolders(c)),
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
@@ -229,7 +230,32 @@ class _ScummVm extends _Args {
   const _ScummVm(super.args, {super.before});
 
   @override
-  List<String> gameArgs(LaunchContext c, String romPath) => ScummVMStrategy.gameArgs(ScummVMStrategy.gameFolderFor(romPath));
+  List<String> gameArgs(LaunchContext c, String romPath) => scummVmGameArgs(romPath);
+}
+
+/// How ScummVM starts the game at [romPath] (issue #11):
+/// - a `.scummvm`/`.svm` file (RomM's ScummVM convention: the game's id in
+///   a file beside its data): that id, in the file's folder;
+/// - a folder: auto-detected there, gone down through folders that hold
+///   only one folder (a zip that unpacked into `<name>\<Game>\`);
+/// - another file: auto-detected in its folder.
+List<String> scummVmGameArgs(String romPath) {
+  if (!io.Directory(romPath).existsSync()) {
+    final file = io.File(romPath);
+    final ext = p.extension(romPath).toLowerCase();
+    if (file.existsSync() && (ext == '.scummvm' || ext == '.svm')) {
+      final id = file.readAsStringSync().trim().split(RegExp(r'\s+')).first;
+      if (RegExp(r'^[A-Za-z0-9:_-]+$').hasMatch(id)) return ['--path=${p.dirname(romPath)}', id];
+    }
+    return ['--auto-detect', '--path=${p.dirname(romPath)}'];
+  }
+  var dir = io.Directory(romPath);
+  while (dir.existsSync()) {
+    final entries = dir.listSync(followLinks: false);
+    if (entries.length != 1 || entries.single is! io.Directory) break;
+    dir = entries.single as io.Directory;
+  }
+  return ['--auto-detect', '--path=${dir.path}'];
 }
 
 /// The profile's ScummVM folders: saves (also given as --savepath) and
@@ -240,7 +266,9 @@ void _scummVmFolders(LaunchContext c) {
   final file = io.File(c.guard.check(p.join(c.data, 'scummvm.ini')));
   final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '')
     ..set('scummvm', 'savepath', saves.path)
-    ..set('scummvm', 'screenshotpath', shots.path);
+    ..set('scummvm', 'screenshotpath', shots.path)
+    // Downloaded icons: the profile's, not %APPDATA%\ScummVM\Icons.
+    ..set('scummvm', 'iconspath', (io.Directory(c.guard.check(p.join(c.data, 'icons')))..createSync()).path);
   file.writeAsStringSync(ini.toText());
 }
 

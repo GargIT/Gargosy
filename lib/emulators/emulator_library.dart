@@ -54,6 +54,8 @@ class EmulatorLibrary {
     'flycast': {'emu.cfg', 'data'},
     'mame': {'cfg', 'nvram', 'sta', 'inp', 'snap', 'diff', 'comments', 'ini', 'mame.ini', 'ui.ini'},
     'xemu': {'xemu.toml'},
+    // A portable ScummVM's own settings, saves and logs beside its exe.
+    'scummvm': {'scummvm.ini', 'saves', 'screenshots', 'logs', 'scummvm.log', 'icons'},
     // A portable Ryujinx keeps its saves, keys and firmware in portable\;
     // Gargosy starts it with -r on the profile's folder instead.
     'ryujinx': {'portable'},

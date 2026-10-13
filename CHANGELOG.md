@@ -30,9 +30,9 @@ What changed in each release of Gargosy. The format follows
   under the Play button. Arcade sets and emulators that read zips keep the zip.
 - Original Xbox discs in the Redump form are made XISO, which xemu needs: the
   video partition is left out while unpacking, so it takes no extra room.
-- ScummVM can play games: an imported ScummVM keeps each profile's settings,
-  saves and screenshots in the profile's folder. Its saves don't sync with
-  RomM yet.
+- ScummVM can play games: download it (or import one) in Settings →
+  Emulators, and each profile keeps its own settings, saves, screenshots and
+  log in its folder. Its saves don't sync with RomM yet.
 
 ### Changed
 
