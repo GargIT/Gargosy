@@ -13,14 +13,16 @@ class FolderLinkUnsupported implements Exception {
   final Object cause;
 
   @override
-  String toString() => "A folder link can't be made at $link (the drive may be FAT32 or exFAT): $cause";
+  String toString() => "A folder link can't be made at $link: $cause. "
+      'The drive may be FAT32 or exFAT, which have no links, or the folder may be in use.';
 }
 
 /// What [pointFolderLink] did besides pointing the link.
 class FolderLinkResult {
   const FolderLinkResult({this.movedToTemplate});
 
-  /// A real folder that was where the link goes, moved here (never deleted).
+  /// Where a real folder (or file) that was where the link goes was moved:
+  /// the profile's folder, the template, or set aside. Never deleted.
   final String? movedToTemplate;
 }
 
@@ -32,9 +34,12 @@ class FolderLinkResult {
 ///
 /// - [target] is made when missing.
 /// - A link to anywhere else is re-pointed.
-/// - A real folder in the way (an imported install with data in it) is moved
-///   once into [templateDir] (`userdata\templates\<emu>\<folder>`), never
-///   deleted; a file in the way is renamed `<name>.gargosy-off`.
+/// - A real folder in the way (an imported install with data in it, or a
+///   release zip that ships the folder) is never deleted. It becomes the
+///   profile's folder when that holds no files yet; otherwise it goes to
+///   [templateDir] (`userdata\templates\<emu>\<folder>`, which new profiles
+///   start from) the first time, and to [setAsideDir] after that.
+/// - A file in the way is renamed `<name>.gargosy-off` (`… (2)` when taken).
 ///
 /// Both paths go through [guard]: [link] must be in `emulators\`, [target]
 /// in the active profile's folder. Throws [FolderLinkUnsupported] when the
@@ -44,6 +49,7 @@ FolderLinkResult pointFolderLink({
   required String target,
   required PathGuard guard,
   required String templateDir,
+  required String setAsideDir,
 }) {
   final linkPath = guard.check(link);
   final targetPath = guard.check(target);
@@ -63,14 +69,26 @@ FolderLinkResult pointFolderLink({
       if (_same(io.Link(linkPath).targetSync(), targetPath)) return const FolderLinkResult();
       io.Link(linkPath).deleteSync(); // the link only, never what it points at
     case io.FileSystemEntityType.directory:
-      moved = _moveAside(linkPath, guard.check(templateDir));
+      if (!_hasFiles(targetPath)) {
+        // The profile has nothing yet: the data is its own from here on.
+        io.Directory(targetPath).deleteSync(recursive: true);
+        io.Directory(linkPath).renameSync(targetPath);
+        moved = targetPath;
+        io.Directory(targetPath).createSync(recursive: true);
+      } else {
+        final template = guard.check(templateDir);
+        moved = _moveAside(
+            linkPath,
+            io.FileSystemEntity.typeSync(template, followLinks: false) == io.FileSystemEntityType.notFound
+                ? template
+                : guard.check(setAsideDir));
+      }
       debugPrint('[FolderLink] $linkPath was a real folder: moved to $moved');
     case io.FileSystemEntityType.notFound:
       break;
     default:
-      final off = guard.check('$linkPath.gargosy-off');
-      io.File(linkPath).renameSync(off);
-      moved = off;
+      moved = _free(guard.check('$linkPath.gargosy-off'));
+      io.File(linkPath).renameSync(moved);
   }
 
   try {
@@ -119,11 +137,23 @@ bool _same(String a, String b) {
 /// Moves the folder [from] to [to], or `<to> (2)`, `(3)` … when [to] is
 /// taken: nothing is overwritten.
 String _moveAside(String from, String to) {
-  var dest = to;
-  for (var n = 2; io.FileSystemEntity.typeSync(dest, followLinks: false) != io.FileSystemEntityType.notFound; n++) {
-    dest = '$to ($n)';
-  }
+  final dest = _free(to);
   io.Directory(p.dirname(dest)).createSync(recursive: true);
   io.Directory(from).renameSync(dest);
   return dest;
+}
+
+/// [path], or `<path> (2)`, `(3)` … : the first name nothing has.
+String _free(String path) {
+  var dest = path;
+  for (var n = 2; io.FileSystemEntity.typeSync(dest, followLinks: false) != io.FileSystemEntityType.notFound; n++) {
+    dest = '$path ($n)';
+  }
+  return dest;
+}
+
+/// Whether [dir] holds a file anywhere (empty folders don't count).
+bool _hasFiles(String dir) {
+  final d = io.Directory(dir);
+  return d.existsSync() && d.listSync(recursive: true, followLinks: false).any((e) => e is! io.Directory);
 }

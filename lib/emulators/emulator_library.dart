@@ -121,9 +121,11 @@ class EmulatorLibrary {
     final skip = dataNames[id] ?? const <String>{};
     void copyDir(io.Directory from, String to) {
       io.Directory(to).createSync(recursive: true);
-      for (final e in from.listSync()) {
+      // Never through a link (issue #8): another Gargosy's user\ link leads
+      // into that profile's data, and a link back to a parent never ends.
+      for (final e in from.listSync(followLinks: false)) {
         final name = p.basename(e.path);
-        if (skip.contains(name.toLowerCase())) continue;
+        if (e is io.Link || skip.contains(name.toLowerCase())) continue;
         final dest = _guard.join(to, name);
         if (e is io.Directory) {
           copyDir(e, dest);
