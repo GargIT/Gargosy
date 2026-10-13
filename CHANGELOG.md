@@ -14,6 +14,10 @@ What changed in each release of Gargosy. The format follows
   the core, so RomM's player and Argosy see the same save, and a game's save
   on a shared PS2 card travels without the other games' (#7). Other systems
   in RetroArch sync as before.
+- Gargosy keeps a log in `userdata\app\logs`, one file per start (the
+  newest 10 are kept, each at most 5 MB). Logins, tokens, passwords and API
+  keys are left out. About → Open log folder; attach the newest log to a bug
+  report (#1).
 
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.
@@ -25,6 +29,16 @@ What changed in each release of Gargosy. The format follows
 - Original Xbox discs in the Redump form are made XISO, which xemu needs: the
   video partition is left out while unpacking, so it takes no extra room.
 
+### Changed
+
+- Settings and the user menu look and work like RomM v2's profile page and
+  user menu: sections in groups (Profile, Library, This PC, Gargosy), settings
+  in cards, and the menu opens Settings on the section you pick. The menu
+  also has the changelog, and Switch profile sits at the bottom.
+- Save states on RomM are one switch, "Sync save states with RomM", for every
+  emulator that can sync them, instead of one per emulator. A profile that had
+  it on for any emulator keeps it on.
+
 ### Fixed
 
 - Dolphin can be downloaded again: its download page now turns programs away,
@@ -34,6 +48,9 @@ What changed in each release of Gargosy. The format follows
   updates still get the latest release, never a preview or nightly build.
 - Emulator downloads show their progress while they run, instead of
   "Downloading 0 %" until done.
+- A PS2 save from RomM goes back onto a memory card file again: the check
+  after writing the card failed every time ("I/O error"), because of how the
+  save engine was compiled.
 - Emulators that come as a zip (PPSSPP, xemu, ares, DuckStation) unpacked
   only their first file, so they never counted as installed.
 - xemu finds its hard disk: the first launch in a profile copies

@@ -6,6 +6,42 @@ import '../../profiles/profile.dart';
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
 
+/// The profile's circle: the RomM avatar, else the initial on the profile's
+/// colour. Not focusable (the badge, the user menu and Settings show it).
+class ProfileAvatar extends StatelessWidget {
+  const ProfileAvatar({super.key, required this.profile, this.avatarPath, this.size = 120, this.ring = false});
+
+  final Profile profile;
+  final String? avatarPath;
+  final double size;
+
+  /// A thin ring around it, as on Settings → Profile.
+  final bool ring;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = GColors.profileColors[profile.colorIndex % GColors.profileColors.length];
+    final avatar = avatarPath != null && profile.hasAvatar && io.File(avatarPath!).existsSync() ? io.File(avatarPath!) : null;
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        border: ring ? Border.all(color: GColors.borderStrong, width: 3) : null,
+      ),
+      alignment: Alignment.center,
+      child: avatar != null
+          // From memory, not Image.file: the file is replaced when RomM's avatar
+          // changes, and Image.file would keep showing the cached old one.
+          ? Image.memory(avatar.readAsBytesSync(), width: size, height: size, fit: BoxFit.cover, gaplessPlayback: true)
+          : Text(profile.name.isEmpty ? '?' : profile.name.characters.first.toUpperCase(),
+              style: TextStyle(fontSize: size * 0.42, fontWeight: FontWeight.w700, color: GColors.bg)),
+    );
+  }
+}
+
 /// A round Plex-style badge: the RomM avatar or the initial on the profile's
 /// colour, a lock when there is a PIN, and the name (spec §5).
 class ProfileBadge extends StatelessWidget {
@@ -32,21 +68,7 @@ class ProfileBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = GColors.profileColors[profile.colorIndex % GColors.profileColors.length];
-    final avatar = avatarPath != null && profile.hasAvatar && io.File(avatarPath!).existsSync() ? io.File(avatarPath!) : null;
-    final circle = Container(
-      width: size,
-      height: size,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      alignment: Alignment.center,
-      child: avatar != null
-          // From memory, not Image.file: the file is replaced when RomM's avatar
-          // changes, and Image.file would keep showing the cached old one.
-          ? Image.memory(avatar.readAsBytesSync(), width: size, height: size, fit: BoxFit.cover, gaplessPlayback: true)
-          : Text(profile.name.isEmpty ? '?' : profile.name.characters.first.toUpperCase(),
-              style: TextStyle(fontSize: size * 0.42, fontWeight: FontWeight.w700, color: GColors.bg)),
-    );
+    final circle = ProfileAvatar(profile: profile, avatarPath: avatarPath, size: size);
     return Column(mainAxisSize: MainAxisSize.min, children: [
       GFocusable(
         autofocus: autofocus,

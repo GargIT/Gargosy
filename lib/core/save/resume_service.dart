@@ -167,9 +167,10 @@ class ResumeService {
     }
     yield _sorted(local.values);
 
-    final syncing = sources
-        .where((s) => _prefs.getBool(StateSyncService.enabledKey(s.emulator.emulatorId)) == true)
-        .toList();
+    // Gargosy: one switch for every emulator whose strategy syncs states (S0.4).
+    final syncing = _prefs.getBool(StateSyncService.enabledKey) == true
+        ? sources.where((s) => s.emulator.supportsStateSync).toList()
+        : const <_Source>[];
     final api = _api;
     if (api == null || syncing.isEmpty || _isOffline()) return;
     final List<RommState> remote;
