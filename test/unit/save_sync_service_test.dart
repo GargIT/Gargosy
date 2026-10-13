@@ -1211,7 +1211,9 @@ void main() {
       });
     }
 
-    test('both sync modes: Dolphin\'s state files make \'both\' a second hash', () async {
+    // Gargosy: states never ride in game saves (issue #30), so a state file
+    // adds no second hash; RomM's copy of the save still matches.
+    test("a Dolphin state file beside the save changes nothing: one hash, the save's", () async {
       final exeDir = Directory(p.join(tempDir.path, 'dolphin'))..createSync();
       File(p.join(exeDir.path, 'Dolphin')).writeAsStringSync('');
       final card = Directory(p.join(exeDir.path, 'User', 'GC', 'USA', 'Card A'))..createSync(recursive: true);
@@ -1232,8 +1234,7 @@ void main() {
       final withState = await sync.rommHashesOfLocal(game, romFile, emulatorId: 'dolphin');
 
       expect(saveOnly, hasLength(1));
-      expect(withState, hasLength(2));
-      expect(withState, containsAll(saveOnly));
+      expect(withState, saveOnly);
     });
 
     test('a DuckStation PS1 card becomes the RetroArch core\'s .srm', () async {

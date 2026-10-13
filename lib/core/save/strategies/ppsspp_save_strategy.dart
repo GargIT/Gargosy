@@ -208,20 +208,8 @@ class PpssppSaveStrategy extends SaveStrategy {
       }
     }
 
-    final statesDir = io.Directory(p.join(pspDir, 'PPSSPP_STATE'));
-    if (await statesDir.exists()) {
-      final stemLower = getRomStem(game).toLowerCase();
-      await for (final entity in statesDir.list()) {
-        if (entity is! io.File) continue;
-        final fname = p.basename(entity.path).toLowerCase();
-        if (fname == '$stemLower.ppst') {
-          if (sessionStart == null || (await entity.stat()).modified.isAfter(sessionStart.subtract(const Duration(seconds: 2)))) {
-            result.add(entity);
-          }
-          break;
-        }
-      }
-    }
+    // Gargosy: states never ride in game saves (issue #30); StateSyncService
+    // carries them.
 
     return result;
   }
@@ -262,7 +250,12 @@ class PpssppSaveStrategy extends SaveStrategy {
               ? p.join(targetStateDir, cleanName)
               : p.join(targetSaveDir, cleanName));
 
-          if (entry.isFile) {
+          if (entry.isFile && entry.name.toLowerCase().endsWith('.ppst')) {
+            // Gargosy: a state in an older bundle (issue #30), only when this
+            // PC has none of that name; never over one.
+            await restoreStateIfMissing(targetStateDir, entry.name, entry.content as List<int>,
+                modified: entry.lastModDateTime);
+          } else if (entry.isFile) {
             await backupSave(targetPath);
             final outFile = io.File(targetPath);
             await outFile.parent.create(recursive: true);
@@ -275,11 +268,8 @@ class PpssppSaveStrategy extends SaveStrategy {
       }
 
       if (filename.toLowerCase().endsWith('.ppst')) {
-        final targetPath = p.normalize(p.join(targetStateDir, filename));
-        await backupSave(targetPath);
-        final outFile = io.File(targetPath);
-        await outFile.parent.create(recursive: true);
-        await outFile.writeAsBytes(data);
+        // Gargosy: only when this PC has no state of that name (issue #30).
+        await restoreStateIfMissing(targetStateDir, filename, data);
         return true;
       }
       return false;
