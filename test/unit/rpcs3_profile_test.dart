@@ -25,6 +25,31 @@ class _Ended implements io.Process {
   @override
   Future<int> get exitCode async => code;
   @override
+  int get pid => 4242;
+  @override
+  Stream<List<int>> get stdout => const Stream.empty();
+  @override
+  Stream<List<int>> get stderr => const Stream.empty();
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// RPCS3 after a firmware install: it stays open until it's closed.
+class _StaysOpen implements io.Process {
+  final _done = Completer<int>();
+  bool killed = false;
+  @override
+  Future<int> get exitCode => _done.future;
+  @override
+  int get pid => 4243;
+  @override
+  bool kill([io.ProcessSignal signal = io.ProcessSignal.sigterm]) {
+    killed = true;
+    if (!_done.isCompleted) _done.complete(1);
+    return true;
+  }
+
+  @override
   Stream<List<int>> get stdout => const Stream.empty();
   @override
   Stream<List<int>> get stderr => const Stream.empty();
@@ -50,7 +75,7 @@ void main() {
     );
   }
 
-  String sharedFlash() => '${p.join(root.emulators, 'rpcs3', 'dev_flash').replaceAll(r'\', '/')}/';
+  String sharedFlash() => '${p.join(root.emulators, 'rpcs3-firmware', 'dev_flash').replaceAll(r'\', '/')}/';
 
   test('RPCS3_CONFIG_DIR is the profile\'s folder; other emulators get no new variables', () {
     final c = ctx();
@@ -68,7 +93,7 @@ void main() {
     expect(vfs, contains("/dev_flash/: '${sharedFlash()}'\n"));
     expect(vfs, contains('/dev_hdd0/: \$(EmulatorDir)dev_hdd0/'), reason: 'saves stay in the profile');
     expect(RegExp('^/dev_flash/:', multiLine: true).allMatches(vfs).length, 1);
-    expect(io.Directory(p.join(root.emulators, 'rpcs3', 'dev_flash')).existsSync(), isTrue);
+    expect(io.Directory(p.join(root.emulators, 'rpcs3-firmware', 'dev_flash')).existsSync(), isTrue);
   });
 
   test('a portable\\ beside the exe (it would win) is turned off, never deleted', () async {
@@ -105,10 +130,19 @@ void main() {
     late int exitCode;
     late ProfileLaunchDirectories dirs;
     late String exe;
+    late List<int> confirmed;
+    _StaysOpen? open;
+    String vsh() => p.join(root.emulators, 'rpcs3-firmware', 'dev_flash', 'vsh', 'module', 'vsh.self');
+    Ps3Firmware firmware() => Ps3Firmware(root, dirs,
+        confirm: (pid) async => (confirmed..add(pid)).isNotEmpty,
+        close: (process) async => process.kill(),
+        poll: const Duration(milliseconds: 1));
 
     setUp(() {
       started = [];
       exitCode = 0;
+      confirmed = [];
+      open = null;
       exe = p.join(root.emulators, 'rpcs3', 'rpcs3.exe');
       io.File(exe).createSync(recursive: true);
       dirs = ProfileLaunchDirectories(
@@ -118,7 +152,8 @@ void main() {
         start: (exePath, args, {workingDirectory, environment}) async {
           started.add((args, environment));
           if (args.first == '--installfw' && exitCode == 0) {
-            io.File(p.join(root.emulators, 'rpcs3', 'dev_flash', 'vsh', 'module', 'vsh.self')).createSync(recursive: true);
+            io.File(vsh()).createSync(recursive: true);
+            return open = _StaysOpen();
           }
           return _Ended(exitCode);
         },
@@ -133,16 +168,26 @@ void main() {
 
     test('the firmware: rpcs3.exe --installfw <PS3UPDAT.PUP from bios\\>, on the profile, once for everyone', () async {
       final pup = io.File(p.join(root.bios, 'ps3', 'PS3UPDAT.PUP'))..createSync(recursive: true);
-      final firmware = Ps3Firmware(root, dirs);
-      expect(firmware.installed, isFalse);
-      await firmware.install(exe);
+      final f = firmware();
+      expect(f.installed, isFalse);
+      await f.install(exe);
       expect(started.single.$1, ['--installfw', pup.path]);
       expect(started.single.$2!['RPCS3_CONFIG_DIR'], isNotNull);
-      expect(firmware.installed, isTrue);
+      expect(confirmed, [4243], reason: "RPCS3's Install firmware? box is answered for the player");
+      expect(open!.killed, isTrue, reason: 'RPCS3 stays open after installing: Gargosy closes it');
+      expect(f.installed, isTrue);
+      expect(io.File(vsh()).existsSync(), isTrue);
+    });
+
+    test("the shared firmware is outside RPCS3's install: removing RPCS3 keeps it", () async {
+      io.File(p.join(root.bios, 'ps3', 'PS3UPDAT.PUP')).createSync(recursive: true);
+      await firmware().install(exe);
+      io.Directory(p.join(root.emulators, 'rpcs3')).deleteSync(recursive: true);
+      expect(firmware().installed, isTrue);
     });
 
     test('no PS3UPDAT.PUP in bios\\: a clear message, nothing started', () async {
-      await expectLater(Ps3Firmware(root, dirs).install(exe),
+      await expectLater(firmware().install(exe),
           throwsA(isA<Ps3FirmwareException>().having((e) => e.message, 'message', contains('PS3UPDAT.PUP'))));
       expect(started, isEmpty);
     });
@@ -150,7 +195,7 @@ void main() {
     test('RPCS3 failing says so', () async {
       io.File(p.join(root.bios, 'PS3UPDAT.PUP')).createSync(recursive: true);
       exitCode = 1;
-      await expectLater(Ps3Firmware(root, dirs).install(exe), throwsA(isA<Ps3FirmwareException>()));
+      await expectLater(firmware().install(exe), throwsA(isA<Ps3FirmwareException>()));
     });
   });
 

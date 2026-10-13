@@ -3,19 +3,23 @@ import 'dart:io' as io;
 import 'package:path/path.dart' as p;
 
 import '../core/storage/ini_file.dart';
+import '../profiles/app_root.dart';
 import 'profile_launch_config.dart';
 
 /// RPCS3 (PS3) on a profile's data (issue #10): started with
 /// `RPCS3_CONFIG_DIR=<data>\`, so `config.yml`, `vfs.yml` and `dev_hdd0`
 /// (saves, licences, installed updates and DLC) are the profile's. The
 /// installed firmware (`dev_flash`, ~200 MB) is shared: the profile's
-/// `vfs.yml` points `/dev_flash/` at `emulators\rpcs3\dev_flash\`, so it's
+/// `config\vfs.yml` points `/dev_flash/` at `emulators\rpcs3-firmware\dev_flash\`, so it's
 /// installed once. `dev_flash2`/`dev_flash3` stay per profile.
 class Rpcs3Config extends ProfileLaunchConfig {
   const Rpcs3Config();
 
-  /// The firmware every profile reads (`fs::get_config_dir` / vfs_config.h).
-  static String sharedFlash(LaunchContext c) => p.join(c.guard.root.emulators, 'rpcs3', 'dev_flash');
+  /// The firmware every profile reads: beside RPCS3's install, not in it,
+  /// so removing, updating or importing RPCS3 never deletes it.
+  static String sharedFlash(LaunchContext c) => sharedFlashIn(c.guard.root);
+
+  static String sharedFlashIn(AppRoot root) => p.join(root.emulators, 'rpcs3-firmware', 'dev_flash');
 
   @override
   Future<List<String>> prepare(LaunchContext c) async {

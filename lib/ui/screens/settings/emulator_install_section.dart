@@ -6,6 +6,7 @@ import '../../../emulators/bios_sync.dart';
 import '../../../emulators/emulator_installer.dart';
 import '../../../emulators/emulator_library.dart';
 import '../../../emulators/ps3_firmware.dart';
+import '../../../play/play_controller.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
@@ -31,6 +32,11 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
   Future<void> _installPs3Firmware(String exe) async {
     final firmware = ref.read(ps3FirmwareProvider);
     if (firmware == null || _installingFirmware) return;
+    // One emulator at a time: RPCS3 can't install while a game runs.
+    if (ref.read(playControllerProvider).runningGameId != null) {
+      showToast(context, 'A game is running. Close it first.');
+      return;
+    }
     setState(() => _installingFirmware = true);
     try {
       await firmware.install(exe);

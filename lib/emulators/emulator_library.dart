@@ -54,6 +54,10 @@ class EmulatorLibrary {
     'flycast': {'emu.cfg', 'data'},
     'mame': {'cfg', 'nvram', 'sta', 'inp', 'snap', 'diff', 'comments', 'ini', 'mame.ini', 'ui.ini'},
     'xemu': {'xemu.toml'},
+    // RPCS3's own data beside its exe: games, saves, firmware and caches.
+    'rpcs3': {'config', 'dev_hdd0', 'dev_hdd1', 'dev_flash', 'dev_flash2', 'dev_flash3', 'dev_usb000', 'dev_bdvd',
+      'cache', 'captures', 'games', 'log', 'savestates', 'shaderlog', 'ppu_progs', 'spu_progs', 'patches', 'portable',
+      'rpcs3.buf'},
     // A portable Ryujinx keeps its saves, keys and firmware in portable\;
     // Gargosy starts it with -r on the profile's folder instead.
     'ryujinx': {'portable'},

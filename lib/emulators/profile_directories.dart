@@ -139,18 +139,25 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
 
   /// Runs [exePath] on this profile's data with [args] and no game (RPCS3's
   /// `--installfw`, issue #10): the launch config readies the profile and
-  /// gives its environment, and nothing else is added. The exit code.
-  Future<int> runWithProfile(String emulatorId, String exePath, List<String> args) async {
+  /// gives its environment, and nothing else is added. [finish] puts the
+  /// profile's settings back; the caller runs it once the process is done,
+  /// and it runs here when the start fails.
+  Future<({io.Process process, Future<void> Function() finish})> startWithProfile(
+      String emulatorId, String exePath, List<String> args) async {
     final config = ProfileLaunchConfig.of(emulatorId);
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
     final c = _context(emulatorId, p.dirname(exePath));
     await config.prepare(c);
-    final process = await _start(exePath, args, workingDirectory: c.exeDir, environment: config.environment(c));
+    final io.Process process;
+    try {
+      process = await _start(exePath, args, workingDirectory: c.exeDir, environment: config.environment(c));
+    } catch (_) {
+      await config.finish(c);
+      rethrow;
+    }
     process.stdout.drain<void>();
     process.stderr.drain<void>();
-    final code = await process.exitCode;
-    await config.finish(c);
-    return code;
+    return (process: process, finish: () => config.finish(c));
   }
 
   /// The `roms\<platform>` folders that exist for the platforms
