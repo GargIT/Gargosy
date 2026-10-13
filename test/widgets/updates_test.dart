@@ -214,7 +214,9 @@ void main() {
   });
 
   testWidgets('hidden in Program Files', (tester) async {
-    await pump(tester, env: {'ProgramFiles': '/'});
+    // The drive the test's Gargosy folder is on (the system temp folder's):
+    // '/' is the current drive, which on CI isn't the temp folder's.
+    await pump(tester, env: {'ProgramFiles': p.rootPrefix(io.Directory.systemTemp.path)});
     await checkNow(tester);
     expect(find.byKey(const Key('update-now')), findsNothing);
     expect(find.textContaining('Windows protects'), findsOneWidget);
