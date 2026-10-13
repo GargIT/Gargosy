@@ -6,6 +6,7 @@ import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strateg
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
+import 'package:gargosy/core/storage/profile_rooted.dart';
 
 /// ScummVM. A ScummVM game is a folder of data files, not a ROM:
 /// ScummVM is started with `--auto-detect --path=<game folder>`, which
@@ -70,13 +71,20 @@ class ScummVMStrategy extends EmulatorStrategy {
     return null;
   }
 
+  /// Gargosy: in a profile ScummVM starts through the profile's launch
+  /// view like every emulator (issue #11): its launch config adds the
+  /// profile's --config and --savepath and puts [gameArgs] last.
+  bool get _throughProfile => _directoryService is ProfileRootedDirectories;
+
   @override
   Future<void> launchWithExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
+    if (_throughProfile) return super.launchWithExtraArgs(game, romPath, extraArgs: extraArgs);
     await _start(romPath, extraArgs, io.ProcessStartMode.detached);
   }
 
   @override
   Future<io.Process?> launchWithHandleAndExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
+    if (_throughProfile) return super.launchWithHandleAndExtraArgs(game, romPath, extraArgs: extraArgs);
     final process = await _start(romPath, extraArgs, io.ProcessStartMode.normal);
     // Pipes must be drained or ScummVM blocks once they fill up (see
     // DirectoryService.launchGameWithHandle).
