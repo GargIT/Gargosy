@@ -57,7 +57,9 @@ add_subdirectory("runner")
 set(SIGIL_BUILD_SHARED ON CACHE BOOL "" FORCE)
 set(SIGIL_BUILD_CLI OFF CACHE BOOL "" FORCE)
 set(SIGIL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../third_party/argosy-sigil" "${CMAKE_BINARY_DIR}/sigil")
+set(SIGIL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/argosy-sigil")
+add_subdirectory("${SIGIL_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/sigil")
+include("${CMAKE_CURRENT_SOURCE_DIR}/sigil_msvc.cmake")
 add_dependencies(${BINARY_NAME} sigil)
 
 

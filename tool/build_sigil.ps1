@@ -9,8 +9,8 @@ if (-not $cmake) {
   $vs = & $vswhere -latest -prerelease -products * -property installationPath
   $cmake = Join-Path $vs 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
 }
-& $cmake -B "$root\build\sigil" -S "$root\third_party\argosy-sigil" `
-  -DSIGIL_BUILD_SHARED=ON -DSIGIL_BUILD_CLI=OFF -DSIGIL_BUILD_TESTS=OFF
+# tool\sigil wraps sigil's own CMake with windows\sigil_msvc.cmake, as the app build does.
+& $cmake -B "$root\build\sigil" -S "$root\tool\sigil"
 if ($LASTEXITCODE -ne 0) { throw 'configuring sigil failed' }
 & $cmake --build "$root\build\sigil" --config Release
 if ($LASTEXITCODE -ne 0) { throw 'building sigil failed' }
