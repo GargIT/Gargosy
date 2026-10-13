@@ -42,9 +42,18 @@ List<({String label, String href})> markdownLinks(String text) {
 /// in the text), B goes back. A link to another file opens it here; a web
 /// link or a folder opens outside.
 class DocReaderScreen extends ConsumerStatefulWidget {
-  const DocReaderScreen({super.key, required this.path});
+  const DocReaderScreen({super.key, required this.path})
+      : text = null,
+        title = null;
+
+  /// Markdown [text] that isn't a file (What's new, issue #3), under
+  /// [title]; its links resolve against [baseDir], the Gargosy folder.
+  DocReaderScreen.text({super.key, required String this.title, required String this.text, required String baseDir})
+      : path = p.join(baseDir, 'text.md');
 
   final String path;
+  final String? text;
+  final String? title;
 
   @override
   ConsumerState<DocReaderScreen> createState() => _DocReaderScreenState();
@@ -58,6 +67,7 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
   StreamSubscription<GameAction>? _pad;
 
   String? _read() {
+    if (widget.text != null) return widget.text;
     try {
       return io.File(widget.path).readAsStringSync();
     } on io.FileSystemException {
@@ -173,7 +183,7 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s8, GSpace.rowPad, GSpace.s4),
-                    child: Text(p.basename(widget.path),
+                    child: Text(widget.title ?? p.basename(widget.path),
                         style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800)),
                   ),
                   Expanded(

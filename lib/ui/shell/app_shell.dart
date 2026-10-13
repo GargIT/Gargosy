@@ -1,8 +1,13 @@
+import 'dart:io' as io;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 export 'shell_menu.dart' show shellTabs, shellTabProvider;
 
+import '../../changelog/whats_new.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../library/upload_queue.dart';
 import '../../providers/romm_providers.dart';
@@ -12,13 +17,13 @@ import '../pages/collections_page.dart';
 import '../pages/home_page.dart';
 import '../pages/platforms_page.dart';
 import '../pages/search_page.dart';
+import '../screens/doc_reader_screen.dart';
 import '../theme/tokens.dart';
 import '../widgets/hint_bar.dart';
 import '../widgets/toast.dart';
 import 'backdrop.dart';
 import 'shell_menu.dart';
 import 'top_bar.dart';
-
 
 /// The signed-in app: v2's top bar over the current tab's page (spec §7).
 class AppShell extends ConsumerStatefulWidget {
@@ -55,7 +60,25 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     // Saves left waiting by an earlier session go up when the profile opens.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _upload());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _upload();
+      _whatsNew();
+    });
+  }
+
+  /// The first start of a newer version: its changelog since the last one
+  /// that ran, once (issue #3). After an in-app update this is the only
+  /// thing that opens; About keeps its quiet "Updated from" line.
+  Future<void> _whatsNew() async {
+    final root = ref.read(appRootProvider);
+    final text = await whatsNewToShow(ref.read(appPreferencesProvider), AppConstants.version, readChangelog: () {
+      final f = io.File(p.join(root.root, 'CHANGELOG.md'));
+      return f.existsSync() ? f.readAsStringSync() : null;
+    });
+    if (text == null || !mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => DocReaderScreen.text(
+            title: "What's new in ${AppConstants.version.split('+').first}", text: text, baseDir: root.root)));
   }
 
   Future<void> _upload() async {
