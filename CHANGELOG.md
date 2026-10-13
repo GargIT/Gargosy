@@ -36,6 +36,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Eden downloads again: its nightly builds no longer carry files, so Gargosy
+  takes Eden's latest release (the x64 Windows build).
 - Dolphin can be downloaded again: its download page now turns programs away,
   so Gargosy reads the update API Dolphin's own updater uses.
 - DuckStation's download is its portable zip, not the installer.
