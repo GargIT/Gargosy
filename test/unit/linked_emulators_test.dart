@@ -265,7 +265,7 @@ void main() {
         root: root,
         paths: paths,
         prefs: MemoryPrefs(),
-        start: (exePath, args, {workingDirectory}) async {
+        start: (exePath, args, {workingDirectory, environment}) async {
           started.add([exePath, ...args]);
           return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
         },

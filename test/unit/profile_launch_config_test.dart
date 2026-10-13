@@ -37,7 +37,8 @@ void main() {
         {'dolphin', 'pcsx2', 'retroarch', 'mame', 'xenia_canary', 'ares', 'xemu', 'ppsspp', 'duckstation', 'mgba', 'flycast',
          'ryujinx', // -r (issue #9)
          // a folder link (issues #8, #12–#15)
-         'eden', 'azahar', 'cemu', 'melonds'});
+         'eden', 'azahar', 'cemu', 'melonds',
+         'rpcs3'}); // RPCS3_CONFIG_DIR (issue #10)
     expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });
 
@@ -251,7 +252,7 @@ void main() {
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
-      start: (exePath, args, {workingDirectory}) async {
+      start: (exePath, args, {workingDirectory, environment}) async {
         started.add([exePath, ...args]);
         return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
       },
@@ -277,7 +278,7 @@ void main() {
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
-      start: (exePath, args, {workingDirectory}) async {
+      start: (exePath, args, {workingDirectory, environment}) async {
         started.add(args);
         return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
       },
