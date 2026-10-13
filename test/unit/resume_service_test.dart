@@ -110,8 +110,8 @@ void main() {
     return file;
   }
 
-  Future<void> syncOn([String emulatorId = 'fakeemu']) =>
-      prefs.setBool(StateSyncService.enabledKey(emulatorId), true);
+  /// The profile's one state-sync switch (state-sync plan S0.4).
+  Future<void> syncOn() => prefs.setBool(StateSyncService.enabledKey, true);
 
   ResumeEntry entryFor(List<ResumeEntry> entries, String fileName) =>
       entries.firstWhere((e) => e.fileName == fileName,
@@ -293,8 +293,7 @@ void main() {
   test('a RomM state two different emulators both match, with no tag deciding, is left out', () async {
     final emu2 = FakeStateEmulator(ds, id: 'fakeemu2');
     final save2 = FakeStateSaveStrategy(p.join(tmp.path, 'states2'), id: 'fakeemu2');
-    await syncOn('fakeemu');
-    await syncOn('fakeemu2');
+    await syncOn();
     api.seed('42', 'GAME.4.st', fakeState('1.2.0'));
     final service = build(
       emulators: [emu, emu2],
@@ -340,8 +339,7 @@ void main() {
   test('ownership: two emulators matching the name → left out; tag decides', () async {
     final emu2 = FakeStateEmulator(ds, id: 'fakeemu2');
     final save2 = FakeStateSaveStrategy(p.join(tmp.path, 'states2'), id: 'fakeemu2');
-    await syncOn('fakeemu');
-    await syncOn('fakeemu2');
+    await syncOn();
     api.seed('42', 'GAME.4.st', fakeState('1.2.0'));
     api.seed('42', 'GAME.5.st', fakeState('1.2.0'), emulator: 'FAKEEMU2');
     final service = build(

@@ -24,6 +24,9 @@ What changed in each release of Gargosy. The format follows
   user menu: sections in groups (Profile, Library, This PC, Gargosy), settings
   in cards, and the menu opens Settings on the section you pick. The menu
   also has the changelog, and Switch profile sits at the bottom.
+- Save states on RomM are one switch, "Sync save states with RomM", for every
+  emulator that can sync them, instead of one per emulator. A profile that had
+  it on for any emulator keeps it on.
 
 ### Fixed
 

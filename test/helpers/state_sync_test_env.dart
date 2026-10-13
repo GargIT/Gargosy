@@ -35,7 +35,7 @@ class StateSyncTestEnv {
     final base = await Directory.systemTemp.createTemp('state_sync');
     final pcsx2 = await Pcsx2TestEnv.create(base);
     if (enabled) {
-      await pcsx2.prefs.setBool(StateSyncService.enabledKey('pcsx2'), true);
+      await pcsx2.prefs.setBool(StateSyncService.enabledKey, true);
     }
     final api = FakeRommStatesApi();
     final service = StateSyncService(api, pcsx2.prefs, (game, {emulatorId, coreOverride}) => pcsx2.strategy,

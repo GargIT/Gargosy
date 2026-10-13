@@ -832,9 +832,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return files;
   }
 
-  /// Whether the user turned on "Sync save states" for RetroArch. States then
-  /// sync through StateSyncService and stay out of the game-save upload.
-  bool get _stateSyncOn => _prefs?.getBool(StateSyncService.enabledKey('retroarch')) ?? false;
+  /// Whether the profile syncs save states (Gargosy: one switch for every
+  /// emulator, S0.4). States then sync through StateSyncService and stay out
+  /// of the game-save upload.
+  bool get _stateSyncOn => _prefs?.getBool(StateSyncService.enabledKey) ?? false;
 
   /// RetroArch's default states folder for [slug], without the per-core
   /// subfolder: `<RetroArch>/states` (EmuDeck and RetroDECK have their own
