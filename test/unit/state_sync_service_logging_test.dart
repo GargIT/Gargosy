@@ -37,8 +37,7 @@ void main() {
 
       expect(pull.downloaded, 0);
       expect(push.uploaded, 0);
-      const line = "[StateSync] Ico (SCUS-97113): state sync is off for 'pcsx2': "
-          'switch it on in Settings > Emulators';
+      const line = '[StateSync] Ico (SCUS-97113): state sync is off: switch it on in Settings > Emulator settings';
       expect(logs.where((l) => l == line), hasLength(2), reason: 'one per operation: $logs');
     });
 
@@ -374,8 +373,8 @@ void main() {
     const cases = <(String, String?, String)>[
       ('enabled', null, 'available'),
       ('enabled', 'pcsx2', 'available'),
-      ('disabled', null, "state sync is off for 'pcsx2': switch it on in Settings > Emulators"),
-      ('disabled', 'pcsx2', "state sync is off for 'pcsx2': switch it on in Settings > Emulators"),
+      ('disabled', null, 'state sync is off: switch it on in Settings > Emulator settings'),
+      ('disabled', 'pcsx2', 'state sync is off: switch it on in Settings > Emulator settings'),
       ('incapable', null, "no state-sync support for emulator 'unknown' (strategy none)"),
       ('incapable', 'duckstation', "no state-sync support for emulator 'duckstation' (strategy none)"),
     ];
@@ -389,5 +388,14 @@ void main() {
         expect(service.isAvailableFor(env.game, emulatorId: emulatorId), reason == 'available');
       });
     }
+  });
+
+  test('an emulator whose strategy has state sync off is not synced, even with a capable save strategy', () {
+    final service = StateSyncService(FakeRommStatesApi(), env.pcsx2.prefs,
+        (game, {emulatorId, coreOverride}) => env.pcsx2.strategy,
+        emulatorSyncs: (id) => id == 'pcsx2');
+    expect(service.isAvailableFor(env.game, emulatorId: 'pcsx2'), isTrue);
+    expect(service.availabilityReason(env.game, emulatorId: 'ppsspp'), contains("no state-sync support for emulator 'ppsspp'"));
+    expect(service.isAvailableFor(env.game, emulatorId: 'ppsspp'), isFalse);
   });
 }

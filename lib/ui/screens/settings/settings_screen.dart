@@ -3,92 +3,122 @@ import 'package:flutter/material.dart';
 import '../../../core/input/gamepad_service.dart';
 import '../../input/gargosy_intents.dart';
 import '../../shell/backdrop.dart';
+import '../../shell/page_top_bar.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
 import 'about_section.dart';
 import 'device_sections.dart';
+import 'emulator_install_section.dart';
 import 'emulators_section.dart';
 import 'profile_section.dart';
 import 'ra_section.dart';
+import 'settings_pages.dart';
 import 'settings_rows.dart';
 
-/// Settings (spec §2): Profile, Controller, Display, Emulators and
-/// RetroAchievements. The sections on the left, the chosen one on the
-/// right; LB/RB move between sections, B goes back.
+export 'settings_pages.dart';
+
+/// Settings in RomM v2's style: the top bar, the sections in groups on the
+/// left, the chosen one's cards on the right. LB/RB move between sections,
+/// B goes back.
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.initial = SettingsPage.profile});
+
+  final SettingsPage initial;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const _sections = ['Profile', 'Controller', 'Display', 'Emulators', 'RetroAchievements', 'About'];
-  int _section = 0;
+  late SettingsPage _page = widget.initial;
 
-  Widget _content() => switch (_section) {
-        0 => const ProfileSection(),
-        1 => const ControllerSection(),
-        2 => const DisplaySection(),
-        3 => const EmulatorsSection(),
-        4 => const RaSection(),
-        _ => ListView(children: const [SettingsHeading('About'), AboutSection()]),
+  Widget _content() => switch (_page) {
+        SettingsPage.profile => const ProfileSection(),
+        SettingsPage.retroAchievements => const RaSection(),
+        SettingsPage.emulators => const EmulatorInstallSection(),
+        SettingsPage.emulatorSettings => const EmulatorsSection(),
+        SettingsPage.controller => const ControllerSection(),
+        SettingsPage.display => const DisplaySection(),
+        SettingsPage.about => ListView(children: const [
+            SettingsCard(title: 'About', icon: Icons.info, children: [AboutSection()]),
+          ]),
       };
 
   void _go(int i) {
-    if (i >= 0 && i < _sections.length) setState(() => _section = i);
+    if (i >= 0 && i < SettingsPage.values.length) setState(() => _page = SettingsPage.values[i]);
   }
+
+  Widget _item(SettingsPage page) {
+    final current = page == _page;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: GFocusable(
+        key: ValueKey('settings-${page.name}'),
+        autofocus: page == widget.initial,
+        borderRadius: GRadius.sm,
+        onActivate: () => setState(() => _page = page),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: BoxDecoration(
+            color: current ? GColors.surfaceHover : Colors.transparent,
+            borderRadius: BorderRadius.circular(GRadius.sm),
+          ),
+          child: Row(children: [
+            Icon(page.icon, size: 17, color: current ? GColors.fg : GColors.fgSecondary),
+            const SizedBox(width: GSpace.s3),
+            Flexible(
+              child: Text(page.label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: GFont.md, fontWeight: FontWeight.w600, color: current ? GColors.fg : GColors.fgSecondary)),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _sidebar() => Container(
+        key: const Key('settings-sidebar'),
+        width: 225,
+        decoration: const BoxDecoration(border: Border(right: BorderSide(color: GColors.border))),
+        child: ListView(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: GSpace.s6), children: [
+          for (final group in SettingsGroup.values) ...[
+            Padding(
+              padding: EdgeInsets.fromLTRB(18, group == SettingsGroup.values.first ? 0 : GSpace.s5, 18, GSpace.s2),
+              child: Text(group.heading,
+                  style: const TextStyle(
+                      fontSize: GFont.xs, fontWeight: FontWeight.w700, letterSpacing: 1, color: GColors.fgSecondary)),
+            ),
+            for (final page in SettingsPage.values)
+              if (page.group == group) _item(page),
+          ],
+        ]),
+      );
 
   @override
   Widget build(BuildContext context) => Actions(
         actions: {
-          PrevTabIntent: CallbackAction<PrevTabIntent>(onInvoke: (_) => _go(_section - 1)),
-          NextTabIntent: CallbackAction<NextTabIntent>(onInvoke: (_) => _go(_section + 1)),
+          PrevTabIntent: CallbackAction<PrevTabIntent>(onInvoke: (_) => _go(_page.index - 1)),
+          NextTabIntent: CallbackAction<NextTabIntent>(onInvoke: (_) => _go(_page.index + 1)),
         },
         child: Scaffold(
           backgroundColor: Colors.transparent,
           body: Backdrop(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s10, GSpace.rowPad, GSpace.s4),
-                child: Text('Settings', style: TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800)),
-              ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              const PageTopBar(scrolled: false),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
-                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    SizedBox(
-                      width: 260,
-                      child: Column(children: [
-                        for (var i = 0; i < _sections.length; i++)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: GSpace.s1),
-                            child: GFocusable(
-                              autofocus: i == 0,
-                              borderRadius: GRadius.pill,
-                              onActivate: () => _go(i),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
-                                decoration: BoxDecoration(
-                                  color: i == _section ? GColors.surfaceHover : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(GRadius.pill),
-                                ),
-                                child: Text(_sections[i],
-                                    style: TextStyle(
-                                        fontSize: GFont.lg,
-                                        fontWeight: FontWeight.w700,
-                                        color: i == _section ? GColors.fg : GColors.fgSecondary)),
-                              ),
-                            ),
-                          ),
-                      ]),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  _sidebar(),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(GSpace.s10, GSpace.s7, GSpace.s10, 0),
+                      child: KeyedSubtree(key: ValueKey(_page), child: _content()),
                     ),
-                    const SizedBox(width: GSpace.s8),
-                    Expanded(child: KeyedSubtree(key: ValueKey(_section), child: _content())),
-                  ]),
-                ),
+                  ),
+                ]),
               ),
               const HintBar(hints: [
                 Hint(GameAction.confirm, 'Choose'),
