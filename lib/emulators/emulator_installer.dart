@@ -37,6 +37,10 @@ class GargosyEmulatorInstaller implements EmulatorInstaller {
 
   @override
   Stream<InstallProgress> install(String id, String url) async* {
+    // A release zip with its own user\ or portable\ must not unpack into a
+    // profile through a folder link (issue #8): the links go first, and the
+    // next launch points them again.
+    _library.removeFolderLinks(id);
     var finished = false;
     await for (final pr in _service.downloadEmulator(id, urlOverride: url)) {
       if (pr.error != null) {

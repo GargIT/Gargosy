@@ -169,8 +169,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('DuckStation').last);
     await tester.pumpAndSettle();
-    await settleIo(tester); // the profile's prefs file is written with real IO
-    expect(c.read(strategyRegistryProvider)!.getPreferredEmulatorId('psx'), 'duckstation');
+    // The choice is kept once the profile's prefs file is written with real IO; give a slow machine time.
+    final registry = c.read(strategyRegistryProvider)!;
+    for (var i = 0; i < 100 && registry.getPreferredEmulatorId('psx') == null; i++) {
+      await settleIo(tester);
+    }
+    expect(registry.getPreferredEmulatorId('psx'), 'duckstation');
     // The field shows the choice once its provider has read it back; give a slow machine time.
     final shown = find.descendant(of: find.byKey(const ValueKey('emulator-for-psx')), matching: find.text('DuckStation'));
     for (var i = 0; i < 100 && shown.evaluate().isEmpty; i++) {
@@ -179,11 +183,18 @@ void main() {
     expect(shown, findsOneWidget);
   });
 
-  testWidgets('save-state sync is switched on per emulator, for this profile', (tester) async {
+  testWidgets('one switch syncs save states for this profile; the note names who syncs', (tester) async {
     await pump(tester, initial: SettingsPage.emulatorSettings);
-    await tester.tap(find.byKey(const ValueKey('state-sync-duckstation')));
+    expect(find.byKey(const ValueKey('state-sync')), findsOneWidget);
+    // The old per-emulator toggles are gone.
+    for (final id in ['duckstation', 'pcsx2', 'retroarch']) {
+      expect(find.byKey(ValueKey('state-sync-$id')), findsNothing, reason: id);
+    }
+    // DuckStation and RetroArch are installed; both report supportsStateSync, PCSX2 isn't installed.
+    expect(find.text('Syncs in DuckStation and RetroArch.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('state-sync')));
     await tester.pumpAndSettle();
-    expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey('duckstation')), isTrue);
+    expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey), isTrue);
   });
 
   testWidgets('deleting the profile names the saves still waiting to upload', (tester) async {

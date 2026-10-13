@@ -60,12 +60,12 @@ void main() {
 
   test("vfs.yml points /dev_flash/ at the shared firmware; the profile's other paths are kept", () async {
     final c = ctx();
-    io.File(p.join(c.data, 'vfs.yml'))
+    io.File(p.join(c.data, 'config', 'vfs.yml'))
       ..createSync(recursive: true)
       ..writeAsStringSync('\$(EmulatorDir): ""\n/dev_hdd0/: \$(EmulatorDir)dev_hdd0/\n/dev_flash/: \$(EmulatorDir)dev_flash/\n');
     expect(await ProfileLaunchConfig.of('rpcs3')!.prepare(c), isEmpty);
-    final vfs = io.File(p.join(c.data, 'vfs.yml')).readAsStringSync();
-    expect(vfs, contains('/dev_flash/: ${sharedFlash()}\n'));
+    final vfs = io.File(p.join(c.data, 'config', 'vfs.yml')).readAsStringSync();
+    expect(vfs, contains("/dev_flash/: '${sharedFlash()}'\n"));
     expect(vfs, contains('/dev_hdd0/: \$(EmulatorDir)dev_hdd0/'), reason: 'saves stay in the profile');
     expect(RegExp('^/dev_flash/:', multiLine: true).allMatches(vfs).length, 1);
     expect(io.Directory(p.join(root.emulators, 'rpcs3', 'dev_flash')).existsSync(), isTrue);
@@ -83,11 +83,11 @@ void main() {
 
   test('repoint: the shared firmware path follows a moved Gargosy folder', () async {
     final c = ctx();
-    io.File(p.join(c.data, 'vfs.yml'))
+    io.File(p.join(c.data, 'config', 'vfs.yml'))
       ..createSync(recursive: true)
       ..writeAsStringSync('/dev_flash/: D:/old/Gargosy/emulators/rpcs3/dev_flash/\n');
     ProfileLaunchConfig.of('rpcs3')!.repoint(c);
-    expect(io.File(p.join(c.data, 'vfs.yml')).readAsStringSync(), '/dev_flash/: ${sharedFlash()}\n');
+    expect(io.File(p.join(c.data, 'config', 'vfs.yml')).readAsStringSync(), "/dev_flash/: '${sharedFlash()}'\n");
   });
 
   test("two profiles never share dev_hdd0; the save code's install is <data>", () {

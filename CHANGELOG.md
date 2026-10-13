@@ -8,6 +8,18 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Ryujinx (Switch) plays on each profile's own data (`-r`), with the keys
+  from RomM's firmware in place, and downloads again: from Ryubing, which
+  carries Ryujinx on since its GitHub went away (#9).
+- Eden (Switch), Azahar (3DS), Cemu (Wii U) and melonDS (DS) play on each
+  profile's own data: their `user\` or `portable\` folder is a link to the
+  profile's (#8, #12–#15). Keys from RomM's firmware go into place, and
+  melonDS's saves stay out of `roms\`. Wii U updates and DLC are installed
+  per profile.
+- Gargosy keeps a log in `userdata\app\logs`, one file per start (the
+  newest 10 are kept, each at most 5 MB). Logins, tokens, passwords and API
+  keys are left out. About → Open log folder; attach the newest log to a bug
+  report (#1).
 - RPCS3 (PS3) plays on each profile's own data and saves, through
   `RPCS3_CONFIG_DIR`. The firmware is shared: Settings → Emulators installs
   RomM's `PS3UPDAT.PUP` once for every profile (#10). Updates and DLC are
@@ -29,9 +41,14 @@ What changed in each release of Gargosy. The format follows
   user menu: sections in groups (Profile, Library, This PC, Gargosy), settings
   in cards, and the menu opens Settings on the section you pick. The menu
   also has the changelog, and Switch profile sits at the bottom.
+- Save states on RomM are one switch, "Sync save states with RomM", for every
+  emulator that can sync them, instead of one per emulator. A profile that had
+  it on for any emulator keeps it on.
 
 ### Fixed
 
+- Eden downloads again: its nightly builds no longer carry files, so Gargosy
+  takes Eden's latest release (the x64 Windows build).
 - Dolphin can be downloaded again: its download page now turns programs away,
   so Gargosy reads the update API Dolphin's own updater uses.
 - DuckStation's download is its portable zip, not the installer.
@@ -39,6 +56,9 @@ What changed in each release of Gargosy. The format follows
   updates still get the latest release, never a preview or nightly build.
 - Emulator downloads show their progress while they run, instead of
   "Downloading 0 %" until done.
+- A PS2 save from RomM goes back onto a memory card file again: the check
+  after writing the card failed every time ("I/O error"), because of how the
+  save engine was compiled.
 - Emulators that come as a zip (PPSSPP, xemu, ares, DuckStation) unpacked
   only their first file, so they never counted as installed.
 - xemu finds its hard disk: the first launch in a profile copies

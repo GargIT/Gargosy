@@ -79,7 +79,7 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('No PIN'));
-    await h.settle(tester);
+    await h.settle(tester, until: find.byType(AppShell)); // however slow the runner's file IO
     final ctx = h.container.read(activeProfileProvider)!;
     final files = io.Directory(ProfilePaths(h.root, ctx.profile.id).dir).listSync(recursive: true).whereType<io.File>();
     for (final f in files) {

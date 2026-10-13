@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import '../profiles/app_root.dart';
 import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
-import 'bios_links.dart';
+import 'bios_links.dart' show BiosFiles;
 import 'profile_directories.dart';
 import 'rpcs3_config.dart';
 
@@ -31,7 +31,7 @@ class Ps3Firmware {
   static const pupName = 'PS3UPDAT.PUP';
 
   /// The firmware file in `bios\`, or null.
-  io.File? get pup => findBiosFile(root.bios, const [pupName]);
+  io.File? get pup => BiosFiles(root.bios).find(const [pupName], platforms: const ['ps3']);
 
   /// Whether a firmware is installed in the shared dev_flash (its VSH).
   bool get installed => io.File(p.join(root.emulators, 'rpcs3', 'dev_flash', 'vsh', 'module', 'vsh.self')).existsSync();

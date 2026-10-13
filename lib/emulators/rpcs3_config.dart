@@ -2,6 +2,7 @@ import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
 
+import '../core/storage/ini_file.dart';
 import 'profile_launch_config.dart';
 
 /// RPCS3 (PS3) on a profile's data (issue #10): started with
@@ -30,6 +31,7 @@ class Rpcs3Config extends ProfileLaunchConfig {
       portable.renameSync(c.guard.check(off));
     }
     _writeVfs(c);
+    _hideStartDialogs(c);
     return const [];
   }
 
@@ -39,15 +41,34 @@ class Rpcs3Config extends ProfileLaunchConfig {
   /// The Gargosy folder moved: the shared firmware's path in vfs.yml follows.
   @override
   void repoint(LaunchContext c) {
-    if (io.File(p.join(c.data, 'vfs.yml')).existsSync()) _writeVfs(c);
+    if (io.File(vfsPath(c)).existsSync()) _writeVfs(c);
+  }
+
+  /// Where RPCS3 reads vfs.yml with RPCS3_CONFIG_DIR set: its config\
+  /// subfolder, beside config.yml (probed: a vfs.yml at the top is ignored).
+  static String vfsPath(LaunchContext c) => p.join(c.data, 'config', 'vfs.yml');
+
+  /// RPCS3's Welcome box and the box after a firmware install want a mouse
+  /// click: off in the profile's GUI settings (probed on 0.0.43).
+  void _hideStartDialogs(LaunchContext c) {
+    final ini = io.File(c.guard.check(p.join(c.data, 'GuiConfigs', 'CurrentSettings.ini')));
+    final text = ini.existsSync() ? ini.readAsStringSync() : '';
+    final out = IniFile(text)
+      ..set('main_window', 'infoBoxEnabledWelcome', 'false')
+      ..set('main_window', 'infoBoxEnabledInstallPUP', 'false');
+    ini.parent.createSync(recursive: true);
+    ini.writeAsStringSync(out.toText());
   }
 
   void _writeVfs(LaunchContext c) {
-    final vfs = io.File(c.guard.check(p.join(c.data, 'vfs.yml')));
+    final vfs = io.File(c.guard.check(vfsPath(c)));
+    vfs.parent.createSync(recursive: true);
     final flash = io.Directory(c.guard.check(sharedFlash(c)));
     flash.createSync(recursive: true);
     final text = vfs.existsSync() ? vfs.readAsStringSync() : '';
-    vfs.writeAsStringSync(setYamlKeys(text, {'/dev_flash/': '${flash.path.replaceAll(r'\', '/')}/'}));
+    // Quoted: a folder name with '#' or ': ' would otherwise end the value.
+    final path = '${flash.path.replaceAll(r'\', '/')}/'.replaceAll("'", "''");
+    vfs.writeAsStringSync(setYamlKeys(text, {'/dev_flash/': "'$path'"}));
   }
 }
 

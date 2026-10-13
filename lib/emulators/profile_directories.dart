@@ -230,13 +230,14 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     io.File? found;
     void search(io.Directory d, int depth) {
       if (found != null || depth > 3) return;
-      for (final e in d.listSync()) {
+      // Never through a folder link (issue #8): it leads into a profile's data.
+      for (final e in d.listSync(followLinks: false)) {
         if (e is io.File && p.basename(e.path).toLowerCase() == wanted) {
           found = e;
           return;
         }
       }
-      for (final e in d.listSync()) {
+      for (final e in d.listSync(followLinks: false)) {
         if (e is io.Directory) search(e, depth + 1);
       }
     }

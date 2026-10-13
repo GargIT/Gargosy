@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/emulator/emulator_strategy.dart';
 import '../../../core/emulator/platform_slugs.dart';
 import '../../../core/save/state_sync_service.dart';
 import '../../../emulators/emulator_library.dart';
@@ -10,12 +11,9 @@ import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import 'settings_rows.dart';
 
-/// The emulators whose save states can sync with RomM.
-const _stateSyncEmulators = ['duckstation', 'pcsx2', 'retroarch'];
-
 /// Settings → Emulator settings: which installed emulator plays each of the
-/// profile's platforms, and save-state sync per emulator. Both are this
-/// profile's own (its prefs).
+/// profile's platforms, and the one save-state sync switch (state-sync plan
+/// S0.4). Both are this profile's own (its prefs).
 class EmulatorsSection extends ConsumerStatefulWidget {
   const EmulatorsSection({super.key});
 
@@ -59,19 +57,13 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
         ));
       }
     }
-    final stateRows = [
-      for (final id in _stateSyncEmulators)
-        if (installed.containsKey(id) && prefs != null)
-          SettingsToggle(
-            key: ValueKey('state-sync-$id'),
-            label: installed[id]!,
-            on: prefs.getBool(StateSyncService.enabledKey(id)) ?? false,
-            onChanged: (on) async {
-              await prefs.setBool(StateSyncService.enabledKey(id), on);
-              if (mounted) setState(() {});
-            },
-          ),
-    ];
+    // Which installed emulators sync states comes from their strategies, never a list here.
+    final syncs = {
+      for (final st in registry?.allStrategies ?? const <EmulatorStrategy>[])
+        ?installed[st.emulatorId]: st.supportsStateSync,
+    };
+    final syncing = [for (final e in syncs.entries) if (e.value) e.key]..sort();
+    final localOnly = [for (final e in syncs.entries) if (!e.value) e.key]..sort();
     return ListView(children: [
       SettingsCard(
         title: 'Which emulator plays',
@@ -94,12 +86,34 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
       SettingsCard(
         title: 'Save states on RomM',
         icon: Icons.cloud_upload,
-        rowPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        note: 'Upload save states after playing and bring them down before, like saves. Off by default.',
-        children: stateRows.isEmpty
-            ? const [Text('No emulator that syncs save states is installed.', style: TextStyle(color: GColors.fgSecondary))]
-            : stateRows,
+        note: 'Upload save states after playing and bring them down before, like saves. Off by default. '
+            'States on this PC always work, sync or not.',
+        children: [
+          if (prefs == null)
+            const Text('Open a profile to change this.', style: TextStyle(color: GColors.fgSecondary))
+          else
+            SettingsToggle(
+              key: const ValueKey('state-sync'),
+              label: 'Sync save states with RomM',
+              note: _stateSyncNote(syncing, localOnly),
+              on: prefs.getBool(StateSyncService.enabledKey) ?? false,
+              onChanged: (on) async {
+                await prefs.setBool(StateSyncService.enabledKey, on);
+                if (mounted) setState(() {});
+              },
+            ),
+        ],
       ),
     ]);
   }
+}
+
+/// Which installed emulators the switch covers, and which keep states on this PC.
+String _stateSyncNote(List<String> syncing, List<String> localOnly) {
+  String names(List<String> list) =>
+      list.length < 2 ? list.join() : '${list.sublist(0, list.length - 1).join(', ')} and ${list.last}';
+  if (syncing.isEmpty) return 'No installed emulator syncs save states yet.';
+  final syncs = 'Syncs in ${names(syncing)}.';
+  if (localOnly.isEmpty) return syncs;
+  return '$syncs ${names(localOnly)} ${localOnly.length == 1 ? 'keeps its' : 'keep their'} states on this PC only.';
 }
