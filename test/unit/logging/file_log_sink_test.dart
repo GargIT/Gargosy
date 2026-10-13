@@ -67,6 +67,28 @@ void main() {
     expect(sink.isFull, isTrue);
   });
 
+  test('a line that fills the file exactly still leaves room for the last line', () {
+    final sink = FileLogSink.open(dir.path, maxBytes: 200, clock: () => now)!;
+    for (var i = 0; i < 40; i++) {
+      sink.write('x' * 18);
+    }
+    sink.close();
+    final text = io.File(sink.path).readAsStringSync();
+    expect(text.trim().split('\r\n').last, contains('The log reached 200 bytes'));
+  });
+
+  test('one very long line is cut, and the log goes on', () {
+    final sink = FileLogSink.open(dir.path, clock: () => now)!;
+    sink.write('y' * (FileLogSink.maxLineChars * 3));
+    sink.write('after');
+    sink.close();
+    final lines = io.File(sink.path).readAsStringSync().split('\r\n');
+    expect(lines[0], endsWith('(line cut)'));
+    expect(lines[0].length, lessThan(FileLogSink.maxLineChars + 20));
+    expect(lines[1], 'after');
+    expect(sink.isFull, isFalse);
+  });
+
   test('a folder that cannot be made means no file log, not an error', () {
     final blocker = io.File(p.join(dir.path, 'logs'))..writeAsStringSync('a file where the folder should be');
     expect(FileLogSink.open(p.join(blocker.path, 'inner')), isNull);

@@ -19,6 +19,10 @@ class FileLogSink {
 
   static const defaultKeep = 10;
   static const defaultMaxBytes = 5 * 1024 * 1024;
+
+  /// A longer line (a dumped response) is cut, so one line can't use up the
+  /// file and silence the rest of the session.
+  static const maxLineChars = 16 * 1024;
   static final _name = RegExp(r'^gargosy-\d{8}-\d{6}(-\d+)?\.log$');
 
   /// A new log file in [dir] (made when missing), the oldest beyond [keep]
@@ -78,9 +82,12 @@ class FileLogSink {
     final file = _file;
     if (file == null || isFull) return;
     try {
-      final bytes = utf8.encode('$line\r\n');
-      if (_written + bytes.length > maxBytes) {
-        file.writeFromSync(utf8.encode('--- The log reached ${_size(maxBytes)}; the rest of this session is not written. ---\r\n'));
+      final text = line.length > maxLineChars ? '${line.substring(0, maxLineChars)} … (line cut)' : line;
+      final bytes = utf8.encode('$text\r\n');
+      final last = utf8.encode('--- The log reached ${_size(maxBytes)}; the rest of this session is not written. ---\r\n');
+      // The last line always has room kept for it.
+      if (_written + bytes.length > maxBytes - last.length) {
+        file.writeFromSync(last);
         _written = maxBytes;
         return;
       }

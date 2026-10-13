@@ -83,11 +83,17 @@ class LoggerService {
   /// Writes [line] (a header line) to the file log as it is, redacted.
   static void writeRaw(String line) => _sink?.write(redact(line));
 
+  static int? _day;
+
   static void _toFile(LogEntry entry) {
     final sink = _sink;
     if (sink == null) return;
     final t = entry.timestamp;
     String two(int n) => n.toString().padLeft(2, '0');
+    // Lines carry the time only; a session past midnight says the new date.
+    final day = t.year * 10000 + t.month * 100 + t.day;
+    if (_day != null && _day != day) sink.write('--- ${t.year}-${two(t.month)}-${two(t.day)} ---');
+    _day = day;
     final time = '${two(t.hour)}:${two(t.minute)}:${two(t.second)}.${t.millisecond.toString().padLeft(3, '0')}';
     final tag = _tag();
     final head = '$time${entry.level == null ? '' : ' [${entry.level}]'}${tag == null ? '' : ' [p:$tag]'} ';

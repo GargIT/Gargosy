@@ -1,9 +1,12 @@
+import 'dart:io' as io;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/input/gamepad_service.dart';
+import '../../../profiles/path_guard.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../../providers/about_providers.dart';
 import '../../theme/tokens.dart';
@@ -92,7 +95,15 @@ class AboutSection extends ConsumerWidget {
         icon: Icons.folder_open_outlined,
         label: 'Open log folder',
         value: r'userdata\app\logs',
-        onActivate: () => ref.read(externalOpenerProvider)(root.logs),
+        onActivate: () {
+          // Made when missing (a start that couldn't write it), so Explorer opens the folder.
+          try {
+            io.Directory(PathGuard(root).check(root.logs)).createSync(recursive: true);
+          } on Object catch (e) {
+            debugPrint('[About] log folder: $e');
+          }
+          ref.read(externalOpenerProvider)(root.logs);
+        },
       ),
       SettingsLinkRow(
         icon: Icons.open_in_new,

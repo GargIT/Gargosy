@@ -20,6 +20,12 @@ void main() {
       'cheevos_token = "abcdef"': 'cheevos_token = "***"',
       '  webdav_password = "pw"': '  webdav_password = "***"',
       'Token = 0123abcd': 'Token = ***',
+      '{raw_token: rmm_abc123, name: Gargosy}': '{raw_token: "***", name: Gargosy}',
+      '{"raw_token":"rmm_abc123"}': '{"raw_token":"***"}',
+      '{"device_code": "dc-1", "user_code": "ABCD"}': '{"device_code": "***", "user_code": "ABCD"}',
+      '[RetroArch] set cheevos_token = "abc123"': '[RetroArch] set cheevos_token = "***"',
+      '[PCSX2] Token = abc, user = henrik': '[PCSX2] Token = ***, user = henrik',
+      'GET /x?access_token=xyz&a=1': 'GET /x?access_token=***&a=1',
     };
     cases.forEach((line, want) => test(line, () => expect(redact(line), want)));
   });
@@ -33,6 +39,7 @@ void main() {
       'keyboard=true, mykey=5', // not a query string
       'https://romm.example/api/roms?platform_id=3&order_by=name',
       'Authorization header missing',
+      '{"token_type": "bearer"}',
     ]) {
       test(line, () => expect(redact(line), line));
     }
