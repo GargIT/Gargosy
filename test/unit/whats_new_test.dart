@@ -65,43 +65,70 @@ void main() {
     });
   });
 
+  test("a reference link inside a section doesn't cut the section short", () {
+    const md = '## [0.2.0] - 2026-11-01\n\n- Fixed X ([#3]).\n\n[#3]: https://github.com/GargIT/Gargosy/issues/3\n\n- Fixed Y.\n';
+    final text = changelogSince(md, Version(0, 1, 0), Version(0, 2, 0))!;
+    expect(text, contains('- Fixed Y.'));
+  });
+
   group('whatsNewToShow', () {
+    Future<String?> show(MemoryPrefs prefs, String current,
+        {String? Function()? read, bool existingInstall = false}) async {
+      final news = await whatsNewToShow(prefs, current,
+          readChangelog: read ?? () => _changelog, existingInstall: existingInstall);
+      await news.recordRun();
+      return news.text;
+    }
+
     test('after an update: shown once, then not again', () async {
-      final prefs = MemoryPrefs();
-      await prefs.setString(lastRunVersionKey, '0.1.0');
-      expect(await whatsNewToShow(prefs, '0.2.0', readChangelog: () => _changelog), contains('- Two.'));
+      final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.1.0';
+      expect(await show(prefs, '0.2.0'), contains('- Two.'));
       expect(prefs.getString(lastRunVersionKey), '0.2.0');
-      expect(await whatsNewToShow(prefs, '0.2.0', readChangelog: () => _changelog), isNull);
+      expect(await show(prefs, '0.2.0'), isNull);
     });
 
-    test('a first start shows nothing, and records the version', () async {
+    test('nothing is recorded until the caller says it was shown', () async {
+      final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.1.0';
+      final news = await whatsNewToShow(prefs, '0.2.0', readChangelog: () => _changelog);
+      expect(news.text, contains('- Two.'));
+      expect(prefs.getString(lastRunVersionKey), '0.1.0', reason: 'not shown yet: next start shows it');
+    });
+
+    test('a fresh install shows nothing, and records the version', () async {
       final prefs = MemoryPrefs();
-      expect(await whatsNewToShow(prefs, '0.2.0', readChangelog: () => _changelog), isNull);
+      expect(await show(prefs, '0.2.0'), isNull);
+      expect(prefs.getString(lastRunVersionKey), '0.2.0');
+    });
+
+    test('Gargosy in use before this feature (no version recorded): this release only', () async {
+      final prefs = MemoryPrefs();
+      final text = await show(prefs, '0.2.0', existingInstall: true);
+      expect(text, startsWith('## [0.2.0]'));
+      expect(text, isNot(contains('Preview two')), reason: 'only the release that brings it');
       expect(prefs.getString(lastRunVersionKey), '0.2.0');
     });
 
     test('a downgrade shows nothing and keeps the newer version', () async {
-      final prefs = MemoryPrefs();
-      await prefs.setString(lastRunVersionKey, '0.3.0');
-      expect(await whatsNewToShow(prefs, '0.2.0', readChangelog: () => _changelog), isNull);
+      final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.3.0';
+      expect(await show(prefs, '0.2.0'), isNull);
       expect(prefs.getString(lastRunVersionKey), '0.3.0');
     });
 
-    test('no changelog (or unreadable): nothing shown, but the version is recorded', () async {
-      final prefs = MemoryPrefs();
-      await prefs.setString(lastRunVersionKey, '0.1.0');
-      expect(await whatsNewToShow(prefs, '0.2.0', readChangelog: () => null), isNull);
-      expect(await whatsNewToShow(MemoryPrefs()..values[lastRunVersionKey] = '0.1.0', '0.2.0',
-          readChangelog: () => throw StateError('locked')), isNull);
-      expect(prefs.getString(lastRunVersionKey), '0.2.0');
+    test('no changelog, or one that throws: nothing shown, the version still recorded', () async {
+      final missing = MemoryPrefs()..values[lastRunVersionKey] = '0.1.0';
+      expect(await show(missing, '0.2.0', read: () => null), isNull);
+      expect(missing.getString(lastRunVersionKey), '0.2.0');
+      final locked = MemoryPrefs()..values[lastRunVersionKey] = '0.1.0';
+      expect(await show(locked, '0.2.0', read: () => throw StateError('locked')), isNull);
+      expect(locked.getString(lastRunVersionKey), '0.2.0');
     });
 
     test('a dev build is recorded as it is (build metadata dropped); the release after it shows its section', () async {
       final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.1.0';
-      expect(await whatsNewToShow(prefs, '0.2.0-dev+5', readChangelog: () => _changelog), isNull,
+      expect(await show(prefs, '0.2.0-dev+5'), isNull,
           reason: '0.2.0-dev sorts before 0.2.0-preview.2: nothing released in between');
       expect(prefs.getString(lastRunVersionKey), '0.2.0-dev');
-      expect(await whatsNewToShow(prefs, '0.2.0', readChangelog: () => _changelog), contains('- Two.'));
+      expect(await show(prefs, '0.2.0'), contains('- Two.'));
     });
   });
 }

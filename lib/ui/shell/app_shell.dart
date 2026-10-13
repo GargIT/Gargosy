@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 
 export 'shell_menu.dart' show shellTabs, shellTabProvider;
 
@@ -68,17 +68,29 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   /// The first start of a newer version: its changelog since the last one
   /// that ran, once (issue #3). After an in-app update this is the only
-  /// thing that opens; About keeps its quiet "Updated from" line.
+  /// thing that opens; About keeps its quiet "Updated from" line. The
+  /// version is recorded once the page is up, so a start that never shows
+  /// it (a profile switch first) shows it next time.
   Future<void> _whatsNew() async {
     final root = ref.read(appRootProvider);
-    final text = await whatsNewToShow(ref.read(appPreferencesProvider), AppConstants.version, readChangelog: () {
-      final f = io.File(p.join(root.root, 'CHANGELOG.md'));
-      return f.existsSync() ? f.readAsStringSync() : null;
-    });
-    if (text == null || !mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => DocReaderScreen.text(
-            title: "What's new in ${AppConstants.version.split('+').first}", text: text, baseDir: root.root)));
+    final active = ref.read(activeProfileProvider);
+    final news = await whatsNewToShow(
+      ref.read(appPreferencesProvider),
+      AppConstants.version,
+      // A profile made before this start: Gargosy ran before, just without
+      // a recorded version (the release that brings this).
+      existingInstall: active != null && active.profile.createdAt.isBefore(appStartedAt),
+      readChangelog: () {
+        final f = io.File(root.changelog);
+        return f.existsSync() ? f.readAsStringSync() : null;
+      },
+    );
+    final text = news.text;
+    if (text == null) return news.recordRun();
+    if (!mounted) return;
+    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => DocReaderScreen.text(title: "What's new in ${news.title}", text: text, baseDir: root.root))));
+    await news.recordRun();
   }
 
   Future<void> _upload() async {

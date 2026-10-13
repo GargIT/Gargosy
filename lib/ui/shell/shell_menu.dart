@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
 
 import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
@@ -48,6 +47,6 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     case UserMenuAction.fullscreen:
       await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
     case UserMenuAction.changelog:
-      await openDoc(context, p.join(ref.read(appRootProvider).root, 'CHANGELOG.md'));
+      await openDoc(context, ref.read(appRootProvider).changelog);
   }
 }

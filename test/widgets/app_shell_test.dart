@@ -314,11 +314,18 @@ void main() {
     // AppConstants.version is 0.0.0 in tests (main() reads pubspec.yaml).
     const now = '0.2.0';
     late String was;
+    late DateTime started;
     setUp(() {
       was = AppConstants.version;
+      started = appStartedAt;
       AppConstants.version = now;
+      // A profile made in the test is made after this start: a fresh install.
+      appStartedAt = DateTime.now();
     });
-    tearDown(() => AppConstants.version = was);
+    tearDown(() {
+      AppConstants.version = was;
+      appStartedAt = started;
+    });
     void changelog(AppRoot root) => io.File(p.join(root.root, 'CHANGELOG.md')).writeAsStringSync(
         '# Changelog\n\n## [Unreleased]\n\n- Soon.\n\n## [$now] - 2026-11-01\n\n- The new thing.\n\n## [0.0.1] - 2026-01-01\n\n- Old.\n');
 
@@ -333,12 +340,21 @@ void main() {
       expect(prefs.values[lastRunVersionKey], now);
     });
 
-    testWidgets('the next start, and a first start ever, open nothing', (tester) async {
+    testWidgets('the next start opens nothing', (tester) async {
       await pump(tester, prefs: MemoryPrefs()..values[lastRunVersionKey] = now, before: changelog);
       expect(find.byType(DocReaderScreen), findsNothing);
     });
 
-    testWidgets('a first start ever opens nothing, and records the version', (tester) async {
+    testWidgets('Gargosy in use before this release (a profile from an earlier start, no version recorded): it opens',
+        (tester) async {
+      appStartedAt = DateTime.now().add(const Duration(days: 1)); // the profile is from before this start
+      await pump(tester, prefs: MemoryPrefs(), before: changelog);
+      expect(find.text("What's new in $now"), findsOneWidget);
+      expect(find.textContaining('The new thing'), findsOneWidget);
+      expect(find.textContaining('Old.'), findsNothing);
+    });
+
+    testWidgets('a fresh install opens nothing, and records the version', (tester) async {
       final prefs = MemoryPrefs();
       await pump(tester, prefs: prefs, before: changelog);
       expect(find.byType(DocReaderScreen), findsNothing);
