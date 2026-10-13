@@ -86,15 +86,40 @@ void main() {
       expect(collected.single.layout, 'swanstation');
     });
 
-    test('LRPS2: layout pcsx2, its cards in system\\pcsx2\\memcards, its core options passed', () async {
+    test('LRPS2: layout pcsx2, shared cards (the default) in system\\pcsx2\\memcards', () async {
       io.File(p.join(dataDir, 'config', 'retroarch-core-options.cfg'))
         ..createSync(recursive: true)
-        ..writeAsStringSync('pcsx2_shared_memory_cards = "disabled"\nother_core_key = "x"\n');
+        ..writeAsStringSync('other_core_key = "x"\n');
       base.loadCoreOverrides({'ps2': 'pcsx2_libretro'});
       await wrapper().getSaveFiles(game('ps2', 'Game A.chd', titleId: 'SLUS-20328'), p.join(tmp.path, 'Game A.chd'));
       expect(collected.single.layout, 'pcsx2');
       expect(collected.single.saveRoot, p.join(dataDir, 'system', 'pcsx2', 'memcards'));
+      expect(collected.single.options['other_core_key'], 'x');
+    });
+
+    test("LRPS2 with Shared Memory Cards off in the core's own .opt: the game's card in saves\\", () async {
+      io.File(p.join(dataDir, 'config', 'retroarch-core-options.cfg'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('pcsx2_shared_memory_cards = "enabled"\n');
+      io.File(p.join(dataDir, 'config', 'LRPS2', 'LRPS2.opt'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('pcsx2_shared_memory_cards = "disabled"\n');
+      base.loadCoreOverrides({'ps2': 'pcsx2_libretro'});
+      await wrapper().getSaveFiles(game('ps2', 'Game A.chd', titleId: 'SLUS-20328'), p.join(tmp.path, 'Game A.chd'));
       expect(collected.single.options['pcsx2_shared_memory_cards'], 'disabled');
+      expect(collected.single.saveRoot, p.join(dataDir, 'saves'));
+    });
+
+    test("a game's own .opt wins over the core's", () async {
+      io.File(p.join(dataDir, 'config', 'LRPS2', 'LRPS2.opt'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('pcsx2_shared_memory_cards = "disabled"\n');
+      io.File(p.join(dataDir, 'config', 'LRPS2', 'Game A.opt'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('pcsx2_shared_memory_cards = "enabled"\n');
+      base.loadCoreOverrides({'ps2': 'pcsx2_libretro'});
+      await wrapper().getSaveFiles(game('ps2', 'Game A.chd', titleId: 'SLUS-20328'), p.join(tmp.path, 'Game A.chd'));
+      expect(collected.single.saveRoot, p.join(dataDir, 'system', 'pcsx2', 'memcards'));
     });
   });
 

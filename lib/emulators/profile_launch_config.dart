@@ -235,12 +235,20 @@ class _RetroArch extends ProfileLaunchConfig {
     io.Directory(c.guard.check(c.data)).createSync(recursive: true);
     final cfg = io.File(c.guard.check(p.join(c.data, 'retroarch.cfg')));
     final text = cfg.existsSync() ? cfg.readAsStringSync() : '';
+    // Saves that RetroArch sorted into core or content subfolders come up
+    // into saves\ before sorting goes off, so none is left where nothing reads.
+    if (RegExp(r'^\s*sort_savefiles(_by_content)?_enable\s*=\s*"true"', multiLine: true).hasMatch(text)) {
+      flattenRetroArchSaves(p.join(c.data, 'saves'), c.guard);
+    }
     cfg.writeAsStringSync(setRetroArchKeys(text, {
       'savefile_directory': p.join(c.data, 'saves'),
-      // Saves flat in saves\, never in a core or content subfolder: sigil's
-      // save root (issue #7) and the old strategy both read them there.
+      // Saves flat in saves\, never in a core or content subfolder, nor next
+      // to the ROM: sigil's save root (issue #7) and the old strategy both
+      // read them there, and roms\ holds only ROMs.
       'sort_savefiles_enable': 'false',
       'sort_savefiles_by_content_enable': 'false',
+      'savefiles_in_content_dir': 'false',
+      'savestates_in_content_dir': 'false',
       'savestate_directory': p.join(c.data, 'states'),
       'system_directory': systemDir(c),
       if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
@@ -424,5 +432,20 @@ class _Swap extends ProfileLaunchConfig {
     }
     final mark = io.File(p.join(c.exeDir, _swapFile));
     if (mark.existsSync()) mark.deleteSync();
+  }
+}
+
+/// Moves the saves RetroArch sorted into subfolders of [saves] (by core,
+/// or by core and content folder) up into [saves], where it reads them
+/// once sorting is off. A save whose name is already in [saves] stays
+/// where it is: nothing is overwritten.
+void flattenRetroArchSaves(String saves, PathGuard guard) {
+  final dir = io.Directory(saves);
+  if (!dir.existsSync()) return;
+  for (final e in dir.listSync(recursive: true, followLinks: false)) {
+    if (e is! io.File || p.dirname(e.path) == p.normalize(saves)) continue;
+    final flat = guard.check(p.join(saves, p.basename(e.path)));
+    if (io.FileSystemEntity.typeSync(flat) != io.FileSystemEntityType.notFound) continue;
+    e.renameSync(flat);
   }
 }

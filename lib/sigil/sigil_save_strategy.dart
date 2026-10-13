@@ -28,6 +28,7 @@ class SigilEmulator {
     this.beforeRestore,
     this.layoutFor,
     this.saveRootFor,
+    this.optionsFor,
   });
 
   final String id;
@@ -43,9 +44,15 @@ class SigilEmulator {
   /// [base] keeps it. Unset: [layout] for every game.
   final String? Function(Game game, SaveStrategy? base)? layoutFor;
 
-  /// The save root for a game's [layout], when it isn't [saveRoot]
-  /// (RetroArch's LRPS2 keeps its cards in `system\pcsx2\memcards`).
-  final String Function(String layout)? saveRootFor;
+  /// The save root for a game's [layout] and options, when it isn't
+  /// [saveRoot] (RetroArch's LRPS2 keeps its shared cards in
+  /// `system\pcsx2\memcards`, a game's own card in `saves\`).
+  final String Function(String layout, Map<String, String> options)? saveRootFor;
+
+  /// The options for one game, when they depend on it (RetroArch: the
+  /// core's and the game's own `.opt` files over the global ones). Unset:
+  /// [options].
+  final Map<String, String> Function(String emulatorDir, Game game, String romPath, SaveStrategy? base)? optionsFor;
 
   /// RomM's platform slugs it syncs → sigil's.
   final Map<String, String> platforms;
@@ -134,8 +141,13 @@ final sigilEmulators = <String, SigilEmulator>{
       'gb': 'gb', 'game-boy': 'gb', 'gbc': 'gbc', 'game-boy-color': 'gbc',
     },
     layoutFor: (game, base) => base is RetroArchSaveStrategy ? base.coreIdFor(game) : null,
-    saveRootFor: (layout) => layout == 'pcsx2' ? p.join('system', 'pcsx2', 'memcards') : 'saves',
-    options: retroArchCoreOptions,
+    // sigil's docs: LRPS2's shared cards are in <system>\pcsx2\memcards;
+    // with Shared Memory Cards off, a game's own card is in the save folder.
+    saveRootFor: (layout, options) => layout == 'pcsx2' && options['pcsx2_shared_memory_cards'] != 'disabled'
+        ? p.join('system', 'pcsx2', 'memcards')
+        : 'saves',
+    optionsFor: (dir, game, romPath, base) =>
+        retroArchCoreOptions(dir, core: base is RetroArchSaveStrategy ? base.coreFolderFor(game) : null, romPath: romPath),
   ),
   'mgba': const SigilEmulator(
     id: 'mgba',
@@ -145,21 +157,37 @@ final sigilEmulators = <String, SigilEmulator>{
   ),
 };
 
-/// RetroArch's core options (`config\retroarch-core-options.cfg` in the
-/// profile's folder: `key = "value"` lines). sigil looks only at the keys
-/// its layout row names (`pcsx2_shared_memory_cards`, `pcsx_rearmed_memcard1`, …).
-Map<String, String> retroArchCoreOptions(String emulatorDir) {
-  final f = io.File(p.join(emulatorDir, 'config', 'retroarch-core-options.cfg'));
-  if (!f.existsSync()) return const {};
-  try {
-    final line = RegExp(r'^\s*([A-Za-z0-9_.-]+)\s*=\s*"([^"]*)"\s*$');
-    return {
-      for (final l in f.readAsLinesSync())
-        if (line.firstMatch(l) case final m?) m[1]!: m[2]!,
-    };
-  } catch (_) {
-    return const {};
+/// RetroArch's core options for a game, as RetroArch reads them: the
+/// global `retroarch-core-options.cfg` (in `config\` and beside
+/// retroarch.cfg), then the core's own `config\<core>\<core>.opt` (where
+/// they go when global core options are off, the default), then the
+/// content folder's and the game's `.opt`, each over the one before
+/// (`key = "value"` lines). sigil looks only at the keys its layout row
+/// names (`pcsx2_shared_memory_cards`, `pcsx_rearmed_memcard1`, …).
+Map<String, String> retroArchCoreOptions(String emulatorDir, {String? core, String? romPath}) {
+  final files = [
+    p.join(emulatorDir, 'retroarch-core-options.cfg'),
+    p.join(emulatorDir, 'config', 'retroarch-core-options.cfg'),
+    if (core != null) ...[
+      p.join(emulatorDir, 'config', core, '$core.opt'),
+      if (romPath != null) p.join(emulatorDir, 'config', core, '${p.basename(p.dirname(romPath))}.opt'),
+      if (romPath != null) p.join(emulatorDir, 'config', core, '${p.basenameWithoutExtension(romPath)}.opt'),
+    ],
+  ];
+  final line = RegExp(r'^\s*([A-Za-z0-9_.-]+)\s*=\s*"([^"]*)"\s*$');
+  final out = <String, String>{};
+  for (final path in files) {
+    final f = io.File(path);
+    if (!f.existsSync()) continue;
+    try {
+      for (final l in f.readAsLinesSync()) {
+        if (line.firstMatch(l) case final m?) out[m[1]!] = m[2]!;
+      }
+    } catch (_) {
+      // An unreadable file: the ones before it stand.
+    }
   }
+  return out;
 }
 
 typedef SigilCollectFn = Future<SigilCollected> Function(SigilSyncCall call);
@@ -265,11 +293,21 @@ class SigilSaveStrategy extends SaveStrategy {
 
   bool _covers(Game game) => _sigilPlatform(game) != null && _layout(game) != null;
 
-  String _root(Game game) {
+  Map<String, String> _options(Game game, String romPath) =>
+      emulator.optionsFor?.call(emulatorDir(), game, romPath, base) ?? emulator.options(emulatorDir());
+
+  String _root(Game game, String romPath) {
     final layout = _layout(game);
-    final rel = layout == null ? emulator.saveRoot : (emulator.saveRootFor?.call(layout) ?? emulator.saveRoot);
+    final rel = layout == null
+        ? emulator.saveRoot
+        : (emulator.saveRootFor?.call(layout, _options(game, romPath)) ?? emulator.saveRoot);
     return p.normalize(p.join(emulatorDir(), rel));
   }
+
+  /// A collected state waits for its upload under the game and its layout:
+  /// another core's collect (the play screen lists every core) never
+  /// replaces it.
+  String _pendingKey(Game game) => '${game.id}|${_layout(game)}';
 
   @override
   SaveStrategy? get wrapped => base;
@@ -294,13 +332,18 @@ class SigilSaveStrategy extends SaveStrategy {
   @override
   Future<void> afterUpload(Game game, String romPath) async {
     if (!_covers(game)) return base?.afterUpload(game, romPath);
-    final state = _pending.remove(game.id);
+    final state = _pending.remove(_pendingKey(game));
     if (state != null) states.write(emulator.id, game.id, state);
   }
 
   @override
-  Future<String?> saveSyncBlockedReason(Game game, String romPath) async =>
-      _covers(game) ? null : base?.saveSyncBlockedReason(game, romPath);
+  Future<String?> saveSyncBlockedReason(Game game, String romPath) async {
+    if (!_covers(game)) return base?.saveSyncBlockedReason(game, romPath);
+    // LRPS2 on shared cards without a serial: sigil couldn't tell this
+    // game's saves from the others', so the old strategy's reason stands.
+    if (_layout(game) == 'pcsx2') return base?.saveSyncBlockedReason(game, romPath);
+    return null;
+  }
 
   /// Restoring touches a card other games may share: it finishes before launch.
   @override
@@ -309,7 +352,7 @@ class SigilSaveStrategy extends SaveStrategy {
 
   @override
   Future<String?> getSaveDir(Game game, String romPath) async =>
-      _covers(game) ? _root(game) : base?.getSaveDir(game, romPath);
+      _covers(game) ? _root(game, romPath) : base?.getSaveDir(game, romPath);
 
   @override
   Future<List<io.File>> getSaveFiles(
@@ -330,7 +373,7 @@ class SigilSaveStrategy extends SaveStrategy {
     }
     final data = collected.data;
     if (data == null) return [];
-    if (collected.state != null) _pending[game.id] = collected.state!;
+    if (collected.state != null) _pending[_pendingKey(game)] = collected.state!;
     final dir = io.Directory(p.join(unitsDir, emulator.id, game.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')));
     if (dir.existsSync()) dir.deleteSync(recursive: true);
     dir.createSync(recursive: true);
@@ -406,13 +449,13 @@ class SigilSaveStrategy extends SaveStrategy {
       // sigil names a card from the content's file name: the emulator's own
       // card name, as sigil's README suggests (`<name>.cue`), when it has one.
       contentPath: stem == null ? romPath : p.join(p.dirname(romPath), '$stem.cue'),
-      saveRoot: hint?.root ?? _root(game),
+      saveRoot: hint?.root ?? _root(game, romPath),
       gameIds: ids.gameIds,
       titleId: ids.titleId,
       rawSerial: ids.rawSerial,
       saveId: ids.saveId,
       usage: ids.usage,
-      options: {...emulator.options(emulatorDir()), ...?hint?.options},
+      options: {..._options(game, romPath), ...?hint?.options},
       state: state,
       overwriteLocal: overwriteLocal,
     );
