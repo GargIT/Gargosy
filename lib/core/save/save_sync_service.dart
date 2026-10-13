@@ -10,6 +10,7 @@ import '../storage/app_preferences.dart';
 import '../romm/romm_models.dart';
 import '../romm/romm_service.dart';
 import '../storage/directory_service.dart';
+import '../storage/profile_rooted.dart';
 import 'formats/rzip.dart';
 import 'formats/save_format_registry.dart';
 import 'formats/zstd.dart';
@@ -115,6 +116,9 @@ class SaveSyncService {
   static const int minValidSaveSizeBytes = 100;
 
   late final RetroArchSaveStrategy _retroarch;
+
+  /// [_retroarch], wrapped by sigil for the games it syncs (issue #7).
+  late final SaveStrategy _retroarchSaves;
   late final SaveStrategy _dolphin;
   late final EdenSaveStrategy _eden;
   late final RyujinxSaveStrategy _ryujinx;
@@ -139,9 +143,15 @@ class SaveSyncService {
     // Gargosy: sigil's strategies take over these emulators' saves (lib/sigil).
     SaveStrategy wrap(String id, SaveStrategy base) => wrapSaves?.call(id, base) ?? base;
     _retroarch = RetroArchSaveStrategy(_directoryService, prefs: _prefs, platform: platform);
+    _retroarchSaves = wrap('retroarch', _retroarch);
     _dolphin = wrap('dolphin', DolphinSaveStrategy(_directoryService, platform: platform));
     _eden = EdenSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
-    _ryujinx = RyujinxSaveStrategy(onMappingResolved: saveMappedFolder, platform: platform);
+    _ryujinx = RyujinxSaveStrategy(
+      onMappingResolved: saveMappedFolder,
+      platform: platform,
+      // Gargosy: in a profile, the folder Ryujinx is started on with -r (issue #9).
+      profileRoot: _directoryService is ProfileRootedDirectories ? () => _directoryService.getEmulatorDirectory('ryujinx') : null,
+    );
     _windows = WindowsSaveStrategy(_prefs, platform: platform);
     _pcsx2 = wrap('pcsx2', Pcsx2SaveStrategy(_directoryService, _prefs, platform: platform));
     _rpcs3 = Rpcs3SaveStrategy(_directoryService, platform: platform);
@@ -227,7 +237,7 @@ class SaveSyncService {
       case 'md':
       case 'sms':
       case 'mastersystem':
-        return _retroarch;
+        return _retroarchSaves;
       case 'nds':
       case 'nintendo-ds':
       case 'ds':
@@ -241,7 +251,7 @@ class SaveSyncService {
         return _duckstation;
       case 'dc':
       case 'dreamcast':
-        return _retroarch;
+        return _retroarchSaves;
       case 'gc':
       case 'ngc':
       case 'gamecube':
@@ -366,7 +376,7 @@ class SaveSyncService {
     if (id == 'melonds') return _melonds;
     if (id == 'mgba') return _mgba;
     if (id == 'duckstation') return _duckstation;
-    if (id == 'retroarch') return _retroarch;
+    if (id == 'retroarch') return _retroarchSaves;
     if (id == 'ppsspp') return _ppsspp;
     if (id == 'cemu') return _cemu;
     if (id == 'pcsx2') return _pcsx2;
@@ -689,8 +699,8 @@ class SaveSyncService {
   /// save states only into their own core; the tag says which emulator made
   /// a save, and on a pull which format it is in (see save/formats).
   String _saveEmulatorTag(SaveStrategy strategy, Game game, String? emulatorId) {
-    if (strategy is RetroArchSaveStrategy) {
-      final core = strategy.coreIdFor(game);
+    if (strategy.unwrapped case final RetroArchSaveStrategy retroarch) {
+      final core = retroarch.coreIdFor(game);
       if (core != null) return core;
     }
     return emulatorId ?? strategy.strategyId;
@@ -1029,7 +1039,8 @@ class SaveSyncService {
     }
   }
 
-  void _applyStrategyMappings(SaveStrategy strategy, Game game, {String? coreOverride}) {
+  void _applyStrategyMappings(SaveStrategy wrapper, Game game, {String? coreOverride}) {
+    final strategy = wrapper.unwrapped;
     if (strategy is RetroArchSaveStrategy) {
       strategy.setLaunchCoreOverride(coreOverride);
     } else if (strategy is EdenSaveStrategy) {

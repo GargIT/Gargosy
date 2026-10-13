@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
+import 'package:gargosy/emulators/profile_launch_config.dart';
 import 'package:gargosy/emulators/profile_directories.dart';
 import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
@@ -32,7 +33,11 @@ void main() {
     final dolphin = list.firstWhere((e) => e.id == 'dolphin');
     expect(dolphin.supported, isTrue);
     expect(dolphin.installedExe, isNull);
-    expect(list.firstWhere((e) => e.id == 'ryujinx').supported, isFalse);
+    expect(list.firstWhere((e) => e.id == 'ryujinx').supported, isTrue, reason: 'pointed with -r (#9)');
+    // Supported exactly when Gargosy can point it at a profile.
+    for (final e in list) {
+      expect(e.supported, ProfileLaunchConfig.supported.contains(e.id), reason: e.id);
+    }
   });
 
   test('import copies the program and leaves the install\'s own saves and markers behind', () async {

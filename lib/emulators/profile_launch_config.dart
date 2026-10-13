@@ -8,6 +8,8 @@ import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
+import 'linked_emulators.dart';
+import 'rpcs3_config.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
 /// emulator's install folder and the shared BIOS folder.
@@ -71,6 +73,10 @@ abstract class ProfileLaunchConfig {
   /// After the emulator exits.
   Future<void> finish(LaunchContext c) async {}
 
+  /// Environment variables the emulator is started with, added to
+  /// Gargosy's own (RPCS3: `RPCS3_CONFIG_DIR`, issue #10).
+  Map<String, String> environment(LaunchContext c) => const {};
+
   /// Rewrites the folder paths in the profile's stored settings to where
   /// they are now (the Gargosy folder may have moved), without starting
   /// anything. Runs before the save pull, so the save code reads this
@@ -113,6 +119,12 @@ abstract class ProfileLaunchConfig {
           '-C', 'savegamePath=${p.join(c.data, 'saves')}',
           '-C', 'savestatePath=${p.join(c.data, 'states')}',
         ]),
+    // Ryujinx (Switch, issue #9): its whole data folder by argument (Ryubing's
+    // CommandLineState: -r / --root-data-dir), and the keys from bios\.
+    'ryujinx': _Args((c) => ['-r', c.data], before: (c) async => _ryujinxKeys(c)),
+    // Eden, Azahar, Cemu, melonDS: a folder link (issues #8, #12–#15).
+    ...linkedEmulatorConfigs,
+    'rpcs3': const Rpcs3Config(),
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
           'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'
@@ -235,8 +247,20 @@ class _RetroArch extends ProfileLaunchConfig {
     io.Directory(c.guard.check(c.data)).createSync(recursive: true);
     final cfg = io.File(c.guard.check(p.join(c.data, 'retroarch.cfg')));
     final text = cfg.existsSync() ? cfg.readAsStringSync() : '';
+    // Saves that RetroArch sorted into core or content subfolders come up
+    // into saves\ before sorting goes off, so none is left where nothing reads.
+    if (RegExp(r'^\s*sort_savefiles(_by_content)?_enable\s*=\s*"true"', multiLine: true).hasMatch(text)) {
+      flattenRetroArchSaves(p.join(c.data, 'saves'), c.guard);
+    }
     cfg.writeAsStringSync(setRetroArchKeys(text, {
       'savefile_directory': p.join(c.data, 'saves'),
+      // Saves flat in saves\, never in a core or content subfolder, nor next
+      // to the ROM: sigil's save root (issue #7) and the old strategy both
+      // read them there, and roms\ holds only ROMs.
+      'sort_savefiles_enable': 'false',
+      'sort_savefiles_by_content_enable': 'false',
+      'savefiles_in_content_dir': 'false',
+      'savestates_in_content_dir': 'false',
       'savestate_directory': p.join(c.data, 'states'),
       'system_directory': systemDir(c),
       if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
@@ -316,6 +340,19 @@ class _Ppsspp extends ProfileLaunchConfig {
     if (memstick.existsSync()) memstick.renameSync(c.guard.check('${memstick.path}.gargosy-off'));
     io.File(c.guard.check(p.join(c.exeDir, 'installed.txt'))).writeAsStringSync(c.data);
     return const [];
+  }
+}
+
+/// Ryujinx's keys (RomM's firmware in `bios\`, `bios\switch` first) into
+/// the profile's `system\`, where it reads them; a game can't start without
+/// prod.keys. The profile's own copies: Ryujinx's Install Keys writes there,
+/// which must not reach `bios\` or another profile, and newer keys a
+/// profile has are never replaced.
+void _ryujinxKeys(LaunchContext c) {
+  final bios = BiosFiles(c.bios);
+  for (final name in const ['prod.keys', 'title.keys']) {
+    final file = bios.find([name], platforms: const ['switch']);
+    if (file != null) copySharedFileIfMissing(file, p.join(c.data, 'system', name), c.guard);
   }
 }
 
@@ -420,5 +457,20 @@ class _Swap extends ProfileLaunchConfig {
     }
     final mark = io.File(p.join(c.exeDir, _swapFile));
     if (mark.existsSync()) mark.deleteSync();
+  }
+}
+
+/// Moves the saves RetroArch sorted into subfolders of [saves] (by core,
+/// or by core and content folder) up into [saves], where it reads them
+/// once sorting is off. A save whose name is already in [saves] stays
+/// where it is: nothing is overwritten.
+void flattenRetroArchSaves(String saves, PathGuard guard) {
+  final dir = io.Directory(saves);
+  if (!dir.existsSync()) return;
+  for (final e in dir.listSync(recursive: true, followLinks: false)) {
+    if (e is! io.File || p.dirname(e.path) == p.normalize(saves)) continue;
+    final flat = guard.check(p.join(saves, p.basename(e.path)));
+    if (io.FileSystemEntity.typeSync(flat) != io.FileSystemEntityType.notFound) continue;
+    e.renameSync(flat);
   }
 }

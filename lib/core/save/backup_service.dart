@@ -53,7 +53,7 @@ class BackupService {
           game,
           (strategy) async => (
                 files: await strategy.getSaveFiles(game, romPath),
-                core: strategy is RetroArchSaveStrategy ? strategy.coreIdFor(game) : null,
+                core: strategy.unwrapped is RetroArchSaveStrategy ? (strategy.unwrapped as RetroArchSaveStrategy).coreIdFor(game) : null,
               ),
           emulatorId: emulatorId,
           coreOverride: coreOverride);

@@ -502,8 +502,9 @@ void main() {
     );
     expect(s, isNotNull);
     expect(
-      SigilSaveStrategy.forEmulator('retroarch', base: base, emulatorDir: () => '', states: states, unitsDir: ''),
+      SigilSaveStrategy.forEmulator('melonds', base: base, emulatorDir: () => '', states: states, unitsDir: ''),
       isNull,
+      reason: 'an emulator sigil does not sync here',
     );
   });
 }

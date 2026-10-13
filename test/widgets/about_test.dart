@@ -159,6 +159,13 @@ void main() {
     expect(find.byType(LicensePage), findsOneWidget);
   });
 
+  testWidgets('Open log folder opens userdata\\app\\logs outside', (tester) async {
+    await pump(tester);
+    await tester.tap(find.text('Open log folder'));
+    await tester.pump();
+    expect(opened.single, p.join(root.path, 'userdata', 'app', 'logs'));
+  });
+
   test('markdownLinks: inline and reference links in order, no images, anchors or repeats', () {
     const md = '![shot](docs/a.png) See [Releases](https://x/releases "title") and [`NOTICE.md`](NOTICE.md),\n'
         '[top](#top), [Releases again](https://x/releases).\n\n[0.1.0]: https://x/tag/v0.1.0\n';

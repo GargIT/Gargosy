@@ -51,6 +51,8 @@ Choose **More info**, then **Run anyway**.
 - **Playing.** On a game's page: Download, then Play. The play screen picks the newest save;
   Y changes the emulator, RB shows the save states.
 - **Offline.** Games on this PC still play; saves upload when RomM can be reached again.
+- **Wii U (Cemu).** Each profile has its own Wii U storage, so updates and DLC are installed per
+  profile.
 - **Another PC.** Copy the folder. Profiles, saves and settings come along; each profile logs
   in again once (the login is encrypted for this PC's Windows user).
 - **Updating.** Gargosy checks GitHub once a start (not more than every 6 hours) and puts a dot

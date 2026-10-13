@@ -131,7 +131,13 @@ class StateSyncService {
   /// accepted from the server.
   static const int minValidStateBytes = 100;
 
-  static String enabledKey(String emulatorId) => 'state_sync_enabled_$emulatorId';
+  /// Gargosy: the profile's one switch for every emulator that syncs states
+  /// (state-sync plan S0.4). Whether an emulator syncs comes from its strategy.
+  static const String enabledKey = 'state_sync_enabled';
+
+  /// Gargosy: the per-emulator switch before S0.4, read once by
+  /// [migrateStateSyncPref].
+  static String legacyEnabledKey(String emulatorId) => '${enabledKey}_$emulatorId';
 
   final RommStatesApi _api;
   final AppPreferences _prefs;
@@ -147,20 +153,24 @@ class StateSyncService {
   static const Duration defaultListTimeout = Duration(seconds: 20);
 
   StateSyncService(this._api, this._prefs, this._resolveStrategy,
-      {Duration listTimeout = defaultListTimeout, StrategyExclusive? exclusive})
+      {Duration listTimeout = defaultListTimeout, StrategyExclusive? exclusive, bool Function(String emulatorId)? emulatorSyncs})
       : _records = StateRecordStore(_prefs),
         _listTimeout = listTimeout,
-        _exclusive = exclusive ?? _runDirectly;
+        _exclusive = exclusive ?? _runDirectly,
+        _emulatorSyncs = emulatorSyncs;
+
+  /// Gargosy: whether an emulator has state sync turned on in its strategy
+  /// (`EmulatorStrategy.supportsStateSync`), the same rule Resume and Settings
+  /// use. A StateSyncCapable save strategy alone only means local states.
+  final bool Function(String emulatorId)? _emulatorSyncs;
 
   /// Pull, push and conflict resolution run through it (see StrategyExclusive).
   final StrategyExclusive _exclusive;
 
-  bool isEnabledFor(String emulatorId) =>
-      _prefs.getBool(enabledKey(emulatorId)) ?? false;
+  bool get isEnabled => _prefs.getBool(enabledKey) ?? false;
 
-  /// True when [game]'s emulator implements state sync and the user turned it
-  /// on. When [emulatorId] is unknown the strategy id stands in for it (they
-  /// match for every emulator that supports state sync today).
+  /// True when [game]'s emulator implements state sync and the profile's
+  /// switch is on.
   bool isAvailableFor(Game game, {String? emulatorId}) =>
       availabilityReason(game, emulatorId: emulatorId) == _available;
 
@@ -171,8 +181,10 @@ class StateSyncService {
   String availabilityReason(Game game, {String? emulatorId}) {
     final strategy = _resolveStrategy(game, emulatorId: emulatorId);
     if (strategy is! StateSyncCapable) return _unsupportedReason(emulatorId, strategy);
-    final key = emulatorId ?? strategy.strategyId;
-    if (!isEnabledFor(key)) return _offReason(key);
+    if (emulatorId != null && _emulatorSyncs != null && !_emulatorSyncs(emulatorId)) {
+      return _unsupportedReason(emulatorId, strategy);
+    }
+    if (!isEnabled) return _offReason;
     return _available;
   }
 
@@ -180,8 +192,7 @@ class StateSyncService {
       "no state-sync support for emulator '${emulatorId ?? strategy?.strategyId ?? 'unknown'}' "
       '(strategy ${strategy?.strategyId ?? 'none'})';
 
-  static String _offReason(String key) =>
-      "state sync is off for '$key': switch it on in Settings > Emulators";
+  static const String _offReason = 'state sync is off: switch it on in Settings > Emulator settings';
 
   /// Null when state sync cannot run for this game (not capable, turned off,
   /// game not identified, state folder unresolved). Never throws.
@@ -192,9 +203,8 @@ class StateSyncService {
         debugPrint('[StateSync] ${game.name}: ${_unsupportedReason(emulatorId, strategy)}');
         return null;
       }
-      final key = emulatorId ?? strategy.strategyId;
-      if (!isEnabledFor(key)) {
-        debugPrint('[StateSync] ${game.name}: ${_offReason(key)}');
+      if (!isEnabled) {
+        debugPrint('[StateSync] ${game.name}: $_offReason');
         return null;
       }
       final matches = await strategy.stateFileMatcher(game, romPath);
@@ -804,4 +814,32 @@ class StateSyncService {
       _hashBytes(await file.readAsBytes());
 
   String _hashBytes(List<int> bytes) => md5.convert(bytes).toString();
+}
+
+/// Gargosy (state-sync plan S0.4): the per-emulator switches become the one
+/// [StateSyncService.enabledKey]. When it isn't set yet and any old switch
+/// was on, sync is on (that profile wanted it); the old keys are removed.
+/// Runs where a profile's prefs open; once they're gone it does nothing.
+Future<void> migrateStateSyncPref(AppPreferences prefs) async {
+  final prefix = '${StateSyncService.enabledKey}_';
+  // Only the old switches: bools under the prefix, nothing else that shares it.
+  final old = [
+    for (final key in prefs.getKeys())
+      if (key.startsWith(prefix) && _boolOrNull(prefs, key) != null) key,
+  ];
+  if (old.isEmpty) return;
+  if (prefs.getBool(StateSyncService.enabledKey) == null && old.any((key) => prefs.getBool(key) == true)) {
+    await prefs.setBool(StateSyncService.enabledKey, true);
+  }
+  for (final key in old) {
+    await prefs.remove(key);
+  }
+}
+
+bool? _boolOrNull(AppPreferences prefs, String key) {
+  try {
+    return prefs.getBool(key);
+  } catch (_) {
+    return null; // not a bool
+  }
 }

@@ -74,7 +74,7 @@ void main() {
         root: root,
         paths: ProfilePaths(root, 'aaa'),
         prefs: prefs,
-        start: (exePath, args, {workingDirectory}) async {
+        start: (exePath, args, {workingDirectory, environment}) async {
           started.add(args);
           return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
         },

@@ -43,7 +43,11 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
     'name': 'Eden (Switch)',
     'type': 'gitea',
     'gitea_host': 'git.eden-emu.dev',
-    'gitea_repo': 'eden-ci/nightly',
+    // Gargosy: Eden's own releases. The eden-ci/nightly releases stopped
+    // carrying files (2026-10); a stable one has a build per compiler and
+    // CPU: the x64 MSVC one is the plain Windows build.
+    'gitea_repo': 'eden-emu/eden',
+    'gitea_asset_required_windows': ['windows', 'amd64', 'msvc-standard', '.zip'],
     'windows_executable': 'eden.exe',
     'linux_executable': 'eden',
     'macos_executable': 'Eden.app/Contents/MacOS/Eden',
@@ -53,12 +57,16 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
   {
     'id': 'ryujinx',
     'name': 'Ryujinx (Switch)',
-    'type': 'github',
-    'github_repo': 'Ryujinx/Ryujinx',
-    'github_asset_required_windows': ['win_x64'],
-    'github_asset_required_linux': ['linux_x64'],
-    'github_asset_required_macos': ['macos_universal'],
-    'github_asset_excluded': ['debug', 'source'],
+    // Gargosy: GitHub's Ryujinx/Ryujinx is gone (2024); it continues as
+    // Ryubing, released on its own GitLab (issue #9). Stable only.
+    'type': 'gitlab',
+    'gitlab_host': 'git.ryujinx.app',
+    'gitlab_repo': 'ryubing/ryujinx',
+    'gitlab_asset_required_windows': ['win_x64', '.zip'],
+    'gitlab_asset_required_linux': ['linux_x64'],
+    'gitlab_asset_required_macos': ['macos_universal'],
+    // One zip: never the headless build or a checksum beside it.
+    'gitlab_asset_excluded': ['debug', 'source', 'canary', 'nogui', 'headless', '.sha256', '.sig'],
     'windows_executable': 'Ryujinx.exe',
     'linux_executable': 'Ryujinx',
     'macos_executable': 'Ryujinx.app/Contents/MacOS/Ryujinx',

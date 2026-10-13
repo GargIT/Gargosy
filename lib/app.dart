@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/storage/logger_service.dart';
 import 'profiles/profile_providers.dart';
 import 'providers/update_providers.dart';
 import 'update/update_installer.dart';
@@ -45,6 +46,13 @@ class _GargosyAppState extends ConsumerState<GargosyApp> {
   Widget build(BuildContext context) {
     final active = ref.watch(activeProfileProvider);
     ref.listen(activeProfileProvider, (prev, next) {
+      final tag = next == null ? null : LoggerService.shortId(next.profile.id);
+      if (tag != LoggerService.profileTag) {
+        // Closed under the old tag, opened under the new one.
+        if (tag == null) debugPrint('[Profile] closed');
+        LoggerService.profileTag = tag;
+        if (tag != null) debugPrint('[Profile] opened $tag');
+      }
       // A profile switch drops every page pushed on top (add profile, login).
       if ((prev == null) != (next == null)) _navigatorKey.currentState?.popUntil((r) => r.isFirst);
     });
