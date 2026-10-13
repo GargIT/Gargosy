@@ -8,6 +8,11 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Gargosy keeps a log in `userdata\app\logs`, one file per start (the
+  newest 10 are kept, each at most 5 MB). Logins, tokens, passwords and API
+  keys are left out. About → Open log folder; attach the newest log to a bug
+  report (#1).
+
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.
 - A reader for those documents — what's new, read me, licences, security

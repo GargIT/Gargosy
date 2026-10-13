@@ -63,6 +63,13 @@ body:
       description: If it's about playing a game or its saves.
       placeholder: PCSX2 2.4.0, PlayStation 2
   - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: >-
+        About → Open log folder, then drag the newest `gargosy-*.log` here (one file per start).
+        Look it over first: it holds file paths and game names. Logins, tokens and passwords are left out.
+  - type: textarea
     id: extra
     attributes:
       label: Anything else

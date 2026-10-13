@@ -42,6 +42,7 @@ Gargosy\
   bios\                          firmware, shared
   userdata\
     settings.json
+    app\logs\                    gargosy-<yyyyMMdd-HHmmss>.log, one per start, newest 10 kept
     templates\<emu>\             starting emulator data for new profiles
     profiles\<id>\               profile.json, login.<PC>.dpapi, emulators\<emu>\, backups\, cache\
 ```
@@ -56,6 +57,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 ### Core (copied from Freegosy unless marked new)
 - `core/platform/platform_info.dart`, `window_service.dart` — platform abstraction; fullscreen (`launch_fullscreen` pref, `--fullscreen`).
 - `core/storage/app_preferences.dart` + `shared_preferences_app_preferences.dart` — prefs interface; `logger_service.dart`, `ini_file.dart`, `safe_fs.dart`.
+- The file log (issue #1, new): `core/storage/file_log_sink.dart` (`FileLogSink.open`: `userdata\app\logs\gargosy-<yyyyMMdd-HHmmss>.log`, newest 10 kept, stops at 5 MB with a last line, synchronous writes, null when the folder can't be written), `log_redaction.dart` (`redact`: Authorization headers, token/password JSON values, `token=`/`password=`/`y=`/`key=`/`apikey=` in queries, `cheevos_token`/`webdav_password`/`Token =` config lines). `logger_service.dart` (adapted): `init(sink:, tag:)` writes every `debugPrint` redacted, timed and tagged `[p:<short id>]` (`profileTag`, set by `GargosyApp` when the profile changes), `error()`, `writeRaw()`. `main.dart`'s `startFileLog` opens it after `ensureLayout()`, writes the header (version, Windows, folder) and hooks `FlutterError.onError` / `PlatformDispatcher.instance.onError`. Only the UI isolate's `debugPrint` reaches it. About has "Open log folder"; the bug template asks for the log. Never log a token, password, PIN or API key yourself: `redact` is the safety net, not the rule.
 - `core/storage/json_file_preferences_store.dart` (adapted) — `SharedPreferences` in `userdata\settings.json`, atomic writes, damaged file kept aside.
 - `core/storage/gargosy_path_provider.dart` (adapted) — `path_provider` folders in `userdata\app\`.
 - `core/security/dpapi.dart` (adapted) — `DataProtector`, DPAPI, `readMachineGuid()`.
