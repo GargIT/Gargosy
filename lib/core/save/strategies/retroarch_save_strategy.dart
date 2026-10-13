@@ -132,6 +132,13 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return core.replaceAll(RegExp(r'\.(dll|so|dylib)$'), '').replaceAll(RegExp(r'_libretro$'), '');
   }
 
+  /// Gargosy: the core's folder name (`LRPS2`, `PCSX-ReARMed` …), where
+  /// RetroArch keeps its `.opt` files under `config\`; null when unknown.
+  String? coreFolderFor(Game game) {
+    final folder = _getCoreInfo(game.platformSlug?.toLowerCase() ?? '')?.saveFolder;
+    return folder == null || folder.isEmpty ? null : folder;
+  }
+
   void setNdsCore(String core) {
     _ndsCore = core;
   }
@@ -384,8 +391,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   /// Whether RetroArch sorts saves into core subfolders (e.g. `saves/mGBA/`).
-  /// Defaults to `true` (RetroArch's default).
-  bool get _sortSavefiles => _cachedSortSavefiles ?? true;
+  /// Gargosy: defaults to `false`, RetroArch's own default (Freegosy had
+  /// true), so a pull before RetroArch first wrote its cfg goes where it reads.
+  bool get _sortSavefiles => _cachedSortSavefiles ?? false;
 
   /// Whether RetroArch sorts saves into ROM parent folder subfolders.
   /// Parsed from config but currently unused in path resolution — RetroArch

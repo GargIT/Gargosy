@@ -8,6 +8,12 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- RetroArch's saves for PlayStation, PlayStation 2 (LRPS2), N64, Game Boy
+  and Game Boy Color now sync through argosy-sigil, as the standalone
+  emulators' do: one save per game in RomM's `autosave` slot, named for
+  the core, so RomM's player and Argosy see the same save, and a game's save
+  on a shared PS2 card travels without the other games' (#7). Other systems
+  in RetroArch sync as before.
 - Ryujinx (Switch) plays on each profile's own data (`-r`), with the keys
   from RomM's firmware in place, and downloads again: from Ryubing, which
   carries Ryujinx on since its GitHub went away (#9).
