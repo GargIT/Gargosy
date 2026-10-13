@@ -43,6 +43,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- Save states never travel inside a game's save any more (Dolphin, PPSSPP,
+  RetroArch): they go to RomM only through "Sync save states". A state in
+  an older save on RomM is put back only when this PC has none of that
+  name (#30).
 - Settings and the user menu look and work like RomM v2's profile page and
   user menu: sections in groups (Profile, Library, This PC, Gargosy), settings
   in cards, and the menu opens Settings on the section you pick. The menu

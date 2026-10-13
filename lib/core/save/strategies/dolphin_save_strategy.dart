@@ -222,7 +222,6 @@ class DolphinSaveStrategy extends SaveStrategy {
       String romPath,
       {DateTime? sessionStart,
       String syncMode = 'both'}) async {
-    final userDir = await _getUserDir(platformSlug: game.platformSlug);
     final rootSaveDir = await getSaveDir(game, romPath);
     if (rootSaveDir == null) return [];
 
@@ -304,30 +303,8 @@ class DolphinSaveStrategy extends SaveStrategy {
       }
     }
 
-    // Handle States
-    if (syncMode == 'states' || syncMode == 'both') {
-      final stateDir = p.join(userDir, 'StateSaves');
-      final stateDirObj = io.Directory(stateDir);
-      if (await stateDirObj.exists()) {
-        final gameId = (await gameIdFor(game, romPath))?.toUpperCase();
-        final romStem = p.basenameWithoutExtension(romPath).toUpperCase();
-
-        await for (final entity in stateDirObj.list()) {
-          if (entity is! io.File) continue;
-          final filename = p.basename(entity.path).toUpperCase();
-          
-          // Dolphin states are usually [GameID].s00, [GameID].sav, etc.
-          // or [Filename].s00
-          if (filename.endsWith('.SAV') || filename.contains(RegExp(r'\.S\d{2}$'))) {
-            if ((gameId != null && filename.startsWith(gameId)) || filename.startsWith(romStem)) {
-              if (sessionStart == null || (await entity.stat()).modified.isAfter(sessionStart.subtract(const Duration(seconds: 2)))) {
-                result.add(entity);
-              }
-            }
-          }
-        }
-      }
-    }
+    // Gargosy: states never ride in game saves (issue #30, state-sync plan
+    // S0.3); they reach RomM only through StateSyncService.
 
     return result;
   }
@@ -346,7 +323,13 @@ class DolphinSaveStrategy extends SaveStrategy {
         for (final file in archive) {
           if (!file.isFile) continue;
           if (file.name == 'freegosy_sync.txt') continue;
-          
+          // Gargosy: a state in an older bundle (issue #30) goes to StateSaves\
+          // only when this PC has no file of that name; never over one.
+          if (isDolphinStateName(file.name)) {
+            await _stateIfMissing(game, p.basename(file.name), file.content as List<int>);
+            continue;
+          }
+
           final targetPath = p.normalize(p.join(saveDir, file.name));
           await io.Directory(p.dirname(targetPath)).create(recursive: true);
           await backupSave(targetPath);
@@ -355,6 +338,10 @@ class DolphinSaveStrategy extends SaveStrategy {
         return true;
       }
 
+      if (isDolphinStateName(filename)) {
+        await _stateIfMissing(game, p.basename(filename), data);
+        return true;
+      }
       final targetPath = p.normalize(p.join(saveDir, filename));
       await backupSave(targetPath);
       await io.File(targetPath).writeAsBytes(data);
@@ -363,4 +350,20 @@ class DolphinSaveStrategy extends SaveStrategy {
       return false;
     }
   }
+
+  /// Gargosy: [name] into StateSaves\ when no file of that name is there.
+  Future<void> _stateIfMissing(Game game, String name, List<int> bytes) async {
+    final userDir = await _getUserDir(platformSlug: game.platformSlug);
+    final target = io.File(p.join(userDir, 'StateSaves', name));
+    if (await target.exists()) return;
+    await target.parent.create(recursive: true);
+    await target.writeAsBytes(bytes);
+  }
+}
+
+/// Gargosy: a Dolphin save state's file name (`<id>.s01`–`.s10`, or one in a
+/// `StateSaves` folder), as older Freegosy bundles carried them.
+bool isDolphinStateName(String name) {
+  final n = name.replaceAll('\\', '/');
+  return RegExp(r'\.s\d{2}$', caseSensitive: false).hasMatch(n) || n.toLowerCase().contains('statesaves/');
 }

@@ -15,7 +15,6 @@ import '../formats/save_format_registry.dart';
 import '../save_state_info.dart';
 import '../save_strategy.dart';
 import '../state_sync_capable.dart';
-import '../state_sync_service.dart';
 import 'ps2_save_folders.dart';
 import 'package:path/path.dart' as p; // Import path package
 import '../../emulator/platform_slugs.dart';
@@ -29,12 +28,10 @@ import '../../emulator/retroarch_core_names.dart';
 ///
 /// Save states (`<content>.state`, `.stateN`, `.state.auto`) sync through
 /// [StateSyncCapable] / StateSyncService when the user turns "Sync save
-/// states" on for RetroArch. With it off they still travel inside the game
-/// save, as before.
+/// states" on. Gargosy: never inside the game save, sync on or off (issue #30).
 class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
-  final AppPreferences? _prefs;
   String _ndsCore = 'melonds'; // Default NDS core
   String? _cachedSaveRoot; // Cached from retroarch.cfg
 
@@ -121,7 +118,6 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   RetroArchSaveStrategy(this._directoryService,
       {PlatformInfo? platform, AppPreferences? prefs, RomGameIds? gameIds})
       : _platform = platform ?? PlatformInfo.current,
-        _prefs = prefs,
         _gameIds = gameIds ?? (prefs == null ? null : RomGameIds(prefs));
 
   /// The core [game]'s saves come from, as RomM and other clients name it:
@@ -840,10 +836,6 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return files;
   }
 
-  /// Whether the profile syncs save states (Gargosy: one switch for every
-  /// emulator, S0.4). States then sync through StateSyncService and stay out
-  /// of the game-save upload.
-  bool get _stateSyncOn => _prefs?.getBool(StateSyncService.enabledKey) ?? false;
 
   /// RetroArch's default states folder for [slug], without the per-core
   /// subfolder: `<RetroArch>/states` (EmuDeck and RetroDECK have their own
@@ -1086,17 +1078,8 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       }
     }
 
-    // Handle States
-    if ((syncMode == 'states' || syncMode == 'both') && !_stateSyncOn) {
-      final romStem = io.File(romPath).uri.pathSegments.last.replaceAll(RegExp(r'\.[^.]+$'), '');
-      for (final checkStem in [stem, romStem]) {
-        filesToCheck.add(io.File('$statesRoot/$checkStem.state.auto'));
-        filesToCheck.add(io.File('$statesRoot/$checkStem.state')); // slot 0 has no number
-        for (int i = 0; i <= 9; i++) {
-          filesToCheck.add(io.File('$statesRoot/$checkStem.state$i'));
-        }
-      }
-    }
+    // Gargosy: states never ride in game saves, sync on or off (issue #30);
+    // StateSyncService carries them.
 
     // Filter out non-existent files and apply sessionStart filter
     final finalResult = <io.File, io.File?>{};
@@ -1151,8 +1134,15 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
           if (lrps2 && !isFileState) continue;
           String? fileTargetDir;
           if (isFileState) {
-            if (_stateSyncOn) continue; // states sync through StateSyncService
-            fileTargetDir = await _statesDir(slug, coreInfo, destPath);
+            // Gargosy: a state in an older bundle (issue #30) only where this
+            // PC has none of that name; never over one, sync on or off.
+            final statesDir = await _statesDir(slug, coreInfo, destPath);
+            final target = io.File(p.join(statesDir, p.basename(file.name)));
+            if (!await target.exists()) {
+              await target.parent.create(recursive: true);
+              await target.writeAsBytes(file.content as List<int>);
+            }
+            continue;
           } else {
             fileTargetDir = await getSaveDir(game, destPath);
           }
@@ -1189,11 +1179,14 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       final isState = filename.contains('.state');
 
       if (isState) {
-        if (_stateSyncOn) {
-          debugPrint('[SaveSync] [retroarch] ignoring state in save restore (state sync is on): $filename');
-          return true;
+        // Gargosy: only where this PC has no state of that name (issue #30).
+        final statesDir = await _statesDir(slug, coreInfo, destPath);
+        final target = io.File(p.join(statesDir, p.basename(filename)));
+        if (!await target.exists()) {
+          await target.parent.create(recursive: true);
+          await target.writeAsBytes(data);
         }
-        targetDir = await _statesDir(slug, coreInfo, destPath);
+        return true;
       } else {
         // For saves: use getSaveDir() which scans for the actual folder
         targetDir = await getSaveDir(game, destPath);
