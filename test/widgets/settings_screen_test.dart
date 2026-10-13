@@ -183,11 +183,18 @@ void main() {
     expect(shown, findsOneWidget);
   });
 
-  testWidgets('save-state sync is switched on per emulator, for this profile', (tester) async {
+  testWidgets('one switch syncs save states for this profile; the note names who syncs', (tester) async {
     await pump(tester, initial: SettingsPage.emulatorSettings);
-    await tester.tap(find.byKey(const ValueKey('state-sync-duckstation')));
+    expect(find.byKey(const ValueKey('state-sync')), findsOneWidget);
+    // The old per-emulator toggles are gone.
+    for (final id in ['duckstation', 'pcsx2', 'retroarch']) {
+      expect(find.byKey(ValueKey('state-sync-$id')), findsNothing, reason: id);
+    }
+    // DuckStation and RetroArch are installed; both report supportsStateSync, PCSX2 isn't installed.
+    expect(find.text('Syncs in DuckStation and RetroArch.'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('state-sync')));
     await tester.pumpAndSettle();
-    expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey('duckstation')), isTrue);
+    expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey), isTrue);
   });
 
   testWidgets('deleting the profile names the saves still waiting to upload', (tester) async {
