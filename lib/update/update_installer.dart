@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
@@ -65,10 +66,12 @@ class UpdateInstaller {
   /// Gargosy.exe, and the folder isn't one Windows protects (Program Files,
   /// Windows), where it couldn't replace the files. Elsewhere a folder that
   /// can't be written makes the updater roll back and say so.
-  bool get canInstall => io.File(paths.installedUpdater).existsSync() && !_inProtectedFolder;
+  late final bool canInstall = io.File(paths.installedUpdater).existsSync() && !_inProtectedFolder;
 
   /// Why [canInstall] is false, for the UI.
-  String? get whyNot {
+  late final String? whyNot = _whyNot();
+
+  String? _whyNot() {
     if (!io.File(paths.installedUpdater).existsSync()) {
       return "This Gargosy has no ${UpdatePaths.updaterExe}: update it by hand from the release page this once.";
     }
@@ -118,12 +121,18 @@ class UpdateInstaller {
   Future<UpdateOutcome?> afterStart(List<String> args) async {
     final from = args.where((a) => a.startsWith(updatedFromArg)).firstOrNull;
     if (from != null) {
-      await _cleanUp();
+      // The old release is removed in the background: the window doesn't
+      // wait for thousands of deletes.
+      cleaning = _cleanUp();
+      unawaited(cleaning);
       return UpdatedFrom(from.substring(updatedFromArg.length));
     }
     if (args.contains(updateFailedArg)) return UpdateFailed(_lastLogLine());
     return null;
   }
+
+  /// The clean-up after an update, running in the background (tests wait for it).
+  Future<void> cleaning = Future.value();
 
   Future<void> _cleanUp() async {
     final dir = io.Directory(paths.dir);
@@ -141,7 +150,8 @@ class UpdateInstaller {
   String? _lastLogLine() {
     try {
       final lines = io.File(paths.log).readAsLinesSync().map((l) => l.trim()).where((l) => l.isNotEmpty);
-      return lines.isEmpty ? null : lines.last;
+      // The updater writes "yyyy-mm-dd hh:mm:ss  " first: the message alone.
+      return lines.isEmpty ? null : lines.last.replaceFirst(RegExp(r'^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\s+'), '');
     } on io.FileSystemException {
       return null;
     }

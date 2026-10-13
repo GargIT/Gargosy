@@ -59,7 +59,6 @@ Future<bool> showConfirm(BuildContext context,
   return ok == true;
 }
 
-/// Pick one of [labels]; null when closed with B. [current] has focus.
 /// A message with one button (OK); A or B closes it.
 Future<void> showNotice(BuildContext context, {required String title, required String body, String ok = 'OK'}) =>
     showDialog<void>(
@@ -75,6 +74,7 @@ Future<void> showNotice(BuildContext context, {required String title, required S
       ]),
     );
 
+/// Pick one of [labels]; null when closed with B. [current] has focus.
 Future<int?> showChoice(BuildContext context, {required String title, required List<String> labels, int? current}) =>
     showDialog<int>(
       context: context,

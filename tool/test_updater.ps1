@@ -211,6 +211,15 @@ Test-Case 'a file the update lacks is refused' {
     Assert-OldApp $root 'missing'
 }
 
+Test-Case 'old files an earlier rollback left in previous\ are never deleted: the update is refused' {
+    $root = New-Case 'stuck'
+    Write-Text "$root\userdata\app\update\previous\Gargosy.exe" 'the only copy'
+    Write-Text "$root\userdata\app\update\previous\.gargosy-incomplete" ''
+    if ((Invoke-Updater $root) -ne 4) { throw 'not refused' }
+    Assert-OldApp $root 'stuck'
+    if ((Get-Content -Raw "$root\userdata\app\update\previous\Gargosy.exe") -ne 'the only copy') { throw 'previous\ was cleared' }
+}
+
 Test-Case 'a locked file rolls back; the old Gargosy starts with --update-failed' {
     $root = New-Case 'locked'
     $before = Get-UserTrees $root

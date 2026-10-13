@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:io' as io;
 
 import 'package:dio/dio.dart';
@@ -85,6 +86,7 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
   Future<void> setChannel(UpdateChannel c) async {
     if (c == _checker.channel) return;
     await _checker.setChannel(c);
+    _generation++; // a check still running for the old channel is dropped
     state = const UpdateState();
     await _check(force: true);
   }
@@ -94,12 +96,21 @@ class UpdateNotifier extends StateNotifier<UpdateState> {
     state = UpdateState(checking: state.checking, result: state.result);
   }
 
+  /// Bumped by [setChannel]: an answer for an older channel isn't shown.
+  int _generation = 0;
+
   Future<void> _check({required bool force}) async {
     if (state.checking) return;
+    final generation = _generation;
     state = UpdateState(checking: true, result: state.result);
-    final result = await _checker.check(force: force);
-    if (!mounted) return;
-    state = UpdateState(result: result ?? state.result);
+    UpdateCheck? result;
+    try {
+      result = await _checker.check(force: force);
+    } catch (e) {
+      debugPrint('[Update] check failed: $e');
+    } finally {
+      if (mounted && generation == _generation) state = UpdateState(result: result ?? state.result);
+    }
   }
 }
 

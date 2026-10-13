@@ -280,7 +280,9 @@ void Log::Line(const std::wstring& text) const {
 
 bool WaitForGargosy(const Args& args) {
   HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, args.pid);
-  if (!process) return true;  // already gone
+  // No such process: it's gone. Anything else (access denied: Gargosy runs
+  // elevated) means it can't be waited for, and nothing may be swapped yet.
+  if (!process) return GetLastError() == ERROR_INVALID_PARAMETER;
   const DWORD result = WaitForSingleObject(process, args.wait_seconds * 1000);
   CloseHandle(process);
   return result == WAIT_OBJECT_0;
@@ -336,6 +338,14 @@ Outcome Apply(const Args& args, const Log& log, const Progress& progress, std::w
     }
   }
 
+  // An earlier update that couldn't put every old file back left them in
+  // previous\ with a marker: they're the only copy, so nothing goes on.
+  const std::wstring stuck = Join(previous, L".gargosy-incomplete");
+  if (IsFile(stuck)) {
+    error = L"An earlier update couldn't put every old file back: they are in userdata\\app\\update\\previous. "
+            L"Copy them into the Gargosy folder and delete that folder, then update again.";
+    return Outcome::kRefused;
+  }
   if (IsDir(previous)) DeleteTree(previous);
   const size_t total = all.size() + fresh.size();
   size_t done = 0;
@@ -357,6 +367,12 @@ Outcome Apply(const Args& args, const Log& log, const Progress& progress, std::w
         all_back = false;
         log.Line(L"Couldn't put back " + *it + L" (it is in userdata\\app\\update\\previous): " + Win32Message(code));
       }
+    }
+    if (!all_back) {
+      // The next update must not delete them (see the start of Apply).
+      HANDLE marker = CreateFileW(Join(previous, L".gargosy-incomplete").c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                                  FILE_ATTRIBUTE_NORMAL, nullptr);
+      if (marker != INVALID_HANDLE_VALUE) CloseHandle(marker);
     }
     log.Line(all_back ? L"Failed: " + why + L" The old version is back."
                       : L"Failed: " + why + L" Some old files are still in userdata\\app\\update\\previous: copy them back by hand.");
@@ -384,7 +400,11 @@ Outcome Apply(const Args& args, const Log& log, const Progress& progress, std::w
     const std::wstring to = Join(root, f);
     DWORD code = 0;
     if (!MakeDirs(Parent(to)) || !CopyOne(Join(args.from, f), to, code)) {
-      return roll_back(f + L" couldn't be written: " + Win32Message(code ? code : GetLastError()) + L".");
+      const DWORD failed = code ? code : GetLastError();
+      // A half-written file isn't in `copied` yet: it goes before the rollback.
+      DWORD ignored = 0;
+      if (IsFile(to)) DeleteOne(to, ignored);
+      return roll_back(f + L" couldn't be written: " + Win32Message(failed) + L".");
     }
     copied.push_back(f);
   }

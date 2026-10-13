@@ -43,11 +43,14 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
   final unpacked = await showDialog<String>(
       context: context, barrierDismissible: false, builder: (_) => _DownloadDialog(release: release));
   if (unpacked == null || !context.mounted) return;
-  // A game or a sync may have started while it downloaded.
+  // A game or a sync may have started while it downloaded (RomM came back
+  // and the upload queue runs): Gargosy quits only once both are done.
   if (ref.read(playControllerProvider).runningGameId != null) {
     showToast(context, "Close the game first: Gargosy can't update while a game runs.");
     return;
   }
+  if (ref.read(activeProfileProvider) != null && !await waitForSyncIdle(context, ref)) return;
+  if (!context.mounted) return;
   unawaited(showDialog<void>(context: context, barrierDismissible: false, builder: (_) => const _Restarting()));
   try {
     await installer.start(unpacked, release.version.toString());

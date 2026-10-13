@@ -49,7 +49,8 @@ int Run(HWND notify) {
   log.Line(L"Updating Gargosy from " + g_args.old_version + L" to " + g_args.version + L" (in progress).");
   log.Line(L"Waiting for Gargosy (process " + std::to_wstring(g_args.pid) + L") to close.");
   if (!WaitForGargosy(g_args)) {
-    g_error = L"Gargosy didn't close within " + std::to_wstring(g_args.wait_seconds) + L" seconds. Nothing was changed.";
+    g_error = L"Gargosy didn't close within " + std::to_wstring(g_args.wait_seconds) +
+              L" seconds, or couldn't be waited for. Nothing was changed.";
     log.Line(L"Stopped: " + g_error);
     return 2;
   }

@@ -78,6 +78,7 @@ void main() {
     io.File(i.paths.log).writeAsStringSync('done\n');
     final outcome = await i.afterStart(['--updated-from=0.1.0']);
     expect((outcome! as UpdatedFrom).oldVersion, '0.1.0');
+    await i.cleaning;
     expect(io.Directory(i.paths.dir).listSync().map((e) => p.basename(e.path)), ['update.log']);
   });
 
@@ -88,6 +89,15 @@ void main() {
     final outcome = await i.afterStart(['--update-failed']);
     expect((outcome! as UpdateFailed).detail, r'Failed: data\app.so is locked. The old version is back.');
     expect(io.Directory(i.paths.unpacked).existsSync(), isTrue);
+  });
+
+  test("the updater's line is shown without its time", () async {
+    final i = installer();
+    io.Directory(i.paths.dir).createSync(recursive: true);
+    io.File(i.paths.log).writeAsStringSync(
+        '2026-10-14 12:03:07  Waiting for Gargosy\r\n2026-10-14 12:03:09  Failed: data\\app.so is locked. The old version is back.\r\n');
+    final outcome = await i.afterStart(['--update-failed']);
+    expect((outcome! as UpdateFailed).detail, r'Failed: data\app.so is locked. The old version is back.');
   });
 
   test('a normal start reports nothing', () async {
