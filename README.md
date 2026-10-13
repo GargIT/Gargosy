@@ -56,6 +56,17 @@ Choose **More info**, then **Run anyway**.
   profile.
 - **Another PC.** Copy the folder. Profiles, saves and settings come along; each profile logs
   in again once (the login is encrypted for this PC's Windows user).
+- **Updating.** Gargosy checks GitHub once a start (not more than every 6 hours) and puts a dot
+  on your avatar when a new version is out. About → **Update now** downloads it, closes Gargosy,
+  swaps the app files and starts it again; your games, emulators, BIOS files and `userdata\`
+  are never touched. The **channel** in About is *Latest* (releases only) or *Preview* (the
+  preview too). Gargosy never goes back to an older version, so switching from Preview to
+  Latest offers nothing until a release is newer than what you have.
+  - **From 0.1.0**, update by hand once: unpack the new zip and copy its files over the old
+    ones. 0.1.0 has no updater; every version after it updates itself.
+  - **If an update stops half way** (the PC lost power) and Gargosy won't start, copy everything
+    from `userdata\app\update\previous\` back into the Gargosy folder, or unpack the new zip
+    over it. `userdata\app\update\update.log` says how far it got.
 
 ## Developing
 

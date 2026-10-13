@@ -9,10 +9,12 @@ import '../../../core/input/gamepad_service.dart';
 import '../../../profiles/path_guard.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../../providers/about_providers.dart';
+import '../../../providers/update_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/hint_bar.dart';
 import '../doc_reader_screen.dart';
 import 'settings_rows.dart';
+import 'updates_block.dart';
 
 const gargosyRepoUrl = 'https://github.com/GargIT/Gargosy';
 
@@ -28,7 +30,7 @@ Future<void> showAboutGargosy(BuildContext context) => showDialog<void>(
             child: Padding(
               padding: EdgeInsets.all(GSpace.s5),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                AboutSection(autofocus: true),
+                Flexible(child: SingleChildScrollView(child: AboutSection(autofocus: true))),
                 HintBar(hints: [Hint(GameAction.confirm, 'Open'), Hint(GameAction.back, 'Close')]),
               ]),
             ),
@@ -39,7 +41,7 @@ Future<void> showAboutGargosy(BuildContext context) => showDialog<void>(
 
 /// About: Gargosy's and RomM's versions, then the documents in the Gargosy
 /// folder (opened in the reader), the Flutter package licences, the log
-/// folder (for bug reports) and GitHub.
+/// folder (for bug reports), GitHub and Updates (issue #16).
 /// The About dialog and Settings → About.
 class AboutSection extends ConsumerWidget {
   const AboutSection({super.key, this.autofocus = false});
@@ -52,6 +54,7 @@ class AboutSection extends ConsumerWidget {
     final root = ref.watch(appRootProvider);
     final romm = ref.watch(rommServerVersionProvider);
     final version = AppConstants.version;
+    final outcome = updateOutcomeLine(ref.watch(updateOutcomeProvider), version);
     final rommText =
         romm.when(data: (v) => v == null ? 'not reachable' : 'v$v', loading: () => '…', error: (_, _) => 'not reachable');
 
@@ -78,6 +81,10 @@ class AboutSection extends ConsumerWidget {
               Text('Gargosy v$version', style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
               const SizedBox(height: GSpace.s1),
               Text('RomM $rommText', style: const TextStyle(color: GColors.fgSecondary)),
+              if (outcome != null) ...[
+                const SizedBox(height: GSpace.s1),
+                Text(outcome, key: const Key('update-outcome'), style: const TextStyle(color: GColors.primary)),
+              ],
             ]),
           ),
         ]),
@@ -111,6 +118,7 @@ class AboutSection extends ConsumerWidget {
         value: gargosyRepoUrl.replaceFirst('https://', ''),
         onActivate: () => ref.read(externalOpenerProvider)(gargosyRepoUrl),
       ),
+      const UpdatesBlock(),
     ]);
   }
 }

@@ -43,6 +43,12 @@ What changed in each release of Gargosy. The format follows
 - ScummVM can play games: an imported ScummVM keeps each profile's settings,
   saves and screenshots in the profile's folder. Its saves don't sync with
   RomM yet.
+- Gargosy updates itself (#16): it checks GitHub at start, shows a dot on the
+  avatar when a new version is out, and About → Update now downloads it,
+  checks it, and swaps the app files with the new `GargosyUpdate.exe`. Your
+  games, emulators, BIOS files and `userdata\` are never touched. The channel
+  is *Latest* (releases) or *Preview* (the rolling preview too). Coming from
+  0.1.0, update by hand once.
 
 ### Changed
 
