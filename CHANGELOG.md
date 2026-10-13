@@ -8,6 +8,11 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Eden (Switch), Azahar (3DS), Cemu (Wii U) and melonDS (DS) play on each
+  profile's own data: their `user\` or `portable\` folder is a link to the
+  profile's (#8, #12–#15). Keys from RomM's firmware go into place, and
+  melonDS's saves stay out of `roms\`. Wii U updates and DLC are installed
+  per profile.
 - Gargosy keeps a log in `userdata\app\logs`, one file per start (the
   newest 10 are kept, each at most 5 MB). Logins, tokens, passwords and API
   keys are left out. About → Open log folder; attach the newest log to a bug
@@ -35,6 +40,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Eden downloads again: its nightly builds no longer carry files, so Gargosy
+  takes Eden's latest release (the x64 Windows build).
 - Dolphin can be downloaded again: its download page now turns programs away,
   so Gargosy reads the update API Dolphin's own updater uses.
 - DuckStation's download is its portable zip, not the installer.

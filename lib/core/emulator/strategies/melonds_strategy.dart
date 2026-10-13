@@ -1,4 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: in a profile (ProfileRootedDirectories) melonDS launches through
+// the directory service, which points it at the profile's portable\ (issue
+// #15), and nothing is copied next to the ROM (roms\ holds only ROMs).
 import 'dart:io';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
@@ -6,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
+import 'package:gargosy/core/storage/profile_rooted.dart';
 
 class MelonDSStrategy extends EmulatorStrategy {
   final DirectoryService _directoryService;
@@ -14,6 +18,8 @@ class MelonDSStrategy extends EmulatorStrategy {
 
   @override
   DirectoryService get directoryService => _directoryService;
+
+  bool get _inProfile => _directoryService is ProfileRootedDirectories;
 
   @override
   String get name => 'melonDS';
@@ -40,7 +46,7 @@ class MelonDSStrategy extends EmulatorStrategy {
   Future<void> launch(Game game, String romPath) async {
     // On Linux the active linux strategy (EmuDeck/RetroDECK/Native) handles
     // emu-launch.sh detection and correct launch — delegate to base class.
-    if (platform.isLinux) {
+    if (platform.isLinux || _inProfile) {
       return super.launch(game, romPath);
     }
     final exePath = await findExecutable();
@@ -55,7 +61,7 @@ class MelonDSStrategy extends EmulatorStrategy {
 
   @override
   Future<Process?> launchWithHandle(Game game, String romPath) async {
-    if (platform.isLinux) {
+    if (platform.isLinux || _inProfile) {
       return super.launchWithHandle(game, romPath);
     }
     final exePath = await findExecutable();
@@ -105,6 +111,7 @@ class MelonDSStrategy extends EmulatorStrategy {
 
   @override
   Future<void> preLaunch(Game game, String romPath) async {
+    if (_inProfile) return; // saves are in the profile's portable\saves
     final srmPath = romPath.replaceAll(RegExp(r'\.[^.]+$'), '.srm');
     final savPath = romPath.replaceAll(RegExp(r'\.[^.]+$'), '.sav');
     final srmFile = File(srmPath);
@@ -116,6 +123,7 @@ class MelonDSStrategy extends EmulatorStrategy {
 
   @override
   Future<void> postLaunch(Game game, String romPath) async {
+    if (_inProfile) return;
     final srmPath = romPath.replaceAll(RegExp(r'\.[^.]+$'), '.srm');
     final savPath = romPath.replaceAll(RegExp(r'\.[^.]+$'), '.sav');
     final srmFile = File(srmPath);
