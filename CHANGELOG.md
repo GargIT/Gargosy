@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Ryujinx (Switch) plays on each profile's own data (`-r`), with the keys
+  from RomM's firmware in place, and downloads again: from Ryubing, which
+  carries Ryujinx on since its GitHub went away (#9).
 - Eden (Switch), Azahar (3DS), Cemu (Wii U) and melonDS (DS) play on each
   profile's own data: their `user\` or `portable\` folder is a link to the
   profile's (#8, #12–#15). Keys from RomM's firmware go into place, and

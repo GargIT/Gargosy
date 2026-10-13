@@ -1,4 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: a profile's own Ryujinx folder ([profileRoot], issue #9), and a
+// game's save is found as Ryujinx keeps it: each 16-hex folder under
+// bis\user\save is one save (not a user), its ExtraData0 names the title,
+// and its committed data is in 0\ (Freegosy took the newest folder for a
+// "user" and so mixed up games).
 import 'dart:io' as io;
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
@@ -7,15 +12,18 @@ import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
 import '../save_strategy.dart';
-import 'eden_save_strategy.dart'; // Reuse exceptions and some logic
 
 /// Save strategy for Ryujinx (Switch) emulator.
 class RyujinxSaveStrategy extends SaveStrategy {
   final PlatformInfo _platform;
   final Future<void> Function(String gameId, String titleId)? onMappingResolved;
 
-  RyujinxSaveStrategy({this.onMappingResolved, PlatformInfo? platform})
+  RyujinxSaveStrategy({this.onMappingResolved, PlatformInfo? platform, this.profileRoot})
       : _platform = platform ?? PlatformInfo.current;
+
+  /// Gargosy: the profile's Ryujinx folder (started with `-r` on it, issue
+  /// #9); null outside a profile, where %APPDATA%\Ryujinx is looked at.
+  final Future<String> Function()? profileRoot;
 
   @override
   String get strategyId => 'switch_ryujinx';
@@ -34,10 +42,11 @@ class RyujinxSaveStrategy extends SaveStrategy {
   // ── Mutable state ──────────────────────────────────────────────────────────
 
   String? _manualMapping;
-  String? _activeProfileOverride;
 
   void setManualMapping(String? titleId) => _manualMapping = titleId;
-  void setActiveProfileOverride(String? profileId) => _activeProfileOverride = profileId;
+  /// Gargosy: a save is found by its title, not by a user folder, so the
+  /// engine's profile choice isn't needed (kept for its callers).
+  void setActiveProfileOverride(String? profileId) {}
 
   // ═══════════════════════════════════════════════════════════════════════════
   //  LAYER 1 — Title ID Resolution
@@ -133,73 +142,6 @@ class RyujinxSaveStrategy extends SaveStrategy {
   //  LAYER 2 — User ID / Profile Resolution
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Future<String> _resolveUserId(String baseSavePath) async {
-    if (_activeProfileOverride != null && _activeProfileOverride!.isNotEmpty) {
-      return _activeProfileOverride!;
-    }
-
-    final dir = io.Directory(baseSavePath);
-    if (!dir.existsSync()) {
-      throw Exception('Ryujinx save base does not exist: ${dir.path}');
-    }
-
-    final candidates = <Map<String, dynamic>>[];
-    for (final entity in dir.listSync()) {
-      if (entity is! io.Directory) continue;
-      final name = p.basename(entity.path);
-      if (!_userIdRegex.hasMatch(name)) continue;
-
-      DateTime? newestFileTime;
-      int saveFileCount = 0;
-
-      for (final saveDir in entity.listSync()) {
-        if (saveDir is! io.Directory) continue;
-        try {
-          for (final file in saveDir.listSync(recursive: true)) {
-            if (file is! io.File) continue;
-            final fname = p.basename(file.path);
-            if (fname.startsWith('.') || fname.endsWith('.bak')) continue;
-
-            saveFileCount++;
-            final stat = file.statSync();
-            if (newestFileTime == null || stat.modified.isAfter(newestFileTime)) {
-              newestFileTime = stat.modified;
-            }
-          }
-        } catch (_) {}
-      }
-
-      if (newestFileTime != null && saveFileCount > 0) {
-        candidates.add({
-          'id': name,
-          'newestFile': newestFileTime,
-          'fileCount': saveFileCount,
-        });
-      }
-    }
-
-    if (candidates.isEmpty) {
-      // Fallback to 0000000000000001 if it exists
-      if (io.Directory(p.join(baseSavePath, '0000000000000001')).existsSync()) {
-        return '0000000000000001';
-      }
-      throw Exception('No active Ryujinx users found in ${dir.path}.');
-    }
-
-    candidates.sort((a, b) => (b['newestFile'] as DateTime).compareTo(a['newestFile'] as DateTime));
-
-    if (candidates.length == 1) return candidates.first['id'] as String;
-
-    final winner = candidates[0];
-    final runnerUp = candidates[1];
-    final gap = (winner['newestFile'] as DateTime).difference(runnerUp['newestFile'] as DateTime);
-
-    if (gap.inHours >= 1 || (runnerUp['fileCount'] as int) <= 1) {
-      return winner['id'] as String;
-    }
-
-    throw ProfileConflictException(candidates);
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   //  ROM file resolution (fuzzy matching)
@@ -239,7 +181,9 @@ class RyujinxSaveStrategy extends SaveStrategy {
 
   Future<String> _getRyujinxSaveBase({String? platformSlug}) async {
     final String resolvedPath;
-    if (_platform.isMacOS) {
+    if (profileRoot != null) {
+      resolvedPath = await profileRoot!();
+    } else if (_platform.isMacOS) {
       final home = _platform.environment['HOME'] ?? '';
       resolvedPath = p.join(home, 'Library', 'Application Support', 'Ryujinx');
     } else if (_platform.isLinux) {
@@ -266,45 +210,52 @@ class RyujinxSaveStrategy extends SaveStrategy {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
     final base = await _getRyujinxSaveBase(platformSlug: game.platformSlug);
-    final userId = await _resolveUserId(base);
     final titleId = await resolveTitleId(romPath, game);
-    final userDirPath = p.join(base, userId);
+    final folder = saveFolderFor(base, titleId);
+    debugPrint('[Ryujinx] getSaveDir: title $titleId -> ${folder ?? 'no save made yet'}');
+    return folder == null ? null : p.join(folder, '0');
+  }
 
-    debugPrint('[Ryujinx] getSaveDir: userDirPath=$userDirPath, targetTitleId=$titleId');
-
-    // Scan for ExtraData0, ExtraData1... in the UserID folder
-    final userDir = io.Directory(userDirPath);
-    if (userDir.existsSync()) {
-      for (int i = 0; i < 100; i++) {
-        final extraDataFile = io.File(p.join(userDirPath, 'ExtraData$i'));
-        if (!extraDataFile.existsSync()) break;
-
+  /// The folder under [base] (`bis\user\save`) that holds [titleId]'s save,
+  /// by its ExtraData0 (or ExtraData1): the title at offset 0 (u64, little
+  /// endian), the save type at 0x20 (1 = a user's save). A user's save comes
+  /// before a device or cache one; of several, the newest. Null when Ryujinx
+  /// hasn't made one yet (the game was never started on this profile).
+  @visibleForTesting
+  static String? saveFolderFor(String base, String titleId) {
+    final dir = io.Directory(base);
+    if (!dir.existsSync()) return null;
+    final target = _normalizeToBaseId(titleId);
+    final found = <({String path, bool account, DateTime modified})>[];
+    for (final e in dir.listSync()) {
+      if (e is! io.Directory || !_userIdRegex.hasMatch(p.basename(e.path))) continue;
+      for (final name in const ['ExtraData0', 'ExtraData1']) {
+        final f = io.File(p.join(e.path, name));
+        if (!f.existsSync()) continue;
         try {
-          final bytes = await extraDataFile.readAsBytes();
-          if (bytes.length >= 8) {
-            // Title ID is at offset 0, 8 bytes, little-endian
-            final extractedTitleId = bytes.sublist(0, 8).reversed.map((b) => b.toRadixString(16).padLeft(2, '0')).join('').toUpperCase();
-            final normalizedExtracted = _normalizeToBaseId(extractedTitleId);
-            final normalizedTarget = _normalizeToBaseId(titleId);
-
-            debugPrint('[Ryujinx] ExtraData$i: found=$normalizedExtracted, target=$normalizedTarget');
-
-            if (normalizedExtracted == normalizedTarget) {
-              final slotDir = p.join(userDirPath, '$i');
-              debugPrint('[Ryujinx] Match found! Slot folder: $slotDir');
-              return slotDir;
-            }
-          }
-        } catch (e) {
-          debugPrint('[Ryujinx] Error reading ExtraData$i: $e');
+          final bytes = f.readAsBytesSync();
+          if (bytes.length < 0x21) continue;
+          final program =
+              bytes.sublist(0, 8).reversed.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toUpperCase();
+          if (_normalizeToBaseId(program) != target) break;
+          final committed = io.Directory(p.join(e.path, '0'));
+          found.add((
+            path: e.path,
+            account: bytes[0x20] == 1,
+            modified: committed.existsSync() ? committed.statSync().modified : f.statSync().modified,
+          ));
+          break;
+        } catch (err) {
+          debugPrint('[Ryujinx] ${f.path}: $err');
         }
       }
     }
-
-    // Default to slot 0 if no match found
-    final defaultDir = p.join(userDirPath, '0');
-    debugPrint('[Ryujinx] No match found, defaulting to slot 0: $defaultDir');
-    return defaultDir;
+    if (found.isEmpty) return null;
+    found.sort((a, b) {
+      if (a.account != b.account) return a.account ? -1 : 1;
+      return b.modified.compareTo(a.modified);
+    });
+    return found.first.path;
   }
 
   @override
@@ -331,18 +282,14 @@ class RyujinxSaveStrategy extends SaveStrategy {
 
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
-    final base = await _getRyujinxSaveBase(platformSlug: game.platformSlug);
-    final userId = await _resolveUserId(base);
     final titleId = await resolveTitleId(destPath, game);
-    
-    debugPrint('[Ryujinx] Restore: userId=$userId, titleId=$titleId');
-
     final targetPath = await getSaveDir(game, destPath);
-    if (targetPath == null) throw Exception('Could not resolve Ryujinx save directory');
-    
-    debugPrint('[Ryujinx] Restore: targeting slot folder $targetPath');
+    if (targetPath == null) {
+      throw Exception("Ryujinx hasn't made a save for ${game.name} ($titleId) on this profile yet: "
+          'start the game once, then its save from RomM can be put in place.');
+    }
 
-    // Ensure target path exists
+    debugPrint('[Ryujinx] Restore: title $titleId into $targetPath');
     if (!io.Directory(targetPath).existsSync()) {
       io.Directory(targetPath).createSync(recursive: true);
     }
@@ -357,25 +304,6 @@ class RyujinxSaveStrategy extends SaveStrategy {
       await io.File(filePath).writeAsBytes(data);
       success = true;
     }
-
-    // Cleanup: Remove any subfolders under UserID folder that are named with a 16-char Title ID
-    final userDir = io.Directory(p.join(base, userId));
-    if (userDir.existsSync()) {
-      for (final entity in userDir.listSync()) {
-        if (entity is io.Directory) {
-          final name = p.basename(entity.path);
-          if (_strictTitleIdRegex.hasMatch(name)) {
-            debugPrint('[Ryujinx] Cleanup: removing invalid Title ID folder $name');
-            try {
-              entity.deleteSync(recursive: true);
-            } catch (e) {
-              debugPrint('[Ryujinx] Cleanup failed for $name: $e');
-            }
-          }
-        }
-      }
-    }
-
     return success;
   }
 
@@ -383,25 +311,7 @@ class RyujinxSaveStrategy extends SaveStrategy {
   /// Used by the UI for manual folder selection.
   Future<List<Map<String, dynamic>>> getAvailableSaveFolders() async {
     final base = await _getRyujinxSaveBase();
-    String userId;
-    try {
-      userId = await _resolveUserId(base);
-    } catch (_) {
-      // Fallback to first user found
-      final dir = io.Directory(base);
-      if (dir.existsSync()) {
-        final users = dir.listSync().whereType<io.Directory>().where((d) => _userIdRegex.hasMatch(p.basename(d.path))).toList();
-        if (users.isNotEmpty) {
-          userId = p.basename(users.first.path);
-        } else {
-          return [];
-        }
-      } else {
-        return [];
-      }
-    }
-
-    final userDir = io.Directory(p.join(base, userId));
+    final userDir = io.Directory(base); // Gargosy: every save folder is here
     if (!userDir.existsSync()) return [];
 
     final folders = <Map<String, dynamic>>[];

@@ -70,7 +70,8 @@ class EmulatorLayout {
     'azahar': EmulatorLayout('azahar', seed: ['user/sdmc', 'user/sysdata', 'user/config']),
     'melonds': EmulatorLayout('melonds', saveView: '_view', seed: ['portable/saves', 'portable/states']),
     'rpcs3': EmulatorLayout('rpcs3', saveView: '_view'),
-    'ryujinx': EmulatorLayout('ryujinx', saveView: '_view'),
+    // Started with -r <data> (issue #9): saves in bis\user\save, keys in system\.
+    'ryujinx': EmulatorLayout('ryujinx', saveView: '_view', seed: ['bis/user/save', 'system']),
   };
 
   static EmulatorLayout of(String id) => _table[id] ?? EmulatorLayout(id);

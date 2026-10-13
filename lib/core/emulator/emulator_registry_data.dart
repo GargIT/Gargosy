@@ -57,12 +57,16 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
   {
     'id': 'ryujinx',
     'name': 'Ryujinx (Switch)',
-    'type': 'github',
-    'github_repo': 'Ryujinx/Ryujinx',
-    'github_asset_required_windows': ['win_x64'],
-    'github_asset_required_linux': ['linux_x64'],
-    'github_asset_required_macos': ['macos_universal'],
-    'github_asset_excluded': ['debug', 'source'],
+    // Gargosy: GitHub's Ryujinx/Ryujinx is gone (2024); it continues as
+    // Ryubing, released on its own GitLab (issue #9). Stable only.
+    'type': 'gitlab',
+    'gitlab_host': 'git.ryujinx.app',
+    'gitlab_repo': 'ryubing/ryujinx',
+    'gitlab_asset_required_windows': ['win_x64', '.zip'],
+    'gitlab_asset_required_linux': ['linux_x64'],
+    'gitlab_asset_required_macos': ['macos_universal'],
+    // One zip: never the headless build or a checksum beside it.
+    'gitlab_asset_excluded': ['debug', 'source', 'canary', 'nogui', 'headless', '.sha256', '.sig'],
     'windows_executable': 'Ryujinx.exe',
     'linux_executable': 'Ryujinx',
     'macos_executable': 'Ryujinx.app/Contents/MacOS/Ryujinx',
