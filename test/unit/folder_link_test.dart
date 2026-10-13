@@ -3,6 +3,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/downloader/download_service.dart';
+import 'package:gargosy/core/emulator/strategies/eden_strategy.dart';
 import 'package:gargosy/core/emulator/emulator_download_service.dart';
 import 'package:gargosy/emulators/emulator_installer.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
@@ -42,12 +43,14 @@ void main() {
   String data(String profile, String emu) => ProfilePaths(root, profile).emulatorDir(emu);
   PathGuard guard(String profile) => PathGuard(root, activeProfileId: profile);
   String template(String emu, String folder) => p.join(root.templates, emu, folder);
+  String setAside(String emu, String folder) => p.join(root.appData, 'set-aside', emu, folder);
 
   FolderLinkResult point(String profile, {String emu = 'eden', String folder = 'user'}) => pointFolderLink(
         link: p.join(install(emu), folder),
         target: p.join(data(profile, emu), folder),
         guard: guard(profile),
         templateDir: template(emu, folder),
+        setAsideDir: setAside(emu, folder),
       );
 
   void write(String path, String text) => io.File(path)
@@ -80,27 +83,50 @@ void main() {
     expect(isFolderLink(p.join(install('eden'), 'user')), isTrue);
   });
 
-  test('a real folder in the way is moved to the template, never deleted', () {
+  test("a real folder in the way becomes the profile's own when the profile has no files yet", () {
+    io.Directory(p.join(data('aaa', 'eden'), 'user', 'nand', 'user', 'save')).createSync(recursive: true); // seeded, empty
+    write(p.join(install('eden'), 'user', 'nand', 'old.sav'), 'from an imported install');
+    final result = point('aaa');
+    expect(result.movedToTemplate, p.join(data('aaa', 'eden'), 'user'));
+    expect(io.File(p.join(install('eden'), 'user', 'nand', 'old.sav')).readAsStringSync(), 'from an imported install',
+        reason: 'read through the link, from the profile');
+    expect(io.Directory(template('eden', 'user')).existsSync(), isFalse);
+  });
+
+  test('when the profile has data, a real folder goes to the template once, never deleted', () {
+    write(p.join(data('aaa', 'eden'), 'user', 'mine.sav'), 'the profile');
     write(p.join(install('eden'), 'user', 'nand', 'old.sav'), 'from an imported install');
     final result = point('aaa');
     expect(result.movedToTemplate, template('eden', 'user'));
     expect(io.File(p.join(template('eden', 'user'), 'nand', 'old.sav')).readAsStringSync(), 'from an imported install');
+    expect(io.File(p.join(data('aaa', 'eden'), 'user', 'mine.sav')).readAsStringSync(), 'the profile');
     expect(isFolderLink(p.join(install('eden'), 'user')), isTrue);
   });
 
-  test('a second real folder, with the template taken, goes beside it: nothing is overwritten', () {
+  test('with the template taken, the next real folders are set aside, not into the template: nothing is overwritten',
+      () {
+    write(p.join(data('aaa', 'eden'), 'user', 'mine.sav'), 'the profile');
     write(p.join(template('eden', 'user'), 'keep.txt'), 'template');
     write(p.join(install('eden'), 'user', 'x.txt'), 'second');
-    final result = point('aaa');
-    expect(result.movedToTemplate, '${template('eden', 'user')} (2)');
+    expect(point('aaa').movedToTemplate, setAside('eden', 'user'));
+    removeFolderLink(p.join(install('eden'), 'user'));
+    write(p.join(install('eden'), 'user', 'y.txt'), 'third');
+    expect(point('aaa').movedToTemplate, '${setAside('eden', 'user')} (2)');
     expect(io.File(p.join(template('eden', 'user'), 'keep.txt')).readAsStringSync(), 'template');
+    expect(io.Directory(root.templates).listSync(recursive: true).whereType<io.File>().length, 1,
+        reason: "new profiles start from the template: it doesn't collect copies");
   });
 
-  test('a file in the way is renamed aside', () {
+  test('a file in the way is renamed aside, and a second one never replaces the first', () {
     write(p.join(install('eden'), 'user'), 'a file named user');
     point('aaa');
     expect(io.File(p.join(install('eden'), 'user.gargosy-off')).readAsStringSync(), 'a file named user');
     expect(isFolderLink(p.join(install('eden'), 'user')), isTrue);
+    removeFolderLink(p.join(install('eden'), 'user'));
+    write(p.join(install('eden'), 'user'), 'another file');
+    point('aaa');
+    expect(io.File(p.join(install('eden'), 'user.gargosy-off')).readAsStringSync(), 'a file named user');
+    expect(io.File(p.join(install('eden'), 'user.gargosy-off (2)')).readAsStringSync(), 'another file');
   });
 
   test("a link to somewhere outside the profile is replaced, and what it pointed at isn't touched", () {
@@ -115,18 +141,18 @@ void main() {
   test('the link goes only in emulators\\, and points only into the active profile', () {
     expect(
       () => pointFolderLink(
-          link: p.join(root.bios, 'user'), target: p.join(data('aaa', 'eden'), 'user'), guard: guard('aaa'), templateDir: template('eden', 'user')),
+          link: p.join(root.bios, 'user'), target: p.join(data('aaa', 'eden'), 'user'), guard: guard('aaa'), templateDir: template('eden', 'user'), setAsideDir: setAside('eden', 'user')),
       throwsA(isA<PathGuardException>()),
     );
     expect(
       () => pointFolderLink(
-          link: p.join(install('eden'), 'user'), target: p.join(data('bbb', 'eden'), 'user'), guard: guard('aaa'), templateDir: template('eden', 'user')),
+          link: p.join(install('eden'), 'user'), target: p.join(data('bbb', 'eden'), 'user'), guard: guard('aaa'), templateDir: template('eden', 'user'), setAsideDir: setAside('eden', 'user')),
       throwsA(isA<PathGuardException>()),
       reason: "another profile's folder",
     );
     expect(
       () => pointFolderLink(
-          link: p.join(install('eden'), 'user'), target: p.join(root.roms, 'user'), guard: guard('aaa'), templateDir: template('eden', 'user')),
+          link: p.join(install('eden'), 'user'), target: p.join(root.roms, 'user'), guard: guard('aaa'), templateDir: template('eden', 'user'), setAsideDir: setAside('eden', 'user')),
       throwsA(isA<PathGuardException>()),
     );
   });
@@ -143,6 +169,10 @@ void main() {
   });
 
   group('what must never follow the link', () {
+    EmulatorLibrary edenLibrary() => EmulatorLibrary(root, [
+          EdenStrategy(ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs())),
+        ]);
+
     setUp(() {
       write(p.join(install('eden'), 'eden.exe'), 'MZ');
       point('aaa');
@@ -162,10 +192,21 @@ void main() {
       expect(io.File(p.join(data('aaa', 'eden'), 'user', 'nand', 'save.bin')).readAsStringSync(), 'the profile\'s save');
     });
 
+    test('importing from a folder with a link copies the folder, never what the link points at', () async {
+      final elsewhere = p.join(root.root, 'other-eden');
+      write(p.join(elsewhere, 'eden.exe'), 'MZ imported');
+      io.Link(p.join(elsewhere, 'user')).createSync(p.join(data('aaa', 'eden'), 'user'));
+      await edenLibrary().importFrom('eden', elsewhere);
+      expect(io.File(p.join(install('eden'), 'eden.exe')).readAsStringSync(), 'MZ imported');
+      expect(io.FileSystemEntity.typeSync(p.join(install('eden'), 'user'), followLinks: false),
+          io.FileSystemEntityType.notFound, reason: "the link wasn't followed and copied as a folder");
+    });
+
     test('importing over an install with a link keeps the profile\'s data', () async {
       final elsewhere = p.join(root.root, 'my-eden');
       write(p.join(elsewhere, 'eden.exe'), 'MZ imported');
-      await EmulatorLibrary(root, const []).importFrom('eden', elsewhere).catchError((_) {});
+      await edenLibrary().importFrom('eden', elsewhere);
+      expect(io.File(p.join(install('eden'), 'eden.exe')).readAsStringSync(), 'MZ imported');
       expect(io.File(p.join(data('aaa', 'eden'), 'user', 'nand', 'save.bin')).readAsStringSync(), 'the profile\'s save');
     });
 
@@ -188,7 +229,7 @@ void main() {
     });
   });
 
-  test('LinkedFolderConfig: prepare and repoint point the link, then run the emulator\'s own step', () async {
+  test("LinkedFolderConfig: prepare points the link; repoint (before a pull) leaves it, the save code reads the profile itself", () async {
     LaunchContext ctx(String profile) => LaunchContext(
           data: data(profile, 'eden'),
           exeDir: install('eden'),
@@ -201,6 +242,8 @@ void main() {
     expect(await config.prepare(ctx('aaa')), isEmpty);
     expect(io.Link(p.join(install('eden'), 'user')).targetSync(), p.join(data('aaa', 'eden'), 'user'));
     config.repoint(ctx('bbb'));
+    expect(io.Link(p.join(install('eden'), 'user')).targetSync(), p.join(data('aaa', 'eden'), 'user'));
+    await config.prepare(ctx('bbb'));
     expect(io.Link(p.join(install('eden'), 'user')).targetSync(), p.join(data('bbb', 'eden'), 'user'));
     expect(config.gameArgs(ctx('bbb'), 'game.nsp'), ['game.nsp']);
   });

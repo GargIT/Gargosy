@@ -25,7 +25,11 @@ final _profilePathsProvider = Provider<ProfilePaths?>((ref) {
 
 final profilePrefsProvider = Provider<ProfilePreferences?>((ref) {
   final paths = ref.watch(_profilePathsProvider);
-  return paths == null ? null : ProfilePreferences.open(paths);
+  if (paths == null) return null;
+  final prefs = ProfilePreferences.open(paths);
+  // The old per-emulator state-sync switches become the one (state-sync plan S0.4).
+  migrateStateSyncPref(prefs).catchError((Object e) => debugPrint('[StateSync] switch migration failed: $e'));
+  return prefs;
 });
 
 final saveDirectoriesProvider = Provider<ProfileSaveDirectories?>((ref) {
@@ -92,7 +96,7 @@ final backupServiceProvider = Provider<BackupService?>((ref) {
   return paths == null ? null : BackupService(backupsDir: () async => paths.backups);
 });
 
-/// Save states on the profile's RomM account (on per emulator in Settings).
+/// Save states on the profile's RomM account (one switch in Settings → Emulator settings).
 final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   final sync = ref.watch(saveSyncServiceProvider);
@@ -103,6 +107,7 @@ final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
     prefs,
     sync.strategyForGame,
     exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'),
+    emulatorSyncs: (id) => ref.read(strategyRegistryProvider)?.getStrategyById(id)?.supportsStateSync ?? false,
   );
 });
 
