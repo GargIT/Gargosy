@@ -33,6 +33,7 @@ void main() {
     final dolphin = list.firstWhere((e) => e.id == 'dolphin');
     expect(dolphin.supported, isTrue);
     expect(dolphin.installedExe, isNull);
+    expect(list.firstWhere((e) => e.id == 'ryujinx').supported, isTrue, reason: 'pointed with -r (#9)');
     // Supported exactly when Gargosy can point it at a profile.
     for (final e in list) {
       expect(e.supported, ProfileLaunchConfig.supported.contains(e.id), reason: e.id);

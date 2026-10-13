@@ -53,12 +53,14 @@ class EmulatorDownloadService {
     final type = typeFor(definition, _platform, fallback: 'github');
     // Gargosy: GitLab (Ryujinx's Ryubing).
     if (type == 'gitlab') {
+      final host = definition['gitlab_host'] as String?;
+      if (host == null) throw StateError('$emulatorId: a GitLab download needs gitlab_host');
       return _releaseService.getLatestReleaseAssets(
         platform: ReleasePlatform.gitlab,
         repo: repo,
         requiredFilters: List<String>.from(definition['gitlab_asset_required_$os'] ?? const []),
         excludedFilters: {...List<String>.from(definition['gitlab_asset_excluded'] ?? const []), 'symbols'}.toList(),
-        baseUrl: 'https://${definition['gitlab_host']}',
+        baseUrl: 'https://$host',
       );
     }
     final platform = type == 'github' || type == 'github_multi' ? ReleasePlatform.github : (type == 'dolphin' ? ReleasePlatform.dolphin : ReleasePlatform.gitea);

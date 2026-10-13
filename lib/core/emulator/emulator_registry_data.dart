@@ -61,7 +61,8 @@ const List<Map<String, dynamic>> kEmulatorDefinitions = [
     'gitlab_asset_required_windows': ['win_x64', '.zip'],
     'gitlab_asset_required_linux': ['linux_x64'],
     'gitlab_asset_required_macos': ['macos_universal'],
-    'gitlab_asset_excluded': ['debug', 'source', 'canary'],
+    // One zip: never the headless build or a checksum beside it.
+    'gitlab_asset_excluded': ['debug', 'source', 'canary', 'nogui', 'headless', '.sha256', '.sig'],
     'windows_executable': 'Ryujinx.exe',
     'linux_executable': 'Ryujinx',
     'macos_executable': 'Ryujinx.app/Contents/MacOS/Ryujinx',

@@ -160,4 +160,70 @@ void main() {
       );
     });
   });
+
+  group("a game's save, as Ryujinx keeps it", () {
+    late AppRoot root;
+    late String base;
+    setUp(() async {
+      root = await tempAppRoot();
+      base = p.join(ProfilePaths(root, 'aaa').emulatorDir('ryujinx'), 'bis', 'user', 'save');
+      io.Directory(base).createSync(recursive: true);
+    });
+    tearDown(() => deleteTempDir(root.root));
+
+    /// bis\user\save\<id>\ with ExtraData0 for [title] (type 1 = a user's
+    /// save) and a file in its committed 0\.
+    void save(String id, String title, {int type = 1, String file = 'save.dat'}) {
+      final extra = Uint8List(0x40);
+      final t = BigInt.parse(title, radix: 16);
+      for (var i = 0; i < 8; i++) {
+        extra[i] = ((t >> (8 * i)) & BigInt.from(0xFF)).toInt();
+      }
+      extra[0x20] = type;
+      io.File(p.join(base, id, 'ExtraData0'))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(extra);
+      io.File(p.join(base, id, '0', file))
+        ..createSync(recursive: true)
+        ..writeAsStringSync(title);
+    }
+
+    Game game(String title) => Game(id: title, name: 'G $title', platformSlug: 'switch', fileSize: 0, titleId: title);
+
+    test('each game gets its own folder, never the newest one of another game', () async {
+      save('0000000000000001', '0100000000010000');
+      save('0000000000000002', '01007EF00011E000');
+      final strategy = RyujinxSaveStrategy(profileRoot: () async => p.dirname(p.dirname(p.dirname(base))));
+      expect(await strategy.getSaveDir(game('0100000000010000'), 'x.nsp'), p.join(base, '0000000000000001', '0'));
+      expect(await strategy.getSaveDir(game('01007EF00011E000'), 'y.nsp'), p.join(base, '0000000000000002', '0'));
+    });
+
+    test("a user's save comes before a device or cache save of the same title", () {
+      save('0000000000000003', '0100000000010000', type: 2);
+      save('0000000000000004', '0100000000010000', type: 1);
+      expect(RyujinxSaveStrategy.saveFolderFor(base, '0100000000010000'), p.join(base, '0000000000000004'));
+    });
+
+    test('no save made yet: no folder, and a pull says to start the game once', () async {
+      save('0000000000000001', '0100000000010000');
+      final strategy = RyujinxSaveStrategy(profileRoot: () async => p.dirname(p.dirname(p.dirname(base))));
+      expect(await strategy.getSaveDir(game('01007EF00011E000'), 'y.nsp'), isNull);
+      expect(await strategy.getSaveFiles(game('01007EF00011E000'), 'y.nsp'), isEmpty);
+      await expectLater(
+        strategy.restoreSave(game('01007EF00011E000'), 'y.nsp', Uint8List(4), 'save.dat'),
+        throwsA(predicate((e) => '$e'.contains('start the game once'))),
+      );
+      expect(io.File(p.join(base, '0000000000000001', '0', 'save.dat')).readAsStringSync(), '0100000000010000',
+          reason: "another game's save is never written over");
+    });
+
+    test("a restore goes into that game's committed folder", () async {
+      save('0000000000000001', '0100000000010000');
+      save('0000000000000002', '01007EF00011E000');
+      final strategy = RyujinxSaveStrategy(profileRoot: () async => p.dirname(p.dirname(p.dirname(base))));
+      await strategy.restoreSave(game('01007EF00011E000'), 'y.nsp', Uint8List.fromList(utf8.encode('from RomM')), 'save.dat');
+      expect(io.File(p.join(base, '0000000000000002', '0', 'save.dat')).readAsStringSync(), 'from RomM');
+      expect(io.File(p.join(base, '0000000000000001', '0', 'save.dat')).readAsStringSync(), '0100000000010000');
+    });
+  });
 }
