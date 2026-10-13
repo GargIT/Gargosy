@@ -8,6 +8,7 @@ import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/strategies/dolphin_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
@@ -154,5 +155,31 @@ void main() {
       expect(io.File(p.join(states, 'Pokemon Emerald.state1')).readAsBytesSync(), List.filled(64, 2), reason: "this PC's state stays");
       expect(io.File(p.join(states, 'Pokemon Emerald.state2')).readAsBytesSync(), List.filled(64, 8), reason: 'only the bundle had it');
     });
+  });
+
+  group('restoreStateIfMissing', () {
+    test("a server name never leaves the folder: '..' and folders are dropped", () async {
+      final dir = p.join(tmp.path, 'states');
+      await restoreStateIfMissing(dir, r'..\..\..\evil.ppst', const [1]);
+      await restoreStateIfMissing(dir, '../../x/also.state1', const [2]);
+      expect(io.File(p.join(dir, 'evil.ppst')).existsSync(), isTrue);
+      expect(io.File(p.join(dir, 'also.state1')).existsSync(), isTrue);
+      expect(io.File(p.join(tmp.path, 'evil.ppst')).existsSync(), isFalse);
+    });
+
+    test("it keeps the bundle's time, so an old state doesn't look like the newest", () async {
+      final dir = p.join(tmp.path, 'states');
+      final then = DateTime(2025, 3, 4, 5, 6, 8);
+      await restoreStateIfMissing(dir, 'old.state2', const [1], modified: then);
+      expect(io.File(p.join(dir, 'old.state2')).lastModifiedSync(), then);
+    });
+  });
+
+  test("Dolphin: an old bundle's .sav (StateSaves' undo state) is a state, not a save", () {
+    expect(isDolphinStateName('lastState.sav'), isTrue);
+    expect(isDolphinStateName('GMSE01.s03'), isTrue);
+    expect(isDolphinStateName('StateSaves/GMSE01.s01'), isTrue);
+    expect(isDolphinStateName('01-GMSE01-Super Mario Sunshine.gci'), isFalse);
+    expect(isDolphinStateName('data.bin'), isFalse);
   });
 }

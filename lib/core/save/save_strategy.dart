@@ -324,3 +324,23 @@ abstract class SaveStrategy {
     return 'retroarch';
   }
 }
+
+/// Gargosy (issue #30): a save state from an older RomM bundle, written to
+/// [dir] as [name]'s file name (a server path never leaves [dir]) only when
+/// no file of that name is there; never over one. It keeps [modified], the
+/// time inside the bundle, so it doesn't look like the newest state.
+Future<void> restoreStateIfMissing(String dir, String name, List<int> bytes, {DateTime? modified}) async {
+  final base = p.basename(name.replaceAll('\\', '/'));
+  if (base.isEmpty || base == '.' || base == '..') return;
+  final target = io.File(p.join(dir, base));
+  if (await target.exists()) return;
+  await target.parent.create(recursive: true);
+  await target.writeAsBytes(bytes);
+  if (modified != null) {
+    try {
+      await target.setLastModified(modified);
+    } on io.FileSystemException {
+      // The time stays "now"; the state itself is in place.
+    }
+  }
+}

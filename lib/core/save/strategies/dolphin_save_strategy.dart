@@ -326,7 +326,7 @@ class DolphinSaveStrategy extends SaveStrategy {
           // Gargosy: a state in an older bundle (issue #30) goes to StateSaves\
           // only when this PC has no file of that name; never over one.
           if (isDolphinStateName(file.name)) {
-            await _stateIfMissing(game, p.basename(file.name), file.content as List<int>);
+            await _stateIfMissing(game, file.name, file.content as List<int>, modified: file.lastModDateTime);
             continue;
           }
 
@@ -339,7 +339,7 @@ class DolphinSaveStrategy extends SaveStrategy {
       }
 
       if (isDolphinStateName(filename)) {
-        await _stateIfMissing(game, p.basename(filename), data);
+        await _stateIfMissing(game, filename, data);
         return true;
       }
       final targetPath = p.normalize(p.join(saveDir, filename));
@@ -352,18 +352,18 @@ class DolphinSaveStrategy extends SaveStrategy {
   }
 
   /// Gargosy: [name] into StateSaves\ when no file of that name is there.
-  Future<void> _stateIfMissing(Game game, String name, List<int> bytes) async {
+  Future<void> _stateIfMissing(Game game, String name, List<int> bytes, {DateTime? modified}) async {
     final userDir = await _getUserDir(platformSlug: game.platformSlug);
-    final target = io.File(p.join(userDir, 'StateSaves', name));
-    if (await target.exists()) return;
-    await target.parent.create(recursive: true);
-    await target.writeAsBytes(bytes);
+    await restoreStateIfMissing(p.join(userDir, 'StateSaves'), name, bytes, modified: modified);
   }
 }
 
-/// Gargosy: a Dolphin save state's file name (`<id>.s01`–`.s10`, or one in a
-/// `StateSaves` folder), as older Freegosy bundles carried them.
+/// Gargosy: a Dolphin save state's file name as older Freegosy bundles
+/// carried them from StateSaves\: `<id>.s01`–`.s10`, a `.sav` (its undo
+/// state, `lastState.sav`, and others it matched there), or anything in a
+/// `StateSaves` folder. GameCube and Wii saves are `.gci` files and title
+/// folders, never `.sav`.
 bool isDolphinStateName(String name) {
-  final n = name.replaceAll('\\', '/');
-  return RegExp(r'\.s\d{2}$', caseSensitive: false).hasMatch(n) || n.toLowerCase().contains('statesaves/');
+  final n = name.replaceAll('\\', '/').toLowerCase();
+  return RegExp(r'\.s\d{2}$').hasMatch(n) || n.endsWith('.sav') || n.contains('statesaves/');
 }

@@ -253,11 +253,8 @@ class PpssppSaveStrategy extends SaveStrategy {
           if (entry.isFile && entry.name.toLowerCase().endsWith('.ppst')) {
             // Gargosy: a state in an older bundle (issue #30), only when this
             // PC has none of that name; never over one.
-            final outFile = io.File(targetPath);
-            if (!await outFile.exists()) {
-              await outFile.parent.create(recursive: true);
-              await outFile.writeAsBytes(entry.content as List<int>);
-            }
+            await restoreStateIfMissing(targetStateDir, entry.name, entry.content as List<int>,
+                modified: entry.lastModDateTime);
           } else if (entry.isFile) {
             await backupSave(targetPath);
             final outFile = io.File(targetPath);
@@ -272,11 +269,7 @@ class PpssppSaveStrategy extends SaveStrategy {
 
       if (filename.toLowerCase().endsWith('.ppst')) {
         // Gargosy: only when this PC has no state of that name (issue #30).
-        final outFile = io.File(p.normalize(p.join(targetStateDir, filename)));
-        if (!await outFile.exists()) {
-          await outFile.parent.create(recursive: true);
-          await outFile.writeAsBytes(data);
-        }
+        await restoreStateIfMissing(targetStateDir, filename, data);
         return true;
       }
       return false;

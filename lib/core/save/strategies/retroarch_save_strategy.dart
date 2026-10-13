@@ -999,9 +999,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
     final rootSaveDir = await getSaveDir(game, romPath);
     await _readConfigSaveRoot();
-    final statesRoot = await _statesDir(slug, coreInfo, romPath);
-
-    debugPrint('[SaveSync] [retroarch] getSaveFilesWithScreenshots slug=$slug rootSaveDir=$rootSaveDir statesRoot=$statesRoot');
+    debugPrint('[SaveSync] [retroarch] getSaveFilesWithScreenshots slug=$slug rootSaveDir=$rootSaveDir');
 
     if (rootSaveDir == null) return {};
 
@@ -1126,6 +1124,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
       if (filename.toLowerCase().endsWith('.zip')) {
         final archive = ZipDecoder().decodeBytes(data);
+        String? statesDir; // looked up once, for the first state
         for (final file in archive) {
           if (!file.isFile) continue;
           if (file.name == 'freegosy_sync.txt') continue;
@@ -1136,12 +1135,8 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
           if (isFileState) {
             // Gargosy: a state in an older bundle (issue #30) only where this
             // PC has none of that name; never over one, sync on or off.
-            final statesDir = await _statesDir(slug, coreInfo, destPath);
-            final target = io.File(p.join(statesDir, p.basename(file.name)));
-            if (!await target.exists()) {
-              await target.parent.create(recursive: true);
-              await target.writeAsBytes(file.content as List<int>);
-            }
+            statesDir ??= await _statesDir(slug, coreInfo, destPath);
+            await restoreStateIfMissing(statesDir, file.name, file.content as List<int>, modified: file.lastModDateTime);
             continue;
           } else {
             fileTargetDir = await getSaveDir(game, destPath);
@@ -1180,12 +1175,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
       if (isState) {
         // Gargosy: only where this PC has no state of that name (issue #30).
-        final statesDir = await _statesDir(slug, coreInfo, destPath);
-        final target = io.File(p.join(statesDir, p.basename(filename)));
-        if (!await target.exists()) {
-          await target.parent.create(recursive: true);
-          await target.writeAsBytes(data);
-        }
+        await restoreStateIfMissing(await _statesDir(slug, coreInfo, destPath), filename, data);
         return true;
       } else {
         // For saves: use getSaveDir() which scans for the actual folder

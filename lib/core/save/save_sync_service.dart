@@ -986,9 +986,14 @@ class SaveSyncService {
       {required String emulatorId, required String syncMode, String? coreOverride}) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
     if (strategy == null) return false;
-    final synced = _prefs.getString(_syncedKey(game.id, strategy.strategyId, syncMode));
-    if (synced == null) return false;
-    return await _fingerprintOf(strategy, game, romPath, syncMode) == synced;
+    // Gargosy: either record counts, as in rommCopyOfLocal. A 'both' record
+    // taken while states still rode in saves (before issue #30) no longer
+    // matches; the 'saves' one does, so an unchanged save isn't sent again.
+    for (final mode in {syncMode, 'saves'}) {
+      final synced = _prefs.getString(_syncedKey(game.id, strategy.strategyId, mode));
+      if (synced != null && await _fingerprintOf(strategy, game, romPath, mode) == synced) return true;
+    }
+    return false;
   }
 
   /// The newest modification time among [entries], looking inside folders
