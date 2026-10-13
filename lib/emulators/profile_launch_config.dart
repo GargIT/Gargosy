@@ -10,6 +10,7 @@ import 'bios_links.dart';
 import 'config_files.dart';
 import 'linked_emulators.dart';
 import 'rpcs3_config.dart';
+import '../core/emulator/strategies/scummvm_strategy.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
 /// emulator's install folder and the shared BIOS folder.
@@ -125,6 +126,12 @@ abstract class ProfileLaunchConfig {
     // Eden, Azahar, Cemu, melonDS: a folder link (issues #8, #12–#15).
     ...linkedEmulatorConfigs,
     'rpcs3': const Rpcs3Config(),
+    // ScummVM (issue #11): its config and saves by argument; the game folder
+    // last, as --auto-detect --path (it can't take a folder as a plain path).
+    'scummvm': _ScummVm((c) => [
+          '--config=${p.join(c.data, 'scummvm.ini')}',
+          '--savepath=${p.join(c.data, 'saves')}',
+        ], before: (c) async => _scummVmFolders(c)),
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
           'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'
@@ -221,6 +228,26 @@ class _Mame extends _Args {
   @override
   List<String> gameArgs(LaunchContext c, String romPath) =>
       ['-rompath', '${p.dirname(romPath)};${p.join(c.exeDir, 'roms')}', p.basenameWithoutExtension(romPath)];
+}
+
+/// ScummVM is started on the game's folder: `--auto-detect --path=<folder>`.
+class _ScummVm extends _Args {
+  const _ScummVm(super.args, {super.before});
+
+  @override
+  List<String> gameArgs(LaunchContext c, String romPath) => ScummVMStrategy.gameArgs(ScummVMStrategy.gameFolderFor(romPath));
+}
+
+/// The profile's ScummVM folders: saves (also given as --savepath) and
+/// screenshots, in its own scummvm.ini; other keys are kept.
+void _scummVmFolders(LaunchContext c) {
+  final saves = io.Directory(c.guard.check(p.join(c.data, 'saves')))..createSync(recursive: true);
+  final shots = io.Directory(c.guard.check(p.join(c.data, 'screenshots')))..createSync(recursive: true);
+  final file = io.File(c.guard.check(p.join(c.data, 'scummvm.ini')));
+  final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '')
+    ..set('scummvm', 'savepath', saves.path)
+    ..set('scummvm', 'screenshotpath', shots.path);
+  file.writeAsStringSync(ini.toText());
 }
 
 class _RetroArch extends ProfileLaunchConfig {
