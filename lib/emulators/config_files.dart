@@ -19,7 +19,7 @@ String setRetroArchKeys(String text, Map<String, String> values) {
 
 /// Sets `key = 'value'` lines in one [section] of a TOML file (xemu's), adding
 /// the section when missing. Other lines are kept as they are.
-String setTomlKeys(String text, String section, Map<String, String> values) {
+String setTomlKeys(String text, String section, Map<String, String> values, {Set<String> bare = const {}}) {
   final lines = text.isEmpty ? <String>[] : text.split(RegExp(r'\r?\n'));
   if (lines.isNotEmpty && lines.last.isEmpty) lines.removeLast();
   var start = lines.indexWhere((l) => l.trim() == '[$section]');
@@ -32,7 +32,7 @@ String setTomlKeys(String text, String section, Map<String, String> values) {
   var end = lines.indexWhere((l) => l.trim().startsWith('['), start + 1);
   if (end < 0) end = lines.length;
   for (final e in values.entries) {
-    final line = "${e.key} = '${e.value}'";
+    final line = '${e.key} = ${bare.contains(e.key) ? e.value : tomlString(e.value)}';
     final i = lines.sublist(start + 1, end).indexWhere((l) => RegExp('^\\s*${RegExp.escape(e.key)}\\s*=').hasMatch(l));
     if (i >= 0) {
       lines[start + 1 + i] = line;
@@ -42,6 +42,19 @@ String setTomlKeys(String text, String section, Map<String, String> values) {
     }
   }
   return '${lines.join('\n')}\n';
+}
+
+/// [value] as a TOML string: a literal one ('…', no escapes, so Windows
+/// paths read as they are), or a basic one ("…", escaped) when it holds an
+/// apostrophe or a line break, which a literal string can't.
+String tomlString(String value) {
+  if (!value.contains("'") && !value.contains('\n') && !value.contains('\r')) return "'$value'";
+  final escaped = value
+      .replaceAll('\\', '\\\\')
+      .replaceAll('"', '\\"')
+      .replaceAll('\n', '\\n')
+      .replaceAll('\r', '\\r');
+  return '"$escaped"';
 }
 
 /// The value of `key = '…'` in one [section] of a TOML file (xemu's), or
@@ -72,7 +85,7 @@ bool addQtArrayPaths(IniFile ini, String section, String array, List<String> pat
   final sizeKey = '$array\\size';
   final size = int.tryParse(ini.get(section, sizeKey) ?? '');
   if (size == null) return false;
-  String norm(String s) => s.replaceAll('\\', '/').replaceAll(RegExp(r'/+$'), '').toLowerCase();
+  String norm(String s) => qtUnquote(s).replaceAll('\\', '/').replaceAll(RegExp(r'/+$'), '').toLowerCase();
   final have = {
     for (var i = 1; i <= size; i++)
       if (ini.get(section, '$array\\$i\\path') case final v?) norm(v),
@@ -84,8 +97,23 @@ bool addQtArrayPaths(IniFile ini, String section, String array, List<String> pat
     n++;
     ini.set(section, '$array\\$n\\deep_scan', 'false');
     ini.set(section, '$array\\$n\\expanded', 'true');
-    ini.set(section, '$array\\$n\\path', qt);
+    ini.set(section, '$array\\$n\\path', qtQuote(qt));
   }
   if (n != size) ini.set(section, sizeKey, '$n');
   return true;
+}
+
+/// [value] as QSettings writes a string to an ini: in quotes, with `\\` and
+/// `"` escaped, when it has a comma, semicolon, quote or an edge space
+/// (else Qt reads a list, or cuts it at `;`).
+String qtQuote(String value) {
+  if (!RegExp(r'[,;"]|^\s|\s$').hasMatch(value)) return value;
+  return '"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"';
+}
+
+/// The string in a QSettings value: [qtQuote] undone.
+String qtUnquote(String value) {
+  final v = value.trim();
+  if (v.length < 2 || !v.startsWith('"') || !v.endsWith('"')) return value;
+  return v.substring(1, v.length - 1).replaceAllMapped(RegExp(r'\\(.)'), (m) => m[1]!);
 }

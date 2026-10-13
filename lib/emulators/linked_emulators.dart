@@ -43,11 +43,15 @@ class _Step extends ProfileLaunchConfig {
   void repoint(LaunchContext c) => before(c);
 }
 
-/// The shared BIOS files named [names] placed in [folder] (hard links).
-void _keysInto(LaunchContext c, String folder, List<List<String>> names) {
+/// The shared key files named [names] copied into [folder] when the profile
+/// has none yet. Copies, not links: the emulators add keys to these files
+/// themselves, which must not change `bios\` or another profile's; and a
+/// profile's own newer keys are never replaced.
+void _keysInto(LaunchContext c, String folder, List<List<String>> names, {required List<String> platforms}) {
+  final bios = BiosFiles(c.bios);
   for (final alternatives in names) {
-    final file = findBiosFile(c.bios, alternatives);
-    if (file != null) placeSharedFile(file, p.join(folder, p.basename(file.path)), c.guard);
+    final file = bios.find(alternatives, platforms: platforms);
+    if (file != null) copySharedFileIfMissing(file, p.join(folder, p.basename(file.path)), c.guard);
   }
 }
 
@@ -68,7 +72,7 @@ void _eden(LaunchContext c) {
   _keysInto(c, p.join(user, 'keys'), [
     ['prod.keys'],
     ['title.keys'],
-  ]);
+  ], platforms: const ['switch']);
   _qtGameDirs(c, p.join(user, 'config', 'qt-config.ini'));
 }
 
@@ -78,7 +82,7 @@ void _azahar(LaunchContext c) {
   _keysInto(c, p.join(user, 'sysdata'), [
     ['aes_keys.txt'],
     ['seeddb.bin'],
-  ]);
+  ], platforms: const ['3ds']);
   _qtGameDirs(c, p.join(user, 'config', 'qt-config.ini'));
 }
 
@@ -91,10 +95,16 @@ void _cemu(LaunchContext c) {
   // A settings.xml beside the exe (an install from before Cemu 2.0) would
   // win over portable\: it's turned off, never deleted.
   final stray = io.File(p.join(c.exeDir, 'settings.xml'));
-  if (stray.existsSync()) stray.renameSync(c.guard.check('${stray.path}.gargosy-off'));
+  if (stray.existsSync()) {
+    var off = '${stray.path}.gargosy-off';
+    for (var n = 2; io.FileSystemEntity.typeSync(off) != io.FileSystemEntityType.notFound; n++) {
+      off = '${stray.path}.gargosy-off ($n)'; // an earlier one is never replaced
+    }
+    stray.renameSync(c.guard.check(off));
+  }
   _keysInto(c, portable, [
     ['keys.txt'],
-  ]);
+  ], platforms: const ['wiiu']);
   final settings = io.File(p.join(portable, 'settings.xml'));
   if (settings.existsSync() && c.gameFolders.isNotEmpty) {
     final text = settings.readAsStringSync();
@@ -132,16 +142,20 @@ void _melonDs(LaunchContext c) {
     'SaveFilePath': p.join(portable, 'saves'),
     'SavestatePath': p.join(portable, 'states'),
   });
-  // The shared BIOS and firmware, only the files that are there.
+  // The shared BIOS and firmware, only the files that are there (bios\nds
+  // first). melonDS uses them only with ExternalBIOSEnable, which needs all
+  // three; without them it keeps its built-in FreeBIOS.
+  final files = BiosFiles(c.bios);
   final bios = <String, String>{
     for (final (key, names) in const [
       ('BIOS9Path', ['bios9.bin']),
       ('BIOS7Path', ['bios7.bin']),
       ('FirmwarePath', ['firmware.bin']),
     ])
-      if (findBiosFile(c.bios, names) case final f?) key: f.path,
+      if (files.find(names, platforms: const ['nds']) case final f?) key: f.path,
   };
   if (bios.isNotEmpty) text = setTomlKeys(text, 'DS', bios);
+  if (bios.length == 3) text = setTomlKeys(text, 'Emu', {'ExternalBIOSEnable': 'true'}, bare: const {'ExternalBIOSEnable'});
   io.Directory(c.guard.check(portable)).createSync(recursive: true);
   io.File(c.guard.check(toml.path)).writeAsStringSync(text);
 }

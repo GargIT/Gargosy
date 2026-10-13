@@ -42,23 +42,43 @@ Iterable<String> _coreFoldersFor(String name, int bytes) sync* {
   }
 }
 
-/// [from] (a file in the shared `bios\`) at [to], hard-linked where the
-/// drive allows it, else copied; a file of the same size there is kept.
-void placeSharedFile(io.File from, String to, PathGuard guard) => _place(from, to, guard);
+/// The files in `bios\`, listed once for several [find]s.
+class BiosFiles {
+  BiosFiles(this.bios)
+      : _files = io.Directory(bios).existsSync()
+            ? io.Directory(bios).listSync(recursive: true, followLinks: false).whereType<io.File>().toList()
+            : const [];
 
-/// The first file named one of [names] (any case) in [bios] or its
-/// subfolders (RomM's firmware lands in `bios\` or a platform folder), or null.
-io.File? findBiosFile(String bios, List<String> names) {
-  final dir = io.Directory(bios);
-  if (!dir.existsSync()) return null;
-  final wanted = {for (final n in names) n.toLowerCase()};
-  final found = dir
-      .listSync(recursive: true, followLinks: false)
-      .whereType<io.File>()
-      .where((f) => wanted.contains(p.basename(f.path).toLowerCase()))
-      .toList()
-    ..sort((a, b) => p.split(a.path).length.compareTo(p.split(b.path).length)); // bios\ itself first
-  return found.firstOrNull;
+  final String bios;
+  final List<io.File> _files;
+
+  /// The file named one of [names] (any case), or null. RomM's firmware
+  /// lands in `bios\` or a platform folder: [platforms] (`nds`, `switch` …)
+  /// come first, then `bios\` itself, then the shallowest elsewhere, so a
+  /// generic name (firmware.bin, keys.txt) from another system isn't taken
+  /// when this one's is there.
+  io.File? find(List<String> names, {List<String> platforms = const []}) {
+    final wanted = {for (final n in names) n.toLowerCase()};
+    final found = _files.where((f) => wanted.contains(p.basename(f.path).toLowerCase())).toList();
+    int rank(io.File f) {
+      final parts = p.split(p.relative(f.path, from: bios));
+      if (parts.length > 1 && platforms.contains(parts.first.toLowerCase())) return 0;
+      return parts.length; // 1 for bios\ itself
+    }
+
+    found.sort((a, b) => rank(a).compareTo(rank(b)));
+    return found.firstOrNull;
+  }
+}
+
+/// [from] copied to [to] when nothing is there yet. For files the emulator
+/// may change itself (keys it adds to): a profile's own copy, never a link
+/// to the shared one, and never replaced once there.
+void copySharedFileIfMissing(io.File from, String to, PathGuard guard) {
+  final dest = io.File(guard.check(to));
+  if (dest.existsSync()) return;
+  dest.parent.createSync(recursive: true);
+  from.copySync(dest.path);
 }
 
 void _place(io.File from, String to, PathGuard guard) {
