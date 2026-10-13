@@ -1,5 +1,6 @@
 # Project-level configuration.
-cmake_minimum_required(VERSION 3.14)
+# 3.18: windows/sigil.cmake sets a source property in sigil's directory.
+cmake_minimum_required(VERSION 3.18)
 project(gargosy LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
@@ -54,12 +55,8 @@ add_subdirectory("runner")
 
 # argosy-sigil (third_party, pinned): game ids and save units. Compiled once,
 # then incrementally; sigil.dll is installed beside Gargosy.exe.
-set(SIGIL_BUILD_SHARED ON CACHE BOOL "" FORCE)
-set(SIGIL_BUILD_CLI OFF CACHE BOOL "" FORCE)
-set(SIGIL_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(SIGIL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/argosy-sigil")
-add_subdirectory("${SIGIL_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/sigil")
-include("${CMAKE_CURRENT_SOURCE_DIR}/sigil_msvc.cmake")
+set(SIGIL_BINARY_DIR "${CMAKE_BINARY_DIR}/sigil")
+include("${CMAKE_CURRENT_SOURCE_DIR}/sigil.cmake")
 add_dependencies(${BINARY_NAME} sigil)
 
 
