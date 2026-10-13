@@ -34,6 +34,7 @@ class Fullscreen {
     // RPCS3's --fullscreen works only with --no-gui, which also ends RPCS3
     // with the game (issue #10).
     'rpcs3': (on: ['--no-gui', '--fullscreen'], off: ['--no-gui']),
+    'scummvm': (on: ['-f'], off: ['-F']),
   };
 
   static bool supports(String emulatorId) => _flags.containsKey(emulatorId);

@@ -34,6 +34,7 @@ void main() {
     expect(dolphin.supported, isTrue);
     expect(dolphin.installedExe, isNull);
     expect(list.firstWhere((e) => e.id == 'ryujinx').supported, isTrue, reason: 'pointed with -r (#9)');
+    expect(list.firstWhere((e) => e.id == 'scummvm').supported, isTrue, reason: '--config and --savepath (#11)');
     // Supported exactly when Gargosy can point it at a profile.
     for (final e in list) {
       expect(e.supported, ProfileLaunchConfig.supported.contains(e.id), reason: e.id);
