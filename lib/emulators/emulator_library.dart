@@ -54,6 +54,9 @@ class EmulatorLibrary {
     'flycast': {'emu.cfg', 'data'},
     'mame': {'cfg', 'nvram', 'sta', 'inp', 'snap', 'diff', 'comments', 'ini', 'mame.ini', 'ui.ini'},
     'xemu': {'xemu.toml'},
+    // A portable Ryujinx keeps its saves, keys and firmware in portable\;
+    // Gargosy starts it with -r on the profile's folder instead.
+    'ryujinx': {'portable'},
   };
 
   PathGuard get _guard => PathGuard(root);

@@ -10,6 +10,7 @@ import '../storage/app_preferences.dart';
 import '../romm/romm_models.dart';
 import '../romm/romm_service.dart';
 import '../storage/directory_service.dart';
+import '../storage/profile_rooted.dart';
 import 'formats/rzip.dart';
 import 'formats/save_format_registry.dart';
 import 'formats/zstd.dart';
@@ -145,7 +146,12 @@ class SaveSyncService {
     _retroarchSaves = wrap('retroarch', _retroarch);
     _dolphin = wrap('dolphin', DolphinSaveStrategy(_directoryService, platform: platform));
     _eden = EdenSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
-    _ryujinx = RyujinxSaveStrategy(onMappingResolved: saveMappedFolder, platform: platform);
+    _ryujinx = RyujinxSaveStrategy(
+      onMappingResolved: saveMappedFolder,
+      platform: platform,
+      // Gargosy: in a profile, the folder Ryujinx is started on with -r (issue #9).
+      profileRoot: _directoryService is ProfileRootedDirectories ? () => _directoryService.getEmulatorDirectory('ryujinx') : null,
+    );
     _windows = WindowsSaveStrategy(_prefs, platform: platform);
     _pcsx2 = wrap('pcsx2', Pcsx2SaveStrategy(_directoryService, _prefs, platform: platform));
     _rpcs3 = Rpcs3SaveStrategy(_directoryService, platform: platform);

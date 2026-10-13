@@ -42,6 +42,45 @@ Iterable<String> _coreFoldersFor(String name, int bytes) sync* {
   }
 }
 
+/// The files in `bios\`, listed once for several [find]s.
+class BiosFiles {
+  BiosFiles(this.bios)
+      : _files = io.Directory(bios).existsSync()
+            ? io.Directory(bios).listSync(recursive: true, followLinks: false).whereType<io.File>().toList()
+            : const [];
+
+  final String bios;
+  final List<io.File> _files;
+
+  /// The file named one of [names] (any case), or null. RomM's firmware
+  /// lands in `bios\` or a platform folder: [platforms] (`nds`, `switch` …)
+  /// come first, then `bios\` itself, then the shallowest elsewhere, so a
+  /// generic name (firmware.bin, keys.txt) from another system isn't taken
+  /// when this one's is there.
+  io.File? find(List<String> names, {List<String> platforms = const []}) {
+    final wanted = {for (final n in names) n.toLowerCase()};
+    final found = _files.where((f) => wanted.contains(p.basename(f.path).toLowerCase())).toList();
+    int rank(io.File f) {
+      final parts = p.split(p.relative(f.path, from: bios));
+      if (parts.length > 1 && platforms.contains(parts.first.toLowerCase())) return 0;
+      return parts.length; // 1 for bios\ itself
+    }
+
+    found.sort((a, b) => rank(a).compareTo(rank(b)));
+    return found.firstOrNull;
+  }
+}
+
+/// [from] copied to [to] when nothing is there yet. For files the emulator
+/// may change itself (keys it adds to): a profile's own copy, never a link
+/// to the shared one, and never replaced once there.
+void copySharedFileIfMissing(io.File from, String to, PathGuard guard) {
+  final dest = io.File(guard.check(to));
+  if (dest.existsSync()) return;
+  dest.parent.createSync(recursive: true);
+  from.copySync(dest.path);
+}
+
 void _place(io.File from, String to, PathGuard guard) {
   final dest = io.File(guard.check(to));
   final size = from.lengthSync();
@@ -58,6 +97,12 @@ final _createHardLink = DynamicLibrary.open('kernel32.dll').lookupFunction<
     int Function(Pointer<Utf16> newFile, Pointer<Utf16> existing, Pointer<Void> security)>('CreateHardLinkW');
 
 bool _hardLink(String existing, String newFile) {
+  // Windows' CreateHardLinkW; elsewhere (tests on Linux) a copy instead.
+  try {
+    _createHardLink;
+  } on Object {
+    return false;
+  }
   final a = newFile.toNativeUtf16();
   final b = existing.toNativeUtf16();
   try {

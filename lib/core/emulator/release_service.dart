@@ -7,6 +7,8 @@ enum ReleasePlatform {
   github,
   gitea,
   dolphin,
+  // Gargosy: GitLab's releases API (Ryujinx's Ryubing, issue #9).
+  gitlab,
 }
 
 class ReleaseService {
@@ -33,6 +35,8 @@ class ReleaseService {
       } else if (platform == ReleasePlatform.dolphin) {
         // For Dolphin, we scrape the official download page
         return await _scrapeDolphin(requiredFilters, excludedFilters);
+      } else if (platform == ReleasePlatform.gitlab) {
+        return await _gitlab(baseUrl!, repo, requiredFilters, excludedFilters);
       } else {
         final base = baseUrl ?? giteaBaseUrl ?? 'https://git.eden-emu.dev';
         url = '$base/api/v1/repos/$repo/releases/latest';
@@ -57,6 +61,51 @@ class ReleaseService {
     } catch (e) {
       return [];
     }
+  }
+
+  /// Gargosy: the newest stable release on a GitLab instance ([base], the
+  /// project [repo] as `group/name`) with files matching the filters.
+  /// GitLab lists releases newest first; an upcoming release, a canary or a
+  /// pre-release tag (`-rc`, `-beta`) is skipped, never offered.
+  Future<List<Map<String, String>>> _gitlab(
+      String base, String repo, List<String> requiredFilters, List<String> excludedFilters) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '$base/api/v4/projects/${Uri.encodeComponent(repo)}/releases?per_page=20',
+        options: Options(headers: {'Accept': 'application/json', 'User-Agent': 'Gargosy'}),
+      );
+      final releases = response.data is List ? response.data as List : const [];
+      return gitlabAssets(releases, requiredFilters, excludedFilters);
+    } catch (e) {
+      debugPrint('[Release] GitLab $repo: $e');
+      return [];
+    }
+  }
+
+  /// [releases] (GitLab's `/releases` JSON) → the first stable release's
+  /// matching files.
+  @visibleForTesting
+  static List<Map<String, String>> gitlabAssets(
+      List<dynamic> releases, List<String> requiredFilters, List<String> excludedFilters) {
+    final unstable = RegExp(r'canary|nightly|-rc|beta|alpha|preview', caseSensitive: false);
+    for (final release in releases.whereType<Map>()) {
+      final tag = '${release['tag_name'] ?? ''} ${release['name'] ?? ''}';
+      if (release['upcoming_release'] == true || unstable.hasMatch(tag)) continue;
+      final links = (release['assets'] is Map ? release['assets']['links'] : null) as List? ?? const [];
+      final out = <Map<String, String>>[];
+      for (final link in links.whereType<Map>()) {
+        final name = (link['name'] ?? '').toString();
+        final url = (link['direct_asset_url'] ?? link['url'] ?? '').toString();
+        if (name.isEmpty || !url.startsWith('https://')) continue;
+        final lower = name.toLowerCase();
+        if (requiredFilters.every((f) => lower.contains(f.toLowerCase())) &&
+            !excludedFilters.any((f) => lower.contains(f.toLowerCase()))) {
+          out.add({'name': name, 'url': url});
+        }
+      }
+      if (out.isNotEmpty) return out;
+    }
+    return [];
   }
 
   List<Map<String, String>> _parseApiAssets(List<dynamic> assets, List<String> requiredFilters, List<String> excludedFilters) {

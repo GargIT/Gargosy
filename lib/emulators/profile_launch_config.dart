@@ -8,6 +8,7 @@ import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
+import 'linked_emulators.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
 /// emulator's install folder and the shared BIOS folder.
@@ -113,6 +114,11 @@ abstract class ProfileLaunchConfig {
           '-C', 'savegamePath=${p.join(c.data, 'saves')}',
           '-C', 'savestatePath=${p.join(c.data, 'states')}',
         ]),
+    // Ryujinx (Switch, issue #9): its whole data folder by argument (Ryubing's
+    // CommandLineState: -r / --root-data-dir), and the keys from bios\.
+    'ryujinx': _Args((c) => ['-r', c.data], before: (c) async => _ryujinxKeys(c)),
+    // Eden, Azahar, Cemu, melonDS: a folder link (issues #8, #12–#15).
+    ...linkedEmulatorConfigs,
     'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
           '-config',
           'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'
@@ -328,6 +334,19 @@ class _Ppsspp extends ProfileLaunchConfig {
     if (memstick.existsSync()) memstick.renameSync(c.guard.check('${memstick.path}.gargosy-off'));
     io.File(c.guard.check(p.join(c.exeDir, 'installed.txt'))).writeAsStringSync(c.data);
     return const [];
+  }
+}
+
+/// Ryujinx's keys (RomM's firmware in `bios\`, `bios\switch` first) into
+/// the profile's `system\`, where it reads them; a game can't start without
+/// prod.keys. The profile's own copies: Ryujinx's Install Keys writes there,
+/// which must not reach `bios\` or another profile, and newer keys a
+/// profile has are never replaced.
+void _ryujinxKeys(LaunchContext c) {
+  final bios = BiosFiles(c.bios);
+  for (final name in const ['prod.keys', 'title.keys']) {
+    final file = bios.find([name], platforms: const ['switch']);
+    if (file != null) copySharedFileIfMissing(file, p.join(c.data, 'system', name), c.guard);
   }
 }
 
