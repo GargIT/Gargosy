@@ -42,9 +42,24 @@ List<({String label, String href})> markdownLinks(String text) {
 /// in the text), B goes back. A link to another file opens it here; a web
 /// link or a folder opens outside.
 class DocReaderScreen extends ConsumerStatefulWidget {
-  const DocReaderScreen({super.key, required this.path});
+  const DocReaderScreen({super.key, required String this.path})
+      : text = null,
+        title = null,
+        baseDir = null;
 
-  final String path;
+  /// Markdown [text] that isn't a file (What's new, issue #3), under
+  /// [title]; its links and images resolve against [baseDir], the Gargosy
+  /// folder.
+  const DocReaderScreen.text({super.key, required String this.title, required String this.text, required String this.baseDir})
+      : path = null;
+
+  final String? path;
+  final String? text;
+  final String? title;
+  final String? baseDir;
+
+  /// The folder links resolve against.
+  String get dir => baseDir ?? p.dirname(path!);
 
   @override
   ConsumerState<DocReaderScreen> createState() => _DocReaderScreenState();
@@ -58,14 +73,15 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
   StreamSubscription<GameAction>? _pad;
 
   String? _read() {
+    if (widget.text != null) return widget.text;
     try {
-      return io.File(widget.path).readAsStringSync();
+      return io.File(widget.path!).readAsStringSync();
     } on io.FileSystemException {
       return null;
     }
   }
 
-  bool get _markdown => p.extension(widget.path).toLowerCase() == '.md';
+  bool get _markdown => widget.text != null || p.extension(widget.path!).toLowerCase() == '.md';
 
   @override
   void initState() {
@@ -102,7 +118,7 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
     }
     final file = href.split('#').first;
     if (file.isEmpty) return;
-    final target = p.normalize(p.join(p.dirname(widget.path), Uri.decodeComponent(file)));
+    final target = p.normalize(p.join(widget.dir, Uri.decodeComponent(file)));
     if (io.Directory(target).existsSync()) {
       ref.read(externalOpenerProvider)(target);
     } else {
@@ -131,7 +147,7 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
 
   Widget _image(Uri uri, String? title, String? alt) {
     if (uri.hasScheme) return const SizedBox.shrink();
-    final file = io.File(p.join(p.dirname(widget.path), Uri.decodeComponent(uri.path)));
+    final file = io.File(p.join(widget.dir, Uri.decodeComponent(uri.path)));
     // The release leaves the README's screenshots out: no broken-image box.
     if (!file.existsSync()) return const SizedBox.shrink();
     return Image.file(file);
@@ -173,13 +189,13 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s8, GSpace.rowPad, GSpace.s4),
-                    child: Text(p.basename(widget.path),
+                    child: Text(widget.title ?? p.basename(widget.path!),
                         style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800)),
                   ),
                   Expanded(
                     child: text == null
                             ? Center(
-                                child: Text("${p.basename(widget.path)} isn't in the Gargosy folder.",
+                                child: Text("${widget.title ?? p.basename(widget.path!)} isn't in the Gargosy folder.",
                                     style: const TextStyle(color: GColors.fgSecondary)),
                               )
                             : Scrollbar(

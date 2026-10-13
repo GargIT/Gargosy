@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- What's new: the first start of a newer version opens its changes once,
+  every release since the last one that ran, also after an update by hand
+  (#3).
 - RetroArch's saves for PlayStation, PlayStation 2 (LRPS2), N64, Game Boy
   and Game Boy Color now sync through argosy-sigil, as the standalone
   emulators' do: one save per game in RomM's `autosave` slot, named for

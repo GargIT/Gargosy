@@ -3,6 +3,9 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/profiles/app_root.dart';
+import 'package:path/path.dart' as p;
+import 'package:gargosy/changelog/whats_new.dart';
 import 'package:gargosy/core/constants/app_constants.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
@@ -29,15 +32,17 @@ import '../helpers/profile_test_env.dart';
 void main() {
   late ProviderContainer c;
 
-  Future<void> pump(WidgetTester tester, {List<Override> extra = const []}) async {
+  Future<void> pump(WidgetTester tester,
+      {List<Override> extra = const [], MemoryPrefs? prefs, void Function(AppRoot root)? before}) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final root = await tester.runAsync(tempAppRoot);
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
+    before?.call(root!);
     c = ProviderContainer(overrides: [
       appRootProvider.overrideWithValue(root!),
-      appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+      appPreferencesProvider.overrideWithValue(prefs ?? MemoryPrefs()),
       // The real pages, with a library that never touches RomM.
       coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
       recentlyPlayedProvider.overrideWith((ref) async => [for (var i = 21; i <= 30; i++) game(i, 'G$i')]),
@@ -303,5 +308,57 @@ void main() {
     queue.running.value = false;
     await tester.pumpAndSettle();
     expect(c.read(activeProfileProvider), isNull);
+  });
+
+  group("what's new after an update (#3)", () {
+    // AppConstants.version is 0.0.0 in tests (main() reads pubspec.yaml).
+    const now = '0.2.0';
+    late String was;
+    late DateTime started;
+    setUp(() {
+      was = AppConstants.version;
+      started = appStartedAt;
+      AppConstants.version = now;
+      // A profile made in the test is made after this start: a fresh install.
+      appStartedAt = DateTime.now();
+    });
+    tearDown(() {
+      AppConstants.version = was;
+      appStartedAt = started;
+    });
+    void changelog(AppRoot root) => io.File(p.join(root.root, 'CHANGELOG.md')).writeAsStringSync(
+        '# Changelog\n\n## [Unreleased]\n\n- Soon.\n\n## [$now] - 2026-11-01\n\n- The new thing.\n\n## [0.0.1] - 2026-01-01\n\n- Old.\n');
+
+    testWidgets('the first start of a newer version opens the changes once, under its own title', (tester) async {
+      final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.0.1';
+      await pump(tester, prefs: prefs, before: changelog);
+      expect(find.byType(DocReaderScreen), findsOneWidget);
+      expect(find.text("What's new in $now"), findsOneWidget);
+      expect(find.textContaining('The new thing'), findsOneWidget);
+      expect(find.textContaining('Old.'), findsNothing);
+      expect(find.textContaining('Soon.'), findsNothing);
+      expect(prefs.values[lastRunVersionKey], now);
+    });
+
+    testWidgets('the next start opens nothing', (tester) async {
+      await pump(tester, prefs: MemoryPrefs()..values[lastRunVersionKey] = now, before: changelog);
+      expect(find.byType(DocReaderScreen), findsNothing);
+    });
+
+    testWidgets('Gargosy in use before this release (a profile from an earlier start, no version recorded): it opens',
+        (tester) async {
+      appStartedAt = DateTime.now().add(const Duration(days: 1)); // the profile is from before this start
+      await pump(tester, prefs: MemoryPrefs(), before: changelog);
+      expect(find.text("What's new in $now"), findsOneWidget);
+      expect(find.textContaining('The new thing'), findsOneWidget);
+      expect(find.textContaining('Old.'), findsNothing);
+    });
+
+    testWidgets('a fresh install opens nothing, and records the version', (tester) async {
+      final prefs = MemoryPrefs();
+      await pump(tester, prefs: prefs, before: changelog);
+      expect(find.byType(DocReaderScreen), findsNothing);
+      expect(prefs.values[lastRunVersionKey], now);
+    });
   });
 }

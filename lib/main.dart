@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 
 import 'app.dart';
+import 'changelog/whats_new.dart';
 import 'core/constants/app_constants.dart';
 import 'core/platform/window_service.dart';
 import 'core/save/backup_entry.dart';
@@ -28,6 +29,7 @@ import 'update/update_installer.dart';
 import 'ui/screens/startup_error_app.dart';
 
 Future<void> main(List<String> args) async {
+  markAppStart();
   WidgetsFlutterBinding.ensureInitialized();
   // Backups' index: one Hive box per profile, in the profile's folder.
   if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
