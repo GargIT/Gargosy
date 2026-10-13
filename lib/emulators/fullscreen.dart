@@ -26,6 +26,11 @@ class Fullscreen {
     'flycast': (on: ['-config', 'window:fullscreen=yes'], off: ['-config', 'window:fullscreen=no']),
     'mgba': (on: ['-f'], off: []),
     'ares': (on: ['--fullscreen'], off: []),
+    'ryujinx': (on: ['--fullscreen'], off: []),
+    'eden': (on: ['-f'], off: []),
+    'azahar': (on: ['-f'], off: ['-w']),
+    'cemu': (on: ['-f'], off: []),
+    'melonds': (on: ['-f'], off: []),
     'scummvm': (on: ['-f'], off: ['-F']),
   };
 

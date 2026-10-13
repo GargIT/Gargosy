@@ -6,6 +6,7 @@ import 'package:archive/archive_io.dart';
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
+import '../../storage/profile_rooted.dart';
 import '../save_strategy.dart';
 
 /// Save strategy for melonDS (Nintendo DS).
@@ -29,6 +30,13 @@ class MelonDsSaveStrategy extends SaveStrategy {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
     debugPrint('[SaveSync] [melonDS] getSaveDir: romPath=$romPath');
+
+    // Gargosy: in a profile, melonDS saves into <data>\portable\saves (its
+    // melonDS.toml sets Instance0.SaveFilePath, issue #15), never next to
+    // the ROM: roms\ holds only ROMs.
+    if (_directoryService is ProfileRootedDirectories) {
+      return p.join(await _directoryService.getEmulatorAppSupportDirectory('melonds'), 'portable', 'saves');
+    }
 
     if (_platform.isLinux) {
       final emuDir = await _directoryService.getEmulatorAppSupportDirectory('melonds');

@@ -35,6 +35,9 @@ void main() {
   test('only the probed emulators are supported in v1', () {
     expect(ProfileLaunchConfig.supported,
         {'dolphin', 'pcsx2', 'retroarch', 'mame', 'xenia_canary', 'ares', 'xemu', 'ppsspp', 'duckstation', 'mgba', 'flycast',
+         'ryujinx', // -r (issue #9)
+         // a folder link (issues #8, #12–#15)
+         'eden', 'azahar', 'cemu', 'melonds',
          'scummvm'}); // --config, --savepath (issue #11)
     expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });

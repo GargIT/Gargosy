@@ -27,6 +27,9 @@ class AppRoot {
   /// Plugin data `path_provider` asks for (support, temp, cache).
   String get appData => p.join(userdata, 'app');
 
+  /// Gargosy's own log files (issue #1), one per start.
+  String get logs => p.join(appData, 'logs');
+
   /// Creates the folders and proves `userdata\` can be written.
   /// Throws [io.FileSystemException] when it can't.
   Future<void> ensureLayout() async {
