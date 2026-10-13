@@ -153,10 +153,16 @@ class StateSyncService {
   static const Duration defaultListTimeout = Duration(seconds: 20);
 
   StateSyncService(this._api, this._prefs, this._resolveStrategy,
-      {Duration listTimeout = defaultListTimeout, StrategyExclusive? exclusive})
+      {Duration listTimeout = defaultListTimeout, StrategyExclusive? exclusive, bool Function(String emulatorId)? emulatorSyncs})
       : _records = StateRecordStore(_prefs),
         _listTimeout = listTimeout,
-        _exclusive = exclusive ?? _runDirectly;
+        _exclusive = exclusive ?? _runDirectly,
+        _emulatorSyncs = emulatorSyncs;
+
+  /// Gargosy: whether an emulator has state sync turned on in its strategy
+  /// (`EmulatorStrategy.supportsStateSync`), the same rule Resume and Settings
+  /// use. A StateSyncCapable save strategy alone only means local states.
+  final bool Function(String emulatorId)? _emulatorSyncs;
 
   /// Pull, push and conflict resolution run through it (see StrategyExclusive).
   final StrategyExclusive _exclusive;
@@ -175,6 +181,9 @@ class StateSyncService {
   String availabilityReason(Game game, {String? emulatorId}) {
     final strategy = _resolveStrategy(game, emulatorId: emulatorId);
     if (strategy is! StateSyncCapable) return _unsupportedReason(emulatorId, strategy);
+    if (emulatorId != null && _emulatorSyncs != null && !_emulatorSyncs(emulatorId)) {
+      return _unsupportedReason(emulatorId, strategy);
+    }
     if (!isEnabled) return _offReason;
     return _available;
   }
@@ -813,12 +822,24 @@ class StateSyncService {
 /// Runs where a profile's prefs open; once they're gone it does nothing.
 Future<void> migrateStateSyncPref(AppPreferences prefs) async {
   final prefix = '${StateSyncService.enabledKey}_';
-  final old = [for (final key in prefs.getKeys()) if (key.startsWith(prefix)) key];
+  // Only the old switches: bools under the prefix, nothing else that shares it.
+  final old = [
+    for (final key in prefs.getKeys())
+      if (key.startsWith(prefix) && _boolOrNull(prefs, key) != null) key,
+  ];
   if (old.isEmpty) return;
   if (prefs.getBool(StateSyncService.enabledKey) == null && old.any((key) => prefs.getBool(key) == true)) {
     await prefs.setBool(StateSyncService.enabledKey, true);
   }
   for (final key in old) {
     await prefs.remove(key);
+  }
+}
+
+bool? _boolOrNull(AppPreferences prefs, String key) {
+  try {
+    return prefs.getBool(key);
+  } catch (_) {
+    return null; // not a bool
   }
 }

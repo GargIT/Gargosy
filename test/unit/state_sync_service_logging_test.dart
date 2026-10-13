@@ -389,4 +389,13 @@ void main() {
       });
     }
   });
+
+  test('an emulator whose strategy has state sync off is not synced, even with a capable save strategy', () {
+    final service = StateSyncService(FakeRommStatesApi(), env.pcsx2.prefs,
+        (game, {emulatorId, coreOverride}) => env.pcsx2.strategy,
+        emulatorSyncs: (id) => id == 'pcsx2');
+    expect(service.isAvailableFor(env.game, emulatorId: 'pcsx2'), isTrue);
+    expect(service.availabilityReason(env.game, emulatorId: 'ppsspp'), contains("no state-sync support for emulator 'ppsspp'"));
+    expect(service.isAvailableFor(env.game, emulatorId: 'ppsspp'), isFalse);
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/emulator/emulator_strategy.dart';
 import '../../../core/emulator/platform_slugs.dart';
 import '../../../core/save/state_sync_service.dart';
 import '../../../emulators/emulator_library.dart';
@@ -57,15 +58,12 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
       }
     }
     // Which installed emulators sync states comes from their strategies, never a list here.
-    final syncing = <String>[];
-    final localOnly = <String>[];
-    for (final st in registry?.allStrategies ?? const []) {
-      final name = installed[st.emulatorId];
-      if (name == null || syncing.contains(name) || localOnly.contains(name)) continue;
-      (st.supportsStateSync ? syncing : localOnly).add(name);
-    }
-    syncing.sort();
-    localOnly.sort();
+    final syncs = {
+      for (final st in registry?.allStrategies ?? const <EmulatorStrategy>[])
+        ?installed[st.emulatorId]: st.supportsStateSync,
+    };
+    final syncing = [for (final e in syncs.entries) if (e.value) e.key]..sort();
+    final localOnly = [for (final e in syncs.entries) if (!e.value) e.key]..sort();
     return ListView(children: [
       SettingsCard(
         title: 'Which emulator plays',
@@ -91,7 +89,9 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
         note: 'Upload save states after playing and bring them down before, like saves. Off by default. '
             'States on this PC always work, sync or not.',
         children: [
-          if (prefs != null)
+          if (prefs == null)
+            const Text('Open a profile to change this.', style: TextStyle(color: GColors.fgSecondary))
+          else
             SettingsToggle(
               key: const ValueKey('state-sync'),
               label: 'Sync save states with RomM',

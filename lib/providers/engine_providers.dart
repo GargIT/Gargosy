@@ -107,6 +107,7 @@ final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
     prefs,
     sync.strategyForGame,
     exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'),
+    emulatorSyncs: (id) => ref.read(strategyRegistryProvider)?.getStrategyById(id)?.supportsStateSync ?? false,
   );
 });
 

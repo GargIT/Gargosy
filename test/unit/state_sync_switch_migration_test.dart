@@ -36,4 +36,13 @@ void main() {
     expect(prefs.getBool(StateSyncService.enabledKey), isFalse);
     expect(prefs.getKeys(), {StateSyncService.enabledKey});
   });
+
+  test('only the old bool switches go: another pref sharing the prefix stays', () async {
+    final prefs = MemoryPrefs();
+    await prefs.setString('${StateSyncService.enabledKey}_at', '2026-10-13');
+    await prefs.setBool(StateSyncService.legacyEnabledKey('pcsx2'), true);
+    await migrateStateSyncPref(prefs);
+    expect(prefs.getBool(StateSyncService.enabledKey), isTrue);
+    expect(prefs.getKeys(), {StateSyncService.enabledKey, '${StateSyncService.enabledKey}_at'});
+  });
 }
