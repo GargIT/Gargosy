@@ -66,6 +66,20 @@ class SaveRestoreGuard {
 abstract class SaveStrategy {
   String get strategyId;
 
+  /// Gargosy: the strategy this one wraps (sigil's wrapper around an
+  /// emulator's own strategy), or null.
+  SaveStrategy? get wrapped => null;
+
+  /// Gargosy: the emulator's own strategy under any wrappers, for code that
+  /// asks what kind it is (RetroArch's core).
+  SaveStrategy get unwrapped {
+    var s = this;
+    for (var inner = s.wrapped; inner != null; inner = s.wrapped) {
+      s = inner;
+    }
+    return s;
+  }
+
   static const _chosenKey = #gargosyChosenRestore;
 
   /// Gargosy: runs [body] as a restore the user chose (a save picked on the

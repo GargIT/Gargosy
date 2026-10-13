@@ -8,6 +8,12 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- RetroArch's saves for PlayStation, PlayStation 2 (LRPS2), N64, Game Boy
+  and Game Boy Color now sync through argosy-sigil, as the standalone
+  emulators' do: one save per game in RomM's `autosave` slot, named for
+  the core, so RomM's player and Argosy see the same save, and a game's save
+  on a shared PS2 card travels without the other games' (#7). Other systems
+  in RetroArch sync as before.
 - Ryujinx (Switch) plays on each profile's own data (`-r`), with the keys
   from RomM's firmware in place, and downloads again: from Ryubing, which
   carries Ryujinx on since its GitHub went away (#9).
@@ -20,6 +26,10 @@ What changed in each release of Gargosy. The format follows
   newest 10 are kept, each at most 5 MB). Logins, tokens, passwords and API
   keys are left out. About → Open log folder; attach the newest log to a bug
   report (#1).
+- RPCS3 (PS3) plays on each profile's own data and saves, through
+  `RPCS3_CONFIG_DIR`. The firmware is shared: Settings → Emulators installs
+  RomM's `PS3UPDAT.PUP` once for every profile (#10). Updates and DLC are
+  per profile.
 
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.

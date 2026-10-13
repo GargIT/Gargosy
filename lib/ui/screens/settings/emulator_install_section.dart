@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../emulators/bios_sync.dart';
 import '../../../emulators/emulator_installer.dart';
 import '../../../emulators/emulator_library.dart';
+import '../../../emulators/ps3_firmware.dart';
+import '../../../play/play_controller.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
@@ -12,7 +14,7 @@ import 'settings_rows.dart';
 
 /// Settings → Emulators: the emulators Gargosy owns (spec §6). Import an
 /// existing install from a folder, download one, update or remove it, and
-/// get the BIOS files from RomM.
+/// get the BIOS files from RomM (and install RPCS3's firmware from bios\).
 class EmulatorInstallSection extends ConsumerStatefulWidget {
   const EmulatorInstallSection({super.key});
 
@@ -24,6 +26,29 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
   /// Emulator id → what is happening to it right now ("Downloading 40 %").
   final Map<String, String> _busy = {};
   bool _gettingBios = false;
+  bool _installingFirmware = false;
+
+  /// RPCS3's firmware from bios\, installed once for every profile (issue #10).
+  Future<void> _installPs3Firmware(String exe) async {
+    final firmware = ref.read(ps3FirmwareProvider);
+    if (firmware == null || _installingFirmware) return;
+    // One emulator at a time: RPCS3 can't install while a game runs.
+    if (ref.read(playControllerProvider).runningGameId != null) {
+      showToast(context, 'A game is running. Close it first.');
+      return;
+    }
+    setState(() => _installingFirmware = true);
+    try {
+      await firmware.install(exe);
+      if (mounted) showToast(context, 'The PS3 firmware is installed, for every profile.');
+    } on Ps3FirmwareException catch (e) {
+      if (mounted) showToast(context, e.message);
+    } on Object catch (e) {
+      if (mounted) showToast(context, "Couldn't install the PS3 firmware: $e");
+    } finally {
+      if (mounted) setState(() => _installingFirmware = false);
+    }
+  }
 
   Future<void> _import(EmulatorInfo e) async {
     final lib = ref.read(emulatorLibraryProvider);
@@ -169,6 +194,8 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         final supported = [for (final e in list) if (e.supported) e];
         final notYet = [for (final e in list) if (!e.supported) e];
         final installed = {for (final e in supported) if (e.installedExe != null) e.id};
+        final rpcs3Exe = supported.where((e) => e.id == 'rpcs3').firstOrNull?.installedExe;
+        final ps3Firmware = ref.watch(ps3FirmwareProvider);
         return ListView(children: [
           SettingsCard(
             title: 'Emulators',
@@ -178,11 +205,22 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: SettingsButton(
-                  label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
-                  icon: Icons.memory,
-                  onActivate: _gettingBios ? null : () => _getBios(installed),
-                ),
+                child: Wrap(spacing: GSpace.s2, runSpacing: GSpace.s2, children: [
+                  SettingsButton(
+                    label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
+                    icon: Icons.memory,
+                    onActivate: _gettingBios ? null : () => _getBios(installed),
+                  ),
+                  if (rpcs3Exe != null && ps3Firmware != null)
+                    SettingsButton(
+                      key: const Key('ps3-firmware'),
+                      label: _installingFirmware
+                          ? 'Installing the PS3 firmware…'
+                          : 'Install PS3 firmware from bios\\ (${ps3Firmware.installed ? 'installed' : 'not installed'})',
+                      icon: Icons.system_update_alt,
+                      onActivate: _installingFirmware ? null : () => _installPs3Firmware(rpcs3Exe),
+                    ),
+                ]),
               ),
               for (final e in supported) _row(e),
             ],

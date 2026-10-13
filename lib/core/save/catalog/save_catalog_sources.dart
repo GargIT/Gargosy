@@ -88,7 +88,7 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
       for (final core in cores) {
         // Under the save lock: another game's sync may be using the strategy.
         final row = await sync.withStrategy<SaveEntry?>(game, (strategy) async {
-          if (strategy is! RetroArchSaveStrategy && !seen.add(strategy)) return null;
+          if (strategy.unwrapped is! RetroArchSaveStrategy && !seen.add(strategy)) return null;
           try {
             final files = [
               for (final f in await strategy.getSaveFiles(game, romPath, syncMode: 'saves'))
@@ -108,8 +108,8 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
               }
               size += await f.length();
             }
-            final maker = strategy is RetroArchSaveStrategy
-                ? SaveMaker('retroarch', coreId: strategy.coreIdFor(game))
+            final maker = strategy.unwrapped is RetroArchSaveStrategy
+                ? SaveMaker('retroarch', coreId: (strategy.unwrapped as RetroArchSaveStrategy).coreIdFor(game))
                 : SaveMaker(emulator.emulatorId);
             return SaveEntry(
               source: SaveSource.local,

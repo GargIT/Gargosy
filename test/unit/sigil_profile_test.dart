@@ -30,7 +30,7 @@ class _Old extends SaveStrategy {
 void main() {
   final paths = ProfilePaths(AppRoot(r'C:\gargosy-test'), 'aaa');
 
-  test("the profile's sigil strategies: the six emulators, their folders and sigil's files inside the profile", () {
+  test("the profile's sigil strategies: the seven emulators, their folders and sigil's files inside the profile", () {
     final wrap = sigilSavesFor(paths)!;
     final pcsx2 = wrap('pcsx2', _Old()) as SigilSaveStrategy;
     expect(pcsx2.emulatorDir(), paths.emulatorDir('pcsx2'));
@@ -40,8 +40,13 @@ void main() {
       expect(wrap(id, _Old()), isA<SigilSaveStrategy>(), reason: id);
     }
     expect(wrap('flycast', null), isA<SigilSaveStrategy>());
+    // RetroArch too (issue #7), wrapping its own strategy.
     final old = _Old();
-    expect(wrap('retroarch', old), same(old));
+    final retroarch = wrap('retroarch', old);
+    expect(retroarch, isA<SigilSaveStrategy>());
+    expect(retroarch!.wrapped, same(old));
+    final other = _Old();
+    expect(wrap('melonds', other), same(other), reason: 'an emulator sigil does not sync here keeps its own');
   });
 
   test("without a usable sigil.dll the old strategies stay (and it says why in the log)", () {

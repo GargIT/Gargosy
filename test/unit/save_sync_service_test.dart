@@ -1493,6 +1493,10 @@ class _SharedCardStrategy implements SaveStrategy {
   @override
   String get strategyId => 'card';
   @override
+  SaveStrategy? get wrapped => null;
+  @override
+  SaveStrategy get unwrapped => this;
+  @override
   String uploadSlotFor(Game game) => 'gargosy';
   @override
   Future<void> afterUpload(Game game, String romPath) async {}

@@ -24,7 +24,7 @@ void main() {
   group('RetroArch config parsing: sort_savefiles_enable', () {
 
 
-    test('sort_savefiles_enable not set defaults to true (RetroArch default)', () async {
+    test('sort_savefiles_enable not set defaults to false (RetroArch default)', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_sort_default_');
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
@@ -47,8 +47,8 @@ void main() {
       final result = await strategy.getSaveDir(game, romPath);
 
       expect(result, isNotNull);
-      expect(result, endsWith('mGBA'),
-          reason: 'Default should be true (append core subfolder)');
+      // Gargosy: RetroArch's own default is false (flat saves\); Freegosy assumed true.
+      expect(p.basename(result!), 'saves', reason: 'Default is false (no core subfolder), as RetroArch');
 
       await tempDir.delete(recursive: true);
     });
@@ -178,7 +178,8 @@ void main() {
       final romPath = p.join(tempDir.path, 'roms', 'Pokemon.gba');
       final result = await strategy.getSaveDir(game, romPath);
 
-      expect(result, equals(p.join(exeDir, 'saves', 'mGBA')),
+      // Gargosy: flat saves\ by default (RetroArch's default), no core subfolder.
+      expect(result, equals(p.join(exeDir, 'saves')),
           reason: 'Without an emudeck folder present, should resolve relative to the exe as before');
 
       await tempDir.delete(recursive: true);

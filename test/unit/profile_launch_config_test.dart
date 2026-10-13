@@ -38,6 +38,7 @@ void main() {
          'ryujinx', // -r (issue #9)
          // a folder link (issues #8, #12–#15)
          'eden', 'azahar', 'cemu', 'melonds',
+         'rpcs3', // RPCS3_CONFIG_DIR (issue #10)
          'scummvm'}); // --config, --savepath (issue #11)
     expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });
@@ -98,6 +99,47 @@ void main() {
     await ProfileLaunchConfig.of('retroarch')!.prepare(c);
     final again = io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync();
     expect(RegExp('^savefile_directory', multiLine: true).allMatches(again).length, 1);
+  });
+
+  test("retroarch: saves stay flat in saves\\ (sigil's save root): sorting by core or content is put back off", () async {
+    final c = ctx('retroarch');
+    io.Directory(c.data).createSync(recursive: true);
+    io.File(p.join(c.data, 'retroarch.cfg'))
+        .writeAsStringSync('sort_savefiles_enable = "true"\nsort_savefiles_by_content_enable = "true"\n');
+    await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+    final cfg = io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync();
+    expect(cfg, contains('sort_savefiles_enable = "false"'));
+    expect(cfg, contains('sort_savefiles_by_content_enable = "false"'));
+    expect(RegExp(r'^sort_savefiles\w* = "true"', multiLine: true).hasMatch(cfg), isFalse);
+  });
+
+  test("retroarch: saves it had sorted come up into saves\\ before sorting goes off; nothing is overwritten", () async {
+    final c = ctx('retroarch');
+    void put(String rel, String text) => io.File(p.join(c.data, 'saves', rel))
+      ..createSync(recursive: true)
+      ..writeAsStringSync(text);
+    put(p.join('PCSX-ReARMed', 'FF7.srm'), 'sorted by core');
+    put(p.join('Snes9x', 'snes', 'Zelda.srm'), 'sorted by core and content');
+    put(p.join('Snes9x', 'Mario.srm'), 'the sorted one');
+    put('Mario.srm', 'already flat');
+    io.File(p.join(c.data, 'retroarch.cfg')).writeAsStringSync('sort_savefiles_enable = "true"\n');
+    await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+    String read(String rel) => io.File(p.join(c.data, 'saves', rel)).readAsStringSync();
+    expect(read('FF7.srm'), 'sorted by core');
+    expect(read('Zelda.srm'), 'sorted by core and content');
+    expect(read('Mario.srm'), 'already flat');
+    expect(read(p.join('Snes9x', 'Mario.srm')), 'the sorted one', reason: 'left where it was, not overwritten');
+  });
+
+  test('retroarch: saves and states never go next to the ROM', () async {
+    final c = ctx('retroarch');
+    io.Directory(c.data).createSync(recursive: true);
+    io.File(p.join(c.data, 'retroarch.cfg'))
+        .writeAsStringSync('savefiles_in_content_dir = "true"\nsavestates_in_content_dir = "true"\n');
+    await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+    final cfg = io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync();
+    expect(cfg, contains('savefiles_in_content_dir = "false"'));
+    expect(cfg, contains('savestates_in_content_dir = "false"'));
   });
 
   test('ppsspp: installed.txt points at the profile; a portable memstick is moved aside', () async {
@@ -211,7 +253,7 @@ void main() {
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
-      start: (exePath, args, {workingDirectory}) async {
+      start: (exePath, args, {workingDirectory, environment}) async {
         started.add([exePath, ...args]);
         return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
       },
@@ -237,7 +279,7 @@ void main() {
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
-      start: (exePath, args, {workingDirectory}) async {
+      start: (exePath, args, {workingDirectory, environment}) async {
         started.add(args);
         return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
       },

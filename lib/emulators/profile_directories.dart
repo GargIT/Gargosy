@@ -20,10 +20,13 @@ import 'fullscreen.dart';
 import 'profile_launch_config.dart';
 
 /// Starts a process; tests pass a recorder.
-typedef ProcessStarter = Future<io.Process> Function(String exe, List<String> args, {String? workingDirectory});
+/// [environment] is added to Gargosy's own (RPCS3's `RPCS3_CONFIG_DIR`).
+typedef ProcessStarter = Future<io.Process> Function(String exe, List<String> args,
+    {String? workingDirectory, Map<String, String>? environment});
 
-Future<io.Process> _defaultStart(String exe, List<String> args, {String? workingDirectory}) =>
-    io.Process.start(exe, args, workingDirectory: workingDirectory);
+Future<io.Process> _defaultStart(String exe, List<String> args,
+        {String? workingDirectory, Map<String, String>? environment}) =>
+    io.Process.start(exe, args, workingDirectory: workingDirectory, environment: environment);
 
 /// The environment Freegosy's save code sees for a profile: Windows' user
 /// folders point inside the profile, so a fallback like `%LOCALAPPDATA%\DuckStation`
@@ -126,12 +129,35 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
     final pre = await config.prepare(c);
     final process = await _start(exePath, [...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]), ...config.gameArgs(c, romPath)],
-        workingDirectory: c.exeDir);
+        workingDirectory: c.exeDir, environment: config.environment(c));
     // Drained, as Freegosy does: a full pipe would freeze the emulator.
     process.stdout.drain<void>();
     process.stderr.drain<void>();
     process.exitCode.then((_) => config.finish(c));
     return process;
+  }
+
+  /// Runs [exePath] on this profile's data with [args] and no game (RPCS3's
+  /// `--installfw`, issue #10): the launch config readies the profile and
+  /// gives its environment, and nothing else is added. [finish] puts the
+  /// profile's settings back; the caller runs it once the process is done,
+  /// and it runs here when the start fails.
+  Future<({io.Process process, Future<void> Function() finish})> startWithProfile(
+      String emulatorId, String exePath, List<String> args) async {
+    final config = ProfileLaunchConfig.of(emulatorId);
+    if (config == null) throw UnsupportedEmulatorException(emulatorId);
+    final c = _context(emulatorId, p.dirname(exePath));
+    await config.prepare(c);
+    final io.Process process;
+    try {
+      process = await _start(exePath, args, workingDirectory: c.exeDir, environment: config.environment(c));
+    } catch (_) {
+      await config.finish(c);
+      rethrow;
+    }
+    process.stdout.drain<void>();
+    process.stderr.drain<void>();
+    return (process: process, finish: () => config.finish(c));
   }
 
   /// The `roms\<platform>` folders that exist for the platforms

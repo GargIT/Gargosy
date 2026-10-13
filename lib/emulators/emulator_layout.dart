@@ -69,9 +69,11 @@ class EmulatorLayout {
     'eden': EmulatorLayout('eden', seed: ['user/nand/user/save', 'user/keys', 'user/config']),
     'azahar': EmulatorLayout('azahar', seed: ['user/sdmc', 'user/sysdata', 'user/config']),
     'melonds': EmulatorLayout('melonds', saveView: '_view', seed: ['portable/saves', 'portable/states']),
-    'rpcs3': EmulatorLayout('rpcs3', saveView: '_view'),
     // Started with -r <data> (issue #9): saves in bis\user\save, keys in system\.
     'ryujinx': EmulatorLayout('ryujinx', saveView: '_view', seed: ['bis/user/save', 'system']),
+    // RPCS3_CONFIG_DIR=<data> (issue #10): $(EmulatorDir) is <data>, so the
+    // save code's <install>\dev_hdd0 is the profile's.
+    'rpcs3': EmulatorLayout('rpcs3', seed: ['dev_hdd0/home/00000001/savedata']),
     // --config and --savepath into the profile (issue #11).
     'scummvm': EmulatorLayout('scummvm', seed: ['saves', 'screenshots']),
   };
