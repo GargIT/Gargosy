@@ -13,6 +13,10 @@ What changed in each release of Gargosy. The format follows
   profile's (#8, #12–#15). Keys from RomM's firmware go into place, and
   melonDS's saves stay out of `roms\`. Wii U updates and DLC are installed
   per profile.
+- Gargosy keeps a log in `userdata\app\logs`, one file per start (the
+  newest 10 are kept, each at most 5 MB). Logins, tokens, passwords and API
+  keys are left out. About → Open log folder; attach the newest log to a bug
+  report (#1).
 
 - About (user menu, and Settings → About): Gargosy's and the RomM server's
   version, and the documents that come with Gargosy.
@@ -45,6 +49,9 @@ What changed in each release of Gargosy. The format follows
   updates still get the latest release, never a preview or nightly build.
 - Emulator downloads show their progress while they run, instead of
   "Downloading 0 %" until done.
+- A PS2 save from RomM goes back onto a memory card file again: the check
+  after writing the card failed every time ("I/O error"), because of how the
+  save engine was compiled.
 - Emulators that come as a zip (PPSSPP, xemu, ares, DuckStation) unpacked
   only their first file, so they never counted as installed.
 - xemu finds its hard disk: the first launch in a profile copies
