@@ -8,6 +8,12 @@ How Gargosy points each emulator at the profile's own folder (spec §6). That fo
 - **Mechanisms:**
   - `arg`: a command-line argument at launch.
   - `settings`: Gargosy writes a file or keys into the emulator's own folder just before launch. This is safe because only one emulator runs at a time.
+  - `link` (issue #8): for an emulator that only reads a folder **next to its exe** (else `%APPDATA%`, asked of Windows directly, so `sandboxedPlatform()` can't redirect it). Before each launch, and before a pull, that folder in `emulators\<emu>\` is a directory junction to the same folder in `<data>`; the emulator writes straight into the profile. `LinkedFolderConfig` in `lib/emulators/linked_folder_config.dart`, `pointFolderLink` in `folder_link.dart`.
+    - A junction needs no admin rights and works on any NTFS drive; on FAT32/exFAT the launch is refused, saying why (`FolderLinkUnsupported`).
+    - A real folder already there (an imported install with data, or a release zip that ships one) is never deleted. It becomes the profile's own folder when that has no files yet; otherwise it goes once into `userdata\templates\<emu>\<folder>` (new profiles start from it), and after that into `userdata\app\set-aside\<emu>\<folder>`. A link pointing anywhere else is re-pointed.
+    - *Remove emulator*, *Update* and *Import* remove the links in the install first, so none can reach a profile's data; finding the exe never walks through a link.
+    - After a crash the link still points at the last profile, and the next launch re-points it. **Run outside Gargosy, the emulator uses the last profile's data.**
+    - Planned for: Eden and Azahar (`user\`), Cemu and melonDS (`portable\`): #12–#15.
 
 | emulatorId | Version | Mechanism | Exact args / file + keys | Settings follow profile | Saves land in | Evidence |
 |---|---|---|---|---|---|---|
@@ -30,10 +36,10 @@ These rows come from the emulators' documentation and from Freegosy, not from a 
 | emulatorId | Expected mechanism (to verify) |
 |---|---|
 | ryujinx | **arg** (#9, built, not probed): `-r "<data>"` (Ryubing's `CommandLineState.cs`; without it, `portable\` next to the exe, else `%APPDATA%\Ryujinx`). `prod.keys`/`title.keys` from `bios\` into `<data>\system\`. Full screen `--fullscreen`. Downloaded from Ryubing's GitLab (`git.ryujinx.app`, `ryubing/ryujinx`, stable `win_x64.zip`): GitHub's `Ryujinx/Ryujinx` is gone. Firmware per profile for now |
-| cemu | arg: `-mlc "<data>\mlc01"` for saves; settings (`settings.xml`) likely stay next to the exe |
-| eden | settings: a `user\` folder next to the exe makes it portable; per-profile needs the NAND/SDMC keys in `qt-config.ini`, or a data-folder argument if the build has one |
-| azahar | as eden: `user\` folder; per-profile through the SDMC/NAND keys in `qt-config.ini` |
-| melonds | settings: `melonDS.toml` next to the exe; save and state path keys |
+| cemu | **link** (#14, probed): `portable\` → `<data>\portable` (settings, graphic packs, `keys.txt` from `bios\`), plus arg `-m "<data>\mlc01"`: the MLC with the saves, never shared. A `settings.xml` next to the exe (pre-2.0) would win over `portable\`: renamed `.gargosy-off`. Game folders: `<GamePaths><Entry>` in `settings.xml` once Cemu made it. Full screen `-f` (all from `src/config/LaunchSettings.cpp`) Probed 2026-10-13 on Windows 11 (Cemu 2.6): started on a profile without a game and closed; nothing new in `%APPDATA%`, `%LOCALAPPDATA%`, Documents or beside the exe, everything in the profile (`mlc01\sys`, `mlc01\usr\save`). |
+| eden | **link** (#12, probed): `user\` → `<data>\user`; `prod.keys`/`title.keys` from `bios\` into `user\keys\`; game folders in `user\config\qt-config.ini` `[UI] Paths\gamedirs` once Eden made its list. Game as a plain argument, full screen `-f` (as in yuzu: Eden's source host isn't reachable from the cloud session, so check both) Probed 2026-10-13 on Windows 11 (Eden v0.2.1, `Eden-Windows-…-amd64-msvc-standard.zip` from `eden-emu/eden`: the `eden-ci/nightly` releases have no files any more): started on a profile without a game and closed; nothing new in `%APPDATA%`, `%LOCALAPPDATA%`, Documents or beside the exe, everything in the profile (`user\config`, `user\nand`, `user\log`). |
+| azahar | **link** (#13, probed): `user\` → `<data>\user`; `aes_keys.txt`/`seeddb.bin` from `bios\` into `user\sysdata\`; game folders as Eden. Full screen `-f`, windowed `-w` (`src/citra_qt/citra_qt.cpp`) Probed 2026-10-13 on Windows 11 (Azahar 2126.2): started on a profile without a game and closed; nothing new in `%APPDATA%`, `%LOCALAPPDATA%`, Documents or beside the exe, everything in the profile (`user\config\qt-config.ini`, `user\nand`, `user\log`). |
+| melonds | **link** (#15, probed): `portable\` → `<data>\portable`, and in its `melonDS.toml` `[Instance0] SaveFilePath`/`SavestatePath` → `<data>\portable\saves`/`states` (never next to the ROM), `[DS] BIOS9Path`/`BIOS7Path`/`FirmwarePath` for the files in `bios\`. Full screen `-f` (`src/frontend/qt_sdl/Config.cpp`, `CLI.cpp`) Probed 2026-10-13 on Windows 11 (melonDS 1.1): started on a profile without a game and closed; nothing new in `%APPDATA%`, `%LOCALAPPDATA%`, Documents or beside the exe, everything in the profile (`portable\melonDS.toml`, which kept the `[Instance0]` save and state paths; its own sections are `[Emu]`, `[DSi]` …, as the keys Gargosy writes). |
 | rpcs3 | settings: `config\vfs.yml`, key `$(EmulatorDir)dev_hdd0/` pointing under `<data>` |
 | scummvm | arg: `--config="<data>\scummvm.ini" --savepath="<data>\saves"` |
 

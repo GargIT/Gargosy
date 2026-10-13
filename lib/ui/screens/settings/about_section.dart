@@ -1,9 +1,12 @@
+import 'dart:io' as io;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/input/gamepad_service.dart';
+import '../../../profiles/path_guard.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../../providers/about_providers.dart';
 import '../../theme/tokens.dart';
@@ -35,7 +38,8 @@ Future<void> showAboutGargosy(BuildContext context) => showDialog<void>(
     );
 
 /// About: Gargosy's and RomM's versions, then the documents in the Gargosy
-/// folder (opened in the reader), the Flutter package licences and GitHub.
+/// folder (opened in the reader), the Flutter package licences, the log
+/// folder (for bug reports) and GitHub.
 /// The About dialog and Settings → About.
 class AboutSection extends ConsumerWidget {
   const AboutSection({super.key, this.autofocus = false});
@@ -51,7 +55,8 @@ class AboutSection extends ConsumerWidget {
     final rommText =
         romm.when(data: (v) => v == null ? 'not reachable' : 'v$v', loading: () => '…', error: (_, _) => 'not reachable');
 
-    Widget doc(String label, String name, {bool focus = false}) => SettingsRow(
+    Widget doc(IconData icon, String label, String name, {bool focus = false}) => SettingsLinkRow(
+          icon: icon,
           label: label,
           value: name,
           autofocus: focus,
@@ -77,15 +82,31 @@ class AboutSection extends ConsumerWidget {
           ),
         ]),
       ),
-      doc("What's new", 'CHANGELOG.md', focus: autofocus),
-      doc('Read me', 'README.md'),
-      doc('Licences', 'NOTICE.md'),
-      doc('Security policy', 'SECURITY.md'),
-      SettingsRow(
+      doc(Icons.history, "What's new", 'CHANGELOG.md', focus: autofocus),
+      doc(Icons.description_outlined, 'Read me', 'README.md'),
+      doc(Icons.verified_outlined, 'Licences', 'NOTICE.md'),
+      doc(Icons.lock_outline, 'Security policy', 'SECURITY.md'),
+      SettingsLinkRow(
+        icon: Icons.inventory_2_outlined,
         label: 'Dart and Flutter packages',
         onActivate: () => showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$version'),
       ),
-      SettingsRow(
+      SettingsLinkRow(
+        icon: Icons.folder_open_outlined,
+        label: 'Open log folder',
+        value: r'userdata\app\logs',
+        onActivate: () {
+          // Made when missing (a start that couldn't write it), so Explorer opens the folder.
+          try {
+            io.Directory(PathGuard(root).check(root.logs)).createSync(recursive: true);
+          } on Object catch (e) {
+            debugPrint('[About] log folder: $e');
+          }
+          ref.read(externalOpenerProvider)(root.logs);
+        },
+      ),
+      SettingsLinkRow(
+        icon: Icons.open_in_new,
         label: 'GitHub',
         value: gargosyRepoUrl.replaceFirst('https://', ''),
         onActivate: () => ref.read(externalOpenerProvider)(gargosyRepoUrl),

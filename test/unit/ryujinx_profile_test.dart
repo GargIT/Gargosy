@@ -143,6 +143,22 @@ void main() {
       expect(io.File(p.join(c.data, 'system', 'title.keys')).existsSync(), isFalse, reason: 'not in bios\\');
     });
 
+    test("the profile's keys are its own copies: never replaced, and a change never reaches bios\\", () async {
+      final shared = io.File(p.join(root.bios, 'switch', 'prod.keys'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('shared');
+      final c = ctx('aaa');
+      io.File(p.join(c.data, 'system', 'prod.keys'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync("newer, the profile's own");
+      await ProfileLaunchConfig.of('ryujinx')!.prepare(c);
+      expect(io.File(p.join(c.data, 'system', 'prod.keys')).readAsStringSync(), "newer, the profile's own");
+      final d = ctx('bbb');
+      await ProfileLaunchConfig.of('ryujinx')!.prepare(d);
+      io.File(p.join(d.data, 'system', 'prod.keys')).writeAsStringSync('Install Keys');
+      expect(shared.readAsStringSync(), 'shared');
+    });
+
     test('two profiles never share it', () async {
       final a = await ProfileLaunchConfig.of('ryujinx')!.prepare(ctx('aaa'));
       final b = await ProfileLaunchConfig.of('ryujinx')!.prepare(ctx('bbb'));

@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,10 +13,13 @@ import 'app.dart';
 import 'core/constants/app_constants.dart';
 import 'core/platform/window_service.dart';
 import 'core/save/backup_entry.dart';
+import 'core/storage/file_log_sink.dart';
 import 'core/storage/gargosy_path_provider.dart';
+import 'core/storage/logger_service.dart';
 import 'core/storage/json_file_preferences_store.dart';
 import 'core/storage/shared_preferences_app_preferences.dart';
 import 'profiles/app_root.dart';
+import 'profiles/path_guard.dart';
 import 'profiles/portable_temp.dart';
 import 'profiles/profile_providers.dart';
 import 'ui/screens/startup_error_app.dart';
@@ -33,6 +37,7 @@ Future<void> main(List<String> args) async {
     runApp(StartupErrorApp(message: '${e.message}: ${e.path ?? root.root}'));
     return;
   }
+  startFileLog(root);
   // Portable: plugins, settings and temp files stay in userdata\, never
   // AppData (spec §3).
   usePortableTemp(p.join(root.appData, 'temp'));
@@ -48,4 +53,26 @@ Future<void> main(List<String> args) async {
     ],
     child: const GargosyApp(),
   ));
+}
+
+/// The log in `userdata\app\logs\` (issue #1): every `debugPrint`, redacted,
+/// and every uncaught error, from here on. A folder that can't be written
+/// means no file log, never a failed start.
+void startFileLog(AppRoot root) {
+  final sink = FileLogSink.open(PathGuard(root).check(root.logs));
+  LoggerService.init(sink: sink, tag: () => LoggerService.profileTag);
+  LoggerService.writeRaw('Gargosy ${AppConstants.version}');
+  LoggerService.writeRaw('Windows ${io.Platform.operatingSystemVersion}');
+  LoggerService.writeRaw('Folder ${root.root}');
+  LoggerService.writeRaw('Started ${DateTime.now().toIso8601String()}');
+  LoggerService.writeRaw('');
+  final flutterError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    LoggerService().error(details.exception, details.stack, context: details.context?.toString());
+    flutterError?.call(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    LoggerService().error(error, stack, context: 'Uncaught');
+    return false;
+  };
 }

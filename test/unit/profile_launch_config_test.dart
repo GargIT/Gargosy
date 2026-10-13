@@ -35,7 +35,9 @@ void main() {
   test('only the probed emulators are supported in v1', () {
     expect(ProfileLaunchConfig.supported,
         {'dolphin', 'pcsx2', 'retroarch', 'mame', 'xenia_canary', 'ares', 'xemu', 'ppsspp', 'duckstation', 'mgba', 'flycast',
-         'ryujinx'}); // -r (issue #9)
+         'ryujinx', // -r (issue #9)
+         // a folder link (issues #8, #12–#15)
+         'eden', 'azahar', 'cemu', 'melonds'});
     expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });
 

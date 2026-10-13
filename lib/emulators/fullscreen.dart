@@ -27,6 +27,10 @@ class Fullscreen {
     'mgba': (on: ['-f'], off: []),
     'ares': (on: ['--fullscreen'], off: []),
     'ryujinx': (on: ['--fullscreen'], off: []),
+    'eden': (on: ['-f'], off: []),
+    'azahar': (on: ['-f'], off: ['-w']),
+    'cemu': (on: ['-f'], off: []),
+    'melonds': (on: ['-f'], off: []),
   };
 
   static bool supports(String emulatorId) => _flags.containsKey(emulatorId);
