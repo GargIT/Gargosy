@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/emulators/emulator_layout.dart';
-import 'package:gargosy/profiles/backups_index.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
@@ -45,7 +44,7 @@ void main() {
     final repo = await c.read(backupRepositoryProvider.future);
     expect(repo, isNotNull);
     // The box sits in backups\ beside the zips it lists, not in the profile's root.
-    expect(io.File(p.join(paths.backups, '${backupsBoxName(anna.id)}.hive')).existsSync(), isTrue);
+    expect(io.File(p.join(paths.backups, 'index.hive')).existsSync(), isTrue);
     expect(io.Directory(paths.dir).listSync().any((e) => p.basename(e.path).startsWith('backups_')), isFalse);
 
     final launch = await c.read(gameLaunchServiceProvider.future);
@@ -67,7 +66,7 @@ void main() {
     // Signing out closes the backups box without waiting, and Hive deletes the
     // box's lock file last. Closing it again (Hive.close) would race that
     // delete, and so would deleting the folder before it's done.
-    final lock = io.File(p.join(paths.backups, '${backupsBoxName(anna.id)}.lock'));
+    final lock = io.File(p.join(paths.backups, 'index.lock'));
     for (var i = 0; i < 100 && lock.existsSync(); i++) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }

@@ -1,63 +1,56 @@
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/profiles/backups_index.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
+import 'package:hive/hive.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/profile_test_env.dart';
 
 void main() {
-  late ProfilePaths paths;
-  late String name;
+  late ProfilePaths anna;
+  late ProfilePaths bert;
+
+  setUpAll(() {
+    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
+  });
 
   setUp(() async {
     final root = await tempAppRoot();
     addTearDown(() => deleteTempDir(root.root));
-    paths = ProfilePaths(root, 'anna-1');
-    io.Directory(paths.dir).createSync(recursive: true);
-    name = backupsBoxName(paths.id);
+    anna = ProfilePaths(root, 'anna-1');
+    bert = ProfilePaths(root, 'bert-2');
   });
 
-  io.File inRoot(String ext) => io.File(p.join(paths.dir, '$name.$ext'));
-  io.File inBackups(String ext) => io.File(p.join(paths.backups, '$name.$ext'));
-
-  test('a new profile gets backups\\ and nothing in its root', () {
-    expect(moveBackupsIndex(paths), paths.backups);
-    expect(io.Directory(paths.backups).existsSync(), isTrue);
-    expect(inRoot('hive').existsSync(), isFalse);
+  test("a profile's list is backups\\index.hive, and nothing lands in its root", () async {
+    final box = await openBackupsBox(anna);
+    expect(box.path, p.join(anna.backups, 'index.hive'));
+    expect(io.Directory(anna.dir).listSync().whereType<io.File>(), isEmpty);
+    await closeBackupsBox();
   });
 
-  test("the box in the profile's root moves into backups\\, with a crash's lock gone", () {
-    inRoot('hive').writeAsStringSync('index');
-    inRoot('lock').writeAsStringSync('');
-    expect(moveBackupsIndex(paths), paths.backups);
-    expect(inBackups('hive').readAsStringSync(), 'index');
-    expect(inRoot('hive').existsSync(), isFalse);
-    expect(inRoot('lock').existsSync(), isFalse);
+  test("opening a profile's list closes the last profile's first, so it never gets that box", () async {
+    final a = await openBackupsBox(anna);
+    await a.put('1', ['anna']);
+    final b = await openBackupsBox(bert);
+    expect(a.isOpen, isFalse);
+    expect(b.isOpen, isTrue);
+    expect(b.get('1'), isNull, reason: "bert's own list, not anna's");
+    expect(b.path, p.join(bert.backups, 'index.hive'));
+    await closeBackupsBox(b);
+    final again = await openBackupsBox(anna);
+    expect(again.get('1'), ['anna']);
+    await closeBackupsBox();
+    expect(again.isOpen, isFalse);
   });
 
-  test('a box already in backups\\ is never replaced', () {
-    io.Directory(paths.backups).createSync();
-    inBackups('hive').writeAsStringSync('new');
-    inRoot('hive').writeAsStringSync('old');
-    moveBackupsIndex(paths);
-    expect(inBackups('hive').readAsStringSync(), 'new');
-    expect(inRoot('hive').readAsStringSync(), 'old', reason: 'left alone, not deleted');
-  });
-
-  test("a crash's compaction copy moves with the box, so Hive can still recover it", () {
-    inRoot('hivec').writeAsStringSync('compacted');
-    expect(moveBackupsIndex(paths), paths.backups);
-    expect(inBackups('hivec').readAsStringSync(), 'compacted');
-    expect(inRoot('hivec').existsSync(), isFalse);
-  });
-
-  test("a box that can't move opens where it is", () {
-    inRoot('hive').writeAsStringSync('index');
-    // backups\ can't be made: a file has its name.
-    io.File(paths.backups).writeAsStringSync('');
-    expect(moveBackupsIndex(paths), paths.dir);
-    expect(inRoot('hive').readAsStringSync(), 'index');
+  test("an old provider closing its box late leaves the next profile's open", () async {
+    final a = await openBackupsBox(anna);
+    final b = await openBackupsBox(bert);
+    await closeBackupsBox(a);
+    expect(b.isOpen, isTrue);
+    await closeBackupsBox(b);
   });
 }

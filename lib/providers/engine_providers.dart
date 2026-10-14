@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 
 import '../sigil/sigil_profile.dart';
 import '../core/emulator/game_launch_service.dart';
@@ -83,10 +82,9 @@ final syncActivityProvider = Provider<ValueListenable<String?>?>((ref) => ref.wa
 final backupRepositoryProvider = FutureProvider<BackupRepository?>((ref) async {
   final paths = ref.watch(_profilePathsProvider);
   if (paths == null) return null;
-  final name = backupsBoxName(paths.id);
-  final box = await Hive.openBox<List>(name, path: moveBackupsIndex(paths));
-  ref.onDispose(box.close);
-  return BackupRepository(boxName: name)..initBox();
+  final box = await openBackupsBox(paths);
+  ref.onDispose(() => closeBackupsBox(box));
+  return BackupRepository(boxName: box.name)..initBox();
 });
 
 final backupServiceProvider = Provider<BackupService?>((ref) {
