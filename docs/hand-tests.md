@@ -6,8 +6,8 @@ The test install is `C:\Retro\apps\gargosy` (built from `main`). For tests that 
 
 ## Logging (#1)
 
-1. [ ] Sign in with a password, pair a device with the QR code, and sign in to RetroAchievements. Open the log in `userdata\app\logs\`, and check that no token, password or API key appears in it.
-2. [ ] Lines written while a profile is open carry its `[p:…]` tag, and lines from the profile picker carry none.
+1. [x] Sign in with a password, pair a device with the QR code, and sign in to RetroAchievements. Open the log in `userdata\app\logs\`, and check that no token, password or API key appears in it.
+2. [x] Lines written while a profile is open carry its `[p:…]` tag, and lines from the profile picker carry none.
 
 ## RetroArch saves through sigil (#7)
 
