@@ -84,8 +84,7 @@ final backupRepositoryProvider = FutureProvider<BackupRepository?>((ref) async {
   final paths = ref.watch(_profilePathsProvider);
   if (paths == null) return null;
   final name = backupsBoxName(paths.id);
-  moveBackupsIndex(paths);
-  final box = await Hive.openBox<List>(name, path: paths.backups);
+  final box = await Hive.openBox<List>(name, path: moveBackupsIndex(paths));
   ref.onDispose(box.close);
   return BackupRepository(boxName: name)..initBox();
 });

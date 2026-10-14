@@ -1,5 +1,6 @@
 import 'dart:io' as io;
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import 'profile_paths.dart';
@@ -10,14 +11,27 @@ import 'profile_paths.dart';
 String backupsBoxName(String profileId) => 'backups_${profileId.replaceAll('-', '_')}';
 
 /// Makes `backups\` and moves the box there from the profile's root, where
-/// Gargosy kept it before. A leftover lock from a crash goes with it, and a
-/// box already in `backups\` is never replaced. Runs before the box opens.
-void moveBackupsIndex(ProfilePaths paths) {
+/// Gargosy kept it before (with Hive's compaction copy, `.hivec`, when a
+/// crash left one). A leftover lock from a crash goes. A box already in
+/// `backups\` is never replaced. Runs before the box opens, and returns the
+/// folder to open it in: `backups\`, or the profile's root when the box
+/// couldn't be moved (it opens where it is then, and moves on a later start).
+String moveBackupsIndex(ProfilePaths paths) {
   final name = backupsBoxName(paths.id);
-  io.Directory(paths.guard.check(paths.backups)).createSync(recursive: true);
-  final old = io.File(paths.guard.check(p.join(paths.dir, '$name.hive')));
-  final moved = p.join(paths.backups, '$name.hive');
-  if (old.existsSync() && !io.File(moved).existsSync()) old.renameSync(paths.guard.check(moved));
-  final lock = io.File(paths.guard.check(p.join(paths.dir, '$name.lock')));
-  if (lock.existsSync() && !old.existsSync()) lock.deleteSync();
+  io.File inRoot(String ext) => io.File(paths.guard.check(p.join(paths.dir, '$name.$ext')));
+  String inBackups(String ext) => paths.guard.check(p.join(paths.backups, '$name.$ext'));
+  try {
+    io.Directory(paths.guard.check(paths.backups)).createSync(recursive: true);
+    if (!io.File(inBackups('hive')).existsSync()) {
+      for (final ext in const ['hivec', 'hive']) {
+        final f = inRoot(ext);
+        if (f.existsSync()) f.renameSync(inBackups(ext));
+      }
+    }
+    final lock = inRoot('lock');
+    if (lock.existsSync() && !inRoot('hive').existsSync()) lock.deleteSync();
+  } on io.FileSystemException catch (e) {
+    debugPrint('[Backups] the backup list stays in the profile folder for now: $e');
+  }
+  return inRoot('hive').existsSync() && !io.File(inBackups('hive')).existsSync() ? paths.dir : paths.backups;
 }

@@ -23,7 +23,7 @@ void main() {
   io.File inBackups(String ext) => io.File(p.join(paths.backups, '$name.$ext'));
 
   test('a new profile gets backups\\ and nothing in its root', () {
-    moveBackupsIndex(paths);
+    expect(moveBackupsIndex(paths), paths.backups);
     expect(io.Directory(paths.backups).existsSync(), isTrue);
     expect(inRoot('hive').existsSync(), isFalse);
   });
@@ -31,7 +31,7 @@ void main() {
   test("the box in the profile's root moves into backups\\, with a crash's lock gone", () {
     inRoot('hive').writeAsStringSync('index');
     inRoot('lock').writeAsStringSync('');
-    moveBackupsIndex(paths);
+    expect(moveBackupsIndex(paths), paths.backups);
     expect(inBackups('hive').readAsStringSync(), 'index');
     expect(inRoot('hive').existsSync(), isFalse);
     expect(inRoot('lock').existsSync(), isFalse);
@@ -44,5 +44,20 @@ void main() {
     moveBackupsIndex(paths);
     expect(inBackups('hive').readAsStringSync(), 'new');
     expect(inRoot('hive').readAsStringSync(), 'old', reason: 'left alone, not deleted');
+  });
+
+  test("a crash's compaction copy moves with the box, so Hive can still recover it", () {
+    inRoot('hivec').writeAsStringSync('compacted');
+    expect(moveBackupsIndex(paths), paths.backups);
+    expect(inBackups('hivec').readAsStringSync(), 'compacted');
+    expect(inRoot('hivec').existsSync(), isFalse);
+  });
+
+  test("a box that can't move opens where it is", () {
+    inRoot('hive').writeAsStringSync('index');
+    // backups\ can't be made: a file has its name.
+    io.File(paths.backups).writeAsStringSync('');
+    expect(moveBackupsIndex(paths), paths.dir);
+    expect(inRoot('hive').readAsStringSync(), 'index');
   });
 }

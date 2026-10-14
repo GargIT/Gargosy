@@ -71,7 +71,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `profiles/json_file.dart` — `readJsonObject(Sync)`, `writeJsonObject`, `writeBytesAtomic` (tmp + rename, through the guard).
 - `profiles/pbkdf2.dart`, `pin.dart` — `PinHash` (PBKDF2-SHA256, 60 000 rounds, verify in an isolate), `PinGate` (5 tries, then 30 s).
 - `profiles/profile.dart`, `profile_paths.dart`, `profile_store.dart` — a profile, its paths, create (copies `templates\`) / list (sync reads) / save / delete / last used.
-- `profiles/backups_index.dart` — `backupsBoxName` (the Hive box listing a profile's backups, in its `backups\`) and `moveBackupsIndex` (moves the box there from the profile's root, where it used to be).
+- `profiles/backups_index.dart` — `backupsBoxName` (the Hive box listing a profile's backups, in its `backups\`) and `moveBackupsIndex` (moves the box and a crash's `.hivec` there from the profile's root, where it used to be; returns the folder to open it in, the root when the move failed).
 - `profiles/pc_identity.dart`, `login_store.dart` — `login.<PC>-<user>-<id8>.dpapi` per profile; `ProfileLogin { token, kind: device|client-token, deviceId }`.
 - `profiles/device_login.dart` — `DeviceLoginFlow`: polls at the server's interval, +5 s on `slow_down`, keeps going through network errors, stops at expiry.
 - `profiles/profile_providers.dart` — root/prefs/protector/PC/auth-factory providers (overridable in tests), `profilesProvider`, `activeProfileProvider` (`ProfileContext`), `pinGatesProvider`.
