@@ -67,6 +67,9 @@ What changed in each release of Gargosy. The format follows
 - Save states on RomM are one switch, "Sync save states with RomM", for every
   emulator that can sync them, instead of one per emulator. A profile that had
   it on for any emulator keeps it on.
+- The list of a profile's save backups sits in its `backups\` folder, beside
+  the backups, instead of in the profile's own folder. It moves there by
+  itself on the first start.
 
 ### Fixed
 

@@ -71,6 +71,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `profiles/json_file.dart` — `readJsonObject(Sync)`, `writeJsonObject`, `writeBytesAtomic` (tmp + rename, through the guard).
 - `profiles/pbkdf2.dart`, `pin.dart` — `PinHash` (PBKDF2-SHA256, 60 000 rounds, verify in an isolate), `PinGate` (5 tries, then 30 s).
 - `profiles/profile.dart`, `profile_paths.dart`, `profile_store.dart` — a profile, its paths, create (copies `templates\`) / list (sync reads) / save / delete / last used.
+- `profiles/backups_index.dart` — `backupsBoxName` (the Hive box listing a profile's backups, in its `backups\`) and `moveBackupsIndex` (moves the box there from the profile's root, where it used to be).
 - `profiles/pc_identity.dart`, `login_store.dart` — `login.<PC>-<user>-<id8>.dpapi` per profile; `ProfileLogin { token, kind: device|client-token, deviceId }`.
 - `profiles/device_login.dart` — `DeviceLoginFlow`: polls at the server's interval, +5 s on `slow_down`, keeps going through network errors, stops at expiry.
 - `profiles/profile_providers.dart` — root/prefs/protector/PC/auth-factory providers (overridable in tests), `profilesProvider`, `activeProfileProvider` (`ProfileContext`), `pinGatesProvider`.
@@ -116,7 +117,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - ScummVM (issue #11): `--config` / `--savepath` / `--logfile` into the profile, `[scummvm] savepath`/`screenshotpath`/`iconspath` set before launch, the game by `scummVmGameArgs` (a `.scummvm` file's id, else `--auto-detect --path`, going into a folder of one folder) in `profile_launch_config.dart`; downloaded from ScummVM's own Windows zip (`windows_url`). `ScummVMStrategy` (patched) launches through the profile there.
 - `emulators/fullscreen.dart` — `Fullscreen`: the play screen's Full screen switch per emulator and profile (on by default), and each emulator's flag; `ProfileLaunchDirectories` puts it first on the command line (RetroArch off goes in its cfg).
 - `emulators/emulator_library.dart` — `EmulatorLibrary` (list, import from a folder, remove), `emulatorsProvider`. Settings → Emulators (`ui/screens/settings/emulator_install_section.dart`): Import / Download / Update / Remove, BIOS from RomM.
-- `providers/engine_providers.dart` — the engine for the active profile: prefs, both directory views, `StrategyRegistry`, `SaveSyncService`, backups (Hive box in the profile folder), `GameLaunchService`.
+- `providers/engine_providers.dart` — the engine for the active profile: prefs, both directory views, `StrategyRegistry`, `SaveSyncService`, backups (Hive box in the profile's `backups\`), `GameLaunchService`.
 - `play/play_engine.dart` — `PlayEngine` (the seam tests fake) and `GargosyPlayEngine`: repoint, back up + pull (`pre_launch_pull.dart`: `SaveRestoreGuard`, 20 s wait for shared cards, never refuses the launch), launch, sync after exit → `PlayResult` message.
 - `play/play_controller.dart` — `PlayController.play`: one game at a time (claimed before the first await), reasons it can't start, the session's end message; the shell refuses a profile switch while a game runs.
 
