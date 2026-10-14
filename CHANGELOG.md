@@ -70,7 +70,8 @@ What changed in each release of Gargosy. The format follows
 - The list of a profile's save backups is `backups\index.hive`, beside the
   backups, instead of a file named after the profile in the profile's own
   folder. The old list isn't moved, so a profile from 0.1.0 starts with
-  an empty backup list (its backup zips stay in `backups\`).
+  an empty backup list: its backup zips stay in `backups\`, and saves that
+  were waiting to upload aren't retried.
 
 ### Fixed
 

@@ -11,15 +11,24 @@ class BackupRepository {
   // Gargosy: one box per profile, so profiles never see each other's backups.
   BackupRepository({this.boxName = _defaultBoxName});
 
+  // Gargosy: on [box] itself, never looked up by name again. Every
+  // profile's box has the same name, so once [box] is closed this
+  // repository fails instead of finding another profile's box.
+  BackupRepository.ofBox(Box<List> box)
+      : boxName = box.name,
+        _box = box,
+        _fixed = true;
+
   static const String _defaultBoxName = 'gargosy_backups';
   final String boxName;
   static const int _maxBackups = 8;
 
   Box<List>? _box;
+  bool _fixed = false;
 
   /// Links the repository to the already-opened Hive box.
   void initBox() {
-    if (_box != null && _box!.isOpen) return;
+    if (_fixed || (_box != null && _box!.isOpen)) return;
     _box = Hive.box<List>(boxName);
   }
 

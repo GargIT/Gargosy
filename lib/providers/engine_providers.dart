@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 
 import '../sigil/sigil_profile.dart';
 import '../core/emulator/game_launch_service.dart';
@@ -82,9 +83,19 @@ final syncActivityProvider = Provider<ValueListenable<String?>?>((ref) => ref.wa
 final backupRepositoryProvider = FutureProvider<BackupRepository?>((ref) async {
   final paths = ref.watch(_profilePathsProvider);
   if (paths == null) return null;
-  final box = await openBackupsBox(paths);
-  ref.onDispose(() => closeBackupsBox(box));
-  return BackupRepository(boxName: box.name)..initBox();
+  // Closed on dispose, also when that comes while the box is still opening.
+  Box<List>? opened;
+  var disposed = false;
+  ref.onDispose(() {
+    disposed = true;
+    if (opened case final box?) closeBackupsBox(box);
+  });
+  final box = opened = await openBackupsBox(paths);
+  if (disposed) {
+    await closeBackupsBox(box);
+    return null;
+  }
+  return BackupRepository.ofBox(box);
 });
 
 final backupServiceProvider = Provider<BackupService?>((ref) {
