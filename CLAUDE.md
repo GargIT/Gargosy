@@ -71,7 +71,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `profiles/json_file.dart` — `readJsonObject(Sync)`, `writeJsonObject`, `writeBytesAtomic` (tmp + rename, through the guard).
 - `profiles/pbkdf2.dart`, `pin.dart` — `PinHash` (PBKDF2-SHA256, 60 000 rounds, verify in an isolate), `PinGate` (5 tries, then 30 s).
 - `profiles/profile.dart`, `profile_paths.dart`, `profile_store.dart` — a profile, its paths, create (copies `templates\`) / list (sync reads) / save / delete / last used.
-- `profiles/backups_index.dart` — `JsonBackupStore`: a profile's backup list is `backups\index.json`, written whole through its `PathGuard`; zips are stored by name (they're all in `backups\`), a name read back never leads out of the folder, and a damaged list is kept aside as `index.damaged.json`.
+- `profiles/backups_index.dart` — `JsonBackupStore`: a profile's backup list is `backups\index.json`, written whole through its `PathGuard`; zips are stored by name (they're all in `backups\`) and a name read back is only ever a `.zip` there; a damaged list is kept aside as `index.damaged-<time>.json`, and a list that can't be read (locked, newer format) is never written over. Nothing is written once the profile's folder is gone.
 - `profiles/pc_identity.dart`, `login_store.dart` — `login.<PC>-<user>-<id8>.dpapi` per profile; `ProfileLogin { token, kind: device|client-token, deviceId }`.
 - `profiles/device_login.dart` — `DeviceLoginFlow`: polls at the server's interval, +5 s on `slow_down`, keeps going through network errors, stops at expiry.
 - `profiles/profile_providers.dart` — root/prefs/protector/PC/auth-factory providers (overridable in tests), `profilesProvider`, `activeProfileProvider` (`ProfileContext`), `pinGatesProvider`.

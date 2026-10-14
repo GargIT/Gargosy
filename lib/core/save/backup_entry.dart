@@ -52,7 +52,8 @@ class BackupEntry {
       timestamp: time,
       md5Hash: md5,
       localZipPath: path,
-      isSynced: json['synced'] == true,
+      // As Freegosy's Hive adapter read it: a backup with no mark counts as synced.
+      isSynced: json['synced'] != false,
       emulatorId: emulator is String ? emulator : null,
       coreId: core is String ? core : null,
     );

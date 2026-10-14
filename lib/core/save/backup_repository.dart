@@ -27,7 +27,7 @@ class BackupRepository {
   // backups. Kept in memory and written whole after each change, one write
   // at a time; without a [store] (tests) it lives in memory only.
   BackupRepository({this.store}) {
-    _load();
+    _games.addAll(_read() ?? const {});
   }
 
   /// Where the list is kept; null keeps it in memory only.
@@ -38,39 +38,66 @@ class BackupRepository {
   final Map<String, List<BackupEntry>> _games = {};
   Future<void> _writing = Future.value();
 
-  void _load() {
+  /// True while the stored list couldn't be read (locked, or a newer
+  /// format): nothing is written over it then.
+  bool _unread = false;
+
+  /// The stored list, or null when it can't be read ([_unread] is set).
+  Map<String, List<BackupEntry>>? _read() {
+    final store = this.store;
+    if (store == null) return const {};
     final Map<String, dynamic>? data;
     try {
-      data = store?.read();
+      data = store.read();
     } on Object catch (e) {
-      debugPrint('[BackupRepository] the backup list could not be read ($e); starting empty');
-      return;
+      debugPrint('[BackupRepository] the backup list could not be read ($e); it is left as it is');
+      _unread = true;
+      return null;
     }
-    final games = data?['games'];
-    if (games is! Map) return;
-    for (final e in games.entries) {
-      final list = e.value;
-      if (list is! List) continue;
-      _games['${e.key}'] = [
-        for (final j in list) ?BackupEntry.fromJson(j, zipPath: store!.fromStored),
-      ];
+    if (data == null) {
+      _unread = false;
+      return const {};
     }
+    final version = data['version'];
+    final games = data['games'];
+    if (games is! Map || (version is int && version > _formatVersion)) {
+      debugPrint('[BackupRepository] the backup list is in a format this Gargosy does not know; it is left as it is');
+      _unread = true;
+      return null;
+    }
+    _unread = false;
+    return {
+      for (final e in games.entries)
+        if (e.value case final List list)
+          '${e.key}': [for (final j in list) ?BackupEntry.fromJson(j, zipPath: store.fromStored)],
+    };
   }
 
-  /// Writes the whole list, after any write still running.
+  /// Writes the whole list, after any write still running. A list that
+  /// couldn't be read at start is read again first, and the games it holds
+  /// that this session hasn't changed are kept; while it still can't be
+  /// read nothing is written. A failed write is logged, and the next one
+  /// writes everything again.
   Future<void> _save() {
     final store = this.store;
     if (store == null) return Future.value();
-    final data = {
-      'version': _formatVersion,
-      'games': {
-        for (final e in _games.entries)
-          if (e.value.isNotEmpty) e.key: [for (final b in e.value) b.toJson(zip: store.toStored(b.localZipPath))],
-      },
-    };
-    final done = _writing.then((_) => store.write(data));
-    _writing = done.then((_) {}, onError: (Object e) => debugPrint('[BackupRepository] write failed: $e'));
-    return done;
+    final done = _writing.then((_) async {
+      if (_unread) {
+        final stored = _read();
+        if (stored == null) return;
+        for (final e in stored.entries) {
+          _games.putIfAbsent(e.key, () => e.value);
+        }
+      }
+      await store.write({
+        'version': _formatVersion,
+        'games': {
+          for (final e in _games.entries)
+            if (e.value.isNotEmpty) e.key: [for (final b in e.value) b.toJson(zip: store.toStored(b.localZipPath))],
+        },
+      });
+    }).catchError((Object e) => debugPrint('[BackupRepository] write failed: $e'));
+    return _writing = done;
   }
 
   // ---------------------------------------------------------------------------
