@@ -11,6 +11,7 @@ import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
 import '../core/save/state_sync_service.dart';
 import '../emulators/profile_directories.dart';
+import '../profiles/backups_index.dart';
 import '../profiles/profile_paths.dart';
 import '../profiles/profile_preferences.dart';
 import '../profiles/profile_providers.dart';
@@ -79,14 +80,11 @@ final saveSyncServiceProvider = Provider<SaveSyncService?>((ref) {
 /// null when idle.
 final syncActivityProvider = Provider<ValueListenable<String?>?>((ref) => ref.watch(saveSyncServiceProvider)?.activity);
 
-/// The Hive box of a profile's backups (in its own folder).
-String backupsBoxName(String profileId) => 'backups_${profileId.replaceAll('-', '_')}';
-
 final backupRepositoryProvider = FutureProvider<BackupRepository?>((ref) async {
   final paths = ref.watch(_profilePathsProvider);
   if (paths == null) return null;
   final name = backupsBoxName(paths.id);
-  final box = await Hive.openBox<List>(name, path: paths.dir);
+  final box = await Hive.openBox<List>(name, path: moveBackupsIndex(paths));
   ref.onDispose(box.close);
   return BackupRepository(boxName: name)..initBox();
 });
