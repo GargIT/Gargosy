@@ -3,35 +3,55 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import '../core/save/backup_repository.dart';
+import 'json_file.dart';
 import 'profile_paths.dart';
 
-/// The Hive box that lists a profile's backups. Its file, `<name>.hive`,
-/// sits in the profile's `backups\` beside the zips it lists. The name stays
-/// unique per profile because Hive finds an open box by name alone.
-String backupsBoxName(String profileId) => 'backups_${profileId.replaceAll('-', '_')}';
+/// A profile's backup list: `backups\index.json`, beside the zips it lists,
+/// written whole through the profile's guard (a `.tmp` renamed into place).
+/// A zip is stored by its name alone, so the list still finds it after the
+/// Gargosy folder moves.
+class JsonBackupStore extends BackupStore {
+  JsonBackupStore(this.paths);
 
-/// Makes `backups\` and moves the box there from the profile's root, where
-/// Gargosy kept it before (with Hive's compaction copy, `.hivec`, when a
-/// crash left one). A leftover lock from a crash goes. A box already in
-/// `backups\` is never replaced. Runs before the box opens, and returns the
-/// folder to open it in: `backups\`, or the profile's root when the box
-/// couldn't be moved (it opens where it is then, and moves on a later start).
-String moveBackupsIndex(ProfilePaths paths) {
-  final name = backupsBoxName(paths.id);
-  io.File inRoot(String ext) => io.File(paths.guard.check(p.join(paths.dir, '$name.$ext')));
-  String inBackups(String ext) => paths.guard.check(p.join(paths.backups, '$name.$ext'));
-  try {
-    io.Directory(paths.guard.check(paths.backups)).createSync(recursive: true);
-    if (!io.File(inBackups('hive')).existsSync()) {
-      for (final ext in const ['hivec', 'hive']) {
-        final f = inRoot(ext);
-        if (f.existsSync()) f.renameSync(inBackups(ext));
-      }
+  final ProfilePaths paths;
+
+  String get file => p.join(paths.backups, 'index.json');
+
+  /// A damaged list is kept aside as `index.damaged-<time>.json` (its
+  /// backups are listed nowhere then, but their zips stay) and the list
+  /// starts empty. When it can't be kept aside, or the file can't be read at
+  /// all, this throws, and the repository writes nothing over it.
+  @override
+  Map<String, dynamic>? read() {
+    try {
+      return readJsonObjectSync(file);
+    } on FormatException catch (e) {
+      final aside = p.join(paths.backups, 'index.damaged-${DateTime.now().millisecondsSinceEpoch}.json');
+      io.File(file).renameSync(paths.guard.check(aside));
+      debugPrint('[Backups] $file is damaged ($e); kept aside as $aside, starting empty');
+      return null;
     }
-    final lock = inRoot('lock');
-    if (lock.existsSync() && !inRoot('hive').existsSync()) lock.deleteSync();
-  } on io.FileSystemException catch (e) {
-    debugPrint('[Backups] the backup list stays in the profile folder for now: $e');
   }
-  return inRoot('hive').existsSync() && !io.File(inBackups('hive')).existsSync() ? paths.dir : paths.backups;
+
+  /// Skipped when the profile's folder is gone (deleted while a write
+  /// waited): writing would make the folder again.
+  @override
+  Future<void> write(Map<String, dynamic> data) async {
+    if (!io.Directory(paths.dir).existsSync()) return;
+    await writeJsonObject(paths.guard, file, data);
+  }
+
+  // Every backup zip is in backups\ (BackupService writes them there): the
+  // list keeps the name alone, and a name read back is only ever a .zip in
+  // that folder, so an edited list can't make a rotation delete anything
+  // else (the list itself included).
+  @override
+  String toStored(String localZipPath) => p.basename(localZipPath);
+
+  @override
+  String? fromStored(String zip) {
+    final full = p.join(paths.backups, p.basename(zip));
+    return p.isWithin(paths.backups, full) && p.extension(full).toLowerCase() == '.zip' ? full : null;
+  }
 }

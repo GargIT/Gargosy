@@ -2,13 +2,11 @@ import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 
 import '../../../library/library_snapshot.dart';
 import '../../../library/upload_queue.dart';
 import '../../../play/play_controller.dart';
-import '../../../profiles/backups_index.dart';
 import '../../../profiles/pin.dart';
 import '../../../profiles/profile.dart';
 import '../../../profiles/profile_providers.dart';
@@ -97,9 +95,6 @@ class ProfileSection extends ConsumerWidget {
     if (!ok || !context.mounted) return;
     if (!await _checkCurrent(context, ref, p) || !context.mounted) return;
     if (!await waitForSyncIdle(context, ref)) return;
-    // The profile's backups box is open in its folder: closed before the folder goes.
-    final box = backupsBoxName(p.id);
-    if (Hive.isBoxOpen(box)) await Hive.box<List>(box).close();
     ref.read(activeProfileProvider.notifier).signOut();
     ref.read(pinGatesProvider).remove(p.id);
     try {

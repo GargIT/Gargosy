@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
-import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/core/save/state_sync_capable.dart';
 import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
 import 'package:gargosy/profiles/login_store.dart';
@@ -16,7 +15,6 @@ import 'package:gargosy/providers/engine_providers.dart';
 import 'package:gargosy/sigil/sigil_save_strategy.dart';
 import 'package:gargosy/sigil/sigil_state_store.dart';
 import 'package:gargosy/sigil/sigil_sync.dart';
-import 'package:hive/hive.dart';
 import 'package:mockito/mockito.dart';
 import 'package:path/path.dart' as p;
 
@@ -173,7 +171,6 @@ void main() {
   });
 
   test('a profile: RetroArch\'s save strategy is sigil\'s wrapper around RetroArchSaveStrategy', () async {
-    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
     final root = await tempAppRoot();
     addTearDown(() => deleteTempDir(root.root));
     final c = ProviderContainer(overrides: [

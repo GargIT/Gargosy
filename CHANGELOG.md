@@ -67,9 +67,11 @@ What changed in each release of Gargosy. The format follows
 - Save states on RomM are one switch, "Sync save states with RomM", for every
   emulator that can sync them, instead of one per emulator. A profile that had
   it on for any emulator keeps it on.
-- The list of a profile's save backups sits in its `backups\` folder, beside
-  the backups, instead of in the profile's own folder. It moves there by
-  itself on the first start.
+- A profile's list of save backups is `backups\index.json`, a readable file
+  beside the backups, instead of a Hive database in the profile's own folder.
+  Gargosy no longer uses Hive. The old list isn't moved, so a profile from
+  0.1.0 starts with an empty backup list: its zips stay in `backups\`, and
+  saves that were waiting to upload aren't retried.
 
 ### Fixed
 

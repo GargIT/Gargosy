@@ -3,7 +3,6 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +12,6 @@ import 'app.dart';
 import 'changelog/whats_new.dart';
 import 'core/constants/app_constants.dart';
 import 'core/platform/window_service.dart';
-import 'core/save/backup_entry.dart';
 import 'core/storage/file_log_sink.dart';
 import 'core/storage/gargosy_path_provider.dart';
 import 'core/storage/logger_service.dart';
@@ -31,8 +29,6 @@ import 'ui/screens/startup_error_app.dart';
 Future<void> main(List<String> args) async {
   markAppStart();
   WidgetsFlutterBinding.ensureInitialized();
-  // Backups' index: one Hive box per profile, in the profile's folder.
-  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
   // The version from pubspec.yaml: shown in the user menu, sent to RomM and RetroAchievements.
   await AppConstants.init();
   final root = AppRoot.fromArgs(args, io.Platform.resolvedExecutable);
