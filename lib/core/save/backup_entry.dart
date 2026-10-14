@@ -1,5 +1,4 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
-import 'package:hive/hive.dart';
 
 /// A single local save backup checkpoint for a game.
 class BackupEntry {
@@ -24,66 +23,38 @@ class BackupEntry {
     this.emulatorId,
     this.coreId,
   });
-}
 
-// ---------------------------------------------------------------------------
-// Hand-written TypeAdapter (avoids needing build_runner / code-gen)
-// ---------------------------------------------------------------------------
+  // Gargosy: the backup list is JSON (`backups\index.json`), not a Hive box.
+  // [zip] is how the list stores [localZipPath] (the name alone for a zip
+  // in the backups folder, so the list survives a moved Gargosy folder).
+  Map<String, dynamic> toJson({String? zip}) => {
+        'time': timestamp.toIso8601String(),
+        'md5': md5Hash,
+        'zip': zip ?? localZipPath,
+        'synced': isSynced,
+        'emulator': ?emulatorId,
+        'core': ?coreId,
+      };
 
-class BackupEntryAdapter extends TypeAdapter<BackupEntry> {
-  @override
-  final int typeId = 1;
-
-  @override
-  BackupEntry read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{};
-    for (var i = 0; i < numOfFields; i++) {
-      final key = reader.readByte();
-      final value = reader.read();
-      fields[key] = value;
-    }
+  /// Null when [json] isn't a backup entry. [zipPath] turns the stored
+  /// `zip` back into a full path, or refuses it (null).
+  static BackupEntry? fromJson(Object? json, {String? Function(String zip)? zipPath}) {
+    if (json is! Map) return null;
+    final time = DateTime.tryParse('${json['time']}');
+    final md5 = json['md5'];
+    final zip = json['zip'];
+    if (time == null || md5 is! String || zip is! String || zip.isEmpty) return null;
+    final path = zipPath == null ? zip : zipPath(zip);
+    if (path == null) return null;
+    final emulator = json['emulator'];
+    final core = json['core'];
     return BackupEntry(
-      timestamp: fields[0] as DateTime,
-      md5Hash: fields[1] as String,
-      localZipPath: fields[2] as String,
-      isSynced: fields.containsKey(3) ? fields[3] as bool : true,
-      emulatorId: fields.containsKey(4) ? fields[4] as String? : null,
-      coreId: fields.containsKey(5) ? fields[5] as String? : null,
+      timestamp: time,
+      md5Hash: md5,
+      localZipPath: path,
+      isSynced: json['synced'] == true,
+      emulatorId: emulator is String ? emulator : null,
+      coreId: core is String ? core : null,
     );
   }
-
-  @override
-  void write(BinaryWriter writer, BackupEntry obj) {
-    writer
-      ..writeByte(4 + (obj.emulatorId == null ? 0 : 1) + (obj.coreId == null ? 0 : 1))
-      ..writeByte(0)
-      ..write(obj.timestamp)
-      ..writeByte(1)
-      ..write(obj.md5Hash)
-      ..writeByte(2)
-      ..write(obj.localZipPath)
-      ..writeByte(3)
-      ..write(obj.isSynced);
-    if (obj.emulatorId != null) {
-      writer
-        ..writeByte(4)
-        ..write(obj.emulatorId);
-    }
-    if (obj.coreId != null) {
-      writer
-        ..writeByte(5)
-        ..write(obj.coreId);
-    }
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is BackupEntryAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
 }

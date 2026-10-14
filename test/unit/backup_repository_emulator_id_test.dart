@@ -4,25 +4,20 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/core/save/backup_repository.dart';
-import 'package:hive/hive.dart';
 
 void main() {
   late Directory tmp;
 
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('backup_repo_emulator');
-    Hive.init(tmp.path);
-    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
-    await Hive.openBox<List>('gargosy_backups');
   });
 
   tearDown(() async {
-    await Hive.close();
     await tmp.delete(recursive: true);
   });
 
   test('marking a backup synced keeps the emulator it was made for', () async {
-    final repo = BackupRepository()..initBox();
+    final repo = BackupRepository();
     final entry = BackupEntry(timestamp: DateTime(2026, 10, 1), md5Hash: 'a', localZipPath: '${tmp.path}/a.zip', emulatorId: 'ares');
     await repo.addEntry('g', entry);
 
@@ -39,7 +34,7 @@ void main() {
   }
 
   test('keeps the 8 newest backups of a game', () async {
-    final repo = BackupRepository()..initBox();
+    final repo = BackupRepository();
     for (var i = 0; i < 10; i++) {
       await repo.addEntry('g', entryAt(i));
     }
@@ -51,7 +46,7 @@ void main() {
   });
 
   test('a backup the same as the newest is not added, and its zip is deleted', () async {
-    final repo = BackupRepository()..initBox();
+    final repo = BackupRepository();
     await repo.addEntry('g', entryAt(0));
     final same = entryAt(1);
     final unchanged = BackupEntry(timestamp: same.timestamp, md5Hash: 'h0', localZipPath: same.localZipPath);
@@ -65,7 +60,7 @@ void main() {
   });
 
   test('a changed backup is added', () async {
-    final repo = BackupRepository()..initBox();
+    final repo = BackupRepository();
     await repo.addEntry('g', entryAt(0));
 
     final added = await repo.addUnlessSameAsNewest('g', entryAt(1));

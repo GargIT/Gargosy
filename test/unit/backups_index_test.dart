@@ -1,6 +1,8 @@
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/save/backup_entry.dart';
+import 'package:gargosy/core/save/backup_repository.dart';
 import 'package:gargosy/profiles/backups_index.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
@@ -8,56 +10,76 @@ import 'package:path/path.dart' as p;
 import '../helpers/profile_test_env.dart';
 
 void main() {
-  late ProfilePaths paths;
-  late String name;
+  late ProfilePaths anna;
+  late ProfilePaths bert;
 
   setUp(() async {
     final root = await tempAppRoot();
     addTearDown(() => deleteTempDir(root.root));
-    paths = ProfilePaths(root, 'anna-1');
-    io.Directory(paths.dir).createSync(recursive: true);
-    name = backupsBoxName(paths.id);
+    anna = ProfilePaths(root, 'anna-1');
+    bert = ProfilePaths(root, 'bert-2');
   });
 
-  io.File inRoot(String ext) => io.File(p.join(paths.dir, '$name.$ext'));
-  io.File inBackups(String ext) => io.File(p.join(paths.backups, '$name.$ext'));
+  BackupEntry entry(ProfilePaths of, String name, {DateTime? at, String? emulator, String? core}) => BackupEntry(
+      timestamp: at ?? DateTime(2026, 10, 14, 9, 30, 15, 250),
+      md5Hash: 'md5-$name',
+      localZipPath: p.join(of.backups, '$name.zip'),
+      emulatorId: emulator,
+      coreId: core);
 
-  test('a new profile gets backups\\ and nothing in its root', () {
-    expect(moveBackupsIndex(paths), paths.backups);
-    expect(io.Directory(paths.backups).existsSync(), isTrue);
-    expect(inRoot('hive').existsSync(), isFalse);
+  test("a profile's list is backups/index.json, and reads back as it was written", () async {
+    final repo = BackupRepository(store: JsonBackupStore(anna));
+    final a = entry(anna, 'a', emulator: 'retroarch', core: 'mgba');
+    await repo.addEntry('12', a);
+    await repo.markAsSynced('12', a);
+    await repo.addEntry('12', entry(anna, 'b', at: DateTime(2026, 10, 14, 10)));
+
+    expect(io.File(p.join(anna.backups, 'index.json')).existsSync(), isTrue);
+    expect(io.Directory(anna.dir).listSync().whereType<io.File>(), isEmpty, reason: 'nothing in the profile root');
+    final again = BackupRepository(store: JsonBackupStore(anna)).getEntries('12');
+    expect(again.map((e) => e.md5Hash), ['md5-b', 'md5-a']);
+    final read = again.last;
+    expect(read.timestamp, a.timestamp);
+    expect(read.isSynced, isTrue);
+    expect(read.emulatorId, 'retroarch');
+    expect(read.coreId, 'mgba');
+    expect(read.localZipPath, a.localZipPath);
+    expect(again.first.isSynced, isFalse);
   });
 
-  test("the box in the profile's root moves into backups\\, with a crash's lock gone", () {
-    inRoot('hive').writeAsStringSync('index');
-    inRoot('lock').writeAsStringSync('');
-    expect(moveBackupsIndex(paths), paths.backups);
-    expect(inBackups('hive').readAsStringSync(), 'index');
-    expect(inRoot('hive').existsSync(), isFalse);
-    expect(inRoot('lock').existsSync(), isFalse);
+  test("each profile has its own list", () async {
+    await BackupRepository(store: JsonBackupStore(anna)).addEntry('12', entry(anna, 'a'));
+    expect(BackupRepository(store: JsonBackupStore(bert)).getEntries('12'), isEmpty);
   });
 
-  test('a box already in backups\\ is never replaced', () {
-    io.Directory(paths.backups).createSync();
-    inBackups('hive').writeAsStringSync('new');
-    inRoot('hive').writeAsStringSync('old');
-    moveBackupsIndex(paths);
-    expect(inBackups('hive').readAsStringSync(), 'new');
-    expect(inRoot('hive').readAsStringSync(), 'old', reason: 'left alone, not deleted');
+  test('zips are stored by name, so the list follows a moved Gargosy folder', () async {
+    await BackupRepository(store: JsonBackupStore(anna)).addEntry('12', entry(anna, 'a'));
+    final text = io.File(p.join(anna.backups, 'index.json')).readAsStringSync();
+    expect(text, contains('"zip": "a.zip"'));
+    expect(text, isNot(contains(anna.root.root.replaceAll(r'\', r'\'))));
   });
 
-  test("a crash's compaction copy moves with the box, so Hive can still recover it", () {
-    inRoot('hivec').writeAsStringSync('compacted');
-    expect(moveBackupsIndex(paths), paths.backups);
-    expect(inBackups('hivec').readAsStringSync(), 'compacted');
-    expect(inRoot('hivec').existsSync(), isFalse);
+  test("a stored name never leads out of backups/, so a rotation can't delete anything else", () {
+    final store = JsonBackupStore(anna);
+    expect(store.fromStored(r'..\..\prefs.json'), p.join(anna.backups, 'prefs.json'));
+    expect(store.fromStored('..'), isNull);
+    expect(store.fromStored(r'C:\Windows\x.zip'), p.join(anna.backups, 'x.zip'));
   });
 
-  test("a box that can't move opens where it is", () {
-    inRoot('hive').writeAsStringSync('index');
-    // backups\ can't be made: a file has its name.
-    io.File(paths.backups).writeAsStringSync('');
-    expect(moveBackupsIndex(paths), paths.dir);
-    expect(inRoot('hive').readAsStringSync(), 'index');
+  test('a damaged list is kept aside and the list starts empty', () {
+    io.Directory(anna.backups).createSync(recursive: true);
+    io.File(p.join(anna.backups, 'index.json')).writeAsStringSync('{not json');
+    expect(BackupRepository(store: JsonBackupStore(anna)).getEntries('12'), isEmpty);
+    expect(io.File(p.join(anna.backups, 'index.damaged.json')).readAsStringSync(), '{not json');
+  });
+
+  test('an entry that makes no sense is skipped, the rest still read', () {
+    io.Directory(anna.backups).createSync(recursive: true);
+    io.File(p.join(anna.backups, 'index.json')).writeAsStringSync('{"version": 1, "games": {"12": ['
+        '{"time": "nope", "md5": "x", "zip": "x.zip"},'
+        '{"time": "2026-10-14T09:00:00.000", "md5": "ok", "zip": "ok.zip", "synced": true}]}}');
+    final read = BackupRepository(store: JsonBackupStore(anna)).getEntries('12');
+    expect(read.single.md5Hash, 'ok');
+    expect(read.single.emulatorId, isNull);
   });
 }

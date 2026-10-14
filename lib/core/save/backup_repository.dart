@@ -1,31 +1,76 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:async';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
-import 'package:hive/hive.dart';
 import 'backup_entry.dart';
 
-/// Hive-backed repository that persists up to [_maxBackups] local backup
-/// entries per game ROM. Business logic (rotation, disk cleanup) lives here
-/// so that providers stay thin.
+/// Where a [BackupRepository] keeps its list (Gargosy: the profile's
+/// `backups\index.json`, `JsonBackupStore`). Freegosy used a Hive box.
+abstract class BackupStore {
+  /// The list as written last; null when there is none yet.
+  Map<String, dynamic>? read();
+
+  /// Replaces the stored list with [data].
+  Future<void> write(Map<String, dynamic> data);
+
+  /// How [localZipPath] is stored, and back: the store may keep it shorter,
+  /// and refuse (null) a stored path it won't hand out.
+  String toStored(String localZipPath) => localZipPath;
+  String? fromStored(String zip) => zip;
+}
+
+/// Repository that persists up to [_maxBackups] local backup entries per
+/// game ROM. Business logic (rotation, disk cleanup) lives here so that
+/// providers stay thin.
 class BackupRepository {
-  // Gargosy: one box per profile, so profiles never see each other's backups.
-  BackupRepository({this.boxName = _defaultBoxName});
-
-  static const String _defaultBoxName = 'gargosy_backups';
-  final String boxName;
-  static const int _maxBackups = 8;
-
-  Box<List>? _box;
-
-  /// Links the repository to the already-opened Hive box.
-  void initBox() {
-    if (_box != null && _box!.isOpen) return;
-    _box = Hive.box<List>(boxName);
+  // Gargosy: one list per profile, so profiles never see each other's
+  // backups. Kept in memory and written whole after each change, one write
+  // at a time; without a [store] (tests) it lives in memory only.
+  BackupRepository({this.store}) {
+    _load();
   }
 
-  Box<List> get _openBox {
-    assert(_box != null && _box!.isOpen, 'BackupRepository: call initBox() first');
-    return _box!;
+  /// Where the list is kept; null keeps it in memory only.
+  final BackupStore? store;
+  static const int _maxBackups = 8;
+  static const int _formatVersion = 1;
+
+  final Map<String, List<BackupEntry>> _games = {};
+  Future<void> _writing = Future.value();
+
+  void _load() {
+    final Map<String, dynamic>? data;
+    try {
+      data = store?.read();
+    } on Object catch (e) {
+      debugPrint('[BackupRepository] the backup list could not be read ($e); starting empty');
+      return;
+    }
+    final games = data?['games'];
+    if (games is! Map) return;
+    for (final e in games.entries) {
+      final list = e.value;
+      if (list is! List) continue;
+      _games['${e.key}'] = [
+        for (final j in list) ?BackupEntry.fromJson(j, zipPath: store!.fromStored),
+      ];
+    }
+  }
+
+  /// Writes the whole list, after any write still running.
+  Future<void> _save() {
+    final store = this.store;
+    if (store == null) return Future.value();
+    final data = {
+      'version': _formatVersion,
+      'games': {
+        for (final e in _games.entries)
+          if (e.value.isNotEmpty) e.key: [for (final b in e.value) b.toJson(zip: store.toStored(b.localZipPath))],
+      },
+    };
+    final done = _writing.then((_) => store.write(data));
+    _writing = done.then((_) {}, onError: (Object e) => debugPrint('[BackupRepository] write failed: $e'));
+    return done;
   }
 
   // ---------------------------------------------------------------------------
@@ -33,17 +78,12 @@ class BackupRepository {
   // ---------------------------------------------------------------------------
 
   /// Returns the backup list for [romId], newest-first.
-  List<BackupEntry> getEntries(String romId) {
-    final raw = _openBox.get(romId);
-    if (raw == null) return [];
-    return raw.cast<BackupEntry>().toList();
-  }
+  List<BackupEntry> getEntries(String romId) => [...?_games[romId]];
 
   /// Returns all unsynced entries across all games, along with their romId.
   List<({String romId, BackupEntry entry})> getUnsyncedEntries() {
     final unsynced = <({String romId, BackupEntry entry})>[];
-    for (final key in _openBox.keys) {
-      final romId = key.toString();
+    for (final romId in _games.keys) {
       final entries = getEntries(romId);
       for (final entry in entries) {
         if (!entry.isSynced) {
@@ -61,20 +101,18 @@ class BackupRepository {
   // ---------------------------------------------------------------------------
 
   /// Appends [entry] for [romId]. If the list would exceed [_maxBackups], the
-  /// oldest entry is silently deleted from disk and removed from the DB.
+  /// oldest entry is silently deleted from disk and removed from the list.
   Future<void> addEntry(String romId, BackupEntry entry) async {
     final entries = getEntries(romId);
     entries.insert(0, entry); // newest first
 
-    if (entries.length > _maxBackups) {
-      final overflow = entries.sublist(_maxBackups);
-      entries.removeRange(_maxBackups, entries.length);
-      for (final old in overflow) {
-        await _deleteFile(old.localZipPath);
-      }
+    final overflow = entries.length > _maxBackups ? entries.sublist(_maxBackups) : const <BackupEntry>[];
+    if (overflow.isNotEmpty) entries.removeRange(_maxBackups, entries.length);
+    _games[romId] = entries;
+    await _save();
+    for (final old in overflow) {
+      await _deleteFile(old.localZipPath);
     }
-
-    await _openBox.put(romId, entries);
   }
 
   /// Adds [entry] unless it holds the same files as the newest backup of
@@ -96,7 +134,8 @@ class BackupRepository {
     entries.removeWhere((e) =>
         e.localZipPath == entry.localZipPath &&
         e.timestamp == entry.timestamp);
-    await _openBox.put(romId, entries);
+    _games[romId] = entries;
+    await _save();
     await _deleteFile(entry.localZipPath);
   }
 
@@ -116,7 +155,8 @@ class BackupRepository {
         emulatorId: old.emulatorId,
         coreId: old.coreId,
       );
-      await _openBox.put(romId, entries);
+      _games[romId] = entries;
+      await _save();
     }
   }
 

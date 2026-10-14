@@ -104,7 +104,7 @@ class UpdateInstaller {
 
   /// Copies the updater into `userdata\app\update\` and starts that copy
   /// (so the one beside Gargosy.exe can be replaced too). The caller then
-  /// quits Gargosy the normal way, so settings and Hive are flushed: the
+  /// quits Gargosy the normal way, so settings are flushed: the
   /// updater waits for this process to end.
   Future<void> start(String unpacked, String newVersion) async {
     if (!canInstall) throw StateError(whyNot ?? "Can't update");

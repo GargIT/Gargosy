@@ -3,7 +3,6 @@ import 'dart:io' as io;
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:pub_semver/pub_semver.dart';
 
 import '../core/constants/app_constants.dart';
@@ -23,12 +22,9 @@ final updateOutcomeProvider = Provider<UpdateOutcome?>((ref) => null);
 /// Whether Gargosy checks for updates by itself at start; tests turn it off.
 final updateAutoCheckEnabledProvider = Provider<bool>((ref) => true);
 
-/// Ends Gargosy the normal way (Hive closed, settings already written), so
-/// the updater can replace its files; tests replace it.
-final appQuitProvider = Provider<Future<void> Function()>((ref) => () async {
-      await Hive.close();
-      io.exit(0);
-    });
+/// Ends Gargosy the normal way (settings already written), so the updater
+/// can replace its files; tests replace it.
+final appQuitProvider = Provider<Future<void> Function()>((ref) => () async => io.exit(0));
 
 final installedVersionProvider =
     Provider<Version>((ref) => UpdateVersion.parse(AppConstants.version) ?? Version.none);

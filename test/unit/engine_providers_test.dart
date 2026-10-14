@@ -4,22 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/emulators/emulator_layout.dart';
-import 'package:gargosy/profiles/backups_index.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/engine_providers.dart';
-import 'package:hive/hive.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
 void main() {
-  setUpAll(() {
-    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(BackupEntryAdapter());
-  });
-
   test('every engine part belongs to the active profile', () async {
     final root = await tempAppRoot();
     addTearDown(() => deleteTempDir(root.root));
@@ -44,9 +38,9 @@ void main() {
 
     final repo = await c.read(backupRepositoryProvider.future);
     expect(repo, isNotNull);
-    // The box sits in backups\ beside the zips it lists, not in the profile's root.
-    expect(io.File(p.join(paths.backups, '${backupsBoxName(anna.id)}.hive')).existsSync(), isTrue);
-    expect(io.Directory(paths.dir).listSync().any((e) => p.basename(e.path).startsWith('backups_')), isFalse);
+    // The list is backups\index.json, written beside the zips it lists.
+    await repo!.addEntry('1', BackupEntry(timestamp: DateTime(2026), md5Hash: 'a', localZipPath: p.join(paths.backups, 'a.zip')));
+    expect(io.File(p.join(paths.backups, 'index.json')).existsSync(), isTrue);
 
     final launch = await c.read(gameLaunchServiceProvider.future);
     expect(launch, isNotNull);
@@ -64,13 +58,5 @@ void main() {
 
     c.read(activeProfileProvider.notifier).signOut();
     expect(c.read(saveSyncServiceProvider), isNull);
-    // Signing out closes the backups box without waiting, and Hive deletes the
-    // box's lock file last. Closing it again (Hive.close) would race that
-    // delete, and so would deleting the folder before it's done.
-    final lock = io.File(p.join(paths.backups, '${backupsBoxName(anna.id)}.lock'));
-    for (var i = 0; i < 100 && lock.existsSync(); i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-    }
-    expect(lock.existsSync(), isFalse, reason: 'the backups box closed on sign-out');
   });
 }

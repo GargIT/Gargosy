@@ -46,7 +46,7 @@ class AppHarness {
       dataProtectorProvider.overrideWithValue(protector),
       pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
       rommAuthFactoryProvider.overrideWithValue((url, trust) => auth),
-      // No timers and no Hive in app tests.
+      // No timers and no upload queue in app tests.
       rommHeartbeatEnabledProvider.overrideWithValue(false),
       // Never GitHub from app tests.
       updateAutoCheckEnabledProvider.overrideWithValue(false),
