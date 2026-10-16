@@ -78,6 +78,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- A zipped game that was unpacked already, but whose zip stayed beside it,
+  plays from its folder again: Gargosy unpacked it all over each time, then
+  refused because the folder was in the way. The leftover zip goes.
 - A game's Saves count counts each save once: the same save on this PC,
   on RomM and in a backup is 1, not 3. A backup's name now carries RomM's
   hash of the save, so it's known as the same save.
