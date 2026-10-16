@@ -78,6 +78,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Downloading a game of several files (RomM sends them as one zip) works
+  again: it failed with "object is unsendable" when the zip was unpacked.
 - A zipped game that was unpacked already, but whose zip stayed beside it,
   plays from its folder again: Gargosy unpacked it all over each time, then
   refused because the folder was in the way. The leftover zip goes.

@@ -95,8 +95,7 @@ class DownloadService {
         case _Shape.zip:
           onProgress?.call(const DownloadProgress(DownloadPhase.extracting));
           // Multi-GB discs: unpacked off the UI isolate so the app keeps responding.
-          final g = guard;
-          await Isolate.run(() => unzipInto(part, staging, g));
+          await _unzipOffIsolate(part, staging, guard);
           _replace(target);
           io.Directory(staging).renameSync(target);
         case _Shape.fileInFolder:
@@ -132,6 +131,12 @@ class DownloadService {
 
 /// Unpacks [zip] into [dir]; an entry whose name escapes [dir] stops it.
 /// Top-level so it can run in another isolate.
+/// [unzipInto] in another isolate. Top-level, so the closure sent there
+/// holds only these three: one made inside [DownloadService.download] takes
+/// its whole scope along (the cancel token, the progress listener), which
+/// an isolate can't receive.
+Future<void> _unzipOffIsolate(String zip, String dir, PathGuard guard) => Isolate.run(() => unzipInto(zip, dir, guard));
+
 void unzipInto(String zip, String dir, PathGuard guard) {
   final input = InputFileStream(zip);
   try {

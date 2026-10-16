@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:archive/archive.dart';
@@ -62,6 +63,20 @@ void main() {
     await service(a).download(game(2, 'B', fsName: 'B', multi: true));
     expect(romsTree()..sort(), [p.join('ps2', 'B', 'B (Disc 1).chd'), p.join('ps2', 'B', 'B (Disc 2).chd'), p.join('ps2', 'B', 'B.m3u')]);
     expect(io.Directory(p.join(root.appData, 'temp')).listSync(), isEmpty);
+  });
+
+  test("a multi-file game unpacks with a cancel token and a progress listener that hold things an isolate can't take", () async {
+    final a = FakeDioAdapter((r) => (status: 200, body: zipOf({'C (Disc 1).chd': 'one', 'C (Disc 2).chd': 'two'})));
+    // The app's listener lives in a notifier holding futures in progress:
+    // nothing of the download's own scope may go to the unpacking isolate.
+    final pending = Completer<void>();
+    final phases = <DownloadPhase>[];
+    await service(a).download(game(3, 'C', fsName: 'C', multi: true), cancel: CancelToken(), onProgress: (pr) {
+      phases.add(pr.phase);
+      if (pending.isCompleted) phases.clear();
+    });
+    expect(phases.last, DownloadPhase.done);
+    expect(romsTree()..sort(), [p.join('ps2', 'C', 'C (Disc 1).chd'), p.join('ps2', 'C', 'C (Disc 2).chd')]);
   });
 
   test('a zip that is the ROM itself is kept as is', () async {
