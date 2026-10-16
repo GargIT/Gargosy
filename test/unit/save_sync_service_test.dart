@@ -16,6 +16,7 @@ import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/save/romm_content_hash.dart';
 import 'package:gargosy/core/save/save_sync_service.dart';
 import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
+import 'package:gargosy/core/save/strategies/scummvm_save_strategy.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:mockito/annotations.dart';
@@ -74,6 +75,10 @@ void main() {
 
       final seen = await Future.wait([coreSeen(a, 'mgba'), coreSeen(b, 'gpsp')]);
       expect(seen, ['mgba', 'gpsp']);
+    });
+
+    test('ScummVM has a save strategy (issue #11)', () {
+      expect(service.saveStrategyForEmulator('scummvm'), isA<ScummVmSaveStrategy>());
     });
 
     test('getStrategyForSlug() checks StrategyRegistry user preferences', () async {

@@ -35,13 +35,14 @@ For each system below, play a game in RetroArch through Gargosy, save in-game an
 
 ## RPCS3 (#10)
 
-11. [ ] Play a PS3 game in profile A and save. In profile B the save isn't there. The save is on RomM.
-12. [ ] While a game runs, nothing in `emulators\rpcs3-firmware\dev_flash` changes (compare the modified dates before and after).
+11. [x] Play a PS3 game in profile A and save. In profile B the save isn't there. The save is on RomM.
+12. [x] While a game runs, nothing in `emulators\rpcs3-firmware\dev_flash` changes (compare the modified dates before and after).
 
 ## ScummVM (#11)
 
 13. [ ] Play a game downloaded from RomM as a `.scummvm` file, then save and load in-game.
 14. [ ] Play a game that is a folder, then save and load in-game.
+22. [ ] Save in a ScummVM game and quit: the save is on RomM. In profile B, the game starts with that save (pulled into `saves\<game>\`). Saves made before this fix sit loose in `saves\` and aren't synced; move them into the game's folder.
 
 ## Eden, Azahar, Cemu, melonDS (#12–#15)
 
