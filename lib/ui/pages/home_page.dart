@@ -28,7 +28,7 @@ class HomePage extends ConsumerWidget {
     final random = ref.watch(randomGameProvider).valueOrNull;
     final favIds = ref.watch(favouriteIdsProvider);
     final offline = ref.watch(rommOfflineProvider);
-    final onThisPc = offline ? ref.watch(gamesOnThisPcProvider) : const <Game>[];
+    final installed = ref.watch(gamesOnThisPcProvider);
     final loading = played.isLoading || added.isLoading;
     final error = played.error ?? added.error;
 
@@ -46,7 +46,7 @@ class HomePage extends ConsumerWidget {
     final playedList = played.valueOrNull ?? const <Game>[];
     final addedList = added.valueOrNull ?? const <Game>[];
     final favList = favourites.valueOrNull ?? const <Game>[];
-    final empty = !loading && error == null && playedList.isEmpty && addedList.isEmpty && favList.isEmpty && random == null;
+    final empty = !loading && error == null && playedList.isEmpty && installed.isEmpty && addedList.isEmpty && favList.isEmpty && random == null;
 
     return ListView(
       key: const Key('page-Home'),
@@ -56,8 +56,8 @@ class HomePage extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
           child: Text('Welcome, $name', style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800)),
         ),
-        // RomM unreachable: what's on this PC still plays (spec §8).
-        if (onThisPc.isNotEmpty) shelf('On this PC', onThisPc, first: true),
+        // RomM unreachable: what's on this PC still plays (spec §8), first.
+        if (offline) shelf('Installed games', installed, first: true),
         if (loading) const Padding(padding: EdgeInsets.all(GSpace.rowPad), child: LinearProgressIndicator()),
         if (error != null)
           SizedBox(
@@ -75,7 +75,8 @@ class HomePage extends ConsumerWidget {
             child: Text('No games yet. Add some to RomM and they show up here.', style: TextStyle(fontSize: GFont.lg, color: GColors.fgMuted)),
           ),
         if (random != null) _RandomPick(game: random, autofocus: playedList.isEmpty),
-        shelf('Continue playing', playedList, first: true),
+        shelf('Continue playing', playedList, first: !offline),
+        if (!offline) shelf('Installed games', installed),
         shelf('Recently added', addedList),
         shelf('Favourites', favList),
       ],

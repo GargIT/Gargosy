@@ -64,11 +64,27 @@ final librarySnapshotProvider = Provider<LibrarySnapshot?>((ref) {
   return LibrarySnapshot(p.join(paths.cache, 'library.json'), paths.guard);
 });
 
-/// The profile's games that are downloaded on this PC (from the snapshot).
+/// The profile's games that are downloaded on this PC (from the snapshot),
+/// newest download first; Home's Installed games shelf.
 final gamesOnThisPcProvider = Provider<List<Game>>((ref) {
   ref.watch(romFilesVersionProvider);
   final snap = ref.watch(librarySnapshotProvider);
   if (snap == null) return const [];
   final files = ref.watch(romFilesProvider);
-  return [for (final g in snap.read()) if (files.isDownloaded(g)) g];
+  return installedNewestFirst(snap.read(), files.installedAt);
 });
+
+/// [games] that are on this PC ([installedAt] not null), newest first; the
+/// same time keeps their order (by name).
+List<Game> installedNewestFirst(List<Game> games, DateTime? Function(Game) installedAt) {
+  final at = <Game, DateTime>{
+    for (final g in games) g: ?installedAt(g),
+  };
+  final list = [for (final g in games) if (at.containsKey(g)) g];
+  final index = {for (var i = 0; i < list.length; i++) list[i]: i};
+  list.sort((a, b) {
+    final byTime = at[b]!.compareTo(at[a]!);
+    return byTime != 0 ? byTime : index[a]!.compareTo(index[b]!);
+  });
+  return list;
+}
