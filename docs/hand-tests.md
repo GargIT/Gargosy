@@ -26,7 +26,7 @@ For each system below, play a game in RetroArch through Gargosy, save in-game an
 
 ## Folder link on a USB stick (#8)
 
-8. [ ] Copy Gargosy to a FAT32 or exFAT USB stick and start Eden, Azahar, Cemu or melonDS from it. The launch is refused with "A folder link can't be made … The drive may be FAT32 or exFAT", and nothing is written.
+8. [ ] Copy Gargosy to a FAT32 or exFAT USB stick and start Eden, Azahar, Cemu or melonDS from it. The launch is refused with "A folder link can't be made … The drive may be FAT32 or exFAT", and nothing is written. *Not tested: no FAT32 or exFAT drive at hand; #8 closed without it (2026-10-16).*
 
 ## Ryujinx (#9)
 
@@ -40,9 +40,9 @@ For each system below, play a game in RetroArch through Gargosy, save in-game an
 
 ## ScummVM (#11)
 
-13. [ ] Play a game downloaded from RomM as a `.scummvm` file, then save and load in-game.
-14. [ ] Play a game that is a folder, then save and load in-game.
-22. [ ] Save in a ScummVM game and quit: the save is on RomM. In profile B, the game starts with that save (pulled into `saves\<game>\`). Saves made before this fix sit loose in `saves\` and aren't synced; move them into the game's folder.
+13. [x] Play a game downloaded from RomM as a `.scummvm` file, then save and load in-game.
+14. [x] Play a game that is a folder, then save and load in-game.
+22. [x] Save in a ScummVM game and quit: the save is on RomM. In profile B, the game starts with that save (pulled into `saves\<game>\`). Saves made before this fix sit loose in `saves\` and aren't synced; move them into the game's folder.
 
 ## Eden, Azahar, Cemu, melonDS (#12–#15)
 
