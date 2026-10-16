@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Home has an Installed games shelf, between Continue playing and Recently
+  added: the games on this PC, newest download first. While RomM can't be
+  reached it comes first, as On this PC did (#39).
 - What's new: the first start of a newer version opens its changes once,
   every release since the last one that ran, also after an update by hand
   (#3).

@@ -83,7 +83,33 @@ void main() {
     expect(find.textContaining('No games yet'), findsNothing);
   });
 
-  testWidgets("offline, Home shows the games on this PC, which still play", (tester) async {
+  testWidgets('online, Installed games sits between Continue playing and Recently added', (tester) async {
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
+      ...overrides,
+      rommOfflineProvider.overrideWithValue(false),
+      gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez'), game(8, 'Ico')]),
+    ]));
+    await tester.pumpAndSettle();
+    final y = {for (final t in ['Continue playing', 'Installed games', 'Recently added']) t: tester.getTopLeft(find.text(t)).dy};
+    expect(y['Continue playing']! < y['Installed games']!, isTrue);
+    expect(y['Installed games']! < y['Recently added']!, isTrue);
+    expect(find.text('Rez'), findsWidgets);
+  });
+
+  testWidgets('with nothing installed there is no Installed games shelf', (tester) async {
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
+      ...overrides,
+      rommOfflineProvider.overrideWithValue(false),
+      gamesOnThisPcProvider.overrideWithValue(const []),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('Installed games'), findsNothing);
+    expect(find.text('Continue playing'), findsOneWidget);
+  });
+
+  testWidgets('offline, Installed games comes first, has the focus, and still plays', (tester) async {
     await setDesktopSize(tester);
     await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
       ...overrides,
@@ -91,18 +117,9 @@ void main() {
       gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez')]),
     ]));
     await tester.pumpAndSettle();
-    expect(find.text('On this PC'), findsOneWidget);
-    expect(find.text('Rez'), findsWidgets);
-  });
-
-  testWidgets('online, the games on this PC are not a shelf of their own', (tester) async {
-    await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      ...overrides,
-      rommOfflineProvider.overrideWithValue(false),
-      gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez')]),
-    ]));
-    await tester.pumpAndSettle();
-    expect(find.text('On this PC'), findsNothing);
+    expect(find.text('Installed games'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Installed games')).dy < tester.getTopLeft(find.text('Continue playing')).dy, isTrue);
+    await press(tester, GameAction.confirm);
+    expect(tester.widget<GameScreen>(find.byType(GameScreen)).game.name, 'Rez', reason: 'A opens the focused game');
   });
 }
