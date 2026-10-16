@@ -17,6 +17,18 @@ class FolderLinkUnsupported implements Exception {
       'The drive may be FAT32 or exFAT, which have no links, or the folder may be in use.';
 }
 
+/// Makes the folder link [link] → [target] (a junction on Windows).
+typedef LinkMaker = void Function(String link, String target);
+
+void _makeLink(String link, String target) => io.Link(link).createSync(target);
+
+/// Folders known this session to hold links ([_checkCanLink]), lower case.
+final _canLinkIn = <String>{};
+
+/// Forgets what [_checkCanLink] learned (tests).
+@visibleForTesting
+void resetLinkCheck() => _canLinkIn.clear();
+
 /// What [pointFolderLink] did besides pointing the link.
 class FolderLinkResult {
   const FolderLinkResult({this.movedToTemplate});
@@ -43,13 +55,14 @@ class FolderLinkResult {
 ///
 /// Both paths go through [guard]: [link] must be in `emulators\`, [target]
 /// in the active profile's folder. Throws [FolderLinkUnsupported] when the
-/// drive has no links.
+/// drive has no links, before anything is moved (issue #49).
 FolderLinkResult pointFolderLink({
   required String link,
   required String target,
   required PathGuard guard,
   required String templateDir,
   required String setAsideDir,
+  LinkMaker makeLink = _makeLink,
 }) {
   final linkPath = guard.check(link);
   final targetPath = guard.check(target);
@@ -64,7 +77,13 @@ FolderLinkResult pointFolderLink({
   io.Directory(targetPath).createSync(recursive: true);
 
   String? moved;
-  switch (io.FileSystemEntity.typeSync(linkPath, followLinks: false)) {
+  final inTheWay = io.FileSystemEntity.typeSync(linkPath, followLinks: false);
+  // Something would be moved aside: first make sure a link can be made here,
+  // so on a drive without links (FAT32, exFAT) nothing moves (issue #49).
+  if (inTheWay != io.FileSystemEntityType.link && inTheWay != io.FileSystemEntityType.notFound) {
+    _checkCanLink(linkPath, targetPath, guard, makeLink);
+  }
+  switch (inTheWay) {
     case io.FileSystemEntityType.link:
       if (_same(io.Link(linkPath).targetSync(), targetPath)) return const FolderLinkResult();
       io.Link(linkPath).deleteSync(); // the link only, never what it points at
@@ -92,12 +111,32 @@ FolderLinkResult pointFolderLink({
   }
 
   try {
-    io.Link(linkPath).createSync(targetPath);
+    makeLink(linkPath, targetPath);
   } on io.FileSystemException catch (e) {
     throw FolderLinkUnsupported(linkPath, e);
   }
   debugPrint('[FolderLink] $linkPath → $targetPath');
   return FolderLinkResult(movedToTemplate: moved);
+}
+
+/// Throws [FolderLinkUnsupported] unless a link can be made beside [linkPath]:
+/// a test link to [targetPath], `.gargosy-linktest`, made and removed at once.
+/// A folder that held one is remembered for the session.
+void _checkCanLink(String linkPath, String targetPath, PathGuard guard, LinkMaker makeLink) {
+  final dir = p.dirname(linkPath);
+  if (_canLinkIn.contains(dir.toLowerCase())) return;
+  final probe = guard.check(p.join(dir, '.gargosy-linktest'));
+  removeFolderLink(probe); // left by a check that didn't finish
+  if (io.FileSystemEntity.typeSync(probe, followLinks: false) != io.FileSystemEntityType.notFound) {
+    throw FolderLinkUnsupported(linkPath, 'something that is not a link is at $probe');
+  }
+  try {
+    makeLink(probe, targetPath);
+  } on io.FileSystemException catch (e) {
+    throw FolderLinkUnsupported(linkPath, e);
+  }
+  removeFolderLink(probe);
+  _canLinkIn.add(dir.toLowerCase());
 }
 
 /// Removes [path] when it's a folder link (the link, never its target).

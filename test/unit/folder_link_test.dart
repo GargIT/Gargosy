@@ -129,6 +129,63 @@ void main() {
     expect(io.File(p.join(install('eden'), 'user.gargosy-off (2)')).readAsStringSync(), 'another file');
   });
 
+  group('a drive without links (FAT32, exFAT; issue #49)', () {
+    setUp(resetLinkCheck);
+    tearDown(resetLinkCheck);
+
+    void noLinks(String link, String target) => throw io.FileSystemException('links not supported', link);
+
+    FolderLinkResult pointOnFat(String profile) => pointFolderLink(
+          link: p.join(install('eden'), 'user'),
+          target: p.join(data(profile, 'eden'), 'user'),
+          guard: guard(profile),
+          templateDir: template('eden', 'user'),
+          setAsideDir: setAside('eden', 'user'),
+          makeLink: noLinks,
+        );
+
+    test('a real folder in the way stays where it is; nothing goes to the template or set aside', () {
+      write(p.join(data('aaa', 'eden'), 'user', 'mine.sav'), 'the profile');
+      write(p.join(install('eden'), 'user', 'nand', 'old.sav'), 'from an imported install');
+      expect(() => pointOnFat('aaa'), throwsA(isA<FolderLinkUnsupported>()));
+      expect(io.File(p.join(install('eden'), 'user', 'nand', 'old.sav')).readAsStringSync(), 'from an imported install');
+      expect(isFolderLink(p.join(install('eden'), 'user')), isFalse);
+      expect(io.Directory(root.templates).existsSync() && io.Directory(root.templates).listSync().isNotEmpty, isFalse);
+      expect(io.Directory(p.join(root.appData, 'set-aside')).existsSync(), isFalse);
+      expect(io.File(p.join(data('aaa', 'eden'), 'user', 'mine.sav')).readAsStringSync(), 'the profile');
+      expect(io.FileSystemEntity.typeSync(p.join(install('eden'), '.gargosy-linktest'), followLinks: false),
+          io.FileSystemEntityType.notFound);
+    });
+
+    test("a real folder in the way stays put even when the profile has nothing yet", () {
+      write(p.join(install('eden'), 'user', 'nand', 'old.sav'), 'from an imported install');
+      expect(() => pointOnFat('aaa'), throwsA(isA<FolderLinkUnsupported>()));
+      expect(io.File(p.join(install('eden'), 'user', 'nand', 'old.sav')).existsSync(), isTrue);
+      expect(io.Directory(p.join(data('aaa', 'eden'), 'user')).listSync(recursive: true).whereType<io.File>(), isEmpty);
+    });
+
+    test('a file in the way is not renamed', () {
+      write(p.join(install('eden'), 'user'), 'a file named user');
+      expect(() => pointOnFat('aaa'), throwsA(isA<FolderLinkUnsupported>()));
+      expect(io.File(p.join(install('eden'), 'user')).readAsStringSync(), 'a file named user');
+      expect(io.File(p.join(install('eden'), 'user.gargosy-off')).existsSync(), isFalse);
+    });
+
+    test('nothing in the way: refused the same, with nothing written in the install', () {
+      expect(() => pointOnFat('aaa'), throwsA(isA<FolderLinkUnsupported>()));
+      expect(io.Directory(install('eden')).listSync(), isEmpty);
+    });
+
+    test('on a drive with links the check leaves no test link behind, and a leftover one is cleared', () {
+      io.Link(p.join(install('eden'), '.gargosy-linktest')).createSync(data('aaa', 'eden'));
+      write(p.join(install('eden'), 'user', 'x.txt'), 'in the way');
+      point('aaa');
+      expect(isFolderLink(p.join(install('eden'), 'user')), isTrue);
+      expect(io.FileSystemEntity.typeSync(p.join(install('eden'), '.gargosy-linktest'), followLinks: false),
+          io.FileSystemEntityType.notFound);
+    });
+  });
+
   test("a link to somewhere outside the profile is replaced, and what it pointed at isn't touched", () {
     final elsewhere = io.Directory(p.join(root.root, 'elsewhere'))..createSync();
     write(p.join(elsewhere.path, 'precious.txt'), 'not ours');
