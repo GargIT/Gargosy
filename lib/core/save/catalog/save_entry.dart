@@ -70,7 +70,8 @@ class SaveEntry {
   final String? sameAsRommId;
 
   /// The `content_hash` RomM would give this save as each sync mode uploads
-  /// it (local rows only; see SaveSyncService.rommHashOfLocal).
+  /// it (local rows; see SaveSyncService.rommHashOfLocal), or the backup's
+  /// hash (backup rows; BackupService.createImmediate makes it the same).
   final Set<String> contentHashes;
 
   /// The save is in a file other games share (a memory card): its time is

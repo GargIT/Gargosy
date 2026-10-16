@@ -270,6 +270,25 @@ void main() {
     expect(find.descendant(of: find.byKey(const ValueKey('tab-badge-1')), matching: find.text('2')), findsOneWidget);
   });
 
+  testWidgets('the Saves badge counts a save once, wherever its copies are', (tester) async {
+    final t = DateTime(2026, 10, 16);
+    SaveEntry romm(String id, String hash) => SaveEntry(
+        source: SaveSource.romm, fileName: id, savedAt: t, maker: const SaveMaker('pcsx2'), tag: 'pcsx2', slot: 'autosave',
+        rommSave: {'id': id, 'content_hash': hash});
+    await pump(tester, menu: PlayMenu(
+      emulators: const [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],
+      platformDefault: const SaveMaker('pcsx2'),
+      catalog: SaveCatalog(
+        thisPc: [SaveEntry(source: SaveSource.local, fileName: 'l', savedAt: t, maker: const SaveMaker('pcsx2'), contentHashes: const {'h'})],
+        backups: [SaveEntry(source: SaveSource.backup, fileName: 'b.zip', savedAt: t, maker: const SaveMaker('pcsx2'), contentHashes: const {'h'})],
+        rommOffline: false,
+        romm: [RommSaveGroup(slot: 'autosave', tag: 'pcsx2', newest: romm('9', 'h'), older: [romm('8', 'old')])],
+      ),
+    ));
+    // The same save on this PC, in a backup and on RomM, and an older one on RomM.
+    expect(find.descendant(of: find.byKey(const ValueKey('tab-badge-1')), matching: find.text('2')), findsOneWidget);
+  });
+
   testWidgets('the pills write status, rating and completion', (tester) async {
     await pump(tester);
     await tester.tap(find.byKey(const ValueKey('pill-status')));

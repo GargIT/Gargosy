@@ -7,6 +7,7 @@ import '../../../core/romm/romm_models.dart';
 import '../../../core/save/resume_service.dart';
 import '../../../core/save/catalog/play_view.dart';
 import '../../../core/save/catalog/play_choice.dart';
+import '../../../core/save/catalog/save_count.dart';
 import '../../../play/play_controller.dart';
 import '../../../providers/library_providers.dart';
 import '../../input/gargosy_intents.dart';
@@ -158,10 +159,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final badges = <int, String>{};
     final catalog = ref.watch(playMenuProvider(_key)).valueOrNull?.catalog;
     if (catalog != null) {
-      final n =
-          catalog.thisPc.length +
-          catalog.backups.length +
-          catalog.romm.fold<int>(0, (sum, g) => sum + 1 + g.older.length);
+      // Different saves, not copies: one save on this PC, on RomM and in a
+      // backup is 1.
+      final n = distinctSaveCount(catalog.all);
       if (n > 0) badges[1] = '$n';
     }
     if (game.raId != null && game.raAchievements.isNotEmpty) {

@@ -75,6 +75,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- A game's Saves count counts each save once: the same save on this PC,
+  on RomM and in a backup is 1, not 3. A backup's name now carries RomM's
+  hash of the save, so it's known as the same save.
 - Eden downloads again: its nightly builds no longer carry files, so Gargosy
   takes Eden's latest release (the x64 Windows build).
 - Dolphin can be downloaded again: its download page now turns programs away,

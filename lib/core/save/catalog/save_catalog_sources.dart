@@ -155,6 +155,7 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
               }
             }(),
             backup: b,
+            contentHashes: {b.md5Hash},
           ),
       ];
     } catch (e) {
