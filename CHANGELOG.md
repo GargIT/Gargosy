@@ -59,6 +59,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- On a drive that can't hold folder links (FAT32, exFAT), starting Eden,
+  Azahar, Cemu or melonDS is refused before anything is moved: the
+  emulator's own `user\` or `portable\` folder stays where it was (#49).
 - Ryujinx can't be downloaded from Gargosy for now: Ryubing's server
   doesn't answer. Settings → Emulators says so; a Ryujinx imported from a
   folder still plays (#9).
