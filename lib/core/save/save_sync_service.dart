@@ -35,6 +35,7 @@ import 'strategies/mgba_save_strategy.dart';
 import 'strategies/ppsspp_save_strategy.dart';
 import 'strategies/cemu_save_strategy.dart';
 import 'strategies/azahar_save_strategy.dart';
+import 'strategies/scummvm_save_strategy.dart';
 import '../emulator/strategy_registry.dart';
 import '../platform/platform_info.dart';
 
@@ -134,6 +135,7 @@ class SaveSyncService {
   late final CemuSaveStrategy _cemu;
   late final AzaharSaveStrategy _azahar;
   late final AresSaveStrategy _ares;
+  late final ScummVmSaveStrategy _scummvm;
 
   /// [platform] is the OS the strategies look for emulators on; tests pass
   /// one with a temporary home.
@@ -164,6 +166,7 @@ class SaveSyncService {
     _cemu = CemuSaveStrategy(_directoryService, platform: platform);
     _azahar = AzaharSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
     _ares = AresSaveStrategy(_directoryService, platform: platform);
+    _scummvm = ScummVmSaveStrategy(_directoryService);
   }
 
   /// Returns the manual Title ID mapping for a given game.
@@ -389,6 +392,7 @@ class SaveSyncService {
     if (id == 'azahar') return _azahar;
     if (id == 'ares') return _ares;
     if (id == 'flycast') return _flycast;
+    if (id == 'scummvm') return _scummvm;
     return null;
   }
 

@@ -4,6 +4,7 @@ import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
 
+import '../core/save/strategies/scummvm_save_strategy.dart';
 import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
 import 'bios_links.dart';
@@ -125,11 +126,10 @@ abstract class ProfileLaunchConfig {
     // Eden, Azahar, Cemu, melonDS: a folder link (issues #8, #12–#15).
     ...linkedEmulatorConfigs,
     'rpcs3': const Rpcs3Config(),
-    // ScummVM (issue #11): its config and saves by argument; the game folder
-    // last, as --auto-detect --path (it can't take a folder as a plain path).
+    // ScummVM (issue #11): its config by argument; each game's own save
+    // folder and the game folder last (_ScummVm.gameArgs).
     'scummvm': _ScummVm((c) => [
           '--config=${p.join(c.data, 'scummvm.ini')}',
-          '--savepath=${p.join(c.data, 'saves')}',
           // Its log would go to %APPDATA%\ScummVM\Logs otherwise.
           '--logfile=${p.join(c.data, 'scummvm.log')}',
         ], before: (c) async => _scummVmFolders(c)),
@@ -231,12 +231,18 @@ class _Mame extends _Args {
       ['-rompath', '${p.dirname(romPath)};${p.join(c.exeDir, 'roms')}', p.basenameWithoutExtension(romPath)];
 }
 
-/// ScummVM is started on the game's folder: `--auto-detect --path=<folder>`.
+/// ScummVM is started on the game's folder: `--auto-detect --path=<folder>`,
+/// with the game's own save folder, `<data>\saves\<game>\`: ScummVM names
+/// saves by engine, so the save code tells games apart by folder.
 class _ScummVm extends _Args {
   const _ScummVm(super.args, {super.before});
 
   @override
-  List<String> gameArgs(LaunchContext c, String romPath) => scummVmGameArgs(romPath);
+  List<String> gameArgs(LaunchContext c, String romPath) {
+    final saves = c.guard.join(p.join(c.data, 'saves'), scummVmSaveFolderName(romPath));
+    io.Directory(saves).createSync(recursive: true);
+    return ['--savepath=$saves', ...scummVmGameArgs(romPath)];
+  }
 }
 
 /// How ScummVM starts the game at [romPath] (issue #11):

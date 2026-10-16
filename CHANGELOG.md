@@ -54,7 +54,8 @@ What changed in each release of Gargosy. The format follows
   0.1.0, update by hand once.
 - ScummVM can play games: download it (or import one) in Settings →
   Emulators, and each profile keeps its own settings, saves, screenshots and
-  log in its folder. Its saves don't sync with RomM yet.
+  log in its folder. Each game's saves sit in their own folder and sync with
+  RomM like other emulators' (#11).
 
 ### Changed
 

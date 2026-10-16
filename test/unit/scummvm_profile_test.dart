@@ -46,14 +46,13 @@ void main() {
     );
   }
 
-  test('--config and --savepath into the profile; screenshots in its scummvm.ini, other keys kept', () async {
+  test('--config into the profile; saves and screenshots in its scummvm.ini, other keys kept', () async {
     final c = ctx();
     io.File(p.join(c.data, 'scummvm.ini'))
       ..createSync(recursive: true)
       ..writeAsStringSync('[scummvm]\ngfx_mode=opengl\n\n[monkey1]\ndescription=The Secret of Monkey Island\n');
     expect(await ProfileLaunchConfig.of('scummvm')!.prepare(c), [
       '--config=${p.join(c.data, 'scummvm.ini')}',
-      '--savepath=${p.join(c.data, 'saves')}',
       '--logfile=${p.join(c.data, 'scummvm.log')}',
     ]);
     final ini = IniFile(io.File(p.join(c.data, 'scummvm.ini')).readAsStringSync());
@@ -64,19 +63,25 @@ void main() {
     expect(io.Directory(p.join(c.data, 'saves')).existsSync(), isTrue);
   });
 
-  test('the game: --auto-detect --path=<the game folder>, last', () {
+  test("the game: its own save folder, then --auto-detect --path=<the game folder>, last", () {
     final folder = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island'))..createSync(recursive: true);
     final c = ctx();
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, folder.path), ['--auto-detect', '--path=${folder.path}']);
+    final saves = '--savepath=${p.join(c.data, 'saves', 'Monkey Island')}';
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, folder.path), [saves, '--auto-detect', '--path=${folder.path}']);
     expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, p.join(folder.path, 'MONKEY.000')),
-        ['--auto-detect', '--path=${folder.path}'], reason: 'a file inside picked: its folder');
+        [saves, '--auto-detect', '--path=${folder.path}'], reason: 'a file inside picked: its folder, the same saves');
+    expect(io.Directory(p.join(c.data, 'saves', 'Monkey Island')).existsSync(), isTrue);
     expect(Fullscreen.supports('scummvm'), isTrue);
   });
 
   test("two profiles' saves and configs are apart: every path is in the profile's own folder", () async {
     for (final profile in ['aaa', 'bbb']) {
       final c = ctx(profile: profile);
-      final args = await ProfileLaunchConfig.of('scummvm')!.prepare(c);
+      final folder = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island'))..createSync(recursive: true);
+      final args = [
+        ...await ProfileLaunchConfig.of('scummvm')!.prepare(c),
+        ...ProfileLaunchConfig.of('scummvm')!.gameArgs(c, folder.path).where((a) => a.startsWith('--savepath=')),
+      ];
       for (final a in args) {
         final path = a.substring(a.indexOf('=') + 1);
         expect(p.isWithin(c.data, path), isTrue, reason: '$profile: $a');
@@ -96,14 +101,18 @@ void main() {
   test("RomM's .scummvm file names the game: its id, in its folder", () {
     final dir = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island'))..createSync(recursive: true);
     final svm = io.File(p.join(dir.path, 'monkey.scummvm'))..writeAsStringSync('monkey1\n');
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(ctx(), svm.path), ['--path=${dir.path}', 'monkey1']);
+    final c = ctx();
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, svm.path),
+        ['--savepath=${p.join(c.data, 'saves', 'Monkey Island')}', '--path=${dir.path}', 'monkey1']);
   });
 
   test('a zip that unpacked into a folder of one folder: ScummVM looks in the inner one', () {
     final outer = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island (1990)'));
     final inner = io.Directory(p.join(outer.path, 'Monkey Island'))..createSync(recursive: true);
     io.File(p.join(inner.path, 'MONKEY.000')).createSync();
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(ctx(), outer.path), ['--auto-detect', '--path=${inner.path}']);
+    final c = ctx();
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, outer.path),
+        ['--savepath=${p.join(c.data, 'saves', 'Monkey Island (1990)')}', '--auto-detect', '--path=${inner.path}']);
   });
 
   test('in a profile the strategy launches through the launch view: full screen, profile, game, in order', () async {
@@ -127,8 +136,8 @@ void main() {
       exe.path,
       '-f',
       '--config=${p.join(data, 'scummvm.ini')}',
-      '--savepath=${p.join(data, 'saves')}',
       '--logfile=${p.join(data, 'scummvm.log')}',
+      '--savepath=${p.join(data, 'saves', 'Monkey Island')}',
       '--auto-detect',
       '--path=${p.absolute(p.normalize(folder.path))}',
     ]);
