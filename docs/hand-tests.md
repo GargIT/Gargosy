@@ -18,11 +18,11 @@ For each system below, play a game in RetroArch through Gargosy, save in-game an
 - start the game again and check that the save comes back;
 - open the game in RomM's web player and check that the save loads there.
 
-3. [ ] Game Boy
-4. [ ] Game Boy Color, a game with a clock (e.g. Pokémon Gold/Silver/Crystal)
-5. [ ] Nintendo 64
-6. [ ] PlayStation (PS1)
-7. [ ] PlayStation 2 with the LRPS2 core
+3. [x] Game Boy
+4. [x] Game Boy Color, a game with a clock (e.g. Pokémon Gold/Silver/Crystal)
+5. [x] Nintendo 64
+6. [x] PlayStation (PS1)
+7. [x] PlayStation 2 with the LRPS2 core
 
 ## Folder link on a USB stick (#8)
 
