@@ -15,7 +15,14 @@ import 'profile_launch_config.dart';
 
 class EmulatorInfo {
   const EmulatorInfo(
-      {required this.id, required this.name, required this.exe, required this.supported, this.installedExe, this.installedFrom, this.version});
+      {required this.id,
+      required this.name,
+      required this.exe,
+      required this.supported,
+      this.installedExe,
+      this.installedFrom,
+      this.version,
+      this.downloadOff});
 
   final String id;
   final String name;
@@ -32,6 +39,10 @@ class EmulatorInfo {
 
   /// The exe's own file version, when it records one.
   final String? version;
+
+  /// Why Gargosy doesn't offer to download it right now; null when it does.
+  /// Import from folder still works.
+  final String? downloadOff;
 }
 
 /// The emulators Gargosy owns (spec §6), in `emulators\<id>\`.
@@ -40,6 +51,12 @@ class EmulatorLibrary {
 
   final AppRoot root;
   final List<EmulatorStrategy> strategies;
+
+  /// Emulators whose download is off for now, and why.
+  static const downloadsOff = <String, String>{
+    // Ryubing's GitLab doesn't answer (2026-10-16); back on when it does (#9).
+    'ryujinx': "Download off: Ryubing's server can't be reached",
+  };
 
   /// What an install keeps besides the program: left out on import.
   static const dataNames = <String, Set<String>>{
@@ -111,6 +128,7 @@ class EmulatorLibrary {
         installedExe: exe,
         installedFrom: exe == null ? null : _installedFrom(s.emulatorId),
         version: exe == null ? null : await PeVersionReader.fileVersion(exe),
+        downloadOff: downloadsOff[s.emulatorId],
       ));
     }
     out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
