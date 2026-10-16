@@ -80,11 +80,15 @@ class BackupService {
       }
       encoder.close();
 
-      // The hash of the files in the zip, not of the zip: an emulator that
-      // rewrites an unchanged save gives new file times, not a new backup.
+      // RomM's content_hash of the save as a push uploads it: one file by
+      // its bytes, several by the files in this zip. Not of the zip itself:
+      // an emulator that rewrites an unchanged save gives new file times,
+      // not a new backup. And a backup of the save on RomM has its hash.
       final zipFile = io.File(tempZipPath);
+      final single = files.length == 1 && !await io.FileSystemEntity.isDirectory(files.single.path);
       final bytes = await zipFile.readAsBytes();
-      final digest = rommHashOfUpload(bytes) ?? md5.convert(bytes).toString();
+      final digest = (single ? await rommHashOfSaveFile(files.single) : rommHashOfUpload(bytes)) ??
+          md5.convert(bytes).toString();
 
       // Rename to final convention: gargosy_[romId]_[timestamp]_[md5].zip
       final timestamp = DateTime.now().millisecondsSinceEpoch;

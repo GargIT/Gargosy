@@ -42,6 +42,21 @@ void main() {
   SaveEntry local(String emulator, DateTime t) =>
       SaveEntry(source: SaveSource.local, fileName: emulator, savedAt: t, maker: SaveMaker(emulator), tag: emulator);
 
+  test("a backup row is compared by its hash, RomM's content_hash of the save", () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
+    final dirs = DirectoryService(prefs);
+    final registry = StrategyRegistry(dirs, prefs);
+    final sources = LiveSaveCatalogSources(
+      sync: SaveSyncService(RommService(RomMConfig(baseUrl: '', username: '', password: '')), dirs, registry, prefs),
+      registry: registry,
+      backupRepository: _Repo([BackupEntry(timestamp: DateTime(2026), md5Hash: 'save', localZipPath: '/b/b.zip')]),
+      rommService: null,
+      installed: const {},
+    );
+    expect(sources.backups(game).single.contentHashes, {'save'});
+  });
+
   test('a RetroArch backup is listed with the core it was made with', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());

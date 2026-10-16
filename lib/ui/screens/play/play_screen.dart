@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/input/gamepad_service.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../core/save/catalog/play_choice.dart';
+import '../../../core/save/catalog/save_count.dart';
 import '../../../core/save/catalog/play_request.dart';
 import '../../../core/save/catalog/play_view.dart';
 import '../../../core/save/catalog/save_entry.dart';
@@ -386,7 +387,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _segment('Saves ${view.saveRows.length}', tab == 0, () => setState(() => _tab = 0)),
+              _segment('Saves ${distinctSaveCount([for (final r in view.saveRows) r.entry])}', tab == 0, () => setState(() => _tab = 0)),
               _segment('States ${view.states.length}', tab == 1, () => setState(() => _tab = 1)),
             ],
           ),

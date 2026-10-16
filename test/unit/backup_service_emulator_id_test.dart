@@ -1,12 +1,14 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/romm_service.dart';
 import 'package:gargosy/core/save/backup_service.dart';
+import 'package:gargosy/core/save/romm_content_hash.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/save_sync_service.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
@@ -146,6 +148,23 @@ void main() {
 
       expect(first, isNotNull);
       expect(second!.md5, first!.md5);
+    });
+
+    test("a backup of one file records that file's hash: RomM's content_hash of the same save", () async {
+      PathProviderPlatform.instance = _FakePathProvider(p.join(tempDir.path, 'support'));
+      final saveDir = Directory(p.join(tempDir.path, 'saves'))..createSync();
+      File(p.join(saveDir.path, 'game.sav')).writeAsBytesSync([1, 2, 3]);
+      final sync = _SaveDirSync({'melonds': saveDir.path});
+
+      final one = await backupService.createImmediate(game, romPath, sync, emulatorId: 'melonds');
+
+      expect(one!.md5, md5.convert([1, 2, 3]).toString());
+      expect(p.basename(one.zipPath), endsWith('_${one.md5}.zip'));
+
+      File(p.join(saveDir.path, 'game.rtc')).writeAsBytesSync([4]);
+      final two = await backupService.createImmediate(game, romPath, sync, emulatorId: 'melonds');
+      final zip = File(two!.zipPath).readAsBytesSync();
+      expect(two.md5, rommHashOfUpload(zip), reason: 'several files go to RomM as a zip like the backup');
     });
   });
 }

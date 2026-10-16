@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/romm/romm_models.dart';
 import '../../../core/save/catalog/play_choice.dart';
+import '../../../core/save/catalog/save_count.dart';
 import '../../../core/save/catalog/play_view.dart';
 import '../../../core/save/catalog/save_entry.dart';
 import '../../../core/save/resume_service.dart';
@@ -137,7 +138,7 @@ class _SavesTabState extends ConsumerState<SavesTab> {
         );
         final who = menu.forThisGame;
         final actions = ref.read(saveActionsProvider);
-        final count = view.saveRows.length;
+        final count = distinctSaveCount([for (final r in view.saveRows) r.entry]);
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (waiting.isNotEmpty)
             Container(
