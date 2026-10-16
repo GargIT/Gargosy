@@ -56,6 +56,6 @@ For each one: play a real game in profile A and save. Then play it in profile B,
 
 These rows need preview releases published on GitHub.
 
-19. [ ] Settings → About → Updates: the updater window shows its progress and starts Gargosy again when it's done.
-20. [ ] On a preview build, About shows the preview version, and its Updates block shows the Preview channel.
-21. [ ] A real update from preview N to N+1. Afterwards, the profiles, ROMs, emulators and BIOS files are all still there, and What's new (#3) opens once with N+1's changes.
+19. [x] Settings → About → Updates: the updater window shows its progress and starts Gargosy again when it's done.
+20. [x] On a preview build, About shows the preview version, and its Updates block shows the Preview channel.
+21. [x] A real update from preview N to N+1. Afterwards, the profiles, ROMs, emulators and BIOS files are all still there, and What's new (#3) opens once with N+1's changes.
