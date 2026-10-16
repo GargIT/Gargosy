@@ -154,7 +154,9 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     final installed = e.installedExe != null;
     final state = !e.supported
         ? 'Not supported yet'
-        : (!installed ? 'Not installed' : (e.version == null ? 'Installed' : 'Installed · ${e.version}'));
+        : (!installed
+            ? e.downloadOff ?? 'Not installed'
+            : (e.version == null ? 'Installed' : 'Installed · ${e.version}'));
     return Row(children: [
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -169,13 +171,15 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
       if (busy == null && e.supported) ...[
         const SizedBox(width: GSpace.s4),
         SettingsButton(label: 'Import from folder', icon: Icons.folder_open_outlined, onActivate: () => _import(e)),
-        const SizedBox(width: GSpace.s2),
-        SettingsButton(
-          label: installed ? 'Update' : 'Download',
-          icon: installed ? Icons.update : Icons.download_outlined,
-          kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
-          onActivate: () => _download(e),
-        ),
+        if (e.downloadOff == null) ...[
+          const SizedBox(width: GSpace.s2),
+          SettingsButton(
+            label: installed ? 'Update' : 'Download',
+            icon: installed ? Icons.update : Icons.download_outlined,
+            kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
+            onActivate: () => _download(e),
+          ),
+        ],
         if (installed) ...[
           const SizedBox(width: GSpace.s2),
           SettingsButton(label: 'Remove', icon: Icons.delete_outline, onActivate: () => _remove(e)),

@@ -23,6 +23,34 @@ void main() {
     expect(find.text('Not supported yet'), findsOneWidget);
   });
 
+  testWidgets('an emulator whose download is off has no Download or Update, and says why; Import stays', (tester) async {
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
+      emulatorsProvider.overrideWith((ref) async => const [
+            EmulatorInfo(id: 'ryujinx', name: 'Ryujinx', exe: 'Ryujinx.exe', supported: true, downloadOff: 'Download off: down'),
+          ]),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('Download off: down'), findsOneWidget);
+    expect(find.text('Download'), findsNothing);
+    expect(find.text('Update'), findsNothing);
+    expect(find.text('Import from folder'), findsOneWidget);
+  });
+
+  testWidgets('an emulator whose download is off still plays once imported, with no Update', (tester) async {
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
+      emulatorsProvider.overrideWith((ref) async => const [
+            EmulatorInfo(id: 'ryujinx', name: 'Ryujinx', exe: 'Ryujinx.exe', supported: true, downloadOff: 'Download off: down',
+                installedExe: r'C:\G\emulators\ryujinx\Ryujinx.exe'),
+          ]),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('Installed'), findsOneWidget, reason: 'an imported Ryujinx still plays');
+    expect(find.text('Update'), findsNothing);
+    expect(find.text('Remove'), findsOneWidget);
+  });
+
   testWidgets('Update says so when the newest is already installed', (tester) async {
     final installer = _FakeInstaller('https://example/dolphin-2.zip');
     await setDesktopSize(tester);

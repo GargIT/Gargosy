@@ -30,7 +30,7 @@ For each system below, play a game in RetroArch through Gargosy, save in-game an
 
 ## Ryujinx (#9)
 
-9. [ ] Settings → Emulators → Download Ryujinx (from Ryubing). It installs and starts.
+9. [ ] Settings → Emulators → Download Ryujinx (from Ryubing). It installs and starts. *On hold: the download is off while Ryubing's server doesn't answer.*
 10. [ ] Play a Switch game in profile A and save. Then play it in profile B: B has no save from A. The save is on RomM. Start a game once before a RomM save can be put in place.
 
 ## RPCS3 (#10)

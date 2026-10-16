@@ -55,6 +55,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- Ryujinx can't be downloaded from Gargosy for now: Ryubing's server
+  doesn't answer. Settings → Emulators says so; a Ryujinx imported from a
+  folder still plays (#9).
 - Save states never travel inside a game's save any more (Dolphin, PPSSPP,
   RetroArch): they go to RomM only through "Sync save states" (#30).
   Dolphin's and PPSSPP's states stay on this PC until those emulators get
