@@ -60,6 +60,18 @@ class RomPreparer {
     final isZip = p.extension(romPath).toLowerCase() == '.zip';
     if (isZip && io.File(romPath).existsSync()) {
       if (zipReaders.contains(emulatorId) || zipPlatforms.contains(game.platformSlug?.toLowerCase())) return null;
+      // Unpacked already, but the zip stayed (an older Gargosy, or a delete
+      // that failed): play the folder, and the zip goes as after an unpack.
+      // An unpack is moved in whole, so a folder with files is a finished one.
+      final dest = files.unpackedDirFor(game);
+      if (dest != null && _hasFiles(dest)) {
+        try {
+          io.File(guard.check(romPath)).deleteSync();
+        } on io.FileSystemException {
+          // In use: it goes on a later start; the folder plays meanwhile.
+        }
+        return dest;
+      }
       return _unpack(game, romPath, emulatorId, onProgress);
     }
     if (emulatorId == 'xemu' && p.extension(romPath).toLowerCase() == '.iso' && io.File(romPath).existsSync()) {
@@ -70,6 +82,12 @@ class RomPreparer {
 
   Future<String> _unpack(Game game, String zip, String emulatorId, void Function(String)? onProgress) async {
     final dest = files.unpackedDirFor(game)!;
+    // Checked before unpacking, not after minutes of it: an empty folder
+    // goes, anything else in the way refuses.
+    if (io.Directory(dest).existsSync()) io.Directory(guard.check(dest)).deleteSync();
+    if (io.FileSystemEntity.typeSync(dest) != io.FileSystemEntityType.notFound) {
+      throw RomPrepareException('${p.basename(dest)} is already in the way in ${p.dirname(dest)}.');
+    }
     final staging = guard.check(p.join(tempDir, 'unpack-${game.id}'));
     _remove(staging);
     io.Directory(staging).createSync(recursive: true);
@@ -181,6 +199,9 @@ class RomPreparer {
     await outDone;
     if (code != 0) throw RomPrepareException("Couldn't unpack ${game.displayName}: ${err.toString().trim()}");
   }
+
+  static bool _hasFiles(String dir) =>
+      io.Directory(dir).existsSync() && io.Directory(dir).listSync(recursive: true).any((e) => e is io.File);
 
   static int _sizeOf(String dir) {
     var n = 0;
