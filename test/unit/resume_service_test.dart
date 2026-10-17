@@ -162,11 +162,19 @@ void main() {
   });
 
   // ─── 3 ────────────────────────────────────────────────────────────────────
-  test('sync off: RomM is never asked', () async {
-    writeLocal('GAME.auto.st', '1.2.0');
+  test('sync off: RomM is never asked, and the state on this PC is listed and resumes from its file (S0.5)', () async {
+    final file = writeLocal('GAME.auto.st', '1.2.0');
     final service = build();
 
-    await lastOf(service.entriesFor(game, [romPath]));
+    final entries = await lastOf(service.entriesFor(game, [romPath]));
+    final entry = entryFor(entries, 'GAME.auto.st');
+    expect(entry.where, ResumeWhere.thisPc);
+
+    // No pull ran (the switch is off): nothing came down, nothing conflicted.
+    final check = await service.checkBeforeLaunch(entry, game, romPath, pulled: const {}, conflicted: const {});
+    expect(check, isA<ResumeReady>());
+    expect((check as ResumeReady).path, file.path);
+    expect(check.stale, isFalse);
 
     expect(api.calls, isEmpty);
   });

@@ -60,3 +60,11 @@ These rows need preview releases published on GitHub.
 19. [x] Settings → About → Updates: the updater window shows its progress and starts Gargosy again when it's done.
 20. [x] On a preview build, About shows the preview version, and its Updates block shows the Preview channel.
 21. [x] A real update from preview N to N+1. Afterwards, the profiles, ROMs, emulators and BIOS files are all still there, and What's new (#3) opens once with N+1's changes.
+
+## Save states between profiles (#58)
+
+With "Save states on RomM" on (Settings → Emulator settings) in both profiles. For each: in profile A, play, save a state to a slot and quit. The state is on RomM. In profile B, the state comes down before launch and Resume (Y on the play screen) starts the game in it. Then make a newer state of the same slot in each profile without syncing between them: the next launch says the state differs and keeps this PC's copy.
+
+24. [ ] DuckStation (PS1)
+25. [ ] PCSX2 (PS2)
+26. [ ] RetroArch, a PS1 game (Beetle PSX HW or PCSX ReARMed)
