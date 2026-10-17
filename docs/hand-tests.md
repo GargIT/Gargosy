@@ -50,7 +50,7 @@ For each one: play a real game in profile A and save. Then play it in profile B,
 
 15. [x] Eden (Switch) (#12)
 16. [x] Azahar (3DS) (#13)
-17. [ ] Cemu (Wii U) (#14)
+17. [x] Cemu (Wii U) (#14)
 18. [x] melonDS (DS) (#15)
 
 ## Updates (#16)
