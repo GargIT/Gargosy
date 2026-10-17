@@ -98,6 +98,14 @@ abstract class SaveStrategy {
   /// commits its sync state here, never before).
   Future<void> afterUpload(Game game, String romPath) async {}
 
+  /// Gargosy (#56): saves on a volume other games share (Flycast's VMU)
+  /// that no game owns, by the names sigil gives them; empty for the rest.
+  Future<List<String>> unclaimedSavesFor(Game game, String romPath) async => const [];
+
+  /// Gargosy (#56): the player says the unclaimed save [name] is [game]'s;
+  /// it travels with the game from the next upload on.
+  Future<void> claimSave(Game game, String romPath, String name) async {}
+
   /// Downloads go to [restoreSave] as they came, never through the save
   /// format conversion (Gargosy: sigil reads other emulators' shapes itself).
   bool restoresUnitsItselfFor(Game game) => false;

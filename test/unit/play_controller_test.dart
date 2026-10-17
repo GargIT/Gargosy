@@ -75,6 +75,20 @@ class FakeEngine implements PlayEngine {
   @override
   Future<void> backUpNow(Game game, SaveMaker who) async => steps.add('backup');
 
+  /// The unclaimed saves on the shared volume; a claim takes one off.
+  List<String> unclaimed = [];
+  bool claimUploads = true;
+
+  @override
+  Future<List<String>> unclaimedSaves(Game game, SaveMaker who) async => unclaimed;
+
+  @override
+  Future<bool> claimSave(Game game, SaveMaker who, String name) async {
+    steps.add('claim $name');
+    unclaimed = [for (final n in unclaimed) if (n != name) n];
+    return claimUploads;
+  }
+
   @override
   bool stateSyncAvailable(Game game) => stateSyncOn;
 

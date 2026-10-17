@@ -184,6 +184,15 @@ final playMenuProvider = FutureProvider.autoDispose.family<PlayMenu?, PlayMenuKe
   return engine?.menuFor(key.game);
 });
 
+/// The saves on the shared volume (Flycast's VMU) that no game owns, for
+/// the game's emulator (#56); empty for the rest.
+final unclaimedSavesProvider = FutureProvider.autoDispose.family<List<String>, PlayMenuKey>((ref, key) async {
+  final engine = ref.watch(playEngineProvider);
+  final who = (await ref.watch(playMenuProvider(key).future))?.forThisGame;
+  if (engine == null || who == null) return const [];
+  return engine.unclaimedSaves(key.game, who);
+});
+
 /// The states the play screen lists for a game: this PC's first, then
 /// merged with RomM's.
 final playStatesProvider = StreamProvider.autoDispose.family<List<ResumeEntry>, PlayMenuKey>((ref, key) {

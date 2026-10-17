@@ -360,6 +360,23 @@ class SaveSyncService {
     }
   }
 
+  /// Gargosy (#56): the saves on a shared volume (Flycast's VMU) that no
+  /// game owns; empty when there are none or they can't be read.
+  Future<List<String>> unclaimedSaves(Game game, String romPath, {required String emulatorId, String? coreOverride}) =>
+      _lock.run(() async {
+        try {
+          return await _saveStrategyFor(game, emulatorId, coreOverride: coreOverride)?.unclaimedSavesFor(game, romPath) ??
+              const [];
+        } catch (e) {
+          debugPrint('[SaveSync] unclaimed saves of $emulatorId unknown: $e');
+          return const [];
+        }
+      });
+
+  /// Gargosy (#56): the unclaimed save [name] is [game]'s from now on.
+  Future<void> claimSave(Game game, String romPath, String name, {required String emulatorId, String? coreOverride}) =>
+      _lock.run(() async => _saveStrategyFor(game, emulatorId, coreOverride: coreOverride)?.claimSave(game, romPath, name));
+
   /// [emulatorId]'s save strategy, set up for [game]: RetroArch's core
   /// ([coreOverride], else the game's chosen core), Eden/Ryujinx/Azahar
   /// mapped folders. The strategies are shared by every game, so a caller

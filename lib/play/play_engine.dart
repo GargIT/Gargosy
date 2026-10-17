@@ -113,6 +113,14 @@ abstract class PlayEngine {
   /// A backup of this PC's save of [who], now.
   Future<void> backUpNow(Game game, SaveMaker who);
 
+  /// The saves on a volume other games share (Flycast's VMU) that no game
+  /// owns, for [who] (#56); empty when none or the game isn't on this PC.
+  Future<List<String>> unclaimedSaves(Game game, SaveMaker who);
+
+  /// [name] becomes [game]'s save and goes up to RomM with it; true when
+  /// RomM took it.
+  Future<bool> claimSave(Game game, SaveMaker who, String name);
+
   /// State sync is on for [game]'s emulator.
   bool stateSyncAvailable(Game game);
 
@@ -347,6 +355,23 @@ class GargosyPlayEngine implements PlayEngine {
 
   @override
   Future<void> backUpNow(Game game, SaveMaker who) async => (await _preparer()).backUp(game, await _romPath(game), who);
+
+  @override
+  Future<List<String>> unclaimedSaves(Game game, SaveMaker who) async {
+    final sync = _ref.read(saveSyncServiceProvider);
+    final romPath = await romPathFor(game);
+    if (sync == null || romPath == null) return const [];
+    return sync.unclaimedSaves(game, romPath, emulatorId: who.emulatorId, coreOverride: _core(who));
+  }
+
+  @override
+  Future<bool> claimSave(Game game, SaveMaker who, String name) async {
+    final sync = _ref.read(saveSyncServiceProvider);
+    if (sync == null) return false;
+    final romPath = await _romPath(game);
+    await sync.claimSave(game, romPath, name, emulatorId: who.emulatorId, coreOverride: _core(who));
+    return sync.pushSaves(game, romPath, emulatorId: who.emulatorId, coreOverride: _core(who));
+  }
 
   String? _emulatorIdOf(Game game) {
     final slug = game.platformSlug;

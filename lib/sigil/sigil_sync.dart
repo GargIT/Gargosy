@@ -26,6 +26,7 @@ class SigilSyncCall {
     this.state,
     this.overwriteLocal = false,
     this.repair = false,
+    this.claimed = const [],
   });
 
   /// sigil's layout id, e.g. `pcsx2_standalone`.
@@ -62,6 +63,10 @@ class SigilSyncCall {
 
   final bool overwriteLocal;
   final bool repair;
+
+  /// Saturn, Sega CD, Dreamcast: unclaimed saves (as collect named them in
+  /// [SigilCollected.unowned]) the player said are this game's (#56).
+  final List<String> claimed;
 }
 
 /// What collect gathered.
@@ -287,6 +292,8 @@ Object runSigilSync(String lib, SigilSyncCall call, Uint8List? unit) {
         ..structVersion = sigilSyncRequestV1
         ..gameIds = strings(call.gameIds)
         ..gameIdCount = call.gameIds.length
+        ..claimed = strings(call.claimed)
+        ..claimedCount = call.claimed.length
         ..mode = sigilSyncUnmanaged
         ..overwriteLocal = call.overwriteLocal ? 1 : 0
         ..write = write.nativeFunction

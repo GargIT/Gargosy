@@ -6,6 +6,7 @@ import '../../../core/save/catalog/play_choice.dart';
 import '../../../core/save/catalog/save_count.dart';
 import '../../../core/save/catalog/play_view.dart';
 import '../../../core/save/catalog/save_entry.dart';
+import '../../../core/save/catalog/save_maker.dart';
 import '../../../core/save/resume_service.dart';
 import '../../../library/upload_queue.dart';
 import '../../../play/play_controller.dart';
@@ -88,6 +89,48 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     _say(reason, 'Deleted.');
   }
 
+  /// The shared card's name for the game's system.
+  String get _volume => const {'dc', 'dreamcast'}.contains(_game.platformSlug?.toLowerCase()) ? 'VMU' : 'memory card';
+
+  Future<void> _claim(SaveMaker who, String name) async {
+    final ok = await showConfirm(context,
+        title: "Is $name this game's save?",
+        body: 'It goes to RomM with ${_game.displayName} and comes back with it on other PCs. '
+            'It stays on the shared $_volume, and the other games keep their saves.',
+        yes: 'Take it',
+        no: 'Not this one',
+        focusYes: false);
+    if (!ok || !mounted) return;
+    final reason = await ref.read(saveActionsProvider).claim(_game, who, name);
+    _say(reason, "$name is ${_game.displayName}'s save now, and it's on RomM.");
+  }
+
+  /// Saves on the shared card that no game owns (#56), to claim one.
+  Widget _unclaimed(SaveMaker who, List<String> names) => Container(
+        margin: const EdgeInsets.only(bottom: GSpace.s3),
+        padding: const EdgeInsets.all(GSpace.s3),
+        decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.lg)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Unclaimed saves on the shared $_volume', style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: GSpace.s1),
+          Text("No game is known to own these. If one is this game's, take it: it then syncs with this game.",
+              style: const TextStyle(color: GColors.fgSecondary)),
+          const SizedBox(height: GSpace.s2),
+          Wrap(spacing: GSpace.s2, runSpacing: GSpace.s2, children: [
+            for (final name in names)
+              GFocusable(
+                borderRadius: GRadius.pill,
+                onActivate: () => _claim(who, name),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
+                  decoration: BoxDecoration(color: GColors.bg, borderRadius: BorderRadius.circular(GRadius.pill)),
+                  child: Text("$name  ·  This is this game's save"),
+                ),
+              ),
+          ]),
+        ]),
+      );
+
   Widget _button(String label, IconData icon, VoidCallback? onPress) => Padding(
         padding: const EdgeInsets.only(left: GSpace.s2),
         child: GFocusable(
@@ -122,6 +165,7 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     final statesAsync = ref.watch(playStatesProvider(_key));
     final states = statesAsync.valueOrNull ?? const <ResumeEntry>[];
     final waiting = ref.watch(uploadsWaitingProvider(_game.id));
+    final unclaimed = ref.watch(unclaimedSavesProvider(_key)).valueOrNull ?? const <String>[];
     return menuAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => ErrorRetry(message: describeLoadError(e), onRetry: () => ref.invalidate(playMenuProvider(_key))),
@@ -167,6 +211,7 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                 who == null ? null : () async => _say(await actions.backUpNow(_game, who), 'Backed up on this PC.')),
           ]),
           const SizedBox(height: GSpace.s2),
+          if (!_states && who != null && unclaimed.isNotEmpty) _unclaimed(who, unclaimed),
           Expanded(
             child: _states
                 ? StateList(states: states, chosen: null, onChoose: (_) {}, loading: statesAsync.isLoading)
