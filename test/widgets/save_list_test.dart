@@ -157,6 +157,24 @@ void main() {
     expect(chose, ['s1.p2s']);
   });
 
+  testWidgets("a state the emulator can't start in: shown with where to load it, A doesn't choose it", (tester) async {
+    final chose = <String>[];
+    await pump(tester, StateList(
+      states: [
+        ResumeEntry(
+            emulatorId: 'azahar', emulatorName: 'Azahar', fileName: 'x.01.cst', slot: const NumberedStateSlot(1),
+            savedAt: _t(9), where: ResumeWhere.romm, resumable: false),
+      ],
+      chosen: null,
+      loading: false,
+      onChoose: (e) => chose.add(e.fileName),
+    ));
+    expect(find.textContaining("load it from Azahar's menu"), findsOneWidget);
+    await tester.tap(find.text('Slot 1'));
+    await tester.pumpAndSettle();
+    expect(chose, isEmpty);
+  });
+
   testWidgets('manage mode with the mouse: a click opens Put on this PC / Delete', (tester) async {
     final restored = <String>[], deleted = <String>[];
     await pump(tester, SaveList(

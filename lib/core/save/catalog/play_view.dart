@@ -203,7 +203,8 @@ PlayView buildPlayView({
     }
   }
   saves.addAll([for (final r in rommRows) if (!r.sameAsLocal) r.item]);
-  final pre = choice.preselect(saves, [for (final s in shownStates) StatePlay(s)]);
+  // A state the emulator can't start in is listed, never chosen.
+  final pre = choice.preselect(saves, [for (final s in shownStates) if (s.resumable) StatePlay(s)]);
   return PlayView(
     thisPc: thisPc,
     backups: backups,

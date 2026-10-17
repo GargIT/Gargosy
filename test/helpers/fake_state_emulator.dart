@@ -74,9 +74,10 @@ class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
 /// construction; every identity field is overridden.
 class FakeStateEmulator extends Pcsx2Strategy {
   FakeStateEmulator(super.ds,
-      {this.id = 'fakeemu', this.loadsStates = true, this.version = '1.2.0'});
+      {this.id = 'fakeemu', this.loadsStates = true, this.syncsStates = true, this.version = '1.2.0'});
   final String id;
   final bool loadsStates;
+  final bool syncsStates;
   String? version;
   @override
   String get emulatorId => id;
@@ -86,6 +87,8 @@ class FakeStateEmulator extends Pcsx2Strategy {
   List<String> get supportedSlugs => ['fakeplatform'];
   @override
   bool get supportsStateLoadOnLaunch => loadsStates;
+  @override
+  bool get supportsStateSync => syncsStates;
   @override
   List<String> stateLoadArgs(String statePath) => ['--load', statePath];
   /// How many times [installedVersion] was asked.

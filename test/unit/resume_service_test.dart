@@ -452,14 +452,30 @@ void main() {
     expect(entry.stateFormat, isNull);
   });
 
-  test('emulators that cannot load states on launch take no part', () async {
-    final noLoad = FakeStateEmulator(ds, loadsStates: false);
+  test('an emulator that neither loads states at start nor syncs them takes no part', () async {
+    final noLoad = FakeStateEmulator(ds, loadsStates: false, syncsStates: false);
     writeLocal('GAME.auto.st', '1.2.0');
     final service = build(emulators: [noLoad]);
 
     final emissions = await service.entriesFor(game, [romPath]).toList();
 
     expect(emissions, [<ResumeEntry>[]]);
+  });
+
+  test("an emulator that syncs states but can't load one at start (Azahar, melonDS): listed, not resumable", () async {
+    final syncOnly = FakeStateEmulator(ds, loadsStates: false);
+    writeLocal('GAME.1.st', '1.2.0');
+    final service = build(emulators: [syncOnly]);
+
+    final entries = await lastOf(service.entriesFor(game, [romPath]));
+
+    expect(entryFor(entries, 'GAME.1.st').resumable, isFalse);
+  });
+
+  test('a state the emulator can load is resumable', () async {
+    writeLocal('GAME.1.st', '1.2.0');
+    final entries = await lastOf(build().entriesFor(game, [romPath]));
+    expect(entryFor(entries, 'GAME.1.st').resumable, isTrue);
   });
 
   // ─── 11 ───────────────────────────────────────────────────────────────────

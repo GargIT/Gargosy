@@ -38,10 +38,16 @@ class ResumeEntry {
     this.remoteUpdatedAt,
     this.remoteScreenshotUrl,
     this.romPath,
+    this.resumable = true,
   });
 
   final String emulatorId;
   final String emulatorName;
+
+  /// Gargosy: the emulator can start the game in this state. False for an
+  /// emulator that syncs states but has no option to load one at start
+  /// (Azahar, melonDS): listed, loaded from the emulator's own menu.
+  final bool resumable;
   final String fileName;
   final StateSlot slot;
   final DateTime savedAt;
@@ -184,7 +190,7 @@ class ResumeService {
     final merged = Map<String, ResumeEntry>.of(local);
     for (final state in remote) {
       final owner = _ownerOf(state, sources, syncing);
-      if (owner == null || !owner.emulator.canLoadState(state.fileName)) continue;
+      if (owner == null || !_listed(owner.emulator, state.fileName)) continue;
       final key = _key(owner.emulator.emulatorId, state.fileName);
       final remoteTime =
           DateTime.tryParse(state.updatedAt ?? '')?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -206,6 +212,7 @@ class ResumeService {
           remoteUpdatedAt: state.updatedAt,
           remoteScreenshotUrl: state.screenshotUrl,
           romPath: owner.romPath,
+          resumable: _resumable(owner.emulator, state.fileName),
         );
         continue;
       }
@@ -228,6 +235,7 @@ class ResumeService {
         remoteUpdatedAt: state.updatedAt,
         remoteScreenshotUrl: state.screenshotUrl,
         romPath: existing.romPath,
+        resumable: existing.resumable,
       );
     }
     yield _sorted(merged.values);
@@ -326,7 +334,9 @@ class ResumeService {
   Future<List<_Source>> _sourcesUnlocked(Game game, String romPath, Map<String, String?> versions) async {
     final result = <_Source>[];
     for (final emulator in _emulatorsFor(game.platformSlug ?? '')) {
-      if (!emulator.supportsStateLoadOnLaunch) continue;
+      // Gargosy: an emulator that syncs states without loading one at start
+      // is listed too, its states not resumable.
+      if (!emulator.supportsStateLoadOnLaunch && !emulator.supportsStateSync) continue;
       try {
         final strategy = _resolve(game, emulatorId: emulator.emulatorId);
         if (strategy is! StateSyncCapable) continue;
@@ -355,7 +365,7 @@ class ResumeService {
       await for (final entity in source.dir.list(followLinks: false)) {
         if (entity is! io.File) continue;
         final name = p.basename(entity.path);
-        if (!source.matches(name) || !source.emulator.canLoadState(name)) continue;
+        if (!source.matches(name) || !_listed(source.emulator, name)) continue;
         if (await entity.length() < StateSyncService.minValidStateBytes) continue;
         final info = await source.strategy.describeState(entity);
         result[_key(source.emulator.emulatorId, name)] = ResumeEntry(
@@ -371,6 +381,7 @@ class ResumeService {
           compat: compatOf(info.emulatorVersion, source.installed),
           localFile: entity,
           romPath: source.romPath,
+          resumable: _resumable(source.emulator, name),
         );
       }
     } catch (e) {
@@ -378,6 +389,13 @@ class ResumeService {
     }
     return result;
   }
+
+  /// A state [name] is listed: any of an emulator that can't load states at
+  /// start (it is loaded from the emulator's menu), else only those its
+  /// command line loads (RetroArch's auto slot isn't).
+  static bool _listed(EmulatorStrategy e, String name) => !e.supportsStateLoadOnLaunch || e.canLoadState(name);
+
+  static bool _resumable(EmulatorStrategy e, String name) => e.supportsStateLoadOnLaunch && e.canLoadState(name);
 
   /// The source a RomM state belongs to: among the sources whose matcher
   /// accepts the name (only those of the tagged emulator when its `emulator`

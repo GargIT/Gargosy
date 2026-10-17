@@ -70,6 +70,15 @@ void main() {
     expect(v.states.map((s) => s.emulatorId), ['retroarch']);
   });
 
+  test("a newer state the emulator can't start in (Azahar, melonDS) is listed, never preselected", () {
+    final azahar = ResumeEntry(
+        emulatorId: 'retroarch', emulatorName: 'Azahar', fileName: 'x.01.cst', slot: const NumberedStateSlot(1),
+        savedAt: wed, where: ResumeWhere.thisPc, resumable: false);
+    final v = view(catalog, picked: rearmed, states: [azahar]);
+    expect(v.states, [azahar]);
+    expect(v.preselected, isA<SavePlay>());
+  });
+
   test('the newest usable save is preselected; a newer state wins', () {
     expect((view(catalog, picked: rearmed).preselected as SavePlay).entry.fileName, 'l-pcsx_rearmed');
     expect(view(catalog, picked: rearmed, states: [state('retroarch', wed)]).preselected, isA<StatePlay>());

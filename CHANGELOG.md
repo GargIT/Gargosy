@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- The play screen's States list shows Azahar's and melonDS's states too, with
+  where to load them: those emulators can't start in a state, so A doesn't
+  pick one and Resume never chooses it.
 - ares' save states sync with RomM when "Save states on RomM" is on, and
   Resume starts a game straight in one (#66).
 - melonDS's save states (DS) sync with RomM when "Save states on RomM" is on.

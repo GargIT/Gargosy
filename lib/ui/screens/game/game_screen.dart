@@ -101,6 +101,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final states = ref.read(playStatesProvider(_key)).valueOrNull ?? const <ResumeEntry>[];
     ResumeEntry? newest;
     for (final s in states) {
+      if (!s.resumable) continue; // loaded from the emulator's own menu
       if (newest == null || s.savedAt.isAfter(newest.savedAt)) newest = s;
     }
     return newest;

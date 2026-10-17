@@ -31,7 +31,8 @@ class StateList extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: GSpace.s2),
       child: GFocusable(
         borderRadius: GRadius.lg,
-        onActivate: () => onChoose(e),
+        // A state the emulator can't start in is shown, not chosen.
+        onActivate: e.resumable ? () => onChoose(e) : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
           decoration: BoxDecoration(
@@ -39,7 +40,7 @@ class StateList extends StatelessWidget {
             borderRadius: BorderRadius.circular(GRadius.lg),
           ),
           child: Row(children: [
-            Icon(mine ? Icons.radio_button_checked : Icons.radio_button_off,
+            Icon(!e.resumable ? Icons.info_outline : (mine ? Icons.radio_button_checked : Icons.radio_button_off),
                 color: mine ? GColors.primary : GColors.fgSecondary),
             const SizedBox(width: GSpace.s3),
             Expanded(
@@ -49,6 +50,9 @@ class StateList extends StatelessWidget {
                     style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
                 // Shown here, the resume loads it without asking again
                 // (ResumeService.checkBeforeLaunch: "seen").
+                if (!e.resumable)
+                  Text("Start the game, then load it from ${e.emulatorName}'s menu: ${e.emulatorName} can't start in a state.",
+                      style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
                 if (e.compat == StateCompat.mismatch)
                   Text(
                       'Made with ${e.emulatorName} ${e.emulatorVersion ?? '?'}; you have ${e.installedVersion ?? '?'}. '

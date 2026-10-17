@@ -257,6 +257,16 @@ void main() {
     expect(engine.steps, containsAllInOrder(['check', 'launch']));
   });
 
+  testWidgets("Y skips a state the emulator can't start in, even a newer one", (tester) async {
+    await pump(tester, downloaded: true, states: [
+      ResumeEntry(emulatorId: 'pcsx2', emulatorName: 'PCSX2', fileName: 'auto.p2s', slot: const AutoStateSlot(), savedAt: DateTime(2026, 10, 9), where: ResumeWhere.thisPc),
+      ResumeEntry(emulatorId: 'azahar', emulatorName: 'Azahar', fileName: 'x.01.cst', slot: const NumberedStateSlot(1), savedAt: DateTime(2026, 10, 10), where: ResumeWhere.thisPc, resumable: false),
+    ]);
+    await press(tester, GameAction.favorite);
+    expect(engine.steps, containsAllInOrder(['check', 'launch']));
+    expect(engine.resumed?.fileName, 'auto.p2s');
+  });
+
   testWidgets('tab badges: the number of saves, achievements earned/total, notes', (tester) async {
     await pump(tester, menu: PlayMenu(
       emulators: const [EmulatorOption(SaveMaker('pcsx2'), 'PCSX2')],

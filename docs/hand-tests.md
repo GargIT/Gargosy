@@ -99,11 +99,11 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 
 ## Azahar save states (#64)
 
-34. [ ] With "Save states on RomM" on: in profile A, play a 3DS game in Azahar, save a state to a slot and quit. The state is on RomM. In profile B, start the game: the state is in Azahar's Load State menu under that slot, and loading it continues where A stopped.
+34. [ ] With "Save states on RomM" on: in profile A, play a 3DS game in Azahar, save a state to a slot and quit. The state is on RomM. In profile B, the play screen's States list shows it with "load it from Azahar's menu" (A doesn't pick it). Start the game: the state is in Azahar's Load State menu under that slot, and loading it continues where A stopped.
 
 ## melonDS save states (#65)
 
-35. [ ] With "Save states on RomM" on: in profile A, play a DS game in melonDS, save a state to a slot and quit. The state is on RomM. In profile B, start the game: the state is in melonDS's Load State menu under that slot, and loading it continues where A stopped.
+35. [ ] With "Save states on RomM" on: in profile A, play a DS game in melonDS, save a state to a slot and quit. The state is on RomM. In profile B, the play screen's States list shows it with "load it from melonDS's menu" (A doesn't pick it). Start the game: the state is in melonDS's Load State menu under that slot, and loading it continues where A stopped.
 
 ## ares save states (#66)
 
