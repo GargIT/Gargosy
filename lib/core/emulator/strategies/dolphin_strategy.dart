@@ -48,6 +48,21 @@ class DolphinStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => true;
 
+  /// Gargosy (#60): states sync through RomM (DolphinSaveStrategy).
+  @override
+  bool get supportsStateSync => true;
+
+  @override
+  bool get supportsStateLoadOnLaunch => true;
+
+  /// Dolphin: `--save_state=<file>` loads the state once the game boots.
+  @override
+  List<String> stateLoadArgs(String statePath) => ['--save_state=$statePath'];
+
+  /// The state comes before `-b -e`: `-e` takes the game as its value.
+  @override
+  List<String> argsWith(List<String> extraArgs) => [...extraArgs, ...launchArgs];
+
   @override
   bool get supportsRetroAchievementsLogin => true;
 

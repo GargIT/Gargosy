@@ -5,8 +5,13 @@ import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/formats/ps2_memory_card.dart';
+import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/state_sync_capable.dart';
+import 'package:gargosy/core/save/strategies/dolphin_save_strategy.dart';
+import 'package:gargosy/core/save/strategies/mgba_save_strategy.dart';
+import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
+import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/emulators/pcsx2_folder_card.dart';
 import 'package:gargosy/sigil/sigil_engine.dart';
 import 'package:gargosy/sigil/sigil_save_strategy.dart';
@@ -15,7 +20,18 @@ import 'package:gargosy/sigil/sigil_sync.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/game_fixtures.dart';
+import '../helpers/profile_test_env.dart';
 import '../helpers/ps1_card_builder.dart';
+
+/// PPSSPP's app-support folder is [dir] (its PSP folder inside).
+class _FixedDirs extends DirectoryService {
+  _FixedDirs(this.dir) : super(MemoryPrefs());
+  final String dir;
+  @override
+  Future<String> getEmulatorAppSupportDirectory(String emulatorId, {String? platformSlug}) async => dir;
+  @override
+  Future<String?> findEmulatorExecutable(String emulatorId, String executableName) async => null;
+}
 
 /// The emulator's old strategy: records what reaches it.
 class _Base extends SaveStrategy {
@@ -206,6 +222,48 @@ void main() {
     await s.restoreSave(_game('gba'), r'D:\roms\gba\Game.gba', Uint8List(10), 'Game.sav');
     expect(base.calls, ['getSaveFiles gba', 'restoreSave gba']);
     expect(s.uploadSlotFor(_game('gba')), 'gargosy');
+  });
+
+  test("PPSSPP (#59): sigil syncs its saves, its states go through PPSSPP's own strategy", () async {
+    final dir = p.join(tmp.path, 'emulators', 'ppsspp');
+    io.Directory(p.join(dir, 'PSP')).createSync(recursive: true);
+    final s = SigilSaveStrategy.forEmulator(
+      'ppsspp',
+      base: PpssppSaveStrategy(_FixedDirs(dir), identify: (path, {platform}) async => null),
+      emulatorDir: () => dir,
+      states: states,
+      unitsDir: p.join(tmp.path, 'u'),
+    )!;
+    expect(s, isA<StateSyncCapable>());
+    final psp = Game.fromJson({...gameJson(5, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp', 'title_id': 'UCUS98618'});
+    final st = s as StateSyncCapable;
+    expect(await st.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'), p.join(dir, 'PSP', 'PPSSPP_STATE'));
+    expect((await st.stateFileMatcher(psp, r'D:\roms\psp\Daxter (USA).iso'))!('UCUS98618_1.00_0.ppst'), isTrue);
+  });
+
+  test("Dolphin (#60): sigil syncs GameCube saves, the states go through Dolphin's own strategy", () async {
+    final dir = p.join(tmp.path, 'emulators', 'dolphin');
+    io.Directory(dir).createSync(recursive: true);
+    final s = SigilSaveStrategy.forEmulator(
+      'dolphin',
+      base: DolphinSaveStrategy(_FixedDirs(dir), identify: (path, {platform}) async => null),
+      emulatorDir: () => dir,
+      states: states,
+      unitsDir: p.join(tmp.path, 'u'),
+    )!;
+    expect(s, isA<StateSyncCapable>());
+    final gc = Game.fromJson({...gameJson(6, 'Zelda', fsName: 'Zelda.rvz'), 'platform_slug': 'ngc', 'save_target': 'GZLE'});
+    final st = s as StateSyncCapable;
+    expect(await st.stateDirectory(gc, r'D:\roms\ngc\Zelda.rvz'), p.join(dir, 'StateSaves'));
+    expect((await st.stateFileMatcher(gc, r'D:\roms\ngc\Zelda.rvz'))!('GZLE01.s01'), isTrue);
+  });
+
+  test("mGBA (#61): sigil syncs Game Boy saves, the states go through mGBA's own strategy", () async {
+    final s = mgba(b: MgbaSaveStrategy(_FixedDirs(emulatorDir)));
+    expect(s, isA<StateSyncCapable>());
+    final st = s as StateSyncCapable;
+    expect((await st.stateFileMatcher(_game('gb'), rom))!('Tetris (World).ss1'), isTrue);
+    expect(st.slotOf('Tetris (World).ss4'), const NumberedStateSlot(4));
   });
 
   test('a state-capable old strategy keeps its save states (the wrapper is StateSyncCapable)', () async {
