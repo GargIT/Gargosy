@@ -6,6 +6,7 @@ import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/strategies/azahar_save_strategy.dart';
+import 'package:gargosy/sigil/sigil_engine.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/game_id_test_env.dart';
@@ -15,6 +16,8 @@ void main() {
   late Directory dir;
   late String base; // Azahar's portable data folder: <exe folder>/user
   late AzaharSaveStrategy azahar;
+  late List<String> read; // the ROMs sigil was asked about
+  SigilId? fromRom; // what sigil reads from any ROM
 
   setUp(() async {
     dir = await Directory.systemTemp.createTemp('romm_azahar');
@@ -22,8 +25,14 @@ void main() {
     File(exe).writeAsStringSync('');
     base = p.join(dir.path, 'user');
     Directory(base).createSync();
+    read = [];
+    fromRom = null;
     azahar = AzaharSaveStrategy(await StubDirectoryService.create(exePath: exe),
-        platform: const PlatformInfo('windows', environment: {}));
+        platform: const PlatformInfo('windows', environment: {}), identify: (path, {platform}) async {
+      expect(platform, '3ds');
+      read.add(path);
+      return fromRom;
+    });
   });
   tearDown(() => dir.delete(recursive: true));
 
@@ -53,8 +62,32 @@ void main() {
     expect(await azahar.getSaveDir(pilotwings(), r'C:\nope\p.3ds'), p.join(base, 'sdmc', mapping));
   });
 
-  test('neither: asks for the folder, as before', () async {
+  test('no RomM id: the ROM\'s own title id, read through sigil once', () async {
+    fromRom = const SigilId(
+        titleId: '0004000000033500', rawSerial: '', saveId: '00040000/00033500', platform: '3ds', fromBinary: true, usage: 4);
+    expect(await azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\p.3ds'), titleFolder(zeros, zeros));
+    expect(await azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\p.3ds'), titleFolder(zeros, zeros));
+    expect(read, [r'C:\roms\p.3ds']);
+  });
+
+  test('RomM\'s id means the ROM is never read', () async {
+    await azahar.getSaveDir(pilotwings(), r'C:\roms\p.3ds');
+    expect(read, isEmpty);
+  });
+
+  test('neither RomM nor the ROM: asks for the folder, as before', () async {
     expect(() => azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\nope\p.3ds'),
+        throwsA(isA<SaveMappingRequiredException>()));
+  });
+
+  test('a ROM id that isn\'t a 3DS title path, or a failed read, asks for the folder', () async {
+    fromRom = const SigilId(titleId: 'x', rawSerial: '', saveId: '../../x', platform: '3ds', fromBinary: false);
+    expect(() => azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\a.3ds'),
+        throwsA(isA<SaveMappingRequiredException>()));
+    final failing = AzaharSaveStrategy(await StubDirectoryService.create(exePath: p.join(dir.path, 'azahar.exe')),
+        platform: const PlatformInfo('windows', environment: {}),
+        identify: (path, {platform}) async => throw const SigilException(-1, 'unreadable'));
+    expect(() => failing.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\b.3ds'),
         throwsA(isA<SaveMappingRequiredException>()));
   });
 
