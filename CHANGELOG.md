@@ -85,6 +85,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Cemu (Wii U) opens an encrypted disc image (`.wux`, `.wud`) whose key
+  sits beside it as `<name>.key`, as Redump sets have it: Gargosy adds the key
+  to the profile's `keys.txt` before the game starts. Before, Cemu asked for
+  the key.
 - Azahar (3DS) syncs saves when RomM doesn't know the game's title id:
   Gargosy reads it from the ROM. Before, no 3DS save was found to upload.
 - Downloading a game of several files (RomM sends them as one zip) works
