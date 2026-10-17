@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Azahar's save states (3DS) sync with RomM when "Save states on RomM" is on.
+  Azahar can't start in a state, so load it from Azahar's menu (#64).
 - Flycast's save states (Dreamcast) sync with RomM when "Save states on RomM"
   is on, and Resume starts a game straight in one (#63).
 - MAME's save states sync with RomM when "Save states on RomM" is on, and

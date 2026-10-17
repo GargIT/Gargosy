@@ -35,6 +35,12 @@ class AzaharStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => true;
 
+  /// Gargosy (#64): states sync through RomM (AzaharSaveStrategy). Azahar
+  /// has no option to load a state at start, so there's no Resume: a state
+  /// that came down is loaded from Azahar's own menu.
+  @override
+  bool get supportsStateSync => true;
+
   @override
   String resolveSavePath(Game game) => '';
 }
