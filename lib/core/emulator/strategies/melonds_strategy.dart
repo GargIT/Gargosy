@@ -42,6 +42,12 @@ class MelonDSStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => true;
 
+  /// Gargosy (#65): states sync through RomM (MelonDsSaveStrategy). melonDS
+  /// has no option to load a state at start (its CLI: -b, -f, -a, -A), so
+  /// there's no Resume: a state that came down is loaded from its menu.
+  @override
+  bool get supportsStateSync => true;
+
   @override
   Future<void> launch(Game game, String romPath) async {
     // On Linux the active linux strategy (EmuDeck/RetroDECK/Native) handles

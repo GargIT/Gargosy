@@ -29,6 +29,18 @@ class MAMEStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => false;
 
+  /// Gargosy (#62): states sync through RomM (MameSaveStrategy, states only).
+  @override
+  bool get supportsStateSync => true;
+
+  @override
+  bool get supportsStateLoadOnLaunch => true;
+
+  /// MAME: `-state <file>` loads the state at start; a full path is taken
+  /// as it is (src/emu/machine.cpp, compose_saveload_filename).
+  @override
+  List<String> stateLoadArgs(String statePath) => ['-state', statePath];
+
   @override
   String resolveSavePath(Game game) => '';
 }

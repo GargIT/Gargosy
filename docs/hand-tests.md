@@ -88,3 +88,23 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 
 30. [ ] With "Save states on RomM" on: in profile A, play a GBA game in mGBA, save a state to a slot (Shift+F1) and quit. The state is on RomM, with its picture on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it.
 31. [ ] The same with a Game Boy (or Game Boy Color) game.
+
+## MAME save states (#62)
+
+32. [ ] With "Save states on RomM" on: in profile A, play an arcade game in MAME, save a state (Shift+F7, then a key, e.g. 1) and quit. The state is on RomM. In profile B, it comes down before launch and Resume starts the game in it.
+
+## Flycast save states (#63)
+
+33. [ ] With "Save states on RomM" on: in profile A, play a Dreamcast game in Flycast, save a state and quit. The state is on RomM, with its picture on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it (Flycast loads the slot at boot). Afterwards, Flycast's own "load state on start" setting is as it was (the Resume setting is for that launch only).
+
+## Azahar save states (#64)
+
+34. [ ] With "Save states on RomM" on: in profile A, play a 3DS game in Azahar, save a state to a slot and quit. The state is on RomM. In profile B, start the game: the state is in Azahar's Load State menu under that slot, and loading it continues where A stopped.
+
+## melonDS save states (#65)
+
+35. [ ] With "Save states on RomM" on: in profile A, play a DS game in melonDS, save a state to a slot and quit. The state is on RomM. In profile B, start the game: the state is in melonDS's Load State menu under that slot, and loading it continues where A stopped.
+
+## ares save states (#66)
+
+36. [ ] With "Save states on RomM" on: in profile A, play a game in ares (e.g. N64), save a state to a slot and quit. The state is on RomM. In profile B, it comes down before launch and Resume starts the game in it.

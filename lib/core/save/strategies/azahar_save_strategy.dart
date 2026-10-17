@@ -1,4 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: StateSyncCapable (#64): `<program id>.<NN>.cst` in user\states;
+// Azahar can't load a state from its command line, so states sync only.
 import 'dart:io' as io;
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
@@ -10,7 +12,9 @@ import '../../romm/romm_models.dart';
 import '../../../sigil/rom_game_ids.dart';
 import '../../../sigil/sigil_engine.dart';
 import '../../storage/directory_service.dart';
+import '../save_state_info.dart';
 import '../save_strategy.dart';
+import '../state_sync_capable.dart';
 
 // ─── Strategy ────────────────────────────────────────────────────────────────
 
@@ -18,7 +22,7 @@ import '../save_strategy.dart';
 ///
 /// Follows the Eden pattern: requires manual folder mapping from the 'sdmc' 
 /// directory if automatic resolution is not possible.
-class AzaharSaveStrategy extends SaveStrategy {
+class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   // ignore: unused_field
   final PlatformInfo _platform;
@@ -92,6 +96,82 @@ class AzaharSaveStrategy extends SaveStrategy {
       throw Exception('Save directory not found for Azahar at $resolvedPath. Please launch Azahar at least once to generate save data.');
     }
     return resolvedPath;
+  }
+
+  // ─── Save states (Gargosy, #64) ──────────────────────────────────────────
+  //
+  // Azahar names a state `<program id as 16 upper hex>.<NN>.cst` in its
+  // user\states folder, slots 0 (Quick Save) to 11; `.movieXXXX.NN.cst`
+  // belong to a movie and are never synced (src/core/savestate.cpp). A state
+  // starts with a 256-byte header: `CST` 0x1B, the program id, the git
+  // revision, the time, the build name and the build version.
+
+  static final _statePattern = RegExp(r'^([0-9A-Fa-f]{16})\.(\d{2})\.cst$');
+  static const _magic = [0x43, 0x53, 0x54, 0x1B];
+  static const _headerSize = 256;
+
+  /// The game's program id (`000400000009F300`): RomM's, else the ROM's.
+  Future<String?> _programId(Game game, String romPath) async {
+    final titlePath = await GameIdResolver.resolve(
+      label: 'Azahar ${game.name}',
+      server: rommTitlePath(game.saveTarget),
+      local: () => _titlePathFromRom(romPath),
+    );
+    return titlePath?.replaceAll('/', '').toUpperCase();
+  }
+
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async =>
+      p.join(await _getAzaharSaveBase(platformSlug: game.platformSlug), 'states');
+
+  @override
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
+    final id = await _programId(game, romPath);
+    if (id == null) return null;
+    return (String fileName) {
+      final m = _statePattern.firstMatch(fileName);
+      if (m == null || m.group(1)!.toUpperCase() != id) return false;
+      return int.parse(m.group(2)!) <= 11;
+    };
+  }
+
+  @override
+  bool looksLikeValidState(Uint8List bytes) {
+    if (bytes.length < _headerSize) return false;
+    for (var i = 0; i < _magic.length; i++) {
+      if (bytes[i] != _magic[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  StateSlot slotOf(String fileName) {
+    final m = _statePattern.firstMatch(fileName);
+    return m == null ? UnknownStateSlot(fileName) : NumberedStateSlot(int.parse(m.group(2)!));
+  }
+
+  /// The build version the header records (`2124`), as Azahar compares it.
+  @override
+  Future<StateFileInfo> describeState(io.File file) async {
+    final base = await super.describeState(file);
+    String? version;
+    io.RandomAccessFile? raf;
+    try {
+      raf = await file.open();
+      final head = await raf.read(_headerSize);
+      if (looksLikeValidState(head) && ByteData.sublistView(head).getUint32(84, Endian.little) == 0) {
+        final bytes = head.sublist(64, 84).takeWhile((c) => c != 0).toList();
+        if (bytes.every((c) => c >= 0x20 && c <= 0x7E)) {
+          final text = String.fromCharCodes(bytes).trim();
+          if (text.isNotEmpty) version = text;
+        }
+      }
+    } catch (e) {
+      debugPrint('[Azahar] cannot read the state header of ${file.path}: $e');
+    } finally {
+      await raf?.close();
+    }
+    return StateFileInfo(savedAt: base.savedAt, emulatorVersion: version);
   }
 
   @override

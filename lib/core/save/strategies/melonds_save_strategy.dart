@@ -1,4 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: StateSyncCapable (#65): `<ROM stem>.ml<N>` in portable\states;
+// melonDS can't load a state from its command line, so states sync only.
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -7,13 +9,15 @@ import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
 import '../../storage/profile_rooted.dart';
+import '../save_state_info.dart';
 import '../save_strategy.dart';
+import '../state_sync_capable.dart';
 
 /// Save strategy for melonDS (Nintendo DS).
 ///
 /// Checks the RetroArch save directory as fallback for users running
 /// RetroArch with the melonDS / DeSmuME core.
-class MelonDsSaveStrategy extends SaveStrategy {
+class MelonDsSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
   String? _cachedRetroarchDir;
@@ -26,6 +30,67 @@ class MelonDsSaveStrategy extends SaveStrategy {
 
   @override
   bool get shouldZip => false;
+
+  // ─── Save states (Gargosy, #65) ──────────────────────────────────────────
+  //
+  // melonDS names a state `<ROM stem>.ml<N>` in its SavestatePath
+  // (src/frontend/qt_sdl/EmuInstance.cpp, getSavestateName), slots 1–8 from
+  // its menu; Gargosy sets that path to <data>\portable\states (#15). A state
+  // starts `MELN` and its version (src/Savestate.cpp).
+
+  static final _slotSuffix = RegExp(r'\.ml(\d)$');
+
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async {
+    if (_directoryService is! ProfileRootedDirectories) {
+      throw StateError("melonDS's state folder is only known in a Gargosy profile");
+    }
+    return p.join(await _directoryService.getEmulatorAppSupportDirectory('melonds'), 'portable', 'states');
+  }
+
+  @override
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
+    final stems = {
+      p.basenameWithoutExtension(romPath).toLowerCase(),
+      if (game.fsName case final fs?) p.basenameWithoutExtension(fs).toLowerCase(),
+    }..removeWhere((s) => s.isEmpty);
+    if (stems.isEmpty) return null;
+    return (String fileName) {
+      if (fileName != p.basename(fileName) || fileName.contains(r'\')) return false;
+      final m = _slotSuffix.firstMatch(fileName);
+      return m != null && stems.contains(fileName.substring(0, m.start).toLowerCase());
+    };
+  }
+
+  @override
+  bool looksLikeValidState(Uint8List bytes) => bytes.length >= 16 && String.fromCharCodes(bytes.sublist(0, 4)) == 'MELN';
+
+  @override
+  StateSlot slotOf(String fileName) {
+    final m = _slotSuffix.firstMatch(fileName);
+    return m == null ? UnknownStateSlot(fileName) : NumberedStateSlot(int.parse(m.group(1)!));
+  }
+
+  /// The state format the header records (`14.x`).
+  @override
+  Future<StateFileInfo> describeState(io.File file) async {
+    final base = await super.describeState(file);
+    String? format;
+    io.RandomAccessFile? raf;
+    try {
+      raf = await file.open();
+      final head = await raf.read(16);
+      if (looksLikeValidState(head)) {
+        final d = ByteData.sublistView(head);
+        format = '${d.getUint16(4, Endian.little)}.${d.getUint16(6, Endian.little)}';
+      }
+    } catch (e) {
+      debugPrint('[melonDS] cannot read the state header of ${file.path}: $e');
+    } finally {
+      await raf?.close();
+    }
+    return StateFileInfo(savedAt: base.savedAt, formatId: format);
+  }
 
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {

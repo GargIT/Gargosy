@@ -10,6 +10,9 @@ import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Any game: the lookup goes by emulator (MAME's states-only strategy too).
+final _anyGame = Game(id: '1', name: 'Game', fileSize: 0);
+
 void main() {
   test('every emulator advertising state sync has a StateSyncCapable save strategy', () async {
     SharedPreferences.setMockInitialValues({});
@@ -32,12 +35,12 @@ void main() {
       final strategy = registry.getStrategyById(id);
       if (strategy == null || !strategy.supportsStateSync) continue;
       advertising.add(id);
-      expect(saveSync.getStrategyForSlug(null, emulatorId: id), isA<StateSyncCapable>(),
+      expect(saveSync.stateStrategyForGame(_anyGame, emulatorId: id), isA<StateSyncCapable>(),
           reason: '$id advertises supportsStateSync but its save strategy is not StateSyncCapable');
     }
 
-    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba']),
-        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60) and mGBA (#61) are the emulators with state sync so far');
+    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba', 'mame', 'flycast', 'azahar', 'melonds', 'ares']),
+        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60), mGBA (#61), MAME (#62), Flycast (#63), Azahar (#64), melonDS (#65) and ares (#66) are the emulators with state sync so far');
   });
 
   test('every emulator that can load a state on launch has a StateSyncCapable save strategy', () async {
@@ -61,12 +64,12 @@ void main() {
       final strategy = registry.getStrategyById(id);
       if (strategy == null || !strategy.supportsStateLoadOnLaunch) continue;
       advertising.add(id);
-      expect(saveSync.getStrategyForSlug(null, emulatorId: id), isA<StateSyncCapable>(),
+      expect(saveSync.stateStrategyForGame(_anyGame, emulatorId: id), isA<StateSyncCapable>(),
           reason: '$id advertises supportsStateLoadOnLaunch but its save strategy is not StateSyncCapable');
     }
 
-    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba']),
-        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60) and mGBA (#61) are the emulators that can load a state on launch so far');
+    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba', 'mame', 'flycast', 'ares']),
+        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60), mGBA (#61), MAME (#62), Flycast (#63) and ares (#66) are the emulators that can load a state on launch so far');
   });
 
   test('emulators default to not loading a state on launch', () async {

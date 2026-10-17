@@ -8,6 +8,16 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- ares' save states sync with RomM when "Save states on RomM" is on, and
+  Resume starts a game straight in one (#66).
+- melonDS's save states (DS) sync with RomM when "Save states on RomM" is on.
+  melonDS can't start in a state, so load it from melonDS's menu (#65).
+- Azahar's save states (3DS) sync with RomM when "Save states on RomM" is on.
+  Azahar can't start in a state, so load it from Azahar's menu (#64).
+- Flycast's save states (Dreamcast) sync with RomM when "Save states on RomM"
+  is on, and Resume starts a game straight in one (#63).
+- MAME's save states sync with RomM when "Save states on RomM" is on, and
+  Resume starts an arcade game straight in one (#62).
 - mGBA's save states (GBA, Game Boy, Game Boy Color) sync with RomM when
   "Save states on RomM" is on, and Resume starts a game straight in one (#61).
 - Dolphin's save states (GameCube and Wii) sync with RomM when "Save states on

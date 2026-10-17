@@ -35,6 +35,8 @@ import 'strategies/mgba_save_strategy.dart';
 import 'strategies/ppsspp_save_strategy.dart';
 import 'strategies/cemu_save_strategy.dart';
 import 'strategies/azahar_save_strategy.dart';
+import 'strategies/flycast_save_strategy.dart';
+import 'strategies/mame_save_strategy.dart';
 import 'strategies/scummvm_save_strategy.dart';
 import '../emulator/strategy_registry.dart';
 import '../platform/platform_info.dart';
@@ -137,6 +139,10 @@ class SaveSyncService {
   late final AresSaveStrategy _ares;
   late final ScummVmSaveStrategy _scummvm;
 
+  /// Gargosy (#62): strategies for emulators whose states sync but whose
+  /// saves don't, by emulator id; never seen by the save pipeline.
+  late final Map<String, SaveStrategy> _stateOnly;
+
   /// [platform] is the OS the strategies look for emulators on; tests pass
   /// one with a temporary home.
   SaveSyncService(this._rommService, this._directoryService, this._strategyRegistry, this._prefs,
@@ -167,6 +173,11 @@ class SaveSyncService {
     _azahar = AzaharSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
     _ares = AresSaveStrategy(_directoryService, platform: platform);
     _scummvm = ScummVmSaveStrategy(_directoryService);
+    _stateOnly = {
+      'mame': MameSaveStrategy(_directoryService),
+      // Flycast's saves go through sigil (_flycast); its states through this (#63).
+      'flycast': FlycastSaveStrategy(_directoryService),
+    };
   }
 
   /// Returns the manual Title ID mapping for a given game.
@@ -334,6 +345,15 @@ class SaveSyncService {
   /// getStrategyForGame, set up for [game] (RetroArch: [coreOverride], else
   /// the game's chosen core). Call it inside [exclusive]: the strategies are
   /// shared by every game.
+  /// Gargosy (#62): the strategy save states go through: a states-only
+  /// strategy for [emulatorId] (MAME, Flycast) first, since [strategyForGame] falls
+  /// back to another emulator's for the platform (RetroArch's for arcade);
+  /// else [strategyForGame]. State sync and Resume use this; the save
+  /// pipeline uses [strategyForGame], unchanged.
+  SaveStrategy? stateStrategyForGame(Game game, {String? emulatorId, String? coreOverride}) =>
+      (emulatorId == null ? null : _stateOnly[emulatorId.toLowerCase()]) ??
+      strategyForGame(game, emulatorId: emulatorId, coreOverride: coreOverride);
+
   SaveStrategy? strategyForGame(Game game, {String? emulatorId, String? coreOverride}) {
     final strategy = getStrategyForGame(game, emulatorId: emulatorId);
     if (strategy != null) {

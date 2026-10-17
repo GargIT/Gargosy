@@ -83,6 +83,21 @@ class AresStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => true;
 
+  /// Gargosy (#66): states sync through RomM (AresSaveStrategy).
+  @override
+  bool get supportsStateSync => true;
+
+  @override
+  bool get supportsStateLoadOnLaunch => true;
+
+  /// ares: `--save-state <slot>` (1-9) loads that slot once the game starts
+  /// (desktop-ui/desktop-ui.cpp); the state is in place under its slot's name.
+  @override
+  List<String> stateLoadArgs(String statePath) => ['--save-state', '${AresSaveStrategy.stateSlot(p.basename(statePath)) ?? 1}'];
+
+  @override
+  bool canLoadState(String fileName) => AresSaveStrategy.stateSlot(fileName) != null;
+
   /// Returns the Ares --system flag for a given Gargosy platform slug.
   String? getSystemNameForSlug(String? slug) {
     if (slug == null) return null;
@@ -95,8 +110,11 @@ class AresStrategy extends EmulatorStrategy {
     return ['--system', systemName];
   }
 
+  /// [launch] and [launchWithHandle] come here through the base class.
+  /// Gargosy (#66): the ExtraArgs variants are overridden, not [launch], so a
+  /// Resume's `--save-state` reaches ares with `--system`.
   @override
-  Future<void> launch(Game game, String romPath) async {
+  Future<void> launchWithExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
     final exePath = await findExecutable();
     if (exePath == null) throw Exception('$name not found. Please download it first.');
 
@@ -106,14 +124,14 @@ class AresStrategy extends EmulatorStrategy {
     }
 
     final normalizedRomPath = p.absolute(p.normalize(romPath));
-    final args = _buildArgs(systemName);
+    final args = [..._buildArgs(systemName), ...extraArgs];
     await preLaunch(game, romPath);
     await directoryService.launchGame(game, normalizedRomPath, emulatorId, exePath, args: args);
     await postLaunch(game, romPath);
   }
 
   @override
-  Future<Process?> launchWithHandle(Game game, String romPath, {String? coreName}) async {
+  Future<Process?> launchWithHandleAndExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
     final exePath = await findExecutable();
     if (exePath == null) throw Exception('$name not found. Please download it first.');
 
@@ -123,7 +141,7 @@ class AresStrategy extends EmulatorStrategy {
     }
 
     final normalizedRomPath = p.absolute(p.normalize(romPath));
-    final args = _buildArgs(systemName);
+    final args = [..._buildArgs(systemName), ...extraArgs];
     await preLaunch(game, romPath);
     final process = await directoryService.launchGameWithHandle(game, normalizedRomPath, emulatorId, exePath, args: args);
     await process?.exitCode;

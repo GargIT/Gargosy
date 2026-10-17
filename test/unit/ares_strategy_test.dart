@@ -160,6 +160,15 @@ void main() {
       expect(mockDir.lastArgs, isNot(contains('--no-file-prompt')));
     });
 
+    test("a Resume (#66): --system, then --save-state with the state's slot", () async {
+      final game = _makeGame('Test.n64', 'n64');
+      await strategy.launchWithHandleAndExtraArgs(game, '/roms/test.n64',
+          extraArgs: strategy.stateLoadArgs('/data/saves/Nintendo 64/test.bs3'));
+      expect(mockDir.lastArgs, ['--system', 'Nintendo 64', '--save-state', '3']);
+      await strategy.launchWithExtraArgs(game, '/roms/test.n64', extraArgs: strategy.stateLoadArgs('/x/test.bs7'));
+      expect(mockDir.lastArgs, ['--system', 'Nintendo 64', '--save-state', '7']);
+    });
+
     test('launch uses correct exe path', () async {
       final game = _makeGame('Test.gba', 'gba');
       await strategy.launch(game, '/roms/test.gba');
