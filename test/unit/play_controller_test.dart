@@ -164,9 +164,13 @@ class FakeEngine implements PlayEngine {
     return statePull;
   }
 
+  /// The state the last resume checked.
+  ResumeEntry? resumed;
+
   @override
   Future<ResumeCheck> checkResume(ResumeEntry entry, Game game, String romPath, StatePull pull) async {
     steps.add('check');
+    resumed = entry;
     return check;
   }
 
