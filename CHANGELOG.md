@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- MAME's save states sync with RomM when "Save states on RomM" is on, and
+  Resume starts an arcade game straight in one (#62).
 - mGBA's save states (GBA, Game Boy, Game Boy Color) sync with RomM when
   "Save states on RomM" is on, and Resume starts a game straight in one (#61).
 - Dolphin's save states (GameCube and Wii) sync with RomM when "Save states on

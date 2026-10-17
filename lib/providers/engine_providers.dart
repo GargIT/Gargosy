@@ -100,7 +100,7 @@ final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
   return StateSyncService(
     romm,
     prefs,
-    sync.strategyForGame,
+    sync.stateStrategyForGame,
     exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'),
     emulatorSyncs: (id) => ref.read(strategyRegistryProvider)?.getStrategyById(id)?.supportsStateSync ?? false,
   );
@@ -115,7 +115,7 @@ final resumeServiceProvider = Provider<ResumeService?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   return ResumeService(
     emulatorsFor: registry.getAllStrategiesForSlug,
-    resolveSaveStrategy: sync.strategyForGame,
+    resolveSaveStrategy: sync.stateStrategyForGame,
     exclusive: sync.exclusive,
     prefs: prefs,
     api: romm,
