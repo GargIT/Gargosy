@@ -7,6 +7,7 @@ import 'dart:io' as io;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/ini_file.dart';
+import 'package:gargosy/core/save/strategies/dolphin_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/duckstation_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/pcsx2_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
@@ -94,6 +95,17 @@ void main() {
       final strategy = PpssppSaveStrategy(dirs, platform: sandboxedPlatform(paths));
       final psp = Game.fromJson({...gameJson(3, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp'});
       expect(await strategy.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'), p.join(stick, 'PSP', 'PPSSPP_STATE'));
+    });
+  });
+
+  group('Dolphin (#60)', () {
+    test(r"--user=<data>: states in <data>\StateSaves, where they're read", () async {
+      firstRun('dolphin');
+      final args = await ProfileLaunchConfig.of('dolphin')!.prepare(ctx('dolphin'));
+      final user = args.firstWhere((a) => a.startsWith('--user=')).substring('--user='.length);
+      final strategy = DolphinSaveStrategy(dirs, platform: sandboxedPlatform(paths));
+      final gc = Game.fromJson({...gameJson(4, 'Zelda', fsName: 'Zelda.rvz'), 'platform_slug': 'ngc'});
+      expect(await strategy.stateDirectory(gc, r'D:\roms\ngc\Zelda.rvz'), p.join(user, 'StateSaves'));
     });
   });
 

@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Dolphin's save states (GameCube and Wii) sync with RomM when "Save states on
+  RomM" is on, and Resume starts a game straight in one (#60).
 - PPSSPP's save states sync with RomM when "Save states on RomM" is on, and
   Resume starts a PSP game straight in one (#59).
 - Home has an Installed games shelf, between Continue playing and Recently

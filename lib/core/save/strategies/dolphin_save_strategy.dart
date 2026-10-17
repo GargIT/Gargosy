@@ -1,4 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: StateSyncCapable (#60): states in StateSaves\, the game by its
+// disc id (RomM's, the disc's, else sigil's), Resume with `-s` (DolphinStrategy).
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:io';
@@ -10,18 +12,25 @@ import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
+import '../../../sigil/rom_game_ids.dart';
+import '../../../sigil/sigil_engine.dart';
+import '../save_state_info.dart';
 import '../save_strategy.dart';
+import '../state_sync_capable.dart';
+import 'dolphin_state_file.dart';
 
 /// Save strategy for Dolphin emulator (GameCube / Wii).
 ///
 /// Refined to support macOS and Windows user directories and Wii/GC specific paths.
-class DolphinSaveStrategy extends SaveStrategy {
+class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
   // ignore: unused_field
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
+  final IdentifyRom _identify;
 
-  DolphinSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  DolphinSaveStrategy(this._directoryService, {PlatformInfo? platform, IdentifyRom? identify})
+      : _platform = platform ?? PlatformInfo.current,
+        _identify = identify ?? SigilEngine.identify;
 
   @override
   String get strategyId => 'dolphin';
@@ -108,6 +117,66 @@ class DolphinSaveStrategy extends SaveStrategy {
   @visibleForTesting
   Future<String?> gameIdFor(Game game, String romPath) async =>
       GameIdResolver.server('Dolphin ${game.name}', _rommGameId(game)) ?? await _extractGameId(romPath);
+
+  // ─── Save states (Gargosy, #60) ──────────────────────────────────────────
+  //
+  // Dolphin names a state `<GameID>.s01`–`.s10` in User\StateSaves, the
+  // 6-character Game ID being the disc id and the maker (`GZLE01`). Its
+  // `lastState.sav` (the undo of a load), `undo.dtm` and the `.dtm` movies
+  // beside states are never synced (Source/Core/Core/State.cpp).
+
+  static final _statePattern = RegExp(r'^([A-Za-z0-9]{4})[A-Za-z0-9]{2}\.s(\d{2})$');
+
+  /// Disc ids sigil read from ROMs this session, by ROM path.
+  final _readIds = <String, String>{};
+
+  /// The 4-character disc id states are named by: [gameIdFor], else sigil's.
+  Future<String?> _stateGameId(Game game, String romPath) async {
+    final id = await gameIdFor(game, romPath).catchError((Object _) => null);
+    if (id != null && RegExp(r'^[A-Za-z0-9]{4}').hasMatch(id)) return id.substring(0, 4).toUpperCase();
+    final known = _readIds[romPath];
+    if (known != null) return known;
+    try {
+      final platform = game.platformSlug?.toLowerCase() == 'wii' ? 'wii' : 'gamecube';
+      final read = (await _identify(romPath, platform: platform))?.rawSerial.toUpperCase() ?? '';
+      if (!RegExp(r'^[A-Z0-9]{4}').hasMatch(read)) return null;
+      return _readIds[romPath] = read.substring(0, 4);
+    } catch (e) {
+      debugPrint('[Dolphin] reading the disc id of $romPath failed: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async =>
+      p.join(await _getUserDir(platformSlug: game.platformSlug), 'StateSaves');
+
+  @override
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
+    final id = await _stateGameId(game, romPath);
+    if (id == null) return null;
+    return (String fileName) {
+      final m = _statePattern.firstMatch(fileName);
+      if (m == null || m.group(1)!.toUpperCase() != id) return false;
+      final slot = int.parse(m.group(2)!);
+      return slot >= 1 && slot <= 10;
+    };
+  }
+
+  @override
+  bool looksLikeValidState(Uint8List bytes) => DolphinStateFile.looksValid(bytes);
+
+  @override
+  StateSlot slotOf(String fileName) {
+    final m = _statePattern.firstMatch(fileName);
+    return m == null ? UnknownStateSlot(fileName) : NumberedStateSlot(int.parse(m.group(2)!));
+  }
+
+  @override
+  Future<StateFileInfo> describeState(File file) async {
+    final base = await super.describeState(file);
+    return StateFileInfo(savedAt: base.savedAt, emulatorVersion: await DolphinStateFile.readVersion(file));
+  }
 
   /// RomM's `save_target` as a disc id: GameCube's is the id itself; Wii's
   /// is the id as 8 hex digits. Anything else (a WAD's path) is no disc id.

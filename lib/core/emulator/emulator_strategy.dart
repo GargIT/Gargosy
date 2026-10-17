@@ -73,6 +73,11 @@ abstract class EmulatorStrategy {
     );
   }
 
+  /// Gargosy (#60): [launchArgs] with this launch's [extraArgs] (e.g.
+  /// [stateLoadArgs]); after them by default. An emulator whose last launch
+  /// argument takes the game as its value (Dolphin's `-e`) puts them first.
+  List<String> argsWith(List<String> extraArgs) => [...launchArgs, ...extraArgs];
+
   Future<void> launch(Game game, String romPath) => launchWithExtraArgs(game, romPath);
 
   Future<Process?> launchWithHandle(Game game, String romPath) =>
@@ -88,7 +93,7 @@ abstract class EmulatorStrategy {
 
     final normalizedRomPath = p.absolute(p.normalize(romPath));
     await preLaunch(game, romPath);
-    await directoryService.launchGame(game, normalizedRomPath, emulatorId, exePath, args: [...launchArgs, ...extraArgs]);
+    await directoryService.launchGame(game, normalizedRomPath, emulatorId, exePath, args: argsWith(extraArgs));
     await postLaunch(game, romPath);
   }
 
@@ -103,7 +108,7 @@ abstract class EmulatorStrategy {
 
     final normalizedRomPath = p.absolute(p.normalize(romPath));
     await preLaunch(game, romPath);
-    final process = await directoryService.launchGameWithHandle(game, normalizedRomPath, emulatorId, exePath, args: [...launchArgs, ...extraArgs]);
+    final process = await directoryService.launchGameWithHandle(game, normalizedRomPath, emulatorId, exePath, args: argsWith(extraArgs));
     await process?.exitCode;
     await postLaunch(game, romPath);
     return process;
