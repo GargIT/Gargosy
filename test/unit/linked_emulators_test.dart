@@ -147,6 +147,52 @@ void main() {
           '<content><GamePaths><Entry>y</Entry><Entry>x</Entry></GamePaths></content>');
     });
 
+    group("a disc's key beside it (Redump's .key) goes into keys.txt", () {
+      const key = [0x54, 0x1b, 0x98, 0x89, 0x51, 0x9b, 0x27, 0xd3, 0x63, 0xcd, 0x21, 0x60, 0x4b, 0x97, 0xc6, 0x7a];
+      const hex = '541b9889519b27d363cd21604b97c67a';
+      late String rom;
+      setUp(() {
+        rom = p.join(root.roms, 'wiiu', 'Mario (Europe)', 'Mario (Europe).wux');
+        write(rom, '');
+      });
+      String keysTxt(LaunchContext c) => p.join(c.data, 'portable', 'keys.txt');
+
+      test('as a hex line, once; what was there is kept', () async {
+        io.File(p.setExtension(rom, '.key')).writeAsBytesSync(key);
+        final c = ctx('cemu');
+        final config = ProfileLaunchConfig.of('cemu')!;
+        await config.prepare(c);
+        write(keysTxt(c), '# Cemu\'s own comment\n');
+        expect(config.gameArgs(c, rom), [rom]);
+        expect(config.gameArgs(c, rom), [rom]);
+        expect(read(keysTxt(c)), "# Cemu's own comment\n$hex # Mario (Europe)\n");
+      });
+
+      test('a key Cemu already has (any case) is not added again; a .key written as hex works too', () async {
+        write(p.setExtension(rom, '.key'), hex.toUpperCase());
+        final c = ctx('cemu');
+        write(keysTxt(c), '${hex.toUpperCase()} # mine');
+        ProfileLaunchConfig.of('cemu')!.gameArgs(c, rom);
+        expect(read(keysTxt(c)), '${hex.toUpperCase()} # mine');
+      });
+
+      test('no keys.txt yet: it is made with the key', () async {
+        io.File(p.setExtension(rom, '.key')).writeAsBytesSync(key);
+        final c = ctx('cemu');
+        ProfileLaunchConfig.of('cemu')!.gameArgs(c, rom);
+        expect(read(keysTxt(c)), '$hex # Mario (Europe)\n');
+      });
+
+      test('no .key, or one that is not a key: nothing written', () async {
+        final c = ctx('cemu');
+        ProfileLaunchConfig.of('cemu')!.gameArgs(c, rom);
+        expect(io.File(keysTxt(c)).existsSync(), isFalse);
+        write(p.setExtension(rom, '.key'), 'not a key');
+        ProfileLaunchConfig.of('cemu')!.gameArgs(c, rom);
+        expect(io.File(keysTxt(c)).existsSync(), isFalse);
+      });
+    });
+
     test("two profiles' MLCs differ", () async {
       final a = await ProfileLaunchConfig.of('cemu')!.prepare(ctx('cemu', profile: 'aaa'));
       final b = await ProfileLaunchConfig.of('cemu')!.prepare(ctx('cemu', profile: 'bbb'));

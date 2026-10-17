@@ -19,19 +19,20 @@ final linkedEmulatorConfigs = <String, ProfileLaunchConfig>{
   // Azahar (3DS, #13): `user\` beside the exe, else %APPDATA%\Azahar.
   'azahar': const LinkedFolderConfig('user', then: _Step(_azahar)),
   // Cemu (Wii U, #14): `portable\` beside the exe; the MLC (the saves) is
-  // the profile's own, given with -m.
-  'cemu': LinkedFolderConfig('portable', then: _Step(_cemu, args: (c) => ['-m', cemuMlc(c)])),
+  // the profile's own, given with -m; a disc's key beside it joins keys.txt.
+  'cemu': LinkedFolderConfig('portable', then: _Step(_cemu, args: (c) => ['-m', cemuMlc(c)], game: addCemuDiscKey)),
   // melonDS (DS, #15): `portable\` beside the exe; saves and states set in
   // its melonDS.toml, never next to the ROM.
   'melonds': const LinkedFolderConfig('portable', then: _Step(_melonDs)),
 };
 
 /// A settings step: [before] edits the profile's files, [args] are the
-/// arguments it adds.
+/// arguments it adds, [game] readies what the game being started needs.
 class _Step extends ProfileLaunchConfig {
-  const _Step(this.before, {this.args});
+  const _Step(this.before, {this.args, this.game});
   final void Function(LaunchContext c) before;
   final List<String> Function(LaunchContext c)? args;
+  final void Function(LaunchContext c, String romPath)? game;
 
   @override
   Future<List<String>> prepare(LaunchContext c) async {
@@ -41,6 +42,12 @@ class _Step extends ProfileLaunchConfig {
 
   @override
   void repoint(LaunchContext c) => before(c);
+
+  @override
+  List<String> gameArgs(LaunchContext c, String romPath) {
+    game?.call(c, romPath);
+    return super.gameArgs(c, romPath);
+  }
 }
 
 /// The shared key files named [names] copied into [folder] when the profile
@@ -111,6 +118,29 @@ void _cemu(LaunchContext c) {
     final updated = addCemuGamePaths(text, c.gameFolders);
     if (updated != text) io.File(c.guard.check(settings.path)).writeAsStringSync(updated);
   }
+}
+
+/// A Wii U disc's key as Redump sets keep it, beside the image
+/// (`<name>.key`: 16 bytes, or 32 hex digits), added to the profile's
+/// keys.txt: Cemu reads keys only from there, one hex line each. A key the
+/// file has already (any case) isn't added again.
+void addCemuDiscKey(LaunchContext c, String romPath) {
+  final keyFile = io.File(p.setExtension(romPath, '.key'));
+  if (!keyFile.existsSync()) return;
+  final bytes = keyFile.readAsBytesSync();
+  final text = String.fromCharCodes(bytes).trim();
+  final key = bytes.length == 16
+      ? [for (final b in bytes) b.toRadixString(16).padLeft(2, '0')].join()
+      : RegExp(r'^[0-9a-fA-F]{32}$').hasMatch(text)
+          ? text.toLowerCase()
+          : null;
+  if (key == null) return;
+  final keys = io.File(c.guard.check(p.join(c.data, 'portable', 'keys.txt')));
+  final had = keys.existsSync() ? keys.readAsStringSync() : '';
+  if (had.toLowerCase().contains(key)) return;
+  final line = '$key # ${p.basenameWithoutExtension(romPath)}\n';
+  keys.parent.createSync(recursive: true);
+  keys.writeAsStringSync(had.isEmpty || had.endsWith('\n') ? '$had$line' : '$had\n$line');
 }
 
 /// [xml] (Cemu's settings.xml) with [paths] in `<GamePaths>` as `<Entry>`s;
