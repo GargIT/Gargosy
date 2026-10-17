@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- ares' save states sync with RomM when "Save states on RomM" is on, and
+  Resume starts a game straight in one (#66).
 - melonDS's save states (DS) sync with RomM when "Save states on RomM" is on.
   melonDS can't start in a state, so load it from melonDS's menu (#65).
 - Azahar's save states (3DS) sync with RomM when "Save states on RomM" is on.

@@ -39,8 +39,8 @@ void main() {
           reason: '$id advertises supportsStateSync but its save strategy is not StateSyncCapable');
     }
 
-    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba', 'mame', 'flycast', 'azahar', 'melonds']),
-        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60), mGBA (#61), MAME (#62), Flycast (#63), Azahar (#64) and melonDS (#65) (the last two without Resume) are the emulators with state sync so far');
+    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba', 'mame', 'flycast', 'azahar', 'melonds', 'ares']),
+        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60), mGBA (#61), MAME (#62), Flycast (#63), Azahar (#64), melonDS (#65) and ares (#66) are the emulators with state sync so far');
   });
 
   test('every emulator that can load a state on launch has a StateSyncCapable save strategy', () async {
@@ -68,8 +68,8 @@ void main() {
           reason: '$id advertises supportsStateLoadOnLaunch but its save strategy is not StateSyncCapable');
     }
 
-    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba', 'mame', 'flycast']),
-        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60), mGBA (#61), MAME (#62) and Flycast (#63) are the emulators that can load a state on launch so far');
+    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba', 'mame', 'flycast', 'ares']),
+        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60), mGBA (#61), MAME (#62), Flycast (#63) and ares (#66) are the emulators that can load a state on launch so far');
   });
 
   test('emulators default to not loading a state on launch', () async {

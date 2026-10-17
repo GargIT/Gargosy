@@ -1,4 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: StateSyncCapable (#66): `<ROM stem>.bs<N>` beside the game's saves;
+// Resume with `--save-state <N>`.
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:developer' as dev;
@@ -8,7 +10,10 @@ import 'package:path/path.dart' as p;
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
+import '../../storage/profile_rooted.dart';
+import '../save_state_info.dart';
 import '../save_strategy.dart';
+import '../state_sync_capable.dart';
 import 'package:gargosy/core/emulator/platform_slugs.dart';
 
 /// Confirmed battery-save extensions (sync these).
@@ -88,7 +93,7 @@ bool _isLogOnlyPlatform(String platformName) {
 ///   Battery saves: `.ram`, `.eeprom`, `.flash`, `.chr` (platform-dependent)
 ///   State files: `.bs1`-`.bs9` (excluded from save sync)
 ///   RTC: `.rtc` (excluded — world clock, not player progress)
-class AresSaveStrategy extends SaveStrategy {
+class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
 
@@ -294,6 +299,50 @@ class AresSaveStrategy extends SaveStrategy {
   /// The name ares gives [romPath]'s saves: the file name without its
   /// extension, in its own case.
   static String _saveStem(String romPath) => p.basenameWithoutExtension(romPath);
+
+  // ─── Save states (Gargosy, #66) ──────────────────────────────────────────
+  //
+  // ares writes a state to `<Paths/Saves>\<system>\<ROM stem>.bs<N>`, slots
+  // 1–9, beside the game's saves; `.bsu` and `.blu` are its undo files
+  // (desktop-ui/program/states.cpp, Emulator::locate).
+
+  static final _stateSuffix = RegExp(r'\.bs([1-9])$');
+
+  /// The slot of a state [fileName] (1–9), or null.
+  static int? stateSlot(String fileName) {
+    final m = _stateSuffix.firstMatch(fileName);
+    return m == null ? null : int.parse(m.group(1)!);
+  }
+
+  /// In a profile, `<data>\saves\<system>` (ares is started with
+  /// `--setting Paths/Saves=<data>\saves\`); elsewhere the saves folder,
+  /// never the ROM folder.
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async {
+    final folder = _platformFolderNames[canonicalPlatformSlug(game.platformSlug?.toLowerCase() ?? '')];
+    if (folder == null) throw StateError('ares runs no ${game.platformSlug} games');
+    if (_directoryService is ProfileRootedDirectories) {
+      return p.join(await _directoryService.getEmulatorAppSupportDirectory('ares'), 'saves', folder);
+    }
+    return await _savesDirFor(game, romPath, writing: true) ?? (throw StateError("ares' saves folder is not set"));
+  }
+
+  @override
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
+    final stem = _saveStem(romPath).toLowerCase();
+    if (stem.isEmpty) return null;
+    return (String fileName) {
+      if (fileName != p.basename(fileName) || fileName.contains(r'\')) return false;
+      final m = _stateSuffix.firstMatch(fileName);
+      return m != null && fileName.substring(0, m.start).toLowerCase() == stem;
+    };
+  }
+
+  @override
+  StateSlot slotOf(String fileName) {
+    final n = stateSlot(fileName);
+    return n == null ? UnknownStateSlot(fileName) : NumberedStateSlot(n);
+  }
 
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
