@@ -48,10 +48,10 @@ For each system below, play a game in RetroArch through Gargosy, save in-game an
 
 For each one: play a real game in profile A and save. Then play it in profile B, which starts without A's save. A's save is on RomM.
 
-15. [ ] Eden (Switch) (#12)
+15. [x] Eden (Switch) (#12)
 16. [ ] Azahar (3DS) (#13)
 17. [ ] Cemu (Wii U) (#14)
-18. [ ] melonDS (DS) (#15)
+18. [x] melonDS (DS) (#15)
 
 ## Updates (#16)
 
