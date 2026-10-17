@@ -8,7 +8,7 @@ import 'pcsx2_folder_card.dart';
 /// Where an emulator's data sits inside a profile's `emulators\<id>\` folder,
 /// as Freegosy's save strategies look for it (docs/emulator-profiles.md).
 class EmulatorLayout {
-  const EmulatorLayout(this.id, {this.saveView = '', this.appSupport = '', this.seed = const [], this.ps2Cards = const [], this.pcsx2FolderCards = const []});
+  const EmulatorLayout(this.id, {this.saveView = '', this.appSupport = '', this.seed = const [], this.markers = const [], this.ps2Cards = const [], this.pcsx2FolderCards = const []});
 
   final String id;
 
@@ -25,6 +25,12 @@ class EmulatorLayout {
   /// starts with its RomM save (some strategies refuse a folder that's missing).
   final List<String> seed;
 
+  /// Empty files that tell the save code the profile's folder is the
+  /// emulator's data, from the first pull on (DuckStation's `portable.txt`:
+  /// without it, a new profile's states were found only because Windows
+  /// ignores case, state-sync plan S0.2).
+  final List<String> markers;
+
   /// PS2 memory cards the emulator makes on its first run: Gargosy makes them
   /// (formatted, 8 MB, as PCSX2 does) when there's none yet, so the first
   /// save from RomM goes onto a real card. Without one, Freegosy's restore
@@ -36,10 +42,14 @@ class EmulatorLayout {
   /// it, so PCSX2 doesn't see an unformatted card. A file card stays.
   final List<String> pcsx2FolderCards;
 
-  /// Creates [seed] and [ps2Cards] under [dataDir]. What's there stays.
+  /// Creates [seed], [markers] and [ps2Cards] under [dataDir]. What's there stays.
   void ensureFolders(String dataDir) {
     for (final s in seed) {
       io.Directory(p.join(dataDir, s)).createSync(recursive: true);
+    }
+    for (final m in markers) {
+      final file = io.File(p.join(dataDir, m));
+      if (!file.existsSync()) file.writeAsStringSync('');
     }
     for (final c in ps2Cards) {
       final path = p.join(dataDir, c);
@@ -56,7 +66,7 @@ class EmulatorLayout {
     'dolphin': EmulatorLayout('dolphin', saveView: '_view', seed: ['GC', 'Wii', 'StateSaves']),
     'pcsx2': EmulatorLayout('pcsx2',
         saveView: 'PCSX2', appSupport: 'PCSX2', seed: ['PCSX2/memcards', 'PCSX2/sstates'], pcsx2FolderCards: ['PCSX2/memcards/Mcd001.ps2']),
-    'duckstation': EmulatorLayout('duckstation', seed: ['memcards', 'savestates']),
+    'duckstation': EmulatorLayout('duckstation', seed: ['memcards', 'savestates'], markers: ['portable.txt']),
     'ppsspp': EmulatorLayout('ppsspp', saveView: '_view', seed: ['PSP/SAVEDATA', 'PSP/PPSSPP_STATE', 'PSP/SYSTEM']),
     'retroarch': EmulatorLayout('retroarch', seed: ['saves', 'states'], ps2Cards: ['system/pcsx2/memcards/Mcd001.ps2']),
     'xenia_canary': EmulatorLayout('xenia_canary', seed: ['content']),

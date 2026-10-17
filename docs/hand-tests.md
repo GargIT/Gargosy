@@ -66,3 +66,11 @@ These rows need preview releases published on GitHub.
 Flycast with its per-game VMU setting off (`PerGameVmu = no` in the profile's `emu.cfg`), so every game shares one VMU.
 
 23. [ ] Two Dreamcast games save to the shared VMU. A save sigil can't tie to a game shows under "Unclaimed saves on the shared VMU" on the game page's Saves tab. "Take it" uploads it with that game, and the other game's save on the VMU is untouched. In profile B, the claimed save comes down with the game.
+
+## Save states between profiles (#58)
+
+With "Save states on RomM" on (Settings → Emulator settings) in both profiles. For each: in profile A, play, save a state to a slot and quit. The state is on RomM. In profile B, the state comes down before launch and Resume (Y on the play screen) starts the game in it. Then make a newer state of the same slot in each profile without syncing between them: the next launch says the state differs and keeps this PC's copy.
+
+24. [ ] DuckStation (PS1)
+25. [ ] PCSX2 (PS2)
+26. [ ] RetroArch, a PS1 game (Beetle PSX HW or PCSX ReARMed)

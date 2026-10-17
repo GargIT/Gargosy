@@ -57,6 +57,16 @@ Checked on 2026-10-12 against argosy-sigil v1.0.0 (`third_party/argosy-sigil`), 
 | SNES, GBA, Genesis, NES, NDS, arcade | `snes9x`, `mgba`, `genesis_plus_gx`, `fceumm`, `melonds`, `fbneo` | — | — | sigil's sync refuses them (`unsupported format`): RetroArch's own strategy keeps them |
 | Saturn, Sega CD, Dreamcast | — | — | — | not checked (needs real volumes): RetroArch's own strategy keeps them for now |
 
+## Save states (state-sync plan, #58–#66)
+
+Where each emulator writes its states in a profile, and how far each is checked. "Code" means `test/unit/profile_state_dirs_test.dart` checks that the folder the emulator is told to use is the folder the save code reads; "hand" means a state made in one profile came down and resumed in another (`docs/hand-tests.md`).
+
+| Emulator | States in the profile | Told by | Checked |
+|---|---|---|---|
+| duckstation | `<data>\savestates\<SERIAL>_<N>.sav`, `<SERIAL>_resume.sav` | `[Folders] SaveStates` in the swapped `settings.ini`; `<data>\portable.txt` (seeded) makes the save code read `<data>` before the first run | code (#58); hand: pending |
+| pcsx2 | `<data>\PCSX2\sstates\<SERIAL> (<CRC>).<NN>.p2s` | `-datapath <data>` (PCSX2 adds `PCSX2\`) | code (#58); hand: pending |
+| retroarch | `<data>\states\<core folder>\<content>.state<N>` | `savestate_directory`; `sort_savestates_enable = "true"` and `sort_savestates_by_content_enable = "false"` written when the profile's cfg has none (a choice already there stays) | code (#58); hand: pending |
+
 ## Not supported in v1
 
 None so far. Every installed emulator passed with one of the two mechanisms.

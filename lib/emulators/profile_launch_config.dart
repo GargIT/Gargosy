@@ -284,6 +284,9 @@ void _scummVmFolders(LaunchContext c) {
   file.writeAsStringSync(ini.toText());
 }
 
+/// [key] is set in RetroArch's config [text] (any value).
+bool _hasKey(String text, String key) => RegExp('^\\s*$key\\s*=', multiLine: true).hasMatch(text);
+
 class _RetroArch extends ProfileLaunchConfig {
   const _RetroArch();
 
@@ -323,6 +326,11 @@ class _RetroArch extends ProfileLaunchConfig {
       'savefiles_in_content_dir': 'false',
       'savestates_in_content_dir': 'false',
       'savestate_directory': p.join(c.data, 'states'),
+      // States sorted by core, as RetroArch does by default and the save code
+      // assumes: pinned before its first exit writes them (state-sync plan
+      // S0.2); a choice already in the profile's config stays.
+      if (!_hasKey(text, 'sort_savestates_enable')) 'sort_savestates_enable': 'true',
+      if (!_hasKey(text, 'sort_savestates_by_content_enable')) 'sort_savestates_by_content_enable': 'false',
       'system_directory': systemDir(c),
       if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
       'playlist_directory': p.join(c.data, 'playlists'),

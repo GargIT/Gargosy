@@ -88,6 +88,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Save states on a new profile: DuckStation's are read from the profile's
+  own folder from the first launch on, and RetroArch's state folder is set
+  before its first run, so a state from RomM lands where the emulator looks.
 - Cemu (Wii U) opens an encrypted disc image (`.wux`, `.wud`) whose key
   sits beside it as `<name>.key`, as Redump sets have it: Gargosy adds the key
   to the profile's `keys.txt` before the game starts. Before, Cemu asked for
