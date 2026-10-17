@@ -85,6 +85,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Azahar (3DS) syncs saves when RomM doesn't know the game's title id:
+  Gargosy reads it from the ROM. Before, no 3DS save was found to upload.
 - Downloading a game of several files (RomM sends them as one zip) works
   again: it failed with "object is unsendable" when the zip was unpacked.
 - A zipped game that was unpacked already, but whose zip stayed beside it,

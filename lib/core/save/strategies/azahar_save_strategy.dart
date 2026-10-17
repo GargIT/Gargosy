@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
+import '../../../sigil/rom_game_ids.dart';
+import '../../../sigil/sigil_engine.dart';
 import '../../storage/directory_service.dart';
 import '../save_strategy.dart';
 
@@ -21,9 +23,15 @@ class AzaharSaveStrategy extends SaveStrategy {
   // ignore: unused_field
   final PlatformInfo _platform;
   final Future<void> Function(String gameId, String mapping)? onMappingResolved;
+  final IdentifyRom _identify;
 
-  AzaharSaveStrategy(this._directoryService, {this.onMappingResolved, PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  /// Gargosy: [identify] reads a ROM's title id when RomM has none (sigil).
+  AzaharSaveStrategy(this._directoryService, {this.onMappingResolved, PlatformInfo? platform, IdentifyRom? identify})
+      : _platform = platform ?? PlatformInfo.current,
+        _identify = identify ?? SigilEngine.identify;
+
+  /// Title paths read from ROMs this session, by ROM path.
+  final _fromRom = <String, String>{};
 
   @override
   String get strategyId => 'azahar';
@@ -89,8 +97,14 @@ class AzaharSaveStrategy extends SaveStrategy {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
     final manual = GameIdResolver.clean(_manualMapping);
-    final fromRomm = manual == null ? GameIdResolver.server('Azahar ${game.name}', rommTitlePath(game.saveTarget)) : null;
-    if (manual == null && fromRomm == null) {
+    final titlePath = manual == null
+        ? await GameIdResolver.resolve(
+            label: 'Azahar ${game.name}',
+            server: rommTitlePath(game.saveTarget),
+            local: () => _titlePathFromRom(romPath),
+          )
+        : null;
+    if (manual == null && titlePath == null) {
       debugPrint('[Azahar] FAILED: No manual mapping resolved for ${game.name}');
       throw SaveMappingRequiredException(
           'Could not determine save folder for "${game.name}". '
@@ -99,10 +113,26 @@ class AzaharSaveStrategy extends SaveStrategy {
 
     final base = await _getAzaharSaveBase(platformSlug: game.platformSlug);
     // A mapping is the folder's path from sdmc, as the folder dialog gives it.
-    final mapping = manual ?? await mappingFromSaveTarget(base, fromRomm!);
+    final mapping = manual ?? await mappingFromSaveTarget(base, titlePath!);
     final finalPath = p.join(base, 'sdmc', mapping);
     debugPrint('[Azahar] Final path: $finalPath');
     return finalPath;
+  }
+
+  /// Gargosy: the title path sigil reads from the ROM (`00040000/00033500`),
+  /// checked like RomM's; null when it can't be read (asked again next time,
+  /// the ROM may not be there yet). Read once per ROM.
+  Future<String?> _titlePathFromRom(String romPath) async {
+    final known = _fromRom[romPath];
+    if (known != null) return known;
+    try {
+      final path = rommTitlePath((await _identify(romPath, platform: '3ds'))?.saveId);
+      if (path != null) _fromRom[romPath] = path;
+      return path;
+    } catch (e) {
+      debugPrint('[Azahar] reading $romPath failed: $e');
+      return null;
+    }
   }
 
   /// RomM's 3DS `save_target` as `<high>/<low>` of the base game's title:
