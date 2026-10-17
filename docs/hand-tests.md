@@ -60,3 +60,9 @@ These rows need preview releases published on GitHub.
 19. [x] Settings → About → Updates: the updater window shows its progress and starts Gargosy again when it's done.
 20. [x] On a preview build, About shows the preview version, and its Updates block shows the Preview channel.
 21. [x] A real update from preview N to N+1. Afterwards, the profiles, ROMs, emulators and BIOS files are all still there, and What's new (#3) opens once with N+1's changes.
+
+## Unclaimed saves on Flycast's shared VMU (#56)
+
+Flycast with its per-game VMU setting off (`PerGameVmu = no` in the profile's `emu.cfg`), so every game shares one VMU.
+
+23. [ ] Two Dreamcast games save to the shared VMU. A save sigil can't tie to a game shows under "Unclaimed saves on the shared VMU" on the game page's Saves tab. "Take it" uploads it with that game, and the other game's save on the VMU is untouched. In profile B, the claimed save comes down with the game.

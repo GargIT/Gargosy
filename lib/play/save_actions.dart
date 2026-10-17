@@ -38,8 +38,16 @@ class SaveActions {
       _ref.invalidate(playStatesProvider(key));
       _ref.invalidate(romSavesProvider(game.id));
       _ref.invalidate(romStatesProvider(game.id));
+      _ref.invalidate(unclaimedSavesProvider(key));
     }
   }
+
+  /// The unclaimed save [name] is [game]'s (#56): claimed and uploaded.
+  Future<String?> claim(Game game, SaveMaker who, String name) => _run(game, 'take the save', (e) async {
+        if (!await e.claimSave(game, who, name)) {
+          throw StateError("it's this game's now, but RomM didn't take it yet; it goes up with the next upload");
+        }
+      });
 
   Future<String?> restore(Game game, SaveEntry save, SaveMaker target) =>
       _run(game, 'put the save on this PC', (e) => e.restore(game, save, target));
