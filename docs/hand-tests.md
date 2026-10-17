@@ -92,3 +92,7 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 ## MAME save states (#62)
 
 32. [ ] With "Save states on RomM" on: in profile A, play an arcade game in MAME, save a state (Shift+F7, then a key, e.g. 1) and quit. The state is on RomM. In profile B, it comes down before launch and Resume starts the game in it.
+
+## Flycast save states (#63)
+
+33. [ ] With "Save states on RomM" on: in profile A, play a Dreamcast game in Flycast, save a state and quit. The state is on RomM, with its picture on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it (Flycast loads the slot at boot). Afterwards, Flycast's own "load state on start" setting is as it was (the Resume setting is for that launch only).

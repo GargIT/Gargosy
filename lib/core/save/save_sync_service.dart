@@ -35,6 +35,7 @@ import 'strategies/mgba_save_strategy.dart';
 import 'strategies/ppsspp_save_strategy.dart';
 import 'strategies/cemu_save_strategy.dart';
 import 'strategies/azahar_save_strategy.dart';
+import 'strategies/flycast_save_strategy.dart';
 import 'strategies/mame_save_strategy.dart';
 import 'strategies/scummvm_save_strategy.dart';
 import '../emulator/strategy_registry.dart';
@@ -172,7 +173,11 @@ class SaveSyncService {
     _azahar = AzaharSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
     _ares = AresSaveStrategy(_directoryService, platform: platform);
     _scummvm = ScummVmSaveStrategy(_directoryService);
-    _stateOnly = {'mame': MameSaveStrategy(_directoryService)};
+    _stateOnly = {
+      'mame': MameSaveStrategy(_directoryService),
+      // Flycast's saves go through sigil (_flycast); its states through this (#63).
+      'flycast': FlycastSaveStrategy(_directoryService),
+    };
   }
 
   /// Returns the manual Title ID mapping for a given game.
@@ -341,7 +346,7 @@ class SaveSyncService {
   /// the game's chosen core). Call it inside [exclusive]: the strategies are
   /// shared by every game.
   /// Gargosy (#62): the strategy save states go through: a states-only
-  /// strategy for [emulatorId] (MAME) first, since [strategyForGame] falls
+  /// strategy for [emulatorId] (MAME, Flycast) first, since [strategyForGame] falls
   /// back to another emulator's for the platform (RetroArch's for arcade);
   /// else [strategyForGame]. State sync and Resume use this; the save
   /// pipeline uses [strategyForGame], unchanged.
