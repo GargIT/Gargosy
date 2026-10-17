@@ -9,6 +9,7 @@ import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/ini_file.dart';
 import 'package:gargosy/core/save/strategies/dolphin_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/duckstation_save_strategy.dart';
+import 'package:gargosy/core/save/strategies/mgba_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/pcsx2_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
@@ -106,6 +107,17 @@ void main() {
       final strategy = DolphinSaveStrategy(dirs, platform: sandboxedPlatform(paths));
       final gc = Game.fromJson({...gameJson(4, 'Zelda', fsName: 'Zelda.rvz'), 'platform_slug': 'ngc'});
       expect(await strategy.stateDirectory(gc, r'D:\roms\ngc\Zelda.rvz'), p.join(user, 'StateSaves'));
+    });
+  });
+
+  group('mGBA (#61)', () {
+    test("-C savestatePath=<data>\\states: where they're read", () async {
+      firstRun('mgba');
+      final args = await ProfileLaunchConfig.of('mgba')!.prepare(ctx('mgba'));
+      final told = args.firstWhere((a) => a.startsWith('savestatePath=')).substring('savestatePath='.length);
+      final strategy = MgbaSaveStrategy(dirs, platform: sandboxedPlatform(paths));
+      final gba = Game.fromJson({...gameJson(5, 'Metroid', fsName: 'Metroid.gba'), 'platform_slug': 'gba'});
+      expect(await strategy.stateDirectory(gba, r'D:\roms\gba\Metroid.gba'), told);
     });
   });
 

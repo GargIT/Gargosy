@@ -36,8 +36,8 @@ void main() {
           reason: '$id advertises supportsStateSync but its save strategy is not StateSyncCapable');
     }
 
-    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin']),
-        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59) and Dolphin (#60) are the emulators with state sync so far');
+    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba']),
+        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60) and mGBA (#61) are the emulators with state sync so far');
   });
 
   test('every emulator that can load a state on launch has a StateSyncCapable save strategy', () async {
@@ -65,8 +65,8 @@ void main() {
           reason: '$id advertises supportsStateLoadOnLaunch but its save strategy is not StateSyncCapable');
     }
 
-    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin']),
-        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59) and Dolphin (#60) are the emulators that can load a state on launch so far');
+    expect(advertising, unorderedEquals(['duckstation', 'pcsx2', 'retroarch', 'ppsspp', 'dolphin', 'mgba']),
+        reason: 'DuckStation, PCSX2, RetroArch, PPSSPP (#59), Dolphin (#60) and mGBA (#61) are the emulators that can load a state on launch so far');
   });
 
   test('emulators default to not loading a state on launch', () async {

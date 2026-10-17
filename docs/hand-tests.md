@@ -77,3 +77,8 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 
 28. [ ] With "Save states on RomM" on: in profile A, play a GameCube game in Dolphin, save a state to a slot (Shift+F1) and quit. The state is on RomM. In profile B, it comes down before launch and Resume starts the game in it.
 29. [ ] The same with a Wii game.
+
+## mGBA save states (#61)
+
+30. [ ] With "Save states on RomM" on: in profile A, play a GBA game in mGBA, save a state to a slot (Shift+F1) and quit. The state is on RomM, with its picture on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it.
+31. [ ] The same with a Game Boy (or Game Boy Color) game.

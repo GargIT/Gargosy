@@ -32,6 +32,17 @@ class MGBAStrategy extends EmulatorStrategy {
   @override
   bool get supportsSaveSync => false;
 
+  /// Gargosy (#61): states sync through RomM (MgbaSaveStrategy).
+  @override
+  bool get supportsStateSync => true;
+
+  @override
+  bool get supportsStateLoadOnLaunch => true;
+
+  /// mGBA: `-t <file>` loads the state when the game starts.
+  @override
+  List<String> stateLoadArgs(String statePath) => ['-t', statePath];
+
   @override
   String resolveSavePath(Game game) => '';
 }

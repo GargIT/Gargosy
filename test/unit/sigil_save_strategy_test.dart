@@ -5,9 +5,11 @@ import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/formats/ps2_memory_card.dart';
+import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/state_sync_capable.dart';
 import 'package:gargosy/core/save/strategies/dolphin_save_strategy.dart';
+import 'package:gargosy/core/save/strategies/mgba_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/emulators/pcsx2_folder_card.dart';
@@ -254,6 +256,14 @@ void main() {
     final st = s as StateSyncCapable;
     expect(await st.stateDirectory(gc, r'D:\roms\ngc\Zelda.rvz'), p.join(dir, 'StateSaves'));
     expect((await st.stateFileMatcher(gc, r'D:\roms\ngc\Zelda.rvz'))!('GZLE01.s01'), isTrue);
+  });
+
+  test("mGBA (#61): sigil syncs Game Boy saves, the states go through mGBA's own strategy", () async {
+    final s = mgba(b: MgbaSaveStrategy(_FixedDirs(emulatorDir)));
+    expect(s, isA<StateSyncCapable>());
+    final st = s as StateSyncCapable;
+    expect((await st.stateFileMatcher(_game('gb'), rom))!('Tetris (World).ss1'), isTrue);
+    expect(st.slotOf('Tetris (World).ss4'), const NumberedStateSlot(4));
   });
 
   test('a state-capable old strategy keeps its save states (the wrapper is StateSyncCapable)', () async {

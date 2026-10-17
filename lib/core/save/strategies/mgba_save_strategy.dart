@@ -1,4 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: StateSyncCapable (#61): `<ROM stem>.ss<N>` in the profile's states folder.
 import 'dart:io' as io;
 import 'dart:typed_data';
 import 'package:path/path.dart' as p;
@@ -7,13 +8,16 @@ import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
 import '../../storage/profile_rooted.dart';
+import '../save_state_info.dart';
 import '../save_strategy.dart';
+import '../state_sync_capable.dart';
+import 'mgba_state_file.dart';
 
 /// Save strategy for mGBA (GBA/GBC/GB).
 ///
 /// Checks the RetroArch save directory as fallback for users running
 /// RetroArch with the mGBA core.
-class MgbaSaveStrategy extends SaveStrategy {
+class MgbaSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
   String? _cachedRetroarchDir;
@@ -26,6 +30,58 @@ class MgbaSaveStrategy extends SaveStrategy {
 
   @override
   bool get shouldZip => false;
+
+  // ─── Save states (Gargosy, #61) ──────────────────────────────────────────
+  //
+  // mGBA names a state `<ROM stem>.ss<N>` (src/core/core.c), slots 1–9 from
+  // its menu and 0 for its own use. In a profile mGBA is started with
+  // `-C savestatePath=<data>\states`; elsewhere it keeps them beside the ROM.
+
+  static final _slotPattern = RegExp(r'\.ss(\d)$');
+
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async {
+    if (_directoryService is ProfileRootedDirectories) {
+      return p.join(await _directoryService.getEmulatorAppSupportDirectory('mgba'), 'states');
+    }
+    return io.File(romPath).parent.path;
+  }
+
+  /// The ROM's stem, as mGBA names the state: the file started (a zip's own
+  /// name, mGBA opens zips itself) or RomM's file name.
+  @override
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
+    final stems = {
+      p.basenameWithoutExtension(romPath).toLowerCase(),
+      if (game.fsName case final fs?) p.basenameWithoutExtension(fs).toLowerCase(),
+    }..removeWhere((s) => s.isEmpty);
+    if (stems.isEmpty) return null;
+    return (String fileName) {
+      if (fileName != p.basename(fileName) || fileName.contains(r'\')) return false;
+      final m = _slotPattern.firstMatch(fileName);
+      return m != null && stems.contains(fileName.substring(0, m.start).toLowerCase());
+    };
+  }
+
+  @override
+  bool looksLikeValidState(Uint8List bytes) => MgbaStateFile.looksValid(bytes);
+
+  @override
+  StateSlot slotOf(String fileName) {
+    final m = _slotPattern.firstMatch(fileName);
+    return m == null ? UnknownStateSlot(fileName) : NumberedStateSlot(int.parse(m.group(1)!));
+  }
+
+  /// A state saved with its screenshot is a PNG: the file is the picture.
+  @override
+  Future<Uint8List?> stateScreenshot(io.File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      return MgbaStateFile.isPng(bytes) ? bytes : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
