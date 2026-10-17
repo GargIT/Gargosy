@@ -68,3 +68,7 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 24. [ ] DuckStation (PS1)
 25. [ ] PCSX2 (PS2)
 26. [ ] RetroArch, a PS1 game (Beetle PSX HW or PCSX ReARMed)
+
+## PPSSPP save states (#59)
+
+27. [ ] With "Save states on RomM" on: in profile A, play a PSP game in PPSSPP, save a state to a slot and quit. The state is on RomM, with its screenshot on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it.

@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- PPSSPP's save states sync with RomM when "Save states on RomM" is on, and
+  Resume starts a PSP game straight in one (#59).
 - Home has an Installed games shelf, between Continue playing and Recently
   added: the games on this PC, newest download first. While RomM can't be
   reached it comes first, as On this PC did (#39).

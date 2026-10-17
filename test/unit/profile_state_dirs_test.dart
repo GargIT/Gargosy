@@ -9,6 +9,7 @@ import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/ini_file.dart';
 import 'package:gargosy/core/save/strategies/duckstation_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/pcsx2_save_strategy.dart';
+import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
 import 'package:gargosy/emulators/emulator_layout.dart';
 import 'package:gargosy/emulators/profile_directories.dart';
@@ -81,6 +82,18 @@ void main() {
       final strategy = Pcsx2SaveStrategy(dirs, dirs.prefs, platform: sandboxedPlatform(paths));
       // docs/emulator-profiles.md: PCSX2 adds a PCSX2\ level inside the data path.
       expect(await strategy.stateDirectory(ps2, r'D:\roms\ps2\Ico (USA).chd'), p.join(datapath, 'PCSX2', 'sstates'));
+    });
+  });
+
+  group('PPSSPP (#59)', () {
+    test(r"installed.txt makes <data> the memory stick: states in <data>\PSP\PPSSPP_STATE, where they're read", () async {
+      firstRun('ppsspp');
+      final c = ctx('ppsspp');
+      await ProfileLaunchConfig.of('ppsspp')!.prepare(c);
+      final stick = io.File(p.join(c.exeDir, 'installed.txt')).readAsStringSync().trim();
+      final strategy = PpssppSaveStrategy(dirs, platform: sandboxedPlatform(paths));
+      final psp = Game.fromJson({...gameJson(3, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp'});
+      expect(await strategy.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'), p.join(stick, 'PSP', 'PPSSPP_STATE'));
     });
   });
 

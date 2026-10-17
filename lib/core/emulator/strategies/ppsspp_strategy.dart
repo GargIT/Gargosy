@@ -6,6 +6,7 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
+import 'package:gargosy/core/emulator/pe_version_reader.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
@@ -44,6 +45,30 @@ class PPSSPPStrategy extends EmulatorStrategy {
 
   @override
   bool get supportsSaveSync => true;
+
+  /// Gargosy (#59): states sync through RomM (PpssppSaveStrategy).
+  @override
+  bool get supportsStateSync => true;
+
+  @override
+  bool get supportsStateLoadOnLaunch => true;
+
+  /// PPSSPP: `--state=<file>` loads the given state at boot.
+  @override
+  List<String> stateLoadArgs(String statePath) => ['--state=$statePath'];
+
+  /// Windows: the file version of PPSSPPWindows64.exe (`v1.20.4`, as its
+  /// states record it). Null elsewhere.
+  @override
+  Future<String?> installedVersion() async {
+    if (!platform.isWindows) return null;
+    try {
+      final exe = await findExecutable();
+      return exe == null ? null : await PeVersionReader.fileVersion(exe);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   bool get supportsRetroAchievementsLogin => true;

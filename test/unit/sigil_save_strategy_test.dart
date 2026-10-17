@@ -7,6 +7,8 @@ import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/formats/ps2_memory_card.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/state_sync_capable.dart';
+import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
+import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/emulators/pcsx2_folder_card.dart';
 import 'package:gargosy/sigil/sigil_engine.dart';
 import 'package:gargosy/sigil/sigil_save_strategy.dart';
@@ -15,7 +17,18 @@ import 'package:gargosy/sigil/sigil_sync.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/game_fixtures.dart';
+import '../helpers/profile_test_env.dart';
 import '../helpers/ps1_card_builder.dart';
+
+/// PPSSPP's app-support folder is [dir] (its PSP folder inside).
+class _FixedDirs extends DirectoryService {
+  _FixedDirs(this.dir) : super(MemoryPrefs());
+  final String dir;
+  @override
+  Future<String> getEmulatorAppSupportDirectory(String emulatorId, {String? platformSlug}) async => dir;
+  @override
+  Future<String?> findEmulatorExecutable(String emulatorId, String executableName) async => null;
+}
 
 /// The emulator's old strategy: records what reaches it.
 class _Base extends SaveStrategy {
@@ -206,6 +219,23 @@ void main() {
     await s.restoreSave(_game('gba'), r'D:\roms\gba\Game.gba', Uint8List(10), 'Game.sav');
     expect(base.calls, ['getSaveFiles gba', 'restoreSave gba']);
     expect(s.uploadSlotFor(_game('gba')), 'gargosy');
+  });
+
+  test("PPSSPP (#59): sigil syncs its saves, its states go through PPSSPP's own strategy", () async {
+    final dir = p.join(tmp.path, 'emulators', 'ppsspp');
+    io.Directory(p.join(dir, 'PSP')).createSync(recursive: true);
+    final s = SigilSaveStrategy.forEmulator(
+      'ppsspp',
+      base: PpssppSaveStrategy(_FixedDirs(dir), identify: (path, {platform}) async => null),
+      emulatorDir: () => dir,
+      states: states,
+      unitsDir: p.join(tmp.path, 'u'),
+    )!;
+    expect(s, isA<StateSyncCapable>());
+    final psp = Game.fromJson({...gameJson(5, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp', 'title_id': 'UCUS98618'});
+    final st = s as StateSyncCapable;
+    expect(await st.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'), p.join(dir, 'PSP', 'PPSSPP_STATE'));
+    expect((await st.stateFileMatcher(psp, r'D:\roms\psp\Daxter (USA).iso'))!('UCUS98618_1.00_0.ppst'), isTrue);
   });
 
   test('a state-capable old strategy keeps its save states (the wrapper is StateSyncCapable)', () async {

@@ -1,4 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+// Gargosy: StateSyncCapable (#59): states in PSP\PPSSPP_STATE, the game by
+// its disc id (RomM's, else sigil's), Resume with `--state=`.
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:io' show File;
@@ -9,15 +11,22 @@ import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
+import '../../../sigil/rom_game_ids.dart';
+import '../../../sigil/sigil_engine.dart';
+import '../save_state_info.dart';
 import '../save_strategy.dart';
+import '../state_sync_capable.dart';
+import 'ppsspp_state_file.dart';
 
 /// Save strategy for PPSSPP (PSP).
-class PpssppSaveStrategy extends SaveStrategy {
+class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
+  final IdentifyRom _identify;
 
-  PpssppSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  PpssppSaveStrategy(this._directoryService, {PlatformInfo? platform, IdentifyRom? identify})
+      : _platform = platform ?? PlatformInfo.current,
+        _identify = identify ?? SigilEngine.identify;
 
   @override
   String get strategyId => 'ppsspp';
@@ -184,6 +193,78 @@ class PpssppSaveStrategy extends SaveStrategy {
   Future<String?> getSaveDir(Game game, String romPath) async {
     final pspDir = await _getPspDir(platformSlug: game.platformSlug);
     return p.join(pspDir, 'SAVEDATA');
+  }
+
+  // ─── Save states (Gargosy, #59) ──────────────────────────────────────────
+  //
+  // PPSSPP names a state `<DISC_ID>_<DISC_VERSION>_<slot>.ppst` (slot from
+  // 0) in PSP\PPSSPP_STATE, with `<same>.jpg` as its screenshot; the undo
+  // copies (`<same>.undo.ppst`), slot names (`.name.txt`) and the global
+  // `load_undo.ppst` are never synced (Core/SaveState.cpp). Any disc
+  // version is the game's: a dump of another version is the same game to RomM.
+
+  static final _statePattern = RegExp(r'^([A-Za-z0-9]+)_(\d+\.\d+)_(\d+)\.ppst$');
+
+  /// Disc ids read from ROMs this session, by ROM path.
+  final _discIds = <String, String>{};
+
+  /// The game's disc id (`ULUS10041`): RomM's, else sigil's from the ROM.
+  Future<String?> _discId(Game game, String romPath) => GameIdResolver.resolve(
+        label: 'PPSSPP ${game.name}',
+        server: GameIdResolver.discFolderId('PPSSPP ${game.name}', game),
+        local: () async {
+          final known = _discIds[romPath];
+          if (known != null) return known;
+          try {
+            final id = (await _identify(romPath, platform: 'psp'))?.titleId.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+            if (id == null || !GameIdResolver.sonyDiscId.hasMatch(id)) return null;
+            return _discIds[romPath] = id;
+          } catch (e) {
+            debugPrint('[PPSSPP] reading the disc id of $romPath failed: $e');
+            return null;
+          }
+        },
+      );
+
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async =>
+      p.join(await _getPspDir(platformSlug: game.platformSlug), 'PPSSPP_STATE');
+
+  @override
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
+    final id = await _discId(game, romPath);
+    if (id == null) return null;
+    return (String fileName) {
+      final m = _statePattern.firstMatch(fileName);
+      return m != null && m.group(1)!.toUpperCase() == id;
+    };
+  }
+
+  @override
+  bool looksLikeValidState(Uint8List bytes) => PpssppStateFile.looksValid(bytes);
+
+  /// PPSSPP counts slots from 0 and shows them from 1.
+  @override
+  StateSlot slotOf(String fileName) {
+    final m = _statePattern.firstMatch(fileName);
+    return m == null ? UnknownStateSlot(fileName) : NumberedStateSlot(int.parse(m.group(3)!) + 1);
+  }
+
+  @override
+  Future<StateFileInfo> describeState(File file) async {
+    final base = await super.describeState(file);
+    return StateFileInfo(savedAt: base.savedAt, emulatorVersion: await PpssppStateFile.readVersion(file));
+  }
+
+  /// The `.jpg` PPSSPP writes beside the state.
+  @override
+  Future<Uint8List?> stateScreenshot(File file) async {
+    try {
+      final shot = File(p.setExtension(file.path, '.jpg'));
+      return await shot.exists() ? await shot.readAsBytes() : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
