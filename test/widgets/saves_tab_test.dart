@@ -31,7 +31,7 @@ void main() {
   final g = Game.fromJson(gameJson(1, 'G', fsName: 'G.chd'));
 
   Future<void> pump(WidgetTester tester, {List<SaveEntry> local = const [], List<SaveEntry> romm = const [], bool offline = false,
-      List<BackupEntry> waiting = const [], List<ResumeEntry> states = const []}) async {
+      List<BackupEntry> waiting = const [], List<ResumeEntry> states = const [], List<String> unclaimed = const []}) async {
     await setDesktopSize(tester);
     engine = FakeEngine()
       ..menu = PlayMenu(
@@ -44,7 +44,8 @@ void main() {
           rommOffline: offline,
         ),
       )
-      ..states = states;
+      ..states = states
+      ..unclaimed = unclaimed;
     await tester.pumpWidget(testApp(SavesTab(game: g), overrides: [
       playEngineProvider.overrideWithValue(engine),
       uploadsWaitingProvider.overrideWith((ref, id) => waiting),
@@ -130,5 +131,49 @@ void main() {
     ]));
     await tester.pumpAndSettle();
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  group('unclaimed saves on a shared card (#56)', () {
+    testWidgets('listed; A asks, and a yes claims it and says so', (tester) async {
+      await pump(tester, unclaimed: ['SONIC_01.SYS', 'MYSTERY.DAT']);
+      expect(find.text('Unclaimed saves on the shared memory card'), findsOneWidget);
+      await focus(tester, "MYSTERY.DAT  ·  This is this game's save");
+      await press(tester, GameAction.confirm);
+      expect(find.text("Is MYSTERY.DAT this game's save?"), findsOneWidget);
+      await tester.tap(find.text('Take it'));
+      await tester.pumpAndSettle();
+      expect(engine.steps, ['claim MYSTERY.DAT']);
+      expect(find.textContaining("is G's save now"), findsOneWidget);
+      expect(find.textContaining('MYSTERY.DAT  ·'), findsNothing, reason: 'the list is read again');
+      expect(find.textContaining('SONIC_01.SYS  ·'), findsOneWidget);
+    });
+
+    testWidgets('"Not this one" claims nothing', (tester) async {
+      await pump(tester, unclaimed: ['MYSTERY.DAT']);
+      await focus(tester, "MYSTERY.DAT  ·  This is this game's save");
+      await press(tester, GameAction.confirm);
+      await tester.tap(find.text('Not this one'));
+      await tester.pumpAndSettle();
+      expect(engine.steps, isEmpty);
+    });
+
+    testWidgets("RomM not taking it says the claim stands and when it goes up", (tester) async {
+      await pump(tester, unclaimed: ['MYSTERY.DAT']);
+      engine.claimUploads = false;
+      await focus(tester, "MYSTERY.DAT  ·  This is this game's save");
+      await press(tester, GameAction.confirm);
+      await tester.tap(find.text('Take it'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining("RomM didn't take it yet"), findsOneWidget);
+    });
+
+    testWidgets('none: no panel; and not on the States list', (tester) async {
+      await pump(tester);
+      expect(find.textContaining('Unclaimed saves'), findsNothing);
+      await pump(tester, unclaimed: ['MYSTERY.DAT']);
+      await tester.tap(find.textContaining('States'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Unclaimed saves'), findsNothing);
+    });
   });
 }

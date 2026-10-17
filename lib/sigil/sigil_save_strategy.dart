@@ -333,7 +333,30 @@ class SigilSaveStrategy extends SaveStrategy {
   Future<void> afterUpload(Game game, String romPath) async {
     if (!_covers(game)) return base?.afterUpload(game, romPath);
     final state = _pending.remove(_pendingKey(game));
-    if (state != null) states.write(emulator.id, game.id, state);
+    if (state == null) return;
+    states.write(emulator.id, game.id, state);
+    // The unit held the claimed saves: sigil's state knows their owner now.
+    states.setClaims(emulator.id, game.id, const []);
+  }
+
+  @override
+  Future<List<String>> unclaimedSavesFor(Game game, String romPath) async {
+    if (!_covers(game)) return await base?.unclaimedSavesFor(game, romPath) ?? const [];
+    try {
+      final call = await _call(game, romPath, state: states.read(emulator.id, game.id), claimed: true);
+      return (await _collect(call)).unowned;
+    } on SigilSyncError catch (e) {
+      debugPrint('[Sigil] ${emulator.id} ${game.name}: unclaimed saves not read ($e)');
+      return const [];
+    }
+  }
+
+  @override
+  Future<void> claimSave(Game game, String romPath, String name) async {
+    if (!_covers(game)) return base?.claimSave(game, romPath, name);
+    final claims = states.claims(emulator.id, game.id);
+    if (!claims.contains(name)) states.setClaims(emulator.id, game.id, [...claims, name]);
+    debugPrint('[Sigil] ${emulator.id} ${game.name}: claimed $name');
   }
 
   @override
@@ -365,7 +388,7 @@ class SigilSaveStrategy extends SaveStrategy {
     final SigilCollected collected;
     SigilSyncCall? call;
     try {
-      call = await _call(game, romPath, state: states.read(emulator.id, game.id));
+      call = await _call(game, romPath, state: states.read(emulator.id, game.id), claimed: true);
       collected = await _collect(call);
     } on SigilSyncError catch (e) {
       // A card sigil can't read is said, not a silent "nothing to upload".
@@ -437,7 +460,9 @@ class SigilSaveStrategy extends SaveStrategy {
     return ok;
   }
 
-  Future<SigilSyncCall> _call(Game game, String romPath, {Uint8List? state, bool overwriteLocal = false}) async {
+  /// [claimed]: a collect, which takes the player's claims (#56) along.
+  Future<SigilSyncCall> _call(Game game, String romPath,
+      {Uint8List? state, bool overwriteLocal = false, bool claimed = false}) async {
     final platform = _sigilPlatform(game)!;
     final layout = _layout(game)!;
     final ids = await _ids(game, romPath, platform);
@@ -458,6 +483,7 @@ class SigilSaveStrategy extends SaveStrategy {
       options: {..._options(game, romPath), ...?hint?.options},
       state: state,
       overwriteLocal: overwriteLocal,
+      claimed: claimed ? states.claims(emulator.id, game.id) : const [],
     );
   }
 
