@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Flycast's shared VMU: saves no game is known to own are listed on the
+  game page's Saves tab under "Unclaimed saves on the shared VMU". Take one
+  for the game and it syncs with that game from then on (#56).
 - Home has an Installed games shelf, between Continue playing and Recently
   added: the games on this PC, newest download first. While RomM can't be
   reached it comes first, as On this PC did (#39).
