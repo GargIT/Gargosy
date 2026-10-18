@@ -13,6 +13,7 @@ class _Stored {
   String updatedAt;
   String? emulator;
   List<int>? screenshot;
+  List<String> labels = const [];
 }
 
 /// In-memory stand-in for one RomM user's `/api/states`. Every call is
@@ -72,7 +73,27 @@ class FakeRommStatesApi implements RommStatesApi {
       updatedAt: stored.updatedAt,
       emulator: stored.emulator,
       screenshotUrl: stored.screenshot == null ? null : '/fake/screenshot/$id',
+      labels: stored.labels,
     );
+  }
+
+  /// Make [setStateLabels] throw (an older RomM without labels).
+  bool failLabels = false;
+
+  /// The labels of state [id] (null when there's no such state).
+  List<String>? labelsOf(int id) => _states[id]?.labels;
+
+  /// Sets state [id]'s labels as the player would in RomM.
+  void label(int id, List<String> labels) => _states[id]!.labels = labels;
+
+  @override
+  Future<RommState> setStateLabels(int stateId, List<String> labels) async {
+    calls.add('LABEL $stateId');
+    if (failLabels) throw Exception('404 Not Found');
+    final stored = _states[stateId];
+    if (stored == null) throw RommStateNotFoundException(stateId);
+    stored.labels = List.of(labels);
+    return _view(stateId);
   }
 
   /// Simulates a state uploaded from another machine.

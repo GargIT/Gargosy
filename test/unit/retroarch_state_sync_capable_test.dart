@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
+import 'package:gargosy/core/emulator/retroarch_core_list.dart';
 import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -81,6 +82,12 @@ void main() {
   test("a state's core is the core whose folder it's in (Gargosy: Resume starts it)", () {
     expect(strategy.stateCoreFor(game), isNotNull);
     expect(strategy.stateCoreFor(game), strategy.coreIdFor(game));
+  });
+
+  test("a state's label on RomM is its core's name, as RetroArch shows it", () {
+    final core = strategy.coreIdFor(game)!;
+    expect(strategy.stateLabelFor(game), kRetroArchCores.firstWhere((c) => c.id == '${core}_libretro').displayName);
+    expect(strategy.stateLabels, containsAll(['PCSX ReARMed', 'Beetle PSX HW', 'mGBA']));
   });
 
   test('looksLikeValidState accepts RASTATE and compressed states only', () {

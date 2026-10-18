@@ -599,4 +599,10 @@ class _SigilStateSaveStrategy extends SigilSaveStrategy with StateSyncCapable {
 
   @override
   String? stateCoreFor(Game game) => _states.stateCoreFor(game);
+
+  @override
+  String? stateLabelFor(Game game) => _states.stateLabelFor(game);
+
+  @override
+  Set<String> get stateLabels => _states.stateLabels;
 }

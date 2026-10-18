@@ -141,6 +141,8 @@ void main() {
       final g = game('psx', 'WipEout (Europe).chd');
       expect((w as StateSyncCapable).stateCoreFor(g), isNotNull);
       expect((w as StateSyncCapable).stateCoreFor(g), base.stateCoreFor(g));
+      expect((w as StateSyncCapable).stateLabelFor(g), base.stateLabelFor(g));
+      expect((w as StateSyncCapable).stateLabels, base.stateLabels);
     });
 
     test('code that asks for RetroArch\'s strategy finds it under the wrapper', () {

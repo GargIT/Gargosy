@@ -71,9 +71,9 @@ Flycast with its per-game VMU setting off (`PerGameVmu = no` in the profile's `e
 
 With "Save states on RomM" on (Settings → Emulator settings) in both profiles. For each: in profile A, play, save a state to a slot and quit. The state is on RomM. In profile B, the state comes down before launch and Resume (Y on the play screen) starts the game in it. Then make a newer state of the same slot in each profile without syncing between them: the next launch says the state differs and keeps this PC's copy.
 
-24. [ ] DuckStation (PS1)
-25. [ ] PCSX2 (PS2)
-26. [ ] RetroArch, a PS1 game (Beetle PSX HW or PCSX ReARMed)
+24. [x] DuckStation (PS1)
+25. [x] PCSX2 (PS2)
+26. [x] RetroArch, a PS1 game (Beetle PSX HW or PCSX ReARMed)
 
 ## PPSSPP save states (#59)
 

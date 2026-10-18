@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- A RetroArch save state on RomM is labelled with the core that made it
+  ("PCSX ReARMed", "Beetle PSX HW"). Your own labels on it are kept.
 - The logo on "Who is playing?" is 2.5 times larger.
 - Settings → Emulator settings lists the installed emulators in two groups
   under "Sync save states with RomM": synced with RomM, and only on this PC.

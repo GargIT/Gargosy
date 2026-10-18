@@ -50,4 +50,12 @@ mixin StateSyncCapable on SaveStrategy {
   /// emulator that runs cores (RetroArch: `pcsx_rearmed`), as last resolved;
   /// null for the others. Resume starts that core, so it loads its own state.
   String? stateCoreFor(Game game) => null;
+
+  /// Gargosy: the label a state of [game] gets on RomM, naming the core
+  /// that made it ("PCSX ReARMed"); null when there's none to give.
+  String? stateLabelFor(Game game) => null;
+
+  /// Gargosy: every label [stateLabelFor] can give, so an upload from
+  /// another core replaces the old one. Empty when there are none.
+  Set<String> get stateLabels => const {};
 }

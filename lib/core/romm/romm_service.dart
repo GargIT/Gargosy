@@ -884,6 +884,12 @@ class RommService implements RommStatesApi {
   }
 
   @override
+  Future<RommState> setStateLabels(int stateId, List<String> labels) async {
+    final response = await _dio.put('/api/states/$stateId/labels', data: {'labels': labels}, options: _authOptions);
+    return RommState.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
   Future<Uint8List> downloadState(int stateId) async {
     try {
       final response = await _dio.get<List<int>>(
