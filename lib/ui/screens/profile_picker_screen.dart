@@ -114,7 +114,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
               Expanded(
                 child: Center(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Image.asset('assets/branding/gargosy_logo.png', width: 72, height: 72),
+                    Image.asset('assets/branding/gargosy_logo.png', width: 180, height: 180),
                     const SizedBox(height: GSpace.s6),
                     const Text('Who is playing?', style: TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800)),
                     const SizedBox(height: GSpace.s10),

@@ -8,6 +8,7 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- The logo on "Who is playing?" is 2.5 times larger.
 - Settings → Emulator settings lists the installed emulators in two groups
   under "Sync save states with RomM": synced with RomM, and only on this PC.
   Emulators that sync but can't start in a state say where to load one.
