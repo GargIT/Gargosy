@@ -45,4 +45,9 @@ mixin StateSyncCapable on SaveStrategy {
   /// Thumbnail bytes for [file] (embedded or a sidecar), or null when there is
   /// none or reading fails. Must never throw.
   Future<Uint8List?> stateScreenshot(io.File file) async => null;
+
+  /// Gargosy: the core [game]'s states in [stateDirectory] belong to, for an
+  /// emulator that runs cores (RetroArch: `pcsx_rearmed`), as last resolved;
+  /// null for the others. Resume starts that core, so it loads its own state.
+  String? stateCoreFor(Game game) => null;
 }

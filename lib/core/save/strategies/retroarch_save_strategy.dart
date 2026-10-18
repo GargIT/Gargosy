@@ -122,6 +122,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   /// The core [game]'s saves come from, as RomM and other clients name it:
   /// its id without `_libretro` (e.g. `pcsx_rearmed`), or null when unknown.
+  @override
+  String? stateCoreFor(Game game) => coreIdFor(game);
+
   String? coreIdFor(Game game) {
     final core = _getCoreInfo(game.platformSlug?.toLowerCase() ?? '')?.coreName;
     if (core == null || core.isEmpty) return null;

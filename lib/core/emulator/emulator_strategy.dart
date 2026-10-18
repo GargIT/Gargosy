@@ -48,6 +48,12 @@ abstract class EmulatorStrategy {
   /// (RetroArch's command line can load numbered slots but not its auto slot).
   bool canLoadState(String fileName) => true;
 
+  /// Gargosy: a [stateLoadArgs] marker, never passed to the emulator: the
+  /// launch turns on the emulator's own "load the auto state at start"
+  /// setting for this session (RetroArch's auto slot, which `--entryslot`
+  /// can't load). The profile's launch config takes it out of the arguments.
+  static const resumeAutoStateArg = '--gargosy-resume-auto-state';
+
   /// Gargosy: [state]'s bytes changed to load with this PC's [romPath], or
   /// null when they load as they are. A state that records the ROM by path
   /// (DuckStation) names the PC it was made on; Resume starts a copy with

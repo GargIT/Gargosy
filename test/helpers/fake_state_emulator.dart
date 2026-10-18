@@ -24,6 +24,11 @@ class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
   final bool perDisc;
   final Map<String, List<int>> screenshots = {};
 
+  /// What [stateCoreFor] answers (a RetroArch-like strategy's core).
+  String? core;
+  @override
+  String? stateCoreFor(Game game) => core;
+
   @override
   String get strategyId => id;
   @override
@@ -74,10 +79,15 @@ class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
 /// construction; every identity field is overridden.
 class FakeStateEmulator extends Pcsx2Strategy {
   FakeStateEmulator(super.ds,
-      {this.id = 'fakeemu', this.loadsStates = true, this.syncsStates = true, this.version = '1.2.0'});
+      {this.id = 'fakeemu', this.loadsStates = true, this.syncsStates = true, this.version = '1.2.0', this.canLoad});
   final String id;
   final bool loadsStates;
   final bool syncsStates;
+
+  /// Which states its command line loads; all when null.
+  final bool Function(String fileName)? canLoad;
+  @override
+  bool canLoadState(String fileName) => canLoad?.call(fileName) ?? true;
   String? version;
   @override
   String get emulatorId => id;

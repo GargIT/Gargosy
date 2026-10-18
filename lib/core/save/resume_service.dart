@@ -39,6 +39,7 @@ class ResumeEntry {
     this.remoteScreenshotUrl,
     this.romPath,
     this.resumable = true,
+    this.core,
   });
 
   final String emulatorId;
@@ -72,6 +73,11 @@ class ResumeEntry {
   /// The ROM file the state was identified with. A state belongs to one disc
   /// (its serial), so a resume boots exactly this file.
   final String? romPath;
+
+  /// Gargosy: the core the state belongs to (RetroArch: `pcsx_rearmed`,
+  /// whose folder it was found in); a resume starts that core. Null for an
+  /// emulator without cores.
+  final String? core;
 }
 
 /// The outcome of [ResumeService.checkBeforeLaunch].
@@ -107,13 +113,14 @@ String resumeMissingMessage(ResumeEntry entry, {required bool serviceAvailable})
 /// One emulator's view of one ROM file: a multi-disc game has one source per
 /// emulator and disc, each accepting only its own disc's states.
 class _Source {
-  _Source(this.emulator, this.strategy, this.dir, this.matches, this.installed, this.romPath);
+  _Source(this.emulator, this.strategy, this.dir, this.matches, this.installed, this.romPath, this.core);
   final EmulatorStrategy emulator;
   final StateSyncCapable strategy;
   final io.Directory dir;
   final bool Function(String) matches;
   final String? installed;
   final String romPath;
+  final String? core;
 }
 
 /// Answers "what can this game be resumed from, and with which emulator?".
@@ -220,6 +227,7 @@ class ResumeService {
           remoteScreenshotUrl: state.screenshotUrl,
           romPath: owner.romPath,
           resumable: _resumable(owner.emulator, state.fileName),
+          core: owner.core,
         );
         continue;
       }
@@ -243,6 +251,7 @@ class ResumeService {
         remoteScreenshotUrl: state.screenshotUrl,
         romPath: existing.romPath,
         resumable: existing.resumable,
+        core: existing.core,
       );
     }
     yield _sorted(merged.values);
@@ -356,11 +365,12 @@ class ResumeService {
           continue;
         }
         final dir = io.Directory(await strategy.stateDirectory(game, romPath));
+        final core = strategy.stateCoreFor(game);
         _strategyByEmulator[emulator.emulatorId] = strategy;
         final id = emulator.emulatorId;
         final installed =
             versions.containsKey(id) ? versions[id] : (versions[id] = await emulator.installedVersion());
-        result.add(_Source(emulator, strategy, dir, matches, installed, romPath));
+        result.add(_Source(emulator, strategy, dir, matches, installed, romPath, core));
       } catch (e) {
         debugPrint('[Resume] ${game.name}: ${emulator.emulatorId} skipped: $e');
       }
@@ -392,6 +402,7 @@ class ResumeService {
           localFile: entity,
           romPath: source.romPath,
           resumable: _resumable(source.emulator, name),
+          core: source.core,
         );
       }
     } catch (e) {
@@ -400,10 +411,12 @@ class ResumeService {
     return result;
   }
 
-  /// A state [name] is listed: any of an emulator that can't load states at
-  /// start (it is loaded from the emulator's menu), else only those its
-  /// command line loads (RetroArch's auto slot isn't).
-  static bool _listed(EmulatorStrategy e, String name) => !e.supportsStateLoadOnLaunch || e.canLoadState(name);
+  /// A state [name] is listed: any of an emulator that syncs states or can't
+  /// load them at start (one its command line can't load, as RetroArch's
+  /// auto slot, is loaded from the emulator's menu), else only those its
+  /// command line loads.
+  static bool _listed(EmulatorStrategy e, String name) =>
+      e.supportsStateSync || !e.supportsStateLoadOnLaunch || e.canLoadState(name);
 
   static bool _resumable(EmulatorStrategy e, String name) => e.supportsStateLoadOnLaunch && e.canLoadState(name);
 

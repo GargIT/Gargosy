@@ -88,18 +88,21 @@ class RetroArchStrategy extends EmulatorStrategy {
   static final _stateSlotPattern = RegExp(r'\.state(\d{1,3})?$');
 
   /// RetroArch: `-e <slot>` (`--entryslot`) loads that slot at boot. Slot 0 is
-  /// the file with no number (`Game.state`).
+  /// the file with no number (`Game.state`). Gargosy: `--entryslot` takes
+  /// only numbers, so the auto slot (`Game.state.auto`) is loaded by
+  /// RetroArch's "Auto Load State", turned on for that launch
+  /// ([EmulatorStrategy.resumeAutoStateArg]).
   @override
   List<String> stateLoadArgs(String statePath) {
-    final match = _stateSlotPattern.firstMatch(p.basename(statePath));
+    final name = p.basename(statePath);
+    if (name.endsWith('.state.auto')) return const [EmulatorStrategy.resumeAutoStateArg];
+    final match = _stateSlotPattern.firstMatch(name);
     if (match == null) return const [];
     return ['-e', '${int.tryParse(match.group(1) ?? '') ?? 0}'];
   }
 
-  /// `--entryslot` only takes slot numbers, so the auto slot
-  /// (`Game.state.auto`) can't be resumed from.
   @override
-  bool canLoadState(String fileName) => _stateSlotPattern.hasMatch(fileName);
+  bool canLoadState(String fileName) => _stateSlotPattern.hasMatch(fileName) || fileName.endsWith('.state.auto');
 
   @override
   bool get supportsRetroAchievementsLogin => true;

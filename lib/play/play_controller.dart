@@ -109,7 +109,10 @@ class PlayController extends StateNotifier<PlayState> {
         return refuse('${entry.emulatorName} is needed. Install it under Emulators (Start → Emulators).');
       }
       final romPath = await _ready(engine, game, foundRom, emulator);
-      final pull = await engine.pullStates(game, romPath, emulator, priority: entry.fileName, onProblem: onNotice);
+      // The core the state was made with (RetroArch), not the platform's default.
+      final coreOverride = entry.core == null ? null : '${entry.core}_libretro';
+      final pull = await engine.pullStates(game, romPath, emulator,
+          priority: entry.fileName, coreOverride: coreOverride, onProblem: onNotice);
       final String loadPath;
       switch (await engine.checkResume(entry, game, romPath, pull)) {
         case ResumeMissing():
@@ -122,8 +125,9 @@ class PlayController extends StateNotifier<PlayState> {
           if (stale) onNotice?.call("Couldn't update ${entry.slot.label} from RomM. Loading the copy on this PC.");
           loadPath = path;
       }
-      await engine.prepare(game, romPath, emulator, onProblem: onNotice);
-      final session = await _launch(engine, game, romPath, emulator, loadStatePath: loadPath, onNotice: onNotice);
+      await engine.prepare(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
+      final session = await _launch(engine, game, romPath, emulator,
+          coreOverride: coreOverride, loadStatePath: loadPath, onNotice: onNotice);
       session.finished.then((result) => _ended(game, result.message, synced: result.synced), onError: (Object e) => _ended(game, 'Saves not synced: $e'));
       return null;
     } on Object catch (e) {
