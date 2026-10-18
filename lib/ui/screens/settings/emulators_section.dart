@@ -58,12 +58,13 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
       }
     }
     // Which installed emulators sync states comes from their strategies, never a list here.
-    final syncs = {
+    final strategies = {
       for (final st in registry?.allStrategies ?? const <EmulatorStrategy>[])
-        ?installed[st.emulatorId]: st.supportsStateSync,
+        if (installed.containsKey(st.emulatorId)) installed[st.emulatorId]!: st,
     };
-    final syncing = [for (final e in syncs.entries) if (e.value) e.key]..sort();
-    final localOnly = [for (final e in syncs.entries) if (!e.value) e.key]..sort();
+    final syncing = [for (final e in strategies.entries) if (e.value.supportsStateSync) e.key]..sort();
+    final localOnly = [for (final e in strategies.entries) if (!e.value.supportsStateSync) e.key]..sort();
+    final fromMenu = [for (final n in syncing) if (!strategies[n]!.supportsStateLoadOnLaunch) n];
     return ListView(children: [
       SettingsCard(
         title: 'Which emulator plays',
@@ -95,25 +96,61 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
             SettingsToggle(
               key: const ValueKey('state-sync'),
               label: 'Sync save states with RomM',
-              note: _stateSyncNote(syncing, localOnly),
               on: prefs.getBool(StateSyncService.enabledKey) ?? false,
               onChanged: (on) async {
                 await prefs.setBool(StateSyncService.enabledKey, on);
                 if (mounted) setState(() {});
               },
             ),
+          if (prefs != null) _StateSyncCoverage(syncing: syncing, localOnly: localOnly, fromMenu: fromMenu),
         ],
       ),
     ]);
   }
 }
 
-/// Which installed emulators the switch covers, and which keep states on this PC.
-String _stateSyncNote(List<String> syncing, List<String> localOnly) {
-  String names(List<String> list) =>
+/// Which installed emulators the switch covers and which keep their states on
+/// this PC, as two lists of names; those that sync but can't start in a state
+/// get a line saying where to load one.
+class _StateSyncCoverage extends StatelessWidget {
+  const _StateSyncCoverage({required this.syncing, required this.localOnly, required this.fromMenu});
+
+  final List<String> syncing;
+  final List<String> localOnly;
+  final List<String> fromMenu;
+
+  static String _names(List<String> list) =>
       list.length < 2 ? list.join() : '${list.sublist(0, list.length - 1).join(', ')} and ${list.last}';
-  if (syncing.isEmpty) return 'No installed emulator syncs save states yet.';
-  final syncs = 'Syncs in ${names(syncing)}.';
-  if (localOnly.isEmpty) return syncs;
-  return '$syncs ${names(localOnly)} ${localOnly.length == 1 ? 'keeps its' : 'keep their'} states on this PC only.';
+
+  @override
+  Widget build(BuildContext context) {
+    const note = TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary, height: 1.4);
+    Widget group(String key, IconData icon, String title, Color color, List<String> names) => Column(
+          key: ValueKey(key),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: GSpace.s2),
+              Text(title, style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w700, color: color)),
+            ]),
+            const SizedBox(height: GSpace.s2),
+            Wrap(spacing: GSpace.s2, runSpacing: GSpace.s2, children: [
+              for (final n in names) SettingsBadge(n, color: color),
+            ]),
+          ],
+        );
+    if (syncing.isEmpty) return const Text('No installed emulator syncs save states yet.', style: note);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      group('state-sync-synced', Icons.cloud_done, 'Synced with RomM', GColors.success, syncing),
+      if (fromMenu.isNotEmpty) ...[
+        const SizedBox(height: GSpace.s2),
+        Text('${_names(fromMenu)}: start the game, then load the state from the emulator\'s own menu.', style: note),
+      ],
+      if (localOnly.isNotEmpty) ...[
+        const SizedBox(height: GSpace.s4),
+        group('state-sync-local', Icons.computer, 'Only on this PC', GColors.fgSecondary, localOnly),
+      ],
+    ]);
+  }
 }

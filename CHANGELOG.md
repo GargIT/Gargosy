@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Settings → Emulator settings lists the installed emulators in two groups
+  under "Sync save states with RomM": synced with RomM, and only on this PC.
+  Emulators that sync but can't start in a state say where to load one.
 - The play screen's States list shows Azahar's and melonDS's states too, with
   where to load them: those emulators can't start in a state, so A doesn't
   pick one and Resume never chooses it.
