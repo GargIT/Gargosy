@@ -2,12 +2,14 @@ import '../emulators/fullscreen.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../profiles/profile_providers.dart';
 import '../profiles/path_guard.dart';
+import '../profiles/json_file.dart';
 import '../core/emulator/strategies/retroarch_strategy.dart';
 import 'package:path/path.dart' as p;
 import 'package:dio/dio.dart';
 import 'dart:io' as io;
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/emulator/emulator_strategy.dart';
@@ -429,11 +431,40 @@ class GargosyPlayEngine implements PlayEngine {
   Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy strategy,
       {String? coreOverride, String? loadStatePath}) async {
     final service = await _launch();
-    final session = await service.launch(game, romPath, strategy, overrideCoreId: coreOverride, loadStatePath: loadStatePath);
+    final statePath = loadStatePath == null ? null : await _stateForThisPc(strategy, loadStatePath, romPath);
+    final session = await service.launch(game, romPath, strategy, overrideCoreId: coreOverride, loadStatePath: statePath);
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
-        .then(_describe);
+        .then(_describe)
+        .whenComplete(() async {
+      if (statePath == loadStatePath) return;
+      try {
+        await io.File(statePath!).delete();
+      } on io.FileSystemException catch (_) {
+        // Left in temp; the next Resume of that state writes over it.
+      }
+    });
     return PlaySession(finished);
+  }
+
+  /// The state Resume starts: a copy in `userdata\app\temp\resume\` when
+  /// the emulator needs it changed for this PC's [romPath]
+  /// ([EmulatorStrategy.stateForRom]: DuckStation's disc path), else
+  /// [statePath] itself. The synced file is never changed, so it isn't
+  /// uploaded again. Any failure starts the state as it is.
+  Future<String> _stateForThisPc(EmulatorStrategy strategy, String statePath, String romPath) async {
+    try {
+      final changed = strategy.stateForRom(await io.File(statePath).readAsBytes(), romPath);
+      if (changed == null) return statePath;
+      final root = _ref.read(appRootProvider);
+      final copy = p.join(root.appData, 'temp', 'resume', p.basename(statePath));
+      await writeBytesAtomic(PathGuard(root), copy, changed);
+      debugPrint("[Resume] ${p.basename(statePath)}: started from a copy naming this PC's ROM");
+      return copy;
+    } catch (e) {
+      debugPrint('[Resume] ${p.basename(statePath)}: kept as it is: $e');
+      return statePath;
+    }
   }
 
   static PlayResult _describe(LaunchResult? r) {

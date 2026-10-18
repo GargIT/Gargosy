@@ -1,4 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -146,6 +147,79 @@ void main() {
       expect(
           await DuckstationStateFile.readScreenshot(File(p.join(dir.path, 'missing.sav')), zstd: fakeZstd),
           isNull);
+    });
+  });
+
+  group('DuckstationStateFile.withMediaPath (Gargosy)', () {
+    const oldPath = r'C:\Retro\roms\psx\Colin McRae Rally 2.0 (Europe).chd';
+    const newPath = r'D:\Gargosy\roms\psx\Colin McRae Rally 2.0 (Europe).chd';
+    final screenshot = List<int>.generate(40, (i) => i);
+    final data = List<int>.generate(100, (i) => 200 - i);
+
+    /// A whole state as DuckStation writes it: header, disc path, screenshot, data.
+    Uint8List state({String path = oldPath, int version = 88, bool withScreenshot = true}) {
+      final pathBytes = path.codeUnits;
+      final header = Uint8List(0xD8);
+      final h = ByteData.sublistView(header)
+        ..setUint32(0, 0x43435544, Endian.little)
+        ..setUint32(4, version, Endian.little)
+        ..setUint32(0xA8, pathBytes.length, Endian.little)
+        ..setUint32(0xAC, pathBytes.isEmpty ? 0 : 0xD8, Endian.little)
+        ..setUint32(0xB0, 1, Endian.little);
+      var at = 0xD8 + pathBytes.length;
+      if (withScreenshot) {
+        h
+          ..setUint32(0xC0, screenshot.length, Endian.little)
+          ..setUint32(0xC4, at, Endian.little);
+        at += screenshot.length;
+      }
+      h
+        ..setUint32(0xCC, data.length, Endian.little)
+        ..setUint32(0xD4, at, Endian.little);
+      return Uint8List.fromList([...header, ...pathBytes, if (withScreenshot) ...screenshot, ...data]);
+    }
+
+    List<int> at(Uint8List bytes, int offsetField, int length) {
+      final offset = ByteData.sublistView(bytes).getUint32(offsetField, Endian.little);
+      return bytes.sublist(offset, offset + length);
+    }
+
+    test("this PC's path in; the screenshot and data found where the header says, unchanged", () {
+      for (final path in [newPath, r'C:\G\roms\psx\x.chd']) {
+        final out = DuckstationStateFile.withMediaPath(state(), path)!;
+        final f = ByteData.sublistView(out);
+        expect(f.getUint32(0xA8, Endian.little), path.length);
+        expect(String.fromCharCodes(at(out, 0xAC, path.length)), path);
+        expect(at(out, 0xC4, screenshot.length), screenshot);
+        expect(at(out, 0xD4, data.length), data);
+        expect(f.getUint32(0xB0, Endian.little), 1, reason: 'the disc of a multi-disc set stays');
+        expect(out.length, state().length + path.length - oldPath.length);
+      }
+    });
+
+    test('a state without a screenshot: only the data moves', () {
+      final out = DuckstationStateFile.withMediaPath(state(withScreenshot: false), newPath)!;
+      expect(ByteData.sublistView(out).getUint32(0xC4, Endian.little), 0);
+      expect(at(out, 0xD4, data.length), data);
+    });
+
+    test('a non-ASCII path is written as UTF-8', () {
+      const path = r'C:\Spel\roms\psx\Brännboll.chd';
+      final out = DuckstationStateFile.withMediaPath(state(), path)!;
+      final length = ByteData.sublistView(out).getUint32(0xA8, Endian.little);
+      expect(length, utf8.encode(path).length);
+      expect(utf8.decode(at(out, 0xAC, length)), path);
+    });
+
+    test('null when nothing needs changing or it is not a state it knows', () {
+      expect(DuckstationStateFile.withMediaPath(state(), oldPath), isNull, reason: 'already this path');
+      expect(DuckstationStateFile.withMediaPath(state(path: ''), newPath), isNull, reason: 'no disc');
+      expect(DuckstationStateFile.withMediaPath(state(version: 68), newPath), isNull, reason: 'older header');
+      expect(DuckstationStateFile.withMediaPath(state().sublist(0, 0xD0), newPath), isNull, reason: 'short');
+      expect(DuckstationStateFile.withMediaPath(Uint8List(400), newPath), isNull, reason: 'no magic');
+      final broken = state();
+      ByteData.sublistView(broken).setUint32(0xA8, 1 << 30, Endian.little);
+      expect(DuckstationStateFile.withMediaPath(broken, newPath), isNull, reason: 'path past the end');
     });
   });
 }

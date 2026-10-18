@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/duckstation_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
@@ -63,5 +64,18 @@ void main() {
 
     expect([...directoryService.handleArgs!, directoryService.handleRomPath!],
         ['-batch', '-fullscreen', romPath]);
+  });
+
+  test("Gargosy: a state is started with this PC's ROM path; one without a disc path as it is", () {
+    final head = Uint8List(0xD8 + 4);
+    ByteData.sublistView(head)
+      ..setUint32(0, 0x43435544, Endian.little)
+      ..setUint32(4, 88, Endian.little)
+      ..setUint32(0xA8, 4, Endian.little)
+      ..setUint32(0xAC, 0xD8, Endian.little);
+    head.setAll(0xD8, r'X:\a'.codeUnits);
+    final out = strategy.stateForRom(head, romPath)!;
+    expect(String.fromCharCodes(out.sublist(0xD8)), romPath);
+    expect(strategy.stateForRom(Uint8List(300), romPath), isNull);
   });
 }

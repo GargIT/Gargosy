@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/core/save/strategies/duckstation_state_file.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:path/path.dart' as p;
 
@@ -47,6 +48,12 @@ class DuckstationStrategy extends EmulatorStrategy {
   /// DuckStation: `-statefile <filename>` loads the given state at boot.
   @override
   List<String> stateLoadArgs(String statePath) => ['-statefile', statePath];
+
+  /// Gargosy: a state records the disc's full path, and DuckStation opens
+  /// that one when it differs from the running disc (a warning on another
+  /// PC). DuckStation keeps the command line's path as given, so [romPath].
+  @override
+  Uint8List? stateForRom(Uint8List state, String romPath) => DuckstationStateFile.withMediaPath(state, romPath);
 
   @override
   String resolveSavePath(Game game) {
