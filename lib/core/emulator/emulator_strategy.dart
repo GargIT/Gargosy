@@ -48,6 +48,12 @@ abstract class EmulatorStrategy {
   /// (RetroArch's command line can load numbered slots but not its auto slot).
   bool canLoadState(String fileName) => true;
 
+  /// Gargosy: [state]'s bytes changed to load with this PC's [romPath], or
+  /// null when they load as they are. A state that records the ROM by path
+  /// (DuckStation) names the PC it was made on; Resume starts a copy with
+  /// this PC's path, and the synced file is never changed.
+  Uint8List? stateForRom(Uint8List state, String romPath) => null;
+
   /// The installed emulator's version as the emulator reports it (e.g.
   /// `2.8.2.0`), or null when it cannot be determined. Compared with the
   /// version a save state records to warn before loading a state from a

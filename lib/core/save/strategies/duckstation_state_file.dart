@@ -1,4 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:isolate';
 import 'package:flutter/foundation.dart';
@@ -97,5 +98,41 @@ class DuckstationStateFile {
     } finally {
       await raf?.close();
     }
+  }
+
+  /// Gargosy: header fields of format 69 and later (DuckStation's
+  /// `SAVE_STATE_HEADER`): the disc path's length and offset, and the
+  /// offsets of the screenshot and the state data, which follow the path.
+  static const _pathLength = 0xA8;
+  static const _pathOffset = 0xAC;
+  static const _screenshotOffset = 0xC4;
+  static const _dataOffset = 0xD4;
+  static const _headerEnd = 0xD8;
+  static const _firstFormatWithThisHeader = 69;
+
+  /// [state] with its disc path set to [mediaPath], or null when it already
+  /// is, the state has no disc, or it isn't a state this can rewrite. Only
+  /// the path, its length and the offsets after it change; the screenshot and
+  /// state data are copied as they are.
+  static Uint8List? withMediaPath(Uint8List state, String mediaPath) {
+    final version = parseFormatVersion(state);
+    if (version == null || version < _firstFormatWithThisHeader || state.length < _headerEnd) return null;
+    final fields = ByteData.sublistView(state);
+    final length = fields.getUint32(_pathLength, Endian.little);
+    final offset = fields.getUint32(_pathOffset, Endian.little);
+    if (length == 0 || offset < _headerEnd || offset + length > state.length) return null;
+    final path = utf8.encode(mediaPath);
+    if (listEquals(Uint8List.sublistView(state, offset, offset + length), path)) return null;
+    final delta = path.length - length;
+    final out = Uint8List(state.length + delta)
+      ..setRange(0, offset, state)
+      ..setRange(offset, offset + path.length, path);
+    out.setRange(offset + path.length, out.length, state, offset + length);
+    final rewritten = ByteData.sublistView(out)..setUint32(_pathLength, path.length, Endian.little);
+    for (final at in [_screenshotOffset, _dataOffset]) {
+      final value = fields.getUint32(at, Endian.little);
+      if (value >= offset + length) rewritten.setUint32(at, value + delta, Endian.little);
+    }
+    return out;
   }
 }
