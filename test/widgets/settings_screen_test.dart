@@ -59,6 +59,8 @@ void main() {
       emulatorsProvider.overrideWith((ref) async => const [
             EmulatorInfo(id: 'duckstation', name: 'DuckStation', exe: 'duckstation-qt-x64-ReleaseLTCG.exe', supported: true, installedExe: r'C:\G\e\d.exe'),
             EmulatorInfo(id: 'retroarch', name: 'RetroArch', exe: 'retroarch.exe', supported: true, installedExe: r'C:\G\e\r.exe'),
+            EmulatorInfo(id: 'melonds', name: 'melonDS', exe: 'melonDS.exe', supported: true, installedExe: r'C:\G\e\m.exe'),
+            EmulatorInfo(id: 'cemu', name: 'Cemu', exe: 'Cemu.exe', supported: true, installedExe: r'C:\G\e\c.exe'),
           ]),
     ]);
     addTearDown(c.dispose);
@@ -190,8 +192,16 @@ void main() {
     for (final id in ['duckstation', 'pcsx2', 'retroarch']) {
       expect(find.byKey(ValueKey('state-sync-$id')), findsNothing, reason: id);
     }
-    // DuckStation and RetroArch are installed; both report supportsStateSync, PCSX2 isn't installed.
-    expect(find.text('Syncs in DuckStation and RetroArch.'), findsOneWidget);
+    // DuckStation, RetroArch and melonDS sync states (melonDS without Resume); Cemu doesn't; PCSX2 isn't installed.
+    final synced = find.byKey(const ValueKey('state-sync-synced'));
+    for (final name in ['DuckStation', 'RetroArch', 'melonDS']) {
+      expect(find.descendant(of: synced, matching: find.text(name)), findsOneWidget, reason: name);
+    }
+    final local = find.byKey(const ValueKey('state-sync-local'));
+    expect(find.descendant(of: local, matching: find.text('Cemu')), findsOneWidget);
+    expect(find.descendant(of: local, matching: find.text('DuckStation')), findsNothing);
+    // melonDS syncs but can't start in a state: the list says where to load one.
+    expect(find.text("melonDS: start the game, then load the state from the emulator's own menu."), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('state-sync')));
     await tester.pumpAndSettle();
     expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey), isTrue);
@@ -239,7 +249,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Get BIOS files from RomM'));
     await tester.pumpAndSettle();
-    expect(bios.calls, ['all duckstation,retroarch']);
+    expect(bios.calls, ['all cemu,duckstation,melonds,retroarch']);
     expect(find.textContaining('Got 3 BIOS files from RomM'), findsOneWidget);
   });
 }
