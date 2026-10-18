@@ -26,6 +26,7 @@ class LaunchContext {
     this.roms = '',
     this.gameFolders = const [],
     this.fullscreen = true,
+    this.resumeAutoState = false,
   });
 
   final String data;
@@ -49,6 +50,11 @@ class LaunchContext {
 
   /// The play screen's Full screen switch for this emulator.
   final bool fullscreen;
+
+  /// Resume of the emulator's own auto state: its "load the auto state at
+  /// start" setting is on for this launch, and off for every other one
+  /// (`EmulatorStrategy.resumeAutoStateArg`).
+  final bool resumeAutoState;
 }
 
 class UnsupportedEmulatorException implements Exception {
@@ -331,6 +337,10 @@ class _RetroArch extends ProfileLaunchConfig {
       // S0.2); a choice already in the profile's config stays.
       if (!_hasKey(text, 'sort_savestates_enable')) 'sort_savestates_enable': 'true',
       if (!_hasKey(text, 'sort_savestates_by_content_enable')) 'sort_savestates_by_content_enable': 'false',
+      // Auto Load State only when Resume starts the auto slot, which
+      // --entryslot can't load; off for every other launch, so a plain Play
+      // never starts in it.
+      'savestate_auto_load': '${c.resumeAutoState}',
       'system_directory': systemDir(c),
       if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
       'playlist_directory': p.join(c.data, 'playlists'),

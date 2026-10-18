@@ -2,6 +2,7 @@
 import 'dart:io' as io;
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -101,12 +102,15 @@ void main() {
     expect(await strategy.stateScreenshot(state), [1, 2, 3]);
   });
 
-  test('RetroArch loads numbered slots with --entryslot and cannot resume the auto slot', () {
+  test('RetroArch loads numbered slots with --entryslot, the auto slot with Auto Load State (Gargosy)', () {
     expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state')), ['-e', '0']);
     expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state4')), ['-e', '4']);
+    expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state.auto')),
+        [EmulatorStrategy.resumeAutoStateArg]);
     expect(emulator.canLoadState('Pokemon Emerald.state4'), isTrue);
     expect(emulator.canLoadState('Pokemon Emerald.state'), isTrue);
-    expect(emulator.canLoadState('Pokemon Emerald.state.auto'), isFalse);
+    expect(emulator.canLoadState('Pokemon Emerald.state.auto'), isTrue);
+    expect(emulator.canLoadState('Pokemon Emerald.state.auto.png'), isFalse);
   });
 
   group('states folder follows retroarch.cfg', () {

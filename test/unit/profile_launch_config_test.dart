@@ -1,6 +1,7 @@
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/emulators/profile_directories.dart';
 import 'package:gargosy/emulators/profile_launch_config.dart';
 import 'package:gargosy/profiles/app_root.dart';
@@ -289,6 +290,35 @@ void main() {
     expect(started.single.sublist(started.single.length - 3),
         ['-rompath', '${r'D:\roms\arcade'};${p.join(p.dirname(exe.path), 'roms')}', '1943']);
     expect(started.single, isNot(contains(r'D:\roms\arcade\1943.zip')));
+  });
+
+  test("retroarch: Auto Load State is on only for a Resume of the auto slot, and the marker isn't passed on", () async {
+    final paths = ProfilePaths(root, 'aaa');
+    final exe = io.File(p.join(root.emulators, 'retroarch', 'retroarch.exe'))..createSync(recursive: true);
+    final started = <List<String>>[];
+    final dirs = ProfileLaunchDirectories(
+      root: root,
+      paths: paths,
+      prefs: MemoryPrefs(),
+      start: (exePath, args, {workingDirectory, environment}) async {
+        started.add(args);
+        return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
+      },
+    );
+    String autoLoad() => RegExp(r'^savestate_auto_load = "(\w+)"', multiLine: true)
+        .firstMatch(io.File(p.join(paths.emulatorDir('retroarch'), 'retroarch.cfg')).readAsStringSync())!
+        .group(1)!;
+
+    await dirs.launchGameWithHandle(game(1, 'G'), r'D:\roms\psx\g.chd', 'retroarch', exe.path,
+        args: const ['-L', 'core.dll', EmulatorStrategy.resumeAutoStateArg]);
+    expect(autoLoad(), 'true');
+    expect(started.last, isNot(contains(EmulatorStrategy.resumeAutoStateArg)));
+    expect(started.last, containsAllInOrder(['-L', 'core.dll', r'D:\roms\psx\g.chd']));
+
+    await dirs.launchGameWithHandle(game(1, 'G'), r'D:\roms\psx\g.chd', 'retroarch', exe.path, args: const ['-e', '2']);
+    expect(autoLoad(), 'false', reason: 'a numbered slot loads with -e');
+    await dirs.launchGameWithHandle(game(1, 'G'), r'D:\roms\psx\g.chd', 'retroarch', exe.path);
+    expect(autoLoad(), 'false', reason: 'a plain Play never starts in the auto state');
   });
 
   test('an emulator Gargosy can\'t point at a profile is refused', () async {

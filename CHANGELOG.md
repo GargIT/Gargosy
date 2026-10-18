@@ -111,6 +111,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- RetroArch's Auto save state slot is in the States list and Resume starts
+  in it: Gargosy turns on RetroArch's "Auto Load State" for that launch only,
+  and keeps it off for every other launch.
 - Resume in DuckStation no longer warns that it can't open the CD image when
   the state was made on another PC, or with the ROMs in another folder:
   DuckStation starts a copy of the state that names this PC's ROM. The synced

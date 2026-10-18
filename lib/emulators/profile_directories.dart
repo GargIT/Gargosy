@@ -2,6 +2,7 @@ import '../core/storage/ini_file.dart';
 import 'config_files.dart';
 import '../core/emulator/platform_slugs.dart';
 import '../core/emulator/emulator_registry_data.dart';
+import '../core/emulator/emulator_strategy.dart';
 import '../core/retroachievements/retroachievements_emulator_login.dart';
 import 'dart:io' as io;
 
@@ -134,7 +135,10 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
       {List<String> args = const []}) async {
     final config = ProfileLaunchConfig.of(emulatorId);
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
-    final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
+    final c = _context(emulatorId, p.dirname(exePath),
+        raLogin: await RetroAchievementsEmulatorLogin.load(prefs),
+        resumeAutoState: args.contains(EmulatorStrategy.resumeAutoStateArg));
+    args = [for (final a in args) if (a != EmulatorStrategy.resumeAutoStateArg) a];
     final pre = await config.prepare(c);
     final process = await _start(exePath, [...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]), ...config.gameArgs(c, romPath)],
         workingDirectory: c.exeDir, environment: config.environment(c));
@@ -181,7 +185,9 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     ];
   }
 
-  LaunchContext _context(String emulatorId, String exeDir, {RetroAchievementsEmulatorLogin? raLogin}) => LaunchContext(
+  LaunchContext _context(String emulatorId, String exeDir,
+          {RetroAchievementsEmulatorLogin? raLogin, bool resumeAutoState = false}) =>
+      LaunchContext(
         data: dataDir(emulatorId),
         exeDir: exeDir,
         bios: root.bios,
@@ -192,6 +198,7 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
         roms: root.roms,
         gameFolders: gameFoldersFor(emulatorId),
         fullscreen: Fullscreen.isOn(prefs, emulatorId),
+        resumeAutoState: resumeAutoState,
       );
 
   /// Takes the RetroAchievements login out of the profile's emulator

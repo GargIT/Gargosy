@@ -484,6 +484,32 @@ void main() {
     expect(entryFor(entries, 'GAME.1.st').resumable, isFalse);
   });
 
+  test("a synced state the command line can't load (RetroArch's auto slot): listed, not resumable", () async {
+    final retroarchLike = FakeStateEmulator(ds, canLoad: (name) => !name.contains('auto'));
+    writeLocal('GAME.1.st', '1.2.0');
+    final local = await lastOf(build(emulators: [retroarchLike]).entriesFor(game, [romPath]));
+    expect(entryFor(local, 'GAME.1.st').resumable, isTrue);
+
+    writeLocal('GAME.auto.st', '1.2.0');
+    expect(entryFor(await lastOf(build(emulators: [retroarchLike]).entriesFor(game, [romPath])), 'GAME.auto.st').resumable,
+        isFalse);
+
+    File(p.join(statesDir, 'GAME.auto.st')).deleteSync();
+    await syncOn();
+    api.seed('42', 'GAME.auto.st', fakeState('1.2.0'), emulator: 'fakeemu');
+    final remote = await lastOf(build(emulators: [retroarchLike]).entriesFor(game, [romPath]));
+    expect(entryFor(remote, 'GAME.auto.st').where, ResumeWhere.romm);
+    expect(entryFor(remote, 'GAME.auto.st').resumable, isFalse);
+  });
+
+  test("an emulator that doesn't sync states lists only those it can start in", () async {
+    final localOnly = FakeStateEmulator(ds, syncsStates: false, canLoad: (name) => !name.contains('auto'));
+    writeLocal('GAME.auto.st', '1.2.0');
+    writeLocal('GAME.1.st', '1.2.0');
+    final entries = await lastOf(build(emulators: [localOnly]).entriesFor(game, [romPath]));
+    expect(entries.map((e) => e.fileName), ['GAME.1.st']);
+  });
+
   test('a state the emulator can load is resumable', () async {
     writeLocal('GAME.1.st', '1.2.0');
     final entries = await lastOf(build().entriesFor(game, [romPath]));

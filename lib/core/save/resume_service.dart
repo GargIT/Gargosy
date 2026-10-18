@@ -400,10 +400,12 @@ class ResumeService {
     return result;
   }
 
-  /// A state [name] is listed: any of an emulator that can't load states at
-  /// start (it is loaded from the emulator's menu), else only those its
-  /// command line loads (RetroArch's auto slot isn't).
-  static bool _listed(EmulatorStrategy e, String name) => !e.supportsStateLoadOnLaunch || e.canLoadState(name);
+  /// A state [name] is listed: any of an emulator that syncs states or can't
+  /// load them at start (one its command line can't load, as RetroArch's
+  /// auto slot, is loaded from the emulator's menu), else only those its
+  /// command line loads.
+  static bool _listed(EmulatorStrategy e, String name) =>
+      e.supportsStateSync || !e.supportsStateLoadOnLaunch || e.canLoadState(name);
 
   static bool _resumable(EmulatorStrategy e, String name) => e.supportsStateLoadOnLaunch && e.canLoadState(name);
 
