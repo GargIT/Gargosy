@@ -21,8 +21,12 @@ class RommState {
   /// Server path of the state's screenshot (`screenshot.download_path`), if any.
   final String? screenshotUrl;
 
+  /// Gargosy: the state's free-text labels (RomM 5.4+); Gargosy adds the
+  /// RetroArch core that made it.
+  final List<String> labels;
+
   const RommState({required this.id, required this.fileName, this.updatedAt,
-      this.emulator, this.screenshotUrl});
+      this.emulator, this.screenshotUrl, this.labels = const []});
 
   factory RommState.fromJson(Map<String, dynamic> json) {
     final screenshot = json['screenshot'];
@@ -32,6 +36,7 @@ class RommState {
       updatedAt: json['updated_at']?.toString(),
       emulator: json['emulator']?.toString(),
       screenshotUrl: screenshot is Map ? screenshot['download_path']?.toString() : null,
+      labels: [for (final l in json['labels'] is List ? json['labels'] as List : const []) l.toString()],
     );
   }
 }
@@ -66,4 +71,7 @@ abstract class RommStatesApi {
 
   /// The screenshot at [url] (a [RommState.screenshotUrl]).
   Future<Uint8List> downloadStateScreenshot(String url);
+
+  /// Gargosy: replaces [stateId]'s labels (`PUT /api/states/{id}/labels`).
+  Future<RommState> setStateLabels(int stateId, List<String> labels);
 }

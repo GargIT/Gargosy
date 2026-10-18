@@ -125,6 +125,25 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   @override
   String? stateCoreFor(Game game) => coreIdFor(game);
 
+  /// The core's name as the play screen shows it ("PCSX ReARMed"), else
+  /// RetroArch's own (its state folder's name), else its id.
+  @override
+  String? stateLabelFor(Game game) {
+    final core = coreIdFor(game);
+    return core == null ? null : _coreLabel('${core}_libretro');
+  }
+
+  static String _coreLabel(String id) =>
+      kRetroArchCores.where((c) => c.id == id).firstOrNull?.displayName ??
+      kRetroArchCoreLibraryNames[id] ??
+      id.replaceAll(RegExp(r'_libretro$'), '');
+
+  @override
+  Set<String> get stateLabels => {
+        for (final c in kRetroArchCores) c.displayName,
+        for (final id in kRetroArchCoreLibraryNames.keys) _coreLabel(id),
+      };
+
   String? coreIdFor(Game game) {
     final core = _getCoreInfo(game.platformSlug?.toLowerCase() ?? '')?.coreName;
     if (core == null || core.isEmpty) return null;

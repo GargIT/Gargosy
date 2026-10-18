@@ -709,7 +709,7 @@ class StateSyncService {
       try {
         final saved = await _api.updateState(server.id, file, fileName: name, screenshot: screenshot);
         debugPrint('[StateSync] uploaded $name (PUT, id ${saved.id})');
-        return saved;
+        return await _labelled(ctx, saved);
       } on RommStateNotFoundException {
         goneId = server.id;
       }
@@ -720,7 +720,30 @@ class StateSyncService {
         screenshot: screenshot);
     debugPrint('[StateSync] uploaded $name (POST, id ${saved.id})'
         "${goneId == null ? '' : ' - re-created: state $goneId is gone from RomM'}");
-    return saved;
+    return _labelled(ctx, saved);
+  }
+
+  /// Gargosy: [saved] with the label naming the core that made it
+  /// ([StateSyncCapable.stateLabelFor]); another core's label goes, the
+  /// player's own labels stay. A failure is logged and never fails the upload.
+  Future<RommState> _labelled(_Ctx ctx, RommState saved) async {
+    final label = ctx.strategy.stateLabelFor(ctx.game);
+    if (label == null) return saved;
+    final others = ctx.strategy.stateLabels.map((l) => l.toLowerCase()).toSet()..remove(label.toLowerCase());
+    final labels = [
+      for (final l in saved.labels)
+        if (!others.contains(l.toLowerCase())) l,
+      if (!saved.labels.any((l) => l.toLowerCase() == label.toLowerCase())) label,
+    ];
+    if (labels.length == saved.labels.length && labels.every(saved.labels.contains)) return saved;
+    try {
+      final labelled = await _api.setStateLabels(saved.id, labels);
+      debugPrint('[StateSync] labelled ${saved.fileName} (id ${saved.id}): $label');
+      return labelled;
+    } catch (e) {
+      debugPrint('[StateSync] could not label ${saved.fileName} (id ${saved.id}) with $label: $e');
+      return saved;
+    }
   }
 
   /// The emulator's screenshot for [file]; never fails an upload.
