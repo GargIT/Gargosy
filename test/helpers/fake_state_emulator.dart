@@ -24,6 +24,11 @@ class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
   final bool perDisc;
   final Map<String, List<int>> screenshots = {};
 
+  /// What [stateCoreFor] answers (a RetroArch-like strategy's core).
+  String? core;
+  @override
+  String? stateCoreFor(Game game) => core;
+
   @override
   String get strategyId => id;
   @override

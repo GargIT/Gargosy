@@ -111,6 +111,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Resume starts a RetroArch state in the core it was made with (PCSX ReARMed,
+  say), not the platform's default core.
 - RetroArch's Auto save state slot is in the States list and Resume starts
   in it: Gargosy turns on RetroArch's "Auto Load State" for that launch only,
   and keeps it off for every other launch.

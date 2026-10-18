@@ -161,8 +161,12 @@ class FakeEngine implements PlayEngine {
   Future<StatePull> pullStates(Game game, String romPath, EmulatorStrategy s,
       {String? priority, String? coreOverride, void Function(String)? onProblem}) async {
     steps.add('states');
+    pulledCore = coreOverride;
     return statePull;
   }
+
+  /// The core the last state pull was for.
+  String? pulledCore;
 
   /// The state the last resume checked.
   ResumeEntry? resumed;
@@ -320,6 +324,27 @@ void main() {
     expect(engine.launchedIn, 'pcsx2');
     expect(engine.loadStatePath, r'D:\G\states\auto.p2s');
     expect(c.read(playControllerProvider).runningGameId, '1');
+  });
+
+  test("a RetroArch state resumes in the core it belongs to, not the platform's default", () async {
+    final rearmed = ResumeEntry(
+      emulatorId: 'retroarch',
+      emulatorName: 'RetroArch',
+      fileName: 'WipEout.state.auto',
+      slot: const AutoStateSlot(),
+      savedAt: DateTime(2026, 10, 18),
+      where: ResumeWhere.both,
+      core: 'pcsx_rearmed',
+    );
+    expect(await c.read(playControllerProvider.notifier).resume(game(1, 'G'), rearmed), isNull);
+    expect(engine.launchedIn, 'retroarch');
+    expect(engine.coreOverride, 'pcsx_rearmed_libretro');
+    expect(engine.pulledCore, 'pcsx_rearmed_libretro', reason: "the pull reads that core's state folder");
+  });
+
+  test('a state of an emulator without cores resumes with no core', () async {
+    expect(await c.read(playControllerProvider.notifier).resume(game(1, 'G'), auto), isNull);
+    expect(engine.coreOverride, isNull);
   });
 
   test('a state that is missing says why, and nothing starts', () async {

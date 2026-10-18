@@ -78,6 +78,11 @@ void main() {
     expect(strategy.slotOf('notes.txt'), isA<UnknownStateSlot>());
   });
 
+  test("a state's core is the core whose folder it's in (Gargosy: Resume starts it)", () {
+    expect(strategy.stateCoreFor(game), isNotNull);
+    expect(strategy.stateCoreFor(game), strategy.coreIdFor(game));
+  });
+
   test('looksLikeValidState accepts RASTATE and compressed states only', () {
     final raw = Uint8List.fromList([...'RASTATE'.codeUnits, 1, ...List.filled(40, 7)]);
     final rzip = Uint8List.fromList([...'#RZIPv'.codeUnits, 2, 0x23, ...List.filled(40, 7)]);

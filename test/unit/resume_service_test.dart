@@ -510,6 +510,16 @@ void main() {
     expect(entries.map((e) => e.fileName), ['GAME.1.st']);
   });
 
+  test("every entry carries the core its folder belongs to (RetroArch), here and on RomM", () async {
+    save.core = 'pcsx_rearmed';
+    writeLocal('GAME.1.st', '1.2.0');
+    await syncOn();
+    api.seed('42', 'GAME.2.st', fakeState('1.2.0'), emulator: 'fakeemu');
+    final entries = await lastOf(build().entriesFor(game, [romPath]));
+    expect(entryFor(entries, 'GAME.1.st').core, 'pcsx_rearmed');
+    expect(entryFor(entries, 'GAME.2.st').core, 'pcsx_rearmed');
+  });
+
   test('a state the emulator can load is resumable', () async {
     writeLocal('GAME.1.st', '1.2.0');
     final entries = await lastOf(build().entriesFor(game, [romPath]));
