@@ -54,6 +54,16 @@ class _ThrowingDescribeStrategy extends FakeStateSaveStrategy {
   Future<StateFileInfo> describeState(File file) async => throw Exception('describeState boom');
 }
 
+/// A strategy like PCSX2's in a profile that never ran it: no state folder
+/// until the emulator's folders are made.
+class _FolderlessStrategy extends FakeStateSaveStrategy {
+  _FolderlessStrategy(super.dir);
+  bool prepared = false;
+  @override
+  Future<String> stateDirectory(Game game, String romPath) async =>
+      prepared ? super.stateDirectory(game, romPath) : throw Exception('Save directory not found');
+}
+
 void main() {
   late Directory tmp;
   late String statesDir;
@@ -89,6 +99,7 @@ void main() {
     bool withApi = true,
     SaveStrategy? Function(Game game, {String? emulatorId})? resolveSaveStrategy,
     StrategyExclusive? exclusive,
+    Future<void> Function(EmulatorStrategy emulator)? prepareFolders,
   }) =>
       ResumeService(
         emulatorsFor: (slug) => slug == 'fakeplatform' ? (emulators ?? [emu]) : [],
@@ -98,6 +109,7 @@ void main() {
         api: withApi ? api : null,
         isOffline: () => offline,
         exclusive: exclusive,
+        prepareFolders: prepareFolders,
       );
 
   Future<List<ResumeEntry>> lastOf(Stream<List<ResumeEntry>> s) async => (await s.toList()).last;
@@ -767,6 +779,36 @@ void main() {
     test('no resume service: resume is not available', () {
       expect(resumeMissingMessage(entry(ResumeWhere.romm), serviceAvailable: false),
           "Resume isn't available right now. Nothing was started.");
+    });
+  });
+
+  group("an emulator this profile never ran (Gargosy)", () {
+    test("its folders are made first, so RomM's states are listed", () async {
+      await syncOn();
+      api.seed('42', 'GAME.2.st', fakeState('1.2.0'), emulator: 'fakeemu');
+      final folderless = _FolderlessStrategy(statesDir);
+      final prepared = <String>[];
+      final service = build(
+        resolveSaveStrategy: (g, {emulatorId}) => emulatorId == emu.emulatorId ? folderless : null,
+        prepareFolders: (e) async {
+          prepared.add(e.emulatorId);
+          folderless.prepared = true;
+        },
+      );
+      final entries = await lastOf(service.entriesFor(game, [romPath]));
+      expect(prepared, ['fakeemu']);
+      expect(entryFor(entries, 'GAME.2.st').where, ResumeWhere.romm);
+    });
+
+    test('nothing is made with sync off, or for an emulator that does not sync states', () async {
+      final prepared = <String>[];
+      await lastOf(build(prepareFolders: (e) async => prepared.add(e.emulatorId)).entriesFor(game, [romPath]));
+      expect(prepared, isEmpty, reason: 'sync off');
+      await syncOn();
+      final local = FakeStateEmulator(ds, syncsStates: false);
+      await lastOf(build(emulators: [local], prepareFolders: (e) async => prepared.add(e.emulatorId))
+          .entriesFor(game, [romPath]));
+      expect(prepared, isEmpty, reason: 'keeps its states on this PC');
     });
   });
 }

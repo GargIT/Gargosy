@@ -113,6 +113,7 @@ final resumeServiceProvider = Provider<ResumeService?>((ref) {
   final prefs = ref.watch(profilePrefsProvider);
   if (registry == null || sync == null || prefs == null) return null;
   final romm = ref.watch(rommServiceProvider);
+  final launch = ref.watch(launchDirectoriesProvider);
   return ResumeService(
     emulatorsFor: registry.getAllStrategiesForSlug,
     resolveSaveStrategy: sync.stateStrategyForGame,
@@ -120,6 +121,7 @@ final resumeServiceProvider = Provider<ResumeService?>((ref) {
     prefs: prefs,
     api: romm,
     isOffline: () => romm?.isOffline.value == true,
+    prepareFolders: launch == null ? null : (e) => launch.ensureDataFolders(e.emulatorId, e.windowsExecutable),
   );
 });
 

@@ -128,7 +128,9 @@ class ResumeService {
     bool Function()? isOffline,
     Duration listTimeout = StateSyncService.defaultListTimeout,
     StrategyExclusive? exclusive,
+    Future<void> Function(EmulatorStrategy emulator)? prepareFolders,
   })  : _emulatorsFor = emulatorsFor,
+        _prepareFolders = prepareFolders,
         _exclusive = exclusive,
         _resolve = resolveSaveStrategy,
         _prefs = prefs,
@@ -147,6 +149,11 @@ class ResumeService {
 
   /// The save lock: finding a game's states sets up the shared strategies.
   final StrategyExclusive? _exclusive;
+
+  /// Gargosy: makes an installed emulator's folders in the profile, as its
+  /// first launch would. A profile that never ran it has none, and its
+  /// strategy can't name a state folder, so RomM's states would have no owner.
+  final Future<void> Function(EmulatorStrategy emulator)? _prepareFolders;
   final Map<String, Uint8List?> _thumbnails = {};
 
   /// Save strategy per emulator id, as last resolved by [_sources]; used for
@@ -338,6 +345,9 @@ class ResumeService {
       // is listed too, its states not resumable.
       if (!emulator.supportsStateLoadOnLaunch && !emulator.supportsStateSync) continue;
       try {
+        if (emulator.supportsStateSync && _prefs.getBool(StateSyncService.enabledKey) == true) {
+          await _prepareFolders?.call(emulator);
+        }
         final strategy = _resolve(game, emulatorId: emulator.emulatorId);
         if (strategy is! StateSyncCapable) continue;
         final matches = await strategy.stateFileMatcher(game, romPath);
