@@ -137,6 +137,10 @@ void main() {
       final w = wrapper();
       expect(w, isA<StateSyncCapable>());
       expect((w as StateSyncCapable).slotOf('Tetris.state1'), base.slotOf('Tetris.state1'));
+      // Resume starts the core the state belongs to: the wrapper must say it.
+      final g = game('psx', 'WipEout (Europe).chd');
+      expect((w as StateSyncCapable).stateCoreFor(g), isNotNull);
+      expect((w as StateSyncCapable).stateCoreFor(g), base.stateCoreFor(g));
     });
 
     test('code that asks for RetroArch\'s strategy finds it under the wrapper', () {
