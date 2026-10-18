@@ -596,4 +596,7 @@ class _SigilStateSaveStrategy extends SigilSaveStrategy with StateSyncCapable {
 
   @override
   Future<Uint8List?> stateScreenshot(io.File file) => _states.stateScreenshot(file);
+
+  @override
+  String? stateCoreFor(Game game) => _states.stateCoreFor(game);
 }
