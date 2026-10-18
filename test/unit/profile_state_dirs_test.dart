@@ -148,4 +148,22 @@ void main() {
       expect(await strategy().stateDirectory(psx, psxRom), key('savestate_directory'));
     });
   });
+
+  group('a profile that never ran the emulator', () {
+    test("listing states makes an installed emulator's folders first, as its launch would", () async {
+      final launch = ProfileLaunchDirectories(root: root, paths: paths, prefs: MemoryPrefs());
+      final strategy = Pcsx2SaveStrategy(dirs, dirs.prefs, platform: sandboxedPlatform(paths));
+      await expectLater(strategy.stateDirectory(ps2, r'D:\roms\ps2\Ico (USA).chd'), throwsException);
+
+      await launch.ensureDataFolders('pcsx2', 'pcsx2-qt.exe');
+      expect(io.Directory(dirs.dataDir('pcsx2')).existsSync(), isFalse, reason: 'not installed: nothing made');
+
+      io.File(p.join(root.emulators, 'pcsx2', 'pcsx2-qt.exe'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('');
+      await launch.ensureDataFolders('pcsx2', 'pcsx2-qt.exe');
+      expect(await strategy.stateDirectory(ps2, r'D:\roms\ps2\Ico (USA).chd'),
+          p.join(dirs.dataDir('pcsx2'), 'PCSX2', 'sstates'));
+    });
+  });
 }

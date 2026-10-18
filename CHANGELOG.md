@@ -111,6 +111,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- RomM's save states show on the play screen in a profile that hasn't started
+  that emulator yet (a new PC or profile): the emulator's folders are made
+  before the states are listed, as its first launch would.
 - Save states on a new profile: DuckStation's are read from the profile's
   own folder from the first launch on, and RetroArch's state folder is set
   before its first run, so a state from RomM lands where the emulator looks.

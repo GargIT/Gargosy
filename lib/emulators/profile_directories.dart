@@ -121,6 +121,14 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
 
   final ProcessStarter _start;
 
+  /// Makes [emulatorId]'s folders in this profile ([EmulatorLayout.ensureFolders])
+  /// when it is installed ([exeName] is found): what a launch does first, done
+  /// before a profile that never ran it lists RomM's states.
+  Future<void> ensureDataFolders(String emulatorId, String exeName) async {
+    if (await findEmulatorExecutable(emulatorId, exeName) == null) return;
+    EmulatorLayout.of(emulatorId).ensureFolders(dataDir(emulatorId));
+  }
+
   @override
   Future<io.Process?> launchGameWithHandle(Game game, String romPath, String emulatorId, String exePath,
       {List<String> args = const []}) async {
