@@ -83,6 +83,32 @@ class PlayController extends StateNotifier<PlayState> {
     }
   }
 
+  /// Gargosy: what [PlayState.runningGameId] holds while an emulator is open
+  /// on its own (no game): launches, profile switches and updates wait for
+  /// it as for a game.
+  static String openEmulatorId(String emulatorId) => 'emulator:$emulatorId';
+
+  /// Opens [emulatorId] (at [exePath]) on the profile's data with no game,
+  /// for its own settings (controllers). Returns why it couldn't, or null.
+  Future<String?> openEmulator(String emulatorId, String name, String exePath) async {
+    if (state.runningGameId != null) return 'A game is running. Close it first.';
+    state = PlayState(runningGameId: openEmulatorId(emulatorId));
+    try {
+      final engine = _ref.read(playEngineProvider);
+      if (engine == null) {
+        state = const PlayState();
+        return 'No profile is active.';
+      }
+      await engine.openEmulator(emulatorId, exePath, onExit: () {
+        if (mounted) state = const PlayState();
+      });
+      return null;
+    } on Object catch (e) {
+      state = const PlayState();
+      return "Couldn't open $name: $e";
+    }
+  }
+
   /// Resumes [game] from the save state [entry], in the emulator that made
   /// it and from the ROM file it belongs to. [confirmVersion] is asked when
   /// the state comes from another build of the emulator; false starts

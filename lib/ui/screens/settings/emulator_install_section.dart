@@ -50,6 +50,20 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     }
   }
 
+  /// Opens [e] on its own, with this profile's settings, for its menus
+  /// (controllers): Dolphin started from a game has none.
+  Future<void> _open(EmulatorInfo e) async {
+    final exe = e.installedExe;
+    if (exe == null) return;
+    final refused = await ref.read(playControllerProvider.notifier).openEmulator(e.id, e.name, exe);
+    if (!mounted) return;
+    showToast(
+        context,
+        refused ??
+            "${e.name} is open with this profile's settings. Set it up there and close it when you're done. "
+                "A game started from it doesn't sync its saves: start games from Gargosy.");
+  }
+
   Future<void> _import(EmulatorInfo e) async {
     final lib = ref.read(emulatorLibraryProvider);
     if (lib == null) return;
@@ -170,6 +184,10 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
           style: TextStyle(fontSize: GFont.md, color: installed && e.supported ? GColors.success : GColors.fgSecondary)),
       if (busy == null && e.supported) ...[
         const SizedBox(width: GSpace.s4),
+        if (installed) ...[
+          SettingsButton(label: 'Open', icon: Icons.open_in_new, onActivate: () => _open(e)),
+          const SizedBox(width: GSpace.s2),
+        ],
         SettingsButton(label: 'Import from folder', icon: Icons.folder_open_outlined, onActivate: () => _import(e)),
         if (e.downloadOff == null) ...[
           const SizedBox(width: GSpace.s2),

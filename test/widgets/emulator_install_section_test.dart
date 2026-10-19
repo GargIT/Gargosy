@@ -2,11 +2,42 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/emulators/bios_sync.dart';
 import 'package:gargosy/emulators/emulator_installer.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
+import 'package:gargosy/play/play_controller.dart';
+import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/ui/screens/settings/emulator_install_section.dart';
 
 import '../helpers/widget_env.dart';
 
+/// Only opens emulators; anything else isn't expected here.
+class _OpenOnlyEngine implements PlayEngine {
+  final opened = <String>[];
+  @override
+  Future<void> openEmulator(String emulatorId, String exePath, {required void Function() onExit}) async =>
+      opened.add('$emulatorId $exePath');
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  testWidgets("Open: only an installed emulator; it starts on the profile and says how", (tester) async {
+    final engine = _OpenOnlyEngine();
+    await setDesktopSize(tester);
+    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
+      playEngineProvider.overrideWithValue(engine),
+      emulatorsProvider.overrideWith((ref) async => const [
+            EmulatorInfo(id: 'dolphin', name: 'Dolphin', exe: 'Dolphin.exe', supported: true, installedExe: r'C:\G\emulators\dolphin\Dolphin.exe'),
+            EmulatorInfo(id: 'pcsx2', name: 'PCSX2', exe: 'pcsx2-qt.exe', supported: true),
+          ]),
+    ]));
+    await tester.pumpAndSettle();
+    expect(find.text('Open'), findsOneWidget, reason: 'PCSX2 is not installed');
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(engine.opened, [r'dolphin C:\G\emulators\dolphin\Dolphin.exe']);
+    expect(find.textContaining("Dolphin is open with this profile's settings"), findsOneWidget);
+    expect(PlayController.openEmulatorId('dolphin'), 'emulator:dolphin');
+  });
+
   testWidgets('lists emulators with their state; unsupported ones say so', (tester) async {
     await setDesktopSize(tester);
     await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
