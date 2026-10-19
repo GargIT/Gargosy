@@ -108,3 +108,10 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 ## ares save states (#66)
 
 36. [x] With "Save states on RomM" on: in profile A, play a game in ares (e.g. N64), save a state to a slot and quit. The state is on RomM. In profile B, it comes down before launch and Resume starts the game in it.
+
+## sigil required, old save code removed (#57)
+
+37. [ ] Rename `sigil.dll` beside `Gargosy.exe` and start Gargosy: it shows "Gargosy can't load sigil.dll" with the path, and doesn't start. Rename it back: Gargosy starts as before.
+38. [ ] A save round trip between two profiles, each in-game save then quit, on: PCSX2 (PS2), DuckStation (PS1), Dolphin (GameCube), PPSSPP (PSP) and mGBA (Game Boy). The save is on RomM, and profile B starts with it.
+39. [ ] The same with a state on each of them (Resume in profile B).
+40. [ ] A Wii game in Dolphin and a PS2 game in RetroArch (LRPS2): a save round trip between two profiles.
