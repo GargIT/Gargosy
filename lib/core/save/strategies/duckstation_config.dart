@@ -153,15 +153,6 @@ class DuckstationGameDb {
   static Future<String?> discSetTitle(String resourcesDir, String serial) async =>
       (await _load(_discSetsPath(resourcesDir), 'titles', parseDiscSets))?[serial.toUpperCase()];
 
-  /// Every disc serial of the multi-disc game [serial] belongs to (per
-  /// `discsets.yaml`), else just [serial]. A later disc often reads the
-  /// saves an earlier one wrote under its own serial.
-  static Future<List<String>> discSetSerials(String resourcesDir, String serial) async {
-    final key = serial.toUpperCase();
-    final members = await _load(_discSetsPath(resourcesDir), 'members', parseDiscSetMembers);
-    return members?[key] ?? [key];
-  }
-
   static Future<T?> _load<T extends Object>(String path, String kind, T Function(String text) parse) async {
     try {
       final file = io.File(path);
@@ -225,17 +216,6 @@ class DuckstationGameDb {
       if (title == null || title.isEmpty) continue;
       for (final serial in set.serials) {
         result.putIfAbsent(serial, () => title);
-      }
-    }
-    return result;
-  }
-
-  /// `discsets.yaml`: every serial maps to all serials of its set.
-  static Map<String, List<String>> parseDiscSetMembers(String text) {
-    final result = <String, List<String>>{};
-    for (final set in _discSets(text)) {
-      for (final serial in set.serials) {
-        result.putIfAbsent(serial, () => set.serials);
       }
     }
     return result;

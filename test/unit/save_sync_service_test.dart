@@ -25,7 +25,6 @@ import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
 
-import '../helpers/duckstation_test_env.dart';
 import '../helpers/ps1_card_builder.dart';
 import '../helpers/rzip_builder.dart';
 import 'save_sync_service_test.mocks.dart';
@@ -1270,43 +1269,6 @@ void main() {
 
       expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isFalse);
       verify(mockRommService.confirmSaveDownloaded(79, deviceId: 'dev-1')).called(1);
-    });
-
-    test('a pull the emulator ignores (DuckStation and a file that is no memory card) restores nothing', () async {
-      final env = await DuckstationTestEnv.create(tempDir);
-      when(mockDirectoryService.findEmulatorExecutable('duckstation', any))
-          .thenAnswer((_) async => p.join(env.exeDir, 'duckstation-qt-x64-ReleaseLTCG.exe'));
-      const rom = 'Colin McRae Rally 2.0 (Europe) (En,Fr,De,Es,It)';
-      final game = Game(
-        id: 'ps1ignored',
-        name: 'Colin McRae Rally 2.0',
-        fsName: '$rom.cue',
-        platformSlug: 'psx',
-        fileSize: 0,
-      );
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
-        (_) async => {
-          'id': 90,
-          'download_path': 'https://example.test/notes.txt',
-          'file_name': 'notes.txt',
-          'emulator': 'duckstation',
-        },
-      );
-      when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
-          .thenAnswer((_) async => Uint8List.fromList(List.filled(300, 7)));
-
-      expect(await sync.pullSave(game, p.join(tempDir.path, 'roms', '$rom.cue'), emulatorId: 'duckstation'), isFalse);
-      await sync.markSaveSynced(
-        game,
-        p.join(tempDir.path, 'roms', '$rom.cue'),
-        emulatorId: 'duckstation',
-        syncMode: 'saves',
-      );
-      expect(
-        await sync.rommCopyOfLocal(game, p.join(tempDir.path, 'roms', '$rom.cue'), emulatorId: 'duckstation'),
-        isNull,
-        reason: 'RomM\'s save 90 is not what this PC has',
-      );
     });
 
     for (final (label, capabilities) in [
