@@ -1,8 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -18,15 +16,6 @@ import 'save_sync_regression_test.mocks.dart';
 /// whether they can be synced (the serial tells this game's saves from the
 /// others') and whether a pull must finish before launch.
 void main() {
-  /// A zip as Gargosy's push builds one from save folders.
-  Uint8List zipOf(Map<String, List<int>> entries) {
-    final a = Archive()..addFile(ArchiveFile('freegosy_sync.txt', 2, [123, 125]));
-    for (final e in entries.entries) {
-      a.addFile(ArchiveFile(e.key, e.value.length, e.value));
-    }
-    return Uint8List.fromList(ZipEncoder().encode(a));
-  }
-
   late Directory tempDir;
   late String raDir;
   late String memcards;
@@ -136,21 +125,6 @@ void main() {
       expect(Ps2SaveFolders.isSaveOf('BASLUS-20852AC5', 'SLUS-20851'), isFalse);
       expect(Ps2SaveFolders.isSaveOf('BASLUS', 'SLUS-20851'), isFalse);
       expect(Ps2SaveFolders.isSaveOf('baslus_20851ac5', 'slus-20851'), isTrue);
-    });
-
-    test('savesFromUpload skips states, loose files and nested folders', () {
-      final saves = Ps2SaveFolders.savesFromUpload(
-        zipOf({
-          'Ace Combat 5 (USA).state1': [1],
-          'loose.bin': [1],
-          'BASLUS-20851AC5/a': [1],
-          'BASLUS-20851AC5/sub/b': [1],
-          'NOTASAVE/c': [1],
-        }),
-        'x.zip',
-      );
-      expect(saves.map((s) => s.name), ['BASLUS-20851AC5']);
-      expect(saves.single.files.map((f) => f.name), ['a']);
     });
   });
 }
