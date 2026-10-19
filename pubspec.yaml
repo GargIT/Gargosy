@@ -49,6 +49,12 @@ dev_dependencies:
   http_mock_adapter: 0.6.1
   file: ^7.0.1
 
+# gamepads_windows 0.3.2, patched: its stop() read through a null callback
+# token on every exit (third_party/gamepads_windows/GARGOSY.md).
+dependency_overrides:
+  gamepads_windows:
+    path: third_party/gamepads_windows
+
 flutter:
   uses-material-design: true
   assets:
