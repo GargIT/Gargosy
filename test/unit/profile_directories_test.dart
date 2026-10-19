@@ -55,7 +55,8 @@ void main() {
       final platform = sandboxedPlatform(ProfilePaths(root, profile));
       return [
         await DolphinSaveStrategy(d, platform: platform).getSaveDir(game, r'C:\roms\gc\g.iso'),
-        await Pcsx2SaveStrategy(d, d.prefs, platform: platform).getSaveDir(game, r'C:\roms\ps2\g.chd'),
+        // PCSX2's cards are sigil's (#57): its own folder is the states'.
+        await Pcsx2SaveStrategy(d, d.prefs, platform: platform).stateDirectory(game, r'C:\roms\ps2\g.chd'),
         await DuckstationSaveStrategy(d, d.prefs, platform: platform).getSaveDir(game, r'C:\roms\psx\g.chd'),
         await PpssppSaveStrategy(d, platform: platform).getSaveDir(game, r'C:\roms\psp\g.iso'),
         await XeniaSaveStrategy(d, platform: platform).getSaveDir(

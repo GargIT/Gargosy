@@ -34,37 +34,33 @@ void main() {
       );
     }
 
-    test('the per-game save folder is found by RomM\'s serial, without reading the ROM', () async {
+    // PCSX2's cards are sigil's (#57): the serial now finds the game's states.
+    test('the state matcher uses RomM\'s serial, without reading the ROM', () async {
       final (pcsx2, spy) = await strategy();
-      final perGame = Directory(p.join(base.path, 'pcsx2', 'saves', 'SCUS-97113'))..createSync(recursive: true);
-      File(p.join(perGame.path, 'data.bin')).writeAsBytesSync(List.filled(150, 2));
-
-      final files = await pcsx2.getSaveFiles(
+      final matches = await pcsx2.stateFileMatcher(
         Game(id: 'g1', name: 'Ico', platformSlug: 'ps2', fileSize: 0, titleId: 'SCUS-97113'),
         p.join(base.path, 'Ico.chd'),
       );
 
-      expect(files.map((f) => f.path), [perGame.path]);
+      expect(matches!('SCUS-97113 (ABCD1234).01.p2s'), isTrue);
+      expect(matches('SLUS-20312 (ABCD1234).01.p2s'), isFalse);
       expect(spy.reads, 0);
     });
 
     test('RomM\'s serial is normalised like a read one (slus_203.12 → SLUS-20312)', () async {
       final (pcsx2, spy) = await strategy();
-      final perGame = Directory(p.join(base.path, 'pcsx2', 'saves', 'SLUS-20312'))..createSync(recursive: true);
-      File(p.join(perGame.path, 'data.bin')).writeAsBytesSync(List.filled(150, 2));
-
-      final files = await pcsx2.getSaveFiles(
+      final matches = await pcsx2.stateFileMatcher(
         Game(id: 'g2', name: 'Game', platformSlug: 'ps2', fileSize: 0, titleId: ' slus_203.12 '),
         p.join(base.path, 'Game.iso'),
       );
 
-      expect(files.map((f) => f.path), [perGame.path]);
+      expect(matches!('SLUS-20312 (ABCD1234).01.p2s'), isTrue);
       expect(spy.reads, 0);
     });
 
     test('without RomM\'s serial the ROM is read, as before', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(
+      await pcsx2.stateFileMatcher(
         Game(id: 'g3', name: 'Game', platformSlug: 'ps2', fileSize: 0),
         p.join(base.path, 'Game.iso'),
       );
@@ -116,7 +112,7 @@ void main() {
 
     test('a multi-disc game reads the launched disc: RomM only knows disc 1', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(
+      await pcsx2.stateFileMatcher(
         Game(
           id: 'm',
           name: 'Two Discs',
@@ -136,7 +132,7 @@ void main() {
 
     test("one disc as .cue + .bin tracks is not multi-disc: RomM's serial is used", () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(
+      await pcsx2.stateFileMatcher(
         Game(
           id: 'c',
           name: 'Cue',
@@ -157,7 +153,7 @@ void main() {
 
     test('a RomM value that isn\'t a serial is ignored', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(
+      await pcsx2.stateFileMatcher(
         Game(id: 'b', name: 'Bad', platformSlug: 'ps2', fileSize: 0, titleId: '../../evil'),
         p.join(base.path, 'Bad.iso'),
       );
@@ -189,19 +185,19 @@ void main() {
 
     test('disc 2 from the library list (no files known) reads that disc', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(listed(), p.join(base.path, 'Two Discs (USA) (Disc 2).chd'));
+      await pcsx2.stateFileMatcher(listed(), p.join(base.path, 'Two Discs (USA) (Disc 2).chd'));
       expect(spy.reads, greaterThan(0));
     });
 
     test('disc 1 uses RomM\'s serial', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(listed(), p.join(base.path, 'Two Discs (USA) (Disc 1).chd'));
+      await pcsx2.stateFileMatcher(listed(), p.join(base.path, 'Two Discs (USA) (Disc 1).chd'));
       expect(spy.reads, 0);
     });
 
     test('an .m3u playlist uses RomM\'s serial (RomM identifies it by its first disc)', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(
+      await pcsx2.stateFileMatcher(
         Game(
           id: 'm3u',
           name: 'Two Discs',
