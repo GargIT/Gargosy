@@ -77,7 +77,7 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 
 ## PPSSPP save states (#59)
 
-27. [ ] With "Save states on RomM" on: in profile A, play a PSP game in PPSSPP, save a state to a slot and quit. The state is on RomM, with its screenshot on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it.
+27. [x] With "Save states on RomM" on: in profile A, play a PSP game in PPSSPP, save a state to a slot and quit. The state is on RomM, with its screenshot on the play screen's States list. In profile B, it comes down before launch and Resume starts the game in it.
 
 ## Dolphin save states (#60)
 
