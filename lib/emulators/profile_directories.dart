@@ -149,6 +149,28 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     return process;
   }
 
+  /// Opens [emulatorId]'s own window on this profile's data, with no game
+  /// (Settings → Emulators, Open): the folders and settings a launch points
+  /// it at, and no full screen, so its menus (controllers) are there. The
+  /// profile's settings are put back when it exits, as after a game.
+  Future<io.Process> openEmulator(String emulatorId, String exePath) async {
+    final config = ProfileLaunchConfig.of(emulatorId);
+    if (config == null) throw UnsupportedEmulatorException(emulatorId);
+    final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
+    final pre = await config.prepare(c);
+    final io.Process process;
+    try {
+      process = await _start(exePath, pre, workingDirectory: c.exeDir, environment: config.environment(c));
+    } catch (_) {
+      await config.finish(c);
+      rethrow;
+    }
+    process.stdout.drain<void>();
+    process.stderr.drain<void>();
+    process.exitCode.then((_) => config.finish(c));
+    return process;
+  }
+
   /// Runs [exePath] on this profile's data with [args] and no game (RPCS3's
   /// `--installfw`, issue #10): the launch config readies the profile and
   /// gives its environment, and nothing else is added. [finish] puts the

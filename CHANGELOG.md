@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Settings → Emulators has Open for each installed emulator: it starts on its
+  own with this profile's settings, so you can set up controllers (Dolphin's
+  Wii Remote, say) in its own menus. A game started from it doesn't sync.
 - A RetroArch save state on RomM is labelled with the core that made it
   ("PCSX ReARMed", "Beetle PSX HW"). Your own labels on it are kept.
 - The logo on "Who is playing?" is 2.5 times larger.

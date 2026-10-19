@@ -102,6 +102,11 @@ abstract class PlayEngine {
   Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy strategy,
       {String? coreOverride, String? loadStatePath});
 
+  /// Opens the emulator at [exePath] on the profile's data with no game, for
+  /// its own settings (controllers). Completes when it has started;
+  /// [onExit] runs when it exits.
+  Future<void> openEmulator(String emulatorId, String exePath, {required void Function() onExit});
+
   /// Puts a RomM save or a backup on this PC for [target] without launching
   /// (backs up the current save first). Throws SaveChoiceException.
   Future<void> restore(Game game, SaveEntry save, SaveMaker target);
@@ -246,6 +251,13 @@ class GargosyPlayEngine implements PlayEngine {
       await registry.clearGameEmulatorPreference(game.id);
       await registry.clearGameCorePreference(game.id);
     }
+  }
+
+  @override
+  Future<void> openEmulator(String emulatorId, String exePath, {required void Function() onExit}) async {
+    final dirs = _ref.read(launchDirectoriesProvider) ?? (throw StateError('No profile is active.'));
+    final process = await dirs.openEmulator(emulatorId, exePath);
+    process.exitCode.whenComplete(onExit);
   }
 
   @override

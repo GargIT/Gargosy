@@ -204,6 +204,18 @@ class FakeEngine implements PlayEngine {
     running = Completer<PlayResult>();
     return PlaySession(running!.future);
   }
+
+  /// The emulator opened on its own, and how to close it.
+  String? opened;
+  void Function()? closeOpened;
+  bool openFails = false;
+
+  @override
+  Future<void> openEmulator(String emulatorId, String exePath, {required void Function() onExit}) async {
+    if (openFails) throw StateError('no exe');
+    opened = '$emulatorId $exePath';
+    closeOpened = onExit;
+  }
 }
 
 void main() {
@@ -345,6 +357,33 @@ void main() {
   test('a state of an emulator without cores resumes with no core', () async {
     expect(await c.read(playControllerProvider.notifier).resume(game(1, 'G'), auto), isNull);
     expect(engine.coreOverride, isNull);
+  });
+
+  group('an emulator opened on its own (its settings)', () {
+    test('it counts as running until it closes: no game, no second emulator', () async {
+      final play = c.read(playControllerProvider.notifier);
+      expect(await play.openEmulator('dolphin', 'Dolphin', r'C:\G\emulators\dolphin\Dolphin.exe'), isNull);
+      expect(engine.opened, r'dolphin C:\G\emulators\dolphin\Dolphin.exe');
+      expect(c.read(playControllerProvider).runningGameId, PlayController.openEmulatorId('dolphin'));
+      expect(await play.play(game(1, 'G')), contains('already running'));
+      expect(await play.openEmulator('pcsx2', 'PCSX2', 'p.exe'), contains('Close it first'));
+      engine.closeOpened!();
+      expect(c.read(playControllerProvider).runningGameId, isNull);
+    });
+
+    test('not while a game runs', () async {
+      final play = c.read(playControllerProvider.notifier);
+      await play.play(game(1, 'G'));
+      expect(await play.openEmulator('dolphin', 'Dolphin', 'd.exe'), contains('Close it first'));
+      expect(engine.opened, isNull);
+    });
+
+    test("one that won't start says why and frees the slot", () async {
+      engine.openFails = true;
+      final play = c.read(playControllerProvider.notifier);
+      expect(await play.openEmulator('dolphin', 'Dolphin', 'd.exe'), contains("Couldn't open Dolphin"));
+      expect(c.read(playControllerProvider).runningGameId, isNull);
+    });
   });
 
   test('a state that is missing says why, and nothing starts', () async {

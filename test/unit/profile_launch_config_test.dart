@@ -272,6 +272,24 @@ void main() {
     ]);
   });
 
+  test("Open (an emulator on its own): the profile's folder, no game, no batch mode, not full screen", () async {
+    final paths = ProfilePaths(root, 'aaa');
+    final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin.exe'))..createSync(recursive: true);
+    final started = <List<String>>[];
+    final dirs = ProfileLaunchDirectories(
+      root: root,
+      paths: paths,
+      prefs: MemoryPrefs(),
+      start: (exePath, args, {workingDirectory, environment}) async {
+        started.add([exePath, ...args]);
+        return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
+      },
+    );
+    final process = await dirs.openEmulator('dolphin', exe.path);
+    await process.exitCode;
+    expect(started.single, [exe.path, '--user=${paths.emulatorDir('dolphin')}']);
+  });
+
   test('mame gets the set name and its folder as -rompath, not the zip path (MAME only looks in its rompath)', () async {
     final paths = ProfilePaths(root, 'aaa');
     final exe = io.File(p.join(root.emulators, 'mame', 'mame.exe'))..createSync(recursive: true);
