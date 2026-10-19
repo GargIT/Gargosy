@@ -27,7 +27,9 @@ final collectionsProvider = FutureProvider<List<RommCollection>>((ref) async {
 });
 
 /// The active profile's RomM user id.
-final rommUserIdProvider = Provider<int?>((ref) => ref.watch(activeProfileProvider.select((c) => c?.profile.rommUserId)));
+final rommUserIdProvider = Provider<int?>(
+  (ref) => ref.watch(activeProfileProvider.select((c) => c?.profile.rommUserId)),
+);
 
 /// Ids of the games in the user's own favourites.
 final favouriteIdsProvider = Provider<Set<String>>((ref) {
@@ -45,7 +47,10 @@ final favouriteIdsProvider = Provider<Set<String>>((ref) {
 final recentlyPlayedProvider = FutureProvider<List<Game>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   if (api == null) return const [];
-  final page = await api.page(const GalleryQuery(lastPlayedOnly: true, sort: GallerySort.lastPlayed, descending: true), limit: 20);
+  final page = await api.page(
+    const GalleryQuery(lastPlayedOnly: true, sort: GallerySort.lastPlayed, descending: true),
+    limit: 20,
+  );
   return page.games;
 });
 
@@ -58,7 +63,10 @@ final recentlyAddedProvider = FutureProvider<List<Game>>((ref) async {
 final favouriteGamesProvider = FutureProvider<List<Game>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   if (api == null) return const [];
-  final page = await api.page(const GalleryQuery(favourites: true, sort: GallerySort.lastPlayed, descending: true), limit: 20);
+  final page = await api.page(
+    const GalleryQuery(favourites: true, sort: GallerySort.lastPlayed, descending: true),
+    limit: 20,
+  );
   return page.games;
 });
 
@@ -140,7 +148,8 @@ Future<String?> toggleFavourite(WidgetRef ref, Game g) async {
 
 /// The Platforms page's Covers setting, per profile.
 final platformCoversChoiceProvider = StateNotifierProvider<PlatformCoversChoice, PlatformCovers>(
-    (ref) => PlatformCoversChoice(ref.watch(profilePrefsProvider)));
+  (ref) => PlatformCoversChoice(ref.watch(profilePrefsProvider)),
+);
 
 /// One Random per run: Random covers change each time Gargosy starts, not each time the page opens.
 final _coversRandom = Random();

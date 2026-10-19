@@ -27,7 +27,13 @@ void main() {
   void paramSfo(String folderPath, String title, {List<String> keys = const []}) {
     // Extra keys are only listed in the key table (no entries): enough for a
     // check that looks for their names in the file.
-    final key = [...utf8.encode('TITLE'), 0, for (final k in keys) ...[...utf8.encode(k), 0], 0, 0];
+    final key = [
+      ...utf8.encode('TITLE'),
+      0,
+      for (final k in keys) ...[...utf8.encode(k), 0],
+      0,
+      0,
+    ];
     final value = [...utf8.encode(title), 0];
     const keyTable = 20 + 16;
     final dataTable = keyTable + key.length;
@@ -57,8 +63,10 @@ void main() {
       final exe = p.join(base.path, 'rpcs3', 'rpcs3.exe');
       File(exe).createSync(recursive: true);
       Directory(savedata()).createSync(recursive: true);
-      return Rpcs3SaveStrategy(await StubDirectoryService.create(exePath: exe),
-          platform: const PlatformInfo('windows', environment: {}));
+      return Rpcs3SaveStrategy(
+        await StubDirectoryService.create(exePath: exe),
+        platform: const PlatformInfo('windows', environment: {}),
+      );
     }
 
     test('every folder starting with RomM\'s title id, and no other game\'s', () async {
@@ -68,7 +76,9 @@ void main() {
       folder(p.join(savedata(), 'BLES00001'));
 
       final files = await strategy.getSaveFiles(
-          Game(id: 'r', name: 'Some Game', platformSlug: 'ps3', fileSize: 0, titleId: 'blus31426'), r'C:\nope\game');
+        Game(id: 'r', name: 'Some Game', platformSlug: 'ps3', fileSize: 0, titleId: 'blus31426'),
+        r'C:\nope\game',
+      );
 
       expect(files.map((f) => p.basename(f.path)).toSet(), {'BLUS31426', 'BLUS31426-AUTOSAVE'});
     });
@@ -78,14 +88,18 @@ void main() {
       folder(p.join(savedata(), 'BLES00001'));
       paramSfo(p.join(savedata(), 'BLES00001'), 'Some Game');
       final files = await strategy.getSaveFiles(
-          Game(id: 'r', name: 'Some Game', platformSlug: 'ps3', fileSize: 0, titleId: 'BLUS31426'), r'C:\nope\game');
+        Game(id: 'r', name: 'Some Game', platformSlug: 'ps3', fileSize: 0, titleId: 'BLUS31426'),
+        r'C:\nope\game',
+      );
       expect(files, isEmpty);
     });
   });
 
   group('PPSSPP', () {
-    Future<PpssppSaveStrategy> ppsspp() async => PpssppSaveStrategy(await StubDirectoryService.create(),
-        platform: PlatformInfo('windows', environment: {'USERPROFILE': base.path}));
+    Future<PpssppSaveStrategy> ppsspp() async => PpssppSaveStrategy(
+      await StubDirectoryService.create(),
+      platform: PlatformInfo('windows', environment: {'USERPROFILE': base.path}),
+    );
 
     String savedata() => p.join(base.path, 'Documents', 'PPSSPP', 'PSP', 'SAVEDATA');
 
@@ -95,7 +109,9 @@ void main() {
       folder(p.join(savedata(), 'NPUH10000X'));
 
       final files = await (await ppsspp()).getSaveFiles(
-          Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS10064'), r'C:\nope\g.iso');
+        Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS10064'),
+        r'C:\nope\g.iso',
+      );
 
       expect(files.map((f) => p.basename(f.path)).toSet(), {'ULUS10064DATA00', 'ULUS10064SETTINGS'});
     });
@@ -104,7 +120,9 @@ void main() {
       folder(p.join(savedata(), 'NPUH10000X'));
       paramSfo(p.join(savedata(), 'NPUH10000X'), 'Some Game');
       final files = await (await ppsspp()).getSaveFiles(
-          Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS10064'), r'C:\nope\g.iso');
+        Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS10064'),
+        r'C:\nope\g.iso',
+      );
       expect(files.where((f) => p.isWithin(savedata(), f.path)), isEmpty);
     });
   });
@@ -117,8 +135,10 @@ void main() {
       final exe = p.join(base.path, 'rpcs3', 'rpcs3.exe');
       File(exe).createSync(recursive: true);
       Directory(rpcs3Savedata()).createSync(recursive: true);
-      return Rpcs3SaveStrategy(await StubDirectoryService.create(exePath: exe),
-          platform: const PlatformInfo('windows', environment: {}));
+      return Rpcs3SaveStrategy(
+        await StubDirectoryService.create(exePath: exe),
+        platform: const PlatformInfo('windows', environment: {}),
+      );
     }
 
     test('RPCS3: a hyphenated title id still finds the folders; save_target is used first', () async {
@@ -141,10 +161,14 @@ void main() {
       folder(p.join(pspSavedata(), 'ULUS10064INSTALL'));
       paramSfo(p.join(pspSavedata(), 'ULUS10064INSTALL'), 'Install');
 
-      final files = await PpssppSaveStrategy(await StubDirectoryService.create(),
-              platform: PlatformInfo('windows', environment: {'USERPROFILE': base.path}))
-          .getSaveFiles(Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS-10064'),
-              r'C:\nope\g.iso');
+      final files =
+          await PpssppSaveStrategy(
+            await StubDirectoryService.create(),
+            platform: PlatformInfo('windows', environment: {'USERPROFILE': base.path}),
+          ).getSaveFiles(
+            Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS-10064'),
+            r'C:\nope\g.iso',
+          );
 
       expect(files.map((f) => p.basename(f.path)).toSet(), {'ULUS10064DATA00', 'ULUS10064SETTINGS'});
     });

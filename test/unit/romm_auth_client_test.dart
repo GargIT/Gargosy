@@ -10,8 +10,21 @@ const meJson = {
   'id': 7,
   'username': 'anna',
   'avatar_path': 'users/7/avatar.png',
-  'oauth_scopes': ['me.read', 'me.write', 'roms.read', 'roms.user.read', 'roms.user.write', 'platforms.read',
-    'assets.read', 'assets.write', 'devices.read', 'devices.write', 'firmware.read', 'collections.read', 'collections.write'],
+  'oauth_scopes': [
+    'me.read',
+    'me.write',
+    'roms.read',
+    'roms.user.read',
+    'roms.user.write',
+    'platforms.read',
+    'assets.read',
+    'assets.write',
+    'devices.read',
+    'devices.write',
+    'firmware.read',
+    'collections.read',
+    'collections.write',
+  ],
 };
 
 void main() {
@@ -23,10 +36,19 @@ void main() {
   });
 
   test('startDeviceAuth posts the device and Gargosy\'s scopes and builds the QR url', () async {
-    final a = FakeDioAdapter((r) => (status: 201, body: {
-          'device_code': 'dc', 'user_code': 'ABCD-1234', 'verification_path': '/pair/device',
-          'verification_path_complete': '/pair/device?user_code=ABCD-1234', 'expires_in': 600, 'interval': 5,
-        }));
+    final a = FakeDioAdapter(
+      (r) => (
+        status: 201,
+        body: {
+          'device_code': 'dc',
+          'user_code': 'ABCD-1234',
+          'verification_path': '/pair/device',
+          'verification_path_complete': '/pair/device?user_code=ABCD-1234',
+          'expires_in': 600,
+          'interval': 5,
+        },
+      ),
+    );
     final start = await client(a).startDeviceAuth(deviceIdentifier: 'id-1', deviceName: 'Gargosy on LIVINGROOM');
     expect(start!.userCode, 'ABCD-1234');
     expect(start.verificationUrl, 'https://romm.example/pair/device?user_code=ABCD-1234');
@@ -44,8 +66,10 @@ void main() {
 
   test('startDeviceAuth on an unreachable server is a network failure', () async {
     final a = FakeDioAdapter((r) => (status: -1, body: null));
-    expect(() => client(a).startDeviceAuth(deviceIdentifier: 'i', deviceName: 'n'),
-        throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.network)));
+    expect(
+      () => client(a).startDeviceAuth(deviceIdentifier: 'i', deviceName: 'n'),
+      throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.network)),
+    );
   });
 
   test('pollDeviceAuth maps every server answer', () async {
@@ -56,8 +80,15 @@ void main() {
     expect(await poll(429, {'detail': 'Too many requests'}), isA<DeviceSlowDown>());
     expect(await poll(400, {'detail': 'access_denied'}), isA<DeviceDenied>());
     expect(await poll(400, {'detail': 'expired_token'}), isA<DeviceExpired>());
-    final ok = await poll(200, {'access_token': 'rmm_x', 'device_id': 'd9', 'scopes': ['me.read']});
-    expect(ok, isA<DeviceApproved>().having((x) => x.token, 'token', 'rmm_x').having((x) => x.deviceId, 'device', 'd9'));
+    final ok = await poll(200, {
+      'access_token': 'rmm_x',
+      'device_id': 'd9',
+      'scopes': ['me.read'],
+    });
+    expect(
+      ok,
+      isA<DeviceApproved>().having((x) => x.token, 'token', 'rmm_x').having((x) => x.deviceId, 'device', 'd9'),
+    );
   });
 
   test('password login asks for the user with Basic auth, then creates a never-expiring client token', () async {
@@ -78,29 +109,51 @@ void main() {
   });
 
   test('password login only asks for scopes the user has', () async {
-    final a = FakeDioAdapter((r) => r.path == '/api/users/me'
-        ? (status: 200, body: {...meJson, 'oauth_scopes': ['me.read', 'me.write', 'roms.read', 'platforms.read']})
-        : (status: 201, body: {'raw_token': 't'}));
+    final a = FakeDioAdapter(
+      (r) => r.path == '/api/users/me'
+          ? (
+              status: 200,
+              body: {
+                ...meJson,
+                'oauth_scopes': ['me.read', 'me.write', 'roms.read', 'platforms.read'],
+              },
+            )
+          : (status: 201, body: {'raw_token': 't'}),
+    );
     await client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n');
     expect(a.requests.last.data['scopes'], ['me.read', 'me.write', 'roms.read', 'platforms.read']);
   });
 
   test('a wrong password is badCredentials', () async {
     final a = FakeDioAdapter((r) => (status: 401, body: {'detail': 'Invalid'}));
-    expect(() => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'),
-        throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.badCredentials)));
+    expect(
+      () => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'),
+      throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.badCredentials)),
+    );
   });
 
   test('password login on a server without client tokens says it is too old', () async {
     final a = FakeDioAdapter((r) => r.path == '/api/users/me' ? (status: 200, body: meJson) : (status: 404, body: {}));
-    expect(() => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'),
-        throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.serverTooOld)));
+    expect(
+      () => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'),
+      throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.serverTooOld)),
+    );
   });
 
   test('a user without me.write cannot create a token: insufficientScope', () async {
-    final a = FakeDioAdapter((r) => (status: 200, body: {...meJson, 'oauth_scopes': ['roms.read']}));
-    expect(() => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'),
-        throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.insufficientScope)));
+    final a = FakeDioAdapter(
+      (r) => (
+        status: 200,
+        body: {
+          ...meJson,
+          'oauth_scopes': ['roms.read'],
+        },
+      ),
+    );
+    expect(
+      () => client(a).loginWithPassword(username: 'u', password: 'p', tokenName: 'n'),
+      throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.insufficientScope)),
+    );
   });
 
   test('fetchMe sends the token as Bearer', () async {
@@ -128,8 +181,7 @@ void main() {
 
   group('a server that is not RomM (an HTML page with 200)', () {
     const html = '<!doctype html><html><body>Welcome to nginx!</body></html>';
-    Matcher notRomm() => throwsA(isA<RommAuthException>()
-        .having((e) => e.failure, 'failure', RommAuthFailure.notRomm));
+    Matcher notRomm() => throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.notRomm));
 
     test('startDeviceAuth', () {
       final a = FakeDioAdapter((r) => (status: 200, body: html));
@@ -156,17 +208,26 @@ void main() {
   test('a 5xx or 408 is a server failure (worth retrying), not "other"', () async {
     for (final status in [500, 502, 503, 504, 408]) {
       final a = FakeDioAdapter((r) => (status: status, body: {'detail': 'Bad gateway'}));
-      expect(() => client(a).pollDeviceAuth('dc'),
-          throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.server)), reason: '$status');
+      expect(
+        () => client(a).pollDeviceAuth('dc'),
+        throwsA(isA<RommAuthException>().having((e) => e.failure, 'failure', RommAuthFailure.server)),
+        reason: '$status',
+      );
     }
   });
 
   test('password re-login as another RomM user is refused before any token is made', () async {
-    final a = FakeDioAdapter((r) => r.path == '/api/users/me' ? (status: 200, body: meJson) : (status: 201, body: {'raw_token': 't'}));
-    await expectLater(client(a).loginWithPassword(username: 'anna', password: 'p', tokenName: 'n', expectedUserId: 8),
-        throwsA(isA<RommAuthException>()
+    final a = FakeDioAdapter(
+      (r) => r.path == '/api/users/me' ? (status: 200, body: meJson) : (status: 201, body: {'raw_token': 't'}),
+    );
+    await expectLater(
+      client(a).loginWithPassword(username: 'anna', password: 'p', tokenName: 'n', expectedUserId: 8),
+      throwsA(
+        isA<RommAuthException>()
             .having((e) => e.failure, 'failure', RommAuthFailure.wrongUser)
-            .having((e) => e.message, 'message', 'anna')));
+            .having((e) => e.message, 'message', 'anna'),
+      ),
+    );
     expect(a.requests.map((r) => r.path), ['/api/users/me']);
   });
 }

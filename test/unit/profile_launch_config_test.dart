@@ -34,13 +34,24 @@ void main() {
   }
 
   test('only the probed emulators are supported in v1', () {
-    expect(ProfileLaunchConfig.supported,
-        {'dolphin', 'pcsx2', 'retroarch', 'mame', 'xenia_canary', 'ares', 'xemu', 'ppsspp', 'duckstation', 'mgba', 'flycast',
-         'ryujinx', // -r (issue #9)
-         // a folder link (issues #8, #12–#15)
-         'eden', 'azahar', 'cemu', 'melonds',
-         'rpcs3', // RPCS3_CONFIG_DIR (issue #10)
-         'scummvm'}); // --config, --savepath (issue #11)
+    expect(ProfileLaunchConfig.supported, {
+      'dolphin',
+      'pcsx2',
+      'retroarch',
+      'mame',
+      'xenia_canary',
+      'ares',
+      'xemu',
+      'ppsspp',
+      'duckstation',
+      'mgba',
+      'flycast',
+      'ryujinx', // -r (issue #9)
+      // a folder link (issues #8, #12–#15)
+      'eden', 'azahar', 'cemu', 'melonds',
+      'rpcs3', // RPCS3_CONFIG_DIR (issue #10)
+      'scummvm',
+    }); // --config, --savepath (issue #11)
     expect(ProfileLaunchConfig.of('not_an_emulator'), isNull);
   });
 
@@ -73,7 +84,9 @@ void main() {
     expect(ini.readAsStringSync(), contains('SettingsVersion = 1'));
     expect(ini.readAsStringSync(), contains('Bios = ${root.bios}'));
     // PCSX2's own settings: only the BIOS folder changes.
-    ini.writeAsStringSync('[UI]\nSettingsVersion = 1\nSetupWizardIncomplete = true\n[Folders]\nBios = bios\nMemoryCards = memcards\n');
+    ini.writeAsStringSync(
+      '[UI]\nSettingsVersion = 1\nSetupWizardIncomplete = true\n[Folders]\nBios = bios\nMemoryCards = memcards\n',
+    );
     await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
     final text = ini.readAsStringSync();
     expect(text, contains('Bios = ${root.bios}'));
@@ -102,17 +115,20 @@ void main() {
     expect(RegExp('^savefile_directory', multiLine: true).allMatches(again).length, 1);
   });
 
-  test("retroarch: saves stay flat in saves\\ (sigil's save root): sorting by core or content is put back off", () async {
-    final c = ctx('retroarch');
-    io.Directory(c.data).createSync(recursive: true);
-    io.File(p.join(c.data, 'retroarch.cfg'))
-        .writeAsStringSync('sort_savefiles_enable = "true"\nsort_savefiles_by_content_enable = "true"\n');
-    await ProfileLaunchConfig.of('retroarch')!.prepare(c);
-    final cfg = io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync();
-    expect(cfg, contains('sort_savefiles_enable = "false"'));
-    expect(cfg, contains('sort_savefiles_by_content_enable = "false"'));
-    expect(RegExp(r'^sort_savefiles\w* = "true"', multiLine: true).hasMatch(cfg), isFalse);
-  });
+  test(
+    "retroarch: saves stay flat in saves\\ (sigil's save root): sorting by core or content is put back off",
+    () async {
+      final c = ctx('retroarch');
+      io.Directory(c.data).createSync(recursive: true);
+      io.File(p.join(c.data, 'retroarch.cfg'))
+          .writeAsStringSync('sort_savefiles_enable = "true"\nsort_savefiles_by_content_enable = "true"\n');
+      await ProfileLaunchConfig.of('retroarch')!.prepare(c);
+      final cfg = io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync();
+      expect(cfg, contains('sort_savefiles_enable = "false"'));
+      expect(cfg, contains('sort_savefiles_by_content_enable = "false"'));
+      expect(RegExp(r'^sort_savefiles\w* = "true"', multiLine: true).hasMatch(cfg), isFalse);
+    },
+  );
 
   test("retroarch: saves it had sorted come up into saves\\ before sorting goes off; nothing is overwritten", () async {
     final c = ctx('retroarch');
@@ -189,7 +205,8 @@ void main() {
     final c = ctx('xemu');
     io.Directory(c.data).createSync(recursive: true);
     io.File(p.join(c.data, 'xemu.toml')).writeAsStringSync(
-        "[sys.files]\nflashrom_path = '${own.path}'\nbootrom_path = '${p.join(root.root, 'gone.bin')}'\n");
+      "[sys.files]\nflashrom_path = '${own.path}'\nbootrom_path = '${p.join(root.root, 'gone.bin')}'\n",
+    );
     await ProfileLaunchConfig.of('xemu')!.prepare(c);
     final toml = io.File(p.join(c.data, 'xemu.toml')).readAsStringSync();
     expect(toml, contains("flashrom_path = '${own.path}'"));
@@ -219,10 +236,18 @@ void main() {
     final b = ctx('mgba', profile: 'bbb');
     await cfg.prepare(b);
     expect(io.File(p.join(a.data, 'config.ini')).readAsStringSync(), contains('anna=1'));
-    expect(io.File(p.join(b.data, 'config.ini')).existsSync() ? io.File(p.join(b.data, 'config.ini')).readAsStringSync() : '',
-        isNot(contains('anna=1')));
-    expect(io.File(p.join(b.exeDir, 'config.ini')).existsSync() ? io.File(p.join(b.exeDir, 'config.ini')).readAsStringSync() : '',
-        isNot(contains('anna=1')));
+    expect(
+      io.File(p.join(b.data, 'config.ini')).existsSync()
+          ? io.File(p.join(b.data, 'config.ini')).readAsStringSync()
+          : '',
+      isNot(contains('anna=1')),
+    );
+    expect(
+      io.File(p.join(b.exeDir, 'config.ini')).existsSync()
+          ? io.File(p.join(b.exeDir, 'config.ini')).readAsStringSync()
+          : '',
+      isNot(contains('anna=1')),
+    );
   });
 
   test('a crash with the exe in a subfolder still puts the settings back in the right emulator folder', () async {
@@ -236,8 +261,12 @@ void main() {
 
   test('mgba and flycast get their save-folder overrides; flycast stays portable', () async {
     final m = ctx('mgba');
-    expect(await ProfileLaunchConfig.of('mgba')!.prepare(m),
-        ['-C', 'savegamePath=${p.join(m.data, 'saves')}', '-C', 'savestatePath=${p.join(m.data, 'states')}']);
+    expect(await ProfileLaunchConfig.of('mgba')!.prepare(m), [
+      '-C',
+      'savegamePath=${p.join(m.data, 'saves')}',
+      '-C',
+      'savestatePath=${p.join(m.data, 'states')}',
+    ]);
     expect(io.File(p.join(m.exeDir, 'portable.ini')).existsSync(), isTrue);
     final f = ctx('flycast');
     final args = await ProfileLaunchConfig.of('flycast')!.prepare(f);
@@ -290,25 +319,31 @@ void main() {
     expect(started.single, [exe.path, '--user=${paths.emulatorDir('dolphin')}']);
   });
 
-  test('mame gets the set name and its folder as -rompath, not the zip path (MAME only looks in its rompath)', () async {
-    final paths = ProfilePaths(root, 'aaa');
-    final exe = io.File(p.join(root.emulators, 'mame', 'mame.exe'))..createSync(recursive: true);
-    final started = <List<String>>[];
-    final dirs = ProfileLaunchDirectories(
-      root: root,
-      paths: paths,
-      prefs: MemoryPrefs(),
-      start: (exePath, args, {workingDirectory, environment}) async {
-        started.add(args);
-        return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
-      },
-    );
-    await dirs.launchGameWithHandle(game(1, '1943'), r'D:\roms\arcade\1943.zip', 'mame', exe.path);
-    // MAME's own roms folder stays on the path, for BIOS sets kept there.
-    expect(started.single.sublist(started.single.length - 3),
-        ['-rompath', '${r'D:\roms\arcade'};${p.join(p.dirname(exe.path), 'roms')}', '1943']);
-    expect(started.single, isNot(contains(r'D:\roms\arcade\1943.zip')));
-  });
+  test(
+    'mame gets the set name and its folder as -rompath, not the zip path (MAME only looks in its rompath)',
+    () async {
+      final paths = ProfilePaths(root, 'aaa');
+      final exe = io.File(p.join(root.emulators, 'mame', 'mame.exe'))..createSync(recursive: true);
+      final started = <List<String>>[];
+      final dirs = ProfileLaunchDirectories(
+        root: root,
+        paths: paths,
+        prefs: MemoryPrefs(),
+        start: (exePath, args, {workingDirectory, environment}) async {
+          started.add(args);
+          return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
+        },
+      );
+      await dirs.launchGameWithHandle(game(1, '1943'), r'D:\roms\arcade\1943.zip', 'mame', exe.path);
+      // MAME's own roms folder stays on the path, for BIOS sets kept there.
+      expect(started.single.sublist(started.single.length - 3), [
+        '-rompath',
+        '${r'D:\roms\arcade'};${p.join(p.dirname(exe.path), 'roms')}',
+        '1943',
+      ]);
+      expect(started.single, isNot(contains(r'D:\roms\arcade\1943.zip')));
+    },
+  );
 
   test("retroarch: Auto Load State is on only for a Resume of the auto slot, and the marker isn't passed on", () async {
     final paths = ProfilePaths(root, 'aaa');
@@ -323,12 +358,18 @@ void main() {
         return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
       },
     );
-    String autoLoad() => RegExp(r'^savestate_auto_load = "(\w+)"', multiLine: true)
-        .firstMatch(io.File(p.join(paths.emulatorDir('retroarch'), 'retroarch.cfg')).readAsStringSync())!
-        .group(1)!;
+    String autoLoad() => RegExp(
+      r'^savestate_auto_load = "(\w+)"',
+      multiLine: true,
+    ).firstMatch(io.File(p.join(paths.emulatorDir('retroarch'), 'retroarch.cfg')).readAsStringSync())!.group(1)!;
 
-    await dirs.launchGameWithHandle(game(1, 'G'), r'D:\roms\psx\g.chd', 'retroarch', exe.path,
-        args: const ['-L', 'core.dll', EmulatorStrategy.resumeAutoStateArg]);
+    await dirs.launchGameWithHandle(
+      game(1, 'G'),
+      r'D:\roms\psx\g.chd',
+      'retroarch',
+      exe.path,
+      args: const ['-L', 'core.dll', EmulatorStrategy.resumeAutoStateArg],
+    );
     expect(autoLoad(), 'true');
     expect(started.last, isNot(contains(EmulatorStrategy.resumeAutoStateArg)));
     expect(started.last, containsAllInOrder(['-L', 'core.dll', r'D:\roms\psx\g.chd']));
@@ -341,8 +382,10 @@ void main() {
 
   test('an emulator Gargosy can\'t point at a profile is refused', () async {
     final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
-    expect(() => dirs.launchGameWithHandle(game(1, 'G'), 'x', 'not_an_emulator', r'C:\x\x.exe'),
-        throwsA(isA<UnsupportedEmulatorException>()));
+    expect(
+      () => dirs.launchGameWithHandle(game(1, 'G'), 'x', 'not_an_emulator', r'C:\x\x.exe'),
+      throwsA(isA<UnsupportedEmulatorException>()),
+    );
   });
 
   test("retroarch: each profile has its own system folder (cores keep cards there), with the BIOS copied in", () async {
@@ -391,15 +434,20 @@ void main() {
       expect(text, contains('RecursivePaths = D:\\Mine'));
       expect(text, contains('RecursivePaths = ${p.join(root.roms, 'ps2')}'));
       await ProfileLaunchConfig.of('pcsx2')!.prepare(c);
-      expect(RegExp(RegExp.escape(p.join(root.roms, 'ps2'))).allMatches(ini.readAsStringSync()).length, 1,
-          reason: 'never added twice');
+      expect(
+        RegExp(RegExp.escape(p.join(root.roms, 'ps2'))).allMatches(ini.readAsStringSync()).length,
+        1,
+        reason: 'never added twice',
+      );
     });
 
     test("DuckStation: in its settings.ini's game folders", () async {
       final c = ctx('duckstation', gameFolders: [p.join(root.roms, 'psx')]);
       await ProfileLaunchConfig.of('duckstation')!.prepare(c);
-      expect(io.File(p.join(c.exeDir, 'settings.ini')).readAsStringSync(),
-          contains('RecursivePaths = ${p.join(root.roms, 'psx')}'));
+      expect(
+        io.File(p.join(c.exeDir, 'settings.ini')).readAsStringSync(),
+        contains('RecursivePaths = ${p.join(root.roms, 'psx')}'),
+      );
     });
 
     test("Dolphin: its ISO folders (searched recursively), unless the player set their own", () async {
@@ -419,7 +467,10 @@ void main() {
     test("RetroArch: its file browser starts in roms", () async {
       final c = ctx('retroarch');
       await ProfileLaunchConfig.of('retroarch')!.prepare(c);
-      expect(io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync(), contains('rgui_browser_directory = "${root.roms}"'));
+      expect(
+        io.File(p.join(c.data, 'retroarch.cfg')).readAsStringSync(),
+        contains('rgui_browser_directory = "${root.roms}"'),
+      );
     });
   });
 

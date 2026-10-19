@@ -6,11 +6,7 @@ void main() {
   group('RomConstants validation', () {
     test('all platform slugs have non-empty extension lists', () {
       for (final entry in RomConstants.platformExtensions.entries) {
-        expect(
-          entry.value,
-          isNotEmpty,
-          reason: 'Platform "${entry.key}" has empty extension list',
-        );
+        expect(entry.value, isNotEmpty, reason: 'Platform "${entry.key}" has empty extension list');
       }
     });
 

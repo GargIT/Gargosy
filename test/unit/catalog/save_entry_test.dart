@@ -40,8 +40,12 @@ void main() {
   });
 
   test('saves group by slot and tag', () {
-    SaveEntry e(String slot, String tag) => SaveEntry.fromRomm(
-        {'file_name': 'a', 'emulator': tag, 'slot': slot, 'updated_at': '2026-01-01T00:00:00Z'}, emulatorIds: ids);
+    SaveEntry e(String slot, String tag) => SaveEntry.fromRomm({
+      'file_name': 'a',
+      'emulator': tag,
+      'slot': slot,
+      'updated_at': '2026-01-01T00:00:00Z',
+    }, emulatorIds: ids);
     expect(e('freegosy', 'ares').groupKey, e('freegosy', 'ares').groupKey);
     expect(e('freegosy', 'ares').groupKey, isNot(e('freegosy', 'mupen64plus_next').groupKey));
     expect(e('a', 'ares').groupKey, isNot(e('b', 'ares').groupKey));

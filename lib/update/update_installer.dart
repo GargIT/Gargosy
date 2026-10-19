@@ -44,9 +44,9 @@ class UpdateInstaller {
     required this.currentVersion,
     required this.platform,
     DetachedStarter? start,
-  })  : _start = start ?? _startDetached,
-        paths = UpdatePaths(root),
-        _guard = PathGuard(root);
+  }) : _start = start ?? _startDetached,
+       paths = UpdatePaths(root),
+       _guard = PathGuard(root);
 
   final AppRoot root;
   final UpdatePaths paths;
@@ -82,10 +82,13 @@ class UpdateInstaller {
   bool get _inProtectedFolder {
     final env = platform.environment;
     final r = p.normalize(root.root).toLowerCase();
-    return [env['ProgramFiles'], env['ProgramFiles(x86)'], env['ProgramW6432'], env['SystemRoot'], env['windir']]
-        .whereType<String>()
-        .where((d) => d.isNotEmpty)
-        .any((d) {
+    return [
+      env['ProgramFiles'],
+      env['ProgramFiles(x86)'],
+      env['ProgramW6432'],
+      env['SystemRoot'],
+      env['windir'],
+    ].whereType<String>().where((d) => d.isNotEmpty).any((d) {
       final dir = p.normalize(d).toLowerCase();
       return r == dir || p.isWithin(dir, r);
     });
@@ -93,14 +96,19 @@ class UpdateInstaller {
 
   /// The updater's command line for [unpacked], version [newVersion].
   List<String> commandLine(String unpacked, String newVersion) => [
-        '--pid', '$pid',
-        '--root', root.root,
-        '--from', unpacked,
-        '--version', newVersion,
-        '--old-version', currentVersion,
-        '--',
-        ...args.where((a) => !a.startsWith(updatedFromArg) && a != updateFailedArg),
-      ];
+    '--pid',
+    '$pid',
+    '--root',
+    root.root,
+    '--from',
+    unpacked,
+    '--version',
+    newVersion,
+    '--old-version',
+    currentVersion,
+    '--',
+    ...args.where((a) => !a.startsWith(updatedFromArg) && a != updateFailedArg),
+  ];
 
   /// Copies the updater into `userdata\app\update\` and starts that copy
   /// (so the one beside Gargosy.exe can be replaced too). The caller then

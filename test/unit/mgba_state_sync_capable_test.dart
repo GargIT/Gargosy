@@ -19,12 +19,20 @@ Uint8List _raw(int magic) => Uint8List(64)..buffer.asByteData().setUint32(0, mag
 
 void main() {
   const rom = r'D:\roms\gba\Metroid Fusion (USA).gba';
-  final game = Game.fromJson({...gameJson(1, 'Metroid Fusion', fsName: 'Metroid Fusion (USA).gba'), 'platform_slug': 'gba'});
+  final game = Game.fromJson({
+    ...gameJson(1, 'Metroid Fusion', fsName: 'Metroid Fusion (USA).gba'),
+    'platform_slug': 'gba',
+  });
   final s = MgbaSaveStrategy(DirectoryService(MemoryPrefs()));
 
   test("the matcher: the ROM's stem and slots .ss0-.ss9; nothing else", () async {
     final match = (await s.stateFileMatcher(game, rom))!;
-    for (final yes in ['Metroid Fusion (USA).ss1', 'Metroid Fusion (USA).ss9', 'Metroid Fusion (USA).ss0', 'metroid fusion (usa).ss2']) {
+    for (final yes in [
+      'Metroid Fusion (USA).ss1',
+      'Metroid Fusion (USA).ss9',
+      'Metroid Fusion (USA).ss0',
+      'metroid fusion (usa).ss2',
+    ]) {
       expect(match(yes), isTrue, reason: yes);
     }
     for (final no in [

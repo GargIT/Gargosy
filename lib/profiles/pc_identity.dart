@@ -17,7 +17,11 @@ class PcIdentity {
   static PcIdentity current() {
     final env = PlatformInfo.current.environment;
     final machine = env['COMPUTERNAME'] ?? 'PC';
-    return PcIdentity(machineName: machine, userName: env['USERNAME'] ?? 'user', machineId: readMachineGuid() ?? machine);
+    return PcIdentity(
+      machineName: machine,
+      userName: env['USERNAME'] ?? 'user',
+      machineId: readMachineGuid() ?? machine,
+    );
   }
 
   static String _safe(String s) => s.replaceAll(RegExp(r'[<>:"/\\|?*.\s]'), '_');

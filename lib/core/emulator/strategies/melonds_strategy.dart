@@ -4,6 +4,7 @@
 // #15), and nothing is copied next to the ROM (roms\ holds only ROMs).
 import 'dart:io';
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
@@ -60,9 +61,12 @@ class MelonDSStrategy extends EmulatorStrategy {
     final normalizedRomPath = p.absolute(p.normalize(romPath));
     await preLaunch(game, romPath);
     // melonDS needs its working directory set to find melonDS.ini / firmware
-    await Process.start(exePath, [normalizedRomPath],
-        workingDirectory: File(exePath).parent.path,
-        mode: ProcessStartMode.detached);
+    await Process.start(
+      exePath,
+      [normalizedRomPath],
+      workingDirectory: File(exePath).parent.path,
+      mode: ProcessStartMode.detached,
+    );
   }
 
   @override
@@ -74,9 +78,12 @@ class MelonDSStrategy extends EmulatorStrategy {
     if (exePath == null) throw Exception('$name not found. Please download it first.');
     final normalizedRomPath = p.absolute(p.normalize(romPath));
     await preLaunch(game, romPath);
-    final process = await Process.start(exePath, [normalizedRomPath],
-        workingDirectory: File(exePath).parent.path,
-        mode: ProcessStartMode.normal);
+    final process = await Process.start(
+      exePath,
+      [normalizedRomPath],
+      workingDirectory: File(exePath).parent.path,
+      mode: ProcessStartMode.normal,
+    );
     // CRITICAL: Drain stdout/stderr to prevent pipe buffer deadlock.
     // Without this, the emulator blocks when its output buffer fills up
     // because the parent process never reads the pipes.
@@ -111,8 +118,7 @@ class MelonDSStrategy extends EmulatorStrategy {
     }
 
     final exeDir = File(exePath).parent.path;
-    await Process.start(exePath, [],
-        workingDirectory: exeDir, mode: ProcessStartMode.detached);
+    await Process.start(exePath, [], workingDirectory: exeDir, mode: ProcessStartMode.detached);
   }
 
   @override
@@ -135,8 +141,7 @@ class MelonDSStrategy extends EmulatorStrategy {
     final srmFile = File(srmPath);
     final savFile = File(savPath);
     if (await savFile.exists()) {
-      if (!(await srmFile.exists()) ||
-          (await savFile.lastModified()).isAfter(await srmFile.lastModified())) {
+      if (!(await srmFile.exists()) || (await savFile.lastModified()).isAfter(await srmFile.lastModified())) {
         await savFile.copy(srmPath);
         debugPrint('[MelonDS-Save] Synced SAV back to SRM');
       }

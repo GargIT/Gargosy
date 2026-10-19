@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strategy.dart';
@@ -55,8 +56,7 @@ class ScummVMStrategy extends EmulatorStrategy {
 
   /// The folder holding the game: [romPath] itself, or the folder of the
   /// file that was picked inside it.
-  static String gameFolderFor(String romPath) =>
-      io.Directory(romPath).existsSync() ? romPath : p.dirname(romPath);
+  static String gameFolderFor(String romPath) => io.Directory(romPath).existsSync() ? romPath : p.dirname(romPath);
 
   /// Arguments that make ScummVM detect and start the game in [gameFolder].
   static List<String> gameArgs(String gameFolder) => ['--auto-detect', '--path=$gameFolder'];
@@ -83,7 +83,11 @@ class ScummVMStrategy extends EmulatorStrategy {
   }
 
   @override
-  Future<io.Process?> launchWithHandleAndExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
+  Future<io.Process?> launchWithHandleAndExtraArgs(
+    Game game,
+    String romPath, {
+    List<String> extraArgs = const [],
+  }) async {
     if (_throughProfile) return super.launchWithHandleAndExtraArgs(game, romPath, extraArgs: extraArgs);
     final process = await _start(romPath, extraArgs, io.ProcessStartMode.normal);
     // Pipes must be drained or ScummVM blocks once they fill up (see
@@ -99,7 +103,9 @@ class ScummVMStrategy extends EmulatorStrategy {
     if (exePath == null) throw Exception('$name not found. Please download it first.');
     final folder = gameFolderFor(p.absolute(p.normalize(romPath)));
     final (exe, args) = commandFor(exePath, [...launchArgs, ...extraArgs, ...gameArgs(folder)], platform: platform);
-    final workingDirectory = p.isAbsolute(exe) && !LinuxEnvironmentStrategy.isFlatpakExecutable(exe) ? p.dirname(exe) : null;
+    final workingDirectory = p.isAbsolute(exe) && !LinuxEnvironmentStrategy.isFlatpakExecutable(exe)
+        ? p.dirname(exe)
+        : null;
     return io.Process.start(exe, args, mode: mode, workingDirectory: workingDirectory, runInShell: exe == 'flatpak');
   }
 

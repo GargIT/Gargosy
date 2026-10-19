@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
@@ -51,14 +52,23 @@ void main() {
     final adapter = DioAdapter(dio: dio);
     heartbeatCount = 0;
     clearCount = 0;
-    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      if (options.path == '/api/activity/heartbeat') {
-        if (options.method == 'POST') heartbeatCount++;
-        if (options.method == 'DELETE') clearCount++;
-      }
-      handler.next(options);
-    }));
-    adapter.onGet('/api/heartbeat', (server) => server.reply(200, {'SYSTEM': {'VERSION': '4.9.0'}}));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.path == '/api/activity/heartbeat') {
+            if (options.method == 'POST') heartbeatCount++;
+            if (options.method == 'DELETE') clearCount++;
+          }
+          handler.next(options);
+        },
+      ),
+    );
+    adapter.onGet(
+      '/api/heartbeat',
+      (server) => server.reply(200, {
+        'SYSTEM': {'VERSION': '4.9.0'},
+      }),
+    );
     adapter.onPost('/api/activity/heartbeat', (server) => server.reply(200, {}), data: Matchers.any);
     adapter.onDelete('/api/activity/heartbeat', (server) => server.reply(204, null));
 

@@ -9,7 +9,13 @@ void main() {
 
   test('polls at the interval until approved', () async {
     final waits = <Duration>[];
-    final auth = FakeRommAuth(polls: [const DevicePending(), const DevicePending(), const DeviceApproved(token: 't', deviceId: 'd')]);
+    final auth = FakeRommAuth(
+      polls: [
+        const DevicePending(),
+        const DevicePending(),
+        const DeviceApproved(token: 't', deviceId: 'd'),
+      ],
+    );
     final result = await DeviceLoginFlow(auth, start, delay: (d) async => waits.add(d)).run();
     expect(result, isA<DeviceApproved>());
     expect(waits, List.filled(3, const Duration(seconds: 5)));
@@ -17,16 +23,23 @@ void main() {
 
   test('slow_down adds five seconds to the interval', () async {
     final waits = <Duration>[];
-    final auth = FakeRommAuth(polls: [const DeviceSlowDown(), const DeviceApproved(token: 't', deviceId: 'd')]);
+    final auth = FakeRommAuth(
+      polls: [
+        const DeviceSlowDown(),
+        const DeviceApproved(token: 't', deviceId: 'd'),
+      ],
+    );
     await DeviceLoginFlow(auth, start, delay: (d) async => waits.add(d)).run();
     expect(waits, [const Duration(seconds: 5), const Duration(seconds: 10)]);
   });
 
   test('flow keeps polling through a network error', () async {
-    final auth = FakeRommAuth(polls: [
-      const RommAuthException(RommAuthFailure.network, 'offline'),
-      const DeviceApproved(token: 't', deviceId: 'd'),
-    ]);
+    final auth = FakeRommAuth(
+      polls: [
+        const RommAuthException(RommAuthFailure.network, 'offline'),
+        const DeviceApproved(token: 't', deviceId: 'd'),
+      ],
+    );
     expect(await DeviceLoginFlow(auth, start, delay: (_) async {}).run(), isA<DeviceApproved>());
   });
 
@@ -52,18 +65,25 @@ void main() {
   });
 
   test('a 5xx from a proxy while RomM restarts does not end the pairing', () async {
-    final auth = FakeRommAuth(polls: [
-      const RommAuthException(RommAuthFailure.server, 'RomM answered 502'),
-      const DeviceApproved(token: 't', deviceId: 'd'),
-    ]);
+    final auth = FakeRommAuth(
+      polls: [
+        const RommAuthException(RommAuthFailure.server, 'RomM answered 502'),
+        const DeviceApproved(token: 't', deviceId: 'd'),
+      ],
+    );
     expect(await DeviceLoginFlow(auth, start, delay: (_) async {}).run(), isA<DeviceApproved>());
   });
 
   test('an interval of 0 from the server still waits a second between polls', () async {
     final waits = <Duration>[];
     const fast = DeviceAuthStart(deviceCode: 'dc', userCode: 'U', verificationUrl: 'u', expiresIn: 60, interval: 0);
-    await DeviceLoginFlow(FakeRommAuth(polls: [const DeviceApproved(token: 't', deviceId: 'd')]), fast,
-        delay: (d) async => waits.add(d)).run();
+    await DeviceLoginFlow(
+      FakeRommAuth(
+        polls: [const DeviceApproved(token: 't', deviceId: 'd')],
+      ),
+      fast,
+      delay: (d) async => waits.add(d),
+    ).run();
     expect(waits, [const Duration(seconds: 1)]);
   });
 }

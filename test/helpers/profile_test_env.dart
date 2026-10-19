@@ -23,7 +23,7 @@ class MemoryPrefs implements AppPreferences {
 /// Deletes a test's temp folder. Windows refuses while a file in it is still
 /// open (a write the test started that is finishing), so it tries for a while.
 Future<void> deleteTempDir(String path) async {
-  for (var i = 0;; i++) {
+  for (var i = 0; ; i++) {
     try {
       await io.Directory(path).delete(recursive: true);
       return;

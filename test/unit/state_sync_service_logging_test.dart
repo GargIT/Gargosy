@@ -42,8 +42,11 @@ void main() {
     });
 
     test('a strategy without StateSyncCapable says so, with the emulator id', () async {
-      final incapable = StateSyncService(FakeRommStatesApi(), env.pcsx2.prefs,
-          (game, {emulatorId, coreOverride}) => null);
+      final incapable = StateSyncService(
+        FakeRommStatesApi(),
+        env.pcsx2.prefs,
+        (game, {emulatorId, coreOverride}) => null,
+      );
       final logs = _captureLogs();
 
       final pull = await incapable.pullStates(env.game, env.romPath, emulatorId: 'duckstation');
@@ -51,7 +54,8 @@ void main() {
 
       expect(pull.skipped, isTrue);
       expect(push.skipped, isTrue);
-      const line = "[StateSync] Ico (SCUS-97113): no state-sync support for emulator "
+      const line =
+          "[StateSync] Ico (SCUS-97113): no state-sync support for emulator "
           "'duckstation' (strategy none)";
       expect(logs.where((l) => l == line), hasLength(2), reason: '$logs');
     });
@@ -65,13 +69,16 @@ void main() {
       final result = await env.service.pullStates(env.game, env.romPath);
 
       expect(result.downloaded, 1);
-      expect(logs, containsAllInOrder([
-        '[StateSync] pull Ico (SCUS-97113) (rom 42, emulator pcsx2): '
-            'states folder ${env.statesDir}',
-        '[StateSync] pull: RomM lists 1 state(s), 1 match this game',
-        '[StateSync] downloaded $stateFileA',
-        '[StateSync] pull done: downloaded=1 restamped=0 conflicts=0',
-      ]));
+      expect(
+        logs,
+        containsAllInOrder([
+          '[StateSync] pull Ico (SCUS-97113) (rom 42, emulator pcsx2): '
+              'states folder ${env.statesDir}',
+          '[StateSync] pull: RomM lists 1 state(s), 1 match this game',
+          '[StateSync] downloaded $stateFileA',
+          '[StateSync] pull done: downloaded=1 restamped=0 conflicts=0',
+        ]),
+      );
     });
 
     test('an empty server list is reported explicitly', () async {
@@ -79,8 +86,7 @@ void main() {
 
       await env.service.pullStates(env.game, env.romPath);
 
-      expect(logs, contains(
-          '[StateSync] pull: RomM lists 0 state(s), 0 match this game (nothing to download)'));
+      expect(logs, contains('[StateSync] pull: RomM lists 0 state(s), 0 match this game (nothing to download)'));
       expect(logs, contains('[StateSync] pull done: downloaded=0 restamped=0 conflicts=0'));
     });
 
@@ -104,8 +110,7 @@ void main() {
       await env.service.pullStates(env.game, env.romPath);
 
       expect(logs, contains('[StateSync] unchanged $stateFileA'));
-      expect(logs, contains(
-          '[StateSync] kept local $stateFileA (changed locally, will upload after exit)'));
+      expect(logs, contains('[StateSync] kept local $stateFileA (changed locally, will upload after exit)'));
     });
 
     test('identical bytes with no shared history are linked', () async {
@@ -145,19 +150,30 @@ void main() {
       final result = await env.service.pullStates(env.game, env.romPath);
 
       expect(result.downloaded, 0);
-      expect(logs.where((l) => l.startsWith('[StateSync] restamped $stateFileA (state id 1): ')),
-          hasLength(1), reason: '$logs');
+      expect(
+        logs.where((l) => l.startsWith('[StateSync] restamped $stateFileA (state id 1): ')),
+        hasLength(1),
+        reason: '$logs',
+      );
       final line = logs.firstWhere((l) => l.startsWith('[StateSync] restamped '));
-      expect(line, endsWith('updated_at changed (was $syncedAt, now $touchedAt), '
-          'the bytes are identical so nothing was written'));
+      expect(
+        line,
+        endsWith(
+          'updated_at changed (was $syncedAt, now $touchedAt), '
+          'the bytes are identical so nothing was written',
+        ),
+      );
       expect(logs, contains('[StateSync] pull done: downloaded=0 restamped=1 conflicts=0'));
       expect(file.readAsBytesSync(), stateBytes(1));
       expect(file.lastModifiedSync(), before, reason: 'nothing was written to disk');
 
       logs.clear();
       await env.service.pullStates(env.game, env.romPath);
-      expect(logs.where((l) => l.startsWith('[StateSync] restamped ')), isEmpty,
-          reason: 'the record was re-stamped, so the next pull has nothing to report: $logs');
+      expect(
+        logs.where((l) => l.startsWith('[StateSync] restamped ')),
+        isEmpty,
+        reason: 'the record was re-stamped, so the next pull has nothing to report: $logs',
+      );
     });
 
     test('a pull right after a push has nothing restamped and nothing downloaded', () async {
@@ -179,24 +195,24 @@ void main() {
 
       test('updated_at only', () {
         expect(
-            StateSyncService.restampedLine(
-                'a.p2s', RommState(id: 7, fileName: 'a.p2s', updatedAt: 'T2'), record),
-            '[StateSync] restamped a.p2s (state id 7): updated_at changed (was T1, now T2), $tail');
+          StateSyncService.restampedLine('a.p2s', RommState(id: 7, fileName: 'a.p2s', updatedAt: 'T2'), record),
+          '[StateSync] restamped a.p2s (state id 7): updated_at changed (was T1, now T2), $tail',
+        );
       });
 
       test('state id only, with an identical updated_at', () {
         expect(
-            StateSyncService.restampedLine(
-                'a.p2s', RommState(id: 9, fileName: 'a.p2s', updatedAt: 'T1'), record),
-            '[StateSync] restamped a.p2s (state id 9): state id changed (was 7, now 9), $tail');
+          StateSyncService.restampedLine('a.p2s', RommState(id: 9, fileName: 'a.p2s', updatedAt: 'T1'), record),
+          '[StateSync] restamped a.p2s (state id 9): state id changed (was 7, now 9), $tail',
+        );
       });
 
       test('both', () {
         expect(
-            StateSyncService.restampedLine(
-                'a.p2s', RommState(id: 9, fileName: 'a.p2s', updatedAt: 'T2'), record),
-            '[StateSync] restamped a.p2s (state id 9): state id changed (was 7, now 9) and '
-            'updated_at changed (was T1, now T2), $tail');
+          StateSyncService.restampedLine('a.p2s', RommState(id: 9, fileName: 'a.p2s', updatedAt: 'T2'), record),
+          '[StateSync] restamped a.p2s (state id 9): state id changed (was 7, now 9) and '
+          'updated_at changed (was T1, now T2), $tail',
+        );
       });
     });
 
@@ -207,8 +223,10 @@ void main() {
 
       await env.service.pullStates(env.game, env.romPath);
 
-      expect(logs, contains(
-          '[StateSync] pull done: downloaded=0 restamped=0 conflicts=0 (stopped early: a download failed)'));
+      expect(
+        logs,
+        contains('[StateSync] pull done: downloaded=0 restamped=0 conflicts=0 (stopped early: a download failed)'),
+      );
     });
   });
 
@@ -220,30 +238,41 @@ void main() {
       final result = await env.service.pushStates(env.game, env.romPath);
 
       expect(result.uploaded, 1);
-      expect(logs, containsAllInOrder([
-        '[StateSync] push Ico (SCUS-97113) (rom 42): 1 of 1 local state(s) eligible '
-            '(any modification time, at least 100 bytes)',
-        '[StateSync] uploaded $stateFileA (POST, id 1)',
-        '[StateSync] push done: uploaded=1 conflicts=0',
-      ]));
+      expect(
+        logs,
+        containsAllInOrder([
+          '[StateSync] push Ico (SCUS-97113) (rom 42): 1 of 1 local state(s) eligible '
+              '(any modification time, at least 100 bytes)',
+          '[StateSync] uploaded $stateFileA (POST, id 1)',
+          '[StateSync] push done: uploaded=1 conflicts=0',
+        ]),
+      );
     });
 
     test('nothing modified in the session says so', () async {
       final now = DateTime.now();
-      await env.writeState(stateFileA, stateBytes(1),
-          modified: now.subtract(const Duration(days: 1)));
+      await env.writeState(stateFileA, stateBytes(1), modified: now.subtract(const Duration(days: 1)));
       final logs = _captureLogs();
       final start = now.subtract(const Duration(minutes: 5));
 
       final result = await env.service.pushStates(env.game, env.romPath, sessionStart: start);
 
       expect(result.uploaded, 0);
-      expect(logs, contains('[StateSync] push Ico (SCUS-97113) (rom 42): '
+      expect(
+        logs,
+        contains(
+          '[StateSync] push Ico (SCUS-97113) (rom 42): '
           '0 of 1 local state(s) eligible '
-          '(modified since ${start.toIso8601String()}, at least 100 bytes)'));
-      expect(logs, contains(
+          '(modified since ${start.toIso8601String()}, at least 100 bytes)',
+        ),
+      );
+      expect(
+        logs,
+        contains(
           '[StateSync] push: nothing to upload '
-          '(no matching state of at least 100 bytes was modified this session)'));
+          '(no matching state of at least 100 bytes was modified this session)',
+        ),
+      );
     });
 
     test('a state under the minimum size is counted out, and the line says why', () async {
@@ -253,10 +282,20 @@ void main() {
       final result = await env.service.pushStates(env.game, env.romPath);
 
       expect(result.uploaded, 0);
-      expect(logs, contains('[StateSync] push Ico (SCUS-97113) (rom 42): 0 of 1 local state(s) '
-          'eligible (any modification time, at least 100 bytes)'));
-      expect(logs, contains('[StateSync] push: nothing to upload '
-          '(no matching state of at least 100 bytes found)'));
+      expect(
+        logs,
+        contains(
+          '[StateSync] push Ico (SCUS-97113) (rom 42): 0 of 1 local state(s) '
+          'eligible (any modification time, at least 100 bytes)',
+        ),
+      );
+      expect(
+        logs,
+        contains(
+          '[StateSync] push: nothing to upload '
+          '(no matching state of at least 100 bytes found)',
+        ),
+      );
     });
 
     test('a changed state is updated with PUT, an untouched one is unchanged', () async {
@@ -268,8 +307,11 @@ void main() {
 
       await env.service.pushStates(env.game, env.romPath);
 
-      expect(logs.where((l) => l.startsWith('[StateSync] uploaded $stateFileA (PUT, id ')),
-          hasLength(1), reason: '$logs');
+      expect(
+        logs.where((l) => l.startsWith('[StateSync] uploaded $stateFileA (PUT, id ')),
+        hasLength(1),
+        reason: '$logs',
+      );
       expect(logs, contains('[StateSync] unchanged $stateFileB'));
       expect(logs, contains('[StateSync] push done: uploaded=1 conflicts=0'));
     });
@@ -308,8 +350,7 @@ void main() {
 
       await env.service.pushStates(env.game, env.romPath);
 
-      expect(logs, contains(
-          '[StateSync] uploaded $stateFileA (POST, id 2) - re-created: state 1 is gone from RomM'));
+      expect(logs, contains('[StateSync] uploaded $stateFileA (POST, id 2) - re-created: state 1 is gone from RomM'));
     });
   });
 
@@ -329,10 +370,13 @@ void main() {
 
       expect(await env.service.resolveConflict(conflict, choice: 'local'), isTrue);
 
-      expect(logs, containsAllInOrder([
-        '[StateSync] resolve $stateFileA: keep local',
-        '[StateSync] resolve $stateFileA: keep local -> uploaded',
-      ]));
+      expect(
+        logs,
+        containsAllInOrder([
+          '[StateSync] resolve $stateFileA: keep local',
+          '[StateSync] resolve $stateFileA: keep local -> uploaded',
+        ]),
+      );
     });
 
     test('keep cloud logs the choice and the restore', () async {
@@ -340,10 +384,13 @@ void main() {
 
       expect(await env.service.resolveConflict(conflict, choice: 'cloud'), isTrue);
 
-      expect(logs, containsAllInOrder([
-        '[StateSync] resolve $stateFileA: keep cloud',
-        '[StateSync] resolve $stateFileA: keep cloud -> restored',
-      ]));
+      expect(
+        logs,
+        containsAllInOrder([
+          '[StateSync] resolve $stateFileA: keep cloud',
+          '[StateSync] resolve $stateFileA: keep cloud -> restored',
+        ]),
+      );
     });
 
     test('an unknown choice logs that nothing was done, and no outcome', () async {
@@ -380,8 +427,7 @@ void main() {
     ];
 
     for (final (kind, emulatorId, reason) in cases) {
-      test('$kind service, emulator ${emulatorId ?? 'unset'}: "$reason" agrees with isAvailableFor',
-          () async {
+      test('$kind service, emulator ${emulatorId ?? 'unset'}: "$reason" agrees with isAvailableFor', () async {
         final service = await serviceFor(kind);
 
         expect(service.availabilityReason(env.game, emulatorId: emulatorId), reason);
@@ -391,11 +437,17 @@ void main() {
   });
 
   test('an emulator whose strategy has state sync off is not synced, even with a capable save strategy', () {
-    final service = StateSyncService(FakeRommStatesApi(), env.pcsx2.prefs,
-        (game, {emulatorId, coreOverride}) => env.pcsx2.strategy,
-        emulatorSyncs: (id) => id == 'pcsx2');
+    final service = StateSyncService(
+      FakeRommStatesApi(),
+      env.pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) => env.pcsx2.strategy,
+      emulatorSyncs: (id) => id == 'pcsx2',
+    );
     expect(service.isAvailableFor(env.game, emulatorId: 'pcsx2'), isTrue);
-    expect(service.availabilityReason(env.game, emulatorId: 'ppsspp'), contains("no state-sync support for emulator 'ppsspp'"));
+    expect(
+      service.availabilityReason(env.game, emulatorId: 'ppsspp'),
+      contains("no state-sync support for emulator 'ppsspp'"),
+    );
     expect(service.isAvailableFor(env.game, emulatorId: 'ppsspp'), isFalse);
   });
 }

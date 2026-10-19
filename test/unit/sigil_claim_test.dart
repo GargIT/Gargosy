@@ -29,27 +29,30 @@ void main() {
   tearDown(() => tmp.deleteSync(recursive: true));
 
   SigilSaveStrategy flycast() => SigilSaveStrategy.forEmulator(
-        'flycast',
-        base: null,
-        emulatorDir: () => p.join(tmp.path, 'emulators', 'flycast'),
-        states: states,
-        unitsDir: p.join(tmp.path, 'units'),
-        collect: (call) async {
-          calls.add(call);
-          final left = [for (final n in unowned) if (!call.claimed.contains(n)) n];
-          return SigilCollected(
-            artifact: 'vmu_save_A1.bin',
-            data: Uint8List(4),
-            contentHash: '',
-            identityHash: '',
-            changed: false,
-            state: Uint8List(2),
-            holding: null,
-            unowned: left,
-            restoreAgain: false,
-          );
-        },
-      )!;
+    'flycast',
+    base: null,
+    emulatorDir: () => p.join(tmp.path, 'emulators', 'flycast'),
+    states: states,
+    unitsDir: p.join(tmp.path, 'units'),
+    collect: (call) async {
+      calls.add(call);
+      final left = [
+        for (final n in unowned)
+          if (!call.claimed.contains(n)) n,
+      ];
+      return SigilCollected(
+        artifact: 'vmu_save_A1.bin',
+        data: Uint8List(4),
+        contentHash: '',
+        identityHash: '',
+        changed: false,
+        state: Uint8List(2),
+        holding: null,
+        unowned: left,
+        restoreAgain: false,
+      );
+    },
+  )!;
 
   const rom = r'D:\roms\dc\Crazy Taxi.chd';
   final taxi = _dc(1, 'Crazy Taxi');
@@ -104,13 +107,15 @@ void main() {
 
   test('a claim passes through sigil itself (an empty VMU folder: nothing to claim, no error)', () async {
     final root = io.Directory(p.join(tmp.path, 'vmu'))..createSync();
-    final got = await SigilEngine.collect(SigilSyncCall(
-      layout: 'flycast_standalone',
-      platform: 'dreamcast',
-      contentPath: rom,
-      saveRoot: root.path,
-      claimed: const ['MYSTERY.DAT'],
-    ));
+    final got = await SigilEngine.collect(
+      SigilSyncCall(
+        layout: 'flycast_standalone',
+        platform: 'dreamcast',
+        contentPath: rom,
+        saveRoot: root.path,
+        claimed: const ['MYSTERY.DAT'],
+      ),
+    );
     expect(got.data, isNull);
     expect(got.unowned, isEmpty);
   });

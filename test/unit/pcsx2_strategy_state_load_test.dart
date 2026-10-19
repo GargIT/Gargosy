@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/pcsx2_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
@@ -24,16 +25,25 @@ class _CapturingDirectoryService extends DirectoryService {
 
   @override
   Future<io.Process?> launchGameWithHandle(
-      Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     handleArgs = args;
     handleRomPath = romPath;
     return null;
   }
 
   @override
-  Future<void> launchGame(Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+  Future<void> launchGame(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     plainArgs = args;
   }
 }
@@ -58,23 +68,22 @@ void main() {
   });
 
   test('launchWithHandleAndExtraArgs adds the extra arguments before the ROM', () async {
-    await strategy.launchWithHandleAndExtraArgs(game, romPath,
-        extraArgs: strategy.stateLoadArgs(statePath));
+    await strategy.launchWithHandleAndExtraArgs(game, romPath, extraArgs: strategy.stateLoadArgs(statePath));
 
-    expect([...directoryService.handleArgs!, directoryService.handleRomPath!],
-        ['-batch', '-fullscreen', '-statefile', statePath, romPath]);
+    expect(
+      [...directoryService.handleArgs!, directoryService.handleRomPath!],
+      ['-batch', '-fullscreen', '-statefile', statePath, romPath],
+    );
   });
 
   test('launchWithHandle passes only the normal arguments', () async {
     await strategy.launchWithHandle(game, romPath);
 
-    expect([...directoryService.handleArgs!, directoryService.handleRomPath!],
-        ['-batch', '-fullscreen', romPath]);
+    expect([...directoryService.handleArgs!, directoryService.handleRomPath!], ['-batch', '-fullscreen', romPath]);
   });
 
   test('launchWithExtraArgs adds the extra arguments', () async {
-    await strategy.launchWithExtraArgs(game, romPath,
-        extraArgs: strategy.stateLoadArgs(statePath));
+    await strategy.launchWithExtraArgs(game, romPath, extraArgs: strategy.stateLoadArgs(statePath));
 
     expect(directoryService.plainArgs, ['-batch', '-fullscreen', '-statefile', statePath]);
   });
@@ -86,10 +95,8 @@ void main() {
   });
 
   test('a launch with extra arguments leaves nothing behind for the next plain launch', () async {
-    await strategy.launchWithHandleAndExtraArgs(game, romPath,
-        extraArgs: strategy.stateLoadArgs(statePath));
-    await strategy.launchWithExtraArgs(game, romPath,
-        extraArgs: strategy.stateLoadArgs(statePath));
+    await strategy.launchWithHandleAndExtraArgs(game, romPath, extraArgs: strategy.stateLoadArgs(statePath));
+    await strategy.launchWithExtraArgs(game, romPath, extraArgs: strategy.stateLoadArgs(statePath));
 
     await strategy.launchWithHandle(game, romPath);
     await strategy.launch(game, romPath);

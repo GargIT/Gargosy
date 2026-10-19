@@ -18,7 +18,13 @@ import '../widgets/favourite.dart';
 /// A gallery's games for [query], loaded a page at a time as you scroll, with
 /// sort and filters on X (spec §2). Used by the gallery screen and by Search.
 class GalleryView extends ConsumerStatefulWidget {
-  const GalleryView({super.key, required this.query, this.title, this.emptyText = 'No games here', this.autofocus = true});
+  const GalleryView({
+    super.key,
+    required this.query,
+    this.title,
+    this.emptyText = 'No games here',
+    this.autofocus = true,
+  });
 
   final GalleryQuery query;
   final String? title;
@@ -97,19 +103,45 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     final favIds = ref.watch(favouriteIdsProvider);
     final header = Padding(
       padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s4, GSpace.rowPad, 0),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        if (widget.title != null) Text(widget.title!, style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800)),
-        if (widget.title != null) const SizedBox(width: GSpace.s4),
-        if (_total != null) Text('$_total games', style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted)),
-        const Spacer(),
-        Text('${_query.sort.label}${_query.hasFilters ? '  ·  filtered' : ''}', style: const TextStyle(color: GColors.fgMuted)),
-      ]),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (widget.title != null)
+            Text(
+              widget.title!,
+              style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800),
+            ),
+          if (widget.title != null) const SizedBox(width: GSpace.s4),
+          if (_total != null)
+            Text(
+              '$_total games',
+              style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
+            ),
+          const Spacer(),
+          Text(
+            '${_query.sort.label}${_query.hasFilters ? '  ·  filtered' : ''}',
+            style: const TextStyle(color: GColors.fgMuted),
+          ),
+        ],
+      ),
     );
     Widget body;
     if (_error != null && _games.isEmpty) {
-      body = Column(children: [header, Expanded(child: ErrorRetry(message: describeLoadError(_error!), onRetry: _reload))]);
+      body = Column(
+        children: [
+          header,
+          Expanded(
+            child: ErrorRetry(message: describeLoadError(_error!), onRetry: _reload),
+          ),
+        ],
+      );
     } else if (_total == null) {
-      body = Column(children: [header, const Expanded(child: Center(child: CircularProgressIndicator()))]);
+      body = Column(
+        children: [
+          header,
+          const Expanded(child: Center(child: CircularProgressIndicator())),
+        ],
+      );
     } else {
       body = CoverGrid(
         header: header,
@@ -128,25 +160,32 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
             ? null
             : Padding(
                 padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s14),
-                child: Row(children: [
-                  Flexible(
-                    child: Text("Couldn't load more  ·  ${describeLoadError(_error!)}",
-                        style: const TextStyle(color: GColors.fgSecondary)),
-                  ),
-                  const SizedBox(width: GSpace.s4),
-                  GFocusable(
-                    borderRadius: GRadius.pill,
-                    onActivate: () {
-                      setState(() => _error = null);
-                      _loadMore();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s2),
-                      decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-                      child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        "Couldn't load more  ·  ${describeLoadError(_error!)}",
+                        style: const TextStyle(color: GColors.fgSecondary),
+                      ),
                     ),
-                  ),
-                ]),
+                    const SizedBox(width: GSpace.s4),
+                    GFocusable(
+                      borderRadius: GRadius.pill,
+                      onActivate: () {
+                        setState(() => _error = null);
+                        _loadMore();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s2),
+                        decoration: BoxDecoration(
+                          color: GColors.surface,
+                          borderRadius: BorderRadius.circular(GRadius.pill),
+                        ),
+                        child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
       );
     }

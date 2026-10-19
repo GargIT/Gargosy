@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/game_launch_service.dart';
@@ -51,11 +52,11 @@ void main() {
   }
 
   GameSession session() => GameSession(
-        process: null,
-        sessionStart: DateTime(2026, 1, 1),
-        emulatorId: 'pcsx2',
-        activityTrackerFuture: Future.value(null),
-      );
+    process: null,
+    sessionStart: DateTime(2026, 1, 1),
+    emulatorId: 'pcsx2',
+    activityTrackerFuture: Future.value(null),
+  );
 
   setUp(() async {
     base = await Directory.systemTemp.createTemp('launch_logging');

@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/duckstation_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
@@ -24,8 +25,12 @@ class _CapturingDirectoryService extends DirectoryService {
 
   @override
   Future<io.Process?> launchGameWithHandle(
-      Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     handleArgs = args;
     handleRomPath = romPath;
     return null;
@@ -52,18 +57,18 @@ void main() {
   });
 
   test('a state launch adds -statefile before the ROM', () async {
-    await strategy.launchWithHandleAndExtraArgs(game, romPath,
-        extraArgs: strategy.stateLoadArgs(statePath));
+    await strategy.launchWithHandleAndExtraArgs(game, romPath, extraArgs: strategy.stateLoadArgs(statePath));
 
-    expect([...directoryService.handleArgs!, directoryService.handleRomPath!],
-        ['-batch', '-fullscreen', '-statefile', statePath, romPath]);
+    expect(
+      [...directoryService.handleArgs!, directoryService.handleRomPath!],
+      ['-batch', '-fullscreen', '-statefile', statePath, romPath],
+    );
   });
 
   test('a plain launch passes only the normal arguments', () async {
     await strategy.launchWithHandle(game, romPath);
 
-    expect([...directoryService.handleArgs!, directoryService.handleRomPath!],
-        ['-batch', '-fullscreen', romPath]);
+    expect([...directoryService.handleArgs!, directoryService.handleRomPath!], ['-batch', '-fullscreen', romPath]);
   });
 
   test("Gargosy: a state is started with this PC's ROM path; one without a disc path as it is", () {

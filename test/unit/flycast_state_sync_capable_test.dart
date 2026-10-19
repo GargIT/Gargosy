@@ -40,7 +40,12 @@ void main() {
 
   test("the matcher: the content's stem, slot 0 bare and 1-99 numbered; not Flycast's scratch files", () async {
     final match = (await s.stateFileMatcher(game, rom))!;
-    for (final yes in ['Crazy Taxi (USA).state', 'Crazy Taxi (USA)_1.state', 'Crazy Taxi (USA)_42.state', 'crazy taxi (usa)_2.state']) {
+    for (final yes in [
+      'Crazy Taxi (USA).state',
+      'Crazy Taxi (USA)_1.state',
+      'Crazy Taxi (USA)_42.state',
+      'crazy taxi (usa)_2.state',
+    ]) {
       expect(match(yes), isTrue, reason: yes);
     }
     for (final no in [
@@ -73,7 +78,8 @@ void main() {
     tearDown(() => tmp.deleteSync(recursive: true));
 
     test('the PNG after the header is the screenshot; the format version is recorded', () async {
-      final state = io.File(p.join(tmp.path, 'a.state'))..writeAsBytesSync(flycastState(png: [0x89, 0x50, 0x4E, 0x47, 9, 9]));
+      final state = io.File(p.join(tmp.path, 'a.state'))
+        ..writeAsBytesSync(flycastState(png: [0x89, 0x50, 0x4E, 0x47, 9, 9]));
       expect(await s.stateScreenshot(state), [0x89, 0x50, 0x4E, 0x47, 9, 9]);
       expect((await s.describeState(state)).formatId, '850');
     });
@@ -93,15 +99,17 @@ void main() {
     EmulatorLayout.of('flycast').ensureFolders(dirs.dataDir('flycast'));
     final exeDir = p.join(root.emulators, 'flycast');
     io.Directory(exeDir).createSync(recursive: true);
-    final args = await ProfileLaunchConfig.of('flycast')!.prepare(LaunchContext(
-      data: paths.emulatorDir('flycast'),
-      exeDir: exeDir,
-      bios: root.bios,
-      profileId: 'aaa',
-      profilesDir: root.profiles,
-      guard: PathGuard(root, activeProfileId: 'aaa'),
-      roms: root.roms,
-    ));
+    final args = await ProfileLaunchConfig.of('flycast')!.prepare(
+      LaunchContext(
+        data: paths.emulatorDir('flycast'),
+        exeDir: exeDir,
+        bios: root.bios,
+        profileId: 'aaa',
+        profilesDir: root.profiles,
+        guard: PathGuard(root, activeProfileId: 'aaa'),
+        roms: root.roms,
+      ),
+    );
     final told = RegExp(r'config:Dreamcast\.SavestatePath=([^,]+)').firstMatch(args.join(' '))!.group(1);
     expect(await FlycastSaveStrategy(dirs).stateDirectory(game, rom), told);
   });
@@ -110,8 +118,10 @@ void main() {
     final prefs = MemoryPrefs();
     final dirs = DirectoryService(prefs);
     final sync = SaveSyncService(
-      RommService(RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', apiKey: 'k'),
-          skipConnectivityCheck: true),
+      RommService(
+        RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', apiKey: 'k'),
+        skipConnectivityCheck: true,
+      ),
       dirs,
       StrategyRegistry(dirs, prefs),
       prefs,
@@ -126,10 +136,14 @@ void main() {
     test("the state's slot loads at boot, for this launch only", () {
       expect(emu.supportsStateSync, isTrue);
       expect(emu.supportsStateLoadOnLaunch, isTrue);
-      expect(emu.stateLoadArgs(r'C:\d\states\Crazy Taxi (USA)_3.state'),
-          ['-config', 'config:Dreamcast.AutoLoadState=yes,config:Dreamcast.SavestateSlot=3']);
-      expect(emu.stateLoadArgs(r'C:\d\states\Crazy Taxi (USA).state'),
-          ['-config', 'config:Dreamcast.AutoLoadState=yes,config:Dreamcast.SavestateSlot=0']);
+      expect(emu.stateLoadArgs(r'C:\d\states\Crazy Taxi (USA)_3.state'), [
+        '-config',
+        'config:Dreamcast.AutoLoadState=yes,config:Dreamcast.SavestateSlot=3',
+      ]);
+      expect(emu.stateLoadArgs(r'C:\d\states\Crazy Taxi (USA).state'), [
+        '-config',
+        'config:Dreamcast.AutoLoadState=yes,config:Dreamcast.SavestateSlot=0',
+      ]);
     });
 
     test('only a slot state can be loaded', () {

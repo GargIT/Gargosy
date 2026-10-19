@@ -1,7 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:async';
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
+
 import 'backup_entry.dart';
 
 /// Where a [BackupRepository] keeps its list (Gargosy: the profile's
@@ -81,22 +83,24 @@ class BackupRepository {
   Future<void> _save() {
     final store = this.store;
     if (store == null) return Future.value();
-    final done = _writing.then((_) async {
-      if (_unread) {
-        final stored = _read();
-        if (stored == null) return;
-        for (final e in stored.entries) {
-          _games.putIfAbsent(e.key, () => e.value);
-        }
-      }
-      await store.write({
-        'version': _formatVersion,
-        'games': {
-          for (final e in _games.entries)
-            if (e.value.isNotEmpty) e.key: [for (final b in e.value) b.toJson(zip: store.toStored(b.localZipPath))],
-        },
-      });
-    }).catchError((Object e) => debugPrint('[BackupRepository] write failed: $e'));
+    final done = _writing
+        .then((_) async {
+          if (_unread) {
+            final stored = _read();
+            if (stored == null) return;
+            for (final e in stored.entries) {
+              _games.putIfAbsent(e.key, () => e.value);
+            }
+          }
+          await store.write({
+            'version': _formatVersion,
+            'games': {
+              for (final e in _games.entries)
+                if (e.value.isNotEmpty) e.key: [for (final b in e.value) b.toJson(zip: store.toStored(b.localZipPath))],
+            },
+          });
+        })
+        .catchError((Object e) => debugPrint('[BackupRepository] write failed: $e'));
     return _writing = done;
   }
 
@@ -158,9 +162,7 @@ class BackupRepository {
   /// Removes a specific [entry] for [romId] and deletes its physical ZIP.
   Future<void> removeEntry(String romId, BackupEntry entry) async {
     final entries = getEntries(romId);
-    entries.removeWhere((e) =>
-        e.localZipPath == entry.localZipPath &&
-        e.timestamp == entry.timestamp);
+    entries.removeWhere((e) => e.localZipPath == entry.localZipPath && e.timestamp == entry.timestamp);
     _games[romId] = entries;
     await _save();
     await _deleteFile(entry.localZipPath);
@@ -169,9 +171,7 @@ class BackupRepository {
   /// Marks a specific [entry] as synced.
   Future<void> markAsSynced(String romId, BackupEntry entry) async {
     final entries = getEntries(romId);
-    final index = entries.indexWhere((e) =>
-        e.localZipPath == entry.localZipPath &&
-        e.timestamp == entry.timestamp);
+    final index = entries.indexWhere((e) => e.localZipPath == entry.localZipPath && e.timestamp == entry.timestamp);
     if (index != -1) {
       final old = entries[index];
       entries[index] = BackupEntry(

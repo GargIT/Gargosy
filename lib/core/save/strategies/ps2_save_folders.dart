@@ -72,12 +72,11 @@ class Ps2SaveFolders {
       if (parts.length != 2) continue; // loose files, states, nested folders
       final (folder, file) = (parts[0], parts[1]);
       if (file.startsWith('_pcsx2_') || !_isSaveFolderName(folder)) continue;
-      folders.putIfAbsent(folder, () => []).add(
-          Ps2CardFile(name: file, data: Uint8List.fromList(entry.content as List<int>)));
+      folders
+          .putIfAbsent(folder, () => [])
+          .add(Ps2CardFile(name: file, data: Uint8List.fromList(entry.content as List<int>)));
     }
-    return [
-      for (final MapEntry(key: name, value: files) in folders.entries) Ps2CardSave(name: name, files: files),
-    ];
+    return [for (final MapEntry(key: name, value: files) in folders.entries) Ps2CardSave(name: name, files: files)];
   }
 
   /// [card] (or a new card when it is missing or was never formatted) with

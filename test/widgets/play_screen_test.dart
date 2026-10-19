@@ -377,19 +377,25 @@ void main() {
     final current = find.byKey(const ValueKey('dropdown-current'));
     expect(find.descendant(of: current, matching: find.text('PCSX2')), findsOneWidget);
     expect(find.descendant(of: current, matching: find.byIcon(Icons.check)), findsOneWidget);
-    await tester.tap(find.descendant(of: find.byKey(const ValueKey('dropdown-list')), matching: find.text('RetroArch')));
+    await tester.tap(
+      find.descendant(of: find.byKey(const ValueKey('dropdown-list')), matching: find.text('RetroArch')),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('dropdown-list')), findsNothing);
     expect(inPanel('RetroArch'), findsOneWidget);
   });
 
   testWidgets('Full screen is on by default; turning it off is kept for that emulator', (tester) async {
-    await open(tester, emulators: const [
-      EmulatorOption(_pcsx2, 'PCSX2', fullscreen: true),
-      EmulatorOption(_ra, 'RetroArch', cores: _cores, fullscreen: true),
-    ]);
+    await open(
+      tester,
+      emulators: const [
+        EmulatorOption(_pcsx2, 'PCSX2', fullscreen: true),
+        EmulatorOption(_ra, 'RetroArch', cores: _cores, fullscreen: true),
+      ],
+    );
     Switch toggle() => tester.widget<Switch>(
-        find.descendant(of: find.byKey(const ValueKey('play-fullscreen')), matching: find.byType(Switch)));
+      find.descendant(of: find.byKey(const ValueKey('play-fullscreen')), matching: find.byType(Switch)),
+    );
     expect(toggle().value, isTrue);
     await tester.tap(find.byKey(const ValueKey('play-fullscreen')));
     await tester.pumpAndSettle();

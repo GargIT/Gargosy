@@ -13,7 +13,11 @@ class FakeDioAdapter implements HttpClientAdapter {
   final requests = <RequestOptions>[];
 
   @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
     requests.add(options);
     final reply = handler(options);
     if (reply.status == -1) {
@@ -22,18 +26,30 @@ class FakeDioAdapter implements HttpClientAdapter {
     final body = reply.body;
     if (body is String) {
       // A web page, as a server that isn't RomM would answer.
-      return ResponseBody.fromString(body, reply.status, headers: {
-        Headers.contentTypeHeader: ['text/html; charset=utf-8'],
-      });
+      return ResponseBody.fromString(
+        body,
+        reply.status,
+        headers: {
+          Headers.contentTypeHeader: ['text/html; charset=utf-8'],
+        },
+      );
     }
     if (body is List<int>) {
-      return ResponseBody.fromBytes(body, reply.status, headers: {
-        Headers.contentTypeHeader: ['image/png'],
-      });
+      return ResponseBody.fromBytes(
+        body,
+        reply.status,
+        headers: {
+          Headers.contentTypeHeader: ['image/png'],
+        },
+      );
     }
-    return ResponseBody.fromString(jsonEncode(body), reply.status, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      reply.status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override

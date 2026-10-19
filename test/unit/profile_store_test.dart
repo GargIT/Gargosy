@@ -26,8 +26,8 @@ void main() {
   });
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  Future<Profile> anna() => store.create(
-      name: 'Anna', colorIndex: 2, serverUrl: 'https://romm.example', rommUserId: 7, rommUsername: 'anna');
+  Future<Profile> anna() =>
+      store.create(name: 'Anna', colorIndex: 2, serverUrl: 'https://romm.example', rommUserId: 7, rommUsername: 'anna');
 
   test('create makes the folder layout and lists the profile', () async {
     final a = await anna();
@@ -42,31 +42,72 @@ void main() {
 
   test('two profiles never share a path', () async {
     final a = await anna();
-    final b = await store.create(name: 'Bob', colorIndex: 0, serverUrl: 'https://romm.example', rommUserId: 8, rommUsername: 'bob');
+    final b = await store.create(
+      name: 'Bob',
+      colorIndex: 0,
+      serverUrl: 'https://romm.example',
+      rommUserId: 8,
+      rommUsername: 'bob',
+    );
     final pa = ProfilePaths(root, a.id), pb = ProfilePaths(root, b.id);
-    final aPaths = {pa.dir, pa.profileFile, pa.prefsFile, pa.avatarFile, pa.emulatorsDir, pa.emulatorDir('dolphin'), pa.backups, pa.cache};
-    final bPaths = {pb.dir, pb.profileFile, pb.prefsFile, pb.avatarFile, pb.emulatorsDir, pb.emulatorDir('dolphin'), pb.backups, pb.cache};
+    final aPaths = {
+      pa.dir,
+      pa.profileFile,
+      pa.prefsFile,
+      pa.avatarFile,
+      pa.emulatorsDir,
+      pa.emulatorDir('dolphin'),
+      pa.backups,
+      pa.cache,
+    };
+    final bPaths = {
+      pb.dir,
+      pb.profileFile,
+      pb.prefsFile,
+      pb.avatarFile,
+      pb.emulatorsDir,
+      pb.emulatorDir('dolphin'),
+      pb.backups,
+      pb.cache,
+    };
     expect(aPaths.intersection(bPaths), isEmpty);
     expect(aPaths.any((x) => p.isWithin(pb.dir, x)), isFalse);
   });
 
   test('PathGuard of one profile rejects the other profile\'s folder', () async {
     final a = await anna();
-    final b = await store.create(name: 'Bob', colorIndex: 0, serverUrl: 'https://romm.example', rommUserId: 8, rommUsername: 'bob');
-    expect(() => ProfilePaths(root, a.id).guard.check(ProfilePaths(root, b.id).profileFile), throwsA(isA<PathGuardException>()));
+    final b = await store.create(
+      name: 'Bob',
+      colorIndex: 0,
+      serverUrl: 'https://romm.example',
+      rommUserId: 8,
+      rommUsername: 'bob',
+    );
+    expect(
+      () => ProfilePaths(root, a.id).guard.check(ProfilePaths(root, b.id).profileFile),
+      throwsA(isA<PathGuardException>()),
+    );
   });
 
   test('create copies every emulator template into the new profile only', () async {
     final t = io.File(p.join(root.templates, 'dolphin', 'Config', 'Dolphin.ini'))..createSync(recursive: true);
     t.writeAsStringSync('[General]\n');
     final a = await anna();
-    expect(io.File(p.join(ProfilePaths(root, a.id).emulatorDir('dolphin'), 'Config', 'Dolphin.ini')).readAsStringSync(), '[General]\n');
+    expect(
+      io.File(p.join(ProfilePaths(root, a.id).emulatorDir('dolphin'), 'Config', 'Dolphin.ini')).readAsStringSync(),
+      '[General]\n',
+    );
     expect(t.readAsStringSync(), '[General]\n');
   });
 
   test('the PIN is saved and checked; save keeps changes', () async {
     final a = await anna();
-    await store.save(a.copyWith(name: 'Anna B', pin: PinHash.create('1234', random: Random(2), iterations: 1000)));
+    await store.save(
+      a.copyWith(
+        name: 'Anna B',
+        pin: PinHash.create('1234', random: Random(2), iterations: 1000),
+      ),
+    );
     final again = (await store.list()).single;
     expect(again.name, 'Anna B');
     expect(again.pin!.verify('1234'), isTrue);
@@ -76,7 +117,13 @@ void main() {
 
   test('delete removes only that folder', () async {
     final a = await anna();
-    final b = await store.create(name: 'Bob', colorIndex: 0, serverUrl: 'https://romm.example', rommUserId: 8, rommUsername: 'bob');
+    final b = await store.create(
+      name: 'Bob',
+      colorIndex: 0,
+      serverUrl: 'https://romm.example',
+      rommUserId: 8,
+      rommUsername: 'bob',
+    );
     await store.delete(a.id);
     expect(io.Directory(ProfilePaths(root, a.id).dir).existsSync(), isFalse);
     expect((await store.list()).map((x) => x.id), [b.id]);

@@ -30,7 +30,9 @@ void main() {
     final root = await tempAppRoot();
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final a = ProfilePaths(root, 'aaa');
-    io.File(a.prefsFile)..createSync(recursive: true)..writeAsStringSync('{oops');
+    io.File(a.prefsFile)
+      ..createSync(recursive: true)
+      ..writeAsStringSync('{oops');
     expect(ProfilePreferences.open(a).getKeys(), isEmpty);
   });
 }

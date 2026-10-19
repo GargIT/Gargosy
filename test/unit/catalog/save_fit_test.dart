@@ -34,17 +34,35 @@ void main() {
     });
 
     test('a PS1 card from DuckStation converts for a RetroArch core', () {
-      final fit = fitFor(save(duck), platformSlug: 'psx', picked: rearmed, platformDefault: rearmed, installed: const {'retroarch', 'duckstation'});
+      final fit = fitFor(
+        save(duck),
+        platformSlug: 'psx',
+        picked: rearmed,
+        platformDefault: rearmed,
+        installed: const {'retroarch', 'duckstation'},
+      );
       expect(fit.kind, SaveFitKind.converted);
     });
 
     test('a RetroArch PS1 card fits DuckStation, converted to its card', () {
-      final fit = fitFor(save(rearmed), platformSlug: 'psx', picked: duck, platformDefault: rearmed, installed: const {'retroarch', 'duckstation'});
+      final fit = fitFor(
+        save(rearmed),
+        platformSlug: 'psx',
+        picked: duck,
+        platformDefault: rearmed,
+        installed: const {'retroarch', 'duckstation'},
+      );
       expect(fit.kind, SaveFitKind.converted);
     });
 
     test('a save no format converts into the picked emulator\'s is unusable, with the reason', () {
-      final fit = fitFor(save(ares), platformSlug: 'n64', picked: mupen, platformDefault: mupen, installed: const {'retroarch', 'ares'});
+      final fit = fitFor(
+        save(ares),
+        platformSlug: 'n64',
+        picked: mupen,
+        platformDefault: mupen,
+        installed: const {'retroarch', 'ares'},
+      );
       expect(fit.kind, SaveFitKind.unusable);
       expect(fit.reason, contains('retroarch'));
     });
@@ -84,8 +102,13 @@ void main() {
     });
 
     test('another emulator\'s local save still converts (PS1 card)', () {
-      final fit = fitFor(local(SaveSource.local, duck), platformSlug: 'psx', picked: rearmed, platformDefault: rearmed,
-          installed: const {'retroarch', 'duckstation'});
+      final fit = fitFor(
+        local(SaveSource.local, duck),
+        platformSlug: 'psx',
+        picked: rearmed,
+        platformDefault: rearmed,
+        installed: const {'retroarch', 'duckstation'},
+      );
       expect(fit.kind, SaveFitKind.converted);
     });
   });
@@ -119,18 +142,41 @@ void main() {
       test('$name: a RomM save fits RetroArch\'s $name core and standalone $name', () {
         final e = save(SaveMaker(name)); // how resolveSaveMaker reads the tag
         final core = SaveMaker('retroarch', coreId: name);
-        expect(fitFor(e, platformSlug: 'x', picked: core, platformDefault: core, installed: {'retroarch', name}).kind,
-            SaveFitKind.native);
-        expect(fitFor(e, platformSlug: 'x', picked: SaveMaker(name), platformDefault: core, installed: {'retroarch', name}).kind,
-            SaveFitKind.native);
+        expect(
+          fitFor(e, platformSlug: 'x', picked: core, platformDefault: core, installed: {'retroarch', name}).kind,
+          SaveFitKind.native,
+        );
+        expect(
+          fitFor(
+            e,
+            platformSlug: 'x',
+            picked: SaveMaker(name),
+            platformDefault: core,
+            installed: {'retroarch', name},
+          ).kind,
+          SaveFitKind.native,
+        );
       });
     }
 
     test('a local RetroArch save is not moved to the standalone emulator by its name alone', () {
-      final e = SaveEntry(source: SaveSource.local, fileName: 'x', savedAt: when,
-          maker: const SaveMaker('retroarch', coreId: 'mgba'), tag: 'mgba');
-      expect(fitFor(e, platformSlug: 'x', picked: const SaveMaker('mgba'), platformDefault: null, installed: const {'retroarch', 'mgba'}).kind,
-          SaveFitKind.unusable);
+      final e = SaveEntry(
+        source: SaveSource.local,
+        fileName: 'x',
+        savedAt: when,
+        maker: const SaveMaker('retroarch', coreId: 'mgba'),
+        tag: 'mgba',
+      );
+      expect(
+        fitFor(
+          e,
+          platformSlug: 'x',
+          picked: const SaveMaker('mgba'),
+          platformDefault: null,
+          installed: const {'retroarch', 'mgba'},
+        ).kind,
+        SaveFitKind.unusable,
+      );
     });
   });
 }

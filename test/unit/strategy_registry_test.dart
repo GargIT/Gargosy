@@ -36,7 +36,7 @@ void main() {
 
     test('setNdsCore updates RetroArchStrategy core', () {
       registry.setNdsCore('desmume');
-      // This is hard to test directly without exposing internal state, 
+      // This is hard to test directly without exposing internal state,
       // but we can at least call it to ensure it doesn't crash.
       registry.setNdsCore('melonds');
     });
@@ -44,13 +44,27 @@ void main() {
     test('No two strategies share the same slug', () {
       final allSlugs = <String, String>{}; // slug -> emulatorId
       final overlaps = <String>[];
-      
+
       final strategyIds = [
-        'retroarch', 'dolphin', 'eden', 'rpcs3', 'pcsx2', 'azahar', 
-        'cemu', 'duckstation', 'flycast', 'melonds', 'ppsspp', 'mgba', 
-        'mame', 'xemu', 'xenia_canary', 'scummvm', 'windows_native'
+        'retroarch',
+        'dolphin',
+        'eden',
+        'rpcs3',
+        'pcsx2',
+        'azahar',
+        'cemu',
+        'duckstation',
+        'flycast',
+        'melonds',
+        'ppsspp',
+        'mgba',
+        'mame',
+        'xemu',
+        'xenia_canary',
+        'scummvm',
+        'windows_native',
       ];
-      
+
       for (final id in strategyIds) {
         final strategy = registry.getStrategyById(id);
         if (strategy != null) {
@@ -64,7 +78,7 @@ void main() {
           }
         }
       }
-      
+
       expect(overlaps, isEmpty, reason: overlaps.join('\n'));
     });
 

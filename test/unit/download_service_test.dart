@@ -27,24 +27,26 @@ void main() {
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
   DownloadService service(FakeDioAdapter a, {Game? detail}) => DownloadService(
-        dio: fakeDio(a),
-        auth: () => Options(headers: {'Authorization': 'Bearer t'}),
-        files: RomFiles(root),
-        guard: PathGuard(root),
-        tempDir: p.join(root.appData, 'temp'),
-        urlFor: (g) => '/api/roms/${g.id}/content/${g.fsName}',
-        detail: (id) async => detail,
-      );
+    dio: fakeDio(a),
+    auth: () => Options(headers: {'Authorization': 'Bearer t'}),
+    files: RomFiles(root),
+    guard: PathGuard(root),
+    tempDir: p.join(root.appData, 'temp'),
+    urlFor: (g) => '/api/roms/${g.id}/content/${g.fsName}',
+    detail: (id) async => detail,
+  );
 
   Game withFiles(int id, String fsName, List<String> fullPaths) => Game.fromJson({
-        ...gameJson(id, fsName, fsName: fsName, multi: fullPaths.where((f) => !f.contains('/')).length > 1),
-        'files': [for (final f in fullPaths) {'file_name': p.posix.basename(f), 'full_path': 'ps2/$fsName/$f'}],
-      });
+    ...gameJson(id, fsName, fsName: fsName, multi: fullPaths.where((f) => !f.contains('/')).length > 1),
+    'files': [
+      for (final f in fullPaths) {'file_name': p.posix.basename(f), 'full_path': 'ps2/$fsName/$f'},
+    ],
+  });
 
   List<String> romsTree() => [
-        for (final e in io.Directory(root.roms).listSync(recursive: true))
-          if (e is io.File) p.relative(e.path, from: root.roms),
-      ];
+    for (final e in io.Directory(root.roms).listSync(recursive: true))
+      if (e is io.File) p.relative(e.path, from: root.roms),
+  ];
 
   test('a single-file game lands at its path, with progress, and nothing else is left', () async {
     final a = FakeDioAdapter((r) => (status: 200, body: List<int>.filled(1000, 7)));
@@ -59,25 +61,38 @@ void main() {
   });
 
   test('a multi-file game is unpacked into its folder and the zip is removed', () async {
-    final a = FakeDioAdapter((r) => (status: 200, body: zipOf({'B (Disc 1).chd': 'one', 'B (Disc 2).chd': 'two', 'B.m3u': 'list'})));
+    final a = FakeDioAdapter(
+      (r) => (status: 200, body: zipOf({'B (Disc 1).chd': 'one', 'B (Disc 2).chd': 'two', 'B.m3u': 'list'})),
+    );
     await service(a).download(game(2, 'B', fsName: 'B', multi: true));
-    expect(romsTree()..sort(), [p.join('ps2', 'B', 'B (Disc 1).chd'), p.join('ps2', 'B', 'B (Disc 2).chd'), p.join('ps2', 'B', 'B.m3u')]);
+    expect(romsTree()..sort(), [
+      p.join('ps2', 'B', 'B (Disc 1).chd'),
+      p.join('ps2', 'B', 'B (Disc 2).chd'),
+      p.join('ps2', 'B', 'B.m3u'),
+    ]);
     expect(io.Directory(p.join(root.appData, 'temp')).listSync(), isEmpty);
   });
 
-  test("a multi-file game unpacks with a cancel token and a progress listener that hold things an isolate can't take", () async {
-    final a = FakeDioAdapter((r) => (status: 200, body: zipOf({'C (Disc 1).chd': 'one', 'C (Disc 2).chd': 'two'})));
-    // The app's listener lives in a notifier holding futures in progress:
-    // nothing of the download's own scope may go to the unpacking isolate.
-    final pending = Completer<void>();
-    final phases = <DownloadPhase>[];
-    await service(a).download(game(3, 'C', fsName: 'C', multi: true), cancel: CancelToken(), onProgress: (pr) {
-      phases.add(pr.phase);
-      if (pending.isCompleted) phases.clear();
-    });
-    expect(phases.last, DownloadPhase.done);
-    expect(romsTree()..sort(), [p.join('ps2', 'C', 'C (Disc 1).chd'), p.join('ps2', 'C', 'C (Disc 2).chd')]);
-  });
+  test(
+    "a multi-file game unpacks with a cancel token and a progress listener that hold things an isolate can't take",
+    () async {
+      final a = FakeDioAdapter((r) => (status: 200, body: zipOf({'C (Disc 1).chd': 'one', 'C (Disc 2).chd': 'two'})));
+      // The app's listener lives in a notifier holding futures in progress:
+      // nothing of the download's own scope may go to the unpacking isolate.
+      final pending = Completer<void>();
+      final phases = <DownloadPhase>[];
+      await service(a).download(
+        game(3, 'C', fsName: 'C', multi: true),
+        cancel: CancelToken(),
+        onProgress: (pr) {
+          phases.add(pr.phase);
+          if (pending.isCompleted) phases.clear();
+        },
+      );
+      expect(phases.last, DownloadPhase.done);
+      expect(romsTree()..sort(), [p.join('ps2', 'C', 'C (Disc 1).chd'), p.join('ps2', 'C', 'C (Disc 2).chd')]);
+    },
+  );
 
   test('a zip that is the ROM itself is kept as is', () async {
     final a = FakeDioAdapter((r) => (status: 200, body: zipOf({'sf2.bin': 'x'})));
@@ -101,7 +116,9 @@ void main() {
   });
 
   test('downloading again replaces the old copy', () async {
-    io.File(p.join(root.roms, 'ps2', 'A.iso'))..createSync(recursive: true)..writeAsStringSync('old');
+    io.File(p.join(root.roms, 'ps2', 'A.iso'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('old');
     final a = FakeDioAdapter((r) => (status: 200, body: List<int>.filled(10, 1)));
     await service(a).download(game(1, 'A', fsName: 'A.iso'));
     expect(io.File(p.join(root.roms, 'ps2', 'A.iso')).lengthSync(), 10);

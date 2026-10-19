@@ -14,12 +14,12 @@ class BiosSync {
   final FirmwareService _firmware;
 
   /// For the platforms [emulatorId] plays; returns how many files came down.
-  Future<int> forEmulator(String emulatorId) => _counting((onProgress) =>
-      _firmware.syncFirmwareForEmulator(emulatorId, onProgress: onProgress));
+  Future<int> forEmulator(String emulatorId) =>
+      _counting((onProgress) => _firmware.syncFirmwareForEmulator(emulatorId, onProgress: onProgress));
 
   /// For every installed emulator (ids in [installed]).
-  Future<int> forAll(Set<String> installed) => _counting((onProgress) =>
-      _firmware.syncAllFirmware(onProgress: onProgress, installedEmulatorIds: installed));
+  Future<int> forAll(Set<String> installed) =>
+      _counting((onProgress) => _firmware.syncAllFirmware(onProgress: onProgress, installedEmulatorIds: installed));
 
   Future<int> _counting(Future<void> Function(FirmwareProgressCallback) run) async {
     final files = <String>{};

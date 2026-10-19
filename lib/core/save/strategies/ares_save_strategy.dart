@@ -4,9 +4,11 @@
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:developer' as dev;
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
@@ -14,6 +16,7 @@ import '../../storage/profile_rooted.dart';
 import '../save_state_info.dart';
 import '../save_strategy.dart';
 import '../state_sync_capable.dart';
+
 import 'package:gargosy/core/emulator/platform_slugs.dart';
 
 /// Confirmed battery-save extensions (sync these).
@@ -33,33 +36,33 @@ bool _isStateExtension(String ext) {
 /// Empty set = log-only bucket (no confirmed extensions yet).
 const Map<String, Set<String>> _confirmedExtensionsPerPlatform = {
   // Confirmed
-  'Famicom':              {'.ram', '.eeprom', '.chr'},
-  'Game Boy':             {'.ram', '.eeprom', '.flash'},
-  'Game Boy Color':       {'.ram', '.eeprom', '.flash'},
-  'Game Boy Advance':     {'.ram', '.eeprom', '.flash'},
-  'Mega Drive':           {'.ram', '.eeprom'},
-  'Nintendo 64':          {'.ram', '.eeprom', '.flash'},
+  'Famicom': {'.ram', '.eeprom', '.chr'},
+  'Game Boy': {'.ram', '.eeprom', '.flash'},
+  'Game Boy Color': {'.ram', '.eeprom', '.flash'},
+  'Game Boy Advance': {'.ram', '.eeprom', '.flash'},
+  'Mega Drive': {'.ram', '.eeprom'},
+  'Nintendo 64': {'.ram', '.eeprom', '.flash'},
   // Defaulting to common set — flag for user testing
-  'Super Famicom':        {'.ram', '.eeprom', '.flash'},
-  'WonderSwan':           {'.ram', '.eeprom', '.flash'},
-  'WonderSwan Color':     {'.ram', '.eeprom', '.flash'},
-  'Neo Geo Pocket':       {'.ram', '.eeprom'},
+  'Super Famicom': {'.ram', '.eeprom', '.flash'},
+  'WonderSwan': {'.ram', '.eeprom', '.flash'},
+  'WonderSwan Color': {'.ram', '.eeprom', '.flash'},
+  'Neo Geo Pocket': {'.ram', '.eeprom'},
   'Neo Geo Pocket Color': {'.ram', '.eeprom'},
-  'MSX':                  {'.ram', '.eeprom'},
+  'MSX': {'.ram', '.eeprom'},
   // Log-only / unconfirmed — empty set means "log everything"
-  'Mega CD':              {},
-  'PlayStation':          {},
-  'Saturn':               {},
-  'PC Engine':            {},
-  'Neo Geo':              {},
-  'ColecoVision':         {},
-  'ZX Spectrum':          {},
-  'Atari 2600':           {},
-  'SG-1000':              {},
-  'SC-3000':              {},
-  'Master System':        {},
-  'Game Gear':            {},
-  'MSX2':                 {},
+  'Mega CD': {},
+  'PlayStation': {},
+  'Saturn': {},
+  'PC Engine': {},
+  'Neo Geo': {},
+  'ColecoVision': {},
+  'ZX Spectrum': {},
+  'Atari 2600': {},
+  'SG-1000': {},
+  'SC-3000': {},
+  'Master System': {},
+  'Game Gear': {},
+  'MSX2': {},
 };
 
 /// Returns the set of battery-save extensions for a platform.
@@ -97,8 +100,7 @@ class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
 
-  AresSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  AresSaveStrategy(this._directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'ares';
@@ -111,45 +113,45 @@ class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   /// Maps Gargosy platform slugs to Ares save folder names.
   static const Map<String, String> _platformFolderNames = {
-    'atari2600':       'Atari 2600',
-    'nes':             'Famicom',
-    'famicom':         'Famicom',
-    'snes':            'Super Famicom',
-    'sfc':             'Super Famicom',
-    'n64':             'Nintendo 64',
-    'gb':              'Game Boy',
-    'gbc':             'Game Boy Color',
-    'gba':             'Game Boy Advance',
-    'gamegear':        'Game Gear',
-    'sms':             'Master System',
-    'mastersystem':    'Master System',
-    'genesis':         'Mega Drive',
-    'megadrive':       'Mega Drive',
-    'md':              'Mega Drive',
-    'segacd':          'Mega CD',
-    'psx':             'PlayStation',
-    'ps1':             'PlayStation',
-    'playstation':     'PlayStation',
-    'pce':             'PC Engine',
-    'pcengine':        'PC Engine',
-    'neogeo':          'Neo Geo',
-    'neo-geo':         'Neo Geo',
-    'neogeoaes':       'Neo Geo',
-    'neogeomvs':       'Neo Geo',
-    'neo-geo-aes':     'Neo Geo',
-    'neo-geo-mvs':     'Neo Geo',
-    'mvs':             'Neo Geo',
-    'aes':             'Neo Geo',
-    'msx':             'MSX',
-    'coleco':          'ColecoVision',
-    'colecovision':    'ColecoVision',
-    'zxspectrum':      'ZX Spectrum',
-    'zx-spectrum':     'ZX Spectrum',
-    'wonderswan':      'WonderSwan',
+    'atari2600': 'Atari 2600',
+    'nes': 'Famicom',
+    'famicom': 'Famicom',
+    'snes': 'Super Famicom',
+    'sfc': 'Super Famicom',
+    'n64': 'Nintendo 64',
+    'gb': 'Game Boy',
+    'gbc': 'Game Boy Color',
+    'gba': 'Game Boy Advance',
+    'gamegear': 'Game Gear',
+    'sms': 'Master System',
+    'mastersystem': 'Master System',
+    'genesis': 'Mega Drive',
+    'megadrive': 'Mega Drive',
+    'md': 'Mega Drive',
+    'segacd': 'Mega CD',
+    'psx': 'PlayStation',
+    'ps1': 'PlayStation',
+    'playstation': 'PlayStation',
+    'pce': 'PC Engine',
+    'pcengine': 'PC Engine',
+    'neogeo': 'Neo Geo',
+    'neo-geo': 'Neo Geo',
+    'neogeoaes': 'Neo Geo',
+    'neogeomvs': 'Neo Geo',
+    'neo-geo-aes': 'Neo Geo',
+    'neo-geo-mvs': 'Neo Geo',
+    'mvs': 'Neo Geo',
+    'aes': 'Neo Geo',
+    'msx': 'MSX',
+    'coleco': 'ColecoVision',
+    'colecovision': 'ColecoVision',
+    'zxspectrum': 'ZX Spectrum',
+    'zx-spectrum': 'ZX Spectrum',
+    'wonderswan': 'WonderSwan',
     'wonderswancolor': 'WonderSwan Color',
-    'ngp':             'Neo Geo Pocket',
-    'ngpc':            'Neo Geo Pocket Color',
-    'neo-geo-pocket':  'Neo Geo Pocket',
+    'ngp': 'Neo Geo Pocket',
+    'ngpc': 'Neo Geo Pocket Color',
+    'neo-geo-pocket': 'Neo Geo Pocket',
   };
 
   String _getExeName() {
@@ -367,8 +369,13 @@ class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
       final bytes = await zipFile.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
       // In the system temp folder: the zip may sit next to the ROMs.
-      final extractDir = io.Directory(p.join(io.Directory.systemTemp.path, 'gargosy_ares_extract',
-          p.basenameWithoutExtension(zipFile.path).replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')));
+      final extractDir = io.Directory(
+        p.join(
+          io.Directory.systemTemp.path,
+          'gargosy_ares_extract',
+          p.basenameWithoutExtension(zipFile.path).replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_'),
+        ),
+      );
       await extractDir.create(recursive: true);
 
       final extracted = <io.File>[];
@@ -393,8 +400,12 @@ class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final saveDir = await getSaveDir(game, romPath);
     if (saveDir == null) return [];
     final nextToRom = p.equals(p.normalize(saveDir), p.normalize(p.dirname(romPath)));
@@ -467,15 +478,16 @@ class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<bool> restoreSave(
-      Game game, String destPath, Uint8List data, String filename) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       // Not getSaveDir(), which returns null when the folder doesn't exist
       // yet (right for reading; restoreSave must CREATE it).
       final savesDir = await _savesDirFor(game, destPath, writing: true);
       if (savesDir == null) {
-        debugPrint('[Ares Save] Not restoring $filename: ares has no saves folder, and its settings.bml '
-            'could not be found to set one (saves never go in the ROM folder)');
+        debugPrint(
+          '[Ares Save] Not restoring $filename: ares has no saves folder, and its settings.bml '
+          'could not be found to set one (saves never go in the ROM folder)',
+        );
         return false;
       }
       final romStem = _saveStem(destPath);

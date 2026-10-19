@@ -2,7 +2,9 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import '../../storage/profile_rooted.dart';
+
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
@@ -153,13 +155,18 @@ class PPSSPPStrategy extends EmulatorStrategy {
       }
       await io.Directory(dir).create(recursive: true);
       await _writeToken(io.File(p.join(dir, _tokenFileName)), login.token);
-      await updateIniFile(io.File(p.join(dir, 'ppsspp.ini')), (config) {
-        var changed = false;
-        changed |= config.set(_raSection, 'AchievementsEnable', 'True');
-        changed |= config.set(_raSection, 'AchievementsUserName', login.username);
-        changed |= config.set(_raSection, 'AchievementsChallengeMode', (login.hardcore ?? false) ? 'True' : 'False');
-        return changed;
-      }, backup: true, create: true);
+      await updateIniFile(
+        io.File(p.join(dir, 'ppsspp.ini')),
+        (config) {
+          var changed = false;
+          changed |= config.set(_raSection, 'AchievementsEnable', 'True');
+          changed |= config.set(_raSection, 'AchievementsUserName', login.username);
+          changed |= config.set(_raSection, 'AchievementsChallengeMode', (login.hardcore ?? false) ? 'True' : 'False');
+          return changed;
+        },
+        backup: true,
+        create: true,
+      );
     } catch (e) {
       debugPrint('[PPSSPP] Could not apply the RetroAchievements login: $e');
     }

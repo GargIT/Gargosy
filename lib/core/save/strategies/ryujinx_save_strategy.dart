@@ -5,9 +5,11 @@
 // and its committed data is in 0\ (Freegosy took the newest folder for a
 // "user" and so mixed up games).
 import 'dart:io' as io;
+
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -19,7 +21,7 @@ class RyujinxSaveStrategy extends SaveStrategy {
   final Future<void> Function(String gameId, String titleId)? onMappingResolved;
 
   RyujinxSaveStrategy({this.onMappingResolved, PlatformInfo? platform, this.profileRoot})
-      : _platform = platform ?? PlatformInfo.current;
+    : _platform = platform ?? PlatformInfo.current;
 
   /// Gargosy: the profile's Ryujinx folder (started with `-r` on it, issue
   /// #9); null outside a profile, where %APPDATA%\Ryujinx is looked at.
@@ -44,6 +46,7 @@ class RyujinxSaveStrategy extends SaveStrategy {
   String? _manualMapping;
 
   void setManualMapping(String? titleId) => _manualMapping = titleId;
+
   /// Gargosy: a save is found by its title, not by a user folder, so the
   /// engine's profile choice isn't needed (kept for its callers).
   void setActiveProfileOverride(String? profileId) {}
@@ -87,8 +90,9 @@ class RyujinxSaveStrategy extends SaveStrategy {
     // 4. Nothing worked
     debugPrint('[Ryujinx] FAILED: No Title ID resolved for ${game.name}');
     throw SaveMappingRequiredException(
-        'Could not determine Title ID for "${game.name}". '
-        'Please select the save folder manually.');
+      'Could not determine Title ID for "${game.name}". '
+      'Please select the save folder manually.',
+    );
   }
 
   String? _extractTitleIdFromFilename(String romPath, Game game) {
@@ -125,8 +129,11 @@ class RyujinxSaveStrategy extends SaveStrategy {
 
   /// RomM's title id (RomM 5.3+) as the base game's, or null.
   static String? _rommTitleId(Game game) {
-    final id = GameIdResolver.server('Ryujinx ${game.name}', game.titleId?.toUpperCase(),
-        shape: GameIdResolver.switchTitleId);
+    final id = GameIdResolver.server(
+      'Ryujinx ${game.name}',
+      game.titleId?.toUpperCase(),
+      shape: GameIdResolver.switchTitleId,
+    );
     return id == null ? null : _normalizeToBaseId(id);
   }
 
@@ -141,7 +148,6 @@ class RyujinxSaveStrategy extends SaveStrategy {
   // ═══════════════════════════════════════════════════════════════════════════
   //  LAYER 2 — User ID / Profile Resolution
   // ═══════════════════════════════════════════════════════════════════════════
-
 
   // ═══════════════════════════════════════════════════════════════════════════
   //  ROM file resolution (fuzzy matching)
@@ -235,8 +241,12 @@ class RyujinxSaveStrategy extends SaveStrategy {
         try {
           final bytes = f.readAsBytesSync();
           if (bytes.length < 0x21) continue;
-          final program =
-              bytes.sublist(0, 8).reversed.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toUpperCase();
+          final program = bytes
+              .sublist(0, 8)
+              .reversed
+              .map((b) => b.toRadixString(16).padLeft(2, '0'))
+              .join()
+              .toUpperCase();
           if (_normalizeToBaseId(program) != target) break;
           final committed = io.Directory(p.join(e.path, '0'));
           found.add((
@@ -259,7 +269,12 @@ class RyujinxSaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final saveDir = await getSaveDir(game, romPath);
     if (saveDir == null) return [];
     final dir = io.Directory(saveDir);
@@ -273,7 +288,9 @@ class RyujinxSaveStrategy extends SaveStrategy {
     if (files.isEmpty) return [];
 
     if (sessionStart != null) {
-      final hasChanges = files.any((f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))));
+      final hasChanges = files.any(
+        (f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))),
+      );
       if (!hasChanges) return [];
     }
 
@@ -285,8 +302,10 @@ class RyujinxSaveStrategy extends SaveStrategy {
     final titleId = await resolveTitleId(destPath, game);
     final targetPath = await getSaveDir(game, destPath);
     if (targetPath == null) {
-      throw Exception("Ryujinx hasn't made a save for ${game.name} ($titleId) on this profile yet: "
-          'start the game once, then its save from RomM can be put in place.');
+      throw Exception(
+        "Ryujinx hasn't made a save for ${game.name} ($titleId) on this profile yet: "
+        'start the game once, then its save from RomM can be put in place.',
+      );
     }
 
     debugPrint('[Ryujinx] Restore: title $titleId into $targetPath');
@@ -318,14 +337,19 @@ class RyujinxSaveStrategy extends SaveStrategy {
     for (final entity in userDir.listSync()) {
       if (entity is! io.Directory) continue;
       final name = p.basename(entity.path);
-      
+
       String? displayName = name;
       final extraData = io.File(p.join(entity.path, 'ExtraData0'));
       if (extraData.existsSync()) {
         try {
           final bytes = await extraData.readAsBytes();
           if (bytes.length >= 8) {
-            displayName = bytes.sublist(0, 8).reversed.map((b) => b.toRadixString(16).padLeft(2, '0')).join('').toUpperCase();
+            displayName = bytes
+                .sublist(0, 8)
+                .reversed
+                .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                .join('')
+                .toUpperCase();
           }
         } catch (_) {}
       }
@@ -358,14 +382,15 @@ class RyujinxSaveStrategy extends SaveStrategy {
   Future<bool> _extractArchive(Archive archive, String destDir, {String? titleId}) async {
     for (final entry in archive) {
       if (entry.name.isEmpty || entry.name == 'freegosy_sync.txt' || entry.name.contains('.bak')) continue;
-      
+
       // Strip container folders: Title ID, User ID, or a numeric index (0, 1, 2...).
       final segments = entry.name.split(RegExp(r'[/\\]'));
       var currentSegments = List<String>.from(segments);
-      
+
       while (currentSegments.length > 1) {
         final first = currentSegments.first;
-        final isTitleId = _strictTitleIdRegex.hasMatch(first) || (titleId != null && first.toUpperCase() == titleId.toUpperCase());
+        final isTitleId =
+            _strictTitleIdRegex.hasMatch(first) || (titleId != null && first.toUpperCase() == titleId.toUpperCase());
         final isUserId = _userIdRegex.hasMatch(first);
         final isNumeric = RegExp(r'^\d+$').hasMatch(first);
 
@@ -375,12 +400,12 @@ class RyujinxSaveStrategy extends SaveStrategy {
           break;
         }
       }
-      
+
       final entryPath = p.joinAll(currentSegments);
       if (entryPath.isEmpty) continue;
 
       debugPrint('[Ryujinx] Restore Entry: "${entry.name}" -> "$entryPath"');
-      
+
       final outPath = p.normalize(p.join(destDir, entryPath));
       if (entry.isFile) {
         await backupSave(outPath);

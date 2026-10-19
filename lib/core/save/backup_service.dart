@@ -1,10 +1,12 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
 import '../romm/romm_models.dart';
 import 'romm_content_hash.dart';
 import 'save_sync_service.dart';
@@ -50,13 +52,16 @@ class BackupService {
       // Gather current save files using the same strategy already used for
       // cloud sync, set up for this game (RetroArch: [coreOverride]'s folder).
       final found = await syncService.withStrategy(
-          game,
-          (strategy) async => (
-                files: await strategy.getSaveFiles(game, romPath),
-                core: strategy.unwrapped is RetroArchSaveStrategy ? (strategy.unwrapped as RetroArchSaveStrategy).coreIdFor(game) : null,
-              ),
-          emulatorId: emulatorId,
-          coreOverride: coreOverride);
+        game,
+        (strategy) async => (
+          files: await strategy.getSaveFiles(game, romPath),
+          core: strategy.unwrapped is RetroArchSaveStrategy
+              ? (strategy.unwrapped as RetroArchSaveStrategy).coreIdFor(game)
+              : null,
+        ),
+        emulatorId: emulatorId,
+        coreOverride: coreOverride,
+      );
       final files = found?.files ?? const <io.File>[];
       if (files.isEmpty) return null;
 
@@ -87,8 +92,8 @@ class BackupService {
       final zipFile = io.File(tempZipPath);
       final single = files.length == 1 && !await io.FileSystemEntity.isDirectory(files.single.path);
       final bytes = await zipFile.readAsBytes();
-      final digest = (single ? await rommHashOfSaveFile(files.single) : rommHashOfUpload(bytes)) ??
-          md5.convert(bytes).toString();
+      final digest =
+          (single ? await rommHashOfSaveFile(files.single) : rommHashOfUpload(bytes)) ?? md5.convert(bytes).toString();
 
       // Rename to final convention: gargosy_[romId]_[timestamp]_[md5].zip
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -124,9 +129,13 @@ class BackupService {
       final bytes = await zipFile.readAsBytes();
       // The strategy puts it back: a save file other games share (a memory
       // card) gets only this game's saves from it.
-      final ok = await syncService.withStrategy(
-              game, (strategy) => strategy.restoreBackup(game, romPath, bytes, p.basename(localZipPath)),
-              emulatorId: emulatorId, coreOverride: coreOverride) ??
+      final ok =
+          await syncService.withStrategy(
+            game,
+            (strategy) => strategy.restoreBackup(game, romPath, bytes, p.basename(localZipPath)),
+            emulatorId: emulatorId,
+            coreOverride: coreOverride,
+          ) ??
           false;
       debugPrint('[BackupService] Restored from: $localZipPath (ok=$ok)');
       return ok;
@@ -142,9 +151,9 @@ class BackupService {
 
   /// Returns (and creates if needed) the per-app backups directory.
   Future<io.Directory> _backupsDirectory() async {
-    final dir = io.Directory(backupsDir != null
-        ? await backupsDir!()
-        : p.join((await getApplicationSupportDirectory()).path, 'backups'));
+    final dir = io.Directory(
+      backupsDir != null ? await backupsDir!() : p.join((await getApplicationSupportDirectory()).path, 'backups'),
+    );
     if (!await dir.exists()) await dir.create(recursive: true);
     return dir;
   }

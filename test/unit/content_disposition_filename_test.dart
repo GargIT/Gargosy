@@ -11,8 +11,7 @@ import 'package:gargosy/core/downloader/download_service.dart';
 void main() {
   group('DownloadService.parseContentDispositionFileName', () {
     test('decodes the RFC 5987 filename* form (real RomM header)', () {
-      const header =
-          "attachment; filename*=UTF-8''doom%202.vhd; filename=\"doom%202.vhd\"";
+      const header = "attachment; filename*=UTF-8''doom%202.vhd; filename=\"doom%202.vhd\"";
       expect(DownloadService.parseContentDispositionFileName(header), 'doom 2.vhd');
     });
 

@@ -42,49 +42,52 @@ class _RaSectionState extends ConsumerState<RaSection> {
     final account = ref.watch(raAccountProvider);
     if (account == null) return const SizedBox.shrink();
     final user = account.username;
-    return ListView(children: [
-      SettingsCard(
-        title: 'RetroAchievements',
-        icon: Icons.emoji_events,
-        trailing: user == null ? null : SettingsBadge('Connected as @$user'),
-        note: "Emulators sign in to RetroAchievements with this profile's account. Your password is used once "
-            'to get a sign-in token from RetroAchievements and is never stored.',
-        children: user == null
-            ? [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SettingsButton(
-                    label: _busy ? 'Connecting…' : 'Connect',
-                    icon: Icons.login,
-                    kind: SettingsButtonKind.primary,
-                    onActivate: _busy ? null : () => _connect(account),
+    return ListView(
+      children: [
+        SettingsCard(
+          title: 'RetroAchievements',
+          icon: Icons.emoji_events,
+          trailing: user == null ? null : SettingsBadge('Connected as @$user'),
+          note:
+              "Emulators sign in to RetroAchievements with this profile's account. Your password is used once "
+              'to get a sign-in token from RetroAchievements and is never stored.',
+          children: user == null
+              ? [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SettingsButton(
+                      label: _busy ? 'Connecting…' : 'Connect',
+                      icon: Icons.login,
+                      kind: SettingsButtonKind.primary,
+                      onActivate: _busy ? null : () => _connect(account),
+                    ),
                   ),
-                ),
-              ]
-            : [
-                SettingsField(label: 'Username', value: user),
-                SettingsToggle(
-                  label: 'Hardcore mode',
-                  note: 'No save states, rewind or cheats while achievements count.',
-                  on: account.hardcore,
-                  onChanged: (on) async {
-                    await account.setHardcore(on);
-                    if (mounted) setState(() {});
-                  },
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SettingsButton(
-                    label: 'Disconnect',
-                    icon: Icons.logout,
-                    onActivate: () async {
-                      await account.disconnect();
+                ]
+              : [
+                  SettingsField(label: 'Username', value: user),
+                  SettingsToggle(
+                    label: 'Hardcore mode',
+                    note: 'No save states, rewind or cheats while achievements count.',
+                    on: account.hardcore,
+                    onChanged: (on) async {
+                      await account.setHardcore(on);
                       if (mounted) setState(() {});
                     },
                   ),
-                ),
-              ],
-      ),
-    ]);
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SettingsButton(
+                      label: 'Disconnect',
+                      icon: Icons.logout,
+                      onActivate: () async {
+                        await account.disconnect();
+                        if (mounted) setState(() {});
+                      },
+                    ),
+                  ),
+                ],
+        ),
+      ],
+    );
   }
 }

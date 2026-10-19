@@ -3,9 +3,11 @@
 // ignore_for_file: prefer_initializing_formals
 import 'dart:io' as io;
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+
 import '../storage/app_preferences.dart';
 import '../romm/romm_models.dart';
 import '../romm/romm_service.dart';
@@ -22,8 +24,10 @@ import 'strategies/retroarch_save_strategy.dart';
 import 'strategies/dolphin_save_strategy.dart';
 import 'strategies/eden_save_strategy.dart';
 import 'strategies/ryujinx_save_strategy.dart';
+
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
+
 import 'strategies/windows_save_strategy.dart';
 import 'strategies/pcsx2_save_strategy.dart';
 import 'strategies/rpcs3_save_strategy.dart';
@@ -56,15 +60,15 @@ class SaveConflictException implements Exception {
   final DateTime cloudTime;
   final String? localScreenshot;
   final String? cloudScreenshot;
-  
+
   SaveConflictException({
-    required this.game, 
-    required this.localTime, 
+    required this.game,
+    required this.localTime,
     required this.cloudTime,
     this.localScreenshot,
     this.cloudScreenshot,
   });
-  
+
   @override
   String toString() => 'Conflict detected for ${game.name}: Local ($localTime) vs Cloud ($cloudTime)';
 }
@@ -145,9 +149,15 @@ class SaveSyncService {
 
   /// [platform] is the OS the strategies look for emulators on; tests pass
   /// one with a temporary home.
-  SaveSyncService(this._rommService, this._directoryService, this._strategyRegistry, this._prefs,
-      {ZstdDecompressor? zstd, PlatformInfo? platform, SaveStrategyWrapper? wrapSaves})
-      : _zstd = zstd {
+  SaveSyncService(
+    this._rommService,
+    this._directoryService,
+    this._strategyRegistry,
+    this._prefs, {
+    ZstdDecompressor? zstd,
+    PlatformInfo? platform,
+    SaveStrategyWrapper? wrapSaves,
+  }) : _zstd = zstd {
     // Gargosy: sigil's strategies take over these emulators' saves (lib/sigil).
     SaveStrategy wrap(String id, SaveStrategy base) => wrapSaves?.call(id, base) ?? base;
     _retroarch = RetroArchSaveStrategy(_directoryService, prefs: _prefs, platform: platform);
@@ -158,7 +168,9 @@ class SaveSyncService {
       onMappingResolved: saveMappedFolder,
       platform: platform,
       // Gargosy: in a profile, the folder Ryujinx is started on with -r (issue #9).
-      profileRoot: _directoryService is ProfileRootedDirectories ? () => _directoryService.getEmulatorDirectory('ryujinx') : null,
+      profileRoot: _directoryService is ProfileRootedDirectories
+          ? () => _directoryService.getEmulatorDirectory('ryujinx')
+          : null,
     );
     _windows = WindowsSaveStrategy(_prefs, platform: platform);
     _pcsx2 = wrap('pcsx2', Pcsx2SaveStrategy(_directoryService, _prefs, platform: platform));
@@ -228,7 +240,9 @@ class SaveSyncService {
       final defaultEmulatorStrategy = _strategyRegistry.getStrategyForSlug(platformSlug);
       if (defaultEmulatorStrategy != null) {
         final strategy = _saveStrategyForEmulatorId(defaultEmulatorStrategy.emulatorId);
-        debugPrint('[SaveSync]   → default emulator="${defaultEmulatorStrategy.emulatorId}" → strategy=${strategy?.strategyId ?? "none"}');
+        debugPrint(
+          '[SaveSync]   → default emulator="${defaultEmulatorStrategy.emulatorId}" → strategy=${strategy?.strategyId ?? "none"}',
+        );
         return strategy;
       }
     }
@@ -317,23 +331,28 @@ class SaveSyncService {
   /// picker) — this only fills in the per-game preference for callers that
   /// don't already know which emulator launched the game (see issue #79).
   SaveStrategy? getStrategyForGame(Game game, {String? emulatorId}) {
-    final resolvedEmulatorId =
-        emulatorId ?? _strategyRegistry.getGameEmulatorPreference(game.id);
+    final resolvedEmulatorId = emulatorId ?? _strategyRegistry.getGameEmulatorPreference(game.id);
     return getStrategyForSlug(game.platformSlug, emulatorId: resolvedEmulatorId);
   }
 
   /// Runs [body] with the save strategy of [emulatorId] (else the game's
   /// emulator) set up for [game], with no other save operation in between:
   /// the strategies are shared by every game. Null when there is none.
-  Future<T?> withStrategy<T>(Game game, Future<T> Function(SaveStrategy strategy) body,
-          {String? emulatorId, String? coreOverride}) =>
-      _lock.run(() async {
-        final strategy = emulatorId != null ? _saveStrategyForEmulatorId(emulatorId) : getStrategyForGame(game);
-        if (strategy == null) return null;
-        _applyStrategyMappings(strategy, game,
-            coreOverride: coreOverride ?? _strategyRegistry.getGameCorePreference(game.id));
-        return body(strategy);
-      });
+  Future<T?> withStrategy<T>(
+    Game game,
+    Future<T> Function(SaveStrategy strategy) body, {
+    String? emulatorId,
+    String? coreOverride,
+  }) => _lock.run(() async {
+    final strategy = emulatorId != null ? _saveStrategyForEmulatorId(emulatorId) : getStrategyForGame(game);
+    if (strategy == null) return null;
+    _applyStrategyMappings(
+      strategy,
+      game,
+      coreOverride: coreOverride ?? _strategyRegistry.getGameCorePreference(game.id),
+    );
+    return body(strategy);
+  });
 
   /// Runs [body] with no other save operation in between (the save lock),
   /// for services that use the strategies themselves (state sync, resume).
@@ -357,8 +376,11 @@ class SaveSyncService {
   SaveStrategy? strategyForGame(Game game, {String? emulatorId, String? coreOverride}) {
     final strategy = getStrategyForGame(game, emulatorId: emulatorId);
     if (strategy != null) {
-      _applyStrategyMappings(strategy, game,
-          coreOverride: coreOverride ?? _strategyRegistry.getGameCorePreference(game.id));
+      _applyStrategyMappings(
+        strategy,
+        game,
+        coreOverride: coreOverride ?? _strategyRegistry.getGameCorePreference(game.id),
+      );
     }
     return strategy;
   }
@@ -371,7 +393,12 @@ class SaveSyncService {
   Future<String?> saveDirFor(Game game, String romPath, {required String emulatorId, String? coreOverride}) =>
       _lock.run(() => _saveDirForUnlocked(game, romPath, emulatorId: emulatorId, coreOverride: coreOverride));
 
-  Future<String?> _saveDirForUnlocked(Game game, String romPath, {required String emulatorId, String? coreOverride}) async {
+  Future<String?> _saveDirForUnlocked(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    String? coreOverride,
+  }) async {
     try {
       return await _saveStrategyFor(game, emulatorId, coreOverride: coreOverride)?.getSaveDir(game, romPath);
     } catch (e) {
@@ -385,7 +412,11 @@ class SaveSyncService {
   Future<List<String>> unclaimedSaves(Game game, String romPath, {required String emulatorId, String? coreOverride}) =>
       _lock.run(() async {
         try {
-          return await _saveStrategyFor(game, emulatorId, coreOverride: coreOverride)?.unclaimedSavesFor(game, romPath) ??
+          return await _saveStrategyFor(
+                game,
+                emulatorId,
+                coreOverride: coreOverride,
+              )?.unclaimedSavesFor(game, romPath) ??
               const [];
         } catch (e) {
           debugPrint('[SaveSync] unclaimed saves of $emulatorId unknown: $e');
@@ -395,7 +426,9 @@ class SaveSyncService {
 
   /// Gargosy (#56): the unclaimed save [name] is [game]'s from now on.
   Future<void> claimSave(Game game, String romPath, String name, {required String emulatorId, String? coreOverride}) =>
-      _lock.run(() async => _saveStrategyFor(game, emulatorId, coreOverride: coreOverride)?.claimSave(game, romPath, name));
+      _lock.run(
+        () async => _saveStrategyFor(game, emulatorId, coreOverride: coreOverride)?.claimSave(game, romPath, name),
+      );
 
   /// [emulatorId]'s save strategy, set up for [game]: RetroArch's core
   /// ([coreOverride], else the game's chosen core), Eden/Ryujinx/Azahar
@@ -404,8 +437,11 @@ class SaveSyncService {
   SaveStrategy? _saveStrategyFor(Game game, String emulatorId, {String? coreOverride}) {
     final strategy = _saveStrategyForEmulatorId(emulatorId);
     if (strategy != null) {
-      _applyStrategyMappings(strategy, game,
-          coreOverride: coreOverride ?? _strategyRegistry.getGameCorePreference(game.id));
+      _applyStrategyMappings(
+        strategy,
+        game,
+        coreOverride: coreOverride ?? _strategyRegistry.getGameCorePreference(game.id),
+      );
     }
     return strategy;
   }
@@ -433,16 +469,13 @@ class SaveSyncService {
     return null;
   }
 
-  String _hashKey(String gameId, String filename) =>
-      'last_hash_${gameId}_$filename';
+  String _hashKey(String gameId, String filename) => 'last_hash_${gameId}_$filename';
 
-  String? _getStoredHash(
-      String gameId, String filename) {
+  String? _getStoredHash(String gameId, String filename) {
     return _prefs.getString(_hashKey(gameId, filename));
   }
 
-  Future<void> _storeHash(
-      String gameId, String filename, String hash) async {
+  Future<void> _storeHash(String gameId, String filename, String hash) async {
     await _prefs.setString(_hashKey(gameId, filename), hash);
   }
 
@@ -461,12 +494,16 @@ class SaveSyncService {
   /// [game] if it were pushed now (see romm_content_hash.dart): the files a
   /// push gathers, RZIP unpacked, one file by its bytes, several as the zip
   /// a push uploads. Null when there are none or they can't be read.
-  Future<String?> rommHashOfLocal(Game game, String romPath,
-          {required String emulatorId, String syncMode = 'saves', String? coreOverride}) =>
-      _lock.run(() async {
-        final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
-        return strategy == null ? null : _rommHashOf(strategy, game, romPath, syncMode);
-      });
+  Future<String?> rommHashOfLocal(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    String syncMode = 'saves',
+    String? coreOverride,
+  }) => _lock.run(() async {
+    final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
+    return strategy == null ? null : _rommHashOf(strategy, game, romPath, syncMode);
+  });
 
   /// rommHashOfLocal for a [strategy] already set up for [game].
   Future<String?> _rommHashOf(SaveStrategy strategy, Game game, String romPath, String syncMode) async {
@@ -482,34 +519,40 @@ class SaveSyncService {
   /// rommHashOfLocal for both sync modes ('saves', and 'both' with the
   /// states), under one hold of the save lock, hashed once when both modes
   /// upload the same files.
-  Future<Set<String>> rommHashesOfLocal(Game game, String romPath, {required String emulatorId, String? coreOverride}) =>
-      _lock.run(() async {
-        final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
-        if (strategy == null) return const <String>{};
-        final hashes = <String>{};
-        String? lastFiles;
-        String? lastHash;
-        for (final mode in const ['saves', 'both']) {
-          try {
-            final filesMap = await _uploadFiles(strategy, game, romPath, mode);
-            if (filesMap.isEmpty) continue;
-            final files = (filesMap.keys.map((f) => f.path).toList()..sort()).join('|');
-            final hash = files == lastFiles ? lastHash : await _rommHashOfFiles(strategy, game, romPath, filesMap);
-            lastFiles = files;
-            lastHash = hash;
-            if (hash != null) hashes.add(hash);
-          } catch (e) {
-            debugPrint('[SaveSync] RomM hash of ${game.displayName}\'s save ($mode) not taken: $e');
-          }
-        }
-        return hashes;
-      });
+  Future<Set<String>> rommHashesOfLocal(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    String? coreOverride,
+  }) => _lock.run(() async {
+    final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
+    if (strategy == null) return const <String>{};
+    final hashes = <String>{};
+    String? lastFiles;
+    String? lastHash;
+    for (final mode in const ['saves', 'both']) {
+      try {
+        final filesMap = await _uploadFiles(strategy, game, romPath, mode);
+        if (filesMap.isEmpty) continue;
+        final files = (filesMap.keys.map((f) => f.path).toList()..sort()).join('|');
+        final hash = files == lastFiles ? lastHash : await _rommHashOfFiles(strategy, game, romPath, filesMap);
+        lastFiles = files;
+        lastHash = hash;
+        if (hash != null) hashes.add(hash);
+      } catch (e) {
+        debugPrint('[SaveSync] RomM hash of ${game.displayName}\'s save ($mode) not taken: $e');
+      }
+    }
+    return hashes;
+  });
 
   /// The files a push in [syncMode] uploads: the strategy's, filtered, RZIP
   /// unpacked.
   Future<Map<io.File, io.File?>> _uploadFiles(SaveStrategy strategy, Game game, String romPath, String syncMode) async {
-    final filesMap =
-        _filterFilesMap(strategy, await strategy.getSaveFilesWithScreenshots(game, romPath, syncMode: syncMode));
+    final filesMap = _filterFilesMap(
+      strategy,
+      await strategy.getSaveFilesWithScreenshots(game, romPath, syncMode: syncMode),
+    );
     return filesMap.isEmpty ? filesMap : _unrzipFiles(game, filesMap);
   }
 
@@ -518,7 +561,11 @@ class SaveSyncService {
   /// files by name (two of one name both count), folders as `<folder>/<path>`,
   /// then the metadata, if the bundle has any; each file read as a stream.
   Future<String?> _rommHashOfFiles(
-      SaveStrategy strategy, Game game, String romPath, Map<io.File, io.File?> filesMap) async {
+    SaveStrategy strategy,
+    Game game,
+    String romPath,
+    Map<io.File, io.File?> filesMap,
+  ) async {
     final keys = filesMap.keys.toList();
     if (keys.length == 1 && !await io.FileSystemEntity.isDirectory(keys.single.path)) {
       return rommHashOfSaveFile(keys.single);
@@ -573,7 +620,12 @@ class SaveSyncService {
   /// (an unchanged session then uploads nothing, whichever mode it uses) and
   /// RomM's id for it.
   Future<bool> _haveRommSave(
-      SaveStrategy strategy, Game game, String romPath, Map<String, dynamic> save, String? hash) async {
+    SaveStrategy strategy,
+    Game game,
+    String romPath,
+    Map<String, dynamic> save,
+    String? hash,
+  ) async {
     if (hash == null) return false;
     var matched = false;
     for (final mode in const ['saves', 'both']) {
@@ -616,7 +668,13 @@ class SaveSyncService {
 
   /// Adds [_bundleMetadata] to a bundle being built, when there is any.
   Future<void> _addBundleMetadata(
-      ZipFileEncoder encoder, String tempDir, int bundleToken, SaveStrategy strategy, Game game, String romPath) async {
+    ZipFileEncoder encoder,
+    String tempDir,
+    int bundleToken,
+    SaveStrategy strategy,
+    Game game,
+    String romPath,
+  ) async {
     final meta = await _bundleMetadata(strategy, game, romPath);
     if (meta == null) return;
     // Scoped to this call's bundleToken: a shared file name would race with a
@@ -627,8 +685,7 @@ class SaveSyncService {
     await metaFile.delete();
   }
 
-  String _pullKey(String gameId) =>
-      'last_pull_$gameId';
+  String _pullKey(String gameId) => 'last_pull_$gameId';
 
   DateTime? _getLastPullTime(String gameId) {
     final stored = _prefs.getString(_pullKey(gameId));
@@ -637,10 +694,7 @@ class SaveSyncService {
   }
 
   Future<void> _setLastPullTime(String gameId) async {
-    await _prefs.setString(
-      _pullKey(gameId),
-      DateTime.now().toIso8601String(),
-    );
+    await _prefs.setString(_pullKey(gameId), DateTime.now().toIso8601String());
   }
 
   // ---------------------------------------------------------------------------
@@ -656,26 +710,67 @@ class SaveSyncService {
   /// omitted, the strategy falls back to the platform's globally-configured
   /// preferred emulator, which may differ from what was actually used
   /// (issue #79).
-  Future<bool> pushSaves(Game game, String romPath,
-          {DateTime? sessionStart, String syncMode = 'both', bool force = false, String? coreOverride, String? emulatorId}) =>
-      _lock.run(() => _doing("Uploading ${game.displayName}'s save", () => _pushSavesUnlocked(game, romPath,
-          sessionStart: sessionStart, syncMode: syncMode, force: force, coreOverride: coreOverride, emulatorId: emulatorId)));
+  Future<bool> pushSaves(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+    bool force = false,
+    String? coreOverride,
+    String? emulatorId,
+  }) => _lock.run(
+    () => _doing(
+      "Uploading ${game.displayName}'s save",
+      () => _pushSavesUnlocked(
+        game,
+        romPath,
+        sessionStart: sessionStart,
+        syncMode: syncMode,
+        force: force,
+        coreOverride: coreOverride,
+        emulatorId: emulatorId,
+      ),
+    ),
+  );
 
-  Future<bool> _pushSavesUnlocked(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both', bool force = false, String? coreOverride, String? emulatorId}) async {
+  Future<bool> _pushSavesUnlocked(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+    bool force = false,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     debugPrint('[SaveSync] ─── PUSH START ─── game="${game.displayName}" slug=${game.platformSlug}');
     debugPrint('[SaveSync]   romPath: $romPath');
-    debugPrint('[SaveSync]   syncMode=$syncMode  force=$force  coreOverride=$coreOverride  emulatorId=$emulatorId  sessionStart=$sessionStart');
+    debugPrint(
+      '[SaveSync]   syncMode=$syncMode  force=$force  coreOverride=$coreOverride  emulatorId=$emulatorId  sessionStart=$sessionStart',
+    );
     await _throwIfSyncBlocked(game, romPath, emulatorId: emulatorId);
     final caps = await _rommService.fetchCapabilities();
     final useDevice = caps.hasDeviceSaveSync;
     debugPrint('[SaveSync]   RomM version: ${useDevice ? "4.9+ (device sync)" : "legacy (<4.9)"}');
     if (useDevice) {
-      return _devicePushSaves(game, romPath,
-          sessionStart: sessionStart, syncMode: syncMode, force: force, coreOverride: coreOverride, emulatorId: emulatorId);
+      return _devicePushSaves(
+        game,
+        romPath,
+        sessionStart: sessionStart,
+        syncMode: syncMode,
+        force: force,
+        coreOverride: coreOverride,
+        emulatorId: emulatorId,
+      );
     }
-    return _legacyPushSaves(game, romPath,
-        sessionStart: sessionStart, syncMode: syncMode, force: force, coreOverride: coreOverride, emulatorId: emulatorId);
+    return _legacyPushSaves(
+      game,
+      romPath,
+      sessionStart: sessionStart,
+      syncMode: syncMode,
+      force: force,
+      coreOverride: coreOverride,
+      emulatorId: emulatorId,
+    );
   }
 
   /// In-memory cache of the last pull-check timestamp per game.
@@ -692,21 +787,40 @@ class SaveSyncService {
   /// Skips network requests if the last check was within [_pullCheckCooldown].
   /// This is called before emulator launch — the save is usually already on
   /// disk from the last session, so the pull is non-blocking (fire-and-forget).
-  Future<bool> pullSave(Game game, String romPath, {Map<String, dynamic>? saveData, String? coreOverride, String? emulatorId}) =>
-      _lock.run(() => _doing("Downloading ${game.displayName}'s save",
-          () => _pullSaveUnlocked(game, romPath, saveData: saveData, coreOverride: coreOverride, emulatorId: emulatorId)));
+  Future<bool> pullSave(
+    Game game,
+    String romPath, {
+    Map<String, dynamic>? saveData,
+    String? coreOverride,
+    String? emulatorId,
+  }) => _lock.run(
+    () => _doing(
+      "Downloading ${game.displayName}'s save",
+      () => _pullSaveUnlocked(game, romPath, saveData: saveData, coreOverride: coreOverride, emulatorId: emulatorId),
+    ),
+  );
 
-  Future<bool> _pullSaveUnlocked(Game game, String romPath, {Map<String, dynamic>? saveData, String? coreOverride, String? emulatorId}) async {
+  Future<bool> _pullSaveUnlocked(
+    Game game,
+    String romPath, {
+    Map<String, dynamic>? saveData,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     final now = DateTime.now();
     final lastCheck = _lastPullCheck[game.id];
     if (saveData == null && lastCheck != null && now.difference(lastCheck) < _pullCheckCooldown) {
-      debugPrint('[SaveSync] ─── PULL SKIP ─── "${game.displayName}" checked ${now.difference(lastCheck).inSeconds}s ago (cooldown)');
+      debugPrint(
+        '[SaveSync] ─── PULL SKIP ─── "${game.displayName}" checked ${now.difference(lastCheck).inSeconds}s ago (cooldown)',
+      );
       return false;
     }
     _lastPullCheck[game.id] = now;
 
     debugPrint('[SaveSync] ─── PULL START ─── game="${game.displayName}" slug=${game.platformSlug}');
-    debugPrint('[SaveSync]   romPath: $romPath  coreOverride=$coreOverride  emulatorId=$emulatorId  saveData=${saveData != null ? "manual" : "auto"}');
+    debugPrint(
+      '[SaveSync]   romPath: $romPath  coreOverride=$coreOverride  emulatorId=$emulatorId  saveData=${saveData != null ? "manual" : "auto"}',
+    );
     await _throwIfSyncBlocked(game, romPath, emulatorId: emulatorId);
     final caps = await _rommService.fetchCapabilities();
     final useDevice = caps.hasDeviceSaveSync;
@@ -725,8 +839,7 @@ class SaveSyncService {
   /// the emulator is set up so its saves can't be synced (see
   /// [SaveStrategy.saveSyncBlockedReason]).
   Future<void> _throwIfSyncBlocked(Game game, String romPath, {String? emulatorId}) async {
-    final reason =
-        await getStrategyForGame(game, emulatorId: emulatorId)?.saveSyncBlockedReason(game, romPath);
+    final reason = await getStrategyForGame(game, emulatorId: emulatorId)?.saveSyncBlockedReason(game, romPath);
     if (reason == null) return;
     debugPrint('[SaveSync] not syncing "${game.displayName}": $reason');
     throw SaveSyncBlockedException(reason);
@@ -759,7 +872,9 @@ class SaveSyncService {
     } catch (e) {
       // Malformed, or the zstandard library failed: RetroArch reads its own
       // RZIP files anyway.
-      debugPrint('[SaveSync] [pull] $filename looks RZIP-compressed but can\'t be unpacked ($e) — restoring it as it is');
+      debugPrint(
+        '[SaveSync] [pull] $filename looks RZIP-compressed but can\'t be unpacked ($e) — restoring it as it is',
+      );
       return bytes;
     }
   }
@@ -783,8 +898,9 @@ class SaveSyncService {
       }
       try {
         final raw = await Rzip.unpack(bytes, zstd: _zstd);
-        final dir = io.Directory(p.join(io.Directory.systemTemp.path, 'gargosy_unrzip',
-            game.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')));
+        final dir = io.Directory(
+          p.join(io.Directory.systemTemp.path, 'gargosy_unrzip', game.id.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_')),
+        );
         await dir.create(recursive: true);
         final copy = io.File(p.join(dir.path, p.basename(file.path)));
         await copy.writeAsBytes(raw);
@@ -792,7 +908,9 @@ class SaveSyncService {
         debugPrint('[SaveSync] ${p.basename(file.path)} is RZIP-compressed — using it unpacked (${raw.length} bytes)');
         result[copy] = entry.value;
       } catch (e) {
-        debugPrint('[SaveSync] ${p.basename(file.path)} looks RZIP-compressed but can\'t be unpacked ($e) — using it as it is');
+        debugPrint(
+          '[SaveSync] ${p.basename(file.path)} looks RZIP-compressed but can\'t be unpacked ($e) — using it as it is',
+        );
         result[file] = entry.value;
       }
     }
@@ -802,8 +920,15 @@ class SaveSyncService {
   /// Restores a downloaded save, converted first to the format the local
   /// emulator reads (save/formats) when it came from another emulator.
   /// [sourceTag] is the save's `emulator` on RomM.
-  Future<bool> _restoreDownloaded(SaveStrategy strategy, Game game, String romPath, Uint8List bytes,
-      String filename, {String? sourceTag, String? emulatorId}) async {
+  Future<bool> _restoreDownloaded(
+    SaveStrategy strategy,
+    Game game,
+    String romPath,
+    Uint8List bytes,
+    String filename, {
+    String? sourceTag,
+    String? emulatorId,
+  }) async {
     if (strategy.restoresUnitsItselfFor(game)) return strategy.restoreSave(game, romPath, bytes, filename);
     final platformSlug = game.platformSlug ?? '';
     final convertible = saveSystemFor(platformSlug) != null;
@@ -871,14 +996,28 @@ class SaveSyncService {
   /// Downloads the RomM save [save] (an item of RommService.getSavesList)
   /// and puts it in place for [emulatorId], converted when it is in another
   /// emulator's format. Unlike pullSave it never skips: the user chose it.
-  Future<void> restoreChosenSave(Game game, String romPath, Map<String, dynamic> save,
-          {required String emulatorId, String? coreOverride}) =>
-      _lock.run(() => _doing("Downloading ${game.displayName}'s save",
-          () => SaveStrategy.chosenRestore(
-              () => _restoreChosenSaveUnlocked(game, romPath, save, emulatorId: emulatorId, coreOverride: coreOverride))));
+  Future<void> restoreChosenSave(
+    Game game,
+    String romPath,
+    Map<String, dynamic> save, {
+    required String emulatorId,
+    String? coreOverride,
+  }) => _lock.run(
+    () => _doing(
+      "Downloading ${game.displayName}'s save",
+      () => SaveStrategy.chosenRestore(
+        () => _restoreChosenSaveUnlocked(game, romPath, save, emulatorId: emulatorId, coreOverride: coreOverride),
+      ),
+    ),
+  );
 
-  Future<void> _restoreChosenSaveUnlocked(Game game, String romPath, Map<String, dynamic> save,
-      {required String emulatorId, String? coreOverride}) async {
+  Future<void> _restoreChosenSaveUnlocked(
+    Game game,
+    String romPath,
+    Map<String, dynamic> save, {
+    required String emulatorId,
+    String? coreOverride,
+  }) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
     if (strategy == null) throw SaveChoiceException("$emulatorId saves can't be set up by Gargosy.");
     final url = save['download_path'] as String? ?? save['url'] as String?;
@@ -888,8 +1027,15 @@ class SaveSyncService {
     if (downloaded == null) throw SaveChoiceException("$filename couldn't be downloaded from RomM.");
     final bytes = await _unrzipDownload(downloaded, filename);
     final name = _adjustFilenameForFormat(bytes, normalizeSaveFilename(filename));
-    final ok = await _restoreDownloaded(strategy, game, romPath, bytes, name,
-        sourceTag: save['emulator']?.toString(), emulatorId: emulatorId);
+    final ok = await _restoreDownloaded(
+      strategy,
+      game,
+      romPath,
+      bytes,
+      name,
+      sourceTag: save['emulator']?.toString(),
+      emulatorId: emulatorId,
+    );
     if (!ok) throw SaveChoiceException("$filename couldn't be put in place for $emulatorId.");
     await _setLastPullTime(game.id);
     await _recordSyncedRommId(game, strategy, save['id']);
@@ -897,13 +1043,34 @@ class SaveSyncService {
 
   /// Converts the save [fromEmulatorId] keeps for [game] on this machine
   /// into [emulatorId]'s format and puts it in place.
-  Future<void> convertLocalSave(Game game, String romPath,
-          {required String fromEmulatorId, String? fromTag, required String emulatorId, String? coreOverride}) =>
-      _lock.run(() => SaveStrategy.chosenRestore(() => _convertLocalSaveUnlocked(game, romPath,
-          fromEmulatorId: fromEmulatorId, fromTag: fromTag, emulatorId: emulatorId, coreOverride: coreOverride)));
+  Future<void> convertLocalSave(
+    Game game,
+    String romPath, {
+    required String fromEmulatorId,
+    String? fromTag,
+    required String emulatorId,
+    String? coreOverride,
+  }) => _lock.run(
+    () => SaveStrategy.chosenRestore(
+      () => _convertLocalSaveUnlocked(
+        game,
+        romPath,
+        fromEmulatorId: fromEmulatorId,
+        fromTag: fromTag,
+        emulatorId: emulatorId,
+        coreOverride: coreOverride,
+      ),
+    ),
+  );
 
-  Future<void> _convertLocalSaveUnlocked(Game game, String romPath,
-      {required String fromEmulatorId, String? fromTag, required String emulatorId, String? coreOverride}) async {
+  Future<void> _convertLocalSaveUnlocked(
+    Game game,
+    String romPath, {
+    required String fromEmulatorId,
+    String? fromTag,
+    required String emulatorId,
+    String? coreOverride,
+  }) async {
     // Read the source with its own setup first: for one emulator both are
     // the same shared strategy.
     final from = _saveStrategyFor(game, fromEmulatorId, coreOverride: fromEmulatorId == 'retroarch' ? fromTag : null);
@@ -928,8 +1095,9 @@ class SaveSyncService {
     final out = switch (conversion) {
       SaveConverted(:final files) => files,
       SaveAsIs() => files, // the same bytes the target reads
-      SaveNotConvertible(:final reason) =>
-        throw SaveChoiceException("The $fromEmulatorId save can't be used by $emulatorId: $reason."),
+      SaveNotConvertible(:final reason) => throw SaveChoiceException(
+        "The $fromEmulatorId save can't be used by $emulatorId: $reason.",
+      ),
     };
     for (final blob in out) {
       if (!await to.restoreSave(game, romPath, blob.bytes, blob.name)) {
@@ -941,12 +1109,24 @@ class SaveSyncService {
   /// A hash of [emulatorId]'s save files for [game] that changes only when
   /// their contents do: `'none'` when there are none, null when they can't
   /// be read. [syncMode] as for pushSaves, so it covers what a push uploads.
-  Future<String?> saveFingerprint(Game game, String romPath,
-          {required String emulatorId, String syncMode = 'saves', String? coreOverride}) =>
-      _lock.run(() => _saveFingerprintUnlocked(game, romPath, emulatorId: emulatorId, syncMode: syncMode, coreOverride: coreOverride));
+  Future<String?> saveFingerprint(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    String syncMode = 'saves',
+    String? coreOverride,
+  }) => _lock.run(
+    () =>
+        _saveFingerprintUnlocked(game, romPath, emulatorId: emulatorId, syncMode: syncMode, coreOverride: coreOverride),
+  );
 
-  Future<String?> _saveFingerprintUnlocked(Game game, String romPath,
-      {required String emulatorId, String syncMode = 'saves', String? coreOverride}) async {
+  Future<String?> _saveFingerprintUnlocked(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    String syncMode = 'saves',
+    String? coreOverride,
+  }) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
     if (strategy == null) return null;
     return _fingerprintOf(strategy, game, romPath, syncMode);
@@ -955,7 +1135,10 @@ class SaveSyncService {
   /// saveFingerprint for a [strategy] already set up for [game].
   Future<String?> _fingerprintOf(SaveStrategy strategy, Game game, String romPath, String syncMode) async {
     try {
-      final files = await _unrzipFiles(game, await strategy.getSaveFilesWithScreenshots(game, romPath, syncMode: syncMode));
+      final files = await _unrzipFiles(
+        game,
+        await strategy.getSaveFilesWithScreenshots(game, romPath, syncMode: syncMode),
+      );
       if (files.isEmpty) return 'none';
       return await saveContentHash(files);
     } catch (e) {
@@ -1004,12 +1187,24 @@ class SaveSyncService {
 
   /// Records that RomM has [emulatorId]'s current save for [game] (it was
   /// just pulled, restored from RomM or pushed), as seen with [syncMode].
-  Future<void> markSaveSynced(Game game, String romPath,
-          {required String emulatorId, required String syncMode, String? coreOverride}) =>
-      _lock.run(() => _markSaveSyncedUnlocked(game, romPath, emulatorId: emulatorId, syncMode: syncMode, coreOverride: coreOverride));
+  Future<void> markSaveSynced(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    required String syncMode,
+    String? coreOverride,
+  }) => _lock.run(
+    () =>
+        _markSaveSyncedUnlocked(game, romPath, emulatorId: emulatorId, syncMode: syncMode, coreOverride: coreOverride),
+  );
 
-  Future<void> _markSaveSyncedUnlocked(Game game, String romPath,
-      {required String emulatorId, required String syncMode, String? coreOverride}) async {
+  Future<void> _markSaveSyncedUnlocked(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    required String syncMode,
+    String? coreOverride,
+  }) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
     if (strategy == null) return;
     final fp = await _fingerprintOf(strategy, game, romPath, syncMode);
@@ -1019,12 +1214,23 @@ class SaveSyncService {
 
   /// Whether [emulatorId]'s current save for [game] is the content RomM has,
   /// as far as this device knows (see markSaveSynced), seen with [syncMode].
-  Future<bool> saveIsSynced(Game game, String romPath,
-          {required String emulatorId, required String syncMode, String? coreOverride}) =>
-      _lock.run(() => _saveIsSyncedUnlocked(game, romPath, emulatorId: emulatorId, syncMode: syncMode, coreOverride: coreOverride));
+  Future<bool> saveIsSynced(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    required String syncMode,
+    String? coreOverride,
+  }) => _lock.run(
+    () => _saveIsSyncedUnlocked(game, romPath, emulatorId: emulatorId, syncMode: syncMode, coreOverride: coreOverride),
+  );
 
-  Future<bool> _saveIsSyncedUnlocked(Game game, String romPath,
-      {required String emulatorId, required String syncMode, String? coreOverride}) async {
+  Future<bool> _saveIsSyncedUnlocked(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    required String syncMode,
+    String? coreOverride,
+  }) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
     if (strategy == null) return false;
     // Gargosy: either record counts, as in rommCopyOfLocal. A 'both' record
@@ -1068,7 +1274,8 @@ class SaveSyncService {
   /// (markSaveSynced) is not newer either, whatever its time: emulators
   /// rewrite unchanged saves on exit.
   Future<bool> _localSaveIsNewer(SaveStrategy strategy, Game game, String romPath, Map<String, dynamic> save) async {
-    final cloud = DateTime.tryParse(save['updated_at']?.toString() ?? '') ??
+    final cloud =
+        DateTime.tryParse(save['updated_at']?.toString() ?? '') ??
         DateTime.tryParse(save['created_at']?.toString() ?? '');
     if (cloud == null) return false;
     try {
@@ -1107,8 +1314,7 @@ class SaveSyncService {
   /// (e.g. Dolphin Wii title dirs, PPSSPP SAVEDATA) that the bundling path in
   /// _devicePushSaves / _legacyPushSaves already handles correctly by zipping
   /// them. Dropping them here was the root cause of Wii saves never uploading.
-  Map<io.File, io.File?> _filterFilesMap(
-      SaveStrategy strategy, Map<io.File, io.File?> filesMap) {
+  Map<io.File, io.File?> _filterFilesMap(SaveStrategy strategy, Map<io.File, io.File?> filesMap) {
     if (strategy.shouldZip) {
       debugPrint('[SaveSync]   Filter: strategy supports ZIP, passing all ${filesMap.length} file(s) through');
       return filesMap;
@@ -1149,19 +1355,29 @@ class SaveSyncService {
   // RomM 4.9+ device-based sync
   // ---------------------------------------------------------------------------
 
-  Future<bool> _devicePushSaves(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both', bool force = false, String? coreOverride, String? emulatorId}) async {
+  Future<bool> _devicePushSaves(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+    bool force = false,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     try {
       final strategy = getStrategyForGame(game, emulatorId: emulatorId);
       if (strategy == null) {
-        debugPrint('[SaveSync] [push] No save strategy for slug="${game.platformSlug}" — game "${game.displayName}" not supported');
+        debugPrint(
+          '[SaveSync] [push] No save strategy for slug="${game.platformSlug}" — game "${game.displayName}" not supported',
+        );
         return false;
       }
       debugPrint('[SaveSync] [push] Strategy: ${strategy.strategyId}  game="${game.displayName}"');
       _applyStrategyMappings(strategy, game, coreOverride: coreOverride);
 
       var filesMap = await strategy.getSaveFilesWithScreenshots(
-        game, romPath,
+        game,
+        romPath,
         sessionStart: sessionStart,
         syncMode: syncMode,
       );
@@ -1186,8 +1402,7 @@ class SaveSyncService {
       }
       filesMap = await _unrzipFiles(game, filesMap);
 
-      final displayStem =
-          game.displayName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+      final displayStem = game.displayName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
       final tempDir = await _directoryService.getEmulatorDirectory('temp');
       if (!await io.Directory(tempDir).exists()) {
         await io.Directory(tempDir).create(recursive: true);
@@ -1198,8 +1413,7 @@ class SaveSyncService {
       String uploadFilename;
       bool isBundle = false;
 
-      if (filesMap.length == 1 &&
-          !await io.FileSystemEntity.isDirectory(filesMap.keys.first.path)) {
+      if (filesMap.length == 1 && !await io.FileSystemEntity.isDirectory(filesMap.keys.first.path)) {
         final entry = filesMap.entries.first;
         finalUploadFile = entry.key;
         finalScreenshotFile = entry.value;
@@ -1216,8 +1430,7 @@ class SaveSyncService {
         for (final entry in filesMap.entries) {
           final file = entry.key;
           if (await io.FileSystemEntity.isDirectory(file.path)) {
-            await encoder.addDirectory(io.Directory(file.path),
-                includeDirName: true);
+            await encoder.addDirectory(io.Directory(file.path), includeDirName: true);
           } else {
             await encoder.addFile(file, p.basename(file.path));
           }
@@ -1225,8 +1438,7 @@ class SaveSyncService {
         encoder.close();
         finalUploadFile = io.File(bundleZipPath);
         uploadFilename = '$displayStem.zip';
-        finalScreenshotFile =
-            filesMap.values.firstWhere((s) => s != null, orElse: () => null);
+        finalScreenshotFile = filesMap.values.firstWhere((s) => s != null, orElse: () => null);
       }
 
       // Reject empty/blank saves to prevent overwriting legitimate cloud saves.
@@ -1241,8 +1453,7 @@ class SaveSyncService {
 
       // RomM's hash of the upload (a zip by its contents): an unchanged save
       // keeps it even when its emulator rewrote the files.
-      final String localHash =
-          await rommHashOfSaveFile(finalUploadFile) ?? await _hashFile(finalUploadFile);
+      final String localHash = await rommHashOfSaveFile(finalUploadFile) ?? await _hashFile(finalUploadFile);
       final String? storedHash = _getStoredHash(game.id, uploadFilename);
 
       if (!force && storedHash != null && localHash == storedHash) {
@@ -1270,8 +1481,7 @@ class SaveSyncService {
       if (!result.ok && result.conflict != null) {
         debugPrint('[SaveSync] [push] Conflict detected — cloud save is newer');
         final cloudTimeStr = result.conflict!['current_save_time']?.toString();
-        final cloudTime =
-            cloudTimeStr != null ? DateTime.tryParse(cloudTimeStr) : null;
+        final cloudTime = cloudTimeStr != null ? DateTime.tryParse(cloudTimeStr) : null;
         DateTime? localTime;
         for (final file in filesMap.keys) {
           final mtime = await file.lastModified();
@@ -1309,8 +1519,13 @@ class SaveSyncService {
     }
   }
 
-  Future<bool> _devicePullSave(Game game, String romPath,
-      {Map<String, dynamic>? saveData, String? coreOverride, String? emulatorId}) async {
+  Future<bool> _devicePullSave(
+    Game game,
+    String romPath, {
+    Map<String, dynamic>? saveData,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     try {
       final strategy = getStrategyForGame(game, emulatorId: emulatorId);
       if (strategy == null) {
@@ -1322,8 +1537,7 @@ class SaveSyncService {
 
       final deviceId = _getDeviceId();
       debugPrint('[SaveSync] [pull] Fetching latest save from server (deviceId=${deviceId ?? "none"})...');
-      final Map<String, dynamic>? save =
-          saveData ?? await _rommService.getLatestSave(game.id, deviceId: deviceId);
+      final Map<String, dynamic>? save = saveData ?? await _rommService.getLatestSave(game.id, deviceId: deviceId);
       if (save == null) {
         debugPrint('[SaveSync] [pull] No save found on server — nothing to pull');
         return false;
@@ -1332,10 +1546,7 @@ class SaveSyncService {
       // If server says we already have the current version, skip
       if (saveData == null && deviceId != null) {
         final syncs = save['device_syncs'] as List<dynamic>?;
-        final mySync = syncs?.firstWhere(
-          (d) => d['device_id'] == deviceId,
-          orElse: () => null,
-        );
+        final mySync = syncs?.firstWhere((d) => d['device_id'] == deviceId, orElse: () => null);
         if (mySync != null && mySync['is_current'] == true) {
           debugPrint('[SaveSync] [pull] Already current on this device — skipping');
           return false;
@@ -1348,15 +1559,13 @@ class SaveSyncService {
       }
       if (await _alreadyHave(strategy, game, romPath, save)) return false;
 
-      final downloadUrl =
-          save['download_path'] as String? ?? save['url'] as String?;
+      final downloadUrl = save['download_path'] as String? ?? save['url'] as String?;
       if (downloadUrl == null) {
         debugPrint('[SaveSync] [pull] Save record found but no download URL');
         return false;
       }
 
-      final filename =
-          save['file_name'] as String? ?? downloadUrl.split('/').last;
+      final filename = save['file_name'] as String? ?? downloadUrl.split('/').last;
       debugPrint('[SaveSync] [pull] Cloud save: $filename');
 
       // Skip save states — only sync battery-backed saves (.srm, .sav, .sra, etc.)
@@ -1393,12 +1602,18 @@ class SaveSyncService {
       // A strategy can take a download and keep nothing of it (DuckStation and
       // a file that is no memory card): then nothing was pulled.
       final before = await _fingerprintOf(strategy, game, romPath, 'saves');
-      final ok = await _restoreDownloaded(strategy, game, romPath, bytes, adjustedFilename,
-          sourceTag: save['emulator']?.toString(), emulatorId: emulatorId);
+      final ok = await _restoreDownloaded(
+        strategy,
+        game,
+        romPath,
+        bytes,
+        adjustedFilename,
+        sourceTag: save['emulator']?.toString(),
+        emulatorId: emulatorId,
+      );
       if (!ok) {
         debugPrint('[SaveSync] [pull] Strategy failed to restore save');
-        throw Exception(
-            'Strategy [${strategy.strategyId}] failed to restore save: $filename');
+        throw Exception('Strategy [${strategy.strategyId}] failed to restore save: $filename');
       }
       if (await _restoredNothing(strategy, game, romPath, before)) return false;
       await _recordSyncedRommId(game, strategy, save['id']);
@@ -1420,8 +1635,15 @@ class SaveSyncService {
 
   /// Legacy upload path for RomM versions prior to 4.9.
   /// Uses timestamp-based conflict detection and manual save pruning.
-  Future<bool> _legacyPushSaves(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both', bool force = false, String? coreOverride, String? emulatorId}) async {
+  Future<bool> _legacyPushSaves(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+    bool force = false,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     try {
       final strategy = getStrategyForGame(game, emulatorId: emulatorId);
       if (strategy == null) {
@@ -1433,7 +1655,8 @@ class SaveSyncService {
       _applyStrategyMappings(strategy, game, coreOverride: coreOverride);
 
       var filesMap = await strategy.getSaveFilesWithScreenshots(
-        game, romPath,
+        game,
+        romPath,
         sessionStart: sessionStart,
         syncMode: syncMode,
       );
@@ -1482,24 +1705,24 @@ class SaveSyncService {
         if (latestRemote != null) {
           final remoteTime = DateTime.tryParse(latestRemote['updated_at']?.toString() ?? '');
           final lastPull = _getLastPullTime(game.id);
-          
+
           // If remote is newer than our last pull, and we have local changes -> Conflict!
           if (remoteTime != null && lastPull != null && remoteTime.isAfter(lastPull)) {
-             // Find the newest local file time
-             DateTime? localTime;
-             for (final file in filesMap.keys) {
-               final mtime = await file.lastModified();
-               if (localTime == null || mtime.isAfter(localTime)) localTime = mtime;
-             }
-             
-             if (localTime != null && remoteTime.isAfter(lastPull)) {
-               throw SaveConflictException(
-                 game: game,
-                 localTime: localTime,
-                 cloudTime: remoteTime,
-                 cloudScreenshot: latestRemote['screenshot_path'] ?? latestRemote['screenshot_url'],
-               );
-             }
+            // Find the newest local file time
+            DateTime? localTime;
+            for (final file in filesMap.keys) {
+              final mtime = await file.lastModified();
+              if (localTime == null || mtime.isAfter(localTime)) localTime = mtime;
+            }
+
+            if (localTime != null && remoteTime.isAfter(lastPull)) {
+              throw SaveConflictException(
+                game: game,
+                localTime: localTime,
+                cloudTime: remoteTime,
+                cloudScreenshot: latestRemote['screenshot_path'] ?? latestRemote['screenshot_url'],
+              );
+            }
           }
         }
       }
@@ -1546,7 +1769,7 @@ class SaveSyncService {
           }
         }
         encoder.close();
-        
+
         finalUploadFile = io.File(bundleZipPath);
         uploadFilename = '$displayStem.zip';
         finalScreenshotFile = filesMap.values.firstWhere((s) => s != null, orElse: () => null);
@@ -1563,14 +1786,13 @@ class SaveSyncService {
 
       // RomM's hash of the upload (a zip by its contents): an unchanged save
       // keeps it even when its emulator rewrote the files.
-      final String localHash =
-          await rommHashOfSaveFile(finalUploadFile) ?? await _hashFile(finalUploadFile);
+      final String localHash = await rommHashOfSaveFile(finalUploadFile) ?? await _hashFile(finalUploadFile);
       final String? storedHash = _getStoredHash(game.id, uploadFilename);
 
       if (!force && storedHash != null && localHash == storedHash) {
         debugPrint('[SaveSync] [push] Hash unchanged — skipping upload');
         if (isBundle && await finalUploadFile.exists()) await finalUploadFile.delete();
-        return true; 
+        return true;
       }
 
       // Upload with autocleanup and overwrite.
@@ -1624,11 +1846,7 @@ class SaveSyncService {
 
   /// Checks if [data] begins with ZIP magic bytes (PK\x03\x04).
   bool _isZipBytes(Uint8List data) =>
-      data.length >= 4 &&
-      data[0] == 0x50 &&
-      data[1] == 0x4B &&
-      data[2] == 0x03 &&
-      data[3] == 0x04;
+      data.length >= 4 && data[0] == 0x50 && data[1] == 0x4B && data[2] == 0x03 && data[3] == 0x04;
 
   /// Ensures the filename matches the actual content format. If [data] is a
   /// ZIP but [filename] doesn't end with .zip, appends .zip so strategies
@@ -1644,6 +1862,7 @@ class SaveSyncService {
 
   /// Matches pure timestamp filenames like "2026-07-11_08-45-38"
   static final _timestampPattern = RegExp(r'^\d{4}-\d{2}-\d{2}[_-]\d{2}[_-]\d{2}[_-]\d{2}$');
+
   /// Matches RomM timestamp tags appended to filenames like "Game Name [2026-07-11_15-36-41]"
   static final _rommTimestampTag = RegExp(r'\s*\[\d{4}-\d{2}-\d{2}[ _]\d{2}-\d{2}-\d{2}(-\d+)?\]$');
 
@@ -1668,7 +1887,13 @@ class SaveSyncService {
 
   /// Legacy pull path for RomM versions prior to 4.9.
   /// Uses stored last-pull timestamps for freshness checks.
-  Future<bool> _legacyPullSave(Game game, String romPath, {Map<String, dynamic>? saveData, String? coreOverride, String? emulatorId}) async {
+  Future<bool> _legacyPullSave(
+    Game game,
+    String romPath, {
+    Map<String, dynamic>? saveData,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     try {
       final strategy = getStrategyForGame(game, emulatorId: emulatorId);
       if (strategy == null) {
@@ -1687,13 +1912,10 @@ class SaveSyncService {
       }
 
       if (saveData == null) {
-        final remoteUpdatedAt = DateTime.tryParse(
-            save['updated_at']?.toString() ?? '');
+        final remoteUpdatedAt = DateTime.tryParse(save['updated_at']?.toString() ?? '');
         final lastPull = _getLastPullTime(game.id);
 
-        if (lastPull != null &&
-            remoteUpdatedAt != null &&
-            !remoteUpdatedAt.isAfter(lastPull)) {
+        if (lastPull != null && remoteUpdatedAt != null && !remoteUpdatedAt.isAfter(lastPull)) {
           debugPrint('[SaveSync] [pull] Save not newer than last pull — skipping');
           return false;
         }
@@ -1705,15 +1927,13 @@ class SaveSyncService {
       }
       if (await _alreadyHave(strategy, game, romPath, save)) return false;
 
-      final downloadUrl = save['download_path'] as String?
-          ?? save['url'] as String?;
+      final downloadUrl = save['download_path'] as String? ?? save['url'] as String?;
       if (downloadUrl == null) {
         debugPrint('[SaveSync] [pull] Save record found but no download URL');
         return false;
       }
 
-      final filename = save['file_name'] as String?
-          ?? downloadUrl.split('/').last;
+      final filename = save['file_name'] as String? ?? downloadUrl.split('/').last;
 
       // Skip save states — only sync battery-backed saves
       final fnameLower = filename.toLowerCase();
@@ -1751,8 +1971,15 @@ class SaveSyncService {
       // A strategy can take a download and keep nothing of it (DuckStation and
       // a file that is no memory card): then nothing was pulled.
       final before = await _fingerprintOf(strategy, game, romPath, 'saves');
-      final ok = await _restoreDownloaded(strategy, game, romPath, bytes, adjustedFilename,
-          sourceTag: save['emulator']?.toString(), emulatorId: emulatorId);
+      final ok = await _restoreDownloaded(
+        strategy,
+        game,
+        romPath,
+        bytes,
+        adjustedFilename,
+        sourceTag: save['emulator']?.toString(),
+        emulatorId: emulatorId,
+      );
 
       if (ok && await _restoredNothing(strategy, game, romPath, before)) return false;
       if (ok) {

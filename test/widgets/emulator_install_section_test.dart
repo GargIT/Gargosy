@@ -22,13 +22,26 @@ void main() {
   testWidgets("Open: only an installed emulator; it starts on the profile and says how", (tester) async {
     final engine = _OpenOnlyEngine();
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
-      playEngineProvider.overrideWithValue(engine),
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'dolphin', name: 'Dolphin', exe: 'Dolphin.exe', supported: true, installedExe: r'C:\G\emulators\dolphin\Dolphin.exe'),
-            EmulatorInfo(id: 'pcsx2', name: 'PCSX2', exe: 'pcsx2-qt.exe', supported: true),
-          ]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          playEngineProvider.overrideWithValue(engine),
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'dolphin',
+                name: 'Dolphin',
+                exe: 'Dolphin.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
+              ),
+              EmulatorInfo(id: 'pcsx2', name: 'PCSX2', exe: 'pcsx2-qt.exe', supported: true),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Open'), findsOneWidget, reason: 'PCSX2 is not installed');
     await tester.tap(find.text('Open'));
@@ -40,13 +53,26 @@ void main() {
 
   testWidgets('lists emulators with their state; unsupported ones say so', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'dolphin', name: 'Dolphin', exe: 'Dolphin.exe', supported: true, installedExe: r'C:\G\emulators\dolphin\Dolphin.exe'),
-            EmulatorInfo(id: 'pcsx2', name: 'PCSX2', exe: 'pcsx2-qt.exe', supported: true),
-            EmulatorInfo(id: 'ryujinx', name: 'Ryujinx', exe: 'Ryujinx.exe', supported: false),
-          ]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'dolphin',
+                name: 'Dolphin',
+                exe: 'Dolphin.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
+              ),
+              EmulatorInfo(id: 'pcsx2', name: 'PCSX2', exe: 'pcsx2-qt.exe', supported: true),
+              EmulatorInfo(id: 'ryujinx', name: 'Ryujinx', exe: 'Ryujinx.exe', supported: false),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Dolphin'), findsOneWidget);
     expect(find.text('Installed'), findsOneWidget);
@@ -54,13 +80,28 @@ void main() {
     expect(find.text('Not supported yet'), findsOneWidget);
   });
 
-  testWidgets('an emulator whose download is off has no Download or Update, and says why; Import stays', (tester) async {
+  testWidgets('an emulator whose download is off has no Download or Update, and says why; Import stays', (
+    tester,
+  ) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'ryujinx', name: 'Ryujinx', exe: 'Ryujinx.exe', supported: true, downloadOff: 'Download off: down'),
-          ]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'ryujinx',
+                name: 'Ryujinx',
+                exe: 'Ryujinx.exe',
+                supported: true,
+                downloadOff: 'Download off: down',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Download off: down'), findsOneWidget);
     expect(find.text('Download'), findsNothing);
@@ -70,12 +111,25 @@ void main() {
 
   testWidgets('an emulator whose download is off still plays once imported, with no Update', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'ryujinx', name: 'Ryujinx', exe: 'Ryujinx.exe', supported: true, downloadOff: 'Download off: down',
-                installedExe: r'C:\G\emulators\ryujinx\Ryujinx.exe'),
-          ]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'ryujinx',
+                name: 'Ryujinx',
+                exe: 'Ryujinx.exe',
+                supported: true,
+                downloadOff: 'Download off: down',
+                installedExe: r'C:\G\emulators\ryujinx\Ryujinx.exe',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Installed'), findsOneWidget, reason: 'an imported Ryujinx still plays');
     expect(find.text('Update'), findsNothing);
@@ -85,13 +139,27 @@ void main() {
   testWidgets('Update says so when the newest is already installed', (tester) async {
     final installer = _FakeInstaller('https://example/dolphin-2.zip');
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
-      emulatorInstallerProvider.overrideWithValue(installer),
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'dolphin', name: 'Dolphin', exe: 'Dolphin.exe', supported: true,
-                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe', installedFrom: 'https://example/dolphin-2.zip', version: '2412'),
-          ]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          emulatorInstallerProvider.overrideWithValue(installer),
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'dolphin',
+                name: 'Dolphin',
+                exe: 'Dolphin.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
+                installedFrom: 'https://example/dolphin-2.zip',
+                version: '2412',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('2412'), findsOneWidget);
     await tester.tap(find.text('Update'));
@@ -104,14 +172,27 @@ void main() {
     final installer = _FakeInstaller('https://example/dolphin-3.zip');
     final biosFor = <String>[];
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const EmulatorInstallSection(), overrides: [
-      emulatorInstallerProvider.overrideWithValue(installer),
-      biosSyncProvider.overrideWithValue(_Bios(biosFor)),
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'dolphin', name: 'Dolphin', exe: 'Dolphin.exe', supported: true,
-                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe', installedFrom: 'https://example/dolphin-2.zip'),
-          ]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          emulatorInstallerProvider.overrideWithValue(installer),
+          biosSyncProvider.overrideWithValue(_Bios(biosFor)),
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'dolphin',
+                name: 'Dolphin',
+                exe: 'Dolphin.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
+                installedFrom: 'https://example/dolphin-2.zip',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Update'));
     await tester.pumpAndSettle();

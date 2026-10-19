@@ -23,7 +23,8 @@ void main() {
   });
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  ProfileLoginStore store([PcIdentity id = pc]) => ProfileLoginStore(profileDir: paths.dir, protector: protector, pc: id);
+  ProfileLoginStore store([PcIdentity id = pc]) =>
+      ProfileLoginStore(profileDir: paths.dir, protector: protector, pc: id);
 
   test('the file is named per PC and Windows user, inside the profile', () {
     expect(p.dirname(store().filePath), paths.dir);

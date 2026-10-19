@@ -8,7 +8,7 @@ Closes #
 
 ## Tests
 <!-- New or changed tests, and what they pin down. -->
-- [ ] `flutter analyze && flutter test` pass (CI on windows-latest is green)
+- [ ] `dart format`, `flutter analyze` and `flutter test` pass (CI on windows-latest is green)
 - [ ] Tried in the app at 1080p, with a controller alone
 
 ## Checklist

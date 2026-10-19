@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/state_sync_service.dart';
 import 'package:path/path.dart' as p;
@@ -13,8 +14,18 @@ const stateFileB = 'SCUS-97113 (A1B2C3D4).resume.p2s';
 /// Bytes that pass PCSX2's state validation: a zip header, a payload larger
 /// than StateSyncService.minValidStateBytes and a zip end record. Different
 /// [seed]s differ. For real zip-shaped states see test/fixtures/pcsx2_states.
-List<int> stateBytes(int seed) =>
-    [0x50, 0x4B, 3, 4, ...List.filled(200, seed), 0x50, 0x4B, 5, 6, ...List.filled(18, 0)];
+List<int> stateBytes(int seed) => [
+  0x50,
+  0x4B,
+  3,
+  4,
+  ...List.filled(200, seed),
+  0x50,
+  0x4B,
+  5,
+  6,
+  ...List.filled(18, 0),
+];
 
 /// A portable PCSX2 install, a fake RomM states API and a StateSyncService
 /// wired to both, for the game "Ico (SCUS-97113)" (RomM rom id `42`).
@@ -38,11 +49,14 @@ class StateSyncTestEnv {
       await pcsx2.prefs.setBool(StateSyncService.enabledKey, true);
     }
     final api = FakeRommStatesApi();
-    final service = StateSyncService(api, pcsx2.prefs, (game, {emulatorId, coreOverride}) => pcsx2.strategy,
-        listTimeout: listTimeout);
+    final service = StateSyncService(
+      api,
+      pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) => pcsx2.strategy,
+      listTimeout: listTimeout,
+    );
     final game = Game(id: '42', name: 'Ico (SCUS-97113)', platformSlug: 'ps2', fileSize: 0);
-    return StateSyncTestEnv._(
-        base, pcsx2, api, service, game, p.join(base.path, 'Ico (SCUS-97113).iso'));
+    return StateSyncTestEnv._(base, pcsx2, api, service, game, p.join(base.path, 'Ico (SCUS-97113).iso'));
   }
 
   String get statesDir => pcsx2.statesDir;

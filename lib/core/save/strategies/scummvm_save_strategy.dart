@@ -49,7 +49,12 @@ class ScummVmSaveStrategy extends SaveStrategy {
       p.join(await _directoryService.getEmulatorDirectory('scummvm'), 'saves', scummVmSaveFolderName(romPath));
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     if (syncMode == 'states') return [];
     final dir = io.Directory((await getSaveDir(game, romPath))!);
     if (!await dir.exists()) return [];

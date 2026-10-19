@@ -36,11 +36,21 @@ void main() {
     io.File(exe).writeAsStringSync('');
     io.Directory(p.join(dir.path, 'user')).createSync();
     read = [];
-    azahar = AzaharSaveStrategy(await StubDirectoryService.create(exePath: exe),
-        platform: const PlatformInfo('windows', environment: {}), identify: (path, {platform}) async {
-      read.add(path);
-      return const SigilId(titleId: '000400000009F300', rawSerial: '', saveId: '00040000/0009f300', platform: '3ds', fromBinary: true, usage: 4);
-    });
+    azahar = AzaharSaveStrategy(
+      await StubDirectoryService.create(exePath: exe),
+      platform: const PlatformInfo('windows', environment: {}),
+      identify: (path, {platform}) async {
+        read.add(path);
+        return const SigilId(
+          titleId: '000400000009F300',
+          rawSerial: '',
+          saveId: '00040000/0009f300',
+          platform: '3ds',
+          fromBinary: true,
+          usage: 4,
+        );
+      },
+    );
   });
   tearDown(() => dir.delete(recursive: true));
 
@@ -54,7 +64,12 @@ void main() {
 
   test("the matcher: the game's program id, slots 0-11; not a movie's states or another game's", () async {
     final match = (await azahar.stateFileMatcher(wipeout(), rom))!;
-    for (final yes in ['000400000009F300.01.cst', '000400000009F300.00.cst', '000400000009F300.11.cst', '000400000009f300.02.cst']) {
+    for (final yes in [
+      '000400000009F300.01.cst',
+      '000400000009F300.00.cst',
+      '000400000009F300.11.cst',
+      '000400000009f300.02.cst',
+    ]) {
       expect(match(yes), isTrue, reason: yes);
     }
     for (final no in [

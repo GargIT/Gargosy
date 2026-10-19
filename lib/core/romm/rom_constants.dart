@@ -31,10 +31,62 @@ class RomConstants {
     'genesis': ['.md', '.bin', '.gen', '.zip', '.7z'],
     '3ds': ['.3ds', '.cci', '.cxi', '.3dsx', '.elf', '.axf', '.app', '.z3dsx', '.zcci', '.zcxi', '.cia', '.zcia'],
     'n3ds': ['.3ds', '.cci', '.cxi', '.3dsx', '.elf', '.axf', '.app', '.z3dsx', '.zcci', '.zcxi', '.cia', '.zcia'],
-    'nintendo-3ds': ['.3ds', '.cci', '.cxi', '.3dsx', '.elf', '.axf', '.app', '.z3dsx', '.zcci', '.zcxi', '.cia', '.zcia'],
-    'nintendo3ds': ['.3ds', '.cci', '.cxi', '.3dsx', '.elf', '.axf', '.app', '.z3dsx', '.zcci', '.zcxi', '.cia', '.zcia'],
-    'new-nintendo-3ds': ['.3ds', '.cci', '.cxi', '.3dsx', '.elf', '.axf', '.app', '.z3dsx', '.zcci', '.zcxi', '.cia', '.zcia'],
-    'new-nintendo-3ds-xl': ['.3ds', '.cci', '.cxi', '.3dsx', '.elf', '.axf', '.app', '.z3dsx', '.zcci', '.zcxi', '.cia', '.zcia'],
+    'nintendo-3ds': [
+      '.3ds',
+      '.cci',
+      '.cxi',
+      '.3dsx',
+      '.elf',
+      '.axf',
+      '.app',
+      '.z3dsx',
+      '.zcci',
+      '.zcxi',
+      '.cia',
+      '.zcia',
+    ],
+    'nintendo3ds': [
+      '.3ds',
+      '.cci',
+      '.cxi',
+      '.3dsx',
+      '.elf',
+      '.axf',
+      '.app',
+      '.z3dsx',
+      '.zcci',
+      '.zcxi',
+      '.cia',
+      '.zcia',
+    ],
+    'new-nintendo-3ds': [
+      '.3ds',
+      '.cci',
+      '.cxi',
+      '.3dsx',
+      '.elf',
+      '.axf',
+      '.app',
+      '.z3dsx',
+      '.zcci',
+      '.zcxi',
+      '.cia',
+      '.zcia',
+    ],
+    'new-nintendo-3ds-xl': [
+      '.3ds',
+      '.cci',
+      '.cxi',
+      '.3dsx',
+      '.elf',
+      '.axf',
+      '.app',
+      '.z3dsx',
+      '.zcci',
+      '.zcxi',
+      '.cia',
+      '.zcia',
+    ],
     'wiiu': ['.wua', '.rpx', '.wud', '.wux'],
     'saturn': ['.bin', '.cue', '.iso', '.mdf', '.chd'],
     'segacd': ['.bin', '.cue', '.iso', '.chd'],
@@ -65,8 +117,7 @@ class RomConstants {
   /// or disc picker.
   static const Set<String> folderGamePlatforms = {'scummvm'};
 
-  static bool isFolderGamePlatform(String? platformSlug) =>
-      folderGamePlatforms.contains(platformSlug?.toLowerCase());
+  static bool isFolderGamePlatform(String? platformSlug) => folderGamePlatforms.contains(platformSlug?.toLowerCase());
 
   static bool isRomFile(String platformSlug, String path) {
     final ext = p.extension(path).toLowerCase();

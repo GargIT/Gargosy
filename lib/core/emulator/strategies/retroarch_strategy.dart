@@ -2,8 +2,10 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import '../../storage/profile_rooted.dart';
+
 import 'dart:io' as io;
 import 'dart:io' show Process;
+
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
@@ -26,11 +28,7 @@ class MissingRetroArchCoreException implements Exception {
   final String corePath;
   final String exePath;
 
-  MissingRetroArchCoreException({
-    required this.coreName,
-    required this.corePath,
-    required this.exePath,
-  });
+  MissingRetroArchCoreException({required this.coreName, required this.corePath, required this.exePath});
 
   @override
   String toString() => 'Missing RetroArch Core: $coreName at $corePath';
@@ -247,10 +245,7 @@ class RetroArchStrategy extends EmulatorStrategy {
 
     final dio = Dio();
     try {
-      await dio.download(
-        'https://github.com/citra-emu/citra-sysdata-mks/raw/master/shared_font.bin',
-        fontFile.path,
-      );
+      await dio.download('https://github.com/citra-emu/citra-sysdata-mks/raw/master/shared_font.bin', fontFile.path);
     } catch (e) {
       // ignore
     }
@@ -270,8 +265,14 @@ class RetroArchStrategy extends EmulatorStrategy {
   }
 
   bool _is3dsSlug(String? slug) {
-    return ['3ds', 'n3ds', 'nintendo-3ds', 'nintendo3ds', 'new-nintendo-3ds', 'new-nintendo-3ds-xl']
-        .contains(slug?.toLowerCase());
+    return [
+      '3ds',
+      'n3ds',
+      'nintendo-3ds',
+      'nintendo3ds',
+      'new-nintendo-3ds',
+      'new-nintendo-3ds-xl',
+    ].contains(slug?.toLowerCase());
   }
 
   // ── Launch ───────────────────────────────────────────────────
@@ -309,8 +310,7 @@ class RetroArchStrategy extends EmulatorStrategy {
 
   @override
   Future<void> launchWithExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
-    final exePath = await _directoryService.findEmulatorExecutable(
-        emulatorId, getExecutableForPlatform());
+    final exePath = await _directoryService.findEmulatorExecutable(emulatorId, getExecutableForPlatform());
     if (exePath == null) {
       throw Exception('$name not found. Please download it first.');
     }
@@ -323,8 +323,13 @@ class RetroArchStrategy extends EmulatorStrategy {
     }
 
     if (coreName == null) {
-      await _directoryService.launchGame(game, normalizedRomPath, emulatorId, exePath,
-          args: [...await retroAchievementsLaunchArgs(), ...extraArgs]);
+      await _directoryService.launchGame(
+        game,
+        normalizedRomPath,
+        emulatorId,
+        exePath,
+        args: [...await retroAchievementsLaunchArgs(), ...extraArgs],
+      );
       return;
     }
 
@@ -334,22 +339,21 @@ class RetroArchStrategy extends EmulatorStrategy {
       String expectedPath;
       if (_isFlatpakExePath(exePath)) {
         final flatpakDir = _getFlatpakCoresDir(exePath);
-        expectedPath = flatpakDir != null
-            ? p.join(flatpakDir, coreName)
-            : '$coreName (Flatpak cores dir not found)';
+        expectedPath = flatpakDir != null ? p.join(flatpakDir, coreName) : '$coreName (Flatpak cores dir not found)';
       } else {
         final emuDir = _getEmuRootDir(exePath);
         expectedPath = p.join(emuDir, 'cores', coreName);
       }
-      throw MissingRetroArchCoreException(
-        coreName: coreName,
-        corePath: expectedPath,
-        exePath: exePath,
-      );
+      throw MissingRetroArchCoreException(coreName: coreName, corePath: expectedPath, exePath: exePath);
     }
 
-    await _directoryService.launchGame(game, normalizedRomPath, emulatorId, exePath,
-        args: [...await retroAchievementsLaunchArgs(), '-L', corePath, ...extraArgs]);
+    await _directoryService.launchGame(
+      game,
+      normalizedRomPath,
+      emulatorId,
+      exePath,
+      args: [...await retroAchievementsLaunchArgs(), '-L', corePath, ...extraArgs],
+    );
   }
 
   @override
@@ -358,10 +362,13 @@ class RetroArchStrategy extends EmulatorStrategy {
 
   /// [coreName] is the core picked at launch (see [launchWithHandle]).
   @override
-  Future<Process?> launchWithHandleAndExtraArgs(Game game, String romPath,
-      {List<String> extraArgs = const [], String? coreName}) async {
-    final exePath = await _directoryService.findEmulatorExecutable(
-        emulatorId, getExecutableForPlatform());
+  Future<Process?> launchWithHandleAndExtraArgs(
+    Game game,
+    String romPath, {
+    List<String> extraArgs = const [],
+    String? coreName,
+  }) async {
+    final exePath = await _directoryService.findEmulatorExecutable(emulatorId, getExecutableForPlatform());
     if (exePath == null) {
       throw Exception('$name not found. Please download it first.');
     }
@@ -374,8 +381,13 @@ class RetroArchStrategy extends EmulatorStrategy {
     }
 
     if (resolvedCoreName == null) {
-      return await _directoryService.launchGameWithHandle(game, normalizedRomPath, emulatorId, exePath,
-          args: [...await retroAchievementsLaunchArgs(), ...extraArgs]);
+      return await _directoryService.launchGameWithHandle(
+        game,
+        normalizedRomPath,
+        emulatorId,
+        exePath,
+        args: [...await retroAchievementsLaunchArgs(), ...extraArgs],
+      );
     }
 
     final corePath = await _resolveCorePath(exePath, resolvedCoreName);
@@ -391,15 +403,16 @@ class RetroArchStrategy extends EmulatorStrategy {
         final emuDir = _getEmuRootDir(exePath);
         expectedPath = p.join(emuDir, 'cores', resolvedCoreName);
       }
-      throw MissingRetroArchCoreException(
-        coreName: resolvedCoreName,
-        corePath: expectedPath,
-        exePath: exePath,
-      );
+      throw MissingRetroArchCoreException(coreName: resolvedCoreName, corePath: expectedPath, exePath: exePath);
     }
 
-    return await _directoryService.launchGameWithHandle(game, normalizedRomPath, emulatorId, exePath,
-        args: [...await retroAchievementsLaunchArgs(), '-L', corePath, ...extraArgs]);
+    return await _directoryService.launchGameWithHandle(
+      game,
+      normalizedRomPath,
+      emulatorId,
+      exePath,
+      args: [...await retroAchievementsLaunchArgs(), '-L', corePath, ...extraArgs],
+    );
   }
 
   // ── Core download ────────────────────────────────────────────
@@ -476,9 +489,7 @@ class RetroArchStrategy extends EmulatorStrategy {
 
   @override
   Future<void> launchStandalone() async {
-    final exePath = await _directoryService.findEmulatorExecutable(
-      emulatorId, getExecutableForPlatform(),
-    );
+    final exePath = await _directoryService.findEmulatorExecutable(emulatorId, getExecutableForPlatform());
     if (exePath == null) throw Exception('$name not found. Please download it first.');
 
     await _directoryService.launchStandalone(emulatorId, exePath);

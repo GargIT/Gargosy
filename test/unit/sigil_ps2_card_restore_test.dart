@@ -17,24 +17,27 @@ void main() {
 
   Uint8List data(int seed) => Uint8List.fromList([for (var i = 0; i < 3000; i++) (seed * 31 + i) & 0xFF]);
   Uint8List card(List<(String, int)> saves) => Ps2MemoryCard.parse(Ps2MemoryCard.formatted()).withSaves([
-        for (final (name, seed) in saves)
-          Ps2CardSave(name: name, files: [Ps2CardFile(name: 'SAVE.DAT', data: data(seed))]),
-      ], (_) => false);
+    for (final (name, seed) in saves)
+      Ps2CardSave(
+        name: name,
+        files: [Ps2CardFile(name: 'SAVE.DAT', data: data(seed))],
+      ),
+  ], (_) => false);
   io.Directory root(String name) => io.Directory(p.join(tmp.path, name))..createSync(recursive: true);
   void put(io.Directory r, Uint8List bytes) =>
       (io.File(p.join(r.path, 'memcards', 'Mcd001.ps2'))..createSync(recursive: true)).writeAsBytesSync(bytes);
   SigilSyncCall pcsx2(io.Directory r) => SigilSyncCall(
-        layout: 'pcsx2_standalone',
-        platform: 'ps2',
-        contentPath: r'D:\roms\ps2\Game A (USA).chd',
-        saveRoot: r.path,
-        gameIds: const ['SLUS-20328'],
-        titleId: 'SLUS-20328',
-        saveId: 'BASLUS-20328',
-        usage: 1,
-        options: const {'pcsx2_slot1': 'Mcd001.ps2'},
-        overwriteLocal: true,
-      );
+    layout: 'pcsx2_standalone',
+    platform: 'ps2',
+    contentPath: r'D:\roms\ps2\Game A (USA).chd',
+    saveRoot: r.path,
+    gameIds: const ['SLUS-20328'],
+    titleId: 'SLUS-20328',
+    saveId: 'BASLUS-20328',
+    usage: 1,
+    options: const {'pcsx2_slot1': 'Mcd001.ps2'},
+    overwriteLocal: true,
+  );
 
   test("a shared card's save goes to another PC's card, and that card's other game stays", () async {
     final a = root('a');

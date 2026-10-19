@@ -1,9 +1,11 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+
 import 'linux_environment_strategy.dart';
 
 class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
@@ -34,24 +36,24 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
     // check common configuration directory for flatpak instalations
     var lowerCaseEmulatorName = emulatorName.toLowerCase();
     var flatpakPackage = kEmulatorFlatpakPackages[lowerCaseEmulatorName];
-    if(flatpakPackage != null) {
+    if (flatpakPackage != null) {
       var supportDirectoryParent = p.join(home, ".var", "app", flatpakPackage, "config");
       final dir = io.Directory(supportDirectoryParent);
-      if(dir.existsSync()) {
-          var lowerAppName = flatpakPackage.split('.').last.toLowerCase();
-          for (final entity in dir.listSync()) {  
-            if (entity is io.File) continue;
-            final lowerFolderName = p.basename(entity.path).toLowerCase();
-            if (lowerFolderName == lowerAppName) {
-              return entity.path;
-            }
+      if (dir.existsSync()) {
+        var lowerAppName = flatpakPackage.split('.').last.toLowerCase();
+        for (final entity in dir.listSync()) {
+          if (entity is io.File) continue;
+          final lowerFolderName = p.basename(entity.path).toLowerCase();
+          if (lowerFolderName == lowerAppName) {
+            return entity.path;
           }
+        }
       }
     }
     // check common configuration directory for app image instalations
-    var altSupportDirectoryPath =  p.join(home, '.local', 'share', lowerCaseEmulatorName);
-    if(io.Directory(altSupportDirectoryPath).existsSync()) {
-          return altSupportDirectoryPath;
+    var altSupportDirectoryPath = p.join(home, '.local', 'share', lowerCaseEmulatorName);
+    if (io.Directory(altSupportDirectoryPath).existsSync()) {
+      return altSupportDirectoryPath;
     }
     return p.join(home, '.config', emulatorName);
   }
@@ -62,7 +64,12 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
   }
 
   @override
-  Future<String?> findExecutable(String emulatorId, String executableName, String emulatorsRoot, String? emudeckRoot) async {
+  Future<String?> findExecutable(
+    String emulatorId,
+    String executableName,
+    String emulatorsRoot,
+    String? emudeckRoot,
+  ) async {
     // 1. Check direct file
     final direct = io.File(p.join(emulatorsRoot, executableName));
     if (await direct.exists()) return direct.path;
@@ -138,11 +145,8 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
     final targetStem = targetLower.replaceAll(RegExp(r'\.appimage$'), '');
     // Names to match AppImage files against, e.g. "pcsx2-qt" -> {pcsx2-qt, pcsx2}
     final idLower = emulatorId.toLowerCase();
-    final names = <String>{
-      targetStem,
-      targetStem.split(RegExp(r'[-_.]')).first,
-      idLower,
-    }..removeWhere((n) => n.isEmpty);
+    final names = <String>{targetStem, targetStem.split(RegExp(r'[-_.]')).first, idLower}
+      ..removeWhere((n) => n.isEmpty);
 
     for (final dir in dirs) {
       if (!await dir.exists()) continue;
@@ -178,7 +182,13 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
   }
 
   @override
-  Future<void> launch(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []}) async {
+  Future<void> launch(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     final (exe, cmdArgs) = LinuxEnvironmentStrategy.splitCommand(exePath);
     _checkFlatpakSandboxAccessIfNeeded(exe, cmdArgs, romPath);
     if (cmdArgs.isNotEmpty) {
@@ -190,12 +200,21 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
       // `flatpak` works fine from an interactive shell. splitCommand resolves
       // `flatpak` to its absolute path; if it couldn't be found, fall back to
       // shell resolution.
-      await io.Process.start(exe, [...cmdArgs, ...args, romPath], mode: io.ProcessStartMode.detached, runInShell: exe == 'flatpak');
+      await io.Process.start(
+        exe,
+        [...cmdArgs, ...args, romPath],
+        mode: io.ProcessStartMode.detached,
+        runInShell: exe == 'flatpak',
+      );
     } else if (exePath.endsWith('.sh')) {
       await io.Process.start('bash', [exePath, ...args, romPath], mode: io.ProcessStartMode.detached);
     } else {
-      await io.Process.start(exePath, [...args, romPath],
-          mode: io.ProcessStartMode.detached, environment: _launchEnvironment(emulatorId));
+      await io.Process.start(
+        exePath,
+        [...args, romPath],
+        mode: io.ProcessStartMode.detached,
+        environment: _launchEnvironment(emulatorId),
+      );
     }
   }
 
@@ -207,22 +226,41 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
       io.Platform.environment,
       nvidiaDriver: io.File('/proc/driver/nvidia/version').existsSync(),
     );
-    if (extra.isNotEmpty) debugPrint('[Launch] $emulatorId: using ${extra.entries.map((e) => '${e.key}=${e.value}').join(' ')} (NVIDIA + Wayland workaround)');
+    if (extra.isNotEmpty) {
+      debugPrint(
+        '[Launch] $emulatorId: using ${extra.entries.map((e) => '${e.key}=${e.value}').join(' ')} (NVIDIA + Wayland workaround)',
+      );
+    }
     return extra.isEmpty ? null : extra;
   }
 
   @override
-  Future<io.Process?> launchWithHandle(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []}) async {
+  Future<io.Process?> launchWithHandle(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     final (exe, cmdArgs) = LinuxEnvironmentStrategy.splitCommand(exePath);
     _checkFlatpakSandboxAccessIfNeeded(exe, cmdArgs, romPath);
     if (cmdArgs.isNotEmpty) {
       // See comment in launch() above regarding runInShell for flatpak commands.
-      return await io.Process.start(exe, [...cmdArgs, ...args, romPath], mode: io.ProcessStartMode.normal, runInShell: exe == 'flatpak');
+      return await io.Process.start(
+        exe,
+        [...cmdArgs, ...args, romPath],
+        mode: io.ProcessStartMode.normal,
+        runInShell: exe == 'flatpak',
+      );
     } else if (exePath.endsWith('.sh')) {
       return await io.Process.start('bash', [exePath, ...args, romPath], mode: io.ProcessStartMode.normal);
     } else {
-      return await io.Process.start(exePath, [...args, romPath],
-          mode: io.ProcessStartMode.normal, environment: _launchEnvironment(emulatorId));
+      return await io.Process.start(
+        exePath,
+        [...args, romPath],
+        mode: io.ProcessStartMode.normal,
+        environment: _launchEnvironment(emulatorId),
+      );
     }
   }
 
@@ -231,7 +269,12 @@ class NativeLinuxStrategy extends LinuxEnvironmentStrategy {
     final (exe, cmdArgs) = LinuxEnvironmentStrategy.splitCommand(exePath);
     if (cmdArgs.isNotEmpty) {
       // See comment in launch() above regarding runInShell for flatpak commands.
-      await io.Process.start(exe, [...cmdArgs, ...args], mode: io.ProcessStartMode.detached, runInShell: exe == 'flatpak');
+      await io.Process.start(
+        exe,
+        [...cmdArgs, ...args],
+        mode: io.ProcessStartMode.detached,
+        runInShell: exe == 'flatpak',
+      );
     } else if (exePath.endsWith('.sh')) {
       await io.Process.start('bash', [exePath, ...args], mode: io.ProcessStartMode.detached);
     } else {

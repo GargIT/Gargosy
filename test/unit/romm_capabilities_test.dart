@@ -138,11 +138,7 @@ void main() {
     });
 
     test('fromJson parses is_current=false correctly', () {
-      final json = {
-        'device_id': 'abc-123',
-        'is_current': false,
-        'is_untracked': false,
-      };
+      final json = {'device_id': 'abc-123', 'is_current': false, 'is_untracked': false};
       final sync = DeviceSync.fromJson(json);
       expect(sync.isCurrent, isFalse);
     });
@@ -185,23 +181,14 @@ void main() {
     });
 
     test('fromJson defaults to empty deviceSyncs when missing', () {
-      final json = {
-        'id': '1',
-        'rom_id': '42',
-        'download_path': '/api/saves/1/content',
-      };
+      final json = {'id': '1', 'rom_id': '42', 'download_path': '/api/saves/1/content'};
       final save = SaveFile.fromJson(json);
       expect(save.deviceSyncs, isEmpty);
       expect(save.slot, isNull);
     });
 
     test('fromJson prefers download_path over url', () {
-      final json = {
-        'id': '1',
-        'rom_id': '42',
-        'download_path': '/api/saves/1/content',
-        'url': '/old/url',
-      };
+      final json = {'id': '1', 'rom_id': '42', 'download_path': '/api/saves/1/content', 'url': '/old/url'};
       final save = SaveFile.fromJson(json);
       expect(save.url, '/api/saves/1/content');
     });

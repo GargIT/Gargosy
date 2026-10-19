@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -31,8 +32,12 @@ class _DirStrategy extends SaveStrategy {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async => dir;
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async =>
-      Directory(dir).listSync().whereType<File>().toList();
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => Directory(dir).listSync().whereType<File>().toList();
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -51,8 +56,12 @@ class _SaveDirSync implements SaveSyncService {
   }
 
   @override
-  Future<T?> withStrategy<T>(Game game, Future<T> Function(SaveStrategy strategy) body,
-      {String? emulatorId, String? coreOverride}) async {
+  Future<T?> withStrategy<T>(
+    Game game,
+    Future<T> Function(SaveStrategy strategy) body, {
+    String? emulatorId,
+    String? coreOverride,
+  }) async {
     final strategy = getStrategyForGame(game, emulatorId: emulatorId);
     return strategy == null ? null : body(strategy);
   }
@@ -114,13 +123,16 @@ void main() {
       // real save files on disk to produce a non-null result.
     });
 
-    test('createImmediate returns null (not a wrong-emulator backup) when no save files exist for the given emulator', () async {
-      // No save files exist for either emulator in this fresh temp dir, so
-      // createImmediate must return null rather than silently succeeding
-      // with a backup sourced from a different emulator's strategy.
-      final result = await backupService.createImmediate(game, romPath, syncService, emulatorId: 'melonds');
-      expect(result, isNull);
-    });
+    test(
+      'createImmediate returns null (not a wrong-emulator backup) when no save files exist for the given emulator',
+      () async {
+        // No save files exist for either emulator in this fresh temp dir, so
+        // createImmediate must return null rather than silently succeeding
+        // with a backup sourced from a different emulator's strategy.
+        final result = await backupService.createImmediate(game, romPath, syncService, emulatorId: 'melonds');
+        expect(result, isNull);
+      },
+    );
 
     test('restore puts a backup into the save folder of the emulator it is asked for', () async {
       final zipPath = p.join(tempDir.path, 'backup.zip');

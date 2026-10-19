@@ -20,7 +20,10 @@ final linkedEmulatorConfigs = <String, ProfileLaunchConfig>{
   'azahar': const LinkedFolderConfig('user', then: _Step(_azahar)),
   // Cemu (Wii U, #14): `portable\` beside the exe; the MLC (the saves) is
   // the profile's own, given with -m; a disc's key beside it joins keys.txt.
-  'cemu': LinkedFolderConfig('portable', then: _Step(_cemu, args: (c) => ['-m', cemuMlc(c)], game: addCemuDiscKey)),
+  'cemu': LinkedFolderConfig(
+    'portable',
+    then: _Step(_cemu, args: (c) => ['-m', cemuMlc(c)], game: addCemuDiscKey),
+  ),
   // melonDS (DS, #15): `portable\` beside the exe; saves and states set in
   // its melonDS.toml, never next to the ROM.
   'melonds': const LinkedFolderConfig('portable', then: _Step(_melonDs)),
@@ -76,20 +79,30 @@ void _qtGameDirs(LaunchContext c, String iniPath) {
 void _eden(LaunchContext c) {
   final user = p.join(c.data, 'user');
   // Keys from RomM's firmware (bios\): Eden can't start a game without them.
-  _keysInto(c, p.join(user, 'keys'), [
-    ['prod.keys'],
-    ['title.keys'],
-  ], platforms: const ['switch']);
+  _keysInto(
+    c,
+    p.join(user, 'keys'),
+    [
+      ['prod.keys'],
+      ['title.keys'],
+    ],
+    platforms: const ['switch'],
+  );
   _qtGameDirs(c, p.join(user, 'config', 'qt-config.ini'));
 }
 
 void _azahar(LaunchContext c) {
   final user = p.join(c.data, 'user');
   // aes_keys.txt for encrypted games, seeddb.bin when there is one.
-  _keysInto(c, p.join(user, 'sysdata'), [
-    ['aes_keys.txt'],
-    ['seeddb.bin'],
-  ], platforms: const ['3ds']);
+  _keysInto(
+    c,
+    p.join(user, 'sysdata'),
+    [
+      ['aes_keys.txt'],
+      ['seeddb.bin'],
+    ],
+    platforms: const ['3ds'],
+  );
   _qtGameDirs(c, p.join(user, 'config', 'qt-config.ini'));
 }
 
@@ -109,9 +122,14 @@ void _cemu(LaunchContext c) {
     }
     stray.renameSync(c.guard.check(off));
   }
-  _keysInto(c, portable, [
-    ['keys.txt'],
-  ], platforms: const ['wiiu']);
+  _keysInto(
+    c,
+    portable,
+    [
+      ['keys.txt'],
+    ],
+    platforms: const ['wiiu'],
+  );
   final settings = io.File(p.join(portable, 'settings.xml'));
   if (settings.existsSync() && c.gameFolders.isNotEmpty) {
     final text = settings.readAsStringSync();
@@ -132,8 +150,8 @@ void addCemuDiscKey(LaunchContext c, String romPath) {
   final key = bytes.length == 16
       ? [for (final b in bytes) b.toRadixString(16).padLeft(2, '0')].join()
       : RegExp(r'^[0-9a-fA-F]{32}$').hasMatch(text)
-          ? text.toLowerCase()
-          : null;
+      ? text.toLowerCase()
+      : null;
   if (key == null) return;
   final keys = io.File(c.guard.check(p.join(c.data, 'portable', 'keys.txt')));
   final had = keys.existsSync() ? keys.readAsStringSync() : '';
@@ -148,7 +166,10 @@ void addCemuDiscKey(LaunchContext c, String romPath) {
 String addCemuGamePaths(String xml, List<String> paths) {
   String esc(String s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   final have = RegExp(r'<Entry>([^<]*)</Entry>').allMatches(xml).map((m) => m[1]!.toLowerCase()).toSet();
-  final add = [for (final path in paths) if (!have.contains(esc(path).toLowerCase())) '<Entry>${esc(path)}</Entry>'];
+  final add = [
+    for (final path in paths)
+      if (!have.contains(esc(path).toLowerCase())) '<Entry>${esc(path)}</Entry>',
+  ];
   if (add.isEmpty) return xml;
   final open = RegExp(r'<GamePaths\s*/>|<GamePaths>').firstMatch(xml);
   if (open != null) {
@@ -185,7 +206,9 @@ void _melonDs(LaunchContext c) {
       if (files.find(names, platforms: const ['nds']) case final f?) key: f.path,
   };
   if (bios.isNotEmpty) text = setTomlKeys(text, 'DS', bios);
-  if (bios.length == 3) text = setTomlKeys(text, 'Emu', {'ExternalBIOSEnable': 'true'}, bare: const {'ExternalBIOSEnable'});
+  if (bios.length == 3) {
+    text = setTomlKeys(text, 'Emu', {'ExternalBIOSEnable': 'true'}, bare: const {'ExternalBIOSEnable'});
+  }
   io.Directory(c.guard.check(portable)).createSync(recursive: true);
   io.File(c.guard.check(toml.path)).writeAsStringSync(text);
 }

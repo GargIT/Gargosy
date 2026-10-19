@@ -9,8 +9,11 @@ import '../profiles/profile_providers.dart';
 /// The active profile's RomM client (spec §4: every RomM call goes through the
 /// profile's own session). Rebuilt only when the server or token changes.
 final rommServiceProvider = Provider<RommService?>((ref) {
-  final key = ref.watch(activeProfileProvider.select((c) =>
-      c == null ? null : (c.profile.serverUrl, c.login.token, c.profile.trustSelfSigned)));
+  final key = ref.watch(
+    activeProfileProvider.select(
+      (c) => c == null ? null : (c.profile.serverUrl, c.login.token, c.profile.trustSelfSigned),
+    ),
+  );
   if (key == null) return null;
   final (url, token, trust) = key;
   final service = RommService(

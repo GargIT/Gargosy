@@ -44,14 +44,19 @@ class EmulatorBiosSpec {
 
   /// If true, the emulator has built-in HLE BIOS and can run without any files.
   final bool hasHleBios;
-  
+
   // Optionally provides a fallback folder if the BIOS file name does not match
   final String? fallbackSubdirectory;
 
   // Some Libretro/RetroArch Cores uses a different subfolder than their standalone counterparts.
   final String? fallbackSubdirectoryLibretro;
 
-  const EmulatorBiosSpec({required this.files, this.hasHleBios = false, this.fallbackSubdirectory, this.fallbackSubdirectoryLibretro});
+  const EmulatorBiosSpec({
+    required this.files,
+    this.hasHleBios = false,
+    this.fallbackSubdirectory,
+    this.fallbackSubdirectoryLibretro,
+  });
 
   int get requiredCount => files.where((f) => f.requirement == BiosRequirement.required).length;
   int get optionalCount => files.where((f) => f.requirement == BiosRequirement.optional).length;
@@ -305,16 +310,11 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
         description: 'Dreamcast BIOS',
         md5Hash: 'e10c53c2f8b90bab96ead2d368858623',
       ),
-      BiosFileSpec(
-        fileName: 'naomi.zip',
-        requirement: BiosRequirement.optional,
-        description: 'NAOMI BIOS (from MAME)',
-      ),
+      BiosFileSpec(fileName: 'naomi.zip', requirement: BiosRequirement.optional, description: 'NAOMI BIOS (from MAME)'),
       BiosFileSpec(
         fileName: 'awbios.zip',
         requirement: BiosRequirement.optional,
         description: 'Atomiswave BIOS (from MAME)',
-
       ),
       BiosFileSpec(
         fileName: 'naomi2.zip',
@@ -370,11 +370,7 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
         description: 'NDS ARM9 BIOS',
         md5Hash: 'a392174eb3e572fed6447e956bde4b25',
       ),
-      BiosFileSpec(
-        fileName: 'firmware.bin',
-        requirement: BiosRequirement.optional,
-        description: 'NDS Firmware',
-      ),
+      BiosFileSpec(fileName: 'firmware.bin', requirement: BiosRequirement.optional, description: 'NDS Firmware'),
       BiosFileSpec(
         fileName: 'dsi_bios7.bin',
         requirement: BiosRequirement.required,
@@ -449,11 +445,7 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
         requirement: BiosRequirement.required,
         description: 'PC Engine CD BIOS v3.0',
       ),
-      BiosFileSpec(
-        fileName: 'gexpress.pce',
-        requirement: BiosRequirement.optional,
-        description: 'Game Express BIOS',
-      ),
+      BiosFileSpec(fileName: 'gexpress.pce', requirement: BiosRequirement.optional, description: 'Game Express BIOS'),
     ],
   ),
 
@@ -483,16 +475,8 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
         requirement: BiosRequirement.required,
         description: '3DO Panasonic FZ-10 (no RSA) BIOS',
       ),
-      BiosFileSpec(
-        fileName: 'goldstar.bin',
-        requirement: BiosRequirement.required,
-        description: '3DO Goldstar BIOS',
-      ),
-      BiosFileSpec(
-        fileName: 'sanyotry.bin',
-        requirement: BiosRequirement.required,
-        description: '3DO Sanyo BIOS',
-      ),
+      BiosFileSpec(fileName: 'goldstar.bin', requirement: BiosRequirement.required, description: '3DO Goldstar BIOS'),
+      BiosFileSpec(fileName: 'sanyotry.bin', requirement: BiosRequirement.required, description: '3DO Sanyo BIOS'),
       BiosFileSpec(
         fileName: '3do_bios.bin',
         requirement: BiosRequirement.required,
@@ -528,11 +512,7 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
         description: 'NDS ARM9 BIOS',
         md5Hash: 'a392174eb3e572fed6447e956bde4b25',
       ),
-      BiosFileSpec(
-        fileName: 'firmware.bin',
-        requirement: BiosRequirement.optional,
-        description: 'NDS Firmware',
-      ),
+      BiosFileSpec(fileName: 'firmware.bin', requirement: BiosRequirement.optional, description: 'NDS Firmware'),
     ],
   ),
 
@@ -550,13 +530,7 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
 
   // ── Atari ST (Hatari via RetroArch) ─────────────────────────────
   'hatari': EmulatorBiosSpec(
-    files: [
-      BiosFileSpec(
-        fileName: 'tos.img',
-        requirement: BiosRequirement.required,
-        description: 'Atari ST TOS ROM',
-      ),
-    ],
+    files: [BiosFileSpec(fileName: 'tos.img', requirement: BiosRequirement.required, description: 'Atari ST TOS ROM')],
   ),
 
   // ── Amiga (PUAE via RetroArch) ───────────────────────────────────
@@ -622,26 +596,10 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
   // ── MSX (blueMSX via RetroArch) ─────────────────────────────────
   'bluemsx': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'MSX.ROM',
-        requirement: BiosRequirement.optional,
-        description: 'MSX System ROM',
-      ),
-      BiosFileSpec(
-        fileName: 'MSX2.ROM',
-        requirement: BiosRequirement.optional,
-        description: 'MSX2 System ROM',
-      ),
-      BiosFileSpec(
-        fileName: 'MSX2P.ROM',
-        requirement: BiosRequirement.optional,
-        description: 'MSX2+ System ROM',
-      ),
-      BiosFileSpec(
-        fileName: 'MSXtR.ROM',
-        requirement: BiosRequirement.optional,
-        description: 'MSX-Music ROM',
-      ),
+      BiosFileSpec(fileName: 'MSX.ROM', requirement: BiosRequirement.optional, description: 'MSX System ROM'),
+      BiosFileSpec(fileName: 'MSX2.ROM', requirement: BiosRequirement.optional, description: 'MSX2 System ROM'),
+      BiosFileSpec(fileName: 'MSX2P.ROM', requirement: BiosRequirement.optional, description: 'MSX2+ System ROM'),
+      BiosFileSpec(fileName: 'MSXtR.ROM', requirement: BiosRequirement.optional, description: 'MSX-Music ROM'),
     ],
   ),
 
@@ -688,49 +646,27 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
   // ── ColecoVision (Gearcoleco via RetroArch) ─────────────────────
   'gearcoleco': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'coleco.rom',
-        requirement: BiosRequirement.required,
-        description: 'ColecoVision BIOS',
-      ),
+      BiosFileSpec(fileName: 'coleco.rom', requirement: BiosRequirement.required, description: 'ColecoVision BIOS'),
     ],
   ),
 
   // ── Odyssey2 (O2EM via RetroArch) ──────────────────────────────
   'o2em': EmulatorBiosSpec(
-    files: [
-      BiosFileSpec(
-        fileName: 'o2rom.bin',
-        requirement: BiosRequirement.required,
-        description: 'Odyssey2 BIOS',
-      ),
-    ],
+    files: [BiosFileSpec(fileName: 'o2rom.bin', requirement: BiosRequirement.required, description: 'Odyssey2 BIOS')],
   ),
 
   // ── Palm (Mu via RetroArch) ─────────────────────────────────────
   'mu': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'palmos-rom.bin',
-        requirement: BiosRequirement.required,
-        description: 'Palm OS ROM',
-      ),
+      BiosFileSpec(fileName: 'palmos-rom.bin', requirement: BiosRequirement.required, description: 'Palm OS ROM'),
     ],
   ),
 
   // ── Sharp X68000 (PX68k via RetroArch) ──────────────────────────
   'px68k': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'iplrom30.dat',
-        requirement: BiosRequirement.required,
-        description: 'X68000 IPL ROM v3.0',
-      ),
-      BiosFileSpec(
-        fileName: 'iplrom.dat',
-        requirement: BiosRequirement.required,
-        description: 'X68000 IPL ROM',
-      ),
+      BiosFileSpec(fileName: 'iplrom30.dat', requirement: BiosRequirement.required, description: 'X68000 IPL ROM v3.0'),
+      BiosFileSpec(fileName: 'iplrom.dat', requirement: BiosRequirement.required, description: 'X68000 IPL ROM'),
       BiosFileSpec(
         fileName: 'cgrom.dat',
         requirement: BiosRequirement.required,
@@ -790,88 +726,45 @@ const Map<String, EmulatorBiosSpec> kBiosRegistry = {
   // ── Thomson MO/TO (Theodore via RetroArch) ──────────────────────
   'theodore': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'to8.rom',
-        requirement: BiosRequirement.required,
-        description: 'Thomson TO8 ROM',
-      ),
-      BiosFileSpec(
-        fileName: 'to9.rom',
-        requirement: BiosRequirement.required,
-        description: 'Thomson TO9 ROM',
-      ),
+      BiosFileSpec(fileName: 'to8.rom', requirement: BiosRequirement.required, description: 'Thomson TO8 ROM'),
+      BiosFileSpec(fileName: 'to9.rom', requirement: BiosRequirement.required, description: 'Thomson TO9 ROM'),
     ],
   ),
 
   // ── TI-83 (Numero via RetroArch) ────────────────────────────────
   'numero': EmulatorBiosSpec(
-    files: [
-      BiosFileSpec(
-        fileName: 'ti83se.rom',
-        requirement: BiosRequirement.optional,
-        description: 'TI-83 SE ROM',
-      ),
-    ],
+    files: [BiosFileSpec(fileName: 'ti83se.rom', requirement: BiosRequirement.optional, description: 'TI-83 SE ROM')],
   ),
 
   // ── ZX Spectrum (Fuse via RetroArch) ────────────────────────────
   'fuse': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: '128.rom',
-        requirement: BiosRequirement.optional,
-        description: 'ZX Spectrum 128K ROM',
-      ),
-      BiosFileSpec(
-        fileName: '48.rom',
-        requirement: BiosRequirement.optional,
-        description: 'ZX Spectrum 48K ROM',
-      ),
+      BiosFileSpec(fileName: '128.rom', requirement: BiosRequirement.optional, description: 'ZX Spectrum 128K ROM'),
+      BiosFileSpec(fileName: '48.rom', requirement: BiosRequirement.optional, description: 'ZX Spectrum 48K ROM'),
     ],
   ),
 
   // ── Amstrad CPC (Caprice32 via RetroArch) ───────────────────────
   'cap32': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'cpc464.rom',
-        requirement: BiosRequirement.optional,
-        description: 'Amstrad CPC 464 ROM',
-      ),
+      BiosFileSpec(fileName: 'cpc464.rom', requirement: BiosRequirement.optional, description: 'Amstrad CPC 464 ROM'),
     ],
   ),
 
   // ── Atari 2600 (Hatarib via RetroArch) ──────────────────────────
-  'hatarib': EmulatorBiosSpec(
-    hasHleBios: true,
-    files: [],
-  ),
+  'hatarib': EmulatorBiosSpec(hasHleBios: true, files: []),
 
   // ── Neo Geo (various cores) ─────────────────────────────────────
   // Neo Geo cores use HLE — the AES/MVS BIOS is embedded in ROMs
   'neocd': EmulatorBiosSpec(
-    files: [
-      BiosFileSpec(
-        fileName: 'neocd.bin',
-        requirement: BiosRequirement.required,
-        description: 'Neo Geo CD BIOS',
-      ),
-    ],
+    files: [BiosFileSpec(fileName: 'neocd.bin', requirement: BiosRequirement.required, description: 'Neo Geo CD BIOS')],
   ),
 
   // ── PC-88 (QUASI88 via RetroArch) ───────────────────────────────
   'quasi88': EmulatorBiosSpec(
     files: [
-      BiosFileSpec(
-        fileName: 'n88.rom',
-        requirement: BiosRequirement.required,
-        description: 'PC-88 N88 ROM',
-      ),
-      BiosFileSpec(
-        fileName: 'n88ext.rom',
-        requirement: BiosRequirement.required,
-        description: 'PC-88 Extension ROM',
-      ),
+      BiosFileSpec(fileName: 'n88.rom', requirement: BiosRequirement.required, description: 'PC-88 N88 ROM'),
+      BiosFileSpec(fileName: 'n88ext.rom', requirement: BiosRequirement.required, description: 'PC-88 Extension ROM'),
     ],
   ),
 

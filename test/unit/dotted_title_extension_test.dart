@@ -8,9 +8,11 @@ void main() {
   group('DownloadService.hasRealExtension', () {
     test('dotted title without a real extension is not an extension', () {
       expect(
-          DownloadService.hasRealExtension(
-              '/roms/ps2/Test Quest Vol. 1 - The Beginning/Test Quest Vol. 1 - The Beginning'),
-          isFalse);
+        DownloadService.hasRealExtension(
+          '/roms/ps2/Test Quest Vol. 1 - The Beginning/Test Quest Vol. 1 - The Beginning',
+        ),
+        isFalse,
+      );
     });
 
     test('plain title without a dot has no extension', () {

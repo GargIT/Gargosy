@@ -7,8 +7,7 @@
 import 'dart:async' as _i7;
 import 'dart:io' as _i9;
 
-import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strategy.dart'
-    as _i4;
+import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strategy.dart' as _i4;
 import 'package:gargosy/core/romm/romm_models.dart' as _i8;
 import 'package:gargosy/core/storage/app_preferences.dart' as _i3;
 import 'package:gargosy/core/storage/directory_service.dart' as _i5;
@@ -33,20 +32,15 @@ import 'package:mockito/src/dummies.dart' as _i6;
 // ignore_for_file: invalid_use_of_internal_member
 
 class _FakeStorageStatus_0 extends _i1.SmartFake implements _i2.StorageStatus {
-  _FakeStorageStatus_0(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeStorageStatus_0(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
-class _FakeAppPreferences_1 extends _i1.SmartFake
-    implements _i3.AppPreferences {
-  _FakeAppPreferences_1(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakeAppPreferences_1 extends _i1.SmartFake implements _i3.AppPreferences {
+  _FakeAppPreferences_1(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
-class _FakeLinuxEnvironmentStrategy_2 extends _i1.SmartFake
-    implements _i4.LinuxEnvironmentStrategy {
-  _FakeLinuxEnvironmentStrategy_2(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakeLinuxEnvironmentStrategy_2 extends _i1.SmartFake implements _i4.LinuxEnvironmentStrategy {
+  _FakeLinuxEnvironmentStrategy_2(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 /// A class which mocks [DirectoryService].
@@ -66,26 +60,18 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
   @override
   String get emulatorsRootPath => (super.noSuchMethod(
     Invocation.getter(#emulatorsRootPath),
-    returnValue: _i6.dummyValue<String>(
-      this,
-      Invocation.getter(#emulatorsRootPath),
-    ),
+    returnValue: _i6.dummyValue<String>(this, Invocation.getter(#emulatorsRootPath)),
   ) as String);
 
   @override
   String get linuxSyncPreset => (super.noSuchMethod(
     Invocation.getter(#linuxSyncPreset),
-    returnValue: _i6.dummyValue<String>(
-      this,
-      Invocation.getter(#linuxSyncPreset),
-    ),
+    returnValue: _i6.dummyValue<String>(this, Invocation.getter(#linuxSyncPreset)),
   ) as String);
 
   @override
-  bool get useFlatEmulatorLayout => (super.noSuchMethod(
-    Invocation.getter(#useFlatEmulatorLayout),
-    returnValue: false,
-  ) as bool);
+  bool get useFlatEmulatorLayout =>
+      (super.noSuchMethod(Invocation.getter(#useFlatEmulatorLayout), returnValue: false) as bool);
 
   @override
   _i2.StorageStatus get status => (super.noSuchMethod(
@@ -100,90 +86,63 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
   ) as _i3.AppPreferences);
 
   @override
-  bool get isSteamDeck =>
-      (super.noSuchMethod(Invocation.getter(#isSteamDeck), returnValue: false)
-          as bool);
+  bool get isSteamDeck => (super.noSuchMethod(Invocation.getter(#isSteamDeck), returnValue: false) as bool);
 
   @override
-  _i4.LinuxEnvironmentStrategy get activeLinuxEnvironment =>
-      (super.noSuchMethod(
-        Invocation.getter(#activeLinuxEnvironment),
-        returnValue: _FakeLinuxEnvironmentStrategy_2(
-          this,
-          Invocation.getter(#activeLinuxEnvironment),
-        ),
-      ) as _i4.LinuxEnvironmentStrategy);
+  _i4.LinuxEnvironmentStrategy get activeLinuxEnvironment => (super.noSuchMethod(
+    Invocation.getter(#activeLinuxEnvironment),
+    returnValue: _FakeLinuxEnvironmentStrategy_2(this, Invocation.getter(#activeLinuxEnvironment)),
+  ) as _i4.LinuxEnvironmentStrategy);
 
   @override
-  set romsRootPath(String? value) => super.noSuchMethod(
-    Invocation.setter(#romsRootPath, value),
-    returnValueForMissingStub: null,
-  );
+  set romsRootPath(String? value) =>
+      super.noSuchMethod(Invocation.setter(#romsRootPath, value), returnValueForMissingStub: null);
 
   @override
-  set emulatorsRootPath(String? value) => super.noSuchMethod(
-    Invocation.setter(#emulatorsRootPath, value),
-    returnValueForMissingStub: null,
-  );
+  set emulatorsRootPath(String? value) =>
+      super.noSuchMethod(Invocation.setter(#emulatorsRootPath, value), returnValueForMissingStub: null);
 
   @override
-  set linuxSyncPreset(String? value) => super.noSuchMethod(
-    Invocation.setter(#linuxSyncPreset, value),
-    returnValueForMissingStub: null,
-  );
+  set linuxSyncPreset(String? value) =>
+      super.noSuchMethod(Invocation.setter(#linuxSyncPreset, value), returnValueForMissingStub: null);
 
   @override
-  set linuxPresetRootPath(String? value) => super.noSuchMethod(
-    Invocation.setter(#linuxPresetRootPath, value),
-    returnValueForMissingStub: null,
-  );
+  set linuxPresetRootPath(String? value) =>
+      super.noSuchMethod(Invocation.setter(#linuxPresetRootPath, value), returnValueForMissingStub: null);
 
   @override
-  set useFlatEmulatorLayout(bool? value) => super.noSuchMethod(
-    Invocation.setter(#useFlatEmulatorLayout, value),
-    returnValueForMissingStub: null,
-  );
+  set useFlatEmulatorLayout(bool? value) =>
+      super.noSuchMethod(Invocation.setter(#useFlatEmulatorLayout, value), returnValueForMissingStub: null);
 
   @override
-  set status(_i2.StorageStatus? value) => super.noSuchMethod(
-    Invocation.setter(#status, value),
-    returnValueForMissingStub: null,
-  );
+  set status(_i2.StorageStatus? value) =>
+      super.noSuchMethod(Invocation.setter(#status, value), returnValueForMissingStub: null);
 
   @override
   set flatpakInstalledCheck(_i7.Future<bool> Function(String)? value) =>
-      super.noSuchMethod(
-        Invocation.setter(#flatpakInstalledCheck, value),
-        returnValueForMissingStub: null,
-      );
+      super.noSuchMethod(Invocation.setter(#flatpakInstalledCheck, value), returnValueForMissingStub: null);
 
   @override
-  _i7.Future<String?> detectEmuDeckRoot() => (super.noSuchMethod(
-    Invocation.method(#detectEmuDeckRoot, []),
-    returnValue: _i7.Future<String?>.value(),
-  ) as _i7.Future<String?>);
+  _i7.Future<String?> detectEmuDeckRoot() =>
+      (super.noSuchMethod(Invocation.method(#detectEmuDeckRoot, []), returnValue: _i7.Future<String?>.value())
+          as _i7.Future<String?>);
 
   @override
   _i7.Future<_i2.StorageStatus> initialize() => (super.noSuchMethod(
     Invocation.method(#initialize, []),
-    returnValue: _i7.Future<_i2.StorageStatus>.value(
-      _FakeStorageStatus_0(this, Invocation.method(#initialize, [])),
-    ),
+    returnValue: _i7.Future<_i2.StorageStatus>.value(_FakeStorageStatus_0(this, Invocation.method(#initialize, []))),
   ) as _i7.Future<_i2.StorageStatus>);
 
   @override
   _i7.Future<String> getDefaultBase() => (super.noSuchMethod(
     Invocation.method(#getDefaultBase, []),
-    returnValue: _i7.Future<String>.value(
-      _i6.dummyValue<String>(this, Invocation.method(#getDefaultBase, [])),
-    ),
+    returnValue: _i7.Future<String>.value(_i6.dummyValue<String>(this, Invocation.method(#getDefaultBase, []))),
   ) as _i7.Future<String>);
 
   @override
-  _i7.Future<String?> resolveSevenZipPath() => (super.noSuchMethod(
-    Invocation.method(#resolveSevenZipPath, []),
-    returnValue: _i7.Future<String?>.value(),
-  ) as _i7.Future<String?>);
+  _i7.Future<String?> resolveSevenZipPath() =>
+      (super.noSuchMethod(Invocation.method(#resolveSevenZipPath, []), returnValue: _i7.Future<String?>.value())
+          as _i7.Future<String?>);
 
   @override
   _i7.Future<void> resetRomsRoot() => (super.noSuchMethod(
@@ -214,60 +173,49 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
   ) as _i7.Future<void>);
 
   @override
-  void loadEmulatorPathOverrides() => super.noSuchMethod(
-    Invocation.method(#loadEmulatorPathOverrides, []),
-    returnValueForMissingStub: null,
-  );
+  void loadEmulatorPathOverrides() =>
+      super.noSuchMethod(Invocation.method(#loadEmulatorPathOverrides, []), returnValueForMissingStub: null);
 
   @override
-  _i7.Future<void> setEmulatorPathOverride(String? emulatorId, String? path) =>
-      (super.noSuchMethod(
-        Invocation.method(#setEmulatorPathOverride, [emulatorId, path]),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+  _i7.Future<void> setEmulatorPathOverride(String? emulatorId, String? path) => (super.noSuchMethod(
+    Invocation.method(#setEmulatorPathOverride, [emulatorId, path]),
+    returnValue: _i7.Future<void>.value(),
+    returnValueForMissingStub: _i7.Future<void>.value(),
+  ) as _i7.Future<void>);
 
   @override
-  _i7.Future<String?> getEmulatorUrlOverride(String? emulatorId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getEmulatorUrlOverride, [emulatorId]),
-        returnValue: _i7.Future<String?>.value(),
-      ) as _i7.Future<String?>);
+  _i7.Future<String?> getEmulatorUrlOverride(String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorUrlOverride, [emulatorId]),
+    returnValue: _i7.Future<String?>.value(),
+  ) as _i7.Future<String?>);
 
   @override
-  _i7.Future<void> setEmulatorUrlOverride(String? emulatorId, String? url) =>
-      (super.noSuchMethod(
-        Invocation.method(#setEmulatorUrlOverride, [emulatorId, url]),
-        returnValue: _i7.Future<void>.value(),
-        returnValueForMissingStub: _i7.Future<void>.value(),
-      ) as _i7.Future<void>);
+  _i7.Future<void> setEmulatorUrlOverride(String? emulatorId, String? url) => (super.noSuchMethod(
+    Invocation.method(#setEmulatorUrlOverride, [emulatorId, url]),
+    returnValue: _i7.Future<void>.value(),
+    returnValueForMissingStub: _i7.Future<void>.value(),
+  ) as _i7.Future<void>);
 
   @override
-  String? getEmulatorPathOverride(String? emulatorId) => (super.noSuchMethod(
-    Invocation.method(#getEmulatorPathOverride, [emulatorId]),
-  ) as String?);
+  String? getEmulatorPathOverride(String? emulatorId) =>
+      (super.noSuchMethod(Invocation.method(#getEmulatorPathOverride, [emulatorId])) as String?);
 
   @override
-  _i7.Future<void> setEmulatorFlatpakOverride(
-    String? emulatorId,
-    String? packageId,
-  ) => (super.noSuchMethod(
+  _i7.Future<void> setEmulatorFlatpakOverride(String? emulatorId, String? packageId) => (super.noSuchMethod(
     Invocation.method(#setEmulatorFlatpakOverride, [emulatorId, packageId]),
     returnValue: _i7.Future<void>.value(),
     returnValueForMissingStub: _i7.Future<void>.value(),
   ) as _i7.Future<void>);
 
   @override
-  String? getEmulatorFlatpakOverride(String? emulatorId) => (super.noSuchMethod(
-    Invocation.method(#getEmulatorFlatpakOverride, [emulatorId]),
-  ) as String?);
+  String? getEmulatorFlatpakOverride(String? emulatorId) =>
+      (super.noSuchMethod(Invocation.method(#getEmulatorFlatpakOverride, [emulatorId])) as String?);
 
   @override
-  _i7.Future<String?> getEffectiveFlatpakPackage(String? emulatorId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getEffectiveFlatpakPackage, [emulatorId]),
-        returnValue: _i7.Future<String?>.value(),
-      ) as _i7.Future<String?>);
+  _i7.Future<String?> getEffectiveFlatpakPackage(String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#getEffectiveFlatpakPackage, [emulatorId]),
+    returnValue: _i7.Future<String?>.value(),
+  ) as _i7.Future<String?>);
 
   @override
   _i7.Future<void> setRomsRoot(String? path) => (super.noSuchMethod(
@@ -284,46 +232,34 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
   ) as _i7.Future<void>);
 
   @override
-  bool platformSupportsArchive(String? platformSlug) => (super.noSuchMethod(
-    Invocation.method(#platformSupportsArchive, [platformSlug]),
-    returnValue: false,
-  ) as bool);
+  bool platformSupportsArchive(String? platformSlug) =>
+      (super.noSuchMethod(Invocation.method(#platformSupportsArchive, [platformSlug]), returnValue: false) as bool);
 
   @override
-  _i7.Future<bool> isRomDownloaded(_i8.Game? game) => (super.noSuchMethod(
-    Invocation.method(#isRomDownloaded, [game]),
-    returnValue: _i7.Future<bool>.value(false),
-  ) as _i7.Future<bool>);
+  _i7.Future<bool> isRomDownloaded(_i8.Game? game) =>
+      (super.noSuchMethod(Invocation.method(#isRomDownloaded, [game]), returnValue: _i7.Future<bool>.value(false))
+          as _i7.Future<bool>);
 
   @override
   _i7.Future<String> getRomsDirectory() => (super.noSuchMethod(
     Invocation.method(#getRomsDirectory, []),
-    returnValue: _i7.Future<String>.value(
-      _i6.dummyValue<String>(this, Invocation.method(#getRomsDirectory, [])),
-    ),
+    returnValue: _i7.Future<String>.value(_i6.dummyValue<String>(this, Invocation.method(#getRomsDirectory, []))),
   ) as _i7.Future<String>);
 
   @override
   _i7.Future<String> getRomDirectory(_i8.Game? game) => (super.noSuchMethod(
     Invocation.method(#getRomDirectory, [game]),
-    returnValue: _i7.Future<String>.value(
-      _i6.dummyValue<String>(this, Invocation.method(#getRomDirectory, [game])),
-    ),
+    returnValue: _i7.Future<String>.value(_i6.dummyValue<String>(this, Invocation.method(#getRomDirectory, [game]))),
   ) as _i7.Future<String>);
 
   @override
   _i7.Future<String> getRomFilePath(_i8.Game? game) => (super.noSuchMethod(
     Invocation.method(#getRomFilePath, [game]),
-    returnValue: _i7.Future<String>.value(
-      _i6.dummyValue<String>(this, Invocation.method(#getRomFilePath, [game])),
-    ),
+    returnValue: _i7.Future<String>.value(_i6.dummyValue<String>(this, Invocation.method(#getRomFilePath, [game]))),
   ) as _i7.Future<String>);
 
   @override
-  _i7.Future<String?> findExistingRomPath(
-    _i8.Game? game, {
-    _i2.FileSystemIndex? index,
-  }) => (super.noSuchMethod(
+  _i7.Future<String?> findExistingRomPath(_i8.Game? game, {_i2.FileSystemIndex? index}) => (super.noSuchMethod(
     Invocation.method(#findExistingRomPath, [game], {#index: index}),
     returnValue: _i7.Future<String?>.value(),
   ) as _i7.Future<String?>);
@@ -336,79 +272,43 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
   ) as _i7.Future<void>);
 
   @override
-  _i7.Future<String> getEmulatorDirectory(String? emulatorId) =>
+  _i7.Future<String> getEmulatorDirectory(String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorDirectory, [emulatorId]),
+    returnValue: _i7.Future<String>.value(
+      _i6.dummyValue<String>(this, Invocation.method(#getEmulatorDirectory, [emulatorId])),
+    ),
+  ) as _i7.Future<String>);
+
+  @override
+  _i7.Future<String> getEmulatorAppSupportDirectory(String? emulatorName, {String? platformSlug}) =>
       (super.noSuchMethod(
-        Invocation.method(#getEmulatorDirectory, [emulatorId]),
+        Invocation.method(#getEmulatorAppSupportDirectory, [emulatorName], {#platformSlug: platformSlug}),
         returnValue: _i7.Future<String>.value(
           _i6.dummyValue<String>(
             this,
-            Invocation.method(#getEmulatorDirectory, [emulatorId]),
+            Invocation.method(#getEmulatorAppSupportDirectory, [emulatorName], {#platformSlug: platformSlug}),
           ),
         ),
       ) as _i7.Future<String>);
 
   @override
-  _i7.Future<String> getEmulatorAppSupportDirectory(
-    String? emulatorName, {
-    String? platformSlug,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getEmulatorAppSupportDirectory,
-      [emulatorName],
-      {#platformSlug: platformSlug},
-    ),
+  _i7.Future<String> getEmulatorBiosDirectory(String? emulatorId, {String? platformSlug}) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorBiosDirectory, [emulatorId], {#platformSlug: platformSlug}),
     returnValue: _i7.Future<String>.value(
       _i6.dummyValue<String>(
         this,
-        Invocation.method(
-          #getEmulatorAppSupportDirectory,
-          [emulatorName],
-          {#platformSlug: platformSlug},
-        ),
+        Invocation.method(#getEmulatorBiosDirectory, [emulatorId], {#platformSlug: platformSlug}),
       ),
     ),
   ) as _i7.Future<String>);
 
   @override
-  _i7.Future<String> getEmulatorBiosDirectory(
-    String? emulatorId, {
-    String? platformSlug,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getEmulatorBiosDirectory,
-      [emulatorId],
-      {#platformSlug: platformSlug},
-    ),
+  _i7.Future<String> getEmulatorSystemDirectory(String? emulatorId, {String? platformSlug}) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorSystemDirectory, [emulatorId], {#platformSlug: platformSlug}),
     returnValue: _i7.Future<String>.value(
       _i6.dummyValue<String>(
         this,
-        Invocation.method(
-          #getEmulatorBiosDirectory,
-          [emulatorId],
-          {#platformSlug: platformSlug},
-        ),
-      ),
-    ),
-  ) as _i7.Future<String>);
-
-  @override
-  _i7.Future<String> getEmulatorSystemDirectory(
-    String? emulatorId, {
-    String? platformSlug,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getEmulatorSystemDirectory,
-      [emulatorId],
-      {#platformSlug: platformSlug},
-    ),
-    returnValue: _i7.Future<String>.value(
-      _i6.dummyValue<String>(
-        this,
-        Invocation.method(
-          #getEmulatorSystemDirectory,
-          [emulatorId],
-          {#platformSlug: platformSlug},
-        ),
+        Invocation.method(#getEmulatorSystemDirectory, [emulatorId], {#platformSlug: platformSlug}),
       ),
     ),
   ) as _i7.Future<String>);
@@ -428,10 +328,7 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
   ) as _i7.Future<void>);
 
   @override
-  _i7.Future<String?> findEmulatorExecutable(
-    String? emulatorId,
-    String? executableName,
-  ) => (super.noSuchMethod(
+  _i7.Future<String?> findEmulatorExecutable(String? emulatorId, String? executableName) => (super.noSuchMethod(
     Invocation.method(#findEmulatorExecutable, [emulatorId, executableName]),
     returnValue: _i7.Future<String?>.value(),
   ) as _i7.Future<String?>);
@@ -444,11 +341,7 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
     String? exePath, {
     List<String>? args = const [],
   }) => (super.noSuchMethod(
-    Invocation.method(
-      #launchGame,
-      [game, romPath, emulatorId, exePath],
-      {#args: args},
-    ),
+    Invocation.method(#launchGame, [game, romPath, emulatorId, exePath], {#args: args}),
     returnValue: _i7.Future<void>.value(),
     returnValueForMissingStub: _i7.Future<void>.value(),
   ) as _i7.Future<void>);
@@ -461,30 +354,20 @@ class MockDirectoryService extends _i1.Mock implements _i5.DirectoryService {
     String? exePath, {
     List<String>? args = const [],
   }) => (super.noSuchMethod(
-    Invocation.method(
-      #launchGameWithHandle,
-      [game, romPath, emulatorId, exePath],
-      {#args: args},
-    ),
+    Invocation.method(#launchGameWithHandle, [game, romPath, emulatorId, exePath], {#args: args}),
     returnValue: _i7.Future<_i9.Process?>.value(),
   ) as _i7.Future<_i9.Process?>);
 
   @override
-  _i7.Future<void> launchStandalone(
-    String? emulatorId,
-    String? exePath, {
-    List<String>? args = const [],
-  }) => (super.noSuchMethod(
-    Invocation.method(#launchStandalone, [emulatorId, exePath], {#args: args}),
-    returnValue: _i7.Future<void>.value(),
-    returnValueForMissingStub: _i7.Future<void>.value(),
-  ) as _i7.Future<void>);
+  _i7.Future<void> launchStandalone(String? emulatorId, String? exePath, {List<String>? args = const []}) =>
+      (super.noSuchMethod(
+        Invocation.method(#launchStandalone, [emulatorId, exePath], {#args: args}),
+        returnValue: _i7.Future<void>.value(),
+        returnValueForMissingStub: _i7.Future<void>.value(),
+      ) as _i7.Future<void>);
 
   @override
-  _i7.Future<bool> isEmulatorInstalled(
-    String? emulatorId,
-    String? executableName,
-  ) => (super.noSuchMethod(
+  _i7.Future<bool> isEmulatorInstalled(String? emulatorId, String? executableName) => (super.noSuchMethod(
     Invocation.method(#isEmulatorInstalled, [emulatorId, executableName]),
     returnValue: _i7.Future<bool>.value(false),
   ) as _i7.Future<bool>);

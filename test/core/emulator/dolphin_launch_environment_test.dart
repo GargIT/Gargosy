@@ -26,8 +26,10 @@ void main() {
 
   test('a session-wide EGL_PLATFORM=wayland (what triggers the crash) is replaced', () {
     expect(env('dolphin', {...wayland, 'EGL_PLATFORM': 'wayland'}), {'EGL_PLATFORM': 'x11', 'QT_QPA_PLATFORM': 'xcb'});
-    expect(env('dolphin', {...wayland, 'EGL_PLATFORM': 'wayland', 'QT_QPA_PLATFORM': 'wayland'}),
-        {'EGL_PLATFORM': 'x11', 'QT_QPA_PLATFORM': 'xcb'});
+    expect(env('dolphin', {...wayland, 'EGL_PLATFORM': 'wayland', 'QT_QPA_PLATFORM': 'wayland'}), {
+      'EGL_PLATFORM': 'x11',
+      'QT_QPA_PLATFORM': 'xcb',
+    });
   });
 
   test('only values that would change are returned', () {

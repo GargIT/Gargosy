@@ -17,15 +17,22 @@ void main() {
   testWidgets('collections: favourites first, then by name; A opens a gallery', (tester) async {
     await setDesktopSize(tester);
     final api = FakeLibraryApi([game(1, 'Okami')]);
-    await tester.pumpWidget(testApp(const CollectionsPage(), overrides: [
-      collectionsProvider.overrideWith((ref) async => const [
-            RommCollection(id: 2, name: 'RPGs', romCount: 12, userId: 7),
-            RommCollection(id: 1, name: 'Favorites', isFavorite: true, romCount: 3, userId: 7),
-            RommCollection(id: 3, name: 'Arcade', romCount: 5, userId: 7),
-          ]),
-      libraryApiProvider.overrideWithValue(api),
-      favouriteIdsProvider.overrideWithValue(const {}),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const CollectionsPage(),
+        overrides: [
+          collectionsProvider.overrideWith(
+            (ref) async => const [
+              RommCollection(id: 2, name: 'RPGs', romCount: 12, userId: 7),
+              RommCollection(id: 1, name: 'Favorites', isFavorite: true, romCount: 3, userId: 7),
+              RommCollection(id: 3, name: 'Arcade', romCount: 5, userId: 7),
+            ],
+          ),
+          libraryApiProvider.overrideWithValue(api),
+          favouriteIdsProvider.overrideWithValue(const {}),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     final names = tester.widgetList<Text>(find.byKey(const ValueKey('collection-name'))).map((t) => t.data).toList();
     expect(names, ['Favourites', 'Arcade', 'RPGs']);
@@ -37,10 +44,12 @@ void main() {
   testWidgets('search: type on the keyboard, results show under it', (tester) async {
     await setDesktopSize(tester);
     final api = FakeLibraryApi([game(1, 'Okami'), game(2, 'Ico'), game(3, 'Okamiden')]);
-    await tester.pumpWidget(testApp(const SearchPage(), overrides: [
-      libraryApiProvider.overrideWithValue(api),
-      favouriteIdsProvider.overrideWithValue(const {}),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const SearchPage(),
+        overrides: [libraryApiProvider.overrideWithValue(api), favouriteIdsProvider.overrideWithValue(const {})],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('Search your library'), findsOneWidget);
     await press(tester, GameAction.confirm); // opens the keyboard

@@ -33,10 +33,7 @@ void main() {
       });
 
       test('known emulators have required fields', () {
-        final knownIds = [
-          'retroarch', 'dolphin', 'pcsx2', 'rpcs3', 'duckstation',
-          'melonds', 'ppsspp', 'mgba', 'cemu',
-        ];
+        final knownIds = ['retroarch', 'dolphin', 'pcsx2', 'rpcs3', 'duckstation', 'melonds', 'ppsspp', 'mgba', 'cemu'];
         for (final id in knownIds) {
           final def = registry.getDefinition(id);
           expect(def, isNotNull, reason: 'Definition for $id should exist');
@@ -115,8 +112,11 @@ void main() {
         final conflicts = registry.detectConflicts();
         for (final entry in conflicts.entries) {
           expect(entry.value.strategies, isA<List>());
-          expect(entry.value.strategies.length, greaterThan(1),
-              reason: 'Conflict for ${entry.key} should have >1 strategy');
+          expect(
+            entry.value.strategies.length,
+            greaterThan(1),
+            reason: 'Conflict for ${entry.key} should have >1 strategy',
+          );
           expect(entry.value.mergedSlugs, isA<List<String>>());
         }
       });
@@ -131,8 +131,7 @@ void main() {
         // All should have the same set
         final first = strategySets.values.first;
         for (final entry in strategySets.entries) {
-          expect(entry.value, first,
-              reason: 'Slug ${entry.key} has different strategy set: ${entry.value} vs $first');
+          expect(entry.value, first, reason: 'Slug ${entry.key} has different strategy set: ${entry.value} vs $first');
         }
       });
     });

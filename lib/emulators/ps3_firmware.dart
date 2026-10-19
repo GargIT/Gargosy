@@ -32,13 +32,15 @@ typedef FirmwareConfirm = Future<bool> Function(int pid);
 /// presses Yes for the player (a controller can't reach that box), waits
 /// until the files stop changing, and closes RPCS3. Probed on 0.0.43.
 class Ps3Firmware {
-  Ps3Firmware(this.root, this.dirs,
-      {FirmwareConfirm? confirm,
-      Future<void> Function(io.Process process)? close,
-      this.poll = const Duration(seconds: 1),
-      this.timeout = const Duration(minutes: 10)})
-      : confirm = confirm ?? confirmWithUiAutomation,
-        close = close ?? closeProcess;
+  Ps3Firmware(
+    this.root,
+    this.dirs, {
+    FirmwareConfirm? confirm,
+    Future<void> Function(io.Process process)? close,
+    this.poll = const Duration(seconds: 1),
+    this.timeout = const Duration(minutes: 10),
+  }) : confirm = confirm ?? confirmWithUiAutomation,
+       close = close ?? closeProcess;
 
   final AppRoot root;
   final ProfileLaunchDirectories dirs;
@@ -75,8 +77,10 @@ class Ps3Firmware {
   Future<void> install(String exePath) async {
     final file = pup;
     if (file == null) {
-      throw const Ps3FirmwareException('There is no $pupName in bios\\. Get BIOS files from RomM first '
-          "(RomM keeps the PS3 firmware with the platform's firmware).");
+      throw const Ps3FirmwareException(
+        'There is no $pupName in bios\\. Get BIOS files from RomM first '
+        "(RomM keeps the PS3 firmware with the platform's firmware).",
+      );
     }
     final run = await dirs.startWithProfile('rpcs3', exePath, commandLine(file.path));
     var exited = false;
@@ -143,8 +147,16 @@ exit 1
   final dir = await io.Directory.systemTemp.createTemp('gargosy-rpcs3-');
   try {
     final ps1 = io.File(p.join(dir.path, 'confirm.ps1'))..writeAsStringSync(script);
-    final r = await io.Process.run('powershell.exe',
-        ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', ps1.path, '-ProcessId', '$pid']);
+    final r = await io.Process.run('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      ps1.path,
+      '-ProcessId',
+      '$pid',
+    ]);
     return r.exitCode == 0;
   } finally {
     dir.deleteSync(recursive: true);

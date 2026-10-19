@@ -44,7 +44,17 @@ abstract final class GColors {
 }
 
 abstract final class GSpace {
-  static const double s1 = 4, s2 = 8, s3 = 12, s4 = 16, s5 = 20, s6 = 24, s7 = 28, s8 = 32, s10 = 40, s12 = 48, s14 = 56;
+  static const double s1 = 4,
+      s2 = 8,
+      s3 = 12,
+      s4 = 16,
+      s5 = 20,
+      s6 = 24,
+      s7 = 28,
+      s8 = 32,
+      s10 = 40,
+      s12 = 48,
+      s14 = 56;
   static const double rowPad = 36;
 }
 

@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:typed_data';
+
 import 'package:archive/archive.dart';
 
 /// A PNG of [width] × [height] 8-bit RGBA [rgba] pixels (rows top to bottom),
@@ -15,8 +16,7 @@ Uint8List encodeRgbaPng(int width, int height, Uint8List rgba) {
     raw.setRange(y * (rowBytes + 1) + 1, (y + 1) * (rowBytes + 1), rgba, y * rowBytes);
   }
 
-  final out = BytesBuilder(copy: false)
-    ..add(const [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+  final out = BytesBuilder(copy: false)..add(const [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
   void chunk(String type, List<int> data) {
     final body = Uint8List(4 + data.length)
       ..setAll(0, type.codeUnits)

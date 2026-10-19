@@ -40,8 +40,13 @@ void main() {
   });
 
   test('the flag goes first, so a strategy argument that takes the ROM next (Dolphin -e) stays last', () {
-    expect(Fullscreen.apply('dolphin', false, ['--user=x', '-b', '-e']),
-        ['-C', 'Dolphin.Display.Fullscreen=False', '--user=x', '-b', '-e']);
+    expect(Fullscreen.apply('dolphin', false, ['--user=x', '-b', '-e']), [
+      '-C',
+      'Dolphin.Display.Fullscreen=False',
+      '--user=x',
+      '-b',
+      '-e',
+    ]);
     expect(Fullscreen.apply('dolphin', true, ['-b', '-e']), ['-C', 'Dolphin.Display.Fullscreen=True', '-b', '-e']);
   });
 
@@ -98,7 +103,8 @@ void main() {
 
     test("RetroArch's config says windowed when off (it keeps what it saved otherwise)", () async {
       await launch('retroarch', 'retroarch.exe', const [], fullscreen: false);
-      final cfg = io.File(p.join(ProfilePaths(root, 'aaa').emulatorDir('retroarch'), 'retroarch.cfg')).readAsStringSync();
+      final cfg = io.File(p.join(ProfilePaths(root, 'aaa').emulatorDir('retroarch'), 'retroarch.cfg'))
+          .readAsStringSync();
       expect(cfg, contains('video_fullscreen = "false"'));
     });
   });

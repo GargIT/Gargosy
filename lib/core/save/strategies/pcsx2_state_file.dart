@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 
@@ -37,10 +38,7 @@ class Pcsx2StateFile {
     final nul = text.indexOf(0);
     final version = String.fromCharCodes(nul < 0 ? text : text.sublist(0, nul)).trim();
     if (version.isEmpty) return null;
-    return (
-      formatId: '0x${formatId.toRadixString(16).toUpperCase().padLeft(8, '0')}',
-      version: version,
-    );
+    return (formatId: '0x${formatId.toRadixString(16).toUpperCase().padLeft(8, '0')}', version: version);
   }
 
   /// [parseVersionHeader] on the start of [file]; null on any failure.

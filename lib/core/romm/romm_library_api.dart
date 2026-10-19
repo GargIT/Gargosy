@@ -47,18 +47,23 @@ class GalleryQuery {
   /// Only games the user has played (Home's "Continue playing").
   final bool lastPlayedOnly;
 
-  GalleryQuery copyWith({String? search, GallerySort? sort, bool? descending, Set<String>? genres, Set<String>? regions}) =>
-      GalleryQuery(
-        platformId: platformId,
-        collectionId: collectionId,
-        favourites: favourites,
-        search: search ?? this.search,
-        sort: sort ?? this.sort,
-        descending: descending ?? this.descending,
-        genres: genres ?? this.genres,
-        regions: regions ?? this.regions,
-        lastPlayedOnly: lastPlayedOnly,
-      );
+  GalleryQuery copyWith({
+    String? search,
+    GallerySort? sort,
+    bool? descending,
+    Set<String>? genres,
+    Set<String>? regions,
+  }) => GalleryQuery(
+    platformId: platformId,
+    collectionId: collectionId,
+    favourites: favourites,
+    search: search ?? this.search,
+    sort: sort ?? this.sort,
+    descending: descending ?? this.descending,
+    genres: genres ?? this.genres,
+    regions: regions ?? this.regions,
+    lastPlayedOnly: lastPlayedOnly,
+  );
 
   bool get hasFilters => genres.isNotEmpty || regions.isNotEmpty;
 
@@ -98,8 +103,17 @@ class GalleryQuery {
       other.lastPlayedOnly == lastPlayedOnly;
 
   @override
-  int get hashCode => Object.hash(platformId, collectionId, favourites, search, sort, descending,
-      Object.hashAllUnordered(genres), Object.hashAllUnordered(regions), lastPlayedOnly);
+  int get hashCode => Object.hash(
+    platformId,
+    collectionId,
+    favourites,
+    search,
+    sort,
+    descending,
+    Object.hashAllUnordered(genres),
+    Object.hashAllUnordered(regions),
+    lastPlayedOnly,
+  );
 }
 
 /// The values a gallery's filters can take (RomM's `filter_values`).
@@ -108,7 +122,10 @@ class FilterValues {
   final List<String> genres;
   final List<String> regions;
 
-  static List<String> _list(Object? v) => [for (final s in (v is List ? v : const [])) if (s is String && s.isNotEmpty) s]..sort();
+  static List<String> _list(Object? v) => [
+    for (final s in (v is List ? v : const []))
+      if (s is String && s.isNotEmpty) s,
+  ]..sort();
 
   factory FilterValues.fromJson(Map<String, dynamic> json) =>
       FilterValues(genres: _list(json['genres']), regions: _list(json['regions']));
@@ -147,7 +164,10 @@ class RommCollection {
   final String? ownerUsername;
 
   factory RommCollection.fromJson(Map<String, dynamic> json) {
-    final ids = {for (final i in (json['rom_ids'] is List ? json['rom_ids'] as List : const [])) if (i is int) i};
+    final ids = {
+      for (final i in (json['rom_ids'] is List ? json['rom_ids'] as List : const []))
+        if (i is int) i,
+    };
     return RommCollection(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
@@ -165,7 +185,12 @@ class RommCollection {
 
 /// What the library pages need from RomM. [RommLibraryApi] is the real one.
 abstract class LibraryApi {
-  Future<GalleryPage> page(GalleryQuery q, {int offset = 0, int limit = RommLibraryApi.pageSize, bool withFilterValues = false});
+  Future<GalleryPage> page(
+    GalleryQuery q, {
+    int offset = 0,
+    int limit = RommLibraryApi.pageSize,
+    bool withFilterValues = false,
+  });
   Future<List<RommCollection>> collections();
 
   /// Adds [gameId] to (or removes it from) the user's own favourites, creating
@@ -193,11 +218,22 @@ class RommLibraryApi implements LibraryApi {
   static const pageSize = 48;
 
   @override
-  Future<GalleryPage> page(GalleryQuery q, {int offset = 0, int limit = pageSize, bool withFilterValues = false}) async {
-    final r = await dio.get('/api/roms',
-        queryParameters: q.toParams(offset: offset, limit: limit, withFilterValues: withFilterValues), options: auth());
+  Future<GalleryPage> page(
+    GalleryQuery q, {
+    int offset = 0,
+    int limit = pageSize,
+    bool withFilterValues = false,
+  }) async {
+    final r = await dio.get(
+      '/api/roms',
+      queryParameters: q.toParams(offset: offset, limit: limit, withFilterValues: withFilterValues),
+      options: auth(),
+    );
     final data = r.data as Map<String, dynamic>;
-    final games = [for (final g in (data['items'] as List? ?? const [])) if (g is Map<String, dynamic>) Game.fromJson(g)];
+    final games = [
+      for (final g in (data['items'] as List? ?? const []))
+        if (g is Map<String, dynamic>) Game.fromJson(g),
+    ];
     final total = data['total'] is int ? data['total'] as int : offset + games.length;
     final fv = data['filter_values'];
     return GalleryPage(
@@ -211,14 +247,19 @@ class RommLibraryApi implements LibraryApi {
   Future<List<RommCollection>> collections() async {
     final r = await dio.get('/api/collections', options: auth());
     final list = r.data is List ? r.data as List : const [];
-    return [for (final c in list) if (c is Map<String, dynamic>) RommCollection.fromJson(c)];
+    return [
+      for (final c in list)
+        if (c is Map<String, dynamic>) RommCollection.fromJson(c),
+    ];
   }
 
   @override
   Future<RommCollection> setFavourite(String gameId, bool favourite, {required int userId}) async {
     final own = (await collections()).where((c) => c.isFavorite && c.userId == userId);
     final fav = own.isNotEmpty ? own.first : await _createFavourites();
-    final body = {'rom_ids': [int.parse(gameId)]};
+    final body = {
+      'rom_ids': [int.parse(gameId)],
+    };
     final r = favourite
         ? await dio.post('/api/collections/${fav.id}/roms', data: body, options: auth())
         : await dio.delete('/api/collections/${fav.id}/roms', data: body, options: auth());
@@ -238,21 +279,29 @@ class RommLibraryApi implements LibraryApi {
     final r = await dio.get('/api/roms/$gameId/notes', options: auth());
     final data = r.data;
     final list = data is Map && data['items'] is List ? data['items'] as List : (data is List ? data : const []);
-    return [for (final n in list) if (n is Map<String, dynamic>) RomNote.fromJson(n)];
+    return [
+      for (final n in list)
+        if (n is Map<String, dynamic>) RomNote.fromJson(n),
+    ];
   }
 
   @override
-  Future<void> addNote(String gameId, String title, String content) => dio.post('/api/roms/$gameId/notes',
-      data: {'title': title, 'content': content, 'is_public': false, 'tags': []}, options: auth());
+  Future<void> addNote(String gameId, String title, String content) => dio.post(
+    '/api/roms/$gameId/notes',
+    data: {'title': title, 'content': content, 'is_public': false, 'tags': []},
+    options: auth(),
+  );
 
   @override
   Future<void> deleteNote(String gameId, int noteId) => dio.delete('/api/roms/$gameId/notes/$noteId', options: auth());
 
   Future<RommCollection> _createFavourites() async {
-    final r = await dio.post('/api/collections',
-        queryParameters: {'is_favorite': true, 'is_public': false},
-        data: FormData.fromMap({'name': 'Favorites', 'description': ''}),
-        options: auth());
+    final r = await dio.post(
+      '/api/collections',
+      queryParameters: {'is_favorite': true, 'is_public': false},
+      data: FormData.fromMap({'name': 'Favorites', 'description': ''}),
+      options: auth(),
+    );
     return RommCollection.fromJson(r.data as Map<String, dynamic>);
   }
 }

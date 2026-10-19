@@ -20,23 +20,23 @@ import 'package:path/path.dart' as p;
 import '../helpers/profile_test_env.dart';
 
 Map<String, Object?> release(String tag, List<String> files, {bool upcoming = false}) => {
-      'tag_name': tag,
-      'name': 'Ryujinx $tag',
-      'upcoming_release': upcoming,
-      'assets': {
-        'links': [
-          for (final f in files)
-            {
-              'name': f,
-              'url': 'https://git.ryujinx.app/ryubing/ryujinx/-/releases/$tag/downloads/$f',
-              'direct_asset_url': 'https://git.ryujinx.app/api/v4/projects/1/packages/generic/Ryubing/$tag/$f',
-            },
-        ],
-        'sources': [
-          {'format': 'zip', 'url': 'https://git.ryujinx.app/ryubing/ryujinx/-/archive/$tag/ryujinx-$tag.zip'},
-        ],
-      },
-    };
+  'tag_name': tag,
+  'name': 'Ryujinx $tag',
+  'upcoming_release': upcoming,
+  'assets': {
+    'links': [
+      for (final f in files)
+        {
+          'name': f,
+          'url': 'https://git.ryujinx.app/ryubing/ryujinx/-/releases/$tag/downloads/$f',
+          'direct_asset_url': 'https://git.ryujinx.app/api/v4/projects/1/packages/generic/Ryubing/$tag/$f',
+        },
+    ],
+    'sources': [
+      {'format': 'zip', 'url': 'https://git.ryujinx.app/ryubing/ryujinx/-/archive/$tag/ryujinx-$tag.zip'},
+    ],
+  },
+};
 
 class _Api implements HttpClientAdapter {
   _Api(this.body);
@@ -44,11 +44,19 @@ class _Api implements HttpClientAdapter {
   final asked = <Uri>[];
 
   @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
     asked.add(options.uri);
-    return ResponseBody.fromString(jsonEncode(body), 200, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -69,34 +77,52 @@ void main() {
     });
 
     test('the newest stable release\'s win_x64 zip, by its direct link', () {
-      final got = ReleaseService.gitlabAssets([
-        release('1.3.3', ['ryujinx-1.3.3-win_x64.zip', 'ryujinx-1.3.3-linux_x64.tar.gz', 'ryujinx-1.3.3-win_arm64.zip']),
-        release('1.3.2', ['ryujinx-1.3.2-win_x64.zip']),
-      ], windows, excluded);
+      final got = ReleaseService.gitlabAssets(
+        [
+          release('1.3.3', [
+            'ryujinx-1.3.3-win_x64.zip',
+            'ryujinx-1.3.3-linux_x64.tar.gz',
+            'ryujinx-1.3.3-win_arm64.zip',
+          ]),
+          release('1.3.2', ['ryujinx-1.3.2-win_x64.zip']),
+        ],
+        windows,
+        excluded,
+      );
       expect(got.single['name'], 'ryujinx-1.3.3-win_x64.zip');
       expect(got.single['url'], endsWith('/generic/Ryubing/1.3.3/ryujinx-1.3.3-win_x64.zip'));
     });
 
     test('an upcoming release, a canary or a release candidate is skipped, never offered', () {
-      final got = ReleaseService.gitlabAssets([
-        release('1.4.0', ['ryujinx-1.4.0-win_x64.zip'], upcoming: true),
-        release('1.3.140-canary', ['ryujinx-canary-1.3.140-win_x64.zip']),
-        release('1.3.4-rc1', ['ryujinx-1.3.4-rc1-win_x64.zip']),
-        release('1.3.3', ['ryujinx-1.3.3-win_x64.zip']),
-      ], windows, excluded);
+      final got = ReleaseService.gitlabAssets(
+        [
+          release('1.4.0', ['ryujinx-1.4.0-win_x64.zip'], upcoming: true),
+          release('1.3.140-canary', ['ryujinx-canary-1.3.140-win_x64.zip']),
+          release('1.3.4-rc1', ['ryujinx-1.3.4-rc1-win_x64.zip']),
+          release('1.3.3', ['ryujinx-1.3.3-win_x64.zip']),
+        ],
+        windows,
+        excluded,
+      );
       expect(got.single['name'], 'ryujinx-1.3.3-win_x64.zip');
     });
 
     test('a release with no Windows zip is passed over for an older one', () {
-      final got = ReleaseService.gitlabAssets([
-        release('1.3.4', ['ryujinx-1.3.4-linux_x64.tar.gz']),
-        release('1.3.3', ['ryujinx-1.3.3-win_x64.zip']),
-      ], windows, excluded);
+      final got = ReleaseService.gitlabAssets(
+        [
+          release('1.3.4', ['ryujinx-1.3.4-linux_x64.tar.gz']),
+          release('1.3.3', ['ryujinx-1.3.3-win_x64.zip']),
+        ],
+        windows,
+        excluded,
+      );
       expect(got.single['name'], 'ryujinx-1.3.3-win_x64.zip');
     });
 
     test("GitLab's API: the project path encoded, newest releases first", () async {
-      final api = _Api([release('1.3.3', ['ryujinx-1.3.3-win_x64.zip'])]);
+      final api = _Api([
+        release('1.3.3', ['ryujinx-1.3.3-win_x64.zip']),
+      ]);
       final got = await ReleaseService(Dio()..httpClientAdapter = api).getLatestReleaseAssets(
         platform: ReleasePlatform.gitlab,
         repo: 'ryubing/ryujinx',
@@ -104,7 +130,10 @@ void main() {
         excludedFilters: excluded,
         baseUrl: 'https://git.ryujinx.app',
       );
-      expect(api.asked.single.toString(), 'https://git.ryujinx.app/api/v4/projects/ryubing%2Fryujinx/releases?per_page=20');
+      expect(
+        api.asked.single.toString(),
+        'https://git.ryujinx.app/api/v4/projects/ryubing%2Fryujinx/releases?per_page=20',
+      );
       expect(got.single['name'], 'ryujinx-1.3.3-win_x64.zip');
     });
   });
@@ -229,15 +258,23 @@ void main() {
         strategy.restoreSave(game('01007EF00011E000'), 'y.nsp', Uint8List(4), 'save.dat'),
         throwsA(predicate((e) => '$e'.contains('start the game once'))),
       );
-      expect(io.File(p.join(base, '0000000000000001', '0', 'save.dat')).readAsStringSync(), '0100000000010000',
-          reason: "another game's save is never written over");
+      expect(
+        io.File(p.join(base, '0000000000000001', '0', 'save.dat')).readAsStringSync(),
+        '0100000000010000',
+        reason: "another game's save is never written over",
+      );
     });
 
     test("a restore goes into that game's committed folder", () async {
       save('0000000000000001', '0100000000010000');
       save('0000000000000002', '01007EF00011E000');
       final strategy = RyujinxSaveStrategy(profileRoot: () async => p.dirname(p.dirname(p.dirname(base))));
-      await strategy.restoreSave(game('01007EF00011E000'), 'y.nsp', Uint8List.fromList(utf8.encode('from RomM')), 'save.dat');
+      await strategy.restoreSave(
+        game('01007EF00011E000'),
+        'y.nsp',
+        Uint8List.fromList(utf8.encode('from RomM')),
+        'save.dat',
+      );
       expect(io.File(p.join(base, '0000000000000002', '0', 'save.dat')).readAsStringSync(), 'from RomM');
       expect(io.File(p.join(base, '0000000000000001', '0', 'save.dat')).readAsStringSync(), '0100000000010000');
     });

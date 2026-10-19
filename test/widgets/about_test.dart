@@ -26,9 +26,11 @@ void main() {
   setUp(() {
     root = io.Directory.systemTemp.createTempSync('gargosy_about');
     io.File(p.join(root.path, 'CHANGELOG.md')).writeAsStringSync(
-        '# Changelog\n\n## [0.2.0]\n\n- [Releases](https://github.com/GargIT/Gargosy/releases)\n'
-        '- [The notices](NOTICE.md)\n\n${List.generate(80, (i) => 'Line $i of the changes.').join('\n\n')}\n');
-    io.File(p.join(root.path, 'NOTICE.md')).writeAsStringSync('# Notices\n\nSee [the 7-Zip licence](LICENSES/7-Zip-LGPL.txt).\n');
+      '# Changelog\n\n## [0.2.0]\n\n- [Releases](https://github.com/GargIT/Gargosy/releases)\n'
+      '- [The notices](NOTICE.md)\n\n${List.generate(80, (i) => 'Line $i of the changes.').join('\n\n')}\n',
+    );
+    io.File(p.join(root.path, 'NOTICE.md'))
+        .writeAsStringSync('# Notices\n\nSee [the 7-Zip licence](LICENSES/7-Zip-LGPL.txt).\n');
     io.File(p.join(root.path, 'LICENSES', '7-Zip-LGPL.txt'))
       ..createSync(recursive: true)
       ..writeAsStringSync('GNU LESSER GENERAL PUBLIC LICENSE\n  Version 2.1\n');
@@ -44,30 +46,37 @@ void main() {
     opened.clear();
     AppConstants.version = '1.2.3';
     final nav = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        appRootProvider.overrideWithValue(AppRoot(root.path)),
-        appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-        externalOpenerProvider.overrideWithValue(opened.add),
-        rommServerVersionProvider.overrideWith((ref) async => rommVersion),
-      ],
-      child: MaterialApp(
-        navigatorKey: nav,
-        theme: gargosyTheme(),
-        builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(child: TextButton(onPressed: () => showAboutGargosy(context), child: const Text('open'))),
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appRootProvider.overrideWithValue(AppRoot(root.path)),
+          appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+          externalOpenerProvider.overrideWithValue(opened.add),
+          rommServerVersionProvider.overrideWith((ref) async => rommVersion),
+        ],
+        child: MaterialApp(
+          navigatorKey: nav,
+          theme: gargosyTheme(),
+          builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: TextButton(onPressed: () => showAboutGargosy(context), child: const Text('open')),
+              ),
+            ),
           ),
         ),
       ),
-    ));
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
 
-  ScrollPosition readerScroll(WidgetTester tester) =>
-      tester.state<ScrollableState>(find.descendant(of: find.byType(DocReaderScreen), matching: find.byType(Scrollable)).first).position;
+  ScrollPosition readerScroll(WidgetTester tester) => tester
+      .state<ScrollableState>(
+        find.descendant(of: find.byType(DocReaderScreen), matching: find.byType(Scrollable)).first,
+      )
+      .position;
 
   testWidgets('the About dialog shows both versions', (tester) async {
     await pump(tester);
@@ -118,8 +127,9 @@ void main() {
     expect(pos.pixels, lessThan(afterPage));
   });
 
-  testWidgets('X lists the links: a web link opens outside, a file opens in the reader, a .txt as plain text',
-      (tester) async {
+  testWidgets('X lists the links: a web link opens outside, a file opens in the reader, a .txt as plain text', (
+    tester,
+  ) async {
     await pump(tester);
     await press(tester, GameAction.confirm);
     await load(tester);
@@ -167,7 +177,8 @@ void main() {
   });
 
   test('markdownLinks: inline and reference links in order, no images, anchors or repeats', () {
-    const md = '![shot](docs/a.png) See [Releases](https://x/releases "title") and [`NOTICE.md`](NOTICE.md),\n'
+    const md =
+        '![shot](docs/a.png) See [Releases](https://x/releases "title") and [`NOTICE.md`](NOTICE.md),\n'
         '[top](#top), [Releases again](https://x/releases).\n\n[0.1.0]: https://x/tag/v0.1.0\n';
     expect(markdownLinks(md).map((l) => (l.label, l.href)), [
       ('Releases', 'https://x/releases'),

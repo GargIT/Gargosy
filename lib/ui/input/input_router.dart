@@ -80,7 +80,9 @@ class _InputRouterState extends ConsumerState<InputRouter> {
   Widget build(BuildContext context) {
     return Listener(
       onPointerDown: (_) {
-        if (ref.read(inputModeProvider) != InputMode.mouse) ref.read(inputModeProvider.notifier).state = InputMode.mouse;
+        if (ref.read(inputModeProvider) != InputMode.mouse) {
+          ref.read(inputModeProvider.notifier).state = InputMode.mouse;
+        }
       },
       child: Shortcuts(
         shortcuts: const {

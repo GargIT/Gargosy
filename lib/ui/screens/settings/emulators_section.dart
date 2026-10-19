@@ -23,8 +23,12 @@ class EmulatorsSection extends ConsumerStatefulWidget {
 
 class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
   Future<void> _choose(String slug, String title, List<({String id, String name})> options, String? current) async {
-    final i = await showChoice(context,
-        title: 'Play $title in', labels: [for (final o in options) o.name], current: options.indexWhere((o) => o.id == current));
+    final i = await showChoice(
+      context,
+      title: 'Play $title in',
+      labels: [for (final o in options) o.name],
+      current: options.indexWhere((o) => o.id == current),
+    );
     if (i == null || i < 0) return;
     await ref.read(strategyRegistryProvider)?.setPreference(canonicalPlatformSlug(slug), options[i].id);
     if (mounted) setState(() {});
@@ -48,13 +52,15 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
         ];
         if (options.length < 2) continue;
         final current = registry.getStrategyForSlug(pl.slug)?.emulatorId;
-        rows.add(SettingsField(
-          key: ValueKey('emulator-for-${pl.slug}'),
-          label: pl.nameForDisplay,
-          value: installed[current] ?? options.first.name,
-          actionIcon: Icons.expand_more,
-          onActivate: () => _choose(pl.slug, pl.nameForDisplay, options, current),
-        ));
+        rows.add(
+          SettingsField(
+            key: ValueKey('emulator-for-${pl.slug}'),
+            label: pl.nameForDisplay,
+            value: installed[current] ?? options.first.name,
+            actionIcon: Icons.expand_more,
+            onActivate: () => _choose(pl.slug, pl.nameForDisplay, options, current),
+          ),
+        );
       }
     }
     // Which installed emulators sync states comes from their strategies, never a list here.
@@ -62,50 +68,67 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
       for (final st in registry?.allStrategies ?? const <EmulatorStrategy>[])
         if (installed.containsKey(st.emulatorId)) installed[st.emulatorId]!: st,
     };
-    final syncing = [for (final e in strategies.entries) if (e.value.supportsStateSync) e.key]..sort();
-    final localOnly = [for (final e in strategies.entries) if (!e.value.supportsStateSync) e.key]..sort();
-    final fromMenu = [for (final n in syncing) if (!strategies[n]!.supportsStateLoadOnLaunch) n];
-    return ListView(children: [
-      SettingsCard(
-        title: 'Which emulator plays',
-        icon: Icons.tune,
-        note: 'For platforms with more than one emulator installed. '
-            'A game can still be played in another one from its play screen.',
-        children: [
-          if (rows.isEmpty)
-            const Text('Only one emulator per platform is installed.', style: TextStyle(color: GColors.fgSecondary))
-          else
-            LayoutBuilder(builder: (context, box) {
-              // Two to a row when there's room, as RomM's settings grid.
-              final w = box.maxWidth >= 640 ? (box.maxWidth - GSpace.s4) / 2 : box.maxWidth;
-              return Wrap(spacing: GSpace.s4, runSpacing: GSpace.s4, children: [
-                for (final r in rows) SizedBox(width: w, child: r),
-              ]);
-            }),
-        ],
-      ),
-      SettingsCard(
-        title: 'Save states on RomM',
-        icon: Icons.cloud_upload,
-        note: 'Upload save states after playing and bring them down before, like saves. Off by default. '
-            'States on this PC always work, sync or not.',
-        children: [
-          if (prefs == null)
-            const Text('Open a profile to change this.', style: TextStyle(color: GColors.fgSecondary))
-          else
-            SettingsToggle(
-              key: const ValueKey('state-sync'),
-              label: 'Sync save states with RomM',
-              on: prefs.getBool(StateSyncService.enabledKey) ?? false,
-              onChanged: (on) async {
-                await prefs.setBool(StateSyncService.enabledKey, on);
-                if (mounted) setState(() {});
-              },
-            ),
-          if (prefs != null) _StateSyncCoverage(syncing: syncing, localOnly: localOnly, fromMenu: fromMenu),
-        ],
-      ),
-    ]);
+    final syncing = [
+      for (final e in strategies.entries)
+        if (e.value.supportsStateSync) e.key,
+    ]..sort();
+    final localOnly = [
+      for (final e in strategies.entries)
+        if (!e.value.supportsStateSync) e.key,
+    ]..sort();
+    final fromMenu = [
+      for (final n in syncing)
+        if (!strategies[n]!.supportsStateLoadOnLaunch) n,
+    ];
+    return ListView(
+      children: [
+        SettingsCard(
+          title: 'Which emulator plays',
+          icon: Icons.tune,
+          note:
+              'For platforms with more than one emulator installed. '
+              'A game can still be played in another one from its play screen.',
+          children: [
+            if (rows.isEmpty)
+              const Text('Only one emulator per platform is installed.', style: TextStyle(color: GColors.fgSecondary))
+            else
+              LayoutBuilder(
+                builder: (context, box) {
+                  // Two to a row when there's room, as RomM's settings grid.
+                  final w = box.maxWidth >= 640 ? (box.maxWidth - GSpace.s4) / 2 : box.maxWidth;
+                  return Wrap(
+                    spacing: GSpace.s4,
+                    runSpacing: GSpace.s4,
+                    children: [for (final r in rows) SizedBox(width: w, child: r)],
+                  );
+                },
+              ),
+          ],
+        ),
+        SettingsCard(
+          title: 'Save states on RomM',
+          icon: Icons.cloud_upload,
+          note:
+              'Upload save states after playing and bring them down before, like saves. Off by default. '
+              'States on this PC always work, sync or not.',
+          children: [
+            if (prefs == null)
+              const Text('Open a profile to change this.', style: TextStyle(color: GColors.fgSecondary))
+            else
+              SettingsToggle(
+                key: const ValueKey('state-sync'),
+                label: 'Sync save states with RomM',
+                on: prefs.getBool(StateSyncService.enabledKey) ?? false,
+                onChanged: (on) async {
+                  await prefs.setBool(StateSyncService.enabledKey, on);
+                  if (mounted) setState(() {});
+                },
+              ),
+            if (prefs != null) _StateSyncCoverage(syncing: syncing, localOnly: localOnly, fromMenu: fromMenu),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -126,31 +149,41 @@ class _StateSyncCoverage extends StatelessWidget {
   Widget build(BuildContext context) {
     const note = TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary, height: 1.4);
     Widget group(String key, IconData icon, String title, Color color, List<String> names) => Column(
-          key: ValueKey(key),
-          crossAxisAlignment: CrossAxisAlignment.start,
+      key: ValueKey(key),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Row(children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: GSpace.s2),
-              Text(title, style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w700, color: color)),
-            ]),
-            const SizedBox(height: GSpace.s2),
-            Wrap(spacing: GSpace.s2, runSpacing: GSpace.s2, children: [
-              for (final n in names) SettingsBadge(n, color: color),
-            ]),
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: GSpace.s2),
+            Text(
+              title,
+              style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w700, color: color),
+            ),
           ],
-        );
-    if (syncing.isEmpty) return const Text('No installed emulator syncs save states yet.', style: note);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      group('state-sync-synced', Icons.cloud_done, 'Synced with RomM', GColors.success, syncing),
-      if (fromMenu.isNotEmpty) ...[
+        ),
         const SizedBox(height: GSpace.s2),
-        Text('${_names(fromMenu)}: start the game, then load the state from the emulator\'s own menu.', style: note),
+        Wrap(
+          spacing: GSpace.s2,
+          runSpacing: GSpace.s2,
+          children: [for (final n in names) SettingsBadge(n, color: color)],
+        ),
       ],
-      if (localOnly.isNotEmpty) ...[
-        const SizedBox(height: GSpace.s4),
-        group('state-sync-local', Icons.computer, 'Only on this PC', GColors.fgSecondary, localOnly),
+    );
+    if (syncing.isEmpty) return const Text('No installed emulator syncs save states yet.', style: note);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        group('state-sync-synced', Icons.cloud_done, 'Synced with RomM', GColors.success, syncing),
+        if (fromMenu.isNotEmpty) ...[
+          const SizedBox(height: GSpace.s2),
+          Text('${_names(fromMenu)}: start the game, then load the state from the emulator\'s own menu.', style: note),
+        ],
+        if (localOnly.isNotEmpty) ...[
+          const SizedBox(height: GSpace.s4),
+          group('state-sync-local', Icons.computer, 'Only on this PC', GColors.fgSecondary, localOnly),
+        ],
       ],
-    ]);
+    );
   }
 }

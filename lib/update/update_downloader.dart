@@ -25,9 +25,7 @@ class UpdateDownloadException implements Exception {
 /// [PathGuard], checks it and unpacks it (issue #16). Nothing in the Gargosy
 /// folder changes here: `GargosyUpdate.exe` does the swap after Gargosy exits.
 class UpdateDownloader {
-  UpdateDownloader({required this._dio, required AppRoot root})
-      : _paths = UpdatePaths(root),
-        _guard = PathGuard(root);
+  UpdateDownloader({required this._dio, required AppRoot root}) : _paths = UpdatePaths(root), _guard = PathGuard(root);
 
   final Dio _dio;
   final UpdatePaths _paths;
@@ -39,8 +37,11 @@ class UpdateDownloader {
   /// `Gargosy\` folder. A cancel or a failed check leaves no zip and no
   /// unpacked folder behind. Throws [UpdateDownloadException], or Dio's
   /// cancel ([DioExceptionType.cancel]).
-  Future<String> download(ReleaseInfo release,
-      {void Function(int received, int total)? onProgress, CancelToken? cancel}) async {
+  Future<String> download(
+    ReleaseInfo release, {
+    void Function(int received, int total)? onProgress,
+    CancelToken? cancel,
+  }) async {
     final dir = _guard.check(_paths.dir);
     await io.Directory(dir).create(recursive: true);
     final zip = _guard.check(_paths.zip(release.version.toString()));
@@ -149,7 +150,9 @@ String? unpackUpdate(String zip, String dir, PathGuard guard) {
   if (!list.existsSync()) return 'The zip has no ${AppFiles.fileName}.';
   try {
     for (final f in AppFiles.parse(list.readAsStringSync())) {
-      if (!io.File(AppFiles.under(dir, f)).existsSync()) return '${AppFiles.fileName} lists $f, but the zip has no such file.';
+      if (!io.File(AppFiles.under(dir, f)).existsSync()) {
+        return '${AppFiles.fileName} lists $f, but the zip has no such file.';
+      }
     }
   } on FormatException catch (e) {
     return 'The release is refused: ${e.message} (${e.source}).';

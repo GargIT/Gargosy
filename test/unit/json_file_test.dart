@@ -33,7 +33,10 @@ void main() {
 
   test('a write outside the guard is refused and nothing is written', () async {
     final path = p.join(root.profiles, 'bbb', 'profile.json');
-    expect(() => writeJsonObject(PathGuard(root, activeProfileId: 'aaa'), path, {}), throwsA(isA<PathGuardException>()));
+    expect(
+      () => writeJsonObject(PathGuard(root, activeProfileId: 'aaa'), path, {}),
+      throwsA(isA<PathGuardException>()),
+    );
     expect(io.File(path).existsSync(), isFalse);
   });
 

@@ -19,28 +19,32 @@ void main() {
   });
 
   testWidgets("an icon RomM doesn't have falls back to the badge", (tester) async {
-    await tester.pumpWidget(testApp(
-      const Center(child: PlatformLogo(slug: 'my-homebrew')),
-      overrides: [
-        platformLogoUrlProvider.overrideWithValue((slug) => 'https://romm.test/assets/platforms/$slug.svg'),
-        platformLogoBuilderProvider.overrideWithValue((url, size, fallback) => fallback), // as a 404 does
-      ],
-    ));
+    await tester.pumpWidget(
+      testApp(
+        const Center(child: PlatformLogo(slug: 'my-homebrew')),
+        overrides: [
+          platformLogoUrlProvider.overrideWithValue((slug) => 'https://romm.test/assets/platforms/$slug.svg'),
+          platformLogoBuilderProvider.overrideWithValue((url, size, fallback) => fallback), // as a 404 does
+        ],
+      ),
+    );
     expect(find.byKey(const ValueKey('platform-badge')), findsOneWidget);
   });
 
   testWidgets("RomM's icon is asked for by slug", (tester) async {
     final asked = <String>[];
-    await tester.pumpWidget(testApp(
-      const Center(child: PlatformLogo(slug: 'ngc')),
-      overrides: [
-        platformLogoUrlProvider.overrideWithValue((slug) => 'https://romm.test/assets/platforms/$slug.svg'),
-        platformLogoBuilderProvider.overrideWithValue((url, size, fallback) {
-          asked.add(url);
-          return SizedBox(key: const ValueKey('svg'), width: size, height: size);
-        }),
-      ],
-    ));
+    await tester.pumpWidget(
+      testApp(
+        const Center(child: PlatformLogo(slug: 'ngc')),
+        overrides: [
+          platformLogoUrlProvider.overrideWithValue((slug) => 'https://romm.test/assets/platforms/$slug.svg'),
+          platformLogoBuilderProvider.overrideWithValue((url, size, fallback) {
+            asked.add(url);
+            return SizedBox(key: const ValueKey('svg'), width: size, height: size);
+          }),
+        ],
+      ),
+    );
     expect(asked, ['https://romm.test/assets/platforms/ngc.svg']);
     expect(find.byKey(const ValueKey('svg')), findsOneWidget);
   });

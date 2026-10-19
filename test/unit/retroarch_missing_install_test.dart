@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -34,7 +35,8 @@ void main() {
     if (await tempDir.exists()) await tempDir.delete(recursive: true);
   });
 
-  const knownBug = 'Known bug: RetroArchSaveStrategy._resolveSaveRoot() force-unwraps '
+  const knownBug =
+      'Known bug: RetroArchSaveStrategy._resolveSaveRoot() force-unwraps '
       'a null executable path (issue #94 crash). Remove skip once fixed.';
 
   for (final os in ['windows', 'macos']) {
@@ -43,11 +45,10 @@ void main() {
       final game = Game(id: '1', name: 'Burnout 3: Takedown', platformSlug: 'ps2', fileSize: 0);
 
       setUp(() {
-        final platform = PlatformInfo(os, environment: {
-          'HOME': tempDir.path,
-          'APPDATA': tempDir.path,
-          'USERPROFILE': tempDir.path,
-        });
+        final platform = PlatformInfo(
+          os,
+          environment: {'HOME': tempDir.path, 'APPDATA': tempDir.path, 'USERPROFILE': tempDir.path},
+        );
         strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
       });
 

@@ -57,9 +57,10 @@ void main() {
     put(p.join(ppsspp, 'PPSSPPWindows64.exe'), const []);
     put(p.join(retroarch, 'retroarch.exe'), const []);
     io.File(p.join(retroarch, 'retroarch.cfg')).writeAsStringSync(
-        'savefile_directory = "${p.join(retroarch, 'saves')}"\n'
-        'savestate_directory = "${p.join(retroarch, 'states')}"\n'
-        'sort_savefiles_enable = "false"\nsort_savestates_enable = "false"\n');
+      'savefile_directory = "${p.join(retroarch, 'saves')}"\n'
+      'savestate_directory = "${p.join(retroarch, 'states')}"\n'
+      'sort_savefiles_enable = "false"\nsort_savestates_enable = "false"\n',
+    );
     dirs = _Installs(prefs, {
       'dolphin': p.join(dolphin, 'Dolphin.exe'),
       'ppsspp': p.join(ppsspp, 'PPSSPPWindows64.exe'),
@@ -77,7 +78,10 @@ void main() {
     setUp(() {
       romPath = p.join(tmp.path, 'roms', '$rom.iso');
       put(romPath, [...'GMSE01'.codeUnits, ...List.filled(64, 0)]);
-      put(p.join(tmp.path, 'dolphin', 'User', 'GC', 'USA', 'Card A', '01-GMSE01-Super Mario Sunshine.gci'), List.filled(8256, 1));
+      put(
+        p.join(tmp.path, 'dolphin', 'User', 'GC', 'USA', 'Card A', '01-GMSE01-Super Mario Sunshine.gci'),
+        List.filled(8256, 1),
+      );
       states = p.join(tmp.path, 'dolphin', 'User', 'StateSaves');
       put(p.join(states, 'GMSE01.s01'), List.filled(64, 2));
     });
@@ -91,13 +95,28 @@ void main() {
       final strategy = DolphinSaveStrategy(dirs, platform: windows);
       final bundle = _zip({'GMSE01.s01': List.filled(64, 9), 'GMSE01.s02': List.filled(64, 8)});
       expect(await strategy.restoreSave(game, romPath, bundle, 'save.zip'), isTrue);
-      expect(io.File(p.join(states, 'GMSE01.s01')).readAsBytesSync(), List.filled(64, 2), reason: "this PC's state stays");
-      expect(io.File(p.join(states, 'GMSE01.s02')).readAsBytesSync(), List.filled(64, 8), reason: 'a state only the bundle had');
+      expect(
+        io.File(p.join(states, 'GMSE01.s01')).readAsBytesSync(),
+        List.filled(64, 2),
+        reason: "this PC's state stays",
+      );
+      expect(
+        io.File(p.join(states, 'GMSE01.s02')).readAsBytesSync(),
+        List.filled(64, 8),
+        reason: 'a state only the bundle had',
+      );
     });
   });
 
   group('PPSSPP', () {
-    final game = Game(id: 'psp', name: 'Patapon', fsName: 'Patapon.iso', platformSlug: 'psp', fileSize: 0, titleId: 'UCUS98711');
+    final game = Game(
+      id: 'psp',
+      name: 'Patapon',
+      fsName: 'Patapon.iso',
+      platformSlug: 'psp',
+      fileSize: 0,
+      titleId: 'UCUS98711',
+    );
     late String states;
     setUp(() {
       states = p.join(tmp.path, 'ppsspp', 'memstick', 'PSP', 'PPSSPP_STATE');
@@ -119,15 +138,29 @@ void main() {
         'Other_1.00_0.ppst': List.filled(64, 8),
       });
       expect(await strategy.restoreSave(game, 'Patapon.iso', bundle, 'save.zip'), isTrue);
-      expect(io.File(p.join(tmp.path, 'ppsspp', 'memstick', 'PSP', 'SAVEDATA', 'UCUS98711DATA', 'DATA.BIN')).readAsBytesSync(),
-          List.filled(64, 7), reason: 'the real save is restored');
-      expect(io.File(p.join(states, 'Patapon.ppst')).readAsBytesSync(), List.filled(64, 2), reason: "this PC's state stays");
+      expect(
+        io.File(p.join(tmp.path, 'ppsspp', 'memstick', 'PSP', 'SAVEDATA', 'UCUS98711DATA', 'DATA.BIN'))
+            .readAsBytesSync(),
+        List.filled(64, 7),
+        reason: 'the real save is restored',
+      );
+      expect(
+        io.File(p.join(states, 'Patapon.ppst')).readAsBytesSync(),
+        List.filled(64, 2),
+        reason: "this PC's state stays",
+      );
       expect(io.File(p.join(states, 'Other_1.00_0.ppst')).existsSync(), isTrue, reason: 'a state only the bundle had');
     });
   });
 
   group('RetroArch, with state sync off', () {
-    final game = Game(id: 'gba', name: 'Pokemon Emerald', fsName: 'Pokemon Emerald.gba', platformSlug: 'gba', fileSize: 0);
+    final game = Game(
+      id: 'gba',
+      name: 'Pokemon Emerald',
+      fsName: 'Pokemon Emerald.gba',
+      platformSlug: 'gba',
+      fileSize: 0,
+    );
     late String romPath;
     late String states;
     setUp(() {
@@ -151,9 +184,20 @@ void main() {
         'Pokemon Emerald.state2': List.filled(64, 8),
       });
       expect(await strategy.restoreSave(game, romPath, bundle, 'save.zip'), isTrue);
-      expect(io.File(p.join(tmp.path, 'retroarch', 'saves', 'Pokemon Emerald.srm')).readAsBytesSync(), List.filled(64, 7));
-      expect(io.File(p.join(states, 'Pokemon Emerald.state1')).readAsBytesSync(), List.filled(64, 2), reason: "this PC's state stays");
-      expect(io.File(p.join(states, 'Pokemon Emerald.state2')).readAsBytesSync(), List.filled(64, 8), reason: 'only the bundle had it');
+      expect(
+        io.File(p.join(tmp.path, 'retroarch', 'saves', 'Pokemon Emerald.srm')).readAsBytesSync(),
+        List.filled(64, 7),
+      );
+      expect(
+        io.File(p.join(states, 'Pokemon Emerald.state1')).readAsBytesSync(),
+        List.filled(64, 2),
+        reason: "this PC's state stays",
+      );
+      expect(
+        io.File(p.join(states, 'Pokemon Emerald.state2')).readAsBytesSync(),
+        List.filled(64, 8),
+        reason: 'only the bundle had it',
+      );
     });
   });
 

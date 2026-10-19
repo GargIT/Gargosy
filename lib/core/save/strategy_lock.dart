@@ -12,14 +12,14 @@ class StrategyLock {
   /// [onSlow] is told (once per wait) when an operation has waited longer
   /// than [warnAfter] for the one before it: a stuck operation stops every
   /// save operation, and the log should say so.
-  StrategyLock(
-      {this.warnAfter = const Duration(minutes: 1),
-      void Function(String message)? onSlow,
-      Timer Function(Duration duration, void Function() callback)? createTimer})
-      : _onSlow = onSlow ?? debugPrint,
-        // Outside any zone by default: a test's fake clock shouldn't see it
-        // (a widget test may end with an operation still queued).
-        _createTimer = createTimer ?? ((d, f) => Zone.root.createTimer(d, f));
+  StrategyLock({
+    this.warnAfter = const Duration(minutes: 1),
+    void Function(String message)? onSlow,
+    Timer Function(Duration duration, void Function() callback)? createTimer,
+  }) : _onSlow = onSlow ?? debugPrint,
+       // Outside any zone by default: a test's fake clock shouldn't see it
+       // (a widget test may end with an operation still queued).
+       _createTimer = createTimer ?? ((d, f) => Zone.root.createTimer(d, f));
 
   final Duration warnAfter;
   final void Function(String message) _onSlow;
@@ -34,12 +34,16 @@ class StrategyLock {
     final done = Completer<void>();
     _tail = done.future;
     final slow = _createTimer(warnAfter, () {
-      _onSlow('[SaveSync] a save operation has waited over ${warnAfter.inSeconds} s for the one before it '
-          '(a slow upload, or one that is stuck)');
+      _onSlow(
+        '[SaveSync] a save operation has waited over ${warnAfter.inSeconds} s for the one before it '
+        '(a slow upload, or one that is stuck)',
+      );
     });
-    return previous.then((_) {
-      slow.cancel();
-      return runZoned(body, zoneValues: {_held: true});
-    }).whenComplete(() => done.complete());
+    return previous
+        .then((_) {
+          slow.cancel();
+          return runZoned(body, zoneValues: {_held: true});
+        })
+        .whenComplete(() => done.complete());
   }
 }

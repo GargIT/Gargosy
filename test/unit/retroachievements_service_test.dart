@@ -33,12 +33,7 @@ void main() {
           'UserPic': '/UserPic/$testUsername.png',
           'MemberSince': '2015-03-01 12:00:00',
         }),
-        queryParameters: {
-          'u': testUsername,
-          'y': testApiKey,
-          'g': 0,
-          'a': 0,
-        },
+        queryParameters: {'u': testUsername, 'y': testApiKey, 'g': 0, 'a': 0},
       );
 
       final profile = await service.fetchProfile(
@@ -57,18 +52,11 @@ void main() {
       dioAdapter.onGet(
         '/API_GetUserSummary.php',
         (server) => server.reply(200, {}),
-        queryParameters: {
-          'u': testUsername,
-          'y': 'wrong_key',
-          'g': 0,
-          'a': 0,
-        },
+        queryParameters: {'u': testUsername, 'y': 'wrong_key', 'g': 0, 'a': 0},
       );
 
       expect(
-        () => service.fetchProfile(
-          const RetroAchievementsCredentials(username: testUsername, webApiKey: 'wrong_key'),
-        ),
+        () => service.fetchProfile(const RetroAchievementsCredentials(username: testUsername, webApiKey: 'wrong_key')),
         throwsA(isA<RetroAchievementsAuthException>()),
       );
     });
@@ -77,18 +65,11 @@ void main() {
       dioAdapter.onGet(
         '/API_GetUserSummary.php',
         (server) => server.reply(401, {'error': 'Unauthorized'}),
-        queryParameters: {
-          'u': testUsername,
-          'y': testApiKey,
-          'g': 0,
-          'a': 0,
-        },
+        queryParameters: {'u': testUsername, 'y': testApiKey, 'g': 0, 'a': 0},
       );
 
       expect(
-        () => service.fetchProfile(
-          const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey),
-        ),
+        () => service.fetchProfile(const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey)),
         throwsA(isA<RetroAchievementsAuthException>()),
       );
     });
@@ -97,18 +78,11 @@ void main() {
       dioAdapter.onGet(
         '/API_GetUserSummary.php',
         (server) => server.reply(404, {'ID': null, 'User': testUsername}),
-        queryParameters: {
-          'u': testUsername,
-          'y': testApiKey,
-          'g': 0,
-          'a': 0,
-        },
+        queryParameters: {'u': testUsername, 'y': testApiKey, 'g': 0, 'a': 0},
       );
 
       expect(
-        () => service.fetchProfile(
-          const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey),
-        ),
+        () => service.fetchProfile(const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey)),
         throwsA(isA<RetroAchievementsAuthException>()),
       );
     });
@@ -124,18 +98,11 @@ void main() {
       dioAdapter.onGet(
         '/API_GetUserSummary.php',
         (server) => server.reply(500, {'error': 'Internal Server Error'}),
-        queryParameters: {
-          'u': testUsername,
-          'y': testApiKey,
-          'g': 0,
-          'a': 0,
-        },
+        queryParameters: {'u': testUsername, 'y': testApiKey, 'g': 0, 'a': 0},
       );
 
       expect(
-        () => service.fetchProfile(
-          const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey),
-        ),
+        () => service.fetchProfile(const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey)),
         throwsA(isA<DioException>()),
       );
     });
@@ -248,8 +215,13 @@ void main() {
 
       expect(
         () => service.fetchConnectToken(testUsername, 'bad'),
-        throwsA(isA<RetroAchievementsAuthException>()
-            .having((e) => e.message, 'message', 'Invalid User/Password combination.')),
+        throwsA(
+          isA<RetroAchievementsAuthException>().having(
+            (e) => e.message,
+            'message',
+            'Invalid User/Password combination.',
+          ),
+        ),
       );
     });
   });
@@ -259,10 +231,14 @@ void main() {
 
     test('sends the password form-encoded in the body, never in the URL', () async {
       RequestOptions? sent;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (o, h) {
-        sent = o;
-        h.next(o);
-      }));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (o, h) {
+            sent = o;
+            h.next(o);
+          },
+        ),
+      );
       dioAdapter.onPost(
         connectUrl,
         (server) => server.reply(200, {'Success': true, 'User': testUsername, 'Token': 't'}),
@@ -321,7 +297,9 @@ void main() {
       );
       expect(
         () => service.fetchGameProgress(
-          const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey), 3),
+          const RetroAchievementsCredentials(username: testUsername, webApiKey: testApiKey),
+          3,
+        ),
         throwsA(isA<RetroAchievementsAuthException>()),
       );
     });

@@ -41,8 +41,12 @@ class FakeRommAuth implements RommAuth {
   }
 
   @override
-  Future<String> loginWithPassword(
-      {required String username, required String password, required String tokenName, int? expectedUserId}) async {
+  Future<String> loginWithPassword({
+    required String username,
+    required String password,
+    required String tokenName,
+    int? expectedUserId,
+  }) async {
     if (passwordError != null) throw passwordError!;
     if (expectedUserId != null && me.id != expectedUserId) {
       throw RommAuthException(RommAuthFailure.wrongUser, me.username);

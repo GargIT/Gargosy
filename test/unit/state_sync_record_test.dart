@@ -16,8 +16,7 @@ void main() {
 
   test('round-trips records per game', () async {
     await store.save('42', {
-      'a.p2s': const StateSyncRecord(
-          rommStateId: 7, lastSyncedHash: 'abc', serverUpdatedAt: '2026-01-01T00:00:00Z'),
+      'a.p2s': const StateSyncRecord(rommStateId: 7, lastSyncedHash: 'abc', serverUpdatedAt: '2026-01-01T00:00:00Z'),
       'b.p2s': const StateSyncRecord(rommStateId: 8, conflict: true),
     });
 
@@ -37,8 +36,7 @@ void main() {
   });
 
   test('copyWith(conflict:) keeps every other field', () {
-    const record = StateSyncRecord(
-        rommStateId: 7, lastSyncedHash: 'abc', serverUpdatedAt: 'u');
+    const record = StateSyncRecord(rommStateId: 7, lastSyncedHash: 'abc', serverUpdatedAt: 'u');
 
     final flagged = record.copyWith(conflict: true);
 

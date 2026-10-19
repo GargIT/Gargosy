@@ -57,8 +57,11 @@ void main() {
     await env.writeState(stateFileA, stateBytes(1), modified: now.subtract(const Duration(days: 1)));
     await env.writeState(stateFileB, stateBytes(2), modified: now);
 
-    final result = await env.service.pushStates(env.game, env.romPath,
-        sessionStart: now.subtract(const Duration(minutes: 5)));
+    final result = await env.service.pushStates(
+      env.game,
+      env.romPath,
+      sessionStart: now.subtract(const Duration(minutes: 5)),
+    );
 
     expect(result.uploaded, 1);
     expect(env.api.calls, ['list', 'POST $stateFileB']);
@@ -252,17 +255,13 @@ void main() {
     await slow.writeState(stateFileA, stateBytes(1));
     slow.api.listGate = Completer<void>(); // never completed: an unreachable server
 
-    final result = await slow.service
-        .pushStates(slow.game, slow.romPath)
-        .timeout(const Duration(seconds: 2));
+    final result = await slow.service.pushStates(slow.game, slow.romPath).timeout(const Duration(seconds: 2));
 
     expect(result.uploaded, 0);
     expect(result.conflicts, isEmpty);
 
     slow.api.listGate = null;
-    final retry = await slow.service
-        .pushStates(slow.game, slow.romPath)
-        .timeout(const Duration(seconds: 2));
+    final retry = await slow.service.pushStates(slow.game, slow.romPath).timeout(const Duration(seconds: 2));
 
     expect(retry.uploaded, 1, reason: 'the timed-out push must release the game');
   });
@@ -270,8 +269,7 @@ void main() {
   test('reports skipped when the game cannot be identified', () async {
     await env.writeState(stateFileA, stateBytes(1));
 
-    final result = await env.service
-        .pushStates(env.game, p.join(env.base.path, 'Unknown Game.iso'));
+    final result = await env.service.pushStates(env.game, p.join(env.base.path, 'Unknown Game.iso'));
 
     expect(result.skipped, isTrue);
     expect(result.uploaded, 0);
@@ -299,8 +297,11 @@ void main() {
 
   test('a strategy resolver that throws never makes a push throw', () async {
     await env.writeState(stateFileA, stateBytes(1));
-    final broken = StateSyncService(env.api, env.pcsx2.prefs,
-        (game, {emulatorId, coreOverride}) => throw StateError('no strategy'));
+    final broken = StateSyncService(
+      env.api,
+      env.pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) => throw StateError('no strategy'),
+    );
 
     final result = await broken.pushStates(env.game, env.romPath);
 

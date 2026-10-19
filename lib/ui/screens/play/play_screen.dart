@@ -387,7 +387,11 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _segment('Saves ${distinctSaveCount([for (final r in view.saveRows) r.entry])}', tab == 0, () => setState(() => _tab = 0)),
+              _segment(
+                'Saves ${distinctSaveCount([for (final r in view.saveRows) r.entry])}',
+                tab == 0,
+                () => setState(() => _tab = 0),
+              ),
               _segment('States ${view.states.length}', tab == 1, () => setState(() => _tab = 1)),
             ],
           ),

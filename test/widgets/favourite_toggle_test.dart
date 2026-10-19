@@ -18,11 +18,16 @@ void main() {
 
   Future<FakeLibraryApi> pumpGallery(WidgetTester tester, FakeLibraryApi api) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const GalleryScreen(title: 'All', query: GalleryQuery()), overrides: [
-      libraryApiProvider.overrideWithValue(api),
-      favouriteIdsProvider.overrideWithValue(const {}),
-      rommUserIdProvider.overrideWithValue(7),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const GalleryScreen(title: 'All', query: GalleryQuery()),
+        overrides: [
+          libraryApiProvider.overrideWithValue(api),
+          favouriteIdsProvider.overrideWithValue(const {}),
+          rommUserIdProvider.overrideWithValue(7),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     return api;
   }
@@ -45,7 +50,9 @@ void main() {
 
   testWidgets('a note RomM refuses to save says so', (tester) async {
     final api = FakeLibraryApi(const []);
-    await tester.pumpWidget(testApp(NotesTab(game: game(1, 'Okami')), overrides: [libraryApiProvider.overrideWithValue(api)]));
+    await tester.pumpWidget(
+      testApp(NotesTab(game: game(1, 'Okami')), overrides: [libraryApiProvider.overrideWithValue(api)]),
+    );
     await tester.pumpAndSettle();
     api.failWith = Exception('SocketException: connection refused');
     await tester.tap(find.text('Add a note'));

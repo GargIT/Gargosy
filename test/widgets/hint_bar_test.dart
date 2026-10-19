@@ -8,10 +8,14 @@ import 'package:gargosy/ui/widgets/hint_bar.dart';
 void main() {
   testWidgets('hints show for controller and keyboard, not mouse', (tester) async {
     final container = ProviderContainer();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const MaterialApp(home: Scaffold(body: HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Back')]))),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Back')])),
+        ),
+      ),
+    );
     expect(find.text('Select'), findsNothing);
     container.read(inputModeProvider.notifier).state = InputMode.gamepad;
     await tester.pump();

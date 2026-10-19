@@ -1,6 +1,8 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import '../storage/profile_rooted.dart';
+
 import 'dart:io';
+
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -96,7 +98,13 @@ class FirmwareService {
           final biosSpec = _resolveBiosSpec(emulatorId, platform.slug);
 
           for (final firmware in platform.firmware) {
-            await _downloadAndPlaceFirmware(firmware, biosDir, emulatorId: emulatorId, biosSpec: biosSpec, onProgress: onProgress);
+            await _downloadAndPlaceFirmware(
+              firmware,
+              biosDir,
+              emulatorId: emulatorId,
+              biosSpec: biosSpec,
+              onProgress: onProgress,
+            );
           }
         }
       }
@@ -127,7 +135,10 @@ class FirmwareService {
   Future<void> syncFirmwareForPlatform(String platformSlug, {FirmwareProgressCallback? onProgress}) async {
     try {
       final platforms = await _rommService.getPlatforms();
-      final platform = platforms.firstWhere((p) => p.slug == platformSlug, orElse: () => throw Exception('Platform not found: $platformSlug'));
+      final platform = platforms.firstWhere(
+        (p) => p.slug == platformSlug,
+        orElse: () => throw Exception('Platform not found: $platformSlug'),
+      );
 
       if (platform.firmware.isEmpty) return;
 
@@ -141,7 +152,13 @@ class FirmwareService {
       final biosSpec = _resolveBiosSpec(strategy.emulatorId, platform.slug);
 
       for (final firmware in platform.firmware) {
-        await _downloadAndPlaceFirmware(firmware, biosDir, emulatorId: strategy.emulatorId, biosSpec: biosSpec, onProgress: onProgress);
+        await _downloadAndPlaceFirmware(
+          firmware,
+          biosDir,
+          emulatorId: strategy.emulatorId,
+          biosSpec: biosSpec,
+          onProgress: onProgress,
+        );
       }
     } catch (e) {
       debugPrint('[FirmwareService] Error syncing firmware for $platformSlug: $e');
@@ -150,18 +167,24 @@ class FirmwareService {
 
   /// Downloads firmware for a specific emulator and places it in its BIOS directory.
   Future<void> syncFirmwareForEmulator(String emulatorId, {FirmwareProgressCallback? onProgress}) async {
-      debugPrint("[Firmware] Started individual emulator BIOS sync for $emulatorId");
+    debugPrint("[Firmware] Started individual emulator BIOS sync for $emulatorId");
     try {
       final platforms = await _rommService.getPlatforms();
       final biosDir = await _directoryService.getEmulatorBiosDirectory(emulatorId);
       final emuSupportedSlugs = _strategyRegistry.getStrategyById(emulatorId)?.supportedSlugs;
 
       for (final platform in platforms) {
-          if (!emuSupportedSlugs!.contains(canonicalPlatformSlug(platform.slug)) | platform.firmware.isEmpty) continue;
-          final biosSpec = _resolveBiosSpec(emulatorId, platform.slug);
-          for (final firmware in platform.firmware) {
-            await _downloadAndPlaceFirmware(firmware, biosDir, emulatorId: emulatorId, biosSpec: biosSpec, onProgress: onProgress);
-          }
+        if (!emuSupportedSlugs!.contains(canonicalPlatformSlug(platform.slug)) | platform.firmware.isEmpty) continue;
+        final biosSpec = _resolveBiosSpec(emulatorId, platform.slug);
+        for (final firmware in platform.firmware) {
+          await _downloadAndPlaceFirmware(
+            firmware,
+            biosDir,
+            emulatorId: emulatorId,
+            biosSpec: biosSpec,
+            onProgress: onProgress,
+          );
+        }
       }
     } catch (e) {
       debugPrint('[FirmwareService] Error syncing firmware for emulator $emulatorId: $e');
@@ -181,9 +204,7 @@ class FirmwareService {
 
     for (final spec in biosSpec.files) {
       // Resolve the actual path considering subdirectory
-      final relativePath = spec.subdirectory != null
-          ? p.join(spec.subdirectory!, spec.fileName)
-          : spec.fileName;
+      final relativePath = spec.subdirectory != null ? p.join(spec.subdirectory!, spec.fileName) : spec.fileName;
       final filePath = p.join(biosDir, relativePath);
       final file = File(filePath);
 
@@ -234,13 +255,13 @@ class FirmwareService {
     // 1. First check, are we syncing BIOS for RetroArch? If yes, we use the Libretro fallback subfolder for this core, if it exists in the registry.
     if (emulatorId == 'retroarch' && biosSpec?.fallbackSubdirectoryLibretro != null) {
       relativePath = p.join(biosSpec!.fallbackSubdirectoryLibretro!, firmware.fileName);
-    // 2. Else, let's check if we recognize the filename of this Firmware. If there's a subfolder in the registry for this specific firmware, let's use it.
+      // 2. Else, let's check if we recognize the filename of this Firmware. If there's a subfolder in the registry for this specific firmware, let's use it.
     } else if (matchingSpecForPath?.subdirectory != null) {
       relativePath = p.join(matchingSpecForPath!.subdirectory!, firmware.fileName);
-    // 3. Else, we check if the registry contains a fallback subfolder for this standalone emulator.
+      // 3. Else, we check if the registry contains a fallback subfolder for this standalone emulator.
     } else if (biosSpec?.fallbackSubdirectory != null) {
       relativePath = p.join(biosSpec!.fallbackSubdirectory!, firmware.fileName);
-    // 4. If all else fails, simply put the firmware in the emulator's root folder.
+      // 4. If all else fails, simply put the firmware in the emulator's root folder.
     } else {
       relativePath = firmware.fileName;
     }
@@ -277,7 +298,9 @@ class FirmwareService {
             debugPrint('[Firmware] File exists and MD5 matches, skipping: $destPath');
             return;
           } else {
-            debugPrint('[Firmware] File exists but MD5 mismatch! Expected ${matchingSpec.md5Hash}, got $digest. Overwriting: $destPath');
+            debugPrint(
+              '[Firmware] File exists but MD5 mismatch! Expected ${matchingSpec.md5Hash}, got $digest. Overwriting: $destPath',
+            );
             // Fall through to re-download
           }
         } catch (e) {
@@ -294,10 +317,10 @@ class FirmwareService {
     onProgress?.call(firmware.fileName, 0, firmware.fileSizeBytes);
 
     final bytes = await _rommService.downloadFirmware(
-      firmware, 
+      firmware,
       onProgress: (received, total) {
         onProgress?.call(firmware.fileName, received, total);
-      }
+      },
     );
 
     if (bytes != null) {
@@ -311,7 +334,9 @@ class FirmwareService {
         try {
           final digest = md5.convert(bytes).toString();
           if (digest.toLowerCase() != matchingSpec!.md5Hash!.toLowerCase()) {
-            debugPrint('[Firmware] WARNING: Downloaded file MD5 mismatch! Expected ${matchingSpec.md5Hash}, got $digest');
+            debugPrint(
+              '[Firmware] WARNING: Downloaded file MD5 mismatch! Expected ${matchingSpec.md5Hash}, got $digest',
+            );
           }
         } catch (_) {}
       }
@@ -324,9 +349,7 @@ class FirmwareService {
   BiosFileSpec? _findMatchingSpec(String fileName, EmulatorBiosSpec? biosSpec) {
     if (biosSpec == null) return null;
     try {
-      return biosSpec.files.firstWhere(
-        (spec) => spec.fileName.toLowerCase() == fileName.toLowerCase(),
-      );
+      return biosSpec.files.firstWhere((spec) => spec.fileName.toLowerCase() == fileName.toLowerCase());
     } catch (_) {
       return null;
     }

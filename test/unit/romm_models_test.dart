@@ -5,44 +5,25 @@ import 'package:gargosy/core/romm/romm_models.dart';
 void main() {
   group('RomM Models', () {
     test('Platform.fromJson parses rom_count', () {
-      final json = {
-        'id': 1,
-        'name': 'GBA',
-        'slug': 'gba',
-        'rom_count': 10,
-      };
+      final json = {'id': 1, 'name': 'GBA', 'slug': 'gba', 'rom_count': 10};
       final platform = Platform.fromJson(json);
       expect(platform.gamesCount, 10);
     });
 
     test('Platform.fromJson parses roms_count', () {
-      final json = {
-        'id': 1,
-        'name': 'GBA',
-        'slug': 'gba',
-        'roms_count': 20,
-      };
+      final json = {'id': 1, 'name': 'GBA', 'slug': 'gba', 'roms_count': 20};
       final platform = Platform.fromJson(json);
       expect(platform.gamesCount, 20);
     });
 
     test('Platform.fromJson parses games_count', () {
-      final json = {
-        'id': 1,
-        'name': 'GBA',
-        'slug': 'gba',
-        'games_count': 30,
-      };
+      final json = {'id': 1, 'name': 'GBA', 'slug': 'gba', 'games_count': 30};
       final platform = Platform.fromJson(json);
       expect(platform.gamesCount, 30);
     });
 
     test('Platform.fromJson defaults games_count to 0', () {
-      final json = {
-        'id': 1,
-        'name': 'GBA',
-        'slug': 'gba',
-      };
+      final json = {'id': 1, 'name': 'GBA', 'slug': 'gba'};
       final platform = Platform.fromJson(json);
       expect(platform.gamesCount, 0);
     });
@@ -76,9 +57,7 @@ void main() {
         'id': '123',
         'name': 'Game Name',
         'file_size_bytes': 0,
-        'rom_user': {
-          'status': 'Playing',
-        },
+        'rom_user': {'status': 'Playing'},
       };
       final game = Game.fromJson(json);
       expect(game.status, 'playing');
@@ -96,11 +75,7 @@ void main() {
     });
 
     test('SaveFile.fromJson parses all fields', () {
-      final json = {
-        'id': '456',
-        'rom_id': '123',
-        'download_path': 'https://example.com/save',
-      };
+      final json = {'id': '456', 'rom_id': '123', 'download_path': 'https://example.com/save'};
       final save = SaveFile.fromJson(json);
       expect(save.id, '456');
       expect(save.romId, '123');
@@ -161,18 +136,20 @@ void main() {
     });
 
     test('the layout as the RomM API really sends it (lower case, hyphens)', () {
-      expect(Game.fromJson({'id': 1, 'name': 'Burnout 3', 'save_target_layout': 'folder-prefix'}).saveTargetLayout,
-          SaveTargetLayout.folderPrefix);
+      expect(
+        Game.fromJson({'id': 1, 'name': 'Burnout 3', 'save_target_layout': 'folder-prefix'}).saveTargetLayout,
+        SaveTargetLayout.folderPrefix,
+      );
       expect({
         for (final v in ['folder-exact', 'folder-prefix', 'file-exact', 'file-prefix', 'folder-split'])
-          SaveTargetLayout.fromJson(v)
+          SaveTargetLayout.fromJson(v),
       }, SaveTargetLayout.values.toSet());
     });
 
     test('every layout RomM sends is known', () {
       expect({
         for (final v in ['FOLDER_EXACT', 'FOLDER_PREFIX', 'FILE_EXACT', 'FILE_PREFIX', 'FOLDER_SPLIT'])
-          SaveTargetLayout.fromJson(v)
+          SaveTargetLayout.fromJson(v),
       }, SaveTargetLayout.values.toSet());
     });
 

@@ -52,8 +52,7 @@ class Ps1MemoryCard {
   /// A quick check that [bytes] is a raw PS1 card: 128 KB starting with `MC`.
   /// This is the format of DuckStation's `.mcd` and of a RetroArch PS1 core's
   /// `.srm` alike. [parse] checks the rest.
-  static bool looksLikeCard(Uint8List bytes) =>
-      bytes.length == size && bytes[0] == 0x4D && bytes[1] == 0x43;
+  static bool looksLikeCard(Uint8List bytes) => bytes.length == size && bytes[0] == 0x4D && bytes[1] == 0x43;
 
   /// Reads and checks [bytes]: the size, the `MC` header, and every save's
   /// block chain (no loops, only linked in-use blocks, the size it
@@ -192,9 +191,9 @@ class Ps1MemoryCard {
   }
 
   static List<int> _freeBlockList(Uint8List bytes) => [
-        for (var block = 1; block <= _dataBlocks; block++)
-          if (_state(bytes, block) & 0xF0 == 0xA0) block,
-      ];
+    for (var block = 1; block <= _dataBlocks; block++)
+      if (_state(bytes, block) & 0xF0 == 0xA0) block,
+  ];
 
   static Uint8List _frame(Uint8List card, int n) =>
       Uint8List.sublistView(card, n * _frameSize, n * _frameSize + _frameSize);

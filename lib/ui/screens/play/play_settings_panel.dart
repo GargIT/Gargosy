@@ -53,18 +53,23 @@ class PlaySettingsPanel extends StatelessWidget {
   final bool compact;
 
   Widget _always() => GFocusable(
-        key: const ValueKey('play-always'),
-        borderRadius: GRadius.pill,
-        onActivate: () => onRemember(!remember),
-        child: Padding(
-          padding: const EdgeInsets.all(GSpace.s2),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(remember ? Icons.check_box : Icons.check_box_outline_blank, size: 20, color: GColors.fgSecondary),
-            const SizedBox(width: GSpace.s2),
-            const Flexible(child: Text('Always for this game', style: TextStyle(color: GColors.fgSecondary))),
-          ]),
-        ),
-      );
+    key: const ValueKey('play-always'),
+    borderRadius: GRadius.pill,
+    onActivate: () => onRemember(!remember),
+    child: Padding(
+      padding: const EdgeInsets.all(GSpace.s2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(remember ? Icons.check_box : Icons.check_box_outline_blank, size: 20, color: GColors.fgSecondary),
+          const SizedBox(width: GSpace.s2),
+          const Flexible(
+            child: Text('Always for this game', style: TextStyle(color: GColors.fgSecondary)),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _fullscreen() {
     final on = fullscreen;
@@ -76,24 +81,38 @@ class PlaySettingsPanel extends StatelessWidget {
         opacity: on == null ? 0.45 : 1,
         child: Padding(
           padding: const EdgeInsets.all(GSpace.s1),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Switch(
-              value: on ?? false,
-              onChanged: on == null ? null : onFullscreen,
-              activeThumbColor: GColors.fg,
-              activeTrackColor: GColors.primary,
-            ),
-            const SizedBox(width: GSpace.s2),
-            Flexible(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                Text('Full screen',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600, color: on == true ? GColors.primaryHover : GColors.fgSecondary)),
-                if (on == null)
-                  const Text('Set in the emulator', style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
-              ]),
-            ),
-          ]),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Switch(
+                value: on ?? false,
+                onChanged: on == null ? null : onFullscreen,
+                activeThumbColor: GColors.fg,
+                activeTrackColor: GColors.primary,
+              ),
+              const SizedBox(width: GSpace.s2),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Full screen',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: on == true ? GColors.primaryHover : GColors.fgSecondary,
+                      ),
+                    ),
+                    if (on == null)
+                      const Text(
+                        'Set in the emulator',
+                        style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -133,11 +152,12 @@ class PlaySettingsPanel extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(GSpace.s2),
               child: Text(
-                  showAll
-                      ? 'Hide the saves ${menu.nameOf(picked)} can\'t use'
-                      : '$hidden ${hidden == 1 ? 'save is' : 'saves are'} hidden: ${menu.nameOf(picked)} can\'t use '
+                showAll
+                    ? 'Hide the saves ${menu.nameOf(picked)} can\'t use'
+                    : '$hidden ${hidden == 1 ? 'save is' : 'saves are'} hidden: ${menu.nameOf(picked)} can\'t use '
                           '${hidden == 1 ? 'it' : 'them'}. Show all',
-                  style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
+                style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+              ),
             ),
           );
     if (compact) {
@@ -153,23 +173,35 @@ class PlaySettingsPanel extends StatelessWidget {
       key: const ValueKey('play-settings'),
       padding: const EdgeInsets.all(GSpace.s4),
       decoration: BoxDecoration(color: GColors.bgElevated, borderRadius: BorderRadius.circular(GRadius.card)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-        const Row(children: [
-          Icon(Icons.settings, size: 16, color: GColors.fgMuted),
-          SizedBox(width: GSpace.s2),
-          Text('PLAYS IN',
-              style: TextStyle(
-                  fontSize: GFont.sm, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: GColors.fgMuted)),
-        ]),
-        const SizedBox(height: GSpace.s3),
-        emulator,
-        const SizedBox(height: GSpace.s3),
-        core,
-        const SizedBox(height: GSpace.s3),
-        Align(alignment: Alignment.centerLeft, child: _fullscreen()),
-        Align(alignment: Alignment.centerLeft, child: _always()),
-        if (hiddenNote != null) ...[const SizedBox(height: GSpace.s2), hiddenNote],
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.settings, size: 16, color: GColors.fgMuted),
+              SizedBox(width: GSpace.s2),
+              Text(
+                'PLAYS IN',
+                style: TextStyle(
+                  fontSize: GFont.sm,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: GColors.fgMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: GSpace.s3),
+          emulator,
+          const SizedBox(height: GSpace.s3),
+          core,
+          const SizedBox(height: GSpace.s3),
+          Align(alignment: Alignment.centerLeft, child: _fullscreen()),
+          Align(alignment: Alignment.centerLeft, child: _always()),
+          if (hiddenNote != null) ...[const SizedBox(height: GSpace.s2), hiddenNote],
+        ],
+      ),
     );
   }
 }

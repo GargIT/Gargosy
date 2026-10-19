@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/strategies/retroarch_save_strategy.dart';
@@ -15,24 +16,20 @@ void main() {
 
   setUp(() {
     mockDirService = MockDirectoryService();
-    when(mockDirService.findEmulatorExecutable(
-            argThat(isA<String>()), argThat(isA<String>())))
+    when(mockDirService.findEmulatorExecutable(argThat(isA<String>()), argThat(isA<String>())))
         .thenAnswer((_) async => null);
     when(mockDirService.linuxSyncPreset).thenReturn('default');
   });
 
   group('RetroArch config parsing: sort_savefiles_enable', () {
-
-
     test('sort_savefiles_enable not set defaults to false (RetroArch default)', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_sort_default_');
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'video_fullscreen = "false"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg')).writeAsString(
+        ['savefile_directory = "${p.join(tempDir.path, 'saves')}"', 'video_fullscreen = "false"'].join('\n'),
+      );
 
       await Directory(p.join(tempDir.path, 'saves', 'mGBA')).create(recursive: true);
 
@@ -53,17 +50,18 @@ void main() {
       await tempDir.delete(recursive: true);
     });
 
-
     test('sort_savefiles_enable with extra whitespace and no quotes', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_sort_ws_');
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = false',
-        'video_fullscreen = "false"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg')).writeAsString(
+        [
+          'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
+          'sort_savefiles_enable = false',
+          'video_fullscreen = "false"',
+        ].join('\n'),
+      );
 
       await Directory(p.join(tempDir.path, 'saves')).create(recursive: true);
 
@@ -78,13 +76,11 @@ void main() {
       final result = await strategy.getSaveDir(game, romPath);
 
       expect(result, isNotNull);
-      expect(result, isNot(endsWith('mGBA')),
-          reason: 'Unquoted false should also be parsed correctly');
+      expect(result, isNot(endsWith('mGBA')), reason: 'Unquoted false should also be parsed correctly');
 
       await tempDir.delete(recursive: true);
     });
   });
-
 
   group('RetroArch config parsing: static retroarchCoreSaveDir', () {
     test('sort_savefiles_enable=false returns flat dir without core subfolder', () async {
@@ -92,20 +88,21 @@ void main() {
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = "false"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg')).writeAsString(
+        ['savefile_directory = "${p.join(tempDir.path, 'saves')}"', 'sort_savefiles_enable = "false"'].join('\n'),
+      );
 
       await Directory(p.join(tempDir.path, 'saves')).create(recursive: true);
 
       final platform = PlatformInfo('linux', environment: {'HOME': tempDir.path});
-      final result = await SaveStrategy.retroarchCoreSaveDir(
-        mockDirService, 'mGBA', platform: platform);
+      final result = await SaveStrategy.retroarchCoreSaveDir(mockDirService, 'mGBA', platform: platform);
 
       expect(result, isNotNull);
-      expect(result, equals(p.join(tempDir.path, 'saves')),
-          reason: 'sort=false should return flat dir, not core subfolder');
+      expect(
+        result,
+        equals(p.join(tempDir.path, 'saves')),
+        reason: 'sort=false should return flat dir, not core subfolder',
+      );
 
       await tempDir.delete(recursive: true);
     });
@@ -115,20 +112,17 @@ void main() {
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = "true"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg')).writeAsString(
+        ['savefile_directory = "${p.join(tempDir.path, 'saves')}"', 'sort_savefiles_enable = "true"'].join('\n'),
+      );
 
       await Directory(p.join(tempDir.path, 'saves', 'mGBA')).create(recursive: true);
 
       final platform = PlatformInfo('linux', environment: {'HOME': tempDir.path});
-      final result = await SaveStrategy.retroarchCoreSaveDir(
-        mockDirService, 'mGBA', platform: platform);
+      final result = await SaveStrategy.retroarchCoreSaveDir(mockDirService, 'mGBA', platform: platform);
 
       expect(result, isNotNull);
-      expect(result, endsWith('mGBA'),
-          reason: 'sort=true should append core subfolder');
+      expect(result, endsWith('mGBA'), reason: 'sort=true should append core subfolder');
 
       await tempDir.delete(recursive: true);
     });
@@ -138,26 +132,22 @@ void main() {
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg'))
+          .writeAsString(['savefile_directory = "${p.join(tempDir.path, 'saves')}"'].join('\n'));
 
       await Directory(p.join(tempDir.path, 'saves', 'mGBA')).create(recursive: true);
 
       final platform = PlatformInfo('linux', environment: {'HOME': tempDir.path});
-      final result = await SaveStrategy.retroarchCoreSaveDir(
-        mockDirService, 'mGBA', platform: platform);
+      final result = await SaveStrategy.retroarchCoreSaveDir(mockDirService, 'mGBA', platform: platform);
 
       expect(result, isNotNull);
-      expect(result, endsWith('mGBA'),
-          reason: 'Default should be true (append core subfolder)');
+      expect(result, endsWith('mGBA'), reason: 'Default should be true (append core subfolder)');
 
       await tempDir.delete(recursive: true);
     });
   });
 
   group('RetroArch EmuDeck-for-Windows detection', () {
-
     test('falls back to normal Windows resolution when emudeck root absent', () async {
       final tempDir = await Directory.systemTemp.createTemp('ra_no_emudeck_win_');
       final exeDir = p.join(tempDir.path, 'RetroArch-Win64');
@@ -165,13 +155,12 @@ void main() {
       final exePath = p.join(exeDir, 'RetroArch.exe');
       await File(exePath).writeAsString('');
 
-      when(mockDirService.findEmulatorExecutable('retroarch', 'RetroArch.exe'))
-          .thenAnswer((_) async => exePath);
+      when(mockDirService.findEmulatorExecutable('retroarch', 'RetroArch.exe')).thenAnswer((_) async => exePath);
 
-      final platform = PlatformInfo('windows', environment: {
-        'USERPROFILE': tempDir.path,
-        'APPDATA': p.join(tempDir.path, 'AppData', 'Roaming'),
-      });
+      final platform = PlatformInfo(
+        'windows',
+        environment: {'USERPROFILE': tempDir.path, 'APPDATA': p.join(tempDir.path, 'AppData', 'Roaming')},
+      );
       final strategy = RetroArchSaveStrategy(mockDirService, platform: platform);
 
       final game = Game(id: '1', name: 'Pokemon', platformSlug: 'gba', fileSize: 0);
@@ -179,8 +168,11 @@ void main() {
       final result = await strategy.getSaveDir(game, romPath);
 
       // Gargosy: flat saves\ by default (RetroArch's default), no core subfolder.
-      expect(result, equals(p.join(exeDir, 'saves')),
-          reason: 'Without an emudeck folder present, should resolve relative to the exe as before');
+      expect(
+        result,
+        equals(p.join(exeDir, 'saves')),
+        reason: 'Without an emudeck folder present, should resolve relative to the exe as before',
+      );
 
       await tempDir.delete(recursive: true);
     });
@@ -198,16 +190,14 @@ void main() {
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = "true"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg')).writeAsString(
+        ['savefile_directory = "${p.join(tempDir.path, 'saves')}"', 'sort_savefiles_enable = "true"'].join('\n'),
+      );
 
       final saveDir = p.join(tempDir.path, 'saves', 'Atari 2600');
       await Directory(saveDir).create(recursive: true);
       // Unrelated leftover save from a completely different game.
-      await File(p.join(saveDir, 'Dragon Ball - Advanced Adventure.srm'))
-          .writeAsBytes([1, 2, 3]);
+      await File(p.join(saveDir, 'Dragon Ball - Advanced Adventure.srm')).writeAsBytes([1, 2, 3]);
 
       when(mockDirService.getEmulatorAppSupportDirectory('retroarch', platformSlug: anyNamed('platformSlug')))
           .thenAnswer((_) async => configDir);
@@ -220,8 +210,11 @@ void main() {
 
       final files = await strategy.getSaveFiles(game, romPath, syncMode: 'saves');
 
-      expect(files, isEmpty,
-          reason: 'Must not fall back to an unrelated save file just because it exists in the directory');
+      expect(
+        files,
+        isEmpty,
+        reason: 'Must not fall back to an unrelated save file just because it exists in the directory',
+      );
 
       await tempDir.delete(recursive: true);
     });
@@ -231,10 +224,9 @@ void main() {
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
 
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "${p.join(tempDir.path, 'saves')}"',
-        'sort_savefiles_enable = "true"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg')).writeAsString(
+        ['savefile_directory = "${p.join(tempDir.path, 'saves')}"', 'sort_savefiles_enable = "true"'].join('\n'),
+      );
 
       final saveDir = p.join(tempDir.path, 'saves', 'mGBA');
       await Directory(saveDir).create(recursive: true);
@@ -265,26 +257,28 @@ void main() {
       final configDir = p.join(tempDir.path, '.config', 'retroarch');
       await Directory(configDir).create(recursive: true);
       final saveDir = p.join(tempDir.path, 'saves');
-      await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-        'savefile_directory = "$saveDir"',
-        'sort_savefiles_enable = "false"',
-      ].join('\n'));
+      await File(p.join(configDir, 'retroarch.cfg'))
+          .writeAsString(['savefile_directory = "$saveDir"', 'sort_savefiles_enable = "false"'].join('\n'));
       await Directory(saveDir).create(recursive: true);
       for (final s in saves) {
         await File(p.join(saveDir, s)).writeAsBytes([1, 2, 3]);
       }
       when(mockDirService.getEmulatorAppSupportDirectory('retroarch', platformSlug: anyNamed('platformSlug')))
           .thenAnswer((_) async => configDir);
-      final strategy = RetroArchSaveStrategy(mockDirService,
-          platform: PlatformInfo('linux', environment: {'HOME': tempDir.path}));
+      final strategy = RetroArchSaveStrategy(
+        mockDirService,
+        platform: PlatformInfo('linux', environment: {'HOME': tempDir.path}),
+      );
       final game = Game(id: '1', name: romName, fsName: romName, platformSlug: 'psx', fileSize: 0);
       final files = await strategy.getSaveFiles(game, p.join(tempDir.path, 'roms', romName), syncMode: 'saves');
       return files.map((f) => p.basename(f.path)).toList();
     }
 
     test('a sequel does not pick up the first game\'s save', () async {
-      expect(await pick('Crash Bandicoot 2 - Cortex Strikes Back (Europe).cue', ['Crash Bandicoot (Europe).srm']),
-          isEmpty);
+      expect(
+        await pick('Crash Bandicoot 2 - Cortex Strikes Back (Europe).cue', ['Crash Bandicoot (Europe).srm']),
+        isEmpty,
+      );
       expect(await pick('Crash Bandicoot 2 (Europe).cue', ['Crash Bandicoot (Europe).srm']), isEmpty);
     });
 
@@ -293,14 +287,16 @@ void main() {
     });
 
     test('an exact name wins over a same-title save for another region', () async {
-      expect(await pick('Crash Bandicoot (USA).cue', ['Crash Bandicoot (Europe).srm', 'Crash Bandicoot (USA).srm']),
-          ['Crash Bandicoot (USA).srm']);
+      expect(await pick('Crash Bandicoot (USA).cue', ['Crash Bandicoot (Europe).srm', 'Crash Bandicoot (USA).srm']), [
+        'Crash Bandicoot (USA).srm',
+      ]);
     });
 
     test('a save for the same title under another region or word order still matches', () async {
       expect(await pick('Crash Bandicoot (Europe).cue', ['Crash Bandicoot (USA).srm']), ['Crash Bandicoot (USA).srm']);
-      expect(await pick('The Legend of Zelda (USA).sfc', ['Legend of Zelda, The (Europe) [!].srm']),
-          ['Legend of Zelda, The (Europe) [!].srm']);
+      expect(await pick('The Legend of Zelda (USA).sfc', ['Legend of Zelda, The (Europe) [!].srm']), [
+        'Legend of Zelda, The (Europe) [!].srm',
+      ]);
     });
 
     test('isSaveNamedFor needs the stem followed by an extension', () {

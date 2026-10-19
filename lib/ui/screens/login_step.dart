@@ -30,6 +30,7 @@ class LoginStep extends ConsumerStatefulWidget {
   final String serverUrl;
   final bool trustSelfSigned;
   final String deviceName;
+
   /// Saves the login; an error it throws is shown here and the step stays.
   final Future<void> Function(ProfileLogin login, RommUser me) onLoggedIn;
   final VoidCallback onBack;
@@ -112,16 +113,15 @@ class _LoginStepState extends ConsumerState<LoginStep> {
   }
 
   String _describe(RommAuthException e) => switch (e.failure) {
-        RommAuthFailure.network => "Can't reach ${widget.serverUrl}. Check the address and your network.",
-        RommAuthFailure.badCredentials => 'Wrong username or password',
-        RommAuthFailure.serverTooOld => 'This RomM server is too old for Gargosy (it has no client API tokens).',
-        RommAuthFailure.insufficientScope => 'This RomM user may not log in apps. Ask the RomM admin.',
-        RommAuthFailure.server => '${e.message}. RomM may be restarting; try again in a moment.',
-        RommAuthFailure.notRomm => '${widget.serverUrl} does not look like a RomM server. Check the address.',
-        RommAuthFailure.wrongUser =>
-          'This is a different RomM user (${e.message}). Log in as ${widget.expectedUsername}.',
-        RommAuthFailure.other => e.message,
-      };
+    RommAuthFailure.network => "Can't reach ${widget.serverUrl}. Check the address and your network.",
+    RommAuthFailure.badCredentials => 'Wrong username or password',
+    RommAuthFailure.serverTooOld => 'This RomM server is too old for Gargosy (it has no client API tokens).',
+    RommAuthFailure.insufficientScope => 'This RomM user may not log in apps. Ask the RomM admin.',
+    RommAuthFailure.server => '${e.message}. RomM may be restarting; try again in a moment.',
+    RommAuthFailure.notRomm => '${widget.serverUrl} does not look like a RomM server. Check the address.',
+    RommAuthFailure.wrongUser => 'This is a different RomM user (${e.message}). Log in as ${widget.expectedUsername}.',
+    RommAuthFailure.other => e.message,
+  };
 
   Future<void> _finish(ProfileLogin login) async {
     try {
@@ -132,8 +132,9 @@ class _LoginStepState extends ConsumerState<LoginStep> {
         final device = login.kind == 'device'
             ? ' Gargosy was approved for ${me.username} in RomM; you can remove that device there.'
             : '';
-        setState(() => _error =
-            'This is a different RomM user (${me.username}). Log in as ${widget.expectedUsername}.$device');
+        setState(
+          () => _error = 'This is a different RomM user (${me.username}). Log in as ${widget.expectedUsername}.$device',
+        );
         return;
       }
       await widget.onLoggedIn(login, me);
@@ -148,7 +149,11 @@ class _LoginStepState extends ConsumerState<LoginStep> {
     setState(() => _error = null);
     try {
       final token = await _auth.loginWithPassword(
-          username: _username, password: _password, tokenName: widget.deviceName, expectedUserId: widget.expectedUserId);
+        username: _username,
+        password: _password,
+        tokenName: widget.deviceName,
+        expectedUserId: widget.expectedUserId,
+      );
       _password = '';
       await _finish(ProfileLogin(token: token, kind: 'client-token'));
     } on RommAuthException catch (e) {
@@ -158,34 +163,47 @@ class _LoginStepState extends ConsumerState<LoginStep> {
   }
 
   Widget _button(String label, VoidCallback onPress, {bool autofocus = false, Key? key}) => GFocusable(
-        key: key,
-        autofocus: autofocus,
-        borderRadius: GRadius.pill,
-        onActivate: onPress,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: GSpace.s6, vertical: GSpace.s3),
-          decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-          child: Text(label, style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600)),
-        ),
-      );
+    key: key,
+    autofocus: autofocus,
+    borderRadius: GRadius.pill,
+    onActivate: onPress,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s6, vertical: GSpace.s3),
+      decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600),
+      ),
+    ),
+  );
 
   Widget _field(Key key, String label, String value, VoidCallback onPress, {bool autofocus = false}) => GFocusable(
-        key: key,
-        autofocus: autofocus,
-        borderRadius: GRadius.lg,
-        onActivate: onPress,
-        child: Container(
-          width: 420,
-          padding: const EdgeInsets.all(GSpace.s4),
-          decoration: BoxDecoration(color: GColors.bgElevated, borderRadius: BorderRadius.circular(GRadius.lg), border: Border.all(color: GColors.borderStrong)),
-          child: Text(value.isEmpty ? label : value, style: TextStyle(fontSize: GFont.lg, color: value.isEmpty ? GColors.fgMuted : GColors.fg)),
-        ),
-      );
+    key: key,
+    autofocus: autofocus,
+    borderRadius: GRadius.lg,
+    onActivate: onPress,
+    child: Container(
+      width: 420,
+      padding: const EdgeInsets.all(GSpace.s4),
+      decoration: BoxDecoration(
+        color: GColors.bgElevated,
+        borderRadius: BorderRadius.circular(GRadius.lg),
+        border: Border.all(color: GColors.borderStrong),
+      ),
+      child: Text(
+        value.isEmpty ? label : value,
+        style: TextStyle(fontSize: GFont.lg, color: value.isEmpty ? GColors.fgMuted : GColors.fg),
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[
-      Text('Log in to ${widget.serverUrl}', style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
+      Text(
+        'Log in to ${widget.serverUrl}',
+        style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      ),
       const SizedBox(height: GSpace.s5),
     ];
     if (_loading) {
@@ -201,7 +219,10 @@ class _LoginStepState extends ConsumerState<LoginStep> {
           child: QrImageView(data: _start!.verificationUrl, size: 220),
         ),
         const SizedBox(height: GSpace.s3),
-        Text(_start!.userCode, style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800, letterSpacing: 4)),
+        Text(
+          _start!.userCode,
+          style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800, letterSpacing: 4),
+        ),
         const SizedBox(height: GSpace.s5),
         _button('Use password instead', () {
           _flow?.cancel();
@@ -224,9 +245,19 @@ class _LoginStepState extends ConsumerState<LoginStep> {
       ]);
     }
     if (_error != null) {
-      children.addAll([const SizedBox(height: GSpace.s4), Text(_error!, style: const TextStyle(color: GColors.danger, fontSize: GFont.lg))]);
+      children.addAll([
+        const SizedBox(height: GSpace.s4),
+        Text(
+          _error!,
+          style: const TextStyle(color: GColors.danger, fontSize: GFont.lg),
+        ),
+      ]);
     }
     children.addAll([const SizedBox(height: GSpace.s6), _button('Back', widget.onBack)]);
-    return Center(child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: children)));
+    return Center(
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: children),
+      ),
+    );
   }
 }

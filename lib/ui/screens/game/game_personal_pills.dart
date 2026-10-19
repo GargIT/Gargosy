@@ -36,12 +36,25 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   late bool _backlog = widget.game.backlogged;
   late bool _nowPlaying = widget.game.nowPlaying;
 
-  Future<void> _write(
-      {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying, required VoidCallback undo}) async {
+  Future<void> _write({
+    String? status,
+    int? rating,
+    int? completion,
+    bool? backlogged,
+    bool? nowPlaying,
+    required VoidCallback undo,
+  }) async {
     final engine = ref.read(playEngineProvider);
-    final ok = engine != null &&
-        await engine.setRommUser(widget.game,
-            status: status, rating: rating, completion: completion, backlogged: backlogged, nowPlaying: nowPlaying);
+    final ok =
+        engine != null &&
+        await engine.setRommUser(
+          widget.game,
+          status: status,
+          rating: rating,
+          completion: completion,
+          backlogged: backlogged,
+          nowPlaying: nowPlaying,
+        );
     if (ok) {
       // The cached game would show the old value next time the page opens.
       ref.invalidate(gameProvider(widget.game.id));
@@ -59,7 +72,12 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
       _backlog ? 'Backlog ✓' : 'Backlog',
       _nowPlaying ? 'Now playing ✓' : 'Now playing',
     ];
-    final i = await showChoice(context, title: 'Status', labels: labels, current: _status == null ? null : keys.indexOf(_status!));
+    final i = await showChoice(
+      context,
+      title: 'Status',
+      labels: labels,
+      current: _status == null ? null : keys.indexOf(_status!),
+    );
     if (i == null || !mounted) return;
     if (i < keys.length) {
       final old = _status;
@@ -77,7 +95,12 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   }
 
   Future<void> _pickRating() async {
-    final i = await showChoice(context, title: 'Your rating', labels: [for (var r = 0; r <= 10; r++) '$r'], current: _rating);
+    final i = await showChoice(
+      context,
+      title: 'Your rating',
+      labels: [for (var r = 0; r <= 10; r++) '$r'],
+      current: _rating,
+    );
     if (i == null || !mounted) return;
     final old = _rating;
     setState(() => _rating = i);
@@ -85,8 +108,12 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   }
 
   Future<void> _pickCompletion() async {
-    final i = await showChoice(context,
-        title: 'Completion', labels: [for (var c = 0; c <= 100; c += 10) '$c %'], current: _completion ~/ 10);
+    final i = await showChoice(
+      context,
+      title: 'Completion',
+      labels: [for (var c = 0; c <= 100; c += 10) '$c %'],
+      current: _completion ~/ 10,
+    );
     if (i == null || !mounted) return;
     final old = _completion;
     setState(() => _completion = i * 10);
@@ -94,32 +121,45 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   }
 
   Widget _pill(Key key, IconData icon, String text, VoidCallback onPress) => Padding(
-        padding: const EdgeInsets.only(right: GSpace.s2),
-        child: GFocusable(
-          key: key,
-          borderRadius: GRadius.pill,
-          onActivate: onPress,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
-            decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: GColors.fgSecondary),
-              const SizedBox(width: GSpace.s2),
-              Text(text, style: const TextStyle(color: GColors.fgSecondary, fontWeight: FontWeight.w600)),
-            ]),
-          ),
+    padding: const EdgeInsets.only(right: GSpace.s2),
+    child: GFocusable(
+      key: key,
+      borderRadius: GRadius.pill,
+      onActivate: onPress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
+        decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: GColors.fgSecondary),
+            const SizedBox(width: GSpace.s2),
+            Text(
+              text,
+              style: const TextStyle(color: GColors.fgSecondary, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     final status = statuses[_status] ?? 'Set status';
     final extra = [if (_nowPlaying) 'now playing', if (_backlog) 'backlog'];
-    return Wrap(runSpacing: GSpace.s2, children: [
-      _pill(const ValueKey('pill-status'), Icons.flag_outlined, extra.isEmpty ? status : '$status · ${extra.join(' · ')}',
-          _pickStatus),
-      _pill(const ValueKey('pill-rating'), Icons.star_outline, _rating == 0 ? 'Rate' : '$_rating / 10', _pickRating),
-      _pill(const ValueKey('pill-completion'), Icons.donut_large, '$_completion % done', _pickCompletion),
-    ]);
+    return Wrap(
+      runSpacing: GSpace.s2,
+      children: [
+        _pill(
+          const ValueKey('pill-status'),
+          Icons.flag_outlined,
+          extra.isEmpty ? status : '$status · ${extra.join(' · ')}',
+          _pickStatus,
+        ),
+        _pill(const ValueKey('pill-rating'), Icons.star_outline, _rating == 0 ? 'Rate' : '$_rating / 10', _pickRating),
+        _pill(const ValueKey('pill-completion'), Icons.donut_large, '$_completion % done', _pickCompletion),
+      ],
+    );
   }
 }

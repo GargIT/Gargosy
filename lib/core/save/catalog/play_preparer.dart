@@ -30,13 +30,17 @@ class PlayPreparer {
     if (save.source == SaveSource.local && maker?.emulatorId == target.emulatorId) {
       if (maker!.coreId == target.coreId) return;
       // RetroArch keeps one folder per core; nothing copies between them.
-      throw SaveChoiceException('This save belongs to the ${maker.coreId ?? 'default'} core; pick that core to play it.');
+      throw SaveChoiceException(
+        'This save belongs to the ${maker.coreId ?? 'default'} core; pick that core to play it.',
+      );
     }
     // ROM folders hold only games: never write a save there.
     final saveDir = await sync.saveDirFor(game, romPath, emulatorId: target.emulatorId, coreOverride: target.coreId);
     if (saveDir != null && p.equals(p.normalize(saveDir), p.normalize(p.dirname(romPath)))) {
-      throw SaveChoiceException("${target.emulatorId} keeps its saves in the game's folder, which holds only games. "
-          'Set its save folder first.');
+      throw SaveChoiceException(
+        "${target.emulatorId} keeps its saves in the game's folder, which holds only games. "
+        'Set its save folder first.',
+      );
     }
     // Gargosy: the chosen backup is copied aside first. The backup made just
     // below can rotate the oldest of the 8 out (its zip deleted), and that
@@ -59,17 +63,34 @@ class PlayPreparer {
   Future<void> _putInPlace(Game game, String romPath, SaveEntry save, SaveMaker target, String? backupZip) async {
     switch (save.source) {
       case SaveSource.romm:
-        await sync.restoreChosenSave(game, romPath, save.rommSave!,
-            emulatorId: target.emulatorId, coreOverride: target.coreId);
+        await sync.restoreChosenSave(
+          game,
+          romPath,
+          save.rommSave!,
+          emulatorId: target.emulatorId,
+          coreOverride: target.coreId,
+        );
       case SaveSource.backup:
-        final ok = await backups.restore(backupZip ?? save.backup!.localZipPath, game, romPath, sync,
-            emulatorId: target.emulatorId, coreOverride: _coreOverride(target));
+        final ok = await backups.restore(
+          backupZip ?? save.backup!.localZipPath,
+          game,
+          romPath,
+          sync,
+          emulatorId: target.emulatorId,
+          coreOverride: _coreOverride(target),
+        );
         if (!ok) throw SaveChoiceException("The backup from ${save.savedAt} couldn't be restored.");
       case SaveSource.local:
         final from = save.maker;
         if (from == null) throw SaveChoiceException("It isn't known which emulator made this save.");
-        await sync.convertLocalSave(game, romPath,
-            fromEmulatorId: from.emulatorId, fromTag: from.tag, emulatorId: target.emulatorId, coreOverride: target.coreId);
+        await sync.convertLocalSave(
+          game,
+          romPath,
+          fromEmulatorId: from.emulatorId,
+          fromTag: from.tag,
+          emulatorId: target.emulatorId,
+          coreOverride: target.coreId,
+        );
     }
   }
 
@@ -82,8 +103,13 @@ class PlayPreparer {
   /// copies). It is a local safety copy: marked synced, so the background
   /// queue never uploads it as the game's newest save.
   Future<void> backUp(Game game, String romPath, SaveMaker who) async {
-    final result =
-        await backups.createImmediate(game, romPath, sync, emulatorId: who.emulatorId, coreOverride: _coreOverride(who));
+    final result = await backups.createImmediate(
+      game,
+      romPath,
+      sync,
+      emulatorId: who.emulatorId,
+      coreOverride: _coreOverride(who),
+    );
     if (result == null) return;
     final newest = repository.getEntries(game.id).firstOrNull;
     if (newest != null && newest.md5Hash == result.md5) {
@@ -93,14 +119,16 @@ class PlayPreparer {
       return;
     }
     await repository.addEntry(
-        game.id,
-        BackupEntry(
-            timestamp: DateTime.now(),
-            md5Hash: result.md5,
-            localZipPath: result.zipPath,
-            isSynced: true,
-            emulatorId: who.emulatorId,
-            coreId: result.coreId ?? who.coreId));
+      game.id,
+      BackupEntry(
+        timestamp: DateTime.now(),
+        md5Hash: result.md5,
+        localZipPath: result.zipPath,
+        isSynced: true,
+        emulatorId: who.emulatorId,
+        coreId: result.coreId ?? who.coreId,
+      ),
+    );
     debugPrint('[PlayPreparer] backed up $who save of ${game.displayName}');
   }
 }

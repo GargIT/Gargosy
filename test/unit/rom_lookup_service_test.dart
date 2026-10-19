@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/rom_lookup_service.dart';
@@ -45,10 +46,7 @@ void main() {
         await file.writeAsString('data');
 
         final game = makeGame(fsName: 'game.iso');
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-        );
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
         expect(result, isNotNull);
         expect(p.basename(result!), 'game.iso');
       });
@@ -58,14 +56,8 @@ void main() {
         await file.writeAsString('data');
 
         // When fsName is null, the service uses fileName as baseName
-        final game = makeGame(
-          fsName: null,
-          fileName: 'actual_game.iso',
-        );
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-        );
+        final game = makeGame(fsName: null, fileName: 'actual_game.iso');
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
         expect(result, isNotNull);
         expect(p.basename(result!), 'actual_game.iso');
       });
@@ -78,24 +70,14 @@ void main() {
         final file = File(p.join(tempDir.path, sanitizedName));
         await file.writeAsString('data');
 
-        final game = makeGame(
-          name: 'Game (USA) [!]',
-          fsName: null,
-          fileName: null,
-        );
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-        );
+        final game = makeGame(name: 'Game (USA) [!]', fsName: null, fileName: null);
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
         expect(result, isNotNull);
       });
 
       test('returns null for nonexistent romDir', () async {
         final game = makeGame();
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          '/nonexistent/path/that/does/not/exist',
-        );
+        final result = await RomLookupService.findExistingRomPath(game, '/nonexistent/path/that/does/not/exist');
         expect(result, isNull);
       });
 
@@ -104,10 +86,7 @@ void main() {
         await file.writeAsString('data');
 
         final game = makeGame(fsName: 'mygame.iso');
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-        );
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
         expect(result, isNotNull);
         // macOS filesystem is case-insensitive but case-preserving
         expect(p.basename(result!).toLowerCase(), 'mygame.iso');
@@ -119,16 +98,8 @@ void main() {
         await File(p.join(folder.path, 'disc1.chd')).writeAsString('small');
         await File(p.join(folder.path, 'disc2.chd')).writeAsString('large data here');
 
-        final game = makeGame(
-          name: 'MultiDisc',
-          fsName: 'MultiDisc',
-          hasMultipleFiles: true,
-          platformSlug: 'psx',
-        );
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-        );
+        final game = makeGame(name: 'MultiDisc', fsName: 'MultiDisc', hasMultipleFiles: true, platformSlug: 'psx');
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
         expect(result, isNotNull);
         // Should find the largest file in the folder
         expect(result, contains('disc2.chd'));
@@ -146,11 +117,7 @@ void main() {
         );
 
         final game = makeGame(fsName: 'indexed_game.iso');
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-          index: index,
-        );
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path, index: index);
         expect(result, file.path);
       });
 
@@ -162,20 +129,13 @@ void main() {
 
         final index = FileSystemIndex(
           rootPath: tempDir.path,
-          files: {
-            'game.iso.part': partFile.path,
-            'game.iso': realFile.path,
-          },
+          files: {'game.iso.part': partFile.path, 'game.iso': realFile.path},
           dirs: {},
           fileSizes: {},
         );
 
         final game = makeGame(fsName: 'game');
-        final result = await RomLookupService.findExistingRomPath(
-          game,
-          tempDir.path,
-          index: index,
-        );
+        final result = await RomLookupService.findExistingRomPath(game, tempDir.path, index: index);
         // Should match via extension check, not the .part file
         expect(result, isNotNull);
       });
@@ -186,14 +146,10 @@ void main() {
         final folder = Directory(p.join(tempDir.path, 'GameFolder'));
         await folder.create();
         await File(p.join(folder.path, 'small.iso')).writeAsString('x');
-        await File(p.join(folder.path, 'big.iso'))
-            .writeAsString('x' * 1000);
+        await File(p.join(folder.path, 'big.iso')).writeAsString('x' * 1000);
 
         final game = makeGame(platformSlug: 'ps2');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNotNull);
         expect(p.basename(result!), 'big.iso');
       });
@@ -205,10 +161,7 @@ void main() {
         await File(p.join(folder.path, 'readme.txt')).writeAsString('info');
 
         final game = makeGame(platformSlug: 'ps3');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNotNull);
         expect(result, contains('PS3Game'));
       });
@@ -218,10 +171,7 @@ void main() {
         await folder.create();
 
         final game = makeGame(platformSlug: 'gba');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNull);
       });
 
@@ -240,10 +190,7 @@ void main() {
         await File(p.join(folder.path, 'game.m3u')).writeAsString('disc1.iso\ndisc2.iso\n');
 
         final game = makeGame(platformSlug: 'gc');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNotNull);
         expect(p.basename(result!), 'game.m3u');
       });
@@ -255,10 +202,7 @@ void main() {
         await File(p.join(folder.path, 'disc2.iso')).writeAsString('x' * 1000);
 
         final game = makeGame(platformSlug: 'gc');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNotNull);
         expect(p.basename(result!), 'disc2.iso');
       });
@@ -275,10 +219,7 @@ void main() {
         await File(p.join(folder.path, '007 - Everything or Nothing')).writeAsString('x' * 100);
 
         final game = makeGame(platformSlug: 'ps2');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNotNull);
         expect(p.basename(result!), '007 - Everything or Nothing');
       });
@@ -290,10 +231,7 @@ void main() {
         await File(p.join(folder.path, 'notes')).writeAsString('more info');
 
         final game = makeGame(platformSlug: 'ps2');
-        final result = await RomLookupService.findMainRomInFolder(
-          game,
-          folder.path,
-        );
+        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNull);
       });
     });
@@ -303,10 +241,7 @@ void main() {
         final file = File(p.join(tempDir.path, 'game.iso'));
         await file.writeAsString('data');
 
-        final result = await RomLookupService.resolveFuzzyRomFile(
-          file.path,
-          ['.iso'],
-        );
+        final result = await RomLookupService.resolveFuzzyRomFile(file.path, ['.iso']);
         expect(result, file.path);
       });
 
@@ -314,10 +249,7 @@ void main() {
         final file = File(p.join(tempDir.path, 'game.iso'));
         await file.writeAsString('data');
 
-        final result = await RomLookupService.resolveFuzzyRomFile(
-          p.join(tempDir.path, 'game'),
-          ['.iso'],
-        );
+        final result = await RomLookupService.resolveFuzzyRomFile(p.join(tempDir.path, 'game'), ['.iso']);
         expect(result, file.path);
       });
 
@@ -327,10 +259,7 @@ void main() {
         await File(p.join(dir.path, 'a.iso')).writeAsString('small');
         await File(p.join(dir.path, 'b.iso')).writeAsString('x' * 500);
 
-        final result = await RomLookupService.resolveFuzzyRomFile(
-          dir.path,
-          ['.iso'],
-        );
+        final result = await RomLookupService.resolveFuzzyRomFile(dir.path, ['.iso']);
         expect(result, isNotNull);
         expect(p.basename(result!), 'b.iso');
       });
@@ -339,20 +268,18 @@ void main() {
         final file = File(p.join(tempDir.path, 'Dragon Ball Z - Legacy.chd'));
         await file.writeAsString('data');
 
-        final result = await RomLookupService.resolveFuzzyRomFile(
-          p.join(tempDir.path, 'Dragon Ball Z Legacy'),
-          ['.chd'],
-        );
+        final result = await RomLookupService.resolveFuzzyRomFile(p.join(tempDir.path, 'Dragon Ball Z Legacy'), [
+          '.chd',
+        ]);
         expect(result, file.path);
       });
 
       test('returns null when no match', () async {
         await File(p.join(tempDir.path, 'other.iso')).writeAsString('data');
 
-        final result = await RomLookupService.resolveFuzzyRomFile(
-          p.join(tempDir.path, 'CompletelyDifferent'),
-          ['.iso'],
-        );
+        final result = await RomLookupService.resolveFuzzyRomFile(p.join(tempDir.path, 'CompletelyDifferent'), [
+          '.iso',
+        ]);
         expect(result, isNull);
       });
     });

@@ -1,8 +1,10 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -16,8 +18,7 @@ class XeniaSaveStrategy extends SaveStrategy {
   // ignore: unused_field
   final PlatformInfo _platform;
 
-  XeniaSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  XeniaSaveStrategy(this._directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'xenia_canary';
@@ -26,8 +27,11 @@ class XeniaSaveStrategy extends SaveStrategy {
   /// RomM 5.3+), else from the file name.
   @visibleForTesting
   static String? titleIdFor(Game game) {
-    final fromRomm =
-        GameIdResolver.server('Xenia ${game.name}', game.titleId?.toUpperCase(), shape: RegExp(r'^[0-9A-F]{8}$'));
+    final fromRomm = GameIdResolver.server(
+      'Xenia ${game.name}',
+      game.titleId?.toUpperCase(),
+      shape: RegExp(r'^[0-9A-F]{8}$'),
+    );
     if (fromRomm != null) return fromRomm;
     final name = game.fsName ?? game.fileName ?? game.name;
     final match = RegExp(r'[0-9A-Fa-f]{8}').firstMatch(name);
@@ -35,8 +39,7 @@ class XeniaSaveStrategy extends SaveStrategy {
   }
 
   Future<String?> _getContentDir() async {
-    final exePath = await _directoryService.findEmulatorExecutable(
-        'xenia_canary', 'xenia_canary.exe');
+    final exePath = await _directoryService.findEmulatorExecutable('xenia_canary', 'xenia_canary.exe');
     if (exePath == null) return null;
     return p.join(File(exePath).parent.path, 'content');
   }
@@ -51,8 +54,7 @@ class XeniaSaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
     final saveDir = await getSaveDir(game, romPath);
     if (saveDir == null) return [];
 
@@ -76,8 +78,7 @@ class XeniaSaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<bool> restoreSave(
-      Game game, String destPath, Uint8List data, String filename) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       final saveDir = await getSaveDir(game, destPath);
       if (saveDir == null) return false;
@@ -89,7 +90,7 @@ class XeniaSaveStrategy extends SaveStrategy {
         final archive = ZipDecoder().decodeBytes(data);
         for (final entry in archive) {
           if (entry.name == 'freegosy_sync.txt' || entry.name.contains('.bak')) continue;
-          
+
           final entryPath = p.normalize(p.join(saveDir, entry.name));
           if (entry.isFile) {
             await backupSave(entryPath);

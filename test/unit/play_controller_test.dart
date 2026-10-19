@@ -85,7 +85,10 @@ class FakeEngine implements PlayEngine {
   @override
   Future<bool> claimSave(Game game, SaveMaker who, String name) async {
     steps.add('claim $name');
-    unclaimed = [for (final n in unclaimed) if (n != name) n];
+    unclaimed = [
+      for (final n in unclaimed)
+        if (n != name) n,
+    ];
     return claimUploads;
   }
 
@@ -99,7 +102,14 @@ class FakeEngine implements PlayEngine {
   }
 
   @override
-  Future<bool> setRommUser(Game game, {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying}) async {
+  Future<bool> setRommUser(
+    Game game, {
+    String? status,
+    int? rating,
+    int? completion,
+    bool? backlogged,
+    bool? nowPlaying,
+  }) async {
     rommUserCalls.add({
       'status': ?status,
       'rating': ?rating,
@@ -109,6 +119,7 @@ class FakeEngine implements PlayEngine {
     });
     return rommUserOk;
   }
+
   @override
   Future<EmulatorStrategy?> emulatorFor(Game game, {String? emulatorId}) async => _Strategy(emulatorId ?? 'pcsx2');
   @override
@@ -116,6 +127,7 @@ class FakeEngine implements PlayEngine {
     if (request.remember) remembered[game.id] = request.emulator.emulatorId;
     if (request.forget) remembered[game.id] = null;
   }
+
   @override
   Future<bool> isInstalled(EmulatorStrategy s) async => installed;
 
@@ -136,6 +148,7 @@ class FakeEngine implements PlayEngine {
     if (readyError != null) throw readyError!;
     return readyPath ?? romPath;
   }
+
   @override
   Future<String?> romPathFor(Game game) async {
     await Future<void>.delayed(Duration.zero); // lists a folder
@@ -144,12 +157,19 @@ class FakeEngine implements PlayEngine {
 
   String? problem;
   @override
-  Future<void> prepare(Game game, String romPath, EmulatorStrategy s,
-      {PlayRequest? request, String? coreOverride, void Function(String)? onProblem}) async {
+  Future<void> prepare(
+    Game game,
+    String romPath,
+    EmulatorStrategy s, {
+    PlayRequest? request,
+    String? coreOverride,
+    void Function(String)? onProblem,
+  }) async {
     steps.add('prepare');
     this.request = request;
     if (problem != null) onProblem?.call(problem!);
   }
+
   ResumeCheck check = const ResumeReady(r'D:\G\states\auto.p2s');
   StatePull statePull = const StatePull();
   String? loadStatePath;
@@ -158,8 +178,14 @@ class FakeEngine implements PlayEngine {
   @override
   Stream<List<ResumeEntry>> statesFor(Game game) => Stream.value(states);
   @override
-  Future<StatePull> pullStates(Game game, String romPath, EmulatorStrategy s,
-      {String? priority, String? coreOverride, void Function(String)? onProblem}) async {
+  Future<StatePull> pullStates(
+    Game game,
+    String romPath,
+    EmulatorStrategy s, {
+    String? priority,
+    String? coreOverride,
+    void Function(String)? onProblem,
+  }) async {
     steps.add('states');
     pulledCore = coreOverride;
     return statePull;
@@ -189,12 +215,22 @@ class FakeEngine implements PlayEngine {
   }
 
   @override
-  Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy s, {String? coreOverride, String? loadStatePath}) async {
+  Future<PlaySession> launch(
+    Game game,
+    String romPath,
+    EmulatorStrategy s, {
+    String? coreOverride,
+    String? loadStatePath,
+  }) async {
     final missing = missingCore;
     if (missing != null) {
       missingCore = null;
       steps.add('launch (no core)');
-      throw MissingRetroArchCoreException(coreName: missing, corePath: r'D:\G\emulators\retroarch\cores\' + missing, exePath: 'ra.exe');
+      throw MissingRetroArchCoreException(
+        coreName: missing,
+        corePath: r'D:\G\emulators\retroarch\cores\' + missing,
+        exePath: 'ra.exe',
+      );
     }
     steps.add('launch');
     launchedRom = romPath;
@@ -311,13 +347,15 @@ void main() {
   });
 
   test("remember stores the game's emulator, forget clears it", () async {
-    await c.read(playControllerProvider.notifier).play(game(1, 'G'),
-        request: const PlayRequest(emulator: SaveMaker('duckstation'), remember: true));
+    await c
+        .read(playControllerProvider.notifier)
+        .play(game(1, 'G'), request: const PlayRequest(emulator: SaveMaker('duckstation'), remember: true));
     expect(engine.remembered['1'], 'duckstation');
     engine.running!.complete(const PlayResult('ok'));
     await Future<void>.delayed(Duration.zero);
-    await c.read(playControllerProvider.notifier).play(game(1, 'G'),
-        request: const PlayRequest(emulator: SaveMaker('pcsx2'), forget: true));
+    await c
+        .read(playControllerProvider.notifier)
+        .play(game(1, 'G'), request: const PlayRequest(emulator: SaveMaker('pcsx2'), forget: true));
     expect(engine.remembered['1'], isNull);
   });
 
@@ -397,11 +435,18 @@ void main() {
     engine.check = const ResumeReady('x.p2s', prompt: (stateVersion: '1.7', installed: '2.0'));
     String? asked;
     expect(
-        await c.read(playControllerProvider.notifier).resume(game(1, 'G'), auto, confirmVersion: (v, i) async {
-          asked = '$v→$i';
-          return false;
-        }),
-        isNotNull);
+      await c
+          .read(playControllerProvider.notifier)
+          .resume(
+            game(1, 'G'),
+            auto,
+            confirmVersion: (v, i) async {
+              asked = '$v→$i';
+              return false;
+            },
+          ),
+      isNotNull,
+    );
     expect(asked, '1.7→2.0');
     expect(engine.steps, ['states', 'check']);
   });
@@ -421,10 +466,9 @@ void main() {
       romPathFor: (_) async => null,
       push: (_, _, _) async => false,
     );
-    final c2 = ProviderContainer(overrides: [
-      playEngineProvider.overrideWithValue(engine),
-      uploadQueueProvider.overrideWith((ref) async => queue),
-    ]);
+    final c2 = ProviderContainer(
+      overrides: [playEngineProvider.overrideWithValue(engine), uploadQueueProvider.overrideWith((ref) async => queue)],
+    );
     addTearDown(c2.dispose);
     await c2.read(playControllerProvider.notifier).play(game(1, 'G'));
     engine.running!.complete(const PlayResult('Save synced to RomM.', synced: true));

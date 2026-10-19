@@ -22,10 +22,10 @@ import 'profile_test_env.dart';
 
 /// The login store [GargosyApp] uses for [p], for checks from a test.
 ProfileLoginStore loginStoreForWidgetless(AppHarness h, Profile p) => ProfileLoginStore(
-      profileDir: ProfilePaths(h.root, p.id).dir,
-      protector: h.protector,
-      pc: h.container.read(pcIdentityProvider),
-    );
+  profileDir: ProfilePaths(h.root, p.id).dir,
+  protector: h.protector,
+  pc: h.container.read(pcIdentityProvider),
+);
 
 class AppHarness {
   late AppRoot root;
@@ -40,23 +40,27 @@ class AppHarness {
     addTearDown(tester.view.reset);
     root = (await tester.runAsync(tempAppRoot))!;
     addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
-    container = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root),
-      appPreferencesProvider.overrideWithValue(prefs),
-      dataProtectorProvider.overrideWithValue(protector),
-      pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
-      rommAuthFactoryProvider.overrideWithValue((url, trust) => auth),
-      // No timers and no upload queue in app tests.
-      rommHeartbeatEnabledProvider.overrideWithValue(false),
-      // Never GitHub from app tests.
-      updateAutoCheckEnabledProvider.overrideWithValue(false),
-      uploadQueueProvider.overrideWith((ref) async => null),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        appRootProvider.overrideWithValue(root),
+        appPreferencesProvider.overrideWithValue(prefs),
+        dataProtectorProvider.overrideWithValue(protector),
+        pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
+        rommAuthFactoryProvider.overrideWithValue((url, trust) => auth),
+        // No timers and no upload queue in app tests.
+        rommHeartbeatEnabledProvider.overrideWithValue(false),
+        // Never GitHub from app tests.
+        updateAutoCheckEnabledProvider.overrideWithValue(false),
+        uploadQueueProvider.overrideWith((ref) async => null),
+      ],
+    );
     addTearDown(container.dispose);
   }
 
   Future<void> pumpApp(WidgetTester tester) async {
-    await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const GargosyApp(startGamepads: false)));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const GargosyApp(startGamepads: false)),
+    );
     await settle(tester);
   }
 
@@ -80,5 +84,4 @@ class AppHarness {
     }
     await tester.pumpAndSettle();
   }
-
 }

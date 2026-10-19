@@ -36,14 +36,17 @@ class SaveRow extends StatelessWidget {
   final VoidCallback? onLongActivate;
 
   static Widget tag(String text, Color color) => Container(
-        margin: const EdgeInsets.only(left: GSpace.s2),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(GRadius.sm),
-          border: Border.all(color: color.withValues(alpha: 0.6)),
-        ),
-        child: Text(text, style: TextStyle(fontSize: GFont.xs, color: color)),
-      );
+    margin: const EdgeInsets.only(left: GSpace.s2),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(GRadius.sm),
+      border: Border.all(color: color.withValues(alpha: 0.6)),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: GFont.xs, color: color),
+    ),
+  );
 
   String _detail() {
     final e = row.entry;
@@ -77,22 +80,37 @@ class SaveRow extends StatelessWidget {
           ),
           child: Opacity(
             opacity: usable ? 1 : 0.45,
-            child: Row(children: [
-              if (showChoice) ...[
-                Icon(chosen ? Icons.radio_button_checked : Icons.radio_button_off,
-                    size: 18, color: chosen ? GColors.primary : GColors.fgSecondary),
-                const SizedBox(width: GSpace.s3),
+            child: Row(
+              children: [
+                if (showChoice) ...[
+                  Icon(
+                    chosen ? Icons.radio_button_checked : Icons.radio_button_off,
+                    size: 18,
+                    color: chosen ? GColors.primary : GColors.fgSecondary,
+                  ),
+                  const SizedBox(width: GSpace.s3),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        e.fileName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        _detail(),
+                        style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                if (maker != null && maker.isNotEmpty) tag(maker, GColors.accent),
+                if (row.fit.kind == SaveFitKind.converted) tag('converted', GColors.primary),
+                if (onRomm) tag('on RomM', GColors.success),
               ],
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(e.fileName, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(_detail(), style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
-                ]),
-              ),
-              if (maker != null && maker.isNotEmpty) tag(maker, GColors.accent),
-              if (row.fit.kind == SaveFitKind.converted) tag('converted', GColors.primary),
-              if (onRomm) tag('on RomM', GColors.success),
-            ]),
+            ),
           ),
         ),
       ),

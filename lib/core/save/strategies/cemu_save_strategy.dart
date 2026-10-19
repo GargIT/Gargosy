@@ -1,8 +1,10 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
@@ -14,8 +16,7 @@ class CemuSaveStrategy extends SaveStrategy {
   // ignore: unused_field
   final PlatformInfo _platform;
 
-  CemuSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  CemuSaveStrategy(this._directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'cemu';
@@ -36,7 +37,9 @@ class CemuSaveStrategy extends SaveStrategy {
     final resolvedPath = p.join(baseDir, 'mlc01', 'usr', 'save');
 
     if (!await io.Directory(resolvedPath).exists()) {
-      throw Exception('Save directory not found for Cemu at $resolvedPath. Please launch Cemu at least once to generate save data.');
+      throw Exception(
+        'Save directory not found for Cemu at $resolvedPath. Please launch Cemu at least once to generate save data.',
+      );
     }
     return resolvedPath;
   }
@@ -47,8 +50,12 @@ class CemuSaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final saveRoot = await _getSaveRoot(platformSlug: game.platformSlug);
     final saveBase = io.Directory(p.join(saveRoot, '00050000'));
     if (!await saveBase.exists()) return [];
@@ -56,9 +63,9 @@ class CemuSaveStrategy extends SaveStrategy {
     // If a session start is given, only upload if something changed this session.
     if (sessionStart != null) {
       final files = saveBase.listSync(recursive: true).whereType<io.File>();
-      final hasChanges = files.any((f) =>
-          f.statSync().modified.isAfter(
-              sessionStart.subtract(const Duration(seconds: 2))));
+      final hasChanges = files.any(
+        (f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))),
+      );
       if (!hasChanges) return [];
     }
 
@@ -69,7 +76,7 @@ class CemuSaveStrategy extends SaveStrategy {
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       final saveRoot = await _getSaveRoot(platformSlug: game.platformSlug);
-      
+
       // Follow symlink if needed
       String resolvedRoot = saveRoot;
       try {
@@ -79,15 +86,15 @@ class CemuSaveStrategy extends SaveStrategy {
       } catch (_) {}
 
       await io.Directory(resolvedRoot).create(recursive: true);
-      
+
       if (filename.toLowerCase().endsWith('.zip')) {
         final archive = ZipDecoder().decodeBytes(data);
         for (final entry in archive) {
           if (entry.name.contains('.bak') || entry.name == 'freegosy_sync.txt') continue;
-          
+
           String cleanName = entry.name.replaceAll('\\', '/');
           final parts = cleanName.split('/');
-          
+
           // Strip redundant Wii U prefixes
           int skipCount = 0;
           for (int i = 0; i < parts.length; i++) {
@@ -100,7 +107,7 @@ class CemuSaveStrategy extends SaveStrategy {
             cleanName = p.joinAll(parts.sublist(skipCount));
           }
           if (cleanName.isEmpty) continue;
-          
+
           final targetPath = p.normalize(p.join(resolvedRoot, cleanName));
           if (entry.isFile) {
             await backupSave(targetPath);

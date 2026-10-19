@@ -48,9 +48,13 @@ class StrategyRegistry {
   static const String _coreOverridePrefix = 'ra_core_';
   final Map<String, String> _coreOverrides = {};
 
-  StrategyRegistry(this._directoryService, this._prefs, {List<CustomEmulatorConfig> customEmulators = const [], PlatformInfo? platform}) 
-    : _customEmulatorConfigs = customEmulators,
-      _platform = platform ?? PlatformInfo.current {
+  StrategyRegistry(
+    this._directoryService,
+    this._prefs, {
+    List<CustomEmulatorConfig> customEmulators = const [],
+    PlatformInfo? platform,
+  }) : _customEmulatorConfigs = customEmulators,
+       _platform = platform ?? PlatformInfo.current {
     final List<EmulatorStrategy> allPossibleStrategies = [
       RetroArchStrategy(_directoryService, platform: _platform),
       DolphinStrategy(_directoryService, platform: _platform),
@@ -83,7 +87,7 @@ class StrategyRegistry {
       if (_platform.isMacOS && supported.contains('macos')) return true;
       return false;
     }).toList();
-    
+
     _loadPreferences();
     _loadCoreOverrides();
     _loadGamePreferences();
@@ -153,17 +157,17 @@ class StrategyRegistry {
         slugToStrategies.putIfAbsent(slug, () => []).add(strategy.emulatorId);
       }
     }
-    
+
     final targetStrategies = slugToStrategies[canonicalSlug];
     if (targetStrategies == null) {
       await _prefs.setString('emulator_pref_$canonicalSlug', emulatorId);
       _slugPreferences[canonicalSlug] = emulatorId;
       return;
     }
-    
+
     targetStrategies.sort();
     final targetKey = targetStrategies.join('|');
-    
+
     for (final entry in slugToStrategies.entries) {
       final ids = entry.value..sort();
       if (ids.join('|') == targetKey) {
@@ -336,7 +340,8 @@ class StrategyRegistry {
   /// Every strategy available on this platform.
   List<EmulatorStrategy> get allStrategies => List.unmodifiable(_strategies);
 
-  EmulatorStrategy? getStrategyById(String id) => _strategies.cast<EmulatorStrategy?>().firstWhere((s) => s?.emulatorId == id, orElse: () => null);
+  EmulatorStrategy? getStrategyById(String id) =>
+      _strategies.cast<EmulatorStrategy?>().firstWhere((s) => s?.emulatorId == id, orElse: () => null);
 
   void setNdsCore(String core) {
     final retroarch = getStrategyById('retroarch');

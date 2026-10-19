@@ -45,15 +45,29 @@ void main() {
 
   test('a pull that put the save in place is marked synced; one that did nothing is not', () async {
     var marked = 0;
-    await pullBeforeLaunch(backUp: () async {}, pull: () async => true, markSynced: () async => marked++, mustFinish: () async => true);
-    await pullBeforeLaunch(backUp: () async {}, pull: () async => false, markSynced: () async => marked++, mustFinish: () async => true);
+    await pullBeforeLaunch(
+      backUp: () async {},
+      pull: () async => true,
+      markSynced: () async => marked++,
+      mustFinish: () async => true,
+    );
+    await pullBeforeLaunch(
+      backUp: () async {},
+      pull: () async => false,
+      markSynced: () async => marked++,
+      mustFinish: () async => true,
+    );
     expect(marked, 1);
   });
 
   test('without a shared save file the launch does not wait for the pull', () async {
     final release = Completer<bool>();
-    await pullBeforeLaunch(backUp: () async {}, pull: () => release.future, markSynced: () async {}, mustFinish: () async => false)
-        .timeout(const Duration(seconds: 1));
+    await pullBeforeLaunch(
+      backUp: () async {},
+      pull: () => release.future,
+      markSynced: () async {},
+      mustFinish: () async => false,
+    ).timeout(const Duration(seconds: 1));
     release.complete(false);
   });
 }

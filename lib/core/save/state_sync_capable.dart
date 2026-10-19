@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
 import 'dart:typed_data';
+
 import '../romm/romm_models.dart';
 import 'save_state_info.dart';
 import 'save_strategy.dart';
@@ -21,8 +22,7 @@ mixin StateSyncCapable on SaveStrategy {
   /// belongs to [game], or null if the game cannot be identified (for example
   /// its serial could not be read from the ROM). It must reject names that
   /// contain path separators and backup/temp files.
-  Future<bool Function(String fileName)?> stateFileMatcher(
-      Game game, String romPath);
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath);
 
   /// Sanity check applied to bytes downloaded from RomM before they replace a
   /// local state, and to a local state before it is uploaded. The default only

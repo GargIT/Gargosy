@@ -28,15 +28,26 @@ class _Sync extends SaveSyncService {
   Future<String?> saveDirFor(Game game, String romPath, {required String emulatorId, String? coreOverride}) async =>
       saveDirs[emulatorId] ?? '/saves/$emulatorId';
   @override
-  Future<void> restoreChosenSave(Game game, String romPath, Map<String, dynamic> save,
-      {required String emulatorId, String? coreOverride}) async {
+  Future<void> restoreChosenSave(
+    Game game,
+    String romPath,
+    Map<String, dynamic> save, {
+    required String emulatorId,
+    String? coreOverride,
+  }) async {
     log.add('romm ${save['file_name']} -> $emulatorId/$coreOverride');
     if (fail) throw SaveChoiceException('download failed');
   }
 
   @override
-  Future<void> convertLocalSave(Game game, String romPath,
-      {required String fromEmulatorId, String? fromTag, required String emulatorId, String? coreOverride}) async {
+  Future<void> convertLocalSave(
+    Game game,
+    String romPath, {
+    required String fromEmulatorId,
+    String? fromTag,
+    required String emulatorId,
+    String? coreOverride,
+  }) async {
     log.add('convert $fromEmulatorId/$fromTag -> $emulatorId');
   }
 }
@@ -49,15 +60,26 @@ class _Backups extends BackupService {
   /// Restore fails when the zip isn't there (as the real one does).
   final bool needsFile;
   @override
-  Future<BackupResult?> createImmediate(Game game, String romPath, SaveSyncService syncService,
-      {String? emulatorId, String? coreOverride}) async {
+  Future<BackupResult?> createImmediate(
+    Game game,
+    String romPath,
+    SaveSyncService syncService, {
+    String? emulatorId,
+    String? coreOverride,
+  }) async {
     log.add(coreOverride == null ? 'backup $emulatorId' : 'backup $emulatorId/$coreOverride');
     return (zipPath: '/backups/b.zip', md5: 'm', coreId: null);
   }
 
   @override
-  Future<bool> restore(String localZipPath, Game game, String romPath, SaveSyncService syncService,
-      {String? emulatorId, String? coreOverride}) async {
+  Future<bool> restore(
+    String localZipPath,
+    Game game,
+    String romPath,
+    SaveSyncService syncService, {
+    String? emulatorId,
+    String? coreOverride,
+  }) async {
     log.add(coreOverride == null ? 'restore -> $emulatorId' : 'restore -> $emulatorId/$coreOverride');
     if (needsFile && !File(localZipPath).existsSync()) return false;
     return restoreOk;
@@ -87,13 +109,14 @@ void main() {
   late List<String> log;
   late List<BackupEntry> added;
 
-  Future<PlayPreparer> preparer(
-      {bool fail = false,
-      bool restoreOk = true,
-      List<BackupEntry> existing = const [],
-      Map<String, String> saveDirs = const {},
-      String? rotateOut,
-      bool needsFile = false}) async {
+  Future<PlayPreparer> preparer({
+    bool fail = false,
+    bool restoreOk = true,
+    List<BackupEntry> existing = const [],
+    Map<String, String> saveDirs = const {},
+    String? rotateOut,
+    bool needsFile = false,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     final dirs = DirectoryService(prefs);
@@ -113,9 +136,18 @@ void main() {
 
   test('a RomM save: back up the target\'s save, register it, then download into the target', () async {
     final p = await preparer();
-    await p.prepare(game, '/r/mk.z64',
-        SaveEntry(source: SaveSource.romm, fileName: 'mk.srm', savedAt: DateTime(2026), maker: mupen, rommSave: {'file_name': 'mk.srm'}),
-        target: ares);
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(
+        source: SaveSource.romm,
+        fileName: 'mk.srm',
+        savedAt: DateTime(2026),
+        maker: mupen,
+        rommSave: {'file_name': 'mk.srm'},
+      ),
+      target: ares,
+    );
     expect(log, ['backup ares', 'romm mk.srm -> ares/null']);
     expect(added.single.emulatorId, 'ares');
   });
@@ -127,7 +159,9 @@ void main() {
   });
 
   test('a backup identical to the newest one is not listed again', () async {
-    final p = await preparer(existing: [BackupEntry(timestamp: DateTime(2026), md5Hash: 'm', localZipPath: '/backups/a.zip')]);
+    final p = await preparer(
+      existing: [BackupEntry(timestamp: DateTime(2026), md5Hash: 'm', localZipPath: '/backups/a.zip')],
+    );
     await p.backUp(game, '/r/mk.z64', ares);
     expect(added, isEmpty);
   });
@@ -142,13 +176,23 @@ void main() {
 
   test('the target\'s own local save: nothing to do, no backup', () async {
     final p = await preparer();
-    await p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.local, fileName: 'mk.eeprom', savedAt: DateTime(2026), maker: ares), target: ares);
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(source: SaveSource.local, fileName: 'mk.eeprom', savedAt: DateTime(2026), maker: ares),
+      target: ares,
+    );
     expect(log, isEmpty);
   });
 
   test('another emulator\'s local save is converted into the target', () async {
     final p = await preparer();
-    await p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.local, fileName: 'mk.srm', savedAt: DateTime(2026), maker: mupen), target: ares);
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(source: SaveSource.local, fileName: 'mk.srm', savedAt: DateTime(2026), maker: mupen),
+      target: ares,
+    );
     expect(log, ['backup ares', 'convert retroarch/mupen64plus_next -> ares']);
   });
 
@@ -161,24 +205,47 @@ void main() {
   test('a backup is restored into the target', () async {
     final p = await preparer(needsFile: true);
     final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: zipFile(), emulatorId: 'ares');
-    await p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.backup, fileName: 'old.zip', savedAt: DateTime(2026), maker: ares, backup: backup), target: ares);
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(source: SaveSource.backup, fileName: 'old.zip', savedAt: DateTime(2026), maker: ares, backup: backup),
+      target: ares,
+    );
     expect(log, ['backup ares', 'restore -> ares']);
   });
 
   test('RetroArch\'s core goes with the download', () async {
     final p = await preparer();
-    await p.prepare(game, '/r/mk.z64',
-        SaveEntry(source: SaveSource.romm, fileName: 'mk.eeprom', savedAt: DateTime(2026), maker: ares, rommSave: {'file_name': 'mk.eeprom'}),
-        target: mupen);
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(
+        source: SaveSource.romm,
+        fileName: 'mk.eeprom',
+        savedAt: DateTime(2026),
+        maker: ares,
+        rommSave: {'file_name': 'mk.eeprom'},
+      ),
+      target: mupen,
+    );
     expect(log.last, 'romm mk.eeprom -> retroarch/mupen64plus_next');
   });
 
   test('a failure throws, after the backup was registered', () async {
     final p = await preparer(fail: true);
     await expectLater(
-      p.prepare(game, '/r/mk.z64',
-          SaveEntry(source: SaveSource.romm, fileName: 'mk.srm', savedAt: DateTime(2026), maker: mupen, rommSave: {'file_name': 'mk.srm'}),
-          target: ares),
+      p.prepare(
+        game,
+        '/r/mk.z64',
+        SaveEntry(
+          source: SaveSource.romm,
+          fileName: 'mk.srm',
+          savedAt: DateTime(2026),
+          maker: mupen,
+          rommSave: {'file_name': 'mk.srm'},
+        ),
+        target: ares,
+      ),
       throwsA(isA<SaveChoiceException>()),
     );
     expect(added, hasLength(1));
@@ -187,9 +254,17 @@ void main() {
   test('nothing is written when the emulator keeps saves in the ROM\'s folder', () async {
     final p = await preparer(saveDirs: {'mgba': '/r'});
     await expectLater(
-      p.prepare(game, '/r/mk.gba',
-          SaveEntry(source: SaveSource.romm, fileName: 'mk.sav', savedAt: DateTime(2026), rommSave: {'file_name': 'mk.sav'}),
-          target: const SaveMaker('mgba')),
+      p.prepare(
+        game,
+        '/r/mk.gba',
+        SaveEntry(
+          source: SaveSource.romm,
+          fileName: 'mk.sav',
+          savedAt: DateTime(2026),
+          rommSave: {'file_name': 'mk.sav'},
+        ),
+        target: const SaveMaker('mgba'),
+      ),
       throwsA(isA<SaveChoiceException>()),
     );
     expect(log, isEmpty);
@@ -198,8 +273,12 @@ void main() {
   test('a RetroArch save of another core is not played in this core', () async {
     final p = await preparer();
     await expectLater(
-      p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.local, fileName: 'mk.srm', savedAt: DateTime(2026), maker: mupen),
-          target: const SaveMaker('retroarch', coreId: 'parallel_n64')),
+      p.prepare(
+        game,
+        '/r/mk.z64',
+        SaveEntry(source: SaveSource.local, fileName: 'mk.srm', savedAt: DateTime(2026), maker: mupen),
+        target: const SaveMaker('retroarch', coreId: 'parallel_n64'),
+      ),
       throwsA(isA<SaveChoiceException>()),
     );
     expect(log, isEmpty);
@@ -209,7 +288,12 @@ void main() {
     final p = await preparer(restoreOk: false);
     final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: zipFile());
     await expectLater(
-      p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.backup, fileName: 'old.zip', savedAt: DateTime(2026), backup: backup), target: ares),
+      p.prepare(
+        game,
+        '/r/mk.z64',
+        SaveEntry(source: SaveSource.backup, fileName: 'old.zip', savedAt: DateTime(2026), backup: backup),
+        target: ares,
+      ),
       throwsA(isA<SaveChoiceException>()),
     );
   });
@@ -220,9 +304,18 @@ void main() {
     final oldest = File('${dir.path}/oldest.zip')..writeAsStringSync('zip');
     final p = await preparer(rotateOut: oldest.path, needsFile: true);
     final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: oldest.path, emulatorId: 'ares');
-    await p.prepare(game, '/r/mk.z64',
-        SaveEntry(source: SaveSource.backup, fileName: 'oldest.zip', savedAt: DateTime(2026), maker: ares, backup: backup),
-        target: ares);
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(
+        source: SaveSource.backup,
+        fileName: 'oldest.zip',
+        savedAt: DateTime(2026),
+        maker: ares,
+        backup: backup,
+      ),
+      target: ares,
+    );
     expect(log, ['backup ares', 'restore -> ares']);
   });
 
@@ -230,7 +323,12 @@ void main() {
     final p = await preparer();
     final backup = BackupEntry(timestamp: DateTime(2026), md5Hash: 'x', localZipPath: '/nowhere/gone.zip');
     await expectLater(
-      p.prepare(game, '/r/mk.z64', SaveEntry(source: SaveSource.backup, fileName: 'gone.zip', savedAt: DateTime(2026), backup: backup), target: ares),
+      p.prepare(
+        game,
+        '/r/mk.z64',
+        SaveEntry(source: SaveSource.backup, fileName: 'gone.zip', savedAt: DateTime(2026), backup: backup),
+        target: ares,
+      ),
       throwsA(isA<SaveChoiceException>()),
     );
     expect(log, isEmpty);

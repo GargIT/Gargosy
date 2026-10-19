@@ -30,9 +30,21 @@ void main() {
 
       test('unknown SDL key is not in the known set', () {
         const knownKeys = {
-          'a', 'b', 'x', 'y', 'dpup', 'dpdown', 'dpleft', 'dpright',
-          'leftx', 'lefty', 'leftshoulder', 'rightshoulder',
-          'start', 'back', 'guide',
+          'a',
+          'b',
+          'x',
+          'y',
+          'dpup',
+          'dpdown',
+          'dpleft',
+          'dpright',
+          'leftx',
+          'lefty',
+          'leftshoulder',
+          'rightshoulder',
+          'start',
+          'back',
+          'guide',
         };
         expect(knownKeys.contains('nonexistent'), isFalse);
         expect(knownKeys.contains(''), isFalse);
@@ -53,8 +65,11 @@ void main() {
         };
 
         for (final entry in expectedMappings.entries) {
-          expect(entry.value.length, greaterThanOrEqualTo(1),
-              reason: 'Bitmask ${entry.key} should map to at least 1 direction');
+          expect(
+            entry.value.length,
+            greaterThanOrEqualTo(1),
+            reason: 'Bitmask ${entry.key} should map to at least 1 direction',
+          );
         }
 
         // Cardinal directions map to single direction
@@ -94,8 +109,7 @@ void main() {
         };
 
         for (final entry in expectedAxisKeys.entries) {
-          expect(entry.value, isNotEmpty,
-              reason: 'Axis index ${entry.key} should map to a non-empty key');
+          expect(entry.value, isNotEmpty, reason: 'Axis index ${entry.key} should map to a non-empty key');
         }
 
         expect(expectedAxisKeys.length, 6);

@@ -16,8 +16,13 @@ class _Service extends Fake implements EmulatorDownloadService {
   String? usedOverride;
 
   @override
-  Stream<DownloadProgress> downloadEmulator(String emulatorId,
-      {String? architecture, String? buildType, String? urlOverride, Object? cancelToken}) async* {
+  Stream<DownloadProgress> downloadEmulator(
+    String emulatorId, {
+    String? architecture,
+    String? buildType,
+    String? urlOverride,
+    Object? cancelToken,
+  }) async* {
     usedOverride = urlOverride;
     yield* Stream.fromIterable(steps);
   }

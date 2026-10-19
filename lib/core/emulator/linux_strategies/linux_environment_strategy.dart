@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -145,7 +146,13 @@ abstract class LinuxEnvironmentStrategy {
   Future<void> launch(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []});
 
   /// Launches a game and returns the process handle.
-  Future<io.Process?> launchWithHandle(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []});
+  Future<io.Process?> launchWithHandle(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  });
 
   /// Launches the emulator standalone.
   Future<void> launchStandalone(String emulatorId, String exePath, {List<String> args = const []});
@@ -158,9 +165,7 @@ abstract class LinuxEnvironmentStrategy {
   Future<Map<String, String>> detectFlatpakEmulators() async {
     final flatpakMap = <String, String>{};
     try {
-      final result = await io.Process.run('flatpak', ['list', '--app', '--columns=application'],
-        runInShell: true,
-      );
+      final result = await io.Process.run('flatpak', ['list', '--app', '--columns=application'], runInShell: true);
       if (result.exitCode != 0) return flatpakMap;
 
       final lines = (result.stdout as String).split('\n');
@@ -207,15 +212,11 @@ abstract class LinuxEnvironmentStrategy {
     final normalizedPath = posix.normalize(posix.absolute(romPath));
     final normalizedHome = posix.normalize(posix.absolute(home));
 
-    const defaultAccessibleRoots = <String>[
-      '/run/media',
-      '/media',
-    ];
+    const defaultAccessibleRoots = <String>['/run/media', '/media'];
 
     bool isWithin(String root) {
       final normalizedRoot = posix.normalize(root);
-      return normalizedPath == normalizedRoot ||
-          posix.isWithin(normalizedRoot, normalizedPath);
+      return normalizedPath == normalizedRoot || posix.isWithin(normalizedRoot, normalizedPath);
     }
 
     if (normalizedHome.isNotEmpty && (normalizedPath == normalizedHome || isWithin(normalizedHome))) {

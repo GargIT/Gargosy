@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/save/formats/ps1_memory_card.dart';
 
@@ -22,7 +23,11 @@ void main() {
     });
 
     test('follows chains that are not in block order', () {
-      final card = Ps1MemoryCard.parse(buildPs1Card([(name: 'BESLES-02605X', blocks: [9, 3, 12], fill: 1)]));
+      final card = Ps1MemoryCard.parse(
+        buildPs1Card([
+          (name: 'BESLES-02605X', blocks: [9, 3, 12], fill: 1),
+        ]),
+      );
 
       expect(card.saves.single.blocks, [9, 3, 12]);
     });
@@ -79,7 +84,9 @@ void main() {
     });
 
     test('block data travels with its save, in chain order', () {
-      final source = buildPs1Card([(name: 'BESLES-02605X', blocks: [9, 3, 12], fill: 0x44)]);
+      final source = buildPs1Card([
+        (name: 'BESLES-02605X', blocks: [9, 3, 12], fill: 0x44),
+      ]);
 
       final bytes = Ps1MemoryCard.parse(source).extract(colin);
 
@@ -109,8 +116,14 @@ void main() {
 
   group('replaceSaves', () {
     test('replaces this game\'s saves and leaves every other save byte for byte', () {
-      final local = buildPs1Card([colinSetting, other, (name: 'BESLES-02605OLD', blocks: [7], fill: 0x55)]);
-      final incoming = buildPs1Card([(name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66)]);
+      final local = buildPs1Card([
+        colinSetting,
+        other,
+        (name: 'BESLES-02605OLD', blocks: [7], fill: 0x55),
+      ]);
+      final incoming = buildPs1Card([
+        (name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66),
+      ]);
 
       final merged = Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!;
       final card = Ps1MemoryCard.parse(merged);
@@ -128,7 +141,9 @@ void main() {
 
     test('the replaced saves are marked deleted, as the PS1 does', () {
       final local = buildPs1Card([colinGame, other]);
-      final incoming = buildPs1Card([(name: 'BESLES-02605NEW', blocks: [1], fill: 0x66)]);
+      final incoming = buildPs1Card([
+        (name: 'BESLES-02605NEW', blocks: [1], fill: 0x66),
+      ]);
 
       final merged = Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!;
 
@@ -140,10 +155,12 @@ void main() {
 
     test('other games\' saves on the incoming card are ignored', () {
       final local = buildPs1Card([other]);
-      final incoming = buildPs1Card([colinSetting, (name: 'BASCUS-94163FF7', blocks: [2], fill: 0x77)]);
+      final incoming = buildPs1Card([
+        colinSetting,
+        (name: 'BASCUS-94163FF7', blocks: [2], fill: 0x77),
+      ]);
 
-      final card = Ps1MemoryCard.parse(
-          Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!);
+      final card = Ps1MemoryCard.parse(Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!);
 
       expect(card.saves.map((s) => s.name).toSet(), {'BASLUS-00594GAME', 'BESLES-02605-SETTING'});
     });
@@ -160,23 +177,24 @@ void main() {
         (name: 'BASLUS-00002B', blocks: [4], fill: 2),
         (name: 'BASLUS-00003C', blocks: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15], fill: 3),
       ]);
-      final incoming = buildPs1Card([(name: 'BESLES-02605BIG', blocks: [1, 2], fill: 0x66)]);
+      final incoming = buildPs1Card([
+        (name: 'BESLES-02605BIG', blocks: [1, 2], fill: 0x66),
+      ]);
 
-      final card = Ps1MemoryCard.parse(
-          Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!);
+      final card = Ps1MemoryCard.parse(Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!);
 
       expect(card.saves.firstWhere((s) => s.name == 'BESLES-02605BIG').blocks, [3, 5]);
     });
 
     test('not enough free blocks: throws, telling how many are needed and free', () {
       final local = buildPs1Card([(name: 'BASLUS-00003C', blocks: List.generate(14, (i) => i + 1), fill: 3)]);
-      final incoming = buildPs1Card([(name: 'BESLES-02605BIG', blocks: [1, 2], fill: 0x66)]);
+      final incoming = buildPs1Card([
+        (name: 'BESLES-02605BIG', blocks: [1, 2], fill: 0x66),
+      ]);
 
       expect(
         () => Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin),
-        throwsA(isA<Ps1CardFullException>()
-            .having((e) => e.needed, 'needed', 2)
-            .having((e) => e.free, 'free', 1)),
+        throwsA(isA<Ps1CardFullException>().having((e) => e.needed, 'needed', 2).having((e) => e.free, 'free', 1)),
       );
     });
 
@@ -185,10 +203,11 @@ void main() {
         (name: 'BASLUS-00003C', blocks: List.generate(13, (i) => i + 1), fill: 3),
         (name: 'BESLES-02605OLD', blocks: [14, 15], fill: 0x55),
       ]);
-      final incoming = buildPs1Card([(name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66)]);
+      final incoming = buildPs1Card([
+        (name: 'BESLES-02605NEW', blocks: [1, 2], fill: 0x66),
+      ]);
 
-      final card = Ps1MemoryCard.parse(
-          Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!);
+      final card = Ps1MemoryCard.parse(Ps1MemoryCard.parse(local).replaceSaves(Ps1MemoryCard.parse(incoming), colin)!);
 
       expect(card.saves.firstWhere((s) => s.name == 'BESLES-02605NEW').blocks, [14, 15]);
     });

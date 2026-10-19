@@ -1,7 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/romm/romm_models.dart';
+
 import 'linux_environment_strategy.dart';
 
 class EmuDeckStrategy extends LinuxEnvironmentStrategy {
@@ -17,7 +19,7 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
     if (emudeckRoot != null) {
       // 1. Check if user pointed directly to a 'roms' folder
       if (p.basename(emudeckRoot).toLowerCase() == 'roms') return emudeckRoot;
-      
+
       // 2. Try standard Emulation/roms (lowercase)
       final standard = p.join(emudeckRoot, 'Emulation', 'roms');
       if (io.Directory(standard).existsSync()) return standard;
@@ -123,7 +125,12 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
   }
 
   @override
-  Future<String?> findExecutable(String emulatorId, String executableName, String emulatorsRoot, String? emudeckRoot) async {
+  Future<String?> findExecutable(
+    String emulatorId,
+    String executableName,
+    String emulatorsRoot,
+    String? emudeckRoot,
+  ) async {
     if (emudeckRoot != null) {
       final masterLauncher = io.File(p.join(emudeckRoot, 'Emulation', 'tools', 'emu-launch.sh'));
       if (await masterLauncher.exists()) {
@@ -162,10 +169,16 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
   bool isEmuLaunchScript(String path) => p.basename(path) == 'emu-launch.sh';
 
   @override
-  Future<void> launch(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []}) async {
+  Future<void> launch(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     final resolvedRomPath = await _resolveWiiURom(romPath, emulatorId);
     final absRomPath = p.absolute(resolvedRomPath);
-    
+
     if (isEmuLaunchScript(exePath)) {
       final emuKeyMap = {
         'pcsx2': 'pcsx2-Qt',
@@ -185,15 +198,26 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
       await io.Process.start('bash', [exePath, ...args, absRomPath], mode: io.ProcessStartMode.detached);
     } else {
       final (exe, cmdArgs) = LinuxEnvironmentStrategy.splitCommand(exePath);
-      await io.Process.start(exe, [...cmdArgs, ...args, absRomPath], mode: io.ProcessStartMode.detached, runInShell: exe == 'flatpak');
+      await io.Process.start(
+        exe,
+        [...cmdArgs, ...args, absRomPath],
+        mode: io.ProcessStartMode.detached,
+        runInShell: exe == 'flatpak',
+      );
     }
   }
 
   @override
-  Future<io.Process?> launchWithHandle(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []}) async {
+  Future<io.Process?> launchWithHandle(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     final resolvedRomPath = await _resolveWiiURom(romPath, emulatorId);
     final absRomPath = p.absolute(resolvedRomPath);
-    
+
     if (isEmuLaunchScript(exePath)) {
       final emuKeyMap = {
         'pcsx2': 'pcsx2-Qt',
@@ -208,12 +232,23 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
         'cemu': 'cemu',
       };
       final emuKey = emuKeyMap[emulatorId] ?? emulatorId;
-      return await io.Process.start('bash', [exePath, '-e', emuKey, ...args, absRomPath], mode: io.ProcessStartMode.normal);
+      return await io.Process.start('bash', [
+        exePath,
+        '-e',
+        emuKey,
+        ...args,
+        absRomPath,
+      ], mode: io.ProcessStartMode.normal);
     } else if (exePath.endsWith('.sh')) {
       return await io.Process.start('bash', [exePath, ...args, absRomPath], mode: io.ProcessStartMode.normal);
     } else {
       final (exe, cmdArgs) = LinuxEnvironmentStrategy.splitCommand(exePath);
-      return await io.Process.start(exe, [...cmdArgs, ...args, absRomPath], mode: io.ProcessStartMode.normal, runInShell: exe == 'flatpak');
+      return await io.Process.start(
+        exe,
+        [...cmdArgs, ...args, absRomPath],
+        mode: io.ProcessStartMode.normal,
+        runInShell: exe == 'flatpak',
+      );
     }
   }
 
@@ -239,7 +274,12 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
     } else {
       final (exe, cmdArgs) = LinuxEnvironmentStrategy.splitCommand(exePath);
       if (cmdArgs.isNotEmpty) {
-        await io.Process.start(exe, [...cmdArgs, ...args], mode: io.ProcessStartMode.detached, runInShell: exe == 'flatpak');
+        await io.Process.start(
+          exe,
+          [...cmdArgs, ...args],
+          mode: io.ProcessStartMode.detached,
+          runInShell: exe == 'flatpak',
+        );
       } else {
         final exeDir = io.File(exe).parent.path;
         await io.Process.start(exe, args, mode: io.ProcessStartMode.detached, workingDirectory: exeDir);
@@ -249,15 +289,12 @@ class EmuDeckStrategy extends LinuxEnvironmentStrategy {
 
   Future<String> _resolveWiiURom(String romPath, String emulatorId) async {
     if (emulatorId.toLowerCase() != 'cemu') return romPath;
-    
+
     final dir = io.Directory(romPath);
     if (!dir.existsSync()) return romPath;
 
     // Check for common Wii U leaf files in the directory
-    final candidates = [
-      p.join(romPath, 'code', 'app.rpx'),
-      p.join(romPath, 'app.rpx'),
-    ];
+    final candidates = [p.join(romPath, 'code', 'app.rpx'), p.join(romPath, 'app.rpx')];
 
     for (final c in candidates) {
       if (io.File(c).existsSync()) {

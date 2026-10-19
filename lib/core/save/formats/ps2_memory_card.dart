@@ -16,8 +16,8 @@ class Ps2CardFile {
     this.attr = 0,
     Uint8List? created,
     Uint8List? modified,
-  })  : created = created ?? Ps2MemoryCard.timeRecord(DateTime.now()),
-        modified = modified ?? Ps2MemoryCard.timeRecord(DateTime.now());
+  }) : created = created ?? Ps2MemoryCard.timeRecord(DateTime.now()),
+       modified = modified ?? Ps2MemoryCard.timeRecord(DateTime.now());
 
   final String name;
   final Uint8List data;
@@ -37,8 +37,8 @@ class Ps2CardSave {
     this.attr = 0,
     Uint8List? created,
     Uint8List? modified,
-  })  : created = created ?? Ps2MemoryCard.timeRecord(DateTime.now()),
-        modified = modified ?? Ps2MemoryCard.timeRecord(DateTime.now());
+  }) : created = created ?? Ps2MemoryCard.timeRecord(DateTime.now()),
+       modified = modified ?? Ps2MemoryCard.timeRecord(DateTime.now());
 
   final String name;
   final List<Ps2CardFile> files;
@@ -172,26 +172,29 @@ class Ps2MemoryCard {
         if (mode & _isDir != 0 || mode & _isFile == 0) {
           throw FormatException('unsupported entry in save $name: ${_name(f)}');
         }
-        files.add(Ps2CardFile(
-          name: _name(f),
-          data: reader.file(_u32(f, 0x10), _u32(f, 4)),
-          mode: mode,
-          attr: _u32(f, 0x20),
-          created: Uint8List.fromList(f.sublist(8, 16)),
-          modified: Uint8List.fromList(f.sublist(0x18, 0x20)),
-        ));
+        files.add(
+          Ps2CardFile(
+            name: _name(f),
+            data: reader.file(_u32(f, 0x10), _u32(f, 4)),
+            mode: mode,
+            attr: _u32(f, 0x20),
+            created: Uint8List.fromList(f.sublist(8, 16)),
+            modified: Uint8List.fromList(f.sublist(0x18, 0x20)),
+          ),
+        );
       }
-      saves.add(Ps2CardSave(
-        name: name,
-        files: files,
-        mode: _u16(entry, 0),
-        attr: _u32(entry, 0x20),
-        created: Uint8List.fromList(entry.sublist(8, 16)),
-        modified: Uint8List.fromList(entry.sublist(0x18, 0x20)),
-      ));
+      saves.add(
+        Ps2CardSave(
+          name: name,
+          files: files,
+          mode: _u16(entry, 0),
+          attr: _u32(entry, 0x20),
+          created: Uint8List.fromList(entry.sublist(8, 16)),
+          modified: Uint8List.fromList(entry.sublist(0x18, 0x20)),
+        ),
+      );
     }
-    return Ps2MemoryCard._(
-        Uint8List.fromList(bytes), ecc, geometry, rootDot, Uint8List.fromList(root[1]), saves);
+    return Ps2MemoryCard._(Uint8List.fromList(bytes), ecc, geometry, rootDot, Uint8List.fromList(root[1]), saves);
   }
 
   /// A newly formatted, empty card, laid out as the PS2 formats one.
@@ -267,8 +270,14 @@ class Ps2MemoryCard {
 
   /// Writes the root directory, [saves] and a matching FAT into [bytes],
   /// packed from the first allocatable cluster.
-  static Uint8List _build(Uint8List bytes, bool ecc, _Geometry g, Uint8List rootDot, Uint8List rootDotDot,
-      List<Ps2CardSave> saves) {
+  static Uint8List _build(
+    Uint8List bytes,
+    bool ecc,
+    _Geometry g,
+    Uint8List rootDot,
+    Uint8List rootDotDot,
+    List<Ps2CardSave> saves,
+  ) {
     final needed = _clustersNeeded(saves);
     if (needed > g.allocEnd) throw Ps2CardFullException(needed, g.allocEnd);
 
@@ -306,8 +315,15 @@ class Ps2MemoryCard {
       final save = saves[i];
       final dirClusters = chain(_ceil(2 + save.files.length, _entriesPerCluster));
       final entries = <Uint8List>[
-        _entry(mode: dirMode, length: 0, cluster: rootClusters.first, dirEntry: 2 + i,
-            created: save.created, modified: save.modified, name: '.'),
+        _entry(
+          mode: dirMode,
+          length: 0,
+          cluster: rootClusters.first,
+          dirEntry: 2 + i,
+          created: save.created,
+          modified: save.modified,
+          name: '.',
+        ),
         _entry(mode: dirMode, length: 0, cluster: 0, created: save.created, modified: save.modified, name: '..'),
       ];
       for (final file in save.files) {
@@ -319,26 +335,30 @@ class Ps2MemoryCard {
           c.setRange(0, end - start, file.data, start);
           data[fileClusters[k]] = c;
         }
-        entries.add(_entry(
-          mode: file.mode,
-          length: file.data.length,
-          cluster: fileClusters.isEmpty ? _chainEnd : fileClusters.first,
-          attr: file.attr,
-          created: file.created,
-          modified: file.modified,
-          name: file.name,
-        ));
+        entries.add(
+          _entry(
+            mode: file.mode,
+            length: file.data.length,
+            cluster: fileClusters.isEmpty ? _chainEnd : fileClusters.first,
+            attr: file.attr,
+            created: file.created,
+            modified: file.modified,
+            name: file.name,
+          ),
+        );
       }
       writeEntries(dirClusters, entries);
-      rootEntries.add(_entry(
-        mode: save.mode,
-        length: entries.length,
-        cluster: dirClusters.first,
-        attr: save.attr,
-        created: save.created,
-        modified: save.modified,
-        name: save.name,
-      ));
+      rootEntries.add(
+        _entry(
+          mode: save.mode,
+          length: entries.length,
+          cluster: dirClusters.first,
+          attr: save.attr,
+          created: save.created,
+          modified: save.modified,
+          name: save.name,
+        ),
+      );
     }
     writeEntries(rootClusters, rootEntries);
 
@@ -533,14 +553,14 @@ class _Geometry {
   int get firstFatCluster => ifcList[0] + 1;
 
   _Geometry withRootAtStart() => _Geometry(
-        clustersPerCard: clustersPerCard,
-        allocOffset: allocOffset,
-        allocEnd: allocEnd,
-        rootCluster: 0,
-        goodBlock1: goodBlock1,
-        goodBlock2: goodBlock2,
-        ifcList: ifcList,
-      );
+    clustersPerCard: clustersPerCard,
+    allocOffset: allocOffset,
+    allocEnd: allocEnd,
+    rootCluster: 0,
+    goodBlock1: goodBlock1,
+    goodBlock2: goodBlock2,
+    ifcList: ifcList,
+  );
   int get fatClusters => (allocEnd + Ps2MemoryCard._fatPerCluster - 1) ~/ Ps2MemoryCard._fatPerCluster;
 
   Uint8List superblock() {
@@ -590,8 +610,11 @@ class _Reader {
     if (n < 0 || n >= geometry.clustersPerCard) throw FormatException('cluster $n out of range');
     final out = Uint8List(Ps2MemoryCard._clusterSize);
     for (var i = 0; i < Ps2MemoryCard._pagesPerCluster; i++) {
-      out.setRange(i * Ps2MemoryCard._pageSize, (i + 1) * Ps2MemoryCard._pageSize,
-          page(n * Ps2MemoryCard._pagesPerCluster + i));
+      out.setRange(
+        i * Ps2MemoryCard._pageSize,
+        (i + 1) * Ps2MemoryCard._pageSize,
+        page(n * Ps2MemoryCard._pagesPerCluster + i),
+      );
     }
     return out;
   }
@@ -636,8 +659,11 @@ class _Reader {
     if (clusters.length != count) throw const FormatException('file shorter than its length');
     final out = Uint8List(count * Ps2MemoryCard._clusterSize);
     for (var i = 0; i < count; i++) {
-      out.setRange(i * Ps2MemoryCard._clusterSize, (i + 1) * Ps2MemoryCard._clusterSize,
-          cluster(geometry.allocOffset + clusters[i]));
+      out.setRange(
+        i * Ps2MemoryCard._clusterSize,
+        (i + 1) * Ps2MemoryCard._clusterSize,
+        cluster(geometry.allocOffset + clusters[i]),
+      );
     }
     return Uint8List.sublistView(out, 0, length);
   }
@@ -670,8 +696,10 @@ class _Writer {
 
   void cluster(int n, Uint8List data) {
     for (var i = 0; i < Ps2MemoryCard._pagesPerCluster; i++) {
-      page(n * Ps2MemoryCard._pagesPerCluster + i,
-          Uint8List.sublistView(data, i * Ps2MemoryCard._pageSize, (i + 1) * Ps2MemoryCard._pageSize));
+      page(
+        n * Ps2MemoryCard._pagesPerCluster + i,
+        Uint8List.sublistView(data, i * Ps2MemoryCard._pageSize, (i + 1) * Ps2MemoryCard._pageSize),
+      );
     }
   }
 }

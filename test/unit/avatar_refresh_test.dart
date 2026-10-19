@@ -28,8 +28,13 @@ void main() {
   });
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  Future<Profile?> refresh(Profile p, Uint8List? avatar) =>
-      refreshAvatar(profile: p, login: login, auth: FakeRommAuth(avatar: avatar), store: store, paths: paths);
+  Future<Profile?> refresh(Profile p, Uint8List? avatar) => refreshAvatar(
+    profile: p,
+    login: login,
+    auth: FakeRommAuth(avatar: avatar),
+    store: store,
+    paths: paths,
+  );
 
   test('an avatar added in RomM after the profile was made is picked up', () async {
     final updated = await refresh(anna, png);

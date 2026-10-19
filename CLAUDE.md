@@ -182,7 +182,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
   - each emulator's `ProfileLaunchConfig` arguments or written keys;
   - device pairing states;
   - the pre-launch pull (late pull writes nothing, failures don't block).
-- Gate: `flutter analyze && flutter test` (also what CI runs, on `windows-latest`). CI also runs `powershell -File tool/test_updater.ps1` (builds `windows/updater` with CMake and tests `GargosyUpdate.exe`).
+- Gate: `dart format lib test tool && flutter analyze && flutter test` (CI runs the same on `windows-latest`, with the format step as a check: `--set-exit-if-changed`). The page width is 120 (`analysis_options.yaml`). CI also runs `powershell -File tool/test_updater.ps1` (builds `windows/updater` with CMake and tests `GargosyUpdate.exe`).
 
 ## Release
 `pwsh tool/make_release.ps1` builds and writes `dist\Gargosy-<version>.zip`: it unpacks to `Gargosy\` with the app, empty `roms\`, `emulators\`, `bios\` and `userdata\`, and the licence files. There is no installer. An update replaces only the app files.

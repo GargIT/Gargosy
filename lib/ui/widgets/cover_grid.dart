@@ -49,53 +49,61 @@ class CoverGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final columns = columnsFor(constraints.maxWidth);
-      return FocusTraversalGroup(
-        policy: WrapGridTraversalPolicy(),
-        child: CustomScrollView(slivers: [
-          if (header != null) SliverToBoxAdapter(child: header),
-          if (games.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: Text(emptyText, style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted))),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s4, GSpace.rowPad, GSpace.s14),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  mainAxisSpacing: gap,
-                  crossAxisSpacing: gap,
-                  mainAxisExtent: GameCard.height,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = columnsFor(constraints.maxWidth);
+        return FocusTraversalGroup(
+          policy: WrapGridTraversalPolicy(),
+          child: CustomScrollView(
+            slivers: [
+              if (header != null) SliverToBoxAdapter(child: header),
+              if (games.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      emptyText,
+                      style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s4, GSpace.rowPad, GSpace.s14),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      mainAxisSpacing: gap,
+                      crossAxisSpacing: gap,
+                      mainAxisExtent: GameCard.height,
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, i) {
+                      if (onEndReached != null &&
+                          i >= games.length - columns * 2 &&
+                          (total == null || games.length < total!)) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) => onEndReached!());
+                      }
+                      final g = games[i];
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: GameCard(
+                          game: g,
+                          coverUrl: coverUrl(g),
+                          autofocus: autofocus && i == 0,
+                          favourite: isFavourite?.call(g) ?? false,
+                          downloaded: isDownloaded?.call(g) ?? false,
+                          onOpen: () => onOpen(g),
+                          onFavorite: onFavorite == null ? null : () => onFavorite!(g),
+                        ),
+                      );
+                    }, childCount: games.length),
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) {
-                    if (onEndReached != null && i >= games.length - columns * 2 && (total == null || games.length < total!)) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) => onEndReached!());
-                    }
-                    final g = games[i];
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: GameCard(
-                        game: g,
-                        coverUrl: coverUrl(g),
-                        autofocus: autofocus && i == 0,
-                        favourite: isFavourite?.call(g) ?? false,
-                        downloaded: isDownloaded?.call(g) ?? false,
-                        onOpen: () => onOpen(g),
-                        onFavorite: onFavorite == null ? null : () => onFavorite!(g),
-                      ),
-                    );
-                  },
-                  childCount: games.length,
-                ),
-              ),
-            ),
-          if (footer != null && games.isNotEmpty) SliverToBoxAdapter(child: footer),
-        ]),
-      );
-    });
+              if (footer != null && games.isNotEmpty) SliverToBoxAdapter(child: footer),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

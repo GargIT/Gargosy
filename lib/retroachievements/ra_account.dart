@@ -16,6 +16,7 @@ class RaAccount {
   RaAccount(this._prefs, {required this.fetchToken, this.signOutEmulators});
 
   final AppPreferences _prefs;
+
   /// Exchanges the password for RA's Connect token.
   final RaTokenFetcher fetchToken;
 
@@ -54,7 +55,9 @@ final raAccountProvider = Provider<RaAccount?>((ref) {
   final prefs = ref.watch(profilePrefsProvider);
   if (prefs == null) return null;
   final dirs = ref.watch(launchDirectoriesProvider);
-  return RaAccount(prefs,
-      fetchToken: (u, p) => RetroAchievementsService().fetchConnectToken(u, p),
-      signOutEmulators: dirs == null ? null : () async => dirs.signOutRetroAchievements());
+  return RaAccount(
+    prefs,
+    fetchToken: (u, p) => RetroAchievementsService().fetchConnectToken(u, p),
+    signOutEmulators: dirs == null ? null : () async => dirs.signOutRetroAchievements(),
+  );
 });

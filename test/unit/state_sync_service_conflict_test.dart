@@ -34,8 +34,11 @@ void main() {
     env.api.calls.clear();
     expect((await env.service.pullStates(env.game, env.romPath)).conflicts, isEmpty);
     expect((await env.service.pushStates(env.game, env.romPath)).conflicts, isEmpty);
-    expect(env.api.calls.where((c) => c.startsWith('PUT') || c.startsWith('POST')), isEmpty,
-        reason: 'the record was updated, so nothing is pending');
+    expect(
+      env.api.calls.where((c) => c.startsWith('PUT') || c.startsWith('POST')),
+      isEmpty,
+      reason: 'the record was updated, so nothing is pending',
+    );
   });
 
   test('choosing cloud replaces the local state, keeps a .bak of it, and clears the conflict', () async {
@@ -84,8 +87,11 @@ void main() {
 
     expect(ok, isFalse);
     expect(env.api.bytesOf(stateId), stateBytes(2));
-    expect(env.api.calls.where((c) => c.startsWith('PUT') || c.startsWith('POST')), isEmpty,
-        reason: 'a truncated local state must never be uploaded over the server copy');
+    expect(
+      env.api.calls.where((c) => c.startsWith('PUT') || c.startsWith('POST')),
+      isEmpty,
+      reason: 'a truncated local state must never be uploaded over the server copy',
+    );
   });
 
   test('a failed resolve keeps the conflict open', () async {
@@ -103,10 +109,12 @@ void main() {
     final ok = await env.service.resolveConflict(conflict, choice: 'cloud');
 
     expect(ok, isFalse);
-    expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(3),
-        reason: 'no backup, no replace');
-    expect(env.stateFile('$stateFileA.gargosy_tmp').existsSync(), isFalse,
-        reason: 'a failed write must not leave its temp file behind');
+    expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(3), reason: 'no backup, no replace');
+    expect(
+      env.stateFile('$stateFileA.gargosy_tmp').existsSync(),
+      isFalse,
+      reason: 'a failed write must not leave its temp file behind',
+    );
 
     final again = await env.service.pullStates(env.game, env.romPath);
     expect(again.conflicts, hasLength(1), reason: 'the conflict stays open');
@@ -121,8 +129,11 @@ void main() {
   });
 
   test('returns false instead of throwing when the strategy resolver throws', () async {
-    final broken = StateSyncService(env.api, env.pcsx2.prefs,
-        (game, {emulatorId, coreOverride}) => throw StateError('no strategy'));
+    final broken = StateSyncService(
+      env.api,
+      env.pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) => throw StateError('no strategy'),
+    );
 
     expect(await broken.resolveConflict(conflict, choice: 'local'), isFalse);
     expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(3));

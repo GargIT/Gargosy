@@ -56,8 +56,11 @@ void main() {
     expect(io.Directory(p.join(emu, 'Dolphin-x64', 'User')).existsSync(), isFalse);
     final dolphin = (await library().list()).firstWhere((e) => e.id == 'dolphin');
     expect(dolphin.installedExe, p.join(emu, 'Dolphin-x64', 'Dolphin.exe'));
-    expect(io.File(p.join(source.path, 'Dolphin-x64', 'User', 'GC', 'USA', 'Card A', 'save.gci')).existsSync(), isTrue,
-        reason: 'the source install is never changed');
+    expect(
+      io.File(p.join(source.path, 'Dolphin-x64', 'User', 'GC', 'USA', 'Card A', 'save.gci')).existsSync(),
+      isTrue,
+      reason: 'the source install is never changed',
+    );
   });
 
   test('importing a folder without the emulator\'s exe is refused', () async {
@@ -95,12 +98,15 @@ void main() {
     expect((await library().list()).firstWhere((e) => e.id == 'dolphin').installedFrom, EmulatorLibrary.imported);
   });
 
-  test('a folder without the program (a failed or wrong download) is cleared before a download; a real install is not', () async {
-    final junk = io.File(p.join(root.emulators, 'pcsx2', 'pcsx2-qt.pdb'))..createSync(recursive: true);
-    await library().clearIfNoProgram('pcsx2');
-    expect(junk.existsSync(), isFalse);
-    final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin.exe'))..createSync(recursive: true);
-    await library().clearIfNoProgram('dolphin');
-    expect(exe.existsSync(), isTrue);
-  });
+  test(
+    'a folder without the program (a failed or wrong download) is cleared before a download; a real install is not',
+    () async {
+      final junk = io.File(p.join(root.emulators, 'pcsx2', 'pcsx2-qt.pdb'))..createSync(recursive: true);
+      await library().clearIfNoProgram('pcsx2');
+      expect(junk.existsSync(), isFalse);
+      final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin.exe'))..createSync(recursive: true);
+      await library().clearIfNoProgram('dolphin');
+      expect(exe.existsSync(), isTrue);
+    },
+  );
 }

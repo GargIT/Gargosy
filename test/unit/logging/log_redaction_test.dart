@@ -15,7 +15,8 @@ void main() {
       '{username: henrik, password: hunter2}': '{username: henrik, password: "***"}',
       'GET https://romm.example/api/x?token=abc123&rom_id=5': 'GET https://romm.example/api/x?token=***&rom_id=5',
       'login?u=henrik&password=hunter2': 'login?u=henrik&password=***',
-      'https://retroachievements.org/API/API_GetGame.php?z=henrik&y=SECRETKEY&i=1': 'https://retroachievements.org/API/API_GetGame.php?z=henrik&y=***&i=1',
+      'https://retroachievements.org/API/API_GetGame.php?z=henrik&y=SECRETKEY&i=1':
+          'https://retroachievements.org/API/API_GetGame.php?z=henrik&y=***&i=1',
       'GET /x?apikey=k1&key=k2': 'GET /x?apikey=***&key=***',
       'cheevos_token = "abcdef"': 'cheevos_token = "***"',
       '  webdav_password = "pw"': '  webdav_password = "***"',

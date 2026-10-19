@@ -37,8 +37,12 @@ class _Repo extends BackupRepository {
 
 void main() {
   final game = Game(id: '1', name: 'Mario Kart 64', platformSlug: 'n64', fileSize: 0);
-  Map<String, dynamic> romm(String name, String tag, String time, {String slot = 'freegosy'}) =>
-      {'file_name': name, 'emulator': tag, 'slot': slot, 'updated_at': time};
+  Map<String, dynamic> romm(String name, String tag, String time, {String slot = 'freegosy'}) => {
+    'file_name': name,
+    'emulator': tag,
+    'slot': slot,
+    'updated_at': time,
+  };
   SaveEntry local(String emulator, DateTime t) =>
       SaveEntry(source: SaveSource.local, fileName: emulator, savedAt: t, maker: SaveMaker(emulator), tag: emulator);
 
@@ -66,7 +70,13 @@ void main() {
       sync: SaveSyncService(RommService(RomMConfig(baseUrl: '', username: '', password: '')), dirs, registry, prefs),
       registry: registry,
       backupRepository: _Repo([
-        BackupEntry(timestamp: DateTime(2026), md5Hash: 'm', localZipPath: '/b/ra.zip', emulatorId: 'retroarch', coreId: 'mgba'),
+        BackupEntry(
+          timestamp: DateTime(2026),
+          md5Hash: 'm',
+          localZipPath: '/b/ra.zip',
+          emulatorId: 'retroarch',
+          coreId: 'mgba',
+        ),
       ]),
       rommService: null,
       installed: const {},
@@ -77,12 +87,18 @@ void main() {
   });
 
   test('RomM saves group by slot and tag, newest first, older versions folded', () async {
-    final c = await loadSaveCatalog(game, '/roms/mk.z64', _Sources(romm: [
-      romm('a.zip', 'freegosy', '2026-10-01T07:56:29Z'),
-      romm('b.srm', 'mupen64plus_next', '2026-09-28T16:40:00Z'),
-      romm('c.zip', 'freegosy', '2026-09-30T10:00:00Z'),
-      romm('d.zip', 'freegosy', '2026-09-29T10:00:00Z'),
-    ]));
+    final c = await loadSaveCatalog(
+      game,
+      '/roms/mk.z64',
+      _Sources(
+        romm: [
+          romm('a.zip', 'freegosy', '2026-10-01T07:56:29Z'),
+          romm('b.srm', 'mupen64plus_next', '2026-09-28T16:40:00Z'),
+          romm('c.zip', 'freegosy', '2026-09-30T10:00:00Z'),
+          romm('d.zip', 'freegosy', '2026-09-29T10:00:00Z'),
+        ],
+      ),
+    );
     expect(c.romm.map((g) => g.newest.fileName), ['a.zip', 'b.srm']);
     expect(c.romm.first.older.map((e) => e.fileName), ['c.zip', 'd.zip']);
     expect(c.romm.first.tag, 'freegosy');
@@ -90,18 +106,26 @@ void main() {
   });
 
   test('saves on this PC come newest first; all holds every row', () async {
-    final c = await loadSaveCatalog(game, '/roms/mk.z64', _Sources(
-      local: [local('retroarch', DateTime(2026, 9, 30)), local('ares', DateTime(2026, 10, 1))],
-      backupRows: [SaveEntry(source: SaveSource.backup, fileName: 'b.zip', savedAt: DateTime(2026, 9, 29))],
-      romm: [romm('a.zip', 'freegosy', '2026-10-01T07:56:29Z')],
-    ));
+    final c = await loadSaveCatalog(
+      game,
+      '/roms/mk.z64',
+      _Sources(
+        local: [local('retroarch', DateTime(2026, 9, 30)), local('ares', DateTime(2026, 10, 1))],
+        backupRows: [SaveEntry(source: SaveSource.backup, fileName: 'b.zip', savedAt: DateTime(2026, 9, 29))],
+        romm: [romm('a.zip', 'freegosy', '2026-10-01T07:56:29Z')],
+      ),
+    );
     expect(c.thisPc.map((e) => e.fileName), ['ares', 'retroarch']);
     expect(c.backups.single.fileName, 'b.zip');
     expect(c.all, hasLength(4));
   });
 
   test('RomM offline or failing: no RomM rows, and it says so', () async {
-    final c = await loadSaveCatalog(game, '/roms/mk.z64', _Sources(local: [local('ares', DateTime(2026, 10, 1))], romm: null));
+    final c = await loadSaveCatalog(
+      game,
+      '/roms/mk.z64',
+      _Sources(local: [local('ares', DateTime(2026, 10, 1))], romm: null),
+    );
     expect(c.rommOffline, isTrue);
     expect(c.romm, isEmpty);
     expect(c.thisPc, hasLength(1));
@@ -113,10 +137,16 @@ void main() {
   });
 
   test('save states listed among RomM saves are left out (they have their own tab)', () async {
-    final c = await loadSaveCatalog(game, '/roms/mk.z64', _Sources(romm: [
-      romm('mk.state1', 'mupen64plus_next', '2026-10-01T07:00:00Z'),
-      romm('mk.srm', 'mupen64plus_next', '2026-09-30T07:00:00Z'),
-    ]));
+    final c = await loadSaveCatalog(
+      game,
+      '/roms/mk.z64',
+      _Sources(
+        romm: [
+          romm('mk.state1', 'mupen64plus_next', '2026-10-01T07:00:00Z'),
+          romm('mk.srm', 'mupen64plus_next', '2026-09-30T07:00:00Z'),
+        ],
+      ),
+    );
     expect(c.romm.single.newest.fileName, 'mk.srm');
   });
 }

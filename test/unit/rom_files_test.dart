@@ -16,7 +16,10 @@ void main() {
 
   test('a game lives at roms\\<platform>\\<fs_name>, names made safe (! included)', () {
     final files = RomFiles(root);
-    expect(files.pathFor(game(1, 'Burnout 3', fsName: 'Burnout 3 (USA).chd')), p.join(root.roms, 'ps2', 'Burnout 3 (USA).chd'));
+    expect(
+      files.pathFor(game(1, 'Burnout 3', fsName: 'Burnout 3 (USA).chd')),
+      p.join(root.roms, 'ps2', 'Burnout 3 (USA).chd'),
+    );
     expect(RomFiles.safeName('Zelda: A Link [!]?.zip'), 'Zelda_ A Link [_]_.zip');
     expect(RomFiles.safeName(r'..\..\x'), '.._.._x');
     expect(RomFiles.safeName('name. '), 'name');
@@ -28,8 +31,12 @@ void main() {
     final single = game(1, 'A', fsName: 'A.iso');
     final multi = game(2, 'B', fsName: 'B', multi: true);
     expect(files.isDownloaded(single), isFalse);
-    io.File(files.pathFor(single))..createSync(recursive: true)..writeAsStringSync('rom');
-    io.File(p.join(files.pathFor(multi), 'B (Disc 1).chd'))..createSync(recursive: true)..writeAsStringSync('rom');
+    io.File(files.pathFor(single))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('rom');
+    io.File(p.join(files.pathFor(multi), 'B (Disc 1).chd'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('rom');
     final other = io.File(p.join(root.roms, 'ps2', 'C.iso'))..writeAsStringSync('rom');
     expect(files.isDownloaded(single), isTrue);
     expect(files.isDownloaded(multi), isTrue);

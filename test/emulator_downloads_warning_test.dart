@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_registry_data.dart';
@@ -40,7 +41,10 @@ void main() {
                 if (response.statusCode == 200 || response.statusCode == 302) {
                   logStatus(response.statusCode, '[$name] $key OK');
                 } else {
-                  logStatus(response.statusCode, '[$name] Broken direct URL ($key): $url (Status: ${response.statusCode})');
+                  logStatus(
+                    response.statusCode,
+                    '[$name] Broken direct URL ($key): $url (Status: ${response.statusCode})',
+                  );
                 }
               } catch (e) {
                 logStatus(0, '[$name] Failed to reach $key ($url): $e');
@@ -54,7 +58,7 @@ void main() {
             final request = await client.getUrl(Uri.parse('https://$host/api/v1/repos/$repo/releases/latest'));
             request.headers.add('User-Agent', 'Gargosy-Test-Suite');
             final response = await request.close();
-            
+
             if (response.statusCode == 200) {
               logStatus(200, '[$name] Gitea API OK');
             } else {
@@ -68,15 +72,18 @@ void main() {
 
             for (final platform in ['windows', 'macos', 'linux']) {
               final requiredKey = 'gitea_asset_required_$platform';
-              final excludedKey = 'gitea_asset_excluded'; 
+              final excludedKey = 'gitea_asset_excluded';
 
-              final requiredFilters = List<String>.from(definition[requiredKey] ?? definition['gitea_asset_required'] ?? []);
+              final requiredFilters = List<String>.from(
+                definition[requiredKey] ?? definition['gitea_asset_required'] ?? [],
+              );
               final excludedFilters = List<String>.from(definition[excludedKey] ?? []);
 
               bool found = false;
               for (final asset in assets) {
                 final String assetName = asset['name'] as String;
-                final matchesRequired = requiredFilters.isEmpty ||
+                final matchesRequired =
+                    requiredFilters.isEmpty ||
                     requiredFilters.every((f) => assetName.toLowerCase().contains(f.toLowerCase()));
                 final matchesExcluded = excludedFilters.any((f) => assetName.toLowerCase().contains(f.toLowerCase()));
 
@@ -87,7 +94,10 @@ void main() {
               }
 
               if (!found) {
-                logStatus(404, '[$name] No matching asset found on Gitea for platform: $platform (Required: $requiredFilters)');
+                logStatus(
+                  404,
+                  '[$name] No matching asset found on Gitea for platform: $platform (Required: $requiredFilters)',
+                );
               }
             }
           } catch (e) {
@@ -100,11 +110,14 @@ void main() {
             request.headers.add('User-Agent', 'Gargosy-Test-Suite');
             request.headers.add('Accept', 'application/vnd.github.v3+json');
             final response = await request.close();
-            
+
             if (response.statusCode == 200) {
               logStatus(200, '[$name] GitHub API OK');
             } else {
-              logStatus(response.statusCode, '[$name] Failed to fetch GitHub releases (Status: ${response.statusCode})');
+              logStatus(
+                response.statusCode,
+                '[$name] Failed to fetch GitHub releases (Status: ${response.statusCode})',
+              );
               continue;
             }
 
@@ -118,12 +131,15 @@ void main() {
               final platformExcluded = List<String>.from(definition['github_asset_excluded_$platform'] ?? []);
               final excludedFilters = {...baseExcluded, ...platformExcluded}.toList();
 
-              final requiredFilters = List<String>.from(definition[requiredKey] ?? definition['github_asset_required'] ?? []);
+              final requiredFilters = List<String>.from(
+                definition[requiredKey] ?? definition['github_asset_required'] ?? [],
+              );
 
               bool found = false;
               for (final asset in assets) {
                 final String assetName = asset['name'] as String;
-                final matchesRequired = requiredFilters.isEmpty ||
+                final matchesRequired =
+                    requiredFilters.isEmpty ||
                     requiredFilters.every((f) => assetName.toLowerCase().contains(f.toLowerCase()));
                 final matchesExcluded = excludedFilters.any((f) => assetName.toLowerCase().contains(f.toLowerCase()));
 
@@ -134,7 +150,10 @@ void main() {
               }
 
               if (!found) {
-                logStatus(404, '[$name] No matching asset found on GitHub for platform: $platform (Required: $requiredFilters)');
+                logStatus(
+                  404,
+                  '[$name] No matching asset found on GitHub for platform: $platform (Required: $requiredFilters)',
+                );
               }
             }
           } catch (e) {
@@ -147,7 +166,7 @@ void main() {
             final request = await client.getUrl(Uri.parse('https://dolphin-emu.org/download/'));
             request.headers.add('User-Agent', 'Gargosy-Test-Suite');
             final response = await request.close();
-            
+
             if (response.statusCode != 200) {
               logStatus(response.statusCode, '[$name] Failed to reach Dolphin site (Status: ${response.statusCode})');
               continue;
@@ -206,7 +225,10 @@ void main() {
               final response = await request.close();
 
               if (response.statusCode != 200) {
-                logStatus(response.statusCode, '[$name] Failed to fetch GitHub releases for $platform (Status: ${response.statusCode})');
+                logStatus(
+                  response.statusCode,
+                  '[$name] Failed to fetch GitHub releases for $platform (Status: ${response.statusCode})',
+                );
                 continue;
               }
 
@@ -223,7 +245,8 @@ void main() {
               bool found = false;
               for (final asset in assets) {
                 final String assetName = asset['name'] as String;
-                final matchesRequired = requiredFilters.isEmpty ||
+                final matchesRequired =
+                    requiredFilters.isEmpty ||
                     requiredFilters.every((f) => assetName.toLowerCase().contains(f.toLowerCase()));
                 final matchesExcluded = excludedFilters.any((f) => assetName.toLowerCase().contains(f.toLowerCase()));
 
@@ -234,7 +257,10 @@ void main() {
               }
 
               if (!found) {
-                logStatus(404, '[$name] No matching asset found on GitHub for platform: $platform (Required: $requiredFilters)');
+                logStatus(
+                  404,
+                  '[$name] No matching asset found on GitHub for platform: $platform (Required: $requiredFilters)',
+                );
               } else {
                 logStatus(200, '[$name] GitHub API OK for $platform');
               }

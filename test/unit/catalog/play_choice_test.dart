@@ -10,17 +10,19 @@ import 'package:gargosy/core/save/save_state_info.dart';
 void main() {
   const ares = SaveMaker('ares');
   SavePlay save(DateTime t, {SaveSource source = SaveSource.romm, bool usable = true}) => SavePlay(
-        SaveEntry(source: source, fileName: 's', savedAt: t, maker: ares),
-        usable ? const SaveFit(SaveFitKind.native, playsIn: ares) : const SaveFit(SaveFitKind.unusable, reason: 'no'),
-      );
-  StatePlay state(DateTime t) => StatePlay(ResumeEntry(
-        emulatorId: 'ares',
-        emulatorName: 'ares',
-        fileName: 'g.state1',
-        slot: const NumberedStateSlot(1),
-        savedAt: t,
-        where: ResumeWhere.thisPc,
-      ));
+    SaveEntry(source: source, fileName: 's', savedAt: t, maker: ares),
+    usable ? const SaveFit(SaveFitKind.native, playsIn: ares) : const SaveFit(SaveFitKind.unusable, reason: 'no'),
+  );
+  StatePlay state(DateTime t) => StatePlay(
+    ResumeEntry(
+      emulatorId: 'ares',
+      emulatorName: 'ares',
+      fileName: 'g.state1',
+      slot: const NumberedStateSlot(1),
+      savedAt: t,
+      where: ResumeWhere.thisPc,
+    ),
+  );
   final mon = DateTime(2026, 9, 28), tue = DateTime(2026, 9, 29), wed = DateTime(2026, 9, 30);
 
   group('preselect', () {

@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -72,7 +73,7 @@ class DuckstationStrategy extends EmulatorStrategy {
       // DuckStation requires a portable.txt file in the SAME directory as the executable to run in portable mode.
       final exePath = await _directoryService.findEmulatorExecutable(emulatorId, windowsExecutable);
       final targetDir = exePath != null ? io.File(exePath).parent.path : installDir;
-      
+
       final portableTxt = io.File(p.join(targetDir, 'portable.txt'));
       if (!await portableTxt.exists()) {
         await portableTxt.create();

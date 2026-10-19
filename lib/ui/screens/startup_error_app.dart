@@ -19,17 +19,27 @@ class StartupErrorApp extends StatelessWidget {
         body: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text("Gargosy can't write to its folder", style: TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800)),
-              const SizedBox(height: GSpace.s4),
-              Text(message, style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary)),
-              const SizedBox(height: GSpace.s4),
-              const Text(
-                'Gargosy keeps everything next to Gargosy.exe. Move the Gargosy folder somewhere you can write to '
-                r'(for example D:\Games\Gargosy, not C:\Program Files) and start it again.',
-                style: TextStyle(fontSize: GFont.lg),
-              ),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Gargosy can't write to its folder",
+                  style: TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: GSpace.s4),
+                Text(
+                  message,
+                  style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
+                ),
+                const SizedBox(height: GSpace.s4),
+                const Text(
+                  'Gargosy keeps everything next to Gargosy.exe. Move the Gargosy folder somewhere you can write to '
+                  r'(for example D:\Games\Gargosy, not C:\Program Files) and start it again.',
+                  style: TextStyle(fontSize: GFont.lg),
+                ),
+              ],
+            ),
           ),
         ),
       ),

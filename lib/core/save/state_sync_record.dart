@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:convert';
+
 import '../storage/app_preferences.dart';
 
 /// What we remember about one state file after syncing it with RomM.
@@ -17,37 +18,32 @@ class StateSyncRecord {
   /// the file and pull re-reports it.
   final bool conflict;
 
-  const StateSyncRecord({
-    this.rommStateId,
-    this.lastSyncedHash,
-    this.serverUpdatedAt,
-    this.conflict = false,
-  });
+  const StateSyncRecord({this.rommStateId, this.lastSyncedHash, this.serverUpdatedAt, this.conflict = false});
 
   /// False for a placeholder that only carries a conflict flag (a slot that
   /// was never synced against the server state it collided with).
   bool get hasSynced => lastSyncedHash != null;
 
   StateSyncRecord copyWith({bool? conflict}) => StateSyncRecord(
-        rommStateId: rommStateId,
-        lastSyncedHash: lastSyncedHash,
-        serverUpdatedAt: serverUpdatedAt,
-        conflict: conflict ?? this.conflict,
-      );
+    rommStateId: rommStateId,
+    lastSyncedHash: lastSyncedHash,
+    serverUpdatedAt: serverUpdatedAt,
+    conflict: conflict ?? this.conflict,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': rommStateId,
-        'hash': lastSyncedHash,
-        'updatedAt': serverUpdatedAt,
-        'conflict': conflict,
-      };
+    'id': rommStateId,
+    'hash': lastSyncedHash,
+    'updatedAt': serverUpdatedAt,
+    'conflict': conflict,
+  };
 
   factory StateSyncRecord.fromJson(Map<String, dynamic> json) => StateSyncRecord(
-        rommStateId: (json['id'] as num?)?.toInt(),
-        lastSyncedHash: json['hash'] as String?,
-        serverUpdatedAt: json['updatedAt'] as String?,
-        conflict: json['conflict'] == true,
-      );
+    rommStateId: (json['id'] as num?)?.toInt(),
+    lastSyncedHash: json['hash'] as String?,
+    serverUpdatedAt: json['updatedAt'] as String?,
+    conflict: json['conflict'] == true,
+  );
 }
 
 /// Persists one JSON map of [StateSyncRecord]s per game, keyed by state file
@@ -64,8 +60,7 @@ class StateRecordStore {
     if (raw == null || raw.isEmpty) return {};
     try {
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
-      return decoded.map((name, value) =>
-          MapEntry(name, StateSyncRecord.fromJson(value as Map<String, dynamic>)));
+      return decoded.map((name, value) => MapEntry(name, StateSyncRecord.fromJson(value as Map<String, dynamic>)));
     } catch (_) {
       // Corrupt entry: start fresh. Worst case the next sync re-links states.
       return {};
@@ -77,9 +72,6 @@ class StateRecordStore {
       await _prefs.remove(keyFor(gameId));
       return;
     }
-    await _prefs.setString(
-      keyFor(gameId),
-      jsonEncode(records.map((name, record) => MapEntry(name, record.toJson()))),
-    );
+    await _prefs.setString(keyFor(gameId), jsonEncode(records.map((name, record) => MapEntry(name, record.toJson()))));
   }
 }

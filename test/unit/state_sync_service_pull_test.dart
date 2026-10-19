@@ -117,10 +117,12 @@ void main() {
     final result = await env.service.pullStates(env.game, env.romPath);
 
     expect(result.downloaded, 0);
-    expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(1),
-        reason: 'no backup, no replace');
-    expect(env.stateFile('$stateFileA.gargosy_tmp').existsSync(), isFalse,
-        reason: 'a failed write must not leave its temp file behind');
+    expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(1), reason: 'no backup, no replace');
+    expect(
+      env.stateFile('$stateFileA.gargosy_tmp').existsSync(),
+      isFalse,
+      reason: 'a failed write must not leave its temp file behind',
+    );
   });
 
   test('leaves a locally changed state alone when the server copy did not change', () async {
@@ -244,9 +246,7 @@ void main() {
 
     // Without the guard this call would queue behind the held list call, so
     // bound it: the guarded call returns at once.
-    final second = await env.service
-        .pullStates(env.game, env.romPath)
-        .timeout(const Duration(seconds: 2));
+    final second = await env.service.pullStates(env.game, env.romPath).timeout(const Duration(seconds: 2));
 
     expect(second.downloaded, 0);
     expect(second.conflicts, isEmpty);
@@ -279,18 +279,14 @@ void main() {
 
     // Without the list timeout this would hang; the outer bound makes that a
     // fast failure instead of a stuck test.
-    final result = await slow.service
-        .pullStates(slow.game, slow.romPath)
-        .timeout(const Duration(seconds: 2));
+    final result = await slow.service.pullStates(slow.game, slow.romPath).timeout(const Duration(seconds: 2));
 
     expect(result.downloaded, 0);
     expect(result.conflicts, isEmpty);
 
     slow.api.listGate = null;
     slow.api.seed('42', stateFileA, stateBytes(1));
-    final retry = await slow.service
-        .pullStates(slow.game, slow.romPath)
-        .timeout(const Duration(seconds: 2));
+    final retry = await slow.service.pullStates(slow.game, slow.romPath).timeout(const Duration(seconds: 2));
 
     expect(retry.downloaded, 1, reason: 'the timed-out pull must release the game');
     expect(slow.stateFile(stateFileA).readAsBytesSync(), stateBytes(1));
@@ -299,8 +295,7 @@ void main() {
   test('reports skipped when the game cannot be identified', () async {
     env.api.seed('42', stateFileA, stateBytes(1));
 
-    final result = await env.service
-        .pullStates(env.game, p.join(env.base.path, 'Unknown Game.iso'));
+    final result = await env.service.pullStates(env.game, p.join(env.base.path, 'Unknown Game.iso'));
 
     expect(result.skipped, isTrue);
     expect(result.downloaded, 0);
@@ -328,8 +323,11 @@ void main() {
 
       final result = await env.service.pullStates(env.game, env.romPath);
 
-      expect(env.api.calls.where(isGet), hasLength(1),
-          reason: 'a stalling server must not be tried again for every remaining state');
+      expect(
+        env.api.calls.where(isGet),
+        hasLength(1),
+        reason: 'a stalling server must not be tried again for every remaining state',
+      );
       expect(result.downloaded, 0);
       expect(result.conflicts, isEmpty);
       expect(result.busy, isFalse);
@@ -390,8 +388,11 @@ void main() {
   });
 
   test('a strategy resolver that throws never makes a pull throw', () async {
-    final broken = StateSyncService(env.api, env.pcsx2.prefs,
-        (game, {emulatorId, coreOverride}) => throw StateError('no strategy'));
+    final broken = StateSyncService(
+      env.api,
+      env.pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) => throw StateError('no strategy'),
+    );
 
     final result = await broken.pullStates(env.game, env.romPath);
 

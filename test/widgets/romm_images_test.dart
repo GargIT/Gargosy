@@ -114,25 +114,32 @@ void main() {
 
     testWidgets("RomM's icons are drawn in their colours (set by CSS classes), not black", (tester) async {
       final svg = io.File(p.join(tmp.path, 'red.svg'))
-        ..writeAsStringSync('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><defs><style>.cls-1 { fill: #ff0000; }'
-            '</style></defs><rect class="cls-1" width="8" height="8"/></svg>');
+        ..writeAsStringSync(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><defs><style>.cls-1 { fill: #ff0000; }'
+          '</style></defs><rect class="cls-1" width="8" height="8"/></svg>',
+        );
       final c = ProviderContainer(overrides: [rommImageCacheProvider.overrideWithValue(_FakeCache(svg))]);
       addTearDown(c.dispose);
       final boundary = GlobalKey();
-      await tester.pumpWidget(UncontrolledProviderScope(
-        container: c,
-        child: MaterialApp(
-          home: Center(
-            child: RepaintBoundary(
-              key: boundary,
-              child: Consumer(
-                builder: (context, ref, _) => ref.watch(platformLogoBuilderProvider)(
-                    'https://romm.home/assets/platforms/red.svg', 32, const PlatformBadge(slug: 'red')),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: c,
+          child: MaterialApp(
+            home: Center(
+              child: RepaintBoundary(
+                key: boundary,
+                child: Consumer(
+                  builder: (context, ref, _) => ref.watch(platformLogoBuilderProvider)(
+                    'https://romm.home/assets/platforms/red.svg',
+                    32,
+                    const PlatformBadge(slug: 'red'),
+                  ),
+                ),
               ),
             ),
           ),
         ),
-      ));
+      );
       for (var i = 0; i < 4; i++) {
         await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
         await tester.pump();
@@ -150,25 +157,34 @@ void main() {
 
     testWidgets("RomM has only an .ico (C64, DOS, …): that one's picture, in its colours", (tester) async {
       final ico = io.File(p.join(tmp.path, 'c64.ico'))..writeAsBytesSync(await _redIco(tester));
-      final c = ProviderContainer(overrides: [
-        rommImageCacheProvider.overrideWithValue(_FakeCache(null, {'https://romm.home/assets/platforms/c64.ico': ico})),
-      ]);
+      final c = ProviderContainer(
+        overrides: [
+          rommImageCacheProvider.overrideWithValue(
+            _FakeCache(null, {'https://romm.home/assets/platforms/c64.ico': ico}),
+          ),
+        ],
+      );
       addTearDown(c.dispose);
       final boundary = GlobalKey();
-      await tester.pumpWidget(UncontrolledProviderScope(
-        container: c,
-        child: MaterialApp(
-          home: Center(
-            child: RepaintBoundary(
-              key: boundary,
-              child: Consumer(
-                builder: (context, ref, _) => ref.watch(platformLogoBuilderProvider)(
-                    'https://romm.home/assets/platforms/c64.svg', 32, const PlatformBadge(slug: 'c64')),
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: c,
+          child: MaterialApp(
+            home: Center(
+              child: RepaintBoundary(
+                key: boundary,
+                child: Consumer(
+                  builder: (context, ref, _) => ref.watch(platformLogoBuilderProvider)(
+                    'https://romm.home/assets/platforms/c64.svg',
+                    32,
+                    const PlatformBadge(slug: 'c64'),
+                  ),
+                ),
               ),
             ),
           ),
         ),
-      ));
+      );
       for (var i = 0; i < 6; i++) {
         await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
         await tester.pump();
@@ -192,7 +208,10 @@ void main() {
       expect(find.byKey(const ValueKey('platform-badge')), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await pumpLogo(tester, c, 'my-homebrew');
-      expect(cache.asked, ['https://romm.home/assets/platforms/my-homebrew.svg', 'https://romm.home/assets/platforms/my-homebrew.ico']);
+      expect(cache.asked, [
+        'https://romm.home/assets/platforms/my-homebrew.svg',
+        'https://romm.home/assets/platforms/my-homebrew.ico',
+      ]);
       expect(find.byKey(const ValueKey('platform-badge')), findsOneWidget);
     });
   });

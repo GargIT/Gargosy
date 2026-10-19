@@ -3,14 +3,17 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 import 'dart:io';
 import 'dart:convert';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/app_preferences.dart';
 import '../../windows/pcgamingwiki_service.dart';
 import '../save_strategy.dart';
+
 import 'package:dio/dio.dart';
 
 class WindowsSaveStrategy extends SaveStrategy {
@@ -30,14 +33,15 @@ class WindowsSaveStrategy extends SaveStrategy {
   final Map<String, String> _wikiSaveFilters = {};
 
   WindowsSaveStrategy(this._prefs, {PlatformInfo? platform})
-      : _wikiService = PcGamingWikiService(Dio()),
-        _platform = platform ?? PlatformInfo.current;
+    : _wikiService = PcGamingWikiService(Dio()),
+      _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'windows';
 
   /// Allows the user to manually set a save path for a game.
   static const String _prefsPrefix = 'win_save_';
+
   /// Allows PCGamingWiki offline serialization for the save path for a game.
   static const String _pcGamingWikiPrefsPrefix = 'win_pcGamingWikiSavePath_';
 
@@ -65,7 +69,7 @@ class WindowsSaveStrategy extends SaveStrategy {
     await _prefs.setString('$_prefsPrefix$gameId', path);
   }
 
- // Enables saving the resolved Save Path initially retrieved with PCGW 
+  // Enables saving the resolved Save Path initially retrieved with PCGW
   Future<void> setPcGamingWikiSavePath(String gameId, String path) async {
     _pcGamingWikiSavePath[gameId] = path;
     await _prefs.setString('$_pcGamingWikiPrefsPrefix$gameId', path);
@@ -87,13 +91,13 @@ class WindowsSaveStrategy extends SaveStrategy {
   }
 
   void loadPersistedWikiFilters() {
-  final keys = _prefs.getKeys().where((k) => k.startsWith(_wikiFilterPrefix));
-  for (final key in keys) {
-    final gameId = key.substring(_wikiFilterPrefix.length);
-    final filter = _prefs.getString(key);
-    if (filter != null) _wikiSaveFilters[gameId] = filter;
+    final keys = _prefs.getKeys().where((k) => k.startsWith(_wikiFilterPrefix));
+    for (final key in keys) {
+      final gameId = key.substring(_wikiFilterPrefix.length);
+      final filter = _prefs.getString(key);
+      if (filter != null) _wikiSaveFilters[gameId] = filter;
+    }
   }
-}
 
   Future<void> setSaveFilter(String gameId, String filter) async {
     _saveFilters[gameId] = filter;
@@ -115,16 +119,15 @@ class WindowsSaveStrategy extends SaveStrategy {
     if (manual != null && manual.isNotEmpty) {
       debugPrint('[WindowsSave] Using manual override for ${game.name}: $manual');
       return manual;
-    }    
+    }
 
     // Determine the game directory
     final isDir = await Directory(romPath).exists();
     final gameDir = isDir ? romPath : File(romPath).parent.path;
 
-    //If a "freegosy_sync.txt" file has been found AND 
+    //If a "freegosy_sync.txt" file has been found AND
     //contains a cached save path with env vars, let's retrieve it
-    if (metadataSavePath != null)
-    {
+    if (metadataSavePath != null) {
       debugPrint('[WindowsSave] Using save path found in freegosy_sync.txt for ${game.name}: $metadataSavePath');
       return metadataSavePath;
     }
@@ -146,7 +149,9 @@ class WindowsSaveStrategy extends SaveStrategy {
           debugPrint('[WindowsSave]   raw: ${loc['raw']} → path: ${loc['path']}');
         }
         final resolved = locations.first['path'];
-        var resolvedFileFilter = RegExp(r'\.[a-zA-Z0-9]{2,4}$').hasMatch(locations.first['raw']!) ? locations.first['raw']?.split('\\').last : '';
+        var resolvedFileFilter = RegExp(r'\.[a-zA-Z0-9]{2,4}$').hasMatch(locations.first['raw']!)
+            ? locations.first['raw']?.split('\\').last
+            : '';
         // PCGW Pages sometimes describes wild cards as "file*.ext", we need to change it into "*.ext"
         if (resolvedFileFilter!.contains('file*')) resolvedFileFilter = resolvedFileFilter.replaceFirst('file*', '*');
         if (resolved != null) {
@@ -324,33 +329,34 @@ class WindowsSaveStrategy extends SaveStrategy {
 
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
-    
     Archive? archive;
     String? envDestPath;
     if (filename.toLowerCase().endsWith('.zip')) {
       archive = ZipDecoder().decodeBytes(data);
       final metaFile = archive.find('freegosy_sync.txt');
-      if (metaFile != null) {             
-            String relativeEnvPath = metaFile.rawContent?.getStream().readString() ?? '';
-            if (relativeEnvPath.isNotEmpty) relativeEnvPath = jsonDecode(relativeEnvPath)['savePath'];
-            envDestPath = relativeEnvPath;
+      if (metaFile != null) {
+        String relativeEnvPath = metaFile.rawContent?.getStream().readString() ?? '';
+        if (relativeEnvPath.isNotEmpty) relativeEnvPath = jsonDecode(relativeEnvPath)['savePath'];
+        envDestPath = relativeEnvPath;
       }
     }
 
-    if (envDestPath != null)
-    {
-          final winLocalAbsolutepath = <String, String>{
-            "['APPDATA']": PlatformInfo.current.environment['APPDATA'] ?? '',
-            "['LOCALAPPDATA']": PlatformInfo.current.environment['LOCALAPPDATA'] ?? '',
-            "['USERPROFILE']": PlatformInfo.current.environment['USERPROFILE'] ?? '',
-            "['PROGRAMDATA']": PlatformInfo.current.environment['PROGRAMDATA'] ?? '',
-            "['PUBLIC']": PlatformInfo.current.environment['PUBLIC'] ?? '',
-            "[GAMEDIR]": destPath,
-          };
+    if (envDestPath != null) {
+      final winLocalAbsolutepath = <String, String>{
+        "['APPDATA']": PlatformInfo.current.environment['APPDATA'] ?? '',
+        "['LOCALAPPDATA']": PlatformInfo.current.environment['LOCALAPPDATA'] ?? '',
+        "['USERPROFILE']": PlatformInfo.current.environment['USERPROFILE'] ?? '',
+        "['PROGRAMDATA']": PlatformInfo.current.environment['PROGRAMDATA'] ?? '',
+        "['PUBLIC']": PlatformInfo.current.environment['PUBLIC'] ?? '',
+        "[GAMEDIR]": destPath,
+      };
 
-          for (final entry in winLocalAbsolutepath.entries) {
-            if (envDestPath!.contains(entry.key)) envDestPath = envDestPath.replaceFirst(entry.key, entry.value); else continue;
-          }
+      for (final entry in winLocalAbsolutepath.entries) {
+        if (envDestPath!.contains(entry.key))
+          envDestPath = envDestPath.replaceFirst(entry.key, entry.value);
+        else
+          continue;
+      }
     }
 
     try {
@@ -365,7 +371,7 @@ class WindowsSaveStrategy extends SaveStrategy {
       if (archive!.isNotEmpty) {
         for (final entry in archive) {
           if (entry.name == 'freegosy_sync.txt' || entry.name.contains('.bak')) continue;
-          
+
           final destDir = Directory(saveDir).parent.path;
           final entryPath = p.normalize(p.join(destDir, entry.name));
           if (entry.isFile) {

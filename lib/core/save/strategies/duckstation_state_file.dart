@@ -2,7 +2,9 @@
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:isolate';
+
 import 'package:flutter/foundation.dart';
+
 import '../formats/zstd.dart';
 import '../rgba_png.dart';
 
@@ -87,9 +89,7 @@ class DuckstationStateFile {
       await raf.setPosition(offset);
       final stored = await raf.read(size);
       if (stored.length != size) return null;
-      final pixels = compression == _zstd
-          ? await (zstd ?? zstandardDecompress)(stored)
-          : stored;
+      final pixels = compression == _zstd ? await (zstd ?? zstandardDecompress)(stored) : stored;
       if (pixels == null || pixels.length != width * height * 4) return null;
       return await Isolate.run(() => encodeRgbaPng(width, height, pixels));
     } catch (e) {

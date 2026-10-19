@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/save/strategies/windows_save_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,10 +66,7 @@ void main() {
 
   group('Issue #48 — loadPersistedFilters', () {
     test('filters round-trip through SharedPreferences', () async {
-      SharedPreferences.setMockInitialValues({
-        'win_filter_game1': '*.ini,*.bin',
-        'win_filter_game2': 'eeprom.*',
-      });
+      SharedPreferences.setMockInitialValues({'win_filter_game1': '*.ini,*.bin', 'win_filter_game2': 'eeprom.*'});
       final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
       final strategy = WindowsSaveStrategy(prefs);
 
@@ -135,8 +133,11 @@ void main() {
       expect(names, isNot(contains('game.exe')));
       expect(names, isNot(contains('readme.txt')));
       // Should NOT be a directory entry
-      expect(files.any((f) => FileSystemEntity.isDirectorySync(f.path)), isFalse,
-          reason: 'Filtered results should be individual files, not directories');
+      expect(
+        files.any((f) => FileSystemEntity.isDirectorySync(f.path)),
+        isFalse,
+        reason: 'Filtered results should be individual files, not directories',
+      );
     });
 
     test('returns directory when no filter is set', () async {

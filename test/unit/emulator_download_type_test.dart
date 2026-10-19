@@ -12,8 +12,6 @@ void main() {
     expect(EmulatorDownloadService.typeFor(dolphin, PlatformInfo('macos'), fallback: 'direct'), 'dolphin');
   });
 
-
-
   test('the fallback is used when a definition has no type', () {
     expect(EmulatorDownloadService.typeFor(const {}, PlatformInfo('linux'), fallback: 'direct'), 'direct');
   });

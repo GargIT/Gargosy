@@ -9,8 +9,7 @@ import '../helpers/state_sync_test_env.dart';
 
 /// Mockup PCSX2 states in test/fixtures/pcsx2_states (see generate.py there):
 /// two real zip-shaped states and three damaged ones.
-List<int> fixture(String name) =>
-    File(p.join('test', 'fixtures', 'pcsx2_states', name)).readAsBytesSync();
+List<int> fixture(String name) => File(p.join('test', 'fixtures', 'pcsx2_states', name)).readAsBytesSync();
 
 const damaged = {
   'truncated.p2s': 'a write cut off halfway (zip header, no end record)',
@@ -27,16 +26,13 @@ void main() {
   group('Pcsx2SaveStrategy.looksLikeValidState on the mockups', () {
     test('accepts the valid mockups', () {
       for (final name in ['valid.p2s', 'valid_other.p2s']) {
-        expect(env.pcsx2.strategy.looksLikeValidState(Uint8List.fromList(fixture(name))),
-            isTrue, reason: name);
+        expect(env.pcsx2.strategy.looksLikeValidState(Uint8List.fromList(fixture(name))), isTrue, reason: name);
       }
     });
 
     for (final entry in damaged.entries) {
       test('rejects ${entry.key} (${entry.value})', () {
-        expect(
-            env.pcsx2.strategy.looksLikeValidState(Uint8List.fromList(fixture(entry.key))),
-            isFalse);
+        expect(env.pcsx2.strategy.looksLikeValidState(Uint8List.fromList(fixture(entry.key))), isFalse);
       });
     }
   });
@@ -72,13 +68,11 @@ void main() {
         // The emulator's write during the session went wrong.
         await env.writeState(stateFileA, fixture(entry.key));
         env.api.calls.clear();
-        final result = await env.service.pushStates(env.game, env.romPath,
-            sessionStart: sessionStart);
+        final result = await env.service.pushStates(env.game, env.romPath, sessionStart: sessionStart);
 
         expect(result.uploaded, 0);
         expect(env.api.calls.where((c) => c.startsWith('POST') || c.startsWith('PUT')), isEmpty);
-        expect(env.api.bytesOf(stateId), fixture('valid.p2s'),
-            reason: 'the server keeps the last good state');
+        expect(env.api.bytesOf(stateId), fixture('valid.p2s'), reason: 'the server keeps the last good state');
       });
     }
 

@@ -27,9 +27,16 @@ void main() {
     LoggerService.profileTag = LoggerService.shortId('452988cf-1111-2222-3333-444455556666');
     debugPrint('[RomM] GET /api/roms?token=secret123&id=1');
     final text = file();
-    expect(text, matches(RegExp(r'^\d\d:\d\d:\d\d\.\d{3} \[p:452988cf\] \[RomM\] GET /api/roms\?token=\*\*\*&id=1\r\n$')));
+    expect(
+      text,
+      matches(RegExp(r'^\d\d:\d\d:\d\d\.\d{3} \[p:452988cf\] \[RomM\] GET /api/roms\?token=\*\*\*&id=1\r\n$')),
+    );
     expect(text, isNot(contains('secret123')));
-    expect(LoggerService().logs.last.message, contains('secret123'), reason: 'memory keeps the line as it was (never written)');
+    expect(
+      LoggerService().logs.last.message,
+      contains('secret123'),
+      reason: 'memory keeps the line as it was (never written)',
+    );
   });
 
   test('no profile: no tag', () {
@@ -40,7 +47,11 @@ void main() {
 
   test('an error with its stack: level ERROR, the stack indented under it', () {
     LoggerService.init(sink: sink, tag: () => null);
-    LoggerService().error(StateError('boom'), StackTrace.fromString('#0 main (file.dart:1)\n#1 run (file.dart:2)'), context: 'Uncaught');
+    LoggerService().error(
+      StateError('boom'),
+      StackTrace.fromString('#0 main (file.dart:1)\n#1 run (file.dart:2)'),
+      context: 'Uncaught',
+    );
     final lines = file().split('\r\n');
     expect(lines[0], contains('[ERROR] Uncaught: Bad state: boom'));
     expect(lines[1], matches(RegExp(r'^ +#0 main')));

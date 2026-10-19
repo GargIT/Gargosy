@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:async';
+
 import 'romm_service.dart';
 
 /// Keeps RomM's real-time "active sessions" board in sync with a running

@@ -22,7 +22,11 @@ class _ZipServer implements HttpClientAdapter {
   CancelToken? cancelMidway;
 
   @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
     if (cancelMidway != null) {
       final token = cancelMidway!;
       final half = bytes.length ~/ 2;
@@ -33,13 +37,21 @@ class _ZipServer implements HttpClientAdapter {
         yield Uint8List.sublistView(bytes, half);
       }
 
-      return ResponseBody(chunks(), status, headers: {
-        Headers.contentLengthHeader: ['${bytes.length}'],
-      });
+      return ResponseBody(
+        chunks(),
+        status,
+        headers: {
+          Headers.contentLengthHeader: ['${bytes.length}'],
+        },
+      );
     }
-    return ResponseBody.fromBytes(bytes, status, headers: {
-      Headers.contentLengthHeader: ['${bytes.length}'],
-    });
+    return ResponseBody.fromBytes(
+      bytes,
+      status,
+      headers: {
+        Headers.contentLengthHeader: ['${bytes.length}'],
+      },
+    );
   }
 
   @override
@@ -56,12 +68,12 @@ Uint8List releaseZip(Map<String, String> files) {
 }
 
 Map<String, String> goodRelease({String list = 'Gargosy.exe\r\napp-files.txt\r\ndata\\icudtl.dat\r\n'}) => {
-      'Gargosy/Gargosy.exe': 'MZ new',
-      'Gargosy/app-files.txt': list,
-      'Gargosy/data/icudtl.dat': 'icu',
-      'Gargosy/userdata/settings.json': '{"should":"never be unpacked"}',
-      'Gargosy/roms/readme.txt': 'never unpacked either',
-    };
+  'Gargosy/Gargosy.exe': 'MZ new',
+  'Gargosy/app-files.txt': list,
+  'Gargosy/data/icudtl.dat': 'icu',
+  'Gargosy/userdata/settings.json': '{"should":"never be unpacked"}',
+  'Gargosy/roms/readme.txt': 'never unpacked either',
+};
 
 void main() {
   late AppRoot root;
@@ -76,13 +88,13 @@ void main() {
   tearDown(() => deleteTempDir(root.root));
 
   ReleaseInfo release({int? size, String? sha}) => ReleaseInfo(
-        version: UpdateVersion.parse('0.2.0')!,
-        assetName: 'Gargosy-0.2.0.zip',
-        assetUrl: 'https://github.com/GargIT/Gargosy/releases/download/v0.2.0/Gargosy-0.2.0.zip',
-        size: size ?? server.bytes.length,
-        sha256: sha,
-        htmlUrl: 'https://github.com/GargIT/Gargosy/releases/tag/v0.2.0',
-      );
+    version: UpdateVersion.parse('0.2.0')!,
+    assetName: 'Gargosy-0.2.0.zip',
+    assetUrl: 'https://github.com/GargIT/Gargosy/releases/download/v0.2.0/Gargosy-0.2.0.zip',
+    size: size ?? server.bytes.length,
+    sha256: sha,
+    htmlUrl: 'https://github.com/GargIT/Gargosy/releases/tag/v0.2.0',
+  );
 
   List<String> leftovers() {
     final dir = io.Directory(downloader.paths.dir);
@@ -107,21 +119,27 @@ void main() {
   });
 
   test('a wrong size deletes the download and says why', () async {
-    await expectLater(downloader.download(release(size: 12)),
-        throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('GitHub says 12'))));
+    await expectLater(
+      downloader.download(release(size: 12)),
+      throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('GitHub says 12'))),
+    );
     expect(leftovers(), isEmpty);
   });
 
   test('a wrong SHA-256 deletes the download', () async {
-    await expectLater(downloader.download(release(sha: 'ab' * 32)),
-        throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('checksum'))));
+    await expectLater(
+      downloader.download(release(sha: 'ab' * 32)),
+      throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('checksum'))),
+    );
     expect(leftovers(), isEmpty);
   });
 
   test('a zip without Gargosy.exe is refused', () async {
     server.bytes = releaseZip({'Gargosy/app-files.txt': 'app-files.txt\n'});
-    await expectLater(downloader.download(release()),
-        throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('no Gargosy.exe'))));
+    await expectLater(
+      downloader.download(release()),
+      throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('no Gargosy.exe'))),
+    );
     expect(leftovers(), isEmpty);
   });
 
@@ -132,8 +150,10 @@ void main() {
 
   test('a list naming a file the zip lacks is refused', () async {
     server.bytes = releaseZip(goodRelease(list: 'Gargosy.exe\nsigil.dll\n'));
-    await expectLater(downloader.download(release()),
-        throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('sigil.dll'))));
+    await expectLater(
+      downloader.download(release()),
+      throwsA(isA<UpdateDownloadException>().having((e) => e.message, 'message', contains('sigil.dll'))),
+    );
   });
 
   test("a list naming the user's folders is refused", () async {
@@ -157,8 +177,10 @@ void main() {
   test('a cancelled download leaves nothing behind', () async {
     final cancel = CancelToken();
     server.cancelMidway = cancel;
-    await expectLater(downloader.download(release(), cancel: cancel),
-        throwsA(isA<DioException>().having((e) => e.type, 'type', DioExceptionType.cancel)));
+    await expectLater(
+      downloader.download(release(), cancel: cancel),
+      throwsA(isA<DioException>().having((e) => e.type, 'type', DioExceptionType.cancel)),
+    );
     expect(leftovers(), isEmpty);
   });
 
@@ -170,13 +192,24 @@ void main() {
 
   group('AppFiles.parse', () {
     test('Windows lines, backslashes, blank lines', () {
-      expect(AppFiles.parse('Gargosy.exe\r\n\r\ndata/flutter_assets/AssetManifest.bin\r\n'),
-          ['Gargosy.exe', r'data\flutter_assets\AssetManifest.bin']);
+      expect(AppFiles.parse('Gargosy.exe\r\n\r\ndata/flutter_assets/AssetManifest.bin\r\n'), [
+        'Gargosy.exe',
+        r'data\flutter_assets\AssetManifest.bin',
+      ]);
     });
 
     for (final bad in [
-      r'..\Gargosy.exe', r'C:\Windows\x.dll', r'\abs.dll', 'userdata\\settings.json', 'Roms\\a.iso', r'data\..\..\x', '',
-      r'userdata.\settings.json', r'USERDA~1\settings.json', r'data\a?.dll', r'Gargosy.exe:stream',
+      r'..\Gargosy.exe',
+      r'C:\Windows\x.dll',
+      r'\abs.dll',
+      'userdata\\settings.json',
+      'Roms\\a.iso',
+      r'data\..\..\x',
+      '',
+      r'userdata.\settings.json',
+      r'USERDA~1\settings.json',
+      r'data\a?.dll',
+      r'Gargosy.exe:stream',
     ]) {
       test('refuses "$bad"', () => expect(() => AppFiles.parse(bad), throwsFormatException));
     }

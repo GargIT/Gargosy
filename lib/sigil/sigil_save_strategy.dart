@@ -135,10 +135,19 @@ final sigilEmulators = <String, SigilEmulator>{
     layout: '',
     saveRoot: 'saves',
     platforms: const {
-      'psx': 'psx', 'ps': 'psx', 'ps1': 'psx', 'playstation': 'psx',
-      'ps2': 'ps2', 'playstation-2': 'ps2', 'playstation2': 'ps2',
-      'n64': 'n64', 'nintendo-64': 'n64',
-      'gb': 'gb', 'game-boy': 'gb', 'gbc': 'gbc', 'game-boy-color': 'gbc',
+      'psx': 'psx',
+      'ps': 'psx',
+      'ps1': 'psx',
+      'playstation': 'psx',
+      'ps2': 'ps2',
+      'playstation-2': 'ps2',
+      'playstation2': 'ps2',
+      'n64': 'n64',
+      'nintendo-64': 'n64',
+      'gb': 'gb',
+      'game-boy': 'gb',
+      'gbc': 'gbc',
+      'game-boy-color': 'gbc',
     },
     layoutFor: (game, base) => base is RetroArchSaveStrategy ? base.coreIdFor(game) : null,
     // sigil's docs: LRPS2's shared cards are in <system>\pcsx2\memcards;
@@ -146,8 +155,11 @@ final sigilEmulators = <String, SigilEmulator>{
     saveRootFor: (layout, options) => layout == 'pcsx2' && options['pcsx2_shared_memory_cards'] != 'disabled'
         ? p.join('system', 'pcsx2', 'memcards')
         : 'saves',
-    optionsFor: (dir, game, romPath, base) =>
-        retroArchCoreOptions(dir, core: base is RetroArchSaveStrategy ? base.coreFolderFor(game) : null, romPath: romPath),
+    optionsFor: (dir, game, romPath, base) => retroArchCoreOptions(
+      dir,
+      core: base is RetroArchSaveStrategy ? base.coreFolderFor(game) : null,
+      romPath: romPath,
+    ),
   ),
   'mgba': const SigilEmulator(
     id: 'mgba',
@@ -461,8 +473,13 @@ class SigilSaveStrategy extends SaveStrategy {
   }
 
   /// [claimed]: a collect, which takes the player's claims (#56) along.
-  Future<SigilSyncCall> _call(Game game, String romPath,
-      {Uint8List? state, bool overwriteLocal = false, bool claimed = false}) async {
+  Future<SigilSyncCall> _call(
+    Game game,
+    String romPath, {
+    Uint8List? state,
+    bool overwriteLocal = false,
+    bool claimed = false,
+  }) async {
     final platform = _sigilPlatform(game)!;
     final layout = _layout(game)!;
     final ids = await _ids(game, romPath, platform);

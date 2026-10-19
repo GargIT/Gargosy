@@ -10,7 +10,14 @@ void main() {
 
   Future<void> pump(WidgetTester tester, Widget child) async {
     container = ProviderContainer();
-    await tester.pumpWidget(UncontrolledProviderScope(container: container, child: MaterialApp(home: Scaffold(body: Center(child: child)))));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(body: Center(child: child)),
+        ),
+      ),
+    );
     await tester.pump();
   }
 
@@ -18,15 +25,16 @@ void main() {
     final calls = <String>[];
     final node = FocusNode();
     await pump(
-        tester,
-        GFocusable(
-          focusNode: node,
-          autofocus: true,
-          onActivate: () => calls.add('a'),
-          onLongActivate: () => calls.add('long'),
-          onDetail: () => calls.add('x'),
-          child: const SizedBox(width: 50, height: 50),
-        ));
+      tester,
+      GFocusable(
+        focusNode: node,
+        autofocus: true,
+        onActivate: () => calls.add('a'),
+        onLongActivate: () => calls.add('long'),
+        onDetail: () => calls.add('x'),
+        child: const SizedBox(width: 50, height: 50),
+      ),
+    );
     Actions.invoke(node.context!, const ActivateIntent());
     Actions.invoke(node.context!, const LongActivateIntent());
     Actions.invoke(node.context!, const DetailIntent());
@@ -45,12 +53,16 @@ void main() {
   testWidgets('D-pad focus moves between GFocusables by direction', (tester) async {
     final left = FocusNode(), right = FocusNode();
     await pump(
-        tester,
-        Row(mainAxisSize: MainAxisSize.min, children: [
+      tester,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           GFocusable(focusNode: left, autofocus: true, child: const SizedBox(width: 50, height: 50)),
           const SizedBox(width: 20),
           GFocusable(focusNode: right, child: const SizedBox(width: 50, height: 50)),
-        ]));
+        ],
+      ),
+    );
     left.focusInDirection(TraversalDirection.right);
     await tester.pump();
     expect(right.hasPrimaryFocus, isTrue);

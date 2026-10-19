@@ -100,7 +100,9 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
     final paths = ProfilePaths(ref.read(appRootProvider), profile.id);
     await loginStoreForWidget(ref, profile).write(paths.guard, login);
     var saved = profile;
-    final Uint8List? avatar = await ref.read(rommAuthFactoryProvider)(_server, _trustSelfSigned).fetchAvatar(login.token, me.id);
+    final Uint8List? avatar = await ref
+        .read(rommAuthFactoryProvider)(_server, _trustSelfSigned)
+        .fetchAvatar(login.token, me.id);
     if (avatar != null) {
       await writeBytesAtomic(paths.guard, paths.avatarFile, avatar);
       saved = profile.copyWith(hasAvatar: true);
@@ -142,76 +144,113 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
   Future<void> _askPin() async {
     final first = await showPinEntry(context, title: 'Choose a PIN', check: (_) async => null);
     if (first == null || !mounted) return;
-    final second = await showPinEntry(context, title: 'Enter the PIN again',
-        check: (pin) async => pin == first ? null : "The PINs don't match");
+    final second = await showPinEntry(
+      context,
+      title: 'Enter the PIN again',
+      check: (pin) async => pin == first ? null : "The PINs don't match",
+    );
     if (second == null) return;
     await _create(await Isolate.run(() => PinHash.create(second)));
   }
 
   Widget _button(String label, VoidCallback onPress, {bool autofocus = false}) => GFocusable(
-        autofocus: autofocus,
-        borderRadius: GRadius.pill,
-        onActivate: onPress,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: GSpace.s6, vertical: GSpace.s3),
-          decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-          child: Text(label, style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600)),
-        ),
-      );
+    autofocus: autofocus,
+    borderRadius: GRadius.pill,
+    onActivate: onPress,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s6, vertical: GSpace.s3),
+      decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600),
+      ),
+    ),
+  );
 
-  Widget _serverStep() => Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('Your RomM server', style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
-        const SizedBox(height: GSpace.s5),
-        GFocusable(
-          key: const Key('server-url'),
-          autofocus: true,
-          borderRadius: GRadius.lg,
-          onActivate: () async {
-            final v = await showOnScreenKeyboard(context, title: 'Server address', initial: _server);
-            if (v != null) setState(() => _server = v);
-          },
-          child: Container(
-            width: 480,
-            padding: const EdgeInsets.all(GSpace.s4),
-            decoration: BoxDecoration(color: GColors.bgElevated, borderRadius: BorderRadius.circular(GRadius.lg), border: Border.all(color: GColors.borderStrong)),
-            child: Text(_server.isEmpty ? 'romm.example.com' : _server,
-                style: TextStyle(fontSize: GFont.lg, color: _server.isEmpty ? GColors.fgMuted : GColors.fg)),
+  Widget _serverStep() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Text(
+        'Your RomM server',
+        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      ),
+      const SizedBox(height: GSpace.s5),
+      GFocusable(
+        key: const Key('server-url'),
+        autofocus: true,
+        borderRadius: GRadius.lg,
+        onActivate: () async {
+          final v = await showOnScreenKeyboard(context, title: 'Server address', initial: _server);
+          if (v != null) setState(() => _server = v);
+        },
+        child: Container(
+          width: 480,
+          padding: const EdgeInsets.all(GSpace.s4),
+          decoration: BoxDecoration(
+            color: GColors.bgElevated,
+            borderRadius: BorderRadius.circular(GRadius.lg),
+            border: Border.all(color: GColors.borderStrong),
+          ),
+          child: Text(
+            _server.isEmpty ? 'romm.example.com' : _server,
+            style: TextStyle(fontSize: GFont.lg, color: _server.isEmpty ? GColors.fgMuted : GColors.fg),
           ),
         ),
+      ),
+      const SizedBox(height: GSpace.s3),
+      _button(
+        _trustSelfSigned ? 'Self-signed certificate: allowed' : 'Self-signed certificate: not allowed',
+        () => setState(() => _trustSelfSigned = !_trustSelfSigned),
+      ),
+      if (_serverError != null) ...[
         const SizedBox(height: GSpace.s3),
-        _button(_trustSelfSigned ? 'Self-signed certificate: allowed' : 'Self-signed certificate: not allowed',
-            () => setState(() => _trustSelfSigned = !_trustSelfSigned)),
-        if (_serverError != null) ...[
-          const SizedBox(height: GSpace.s3),
-          Text(_serverError!, style: const TextStyle(color: GColors.danger, fontSize: GFont.lg)),
-        ],
-        const SizedBox(height: GSpace.s5),
-        Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(
+          _serverError!,
+          style: const TextStyle(color: GColors.danger, fontSize: GFont.lg),
+        ),
+      ],
+      const SizedBox(height: GSpace.s5),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           _button('Cancel', () => Navigator.of(context).pop()),
           const SizedBox(width: GSpace.s3),
           _button('Continue', _checkServer),
-        ]),
-      ]);
+        ],
+      ),
+    ],
+  );
 
-  Widget _detailsStep() => Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('Your profile', style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
-        const SizedBox(height: GSpace.s5),
-        GFocusable(
-          autofocus: true,
-          borderRadius: GRadius.lg,
-          onActivate: () async {
-            final v = await showOnScreenKeyboard(context, title: 'Name', initial: _name);
-            if (v != null) setState(() => _name = v);
-          },
-          child: Container(
-            width: 420,
-            padding: const EdgeInsets.all(GSpace.s4),
-            decoration: BoxDecoration(color: GColors.bgElevated, borderRadius: BorderRadius.circular(GRadius.lg), border: Border.all(color: GColors.borderStrong)),
-            child: Text(_name, style: const TextStyle(fontSize: GFont.lg)),
+  Widget _detailsStep() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Text(
+        'Your profile',
+        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      ),
+      const SizedBox(height: GSpace.s5),
+      GFocusable(
+        autofocus: true,
+        borderRadius: GRadius.lg,
+        onActivate: () async {
+          final v = await showOnScreenKeyboard(context, title: 'Name', initial: _name);
+          if (v != null) setState(() => _name = v);
+        },
+        child: Container(
+          width: 420,
+          padding: const EdgeInsets.all(GSpace.s4),
+          decoration: BoxDecoration(
+            color: GColors.bgElevated,
+            borderRadius: BorderRadius.circular(GRadius.lg),
+            border: Border.all(color: GColors.borderStrong),
           ),
+          child: Text(_name, style: const TextStyle(fontSize: GFont.lg)),
         ),
-        const SizedBox(height: GSpace.s4),
-        Row(mainAxisSize: MainAxisSize.min, children: [
+      ),
+      const SizedBox(height: GSpace.s4),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           for (var i = 0; i < GColors.profileColors.length; i++)
             Padding(
               padding: const EdgeInsets.all(GSpace.s2),
@@ -229,74 +268,97 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
                 ),
               ),
             ),
-        ]),
-        const SizedBox(height: GSpace.s5),
-        Row(mainAxisSize: MainAxisSize.min, children: [
+        ],
+      ),
+      const SizedBox(height: GSpace.s5),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           _button('Cancel', _cancel),
           const SizedBox(width: GSpace.s3),
           _button('Continue', () => setState(() => _step = _Step.pin)),
-        ]),
-      ]);
+        ],
+      ),
+    ],
+  );
 
-  Widget _pinStep() => Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('Protect it with a PIN?', style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
-        const SizedBox(height: GSpace.s2),
-        const Text('A PIN keeps others on this PC from playing as you by mistake. It is a lock, not security.',
-            style: TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary)),
-        const SizedBox(height: GSpace.s5),
-        Row(mainAxisSize: MainAxisSize.min, children: [
+  Widget _pinStep() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Text(
+        'Protect it with a PIN?',
+        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      ),
+      const SizedBox(height: GSpace.s2),
+      const Text(
+        'A PIN keeps others on this PC from playing as you by mistake. It is a lock, not security.',
+        style: TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
+      ),
+      const SizedBox(height: GSpace.s5),
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           _button('No PIN', () => _create(null), autofocus: true),
           const SizedBox(width: GSpace.s3),
           _button('Set a PIN', _askPin),
           const SizedBox(width: GSpace.s3),
           _button('Cancel', _cancel),
-        ]),
-        if (_createError != null) ...[
-          const SizedBox(height: GSpace.s4),
-          Text(_createError!, style: const TextStyle(color: GColors.danger, fontSize: GFont.lg)),
         ],
-      ]);
+      ),
+      if (_createError != null) ...[
+        const SizedBox(height: GSpace.s4),
+        Text(
+          _createError!,
+          style: const TextStyle(color: GColors.danger, fontSize: GFont.lg),
+        ),
+      ],
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
     final Widget body = switch (_step) {
       _Step.server => _serverStep(),
       _Step.login => LoginStep(
-          serverUrl: _server,
-          trustSelfSigned: _trustSelfSigned,
-          deviceName: _deviceName,
-          onBack: () => setState(() => _step = _Step.server),
-          onServerError: (message) => setState(() {
-            _serverError = message;
-            _step = _Step.server;
-          }),
-          onLoggedIn: (login, me) async => setState(() {
-            _login = login;
-            _me = me;
-            _name = me.username;
-            _step = _Step.details;
-          }),
-        ),
+        serverUrl: _server,
+        trustSelfSigned: _trustSelfSigned,
+        deviceName: _deviceName,
+        onBack: () => setState(() => _step = _Step.server),
+        onServerError: (message) => setState(() {
+          _serverError = message;
+          _step = _Step.server;
+        }),
+        onLoggedIn: (login, me) async => setState(() {
+          _login = login;
+          _me = me;
+          _name = me.username;
+          _step = _Step.details;
+        }),
+      ),
       _Step.details => _detailsStep(),
       _Step.pin => _pinStep(),
     };
     return Actions(
       actions: {
-        BackIntent: CallbackAction<BackIntent>(onInvoke: (_) {
-          switch (_step) {
-            case _Step.server:
-              Navigator.of(context).pop();
-            case _Step.login:
-              setState(() => _step = _Step.server);
-            case _Step.details:
-              _cancel(); // logged in: going back means stopping, after asking
-            case _Step.pin:
-              setState(() => _step = _Step.details);
-          }
-          return null;
-        }),
+        BackIntent: CallbackAction<BackIntent>(
+          onInvoke: (_) {
+            switch (_step) {
+              case _Step.server:
+                Navigator.of(context).pop();
+              case _Step.login:
+                setState(() => _step = _Step.server);
+              case _Step.details:
+                _cancel(); // logged in: going back means stopping, after asking
+              case _Step.pin:
+                setState(() => _step = _Step.details);
+            }
+            return null;
+          },
+        ),
       },
-      child: Scaffold(body: Center(child: SingleChildScrollView(child: body))),
+      child: Scaffold(
+        body: Center(child: SingleChildScrollView(child: body)),
+      ),
     );
   }
 }

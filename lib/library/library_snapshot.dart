@@ -77,10 +77,11 @@ final gamesOnThisPcProvider = Provider<List<Game>>((ref) {
 /// [games] that are on this PC ([installedAt] not null), newest first; the
 /// same time keeps their order (by name).
 List<Game> installedNewestFirst(List<Game> games, DateTime? Function(Game) installedAt) {
-  final at = <Game, DateTime>{
-    for (final g in games) g: ?installedAt(g),
-  };
-  final list = [for (final g in games) if (at.containsKey(g)) g];
+  final at = <Game, DateTime>{for (final g in games) g: ?installedAt(g)};
+  final list = [
+    for (final g in games)
+      if (at.containsKey(g)) g,
+  ];
   final index = {for (var i = 0; i < list.length; i++) list[i]: i};
   list.sort((a, b) {
     final byTime = at[b]!.compareTo(at[a]!);

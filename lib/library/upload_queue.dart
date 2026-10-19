@@ -50,7 +50,10 @@ class UploadQueue {
   }
 
   /// What waits for [gameId].
-  List<BackupEntry> waitingFor(String gameId) => [for (final w in pending()) if (w.romId == gameId) w.entry];
+  List<BackupEntry> waitingFor(String gameId) => [
+    for (final w in pending())
+      if (w.romId == gameId) w.entry,
+  ];
 
   /// Uploads what waits; returns how many games went up. A run already
   /// going makes this one do nothing.
@@ -105,8 +108,12 @@ final uploadQueueProvider = FutureProvider<UploadQueue?>((ref) async {
     markSynced: repo.markAsSynced,
     gameById: romm.getGame,
     romPathFor: engine.romPathFor,
-    push: (game, romPath, newest) => sync.pushSaves(game, romPath,
-        emulatorId: newest.emulatorId, coreOverride: newest.coreId == null ? null : '${newest.coreId}_libretro'),
+    push: (game, romPath, newest) => sync.pushSaves(
+      game,
+      romPath,
+      emulatorId: newest.emulatorId,
+      coreOverride: newest.coreId == null ? null : '${newest.coreId}_libretro',
+    ),
   );
 });
 

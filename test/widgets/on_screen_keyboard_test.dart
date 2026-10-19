@@ -15,20 +15,22 @@ void main() {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(
-      child: MaterialApp(
-        home: Scaffold(
-          body: OnScreenKeyboard(
-            key: UniqueKey(), // a fresh keyboard each pump, even within one test
-            title: 'Server',
-            initial: initial,
-            obscure: obscure,
-            onDone: (v) => done = v,
-            onCancel: () => cancelled = true,
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: OnScreenKeyboard(
+              key: UniqueKey(), // a fresh keyboard each pump, even within one test
+              title: 'Server',
+              initial: initial,
+              obscure: obscure,
+              onDone: (v) => done = v,
+              onCancel: () => cancelled = true,
+            ),
           ),
         ),
       ),
-    ));
+    );
     await tester.pump();
   }
 

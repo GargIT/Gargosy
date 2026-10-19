@@ -44,10 +44,7 @@ class ReleaseService {
       }
 
       try {
-        final response = await _dio.get(
-          url,
-          options: Options(headers: headers),
-        );
+        final response = await _dio.get(url, options: Options(headers: headers));
 
         if (response.statusCode == 200) {
           return _parseApiAssets(response.data['assets'], requiredFilters, excludedFilters);
@@ -68,7 +65,11 @@ class ReleaseService {
   /// GitLab lists releases newest first; an upcoming release, a canary or a
   /// pre-release tag (`-rc`, `-beta`) is skipped, never offered.
   Future<List<Map<String, String>>> _gitlab(
-      String base, String repo, List<String> requiredFilters, List<String> excludedFilters) async {
+    String base,
+    String repo,
+    List<String> requiredFilters,
+    List<String> excludedFilters,
+  ) async {
     try {
       final response = await _dio.get<dynamic>(
         '$base/api/v4/projects/${Uri.encodeComponent(repo)}/releases?per_page=20',
@@ -86,7 +87,10 @@ class ReleaseService {
   /// matching files.
   @visibleForTesting
   static List<Map<String, String>> gitlabAssets(
-      List<dynamic> releases, List<String> requiredFilters, List<String> excludedFilters) {
+    List<dynamic> releases,
+    List<String> requiredFilters,
+    List<String> excludedFilters,
+  ) {
     final unstable = RegExp(r'canary|nightly|-rc|beta|alpha|preview', caseSensitive: false);
     for (final release in releases.whereType<Map>()) {
       final tag = '${release['tag_name'] ?? ''} ${release['name'] ?? ''}';
@@ -108,14 +112,18 @@ class ReleaseService {
     return [];
   }
 
-  List<Map<String, String>> _parseApiAssets(List<dynamic> assets, List<String> requiredFilters, List<String> excludedFilters) {
+  List<Map<String, String>> _parseApiAssets(
+    List<dynamic> assets,
+    List<String> requiredFilters,
+    List<String> excludedFilters,
+  ) {
     List<Map<String, String>> matchingAssets = [];
     for (final asset in assets) {
       final name = (asset['name'] as String);
       final downloadUrl = asset['browser_download_url'] as String;
 
-      final matchesRequired = requiredFilters.isEmpty ||
-          requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
+      final matchesRequired =
+          requiredFilters.isEmpty || requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
       final matchesExcluded = excludedFilters.any((f) => name.toLowerCase().contains(f.toLowerCase()));
 
       if (matchesRequired && !matchesExcluded) {
@@ -126,8 +134,12 @@ class ReleaseService {
   }
 
   Future<List<Map<String, String>>> _scrapeFallback(
-      ReleasePlatform platform, String repo, List<String> requiredFilters, 
-      List<String> excludedFilters, String? baseUrl) async {
+    ReleasePlatform platform,
+    String repo,
+    List<String> requiredFilters,
+    List<String> excludedFilters,
+    String? baseUrl,
+  ) async {
     try {
       if (platform == ReleasePlatform.gitea) {
         // Gitea HTML scrape still works fine
@@ -139,21 +151,25 @@ class ReleaseService {
       // /releases/latest redirects to the latest release, as the API's
       // releases/latest would. Gargosy: the Atom feed listed pre-releases and
       // nightlies first, so a fallback picked those (or nothing, for xemu).
-      final latest = await _dio.get<String>('https://github.com/$repo/releases/latest',
-          options: Options(
-            headers: {'User-Agent': 'Gargosy'},
-            followRedirects: false,
-            responseType: ResponseType.plain,
-            validateStatus: (s) => s != null && s < 400,
-          ));
+      final latest = await _dio.get<String>(
+        'https://github.com/$repo/releases/latest',
+        options: Options(
+          headers: {'User-Agent': 'Gargosy'},
+          followRedirects: false,
+          responseType: ResponseType.plain,
+          validateStatus: (s) => s != null && s < 400,
+        ),
+      );
       final location = latest.headers.value('location') ?? '';
       final tagAt = location.indexOf('/releases/tag/');
       if (tagAt < 0) return [];
       final tag = location.substring(tagAt + '/releases/tag/'.length);
 
       // The release's files, as its page lists them.
-      final pageResponse = await _dio.get<String>('https://github.com/$repo/releases/expanded_assets/$tag',
-          options: Options(headers: {'User-Agent': 'Gargosy'}, responseType: ResponseType.plain));
+      final pageResponse = await _dio.get<String>(
+        'https://github.com/$repo/releases/expanded_assets/$tag',
+        options: Options(headers: {'User-Agent': 'Gargosy'}, responseType: ResponseType.plain),
+      );
       if ((pageResponse.statusCode ?? 0) < 200 || (pageResponse.statusCode ?? 0) >= 300) return [];
 
       return _parseHtmlAssets(pageResponse.data ?? '', 'https://github.com', requiredFilters, excludedFilters);
@@ -163,15 +179,23 @@ class ReleaseService {
     }
   }
 
-  Future<List<Map<String, String>>> _htmlScrape(String url, String base, 
-      List<String> requiredFilters, List<String> excludedFilters) async {
+  Future<List<Map<String, String>>> _htmlScrape(
+    String url,
+    String base,
+    List<String> requiredFilters,
+    List<String> excludedFilters,
+  ) async {
     final response = await http.get(Uri.parse(url), headers: {'User-Agent': 'Gargosy'});
     if (response.statusCode < 200 || response.statusCode >= 300) return [];
     return _parseHtmlAssets(response.body, base, requiredFilters, excludedFilters);
   }
 
-  List<Map<String, String>> _parseHtmlAssets(String html, String base,
-      List<String> requiredFilters, List<String> excludedFilters) {
+  List<Map<String, String>> _parseHtmlAssets(
+    String html,
+    String base,
+    List<String> requiredFilters,
+    List<String> excludedFilters,
+  ) {
     final regex = RegExp(r'href="([^"]+/releases/download/[^"]+)"');
     final matches = regex.allMatches(html);
     final List<Map<String, String>> matchingAssets = [];
@@ -181,8 +205,8 @@ class ReleaseService {
       final fullUrl = path.startsWith('http') ? path : '$base$path';
       final name = fullUrl.split('/').last;
 
-      final matchesRequired = requiredFilters.isEmpty ||
-          requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
+      final matchesRequired =
+          requiredFilters.isEmpty || requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
       final matchesExcluded = excludedFilters.any((f) => name.toLowerCase().contains(f.toLowerCase()));
 
       if (matchesRequired && !matchesExcluded) {
@@ -198,8 +222,10 @@ class ReleaseService {
   /// answers programs with a 403 page, so it isn't scraped any more.
   Future<List<Map<String, String>>> _scrapeDolphin(List<String> requiredFilters, List<String> excludedFilters) async {
     try {
-      final response = await _dio.get<dynamic>('https://dolphin-emu.org/update/latest/beta',
-          options: Options(headers: {'User-Agent': 'Gargosy'}));
+      final response = await _dio.get<dynamic>(
+        'https://dolphin-emu.org/update/latest/beta',
+        options: Options(headers: {'User-Agent': 'Gargosy'}),
+      );
       final artifacts = response.data is Map ? (response.data['artifacts'] as List? ?? const []) : const [];
       final List<Map<String, String>> matchingAssets = [];
       for (final artifact in artifacts.whereType<Map>()) {
@@ -207,8 +233,8 @@ class ReleaseService {
         if (!fullUrl.startsWith('https://dl.dolphin-emu.org/')) continue;
         final name = fullUrl.split('/').last;
 
-        final matchesRequired = requiredFilters.isEmpty ||
-            requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
+        final matchesRequired =
+            requiredFilters.isEmpty || requiredFilters.every((f) => name.toLowerCase().contains(f.toLowerCase()));
         final matchesExcluded = excludedFilters.any((f) => name.toLowerCase().contains(f.toLowerCase()));
         if (matchesRequired && !matchesExcluded && !matchingAssets.any((a) => a['url'] == fullUrl)) {
           matchingAssets.add({'name': name, 'url': fullUrl});

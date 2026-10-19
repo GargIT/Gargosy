@@ -59,16 +59,19 @@ void main() {
     });
   });
 
-  test('by default the warning timer is not a test timer: a widget test ending with a queued operation has none pending', () {
-    fakeAsync((async) {
-      final lock = StrategyLock();
-      final first = Completer<void>();
-      lock.run(() => first.future);
-      lock.run(() async {});
-      async.flushMicrotasks();
-      expect(async.pendingTimers, isEmpty);
-      first.complete();
-      async.flushMicrotasks();
-    });
-  });
+  test(
+    'by default the warning timer is not a test timer: a widget test ending with a queued operation has none pending',
+    () {
+      fakeAsync((async) {
+        final lock = StrategyLock();
+        final first = Completer<void>();
+        lock.run(() => first.future);
+        lock.run(() async {});
+        async.flushMicrotasks();
+        expect(async.pendingTimers, isEmpty);
+        first.complete();
+        async.flushMicrotasks();
+      });
+    },
+  );
 }

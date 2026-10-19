@@ -14,6 +14,7 @@ class FakeProtector implements DataProtector {
     if (failProtect) throw StateError('The disk is full');
     return Uint8List.fromList([for (final b in data) b ^ 0x5A]);
   }
+
   @override
   Uint8List? unprotect(Uint8List data) => fail ? null : Uint8List.fromList([for (final b in data) b ^ 0x5A]);
 }

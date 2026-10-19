@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:gargosy/core/emulator/strategies/pcsx2_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
@@ -16,8 +17,7 @@ import 'package:path/path.dart' as p;
 /// matcher for `.../<disc>.iso` accepts only `GAME-<disc>.auto.st` and
 /// `GAME-<disc>.<n>.st`.
 class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
-  FakeStateSaveStrategy(this.dir,
-      {this.id = 'fakeemu', this.identifiable = true, this.perDisc = false});
+  FakeStateSaveStrategy(this.dir, {this.id = 'fakeemu', this.identifiable = true, this.perDisc = false});
   final String dir;
   final String id;
   bool identifiable;
@@ -34,40 +34,47 @@ class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async => null;
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath,
-          {DateTime? sessionStart, String syncMode = 'both'}) async => [];
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => [];
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => false;
   @override
   Future<String> stateDirectory(Game game, String romPath) async => dir;
   @override
-  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async =>
-      !identifiable
-          ? null
-          : perDisc
-              ? (name) => RegExp('^GAME-${RegExp.escape(p.basenameWithoutExtension(romPath))}'
-                      r'\.(auto|\d+)\.st$')
-                  .hasMatch(name)
-              : (name) => RegExp(r'^GAME\.(auto|\d+)\.st$').hasMatch(name);
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async => !identifiable
+      ? null
+      : perDisc
+      ? (name) => RegExp(
+          '^GAME-${RegExp.escape(p.basenameWithoutExtension(romPath))}'
+          r'\.(auto|\d+)\.st$',
+        ).hasMatch(name)
+      : (name) => RegExp(r'^GAME\.(auto|\d+)\.st$').hasMatch(name);
   @override
   StateSlot slotOf(String fileName) {
     final m = RegExp(r'^GAME(?:-[^.]+)?\.(auto|\d+)\.st$').firstMatch(fileName);
     if (m == null) return UnknownStateSlot(fileName);
     return m.group(1) == 'auto' ? const AutoStateSlot() : NumberedStateSlot(int.parse(m.group(1)!));
   }
+
   @override
   Future<StateFileInfo> describeState(File file) async {
     final base = await super.describeState(file);
     try {
       final first = (await file.readAsString()).split('\n').first;
       return StateFileInfo(
-          savedAt: base.savedAt,
-          emulatorVersion: first.startsWith('ver=') ? first.substring(4) : null,
-          formatId: first.startsWith('fmt=') ? first.substring(4) : null);
+        savedAt: base.savedAt,
+        emulatorVersion: first.startsWith('ver=') ? first.substring(4) : null,
+        formatId: first.startsWith('fmt=') ? first.substring(4) : null,
+      );
     } catch (_) {
       return base;
     }
   }
+
   @override
   Future<Uint8List?> stateScreenshot(File file) async {
     final bytes = screenshots[p.basename(file.path)];
@@ -78,8 +85,14 @@ class FakeStateSaveStrategy extends SaveStrategy with StateSyncCapable {
 /// Emulator side of "fakeemu". Borrows Pcsx2Strategy's plumbing only for
 /// construction; every identity field is overridden.
 class FakeStateEmulator extends Pcsx2Strategy {
-  FakeStateEmulator(super.ds,
-      {this.id = 'fakeemu', this.loadsStates = true, this.syncsStates = true, this.version = '1.2.0', this.canLoad});
+  FakeStateEmulator(
+    super.ds, {
+    this.id = 'fakeemu',
+    this.loadsStates = true,
+    this.syncsStates = true,
+    this.version = '1.2.0',
+    this.canLoad,
+  });
   final String id;
   final bool loadsStates;
   final bool syncsStates;
@@ -101,6 +114,7 @@ class FakeStateEmulator extends Pcsx2Strategy {
   bool get supportsStateSync => syncsStates;
   @override
   List<String> stateLoadArgs(String statePath) => ['--load', statePath];
+
   /// How many times [installedVersion] was asked.
   int versionCalls = 0;
   @override
@@ -111,10 +125,8 @@ class FakeStateEmulator extends Pcsx2Strategy {
 }
 
 /// Content for a fakeemu state file: 200+ bytes, recording [version].
-List<int> fakeState(String version, {int seed = 1}) =>
-    [...'ver=$version\n'.codeUnits, ...List.filled(200, seed)];
+List<int> fakeState(String version, {int seed = 1}) => [...'ver=$version\n'.codeUnits, ...List.filled(200, seed)];
 
 /// Content for a fakeemu state that records only a state format [format], no
 /// emulator version (like emulators whose states don't name their build).
-List<int> fakeFormatOnlyState(String format) =>
-    [...'fmt=$format\n'.codeUnits, ...List.filled(200, 1)];
+List<int> fakeFormatOnlyState(String format) => [...'fmt=$format\n'.codeUnits, ...List.filled(200, 1)];

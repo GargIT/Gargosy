@@ -1,8 +1,10 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
+
 import '../emulator_strategy.dart';
 import '../custom_emulator_config.dart';
 
@@ -76,11 +78,7 @@ class CustomEmulatorStrategy extends EmulatorStrategy {
       // Treat commandOverride as a full shell command line.
       // Split into executable + arguments and run with runInShell.
       final parts = _splitShellCommand(config.commandOverride!);
-      await io.Process.run(
-        parts.first,
-        [...parts.sublist(1), normalizedRomPath],
-        runInShell: true,
-      );
+      await io.Process.run(parts.first, [...parts.sublist(1), normalizedRomPath], runInShell: true);
     } else {
       // We use a raw process start because custom emulators might not be in the standard EmuDeck structure
       await io.Process.run(exePath, [normalizedRomPath], runInShell: true);

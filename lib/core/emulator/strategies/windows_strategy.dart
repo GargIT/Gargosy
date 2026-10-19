@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -71,8 +72,7 @@ class WindowsStrategy extends EmulatorStrategy {
     await _prefs.setString('$_argsPrefix$gameId', args.join('\n'));
   }
 
-  List<String> getLaunchArgs(String gameId) =>
-      _launchArgsOverrides[gameId] ?? [];
+  List<String> getLaunchArgs(String gameId) => _launchArgsOverrides[gameId] ?? [];
 
   @override
   Future<void> launch(Game game, String romPath) async {
@@ -87,11 +87,7 @@ class WindowsStrategy extends EmulatorStrategy {
     }
 
     final args = getLaunchArgs(game.id);
-    final process = await Process.start(
-      exePath,
-      args,
-      workingDirectory: File(exePath).parent.path,
-    );
+    final process = await Process.start(exePath, args, workingDirectory: File(exePath).parent.path);
 
     // Wait up to 5 seconds — if process exits that fast it crashed
     final exitCode = await process.exitCode

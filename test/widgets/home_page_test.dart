@@ -47,26 +47,36 @@ void main() {
 
   testWidgets('an empty library says so', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      recentlyPlayedProvider.overrideWith((ref) async => const []),
-      recentlyAddedProvider.overrideWith((ref) async => const []),
-      favouriteGamesProvider.overrideWith((ref) async => const []),
-      randomGameProvider.overrideWith((ref) async => null),
-      favouriteIdsProvider.overrideWithValue(const {}),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: [
+          recentlyPlayedProvider.overrideWith((ref) async => const []),
+          recentlyAddedProvider.overrideWith((ref) async => const []),
+          favouriteGamesProvider.overrideWith((ref) async => const []),
+          randomGameProvider.overrideWith((ref) async => null),
+          favouriteIdsProvider.overrideWithValue(const {}),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('No games yet'), findsOneWidget);
   });
 
   testWidgets('shows the error with retry when RomM can\'t be reached', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      recentlyPlayedProvider.overrideWith((ref) async => throw Exception('SocketException: connection refused')),
-      recentlyAddedProvider.overrideWith((ref) async => throw Exception('SocketException: connection refused')),
-      favouriteGamesProvider.overrideWith((ref) async => const []),
-      randomGameProvider.overrideWith((ref) async => null),
-      favouriteIdsProvider.overrideWithValue(const {}),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: [
+          recentlyPlayedProvider.overrideWith((ref) async => throw Exception('SocketException: connection refused')),
+          recentlyAddedProvider.overrideWith((ref) async => throw Exception('SocketException: connection refused')),
+          favouriteGamesProvider.overrideWith((ref) async => const []),
+          randomGameProvider.overrideWith((ref) async => null),
+          favouriteIdsProvider.overrideWithValue(const {}),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining("Can't reach RomM"), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
@@ -74,10 +84,17 @@ void main() {
 
   testWidgets('with RomM down, the real shelves report it (not "No games yet")', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      libraryApiProvider.overrideWithValue(FakeLibraryApi(const [])..failWith = Exception('SocketException: connection refused')),
-      collectionsProvider.overrideWith((ref) async => const []),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: [
+          libraryApiProvider.overrideWithValue(
+            FakeLibraryApi(const [])..failWith = Exception('SocketException: connection refused'),
+          ),
+          collectionsProvider.overrideWith((ref) async => const []),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining("Can't reach RomM"), findsOneWidget);
     expect(find.textContaining('No games yet'), findsNothing);
@@ -85,13 +102,20 @@ void main() {
 
   testWidgets('online, Installed games sits between Continue playing and Recently added', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      ...overrides,
-      rommOfflineProvider.overrideWithValue(false),
-      gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez'), game(8, 'Ico')]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: [
+          ...overrides,
+          rommOfflineProvider.overrideWithValue(false),
+          gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez'), game(8, 'Ico')]),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
-    final y = {for (final t in ['Continue playing', 'Installed games', 'Recently added']) t: tester.getTopLeft(find.text(t)).dy};
+    final y = {
+      for (final t in ['Continue playing', 'Installed games', 'Recently added']) t: tester.getTopLeft(find.text(t)).dy,
+    };
     expect(y['Continue playing']! < y['Installed games']!, isTrue);
     expect(y['Installed games']! < y['Recently added']!, isTrue);
     expect(find.text('Rez'), findsWidgets);
@@ -99,11 +123,16 @@ void main() {
 
   testWidgets('with nothing installed there is no Installed games shelf', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      ...overrides,
-      rommOfflineProvider.overrideWithValue(false),
-      gamesOnThisPcProvider.overrideWithValue(const []),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: [
+          ...overrides,
+          rommOfflineProvider.overrideWithValue(false),
+          gamesOnThisPcProvider.overrideWithValue(const []),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Installed games'), findsNothing);
     expect(find.text('Continue playing'), findsOneWidget);
@@ -111,14 +140,22 @@ void main() {
 
   testWidgets('offline, Installed games comes first, has the focus, and still plays', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const HomePage(name: 'Anna'), overrides: [
-      ...overrides,
-      rommOfflineProvider.overrideWithValue(true),
-      gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez')]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: [
+          ...overrides,
+          rommOfflineProvider.overrideWithValue(true),
+          gamesOnThisPcProvider.overrideWithValue([game(9, 'Rez')]),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Installed games'), findsOneWidget);
-    expect(tester.getTopLeft(find.text('Installed games')).dy < tester.getTopLeft(find.text('Continue playing')).dy, isTrue);
+    expect(
+      tester.getTopLeft(find.text('Installed games')).dy < tester.getTopLeft(find.text('Continue playing')).dy,
+      isTrue,
+    );
     await press(tester, GameAction.confirm);
     expect(tester.widget<GameScreen>(find.byType(GameScreen)).game.name, 'Rez', reason: 'A opens the focused game');
   });

@@ -17,7 +17,10 @@ void main() {
 
   Future<void> typeOnScreen(WidgetTester tester, String text) async {
     for (final ch in text.split('')) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.findKeyByKeyId(ch.codeUnitAt(0)) ?? LogicalKeyboardKey.keyA, character: ch);
+      await tester.sendKeyEvent(
+        LogicalKeyboardKey.findKeyByKeyId(ch.codeUnitAt(0)) ?? LogicalKeyboardKey.keyA,
+        character: ch,
+      );
     }
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
@@ -39,8 +42,17 @@ void main() {
     h = AppHarness();
     await h.setUp(tester);
     h.auth = FakeRommAuth(
-      start: const DeviceAuthStart(deviceCode: 'dc', userCode: 'WXYZ-9876', verificationUrl: 'https://romm.example/pair/device?user_code=WXYZ-9876', expiresIn: 600, interval: 1),
-      polls: [const DevicePending(), const DeviceApproved(token: 'rmm_dev', deviceId: 'd1')],
+      start: const DeviceAuthStart(
+        deviceCode: 'dc',
+        userCode: 'WXYZ-9876',
+        verificationUrl: 'https://romm.example/pair/device?user_code=WXYZ-9876',
+        expiresIn: 600,
+        interval: 1,
+      ),
+      polls: [
+        const DevicePending(),
+        const DeviceApproved(token: 'rmm_dev', deviceId: 'd1'),
+      ],
       me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []),
     );
     await openAdd(tester);
@@ -61,10 +73,16 @@ void main() {
     expect(login.kind, 'device');
   });
 
-  testWidgets('a server without device pairing goes straight to the password; the password is not kept', (tester) async {
+  testWidgets('a server without device pairing goes straight to the password; the password is not kept', (
+    tester,
+  ) async {
     h = AppHarness();
     await h.setUp(tester);
-    h.auth = FakeRommAuth(start: null, passwordToken: 'rmm_pw', me: const RommUser(id: 9, username: 'anna', avatarPath: '', oauthScopes: []));
+    h.auth = FakeRommAuth(
+      start: null,
+      passwordToken: 'rmm_pw',
+      me: const RommUser(id: 9, username: 'anna', avatarPath: '', oauthScopes: []),
+    );
     await openAdd(tester);
     await tester.tap(find.byKey(const Key('login-username')));
     await tester.pumpAndSettle();
@@ -99,7 +117,10 @@ void main() {
   testWidgets('a wrong password shows the error and keeps the step', (tester) async {
     h = AppHarness();
     await h.setUp(tester);
-    h.auth = FakeRommAuth(start: null, passwordError: const RommAuthException(RommAuthFailure.badCredentials, 'Wrong username or password'));
+    h.auth = FakeRommAuth(
+      start: null,
+      passwordError: const RommAuthException(RommAuthFailure.badCredentials, 'Wrong username or password'),
+    );
     await openAdd(tester);
     await tester.tap(find.text('Log in'));
     await h.settle(tester);
@@ -109,7 +130,10 @@ void main() {
   testWidgets('setting a PIN asks twice and saves it', (tester) async {
     h = AppHarness();
     await h.setUp(tester);
-    h.auth = FakeRommAuth(start: null, me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []));
+    h.auth = FakeRommAuth(
+      start: null,
+      me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []),
+    );
     await openAdd(tester);
     await tester.tap(find.text('Log in'));
     await h.settle(tester);
@@ -118,7 +142,12 @@ void main() {
     await tester.tap(find.text('Set a PIN'));
     await tester.pumpAndSettle();
     for (var round = 0; round < 2; round++) {
-      for (final k in [LogicalKeyboardKey.digit2, LogicalKeyboardKey.digit5, LogicalKeyboardKey.digit8, LogicalKeyboardKey.digit0]) {
+      for (final k in [
+        LogicalKeyboardKey.digit2,
+        LogicalKeyboardKey.digit5,
+        LogicalKeyboardKey.digit8,
+        LogicalKeyboardKey.digit0,
+      ]) {
         await tester.sendKeyEvent(k);
       }
       await h.settle(tester);
@@ -128,7 +157,9 @@ void main() {
     expect(ctx.profile.pin!.verify('2580'), isTrue);
   });
 
-  testWidgets('when pairing fails to start (not a network problem) the password form is offered, with the error', (tester) async {
+  testWidgets('when pairing fails to start (not a network problem) the password form is offered, with the error', (
+    tester,
+  ) async {
     h = AppHarness();
     await h.setUp(tester);
     h.auth = FakeRommAuth(startError: const RommAuthException(RommAuthFailure.other, 'RomM answered 403'));
@@ -142,17 +173,24 @@ void main() {
   testWidgets('an address that is not a RomM server goes back to the server step with the reason', (tester) async {
     h = AppHarness();
     await h.setUp(tester);
-    h.auth = FakeRommAuth(startError: const RommAuthException(RommAuthFailure.notRomm, 'This does not look like a RomM server'));
+    h.auth = FakeRommAuth(
+      startError: const RommAuthException(RommAuthFailure.notRomm, 'This does not look like a RomM server'),
+    );
     await openAdd(tester);
     await h.settle(tester);
     expect(find.textContaining('does not look like a RomM server'), findsOneWidget);
     expect(find.byKey(const Key('server-url')), findsOneWidget);
   });
 
-  testWidgets('if creating the profile fails, the error shows, nothing half-made is left, and trying again works', (tester) async {
+  testWidgets('if creating the profile fails, the error shows, nothing half-made is left, and trying again works', (
+    tester,
+  ) async {
     h = AppHarness();
     await h.setUp(tester);
-    h.auth = FakeRommAuth(start: null, me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []));
+    h.auth = FakeRommAuth(
+      start: null,
+      me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []),
+    );
     await openAdd(tester);
     await tester.tap(find.text('Log in'));
     await h.settle(tester);
@@ -175,7 +213,10 @@ void main() {
   testWidgets('after logging in, Cancel (confirmed) drops the login and adds no profile', (tester) async {
     h = AppHarness();
     await h.setUp(tester);
-    h.auth = FakeRommAuth(start: null, me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []));
+    h.auth = FakeRommAuth(
+      start: null,
+      me: const RommUser(id: 7, username: 'anna', avatarPath: '', oauthScopes: []),
+    );
     await openAdd(tester);
     await tester.tap(find.text('Log in'));
     await h.settle(tester);

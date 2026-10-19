@@ -11,8 +11,7 @@ import 'dart:typed_data' as _i13;
 import 'package:dio/dio.dart' as _i4;
 import 'package:flutter/foundation.dart' as _i2;
 import 'package:gargosy/core/emulator/emulator_strategy.dart' as _i16;
-import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strategy.dart'
-    as _i8;
+import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strategy.dart' as _i8;
 import 'package:gargosy/core/emulator/strategy_registry.dart' as _i15;
 import 'package:gargosy/core/romm/romm_models.dart' as _i3;
 import 'package:gargosy/core/romm/romm_service.dart' as _i9;
@@ -39,53 +38,40 @@ import 'package:mockito/src/dummies.dart' as _i10;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
-class _FakeValueNotifier_0<T> extends _i1.SmartFake
-    implements _i2.ValueNotifier<T> {
-  _FakeValueNotifier_0(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakeValueNotifier_0<T> extends _i1.SmartFake implements _i2.ValueNotifier<T> {
+  _FakeValueNotifier_0(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 class _FakeRomMConfig_1 extends _i1.SmartFake implements _i3.RomMConfig {
-  _FakeRomMConfig_1(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeRomMConfig_1(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 class _FakeDio_2 extends _i1.SmartFake implements _i4.Dio {
-  _FakeDio_2(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeDio_2(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 class _FakeOptions_3 extends _i1.SmartFake implements _i4.Options {
-  _FakeOptions_3(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeOptions_3(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
-class _FakeRommCapabilities_4 extends _i1.SmartFake
-    implements _i3.RommCapabilities {
-  _FakeRommCapabilities_4(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakeRommCapabilities_4 extends _i1.SmartFake implements _i3.RommCapabilities {
+  _FakeRommCapabilities_4(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 class _FakeRommState_5 extends _i1.SmartFake implements _i5.RommState {
-  _FakeRommState_5(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeRommState_5(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 class _FakeStorageStatus_6 extends _i1.SmartFake implements _i6.StorageStatus {
-  _FakeStorageStatus_6(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeStorageStatus_6(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
-class _FakeAppPreferences_7 extends _i1.SmartFake
-    implements _i7.AppPreferences {
-  _FakeAppPreferences_7(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakeAppPreferences_7 extends _i1.SmartFake implements _i7.AppPreferences {
+  _FakeAppPreferences_7(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
-class _FakeLinuxEnvironmentStrategy_8 extends _i1.SmartFake
-    implements _i8.LinuxEnvironmentStrategy {
-  _FakeLinuxEnvironmentStrategy_8(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+class _FakeLinuxEnvironmentStrategy_8 extends _i1.SmartFake implements _i8.LinuxEnvironmentStrategy {
+  _FakeLinuxEnvironmentStrategy_8(Object parent, Invocation parentInvocation) : super(parent, parentInvocation);
 }
 
 /// A class which mocks [RommService].
@@ -99,23 +85,17 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   @override
   _i2.ValueNotifier<bool> get isOffline => (super.noSuchMethod(
     Invocation.getter(#isOffline),
-    returnValue: _FakeValueNotifier_0<bool>(
-      this,
-      Invocation.getter(#isOffline),
-    ),
+    returnValue: _FakeValueNotifier_0<bool>(this, Invocation.getter(#isOffline)),
   ) as _i2.ValueNotifier<bool>);
 
   @override
-  _i3.RomMConfig get config => (super.noSuchMethod(
-    Invocation.getter(#config),
-    returnValue: _FakeRomMConfig_1(this, Invocation.getter(#config)),
-  ) as _i3.RomMConfig);
+  _i3.RomMConfig get config =>
+      (super.noSuchMethod(Invocation.getter(#config), returnValue: _FakeRomMConfig_1(this, Invocation.getter(#config)))
+          as _i3.RomMConfig);
 
   @override
-  _i4.Dio get dio => (super.noSuchMethod(
-    Invocation.getter(#dio),
-    returnValue: _FakeDio_2(this, Invocation.getter(#dio)),
-  ) as _i4.Dio);
+  _i4.Dio get dio =>
+      (super.noSuchMethod(Invocation.getter(#dio), returnValue: _FakeDio_2(this, Invocation.getter(#dio))) as _i4.Dio);
 
   @override
   _i4.Options get authOptions => (super.noSuchMethod(
@@ -126,10 +106,7 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   @override
   _i3.RommCapabilities get capabilities => (super.noSuchMethod(
     Invocation.getter(#capabilities),
-    returnValue: _FakeRommCapabilities_4(
-      this,
-      Invocation.getter(#capabilities),
-    ),
+    returnValue: _FakeRommCapabilities_4(this, Invocation.getter(#capabilities)),
   ) as _i3.RommCapabilities);
 
   @override
@@ -139,22 +116,14 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as String);
 
   @override
-  void updateConfig(_i3.RomMConfig? newConfig) => super.noSuchMethod(
-    Invocation.method(#updateConfig, [newConfig]),
-    returnValueForMissingStub: null,
-  );
+  void updateConfig(_i3.RomMConfig? newConfig) =>
+      super.noSuchMethod(Invocation.method(#updateConfig, [newConfig]), returnValueForMissingStub: null);
 
   @override
-  void startHeartbeat() => super.noSuchMethod(
-    Invocation.method(#startHeartbeat, []),
-    returnValueForMissingStub: null,
-  );
+  void startHeartbeat() => super.noSuchMethod(Invocation.method(#startHeartbeat, []), returnValueForMissingStub: null);
 
   @override
-  void stopHeartbeat() => super.noSuchMethod(
-    Invocation.method(#stopHeartbeat, []),
-    returnValueForMissingStub: null,
-  );
+  void stopHeartbeat() => super.noSuchMethod(Invocation.method(#stopHeartbeat, []), returnValueForMissingStub: null);
 
   @override
   _i11.Future<_i3.RommCapabilities> fetchCapabilities() => (super.noSuchMethod(
@@ -181,43 +150,34 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<String?>);
 
   @override
-  _i11.Future<_i3.Game?> getGame(String? id) => (super.noSuchMethod(
-    Invocation.method(#getGame, [id]),
-    returnValue: _i11.Future<_i3.Game?>.value(),
-  ) as _i11.Future<_i3.Game?>);
+  _i11.Future<_i3.Game?> getGame(String? id) =>
+      (super.noSuchMethod(Invocation.method(#getGame, [id]), returnValue: _i11.Future<_i3.Game?>.value())
+          as _i11.Future<_i3.Game?>);
 
   @override
-  _i11.Future<Map<int, Map<String, dynamic>>>
-  getRetroAchievementsProgression() => (super.noSuchMethod(
+  _i11.Future<Map<int, Map<String, dynamic>>> getRetroAchievementsProgression() => (super.noSuchMethod(
     Invocation.method(#getRetroAchievementsProgression, []),
-    returnValue: _i11.Future<Map<int, Map<String, dynamic>>>.value(
-      <int, Map<String, dynamic>>{},
-    ),
+    returnValue: _i11.Future<Map<int, Map<String, dynamic>>>.value(<int, Map<String, dynamic>>{}),
   ) as _i11.Future<Map<int, Map<String, dynamic>>>);
 
   @override
-  _i11.Future<({int id, String? raUsername})?> getRetroAchievementsLink() =>
-      (super.noSuchMethod(
-        Invocation.method(#getRetroAchievementsLink, []),
-        returnValue: _i11.Future<({int id, String? raUsername})?>.value(),
-      ) as _i11.Future<({int id, String? raUsername})?>);
+  _i11.Future<({int id, String? raUsername})?> getRetroAchievementsLink() => (super.noSuchMethod(
+    Invocation.method(#getRetroAchievementsLink, []),
+    returnValue: _i11.Future<({int id, String? raUsername})?>.value(),
+  ) as _i11.Future<({int id, String? raUsername})?>);
 
   @override
-  _i11.Future<void> setRetroAchievementsUsername(
-    int? userId,
-    String? raUsername,
-  ) => (super.noSuchMethod(
+  _i11.Future<void> setRetroAchievementsUsername(int? userId, String? raUsername) => (super.noSuchMethod(
     Invocation.method(#setRetroAchievementsUsername, [userId, raUsername]),
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
 
   @override
-  _i11.Future<bool> refreshRetroAchievements(int? userId) =>
-      (super.noSuchMethod(
-        Invocation.method(#refreshRetroAchievements, [userId]),
-        returnValue: _i11.Future<bool>.value(false),
-      ) as _i11.Future<bool>);
+  _i11.Future<bool> refreshRetroAchievements(int? userId) => (super.noSuchMethod(
+    Invocation.method(#refreshRetroAchievements, [userId]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
 
   @override
   _i11.Future<List<_i3.Platform>> getPlatforms() => (super.noSuchMethod(
@@ -226,62 +186,45 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<List<_i3.Platform>>);
 
   @override
-  _i11.Future<List<Map<String, dynamic>>> getCollections() =>
-      (super.noSuchMethod(
-        Invocation.method(#getCollections, []),
-        returnValue: _i11.Future<List<Map<String, dynamic>>>.value(
-          <Map<String, dynamic>>[],
-        ),
-      ) as _i11.Future<List<Map<String, dynamic>>>);
+  _i11.Future<List<Map<String, dynamic>>> getCollections() => (super.noSuchMethod(
+    Invocation.method(#getCollections, []),
+    returnValue: _i11.Future<List<Map<String, dynamic>>>.value(<Map<String, dynamic>>[]),
+  ) as _i11.Future<List<Map<String, dynamic>>>);
 
   @override
   String? resolveCoverUrl(_i3.Game? game) =>
-      (super.noSuchMethod(Invocation.method(#resolveCoverUrl, [game]))
-          as String?);
+      (super.noSuchMethod(Invocation.method(#resolveCoverUrl, [game])) as String?);
 
   @override
-  _i11.Future<List<_i3.Game>> getGames(String? platformId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getGames, [platformId]),
-        returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
-      ) as _i11.Future<List<_i3.Game>>);
-
-  @override
-  _i11.Future<List<_i3.Game>> getAllGames({String? platformId}) =>
-      (super.noSuchMethod(
-        Invocation.method(#getAllGames, [], {#platformId: platformId}),
-        returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
-      ) as _i11.Future<List<_i3.Game>>);
-
-  @override
-  _i11.Future<List<_i3.Game>> getRecentlyAdded({int? limit = 15}) =>
-      (super.noSuchMethod(
-        Invocation.method(#getRecentlyAdded, [], {#limit: limit}),
-        returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
-      ) as _i11.Future<List<_i3.Game>>);
-
-  @override
-  _i11.Future<List<_i3.Game>> getRecentlyPlayed({int? limit = 15}) =>
-      (super.noSuchMethod(
-        Invocation.method(#getRecentlyPlayed, [], {#limit: limit}),
-        returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
-      ) as _i11.Future<List<_i3.Game>>);
-
-  @override
-  _i11.Future<List<_i3.Game>> searchRoms({
-    String? sha1,
-    String? md5,
-    String? search,
-    String? platformId,
-  }) => (super.noSuchMethod(
-    Invocation.method(#searchRoms, [], {
-      #sha1: sha1,
-      #md5: md5,
-      #search: search,
-      #platformId: platformId,
-    }),
+  _i11.Future<List<_i3.Game>> getGames(String? platformId) => (super.noSuchMethod(
+    Invocation.method(#getGames, [platformId]),
     returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
   ) as _i11.Future<List<_i3.Game>>);
+
+  @override
+  _i11.Future<List<_i3.Game>> getAllGames({String? platformId}) => (super.noSuchMethod(
+    Invocation.method(#getAllGames, [], {#platformId: platformId}),
+    returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
+  ) as _i11.Future<List<_i3.Game>>);
+
+  @override
+  _i11.Future<List<_i3.Game>> getRecentlyAdded({int? limit = 15}) => (super.noSuchMethod(
+    Invocation.method(#getRecentlyAdded, [], {#limit: limit}),
+    returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
+  ) as _i11.Future<List<_i3.Game>>);
+
+  @override
+  _i11.Future<List<_i3.Game>> getRecentlyPlayed({int? limit = 15}) => (super.noSuchMethod(
+    Invocation.method(#getRecentlyPlayed, [], {#limit: limit}),
+    returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
+  ) as _i11.Future<List<_i3.Game>>);
+
+  @override
+  _i11.Future<List<_i3.Game>> searchRoms({String? sha1, String? md5, String? search, String? platformId}) =>
+      (super.noSuchMethod(
+        Invocation.method(#searchRoms, [], {#sha1: sha1, #md5: md5, #search: search, #platformId: platformId}),
+        returnValue: _i11.Future<List<_i3.Game>>.value(<_i3.Game>[]),
+      ) as _i11.Future<List<_i3.Game>>);
 
   @override
   _i11.Future<({List<_i3.Game> games, int total})> getGamesPage({
@@ -312,39 +255,28 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
       #withCharIndex: withCharIndex,
       #withFilterValues: withFilterValues,
     }),
-    returnValue: _i11.Future<({List<_i3.Game> games, int total})>.value((
-      games: <_i3.Game>[],
-      total: 0,
-    )),
+    returnValue: _i11.Future<({List<_i3.Game> games, int total})>.value((games: <_i3.Game>[], total: 0)),
   ) as _i11.Future<({List<_i3.Game> games, int total})>);
 
   @override
-  _i11.Future<_i3.Game?> getRandomGame() => (super.noSuchMethod(
-    Invocation.method(#getRandomGame, []),
-    returnValue: _i11.Future<_i3.Game?>.value(),
-  ) as _i11.Future<_i3.Game?>);
+  _i11.Future<_i3.Game?> getRandomGame() =>
+      (super.noSuchMethod(Invocation.method(#getRandomGame, []), returnValue: _i11.Future<_i3.Game?>.value())
+          as _i11.Future<_i3.Game?>);
 
   @override
-  _i11.Future<List<_i3.SaveFile>> getSaves(String? gameId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getSaves, [gameId]),
-        returnValue: _i11.Future<List<_i3.SaveFile>>.value(<_i3.SaveFile>[]),
-      ) as _i11.Future<List<_i3.SaveFile>>);
+  _i11.Future<List<_i3.SaveFile>> getSaves(String? gameId) => (super.noSuchMethod(
+    Invocation.method(#getSaves, [gameId]),
+    returnValue: _i11.Future<List<_i3.SaveFile>>.value(<_i3.SaveFile>[]),
+  ) as _i11.Future<List<_i3.SaveFile>>);
 
   @override
   String getDownloadUrl(_i3.Game? game) => (super.noSuchMethod(
     Invocation.method(#getDownloadUrl, [game]),
-    returnValue: _i10.dummyValue<String>(
-      this,
-      Invocation.method(#getDownloadUrl, [game]),
-    ),
+    returnValue: _i10.dummyValue<String>(this, Invocation.method(#getDownloadUrl, [game])),
   ) as String);
 
   @override
-  _i11.Future<
-    ({Map<String, dynamic>? conflict, bool ok, Map<String, dynamic>? saved})
-  >
-  uploadSave(
+  _i11.Future<({Map<String, dynamic>? conflict, bool ok, Map<String, dynamic>? saved})> uploadSave(
     String? gameId,
     _i12.File? saveFile, {
     String? emulator,
@@ -355,111 +287,77 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     bool? overwrite = false,
     _i12.File? screenshotFile,
     String? overrideFilename,
-  }) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #uploadSave,
-          [gameId, saveFile],
-          {
-            #emulator: emulator,
-            #slot: slot,
-            #deviceId: deviceId,
-            #autocleanup: autocleanup,
-            #autocleanupLimit: autocleanupLimit,
-            #overwrite: overwrite,
-            #screenshotFile: screenshotFile,
-            #overrideFilename: overrideFilename,
-          },
-        ),
-        returnValue:
-            _i11.Future<
-              ({
-                Map<String, dynamic>? conflict,
-                bool ok,
-                Map<String, dynamic>? saved,
-              })
-            >.value((conflict: null, ok: false, saved: null)),
-      ) as _i11.Future<
-        ({Map<String, dynamic>? conflict, bool ok, Map<String, dynamic>? saved})
-      >);
+  }) => (super.noSuchMethod(
+    Invocation.method(
+      #uploadSave,
+      [gameId, saveFile],
+      {
+        #emulator: emulator,
+        #slot: slot,
+        #deviceId: deviceId,
+        #autocleanup: autocleanup,
+        #autocleanupLimit: autocleanupLimit,
+        #overwrite: overwrite,
+        #screenshotFile: screenshotFile,
+        #overrideFilename: overrideFilename,
+      },
+    ),
+    returnValue: _i11.Future<({Map<String, dynamic>? conflict, bool ok, Map<String, dynamic>? saved})>.value((
+      conflict: null,
+      ok: false,
+      saved: null,
+    )),
+  ) as _i11.Future<({Map<String, dynamic>? conflict, bool ok, Map<String, dynamic>? saved})>);
 
   @override
-  _i11.Future<bool> confirmSaveDownloaded(
-    int? saveId, {
-    required String? deviceId,
-  }) => (super.noSuchMethod(
+  _i11.Future<bool> confirmSaveDownloaded(int? saveId, {required String? deviceId}) => (super.noSuchMethod(
     Invocation.method(#confirmSaveDownloaded, [saveId], {#deviceId: deviceId}),
     returnValue: _i11.Future<bool>.value(false),
   ) as _i11.Future<bool>);
 
   @override
-  _i11.Future<bool> deleteSaves(List<int>? saveIds) => (super.noSuchMethod(
-    Invocation.method(#deleteSaves, [saveIds]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
+  _i11.Future<bool> deleteSaves(List<int>? saveIds) =>
+      (super.noSuchMethod(Invocation.method(#deleteSaves, [saveIds]), returnValue: _i11.Future<bool>.value(false))
+          as _i11.Future<bool>);
 
   @override
-  _i11.Future<void> pruneOldSaves(String? gameId, {int? keepCount = 5}) =>
+  _i11.Future<void> pruneOldSaves(String? gameId, {int? keepCount = 5}) => (super.noSuchMethod(
+    Invocation.method(#pruneOldSaves, [gameId], {#keepCount: keepCount}),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<List<Map<String, dynamic>>> getSavesList(String? gameId, {String? deviceId, String? slot}) =>
       (super.noSuchMethod(
-        Invocation.method(#pruneOldSaves, [gameId], {#keepCount: keepCount}),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+        Invocation.method(#getSavesList, [gameId], {#deviceId: deviceId, #slot: slot}),
+        returnValue: _i11.Future<List<Map<String, dynamic>>>.value(<Map<String, dynamic>>[]),
+      ) as _i11.Future<List<Map<String, dynamic>>>);
 
   @override
-  _i11.Future<List<Map<String, dynamic>>> getSavesList(
-    String? gameId, {
-    String? deviceId,
-    String? slot,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getSavesList,
-      [gameId],
-      {#deviceId: deviceId, #slot: slot},
-    ),
-    returnValue: _i11.Future<List<Map<String, dynamic>>>.value(
-      <Map<String, dynamic>>[],
-    ),
-  ) as _i11.Future<List<Map<String, dynamic>>>);
+  _i11.Future<List<Map<String, dynamic>>?> getSavesListOrNull(String? gameId, {String? deviceId, String? slot}) =>
+      (super.noSuchMethod(
+        Invocation.method(#getSavesListOrNull, [gameId], {#deviceId: deviceId, #slot: slot}),
+        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
+      ) as _i11.Future<List<Map<String, dynamic>>?>);
 
   @override
-  _i11.Future<List<Map<String, dynamic>>?> getSavesListOrNull(
-    String? gameId, {
-    String? deviceId,
-    String? slot,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getSavesListOrNull,
-      [gameId],
-      {#deviceId: deviceId, #slot: slot},
-    ),
-    returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
-  ) as _i11.Future<List<Map<String, dynamic>>?>);
-
-  @override
-  _i11.Future<Map<String, dynamic>?> getLatestSave(
-    String? gameId, {
-    String? deviceId,
-  }) => (super.noSuchMethod(
+  _i11.Future<Map<String, dynamic>?> getLatestSave(String? gameId, {String? deviceId}) => (super.noSuchMethod(
     Invocation.method(#getLatestSave, [gameId], {#deviceId: deviceId}),
     returnValue: _i11.Future<Map<String, dynamic>?>.value(),
   ) as _i11.Future<Map<String, dynamic>?>);
 
   @override
-  _i11.Future<_i13.Uint8List?> downloadSave(
-    String? saveUrl, {
-    String? deviceId,
-  }) => (super.noSuchMethod(
+  _i11.Future<_i13.Uint8List?> downloadSave(String? saveUrl, {String? deviceId}) => (super.noSuchMethod(
     Invocation.method(#downloadSave, [saveUrl], {#deviceId: deviceId}),
     returnValue: _i11.Future<_i13.Uint8List?>.value(),
   ) as _i11.Future<_i13.Uint8List?>);
 
   @override
-  _i11.Future<List<_i5.RommState>> listStates(String? romId) =>
-      (super.noSuchMethod(
-        Invocation.method(#listStates, [romId]),
-        returnValue: _i11.Future<List<_i5.RommState>>.value(<_i5.RommState>[]),
-      ) as _i11.Future<List<_i5.RommState>>);
+  _i11.Future<List<_i5.RommState>> listStates(String? romId) => (super.noSuchMethod(
+    Invocation.method(#listStates, [romId]),
+    returnValue: _i11.Future<List<_i5.RommState>>.value(<_i5.RommState>[]),
+  ) as _i11.Future<List<_i5.RommState>>);
 
   @override
   _i11.Future<_i5.RommState> uploadState(
@@ -469,11 +367,7 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     String? emulator,
     _i13.Uint8List? screenshot,
   }) => (super.noSuchMethod(
-    Invocation.method(
-      #uploadState,
-      [romId, file],
-      {#fileName: fileName, #emulator: emulator, #screenshot: screenshot},
-    ),
+    Invocation.method(#uploadState, [romId, file], {#fileName: fileName, #emulator: emulator, #screenshot: screenshot}),
     returnValue: _i11.Future<_i5.RommState>.value(
       _FakeRommState_5(
         this,
@@ -493,36 +387,26 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     required String? fileName,
     _i13.Uint8List? screenshot,
   }) => (super.noSuchMethod(
-    Invocation.method(
-      #updateState,
-      [stateId, file],
-      {#fileName: fileName, #screenshot: screenshot},
-    ),
+    Invocation.method(#updateState, [stateId, file], {#fileName: fileName, #screenshot: screenshot}),
     returnValue: _i11.Future<_i5.RommState>.value(
       _FakeRommState_5(
         this,
-        Invocation.method(
-          #updateState,
-          [stateId, file],
-          {#fileName: fileName, #screenshot: screenshot},
-        ),
+        Invocation.method(#updateState, [stateId, file], {#fileName: fileName, #screenshot: screenshot}),
       ),
     ),
   ) as _i11.Future<_i5.RommState>);
 
   @override
-  _i11.Future<_i13.Uint8List> downloadState(int? stateId) =>
-      (super.noSuchMethod(
-        Invocation.method(#downloadState, [stateId]),
-        returnValue: _i11.Future<_i13.Uint8List>.value(_i13.Uint8List(0)),
-      ) as _i11.Future<_i13.Uint8List>);
+  _i11.Future<_i13.Uint8List> downloadState(int? stateId) => (super.noSuchMethod(
+    Invocation.method(#downloadState, [stateId]),
+    returnValue: _i11.Future<_i13.Uint8List>.value(_i13.Uint8List(0)),
+  ) as _i11.Future<_i13.Uint8List>);
 
   @override
-  _i11.Future<_i13.Uint8List> downloadStateScreenshot(String? url) =>
-      (super.noSuchMethod(
-        Invocation.method(#downloadStateScreenshot, [url]),
-        returnValue: _i11.Future<_i13.Uint8List>.value(_i13.Uint8List(0)),
-      ) as _i11.Future<_i13.Uint8List>);
+  _i11.Future<_i13.Uint8List> downloadStateScreenshot(String? url) => (super.noSuchMethod(
+    Invocation.method(#downloadStateScreenshot, [url]),
+    returnValue: _i11.Future<_i13.Uint8List>.value(_i13.Uint8List(0)),
+  ) as _i11.Future<_i13.Uint8List>);
 
   @override
   _i11.Future<void> recordPlaySession({
@@ -542,50 +426,37 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<void>);
 
   @override
-  _i11.Future<void> sendActivityHeartbeat({
-    required String? romId,
-    required String? deviceId,
-  }) => (super.noSuchMethod(
-    Invocation.method(#sendActivityHeartbeat, [], {
-      #romId: romId,
-      #deviceId: deviceId,
-    }),
+  _i11.Future<void> sendActivityHeartbeat({required String? romId, required String? deviceId}) => (super.noSuchMethod(
+    Invocation.method(#sendActivityHeartbeat, [], {#romId: romId, #deviceId: deviceId}),
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
 
   @override
-  _i11.Future<void> clearActivityHeartbeat({required String? deviceId}) =>
-      (super.noSuchMethod(
-        Invocation.method(#clearActivityHeartbeat, [], {#deviceId: deviceId}),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> clearActivityHeartbeat({required String? deviceId}) => (super.noSuchMethod(
+    Invocation.method(#clearActivityHeartbeat, [], {#deviceId: deviceId}),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  _i11.Future<List<_i3.Firmware>> getFirmware({String? platformId}) =>
-      (super.noSuchMethod(
-        Invocation.method(#getFirmware, [], {#platformId: platformId}),
-        returnValue: _i11.Future<List<_i3.Firmware>>.value(<_i3.Firmware>[]),
-      ) as _i11.Future<List<_i3.Firmware>>);
+  _i11.Future<List<_i3.Firmware>> getFirmware({String? platformId}) => (super.noSuchMethod(
+    Invocation.method(#getFirmware, [], {#platformId: platformId}),
+    returnValue: _i11.Future<List<_i3.Firmware>>.value(<_i3.Firmware>[]),
+  ) as _i11.Future<List<_i3.Firmware>>);
 
   @override
   String getFirmwareDownloadUrl(_i3.Firmware? firmware) => (super.noSuchMethod(
     Invocation.method(#getFirmwareDownloadUrl, [firmware]),
-    returnValue: _i10.dummyValue<String>(
-      this,
-      Invocation.method(#getFirmwareDownloadUrl, [firmware]),
-    ),
+    returnValue: _i10.dummyValue<String>(this, Invocation.method(#getFirmwareDownloadUrl, [firmware])),
   ) as String);
 
   @override
-  _i11.Future<_i13.Uint8List?> downloadFirmware(
-    _i3.Firmware? firmware, {
-    void Function(int, int)? onProgress,
-  }) => (super.noSuchMethod(
-    Invocation.method(#downloadFirmware, [firmware], {#onProgress: onProgress}),
-    returnValue: _i11.Future<_i13.Uint8List?>.value(),
-  ) as _i11.Future<_i13.Uint8List?>);
+  _i11.Future<_i13.Uint8List?> downloadFirmware(_i3.Firmware? firmware, {void Function(int, int)? onProgress}) =>
+      (super.noSuchMethod(
+        Invocation.method(#downloadFirmware, [firmware], {#onProgress: onProgress}),
+        returnValue: _i11.Future<_i13.Uint8List?>.value(),
+      ) as _i11.Future<_i13.Uint8List?>);
 
   @override
   _i11.Future<bool> updateRomProps(
@@ -599,40 +470,28 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     Invocation.method(
       #updateRomProps,
       [romId],
-      {
-        #backlogged: backlogged,
-        #nowPlaying: nowPlaying,
-        #rating: rating,
-        #status: status,
-        #completion: completion,
-      },
+      {#backlogged: backlogged, #nowPlaying: nowPlaying, #rating: rating, #status: status, #completion: completion},
     ),
     returnValue: _i11.Future<bool>.value(false),
   ) as _i11.Future<bool>);
 
   @override
-  _i11.Future<List<_i3.RomNote>> getRomNotes(String? romId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getRomNotes, [romId]),
-        returnValue: _i11.Future<List<_i3.RomNote>>.value(<_i3.RomNote>[]),
-      ) as _i11.Future<List<_i3.RomNote>>);
+  _i11.Future<List<_i3.RomNote>> getRomNotes(String? romId) => (super.noSuchMethod(
+    Invocation.method(#getRomNotes, [romId]),
+    returnValue: _i11.Future<List<_i3.RomNote>>.value(<_i3.RomNote>[]),
+  ) as _i11.Future<List<_i3.RomNote>>);
 
   @override
-  _i11.Future<bool> createRomNote(
-    String? romId,
-    String? title,
-    String? content,
-  ) => (super.noSuchMethod(
+  _i11.Future<bool> createRomNote(String? romId, String? title, String? content) => (super.noSuchMethod(
     Invocation.method(#createRomNote, [romId, title, content]),
     returnValue: _i11.Future<bool>.value(false),
   ) as _i11.Future<bool>);
 
   @override
-  _i11.Future<bool> deleteRomNote(String? romId, int? noteId) =>
-      (super.noSuchMethod(
-        Invocation.method(#deleteRomNote, [romId, noteId]),
-        returnValue: _i11.Future<bool>.value(false),
-      ) as _i11.Future<bool>);
+  _i11.Future<bool> deleteRomNote(String? romId, int? noteId) => (super.noSuchMethod(
+    Invocation.method(#deleteRomNote, [romId, noteId]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
 }
 
 /// A class which mocks [DirectoryService].
@@ -646,35 +505,24 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
   @override
   String get romsRootPath => (super.noSuchMethod(
     Invocation.getter(#romsRootPath),
-    returnValue: _i10.dummyValue<String>(
-      this,
-      Invocation.getter(#romsRootPath),
-    ),
+    returnValue: _i10.dummyValue<String>(this, Invocation.getter(#romsRootPath)),
   ) as String);
 
   @override
   String get emulatorsRootPath => (super.noSuchMethod(
     Invocation.getter(#emulatorsRootPath),
-    returnValue: _i10.dummyValue<String>(
-      this,
-      Invocation.getter(#emulatorsRootPath),
-    ),
+    returnValue: _i10.dummyValue<String>(this, Invocation.getter(#emulatorsRootPath)),
   ) as String);
 
   @override
   String get linuxSyncPreset => (super.noSuchMethod(
     Invocation.getter(#linuxSyncPreset),
-    returnValue: _i10.dummyValue<String>(
-      this,
-      Invocation.getter(#linuxSyncPreset),
-    ),
+    returnValue: _i10.dummyValue<String>(this, Invocation.getter(#linuxSyncPreset)),
   ) as String);
 
   @override
-  bool get useFlatEmulatorLayout => (super.noSuchMethod(
-    Invocation.getter(#useFlatEmulatorLayout),
-    returnValue: false,
-  ) as bool);
+  bool get useFlatEmulatorLayout =>
+      (super.noSuchMethod(Invocation.getter(#useFlatEmulatorLayout), returnValue: false) as bool);
 
   @override
   _i6.StorageStatus get status => (super.noSuchMethod(
@@ -689,90 +537,63 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
   ) as _i7.AppPreferences);
 
   @override
-  bool get isSteamDeck =>
-      (super.noSuchMethod(Invocation.getter(#isSteamDeck), returnValue: false)
-          as bool);
+  bool get isSteamDeck => (super.noSuchMethod(Invocation.getter(#isSteamDeck), returnValue: false) as bool);
 
   @override
-  _i8.LinuxEnvironmentStrategy get activeLinuxEnvironment =>
-      (super.noSuchMethod(
-        Invocation.getter(#activeLinuxEnvironment),
-        returnValue: _FakeLinuxEnvironmentStrategy_8(
-          this,
-          Invocation.getter(#activeLinuxEnvironment),
-        ),
-      ) as _i8.LinuxEnvironmentStrategy);
+  _i8.LinuxEnvironmentStrategy get activeLinuxEnvironment => (super.noSuchMethod(
+    Invocation.getter(#activeLinuxEnvironment),
+    returnValue: _FakeLinuxEnvironmentStrategy_8(this, Invocation.getter(#activeLinuxEnvironment)),
+  ) as _i8.LinuxEnvironmentStrategy);
 
   @override
-  set romsRootPath(String? value) => super.noSuchMethod(
-    Invocation.setter(#romsRootPath, value),
-    returnValueForMissingStub: null,
-  );
+  set romsRootPath(String? value) =>
+      super.noSuchMethod(Invocation.setter(#romsRootPath, value), returnValueForMissingStub: null);
 
   @override
-  set emulatorsRootPath(String? value) => super.noSuchMethod(
-    Invocation.setter(#emulatorsRootPath, value),
-    returnValueForMissingStub: null,
-  );
+  set emulatorsRootPath(String? value) =>
+      super.noSuchMethod(Invocation.setter(#emulatorsRootPath, value), returnValueForMissingStub: null);
 
   @override
-  set linuxSyncPreset(String? value) => super.noSuchMethod(
-    Invocation.setter(#linuxSyncPreset, value),
-    returnValueForMissingStub: null,
-  );
+  set linuxSyncPreset(String? value) =>
+      super.noSuchMethod(Invocation.setter(#linuxSyncPreset, value), returnValueForMissingStub: null);
 
   @override
-  set linuxPresetRootPath(String? value) => super.noSuchMethod(
-    Invocation.setter(#linuxPresetRootPath, value),
-    returnValueForMissingStub: null,
-  );
+  set linuxPresetRootPath(String? value) =>
+      super.noSuchMethod(Invocation.setter(#linuxPresetRootPath, value), returnValueForMissingStub: null);
 
   @override
-  set useFlatEmulatorLayout(bool? value) => super.noSuchMethod(
-    Invocation.setter(#useFlatEmulatorLayout, value),
-    returnValueForMissingStub: null,
-  );
+  set useFlatEmulatorLayout(bool? value) =>
+      super.noSuchMethod(Invocation.setter(#useFlatEmulatorLayout, value), returnValueForMissingStub: null);
 
   @override
-  set status(_i6.StorageStatus? value) => super.noSuchMethod(
-    Invocation.setter(#status, value),
-    returnValueForMissingStub: null,
-  );
+  set status(_i6.StorageStatus? value) =>
+      super.noSuchMethod(Invocation.setter(#status, value), returnValueForMissingStub: null);
 
   @override
   set flatpakInstalledCheck(_i11.Future<bool> Function(String)? value) =>
-      super.noSuchMethod(
-        Invocation.setter(#flatpakInstalledCheck, value),
-        returnValueForMissingStub: null,
-      );
+      super.noSuchMethod(Invocation.setter(#flatpakInstalledCheck, value), returnValueForMissingStub: null);
 
   @override
-  _i11.Future<String?> detectEmuDeckRoot() => (super.noSuchMethod(
-    Invocation.method(#detectEmuDeckRoot, []),
-    returnValue: _i11.Future<String?>.value(),
-  ) as _i11.Future<String?>);
+  _i11.Future<String?> detectEmuDeckRoot() =>
+      (super.noSuchMethod(Invocation.method(#detectEmuDeckRoot, []), returnValue: _i11.Future<String?>.value())
+          as _i11.Future<String?>);
 
   @override
   _i11.Future<_i6.StorageStatus> initialize() => (super.noSuchMethod(
     Invocation.method(#initialize, []),
-    returnValue: _i11.Future<_i6.StorageStatus>.value(
-      _FakeStorageStatus_6(this, Invocation.method(#initialize, [])),
-    ),
+    returnValue: _i11.Future<_i6.StorageStatus>.value(_FakeStorageStatus_6(this, Invocation.method(#initialize, []))),
   ) as _i11.Future<_i6.StorageStatus>);
 
   @override
   _i11.Future<String> getDefaultBase() => (super.noSuchMethod(
     Invocation.method(#getDefaultBase, []),
-    returnValue: _i11.Future<String>.value(
-      _i10.dummyValue<String>(this, Invocation.method(#getDefaultBase, [])),
-    ),
+    returnValue: _i11.Future<String>.value(_i10.dummyValue<String>(this, Invocation.method(#getDefaultBase, []))),
   ) as _i11.Future<String>);
 
   @override
-  _i11.Future<String?> resolveSevenZipPath() => (super.noSuchMethod(
-    Invocation.method(#resolveSevenZipPath, []),
-    returnValue: _i11.Future<String?>.value(),
-  ) as _i11.Future<String?>);
+  _i11.Future<String?> resolveSevenZipPath() =>
+      (super.noSuchMethod(Invocation.method(#resolveSevenZipPath, []), returnValue: _i11.Future<String?>.value())
+          as _i11.Future<String?>);
 
   @override
   _i11.Future<void> resetRomsRoot() => (super.noSuchMethod(
@@ -803,60 +624,49 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
   ) as _i11.Future<void>);
 
   @override
-  void loadEmulatorPathOverrides() => super.noSuchMethod(
-    Invocation.method(#loadEmulatorPathOverrides, []),
-    returnValueForMissingStub: null,
-  );
+  void loadEmulatorPathOverrides() =>
+      super.noSuchMethod(Invocation.method(#loadEmulatorPathOverrides, []), returnValueForMissingStub: null);
 
   @override
-  _i11.Future<void> setEmulatorPathOverride(String? emulatorId, String? path) =>
-      (super.noSuchMethod(
-        Invocation.method(#setEmulatorPathOverride, [emulatorId, path]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> setEmulatorPathOverride(String? emulatorId, String? path) => (super.noSuchMethod(
+    Invocation.method(#setEmulatorPathOverride, [emulatorId, path]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  _i11.Future<String?> getEmulatorUrlOverride(String? emulatorId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getEmulatorUrlOverride, [emulatorId]),
-        returnValue: _i11.Future<String?>.value(),
-      ) as _i11.Future<String?>);
+  _i11.Future<String?> getEmulatorUrlOverride(String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorUrlOverride, [emulatorId]),
+    returnValue: _i11.Future<String?>.value(),
+  ) as _i11.Future<String?>);
 
   @override
-  _i11.Future<void> setEmulatorUrlOverride(String? emulatorId, String? url) =>
-      (super.noSuchMethod(
-        Invocation.method(#setEmulatorUrlOverride, [emulatorId, url]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> setEmulatorUrlOverride(String? emulatorId, String? url) => (super.noSuchMethod(
+    Invocation.method(#setEmulatorUrlOverride, [emulatorId, url]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  String? getEmulatorPathOverride(String? emulatorId) => (super.noSuchMethod(
-    Invocation.method(#getEmulatorPathOverride, [emulatorId]),
-  ) as String?);
+  String? getEmulatorPathOverride(String? emulatorId) =>
+      (super.noSuchMethod(Invocation.method(#getEmulatorPathOverride, [emulatorId])) as String?);
 
   @override
-  _i11.Future<void> setEmulatorFlatpakOverride(
-    String? emulatorId,
-    String? packageId,
-  ) => (super.noSuchMethod(
+  _i11.Future<void> setEmulatorFlatpakOverride(String? emulatorId, String? packageId) => (super.noSuchMethod(
     Invocation.method(#setEmulatorFlatpakOverride, [emulatorId, packageId]),
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
 
   @override
-  String? getEmulatorFlatpakOverride(String? emulatorId) => (super.noSuchMethod(
-    Invocation.method(#getEmulatorFlatpakOverride, [emulatorId]),
-  ) as String?);
+  String? getEmulatorFlatpakOverride(String? emulatorId) =>
+      (super.noSuchMethod(Invocation.method(#getEmulatorFlatpakOverride, [emulatorId])) as String?);
 
   @override
-  _i11.Future<String?> getEffectiveFlatpakPackage(String? emulatorId) =>
-      (super.noSuchMethod(
-        Invocation.method(#getEffectiveFlatpakPackage, [emulatorId]),
-        returnValue: _i11.Future<String?>.value(),
-      ) as _i11.Future<String?>);
+  _i11.Future<String?> getEffectiveFlatpakPackage(String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#getEffectiveFlatpakPackage, [emulatorId]),
+    returnValue: _i11.Future<String?>.value(),
+  ) as _i11.Future<String?>);
 
   @override
   _i11.Future<void> setRomsRoot(String? path) => (super.noSuchMethod(
@@ -873,135 +683,83 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
   ) as _i11.Future<void>);
 
   @override
-  bool platformSupportsArchive(String? platformSlug) => (super.noSuchMethod(
-    Invocation.method(#platformSupportsArchive, [platformSlug]),
-    returnValue: false,
-  ) as bool);
+  bool platformSupportsArchive(String? platformSlug) =>
+      (super.noSuchMethod(Invocation.method(#platformSupportsArchive, [platformSlug]), returnValue: false) as bool);
 
   @override
-  _i11.Future<bool> isRomDownloaded(_i3.Game? game) => (super.noSuchMethod(
-    Invocation.method(#isRomDownloaded, [game]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
+  _i11.Future<bool> isRomDownloaded(_i3.Game? game) =>
+      (super.noSuchMethod(Invocation.method(#isRomDownloaded, [game]), returnValue: _i11.Future<bool>.value(false))
+          as _i11.Future<bool>);
 
   @override
   _i11.Future<String> getRomsDirectory() => (super.noSuchMethod(
     Invocation.method(#getRomsDirectory, []),
-    returnValue: _i11.Future<String>.value(
-      _i10.dummyValue<String>(this, Invocation.method(#getRomsDirectory, [])),
-    ),
+    returnValue: _i11.Future<String>.value(_i10.dummyValue<String>(this, Invocation.method(#getRomsDirectory, []))),
   ) as _i11.Future<String>);
 
   @override
   _i11.Future<String> getRomDirectory(_i3.Game? game) => (super.noSuchMethod(
     Invocation.method(#getRomDirectory, [game]),
-    returnValue: _i11.Future<String>.value(
-      _i10.dummyValue<String>(
-        this,
-        Invocation.method(#getRomDirectory, [game]),
-      ),
-    ),
+    returnValue: _i11.Future<String>.value(_i10.dummyValue<String>(this, Invocation.method(#getRomDirectory, [game]))),
   ) as _i11.Future<String>);
 
   @override
   _i11.Future<String> getRomFilePath(_i3.Game? game) => (super.noSuchMethod(
     Invocation.method(#getRomFilePath, [game]),
-    returnValue: _i11.Future<String>.value(
-      _i10.dummyValue<String>(this, Invocation.method(#getRomFilePath, [game])),
-    ),
+    returnValue: _i11.Future<String>.value(_i10.dummyValue<String>(this, Invocation.method(#getRomFilePath, [game]))),
   ) as _i11.Future<String>);
 
   @override
-  _i11.Future<String?> findExistingRomPath(
-    _i3.Game? game, {
-    _i6.FileSystemIndex? index,
-  }) => (super.noSuchMethod(
+  _i11.Future<String?> findExistingRomPath(_i3.Game? game, {_i6.FileSystemIndex? index}) => (super.noSuchMethod(
     Invocation.method(#findExistingRomPath, [game], {#index: index}),
     returnValue: _i11.Future<String?>.value(),
   ) as _i11.Future<String?>);
 
   @override
-  _i11.Future<void> setUseFlatEmulatorLayout(bool? value) =>
-      (super.noSuchMethod(
-        Invocation.method(#setUseFlatEmulatorLayout, [value]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> setUseFlatEmulatorLayout(bool? value) => (super.noSuchMethod(
+    Invocation.method(#setUseFlatEmulatorLayout, [value]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  _i11.Future<String> getEmulatorDirectory(String? emulatorId) =>
+  _i11.Future<String> getEmulatorDirectory(String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorDirectory, [emulatorId]),
+    returnValue: _i11.Future<String>.value(
+      _i10.dummyValue<String>(this, Invocation.method(#getEmulatorDirectory, [emulatorId])),
+    ),
+  ) as _i11.Future<String>);
+
+  @override
+  _i11.Future<String> getEmulatorAppSupportDirectory(String? emulatorName, {String? platformSlug}) =>
       (super.noSuchMethod(
-        Invocation.method(#getEmulatorDirectory, [emulatorId]),
+        Invocation.method(#getEmulatorAppSupportDirectory, [emulatorName], {#platformSlug: platformSlug}),
         returnValue: _i11.Future<String>.value(
           _i10.dummyValue<String>(
             this,
-            Invocation.method(#getEmulatorDirectory, [emulatorId]),
+            Invocation.method(#getEmulatorAppSupportDirectory, [emulatorName], {#platformSlug: platformSlug}),
           ),
         ),
       ) as _i11.Future<String>);
 
   @override
-  _i11.Future<String> getEmulatorAppSupportDirectory(
-    String? emulatorName, {
-    String? platformSlug,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getEmulatorAppSupportDirectory,
-      [emulatorName],
-      {#platformSlug: platformSlug},
-    ),
+  _i11.Future<String> getEmulatorBiosDirectory(String? emulatorId, {String? platformSlug}) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorBiosDirectory, [emulatorId], {#platformSlug: platformSlug}),
     returnValue: _i11.Future<String>.value(
       _i10.dummyValue<String>(
         this,
-        Invocation.method(
-          #getEmulatorAppSupportDirectory,
-          [emulatorName],
-          {#platformSlug: platformSlug},
-        ),
+        Invocation.method(#getEmulatorBiosDirectory, [emulatorId], {#platformSlug: platformSlug}),
       ),
     ),
   ) as _i11.Future<String>);
 
   @override
-  _i11.Future<String> getEmulatorBiosDirectory(
-    String? emulatorId, {
-    String? platformSlug,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getEmulatorBiosDirectory,
-      [emulatorId],
-      {#platformSlug: platformSlug},
-    ),
+  _i11.Future<String> getEmulatorSystemDirectory(String? emulatorId, {String? platformSlug}) => (super.noSuchMethod(
+    Invocation.method(#getEmulatorSystemDirectory, [emulatorId], {#platformSlug: platformSlug}),
     returnValue: _i11.Future<String>.value(
       _i10.dummyValue<String>(
         this,
-        Invocation.method(
-          #getEmulatorBiosDirectory,
-          [emulatorId],
-          {#platformSlug: platformSlug},
-        ),
-      ),
-    ),
-  ) as _i11.Future<String>);
-
-  @override
-  _i11.Future<String> getEmulatorSystemDirectory(
-    String? emulatorId, {
-    String? platformSlug,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #getEmulatorSystemDirectory,
-      [emulatorId],
-      {#platformSlug: platformSlug},
-    ),
-    returnValue: _i11.Future<String>.value(
-      _i10.dummyValue<String>(
-        this,
-        Invocation.method(
-          #getEmulatorSystemDirectory,
-          [emulatorId],
-          {#platformSlug: platformSlug},
-        ),
+        Invocation.method(#getEmulatorSystemDirectory, [emulatorId], {#platformSlug: platformSlug}),
       ),
     ),
   ) as _i11.Future<String>);
@@ -1021,10 +779,7 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
   ) as _i11.Future<void>);
 
   @override
-  _i11.Future<String?> findEmulatorExecutable(
-    String? emulatorId,
-    String? executableName,
-  ) => (super.noSuchMethod(
+  _i11.Future<String?> findEmulatorExecutable(String? emulatorId, String? executableName) => (super.noSuchMethod(
     Invocation.method(#findEmulatorExecutable, [emulatorId, executableName]),
     returnValue: _i11.Future<String?>.value(),
   ) as _i11.Future<String?>);
@@ -1037,11 +792,7 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
     String? exePath, {
     List<String>? args = const [],
   }) => (super.noSuchMethod(
-    Invocation.method(
-      #launchGame,
-      [game, romPath, emulatorId, exePath],
-      {#args: args},
-    ),
+    Invocation.method(#launchGame, [game, romPath, emulatorId, exePath], {#args: args}),
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
@@ -1054,30 +805,20 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
     String? exePath, {
     List<String>? args = const [],
   }) => (super.noSuchMethod(
-    Invocation.method(
-      #launchGameWithHandle,
-      [game, romPath, emulatorId, exePath],
-      {#args: args},
-    ),
+    Invocation.method(#launchGameWithHandle, [game, romPath, emulatorId, exePath], {#args: args}),
     returnValue: _i11.Future<_i12.Process?>.value(),
   ) as _i11.Future<_i12.Process?>);
 
   @override
-  _i11.Future<void> launchStandalone(
-    String? emulatorId,
-    String? exePath, {
-    List<String>? args = const [],
-  }) => (super.noSuchMethod(
-    Invocation.method(#launchStandalone, [emulatorId, exePath], {#args: args}),
-    returnValue: _i11.Future<void>.value(),
-    returnValueForMissingStub: _i11.Future<void>.value(),
-  ) as _i11.Future<void>);
+  _i11.Future<void> launchStandalone(String? emulatorId, String? exePath, {List<String>? args = const []}) =>
+      (super.noSuchMethod(
+        Invocation.method(#launchStandalone, [emulatorId, exePath], {#args: args}),
+        returnValue: _i11.Future<void>.value(),
+        returnValueForMissingStub: _i11.Future<void>.value(),
+      ) as _i11.Future<void>);
 
   @override
-  _i11.Future<bool> isEmulatorInstalled(
-    String? emulatorId,
-    String? executableName,
-  ) => (super.noSuchMethod(
+  _i11.Future<bool> isEmulatorInstalled(String? emulatorId, String? executableName) => (super.noSuchMethod(
     Invocation.method(#isEmulatorInstalled, [emulatorId, executableName]),
     returnValue: _i11.Future<bool>.value(false),
   ) as _i11.Future<bool>);
@@ -1092,50 +833,31 @@ class MockStrategyRegistry extends _i1.Mock implements _i15.StrategyRegistry {
   }
 
   @override
-  Map<String, String> get coreOverrides => (super.noSuchMethod(
-    Invocation.getter(#coreOverrides),
-    returnValue: <String, String>{},
-  ) as Map<String, String>);
+  Map<String, String> get coreOverrides =>
+      (super.noSuchMethod(Invocation.getter(#coreOverrides), returnValue: <String, String>{}) as Map<String, String>);
 
   @override
-  List<_i16.EmulatorStrategy> get allStrategies => (super.noSuchMethod(
-    Invocation.getter(#allStrategies),
-    returnValue: <_i16.EmulatorStrategy>[],
-  ) as List<_i16.EmulatorStrategy>);
+  List<_i16.EmulatorStrategy> get allStrategies =>
+      (super.noSuchMethod(Invocation.getter(#allStrategies), returnValue: <_i16.EmulatorStrategy>[])
+          as List<_i16.EmulatorStrategy>);
 
   @override
-  Map<
-    String,
-    ({List<String> mergedSlugs, List<_i16.EmulatorStrategy> strategies})
-  >
-  detectConflicts() =>
+  Map<String, ({List<String> mergedSlugs, List<_i16.EmulatorStrategy> strategies})> detectConflicts() =>
       (super.noSuchMethod(
         Invocation.method(#detectConflicts, []),
-        returnValue:
-            <
-              String,
-              ({
-                List<String> mergedSlugs,
-                List<_i16.EmulatorStrategy> strategies,
-              })
-            >{},
-      ) as Map<
-        String,
-        ({List<String> mergedSlugs, List<_i16.EmulatorStrategy> strategies})
-      >);
+        returnValue: <String, ({List<String> mergedSlugs, List<_i16.EmulatorStrategy> strategies})>{},
+      ) as Map<String, ({List<String> mergedSlugs, List<_i16.EmulatorStrategy> strategies})>);
 
   @override
   String? getPreferredEmulatorId(String? slug) =>
-      (super.noSuchMethod(Invocation.method(#getPreferredEmulatorId, [slug]))
-          as String?);
+      (super.noSuchMethod(Invocation.method(#getPreferredEmulatorId, [slug])) as String?);
 
   @override
-  _i11.Future<void> setPreference(String? canonicalSlug, String? emulatorId) =>
-      (super.noSuchMethod(
-        Invocation.method(#setPreference, [canonicalSlug, emulatorId]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> setPreference(String? canonicalSlug, String? emulatorId) => (super.noSuchMethod(
+    Invocation.method(#setPreference, [canonicalSlug, emulatorId]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
   _i11.Future<void> clearPreferences() => (super.noSuchMethod(
@@ -1145,61 +867,50 @@ class MockStrategyRegistry extends _i1.Mock implements _i15.StrategyRegistry {
   ) as _i11.Future<void>);
 
   @override
-  _i11.Future<void> setGameEmulatorPreference(
-    String? gameId,
-    String? emulatorId,
-  ) => (super.noSuchMethod(
+  _i11.Future<void> setGameEmulatorPreference(String? gameId, String? emulatorId) => (super.noSuchMethod(
     Invocation.method(#setGameEmulatorPreference, [gameId, emulatorId]),
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
 
   @override
-  String? getGameEmulatorPreference(String? gameId) => (super.noSuchMethod(
-    Invocation.method(#getGameEmulatorPreference, [gameId]),
-  ) as String?);
+  String? getGameEmulatorPreference(String? gameId) =>
+      (super.noSuchMethod(Invocation.method(#getGameEmulatorPreference, [gameId])) as String?);
 
   @override
-  _i11.Future<void> clearGameEmulatorPreference(String? gameId) =>
-      (super.noSuchMethod(
-        Invocation.method(#clearGameEmulatorPreference, [gameId]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> clearGameEmulatorPreference(String? gameId) => (super.noSuchMethod(
+    Invocation.method(#clearGameEmulatorPreference, [gameId]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  _i11.Future<void> setGameCorePreference(String? gameId, String? coreId) =>
-      (super.noSuchMethod(
-        Invocation.method(#setGameCorePreference, [gameId, coreId]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> setGameCorePreference(String? gameId, String? coreId) => (super.noSuchMethod(
+    Invocation.method(#setGameCorePreference, [gameId, coreId]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
   String? getGameCorePreference(String? gameId) =>
-      (super.noSuchMethod(Invocation.method(#getGameCorePreference, [gameId]))
-          as String?);
+      (super.noSuchMethod(Invocation.method(#getGameCorePreference, [gameId])) as String?);
 
   @override
-  _i11.Future<void> clearGameCorePreference(String? gameId) =>
-      (super.noSuchMethod(
-        Invocation.method(#clearGameCorePreference, [gameId]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> clearGameCorePreference(String? gameId) => (super.noSuchMethod(
+    Invocation.method(#clearGameCorePreference, [gameId]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  _i11.Future<void> setCoreOverride(String? slug, String? coreId) =>
-      (super.noSuchMethod(
-        Invocation.method(#setCoreOverride, [slug, coreId]),
-        returnValue: _i11.Future<void>.value(),
-        returnValueForMissingStub: _i11.Future<void>.value(),
-      ) as _i11.Future<void>);
+  _i11.Future<void> setCoreOverride(String? slug, String? coreId) => (super.noSuchMethod(
+    Invocation.method(#setCoreOverride, [slug, coreId]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  String? getCoreOverride(String? slug) =>
-      (super.noSuchMethod(Invocation.method(#getCoreOverride, [slug]))
-          as String?);
+  String? getCoreOverride(String? slug) => (super.noSuchMethod(Invocation.method(#getCoreOverride, [slug])) as String?);
 
   @override
   _i11.Future<void> clearCoreOverride(String? slug) => (super.noSuchMethod(
@@ -1216,33 +927,25 @@ class MockStrategyRegistry extends _i1.Mock implements _i15.StrategyRegistry {
   ) as _i11.Future<void>);
 
   @override
-  _i16.EmulatorStrategy? getStrategyForSlug(
-    String? platformSlug, {
-    String? gameId,
-  }) => (super.noSuchMethod(
-    Invocation.method(#getStrategyForSlug, [platformSlug], {#gameId: gameId}),
-  ) as _i16.EmulatorStrategy?);
-
-  @override
-  List<_i16.EmulatorStrategy> getAllStrategiesForSlug(String? platformSlug) =>
-      (super.noSuchMethod(
-        Invocation.method(#getAllStrategiesForSlug, [platformSlug]),
-        returnValue: <_i16.EmulatorStrategy>[],
-      ) as List<_i16.EmulatorStrategy>);
-
-  @override
-  _i16.EmulatorStrategy? getStrategyById(String? id) =>
-      (super.noSuchMethod(Invocation.method(#getStrategyById, [id]))
+  _i16.EmulatorStrategy? getStrategyForSlug(String? platformSlug, {String? gameId}) =>
+      (super.noSuchMethod(Invocation.method(#getStrategyForSlug, [platformSlug], {#gameId: gameId}))
           as _i16.EmulatorStrategy?);
 
   @override
-  void setNdsCore(String? core) => super.noSuchMethod(
-    Invocation.method(#setNdsCore, [core]),
-    returnValueForMissingStub: null,
-  );
+  List<_i16.EmulatorStrategy> getAllStrategiesForSlug(String? platformSlug) => (super.noSuchMethod(
+    Invocation.method(#getAllStrategiesForSlug, [platformSlug]),
+    returnValue: <_i16.EmulatorStrategy>[],
+  ) as List<_i16.EmulatorStrategy>);
+
+  @override
+  _i16.EmulatorStrategy? getStrategyById(String? id) =>
+      (super.noSuchMethod(Invocation.method(#getStrategyById, [id])) as _i16.EmulatorStrategy?);
+
+  @override
+  void setNdsCore(String? core) =>
+      super.noSuchMethod(Invocation.method(#setNdsCore, [core]), returnValueForMissingStub: null);
 
   @override
   Map<String, dynamic>? getDefinition(String? emulatorId) =>
-      (super.noSuchMethod(Invocation.method(#getDefinition, [emulatorId]))
-          as Map<String, dynamic>?);
+      (super.noSuchMethod(Invocation.method(#getDefinition, [emulatorId])) as Map<String, dynamic>?);
 }

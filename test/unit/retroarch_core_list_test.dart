@@ -30,8 +30,7 @@ void main() {
 
     test('all cores have valid categories', () {
       for (final core in kRetroArchCores) {
-        expect(CoreCategory.values, contains(core.category),
-            reason: 'Core ${core.id} has invalid category');
+        expect(CoreCategory.values, contains(core.category), reason: 'Core ${core.id} has invalid category');
       }
     });
 
@@ -49,8 +48,7 @@ void main() {
     test('core IDs follow libretro naming convention', () {
       final namingPattern = RegExp(r'^[a-z0-9_-]+_libretro$');
       for (final core in kRetroArchCores) {
-        expect(namingPattern.hasMatch(core.id), isTrue,
-            reason: 'Core ${core.id} does not follow naming convention');
+        expect(namingPattern.hasMatch(core.id), isTrue, reason: 'Core ${core.id} does not follow naming convention');
       }
     });
 
@@ -146,13 +144,30 @@ void main() {
 
     test('returns recommended cores for all major platforms', () {
       final majorPlatforms = [
-        'gba', 'gbc', 'gb', 'nes', 'snes', 'n64', 'nds',
-        'psx', 'ps1', 'psp', 'ps2',
-        'megadrive', 'genesis', 'sms', 'gamegear',
-        'saturn', 'dc', 'dreamcast',
-        'arcade', 'neogeo',
-        'atari2600', 'atari7800',
-        'dos', 'msx',
+        'gba',
+        'gbc',
+        'gb',
+        'nes',
+        'snes',
+        'n64',
+        'nds',
+        'psx',
+        'ps1',
+        'psp',
+        'ps2',
+        'megadrive',
+        'genesis',
+        'sms',
+        'gamegear',
+        'saturn',
+        'dc',
+        'dreamcast',
+        'arcade',
+        'neogeo',
+        'atari2600',
+        'atari7800',
+        'dos',
+        'msx',
       ];
 
       for (final slug in majorPlatforms) {
@@ -188,8 +203,7 @@ void main() {
     test('all returned cores support the requested platform', () {
       final cores = getCoresForSlug('gba');
       for (final core in cores) {
-        expect(core.platforms, contains('gba'),
-            reason: 'Core ${core.id} should support gba');
+        expect(core.platforms, contains('gba'), reason: 'Core ${core.id} should support gba');
       }
     });
 
@@ -212,8 +226,7 @@ void main() {
       final map = getRecommendedCoresByCategory();
       for (final entry in map.entries) {
         for (final core in entry.value) {
-          expect(core.isRecommended, isTrue,
-              reason: 'Core ${core.id} in recommended map should be recommended');
+          expect(core.isRecommended, isTrue, reason: 'Core ${core.id} in recommended map should be recommended');
         }
       }
     });
@@ -256,8 +269,7 @@ void main() {
       for (final core in recommendedCores) {
         for (final slug in core.platforms) {
           final defaultCore = getDefaultCoreForSlug(slug);
-          expect(defaultCore, isNotNull,
-              reason: 'Platform $slug (from ${core.id}) should have a default core');
+          expect(defaultCore, isNotNull, reason: 'Platform $slug (from ${core.id}) should have a default core');
         }
       }
     });
@@ -279,8 +291,7 @@ void main() {
     });
 
     test('core count meets minimum threshold', () {
-      expect(kRetroArchCores.length, greaterThan(100),
-          reason: 'Should have at least 100 cores');
+      expect(kRetroArchCores.length, greaterThan(100), reason: 'Should have at least 100 cores');
     });
   });
 
@@ -333,8 +344,7 @@ void main() {
           // NES has multiple recommended cores (mesen, fceumm)
           expect(defaultCore, isNotNull, reason: 'Default core for ${entry.key} should not be null');
         } else {
-          expect(defaultCore, entry.value,
-              reason: 'Default core for ${entry.key} should be ${entry.value}');
+          expect(defaultCore, entry.value, reason: 'Default core for ${entry.key} should be ${entry.value}');
         }
       }
     });

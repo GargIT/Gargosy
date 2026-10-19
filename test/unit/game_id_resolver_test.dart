@@ -8,12 +8,13 @@ void main() {
     test('RomM\'s value wins and the ROM is never read', () async {
       var reads = 0;
       final id = await GameIdResolver.resolve(
-          label: 'test',
-          server: 'SLUS-20675',
-          local: () async {
-            reads++;
-            return 'SLUS-99999';
-          });
+        label: 'test',
+        server: 'SLUS-20675',
+        local: () async {
+          reads++;
+          return 'SLUS-99999';
+        },
+      );
       expect(id, 'SLUS-20675');
       expect(reads, 0);
     });
@@ -22,12 +23,13 @@ void main() {
       for (final server in [null, '', '   ']) {
         var reads = 0;
         final id = await GameIdResolver.resolve(
-            label: 'test',
-            server: server,
-            local: () async {
-              reads++;
-              return 'SLUS-99999';
-            });
+          label: 'test',
+          server: server,
+          local: () async {
+            reads++;
+            return 'SLUS-99999';
+          },
+        );
         expect(id, 'SLUS-99999', reason: '"$server"');
         expect(reads, 1);
       }
@@ -52,13 +54,14 @@ void main() {
     test('a RomM value that doesn\'t look like the id is ignored', () async {
       var reads = 0;
       final id = await GameIdResolver.resolve(
-          label: 't',
-          server: '../../x',
-          shape: serial,
-          local: () async {
-            reads++;
-            return 'SLUS-21050';
-          });
+        label: 't',
+        server: '../../x',
+        shape: serial,
+        local: () async {
+          reads++;
+          return 'SLUS-21050';
+        },
+      );
       expect(id, 'SLUS-21050');
       expect(reads, 1);
       expect(GameIdResolver.server('t', '../../x', shape: serial), isNull);

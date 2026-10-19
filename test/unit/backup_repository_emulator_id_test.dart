@@ -18,7 +18,12 @@ void main() {
 
   test('marking a backup synced keeps the emulator it was made for', () async {
     final repo = BackupRepository();
-    final entry = BackupEntry(timestamp: DateTime(2026, 10, 1), md5Hash: 'a', localZipPath: '${tmp.path}/a.zip', emulatorId: 'ares');
+    final entry = BackupEntry(
+      timestamp: DateTime(2026, 10, 1),
+      md5Hash: 'a',
+      localZipPath: '${tmp.path}/a.zip',
+      emulatorId: 'ares',
+    );
     await repo.addEntry('g', entry);
 
     await repo.markAsSynced('g', entry);

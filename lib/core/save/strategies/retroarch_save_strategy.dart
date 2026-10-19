@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
 import 'dart:isolate';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,7 +17,9 @@ import '../save_state_info.dart';
 import '../save_strategy.dart';
 import '../state_sync_capable.dart';
 import 'ps2_save_folders.dart';
+
 import 'package:path/path.dart' as p; // Import path package
+
 import '../../emulator/platform_slugs.dart';
 import '../../emulator/retroarch_core_list.dart';
 import '../../emulator/retroarch_core_names.dart';
@@ -96,14 +99,14 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   /// What `~` stands for in retroarch.cfg: the portable AppImage's home when
   /// that is the install in use, else the user's.
-  String? get _configHome =>
-      _appImageHome ?? _platform.environment['HOME'] ?? _platform.environment['USERPROFILE'];
+  String? get _configHome => _appImageHome ?? _platform.environment['HOME'] ?? _platform.environment['USERPROFILE'];
 
   /// RetroArch's config folder (holding `saves/` and `states/`) on Linux:
   /// the portable AppImage's, else the preset's (`~/.config/retroarch`, the
   /// Flatpak's, EmuDeck's, RetroDECK's).
   Future<String> _linuxBaseDir(String? slug) async =>
-      await _appImageConfigDir() ?? await _directoryService.getEmulatorAppSupportDirectory('retroarch', platformSlug: slug);
+      await _appImageConfigDir() ??
+      await _directoryService.getEmulatorAppSupportDirectory('retroarch', platformSlug: slug);
 
   final RomGameIds? _gameIds;
 
@@ -115,10 +118,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   @visibleForTesting
   Future<String?> Function(String romPath)? ps2SerialOverride;
 
-  RetroArchSaveStrategy(this._directoryService,
-      {PlatformInfo? platform, AppPreferences? prefs, RomGameIds? gameIds})
-      : _platform = platform ?? PlatformInfo.current,
-        _gameIds = gameIds ?? (prefs == null ? null : RomGameIds(prefs));
+  RetroArchSaveStrategy(this._directoryService, {PlatformInfo? platform, AppPreferences? prefs, RomGameIds? gameIds})
+    : _platform = platform ?? PlatformInfo.current,
+      _gameIds = gameIds ?? (prefs == null ? null : RomGameIds(prefs));
 
   /// The core [game]'s saves come from, as RomM and other clients name it:
   /// its id without `_libretro` (e.g. `pcsx_rearmed`), or null when unknown.
@@ -140,9 +142,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   @override
   Set<String> get stateLabels => {
-        for (final c in kRetroArchCores) c.displayName,
-        for (final id in kRetroArchCoreLibraryNames.keys) _coreLabel(id),
-      };
+    for (final c in kRetroArchCores) c.displayName,
+    for (final id in kRetroArchCoreLibraryNames.keys) _coreLabel(id),
+  };
 
   String? coreIdFor(Game game) {
     final core = _getCoreInfo(game.platformSlug?.toLowerCase() ?? '')?.coreName;
@@ -246,9 +248,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// library_name: PPSSPP keeps PSP saves in its own memory-stick layout,
   /// Azahar a 3DS layout, and Mupen64Plus states under States/.
   static const Map<String, _CoreInfo> _ownLayouts = {
-    'ppsspp':      _CoreInfo('ppsspp_libretro',      'PPSSPP/PSP/SAVEDATA', 'PPSSPP'),
-    'azahar':      _CoreInfo('azahar_libretro',      '3DS',                 'States/3DS'),
-    'mupen64plus': _CoreInfo('mupen64plus_libretro', 'Mupen64Plus',         'States/Mupen64Plus'),
+    'ppsspp': _CoreInfo('ppsspp_libretro', 'PPSSPP/PSP/SAVEDATA', 'PPSSPP'),
+    'azahar': _CoreInfo('azahar_libretro', '3DS', 'States/3DS'),
+    'mupen64plus': _CoreInfo('mupen64plus_libretro', 'Mupen64Plus', 'States/Mupen64Plus'),
   };
 
   @override
@@ -309,14 +311,17 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       if (await io.FileSystemEntity.isDirectory(exePath)) exeDir = exePath;
       candidates.add(p.join(exeDir, 'retroarch.cfg'));
     }
-    debugPrint('[SaveSync] [retroarch] _readConfigSaveRoot candidates=${candidates.length}: ${candidates.map((c) => p.basename(p.dirname(c))).join(', ')}');
+    debugPrint(
+      '[SaveSync] [retroarch] _readConfigSaveRoot candidates=${candidates.length}: ${candidates.map((c) => p.basename(p.dirname(c))).join(', ')}',
+    );
 
     final savefileDirRe = RegExp(r'^\s*savefile_directory\s*=\s*"([^"]*)"');
     final systemDirRe = RegExp(r'^\s*system_directory\s*=\s*"([^"]*)"');
     final coreOptionsDirRe = RegExp(r'^\s*rgui_config_directory\s*=\s*"([^"]*)"');
     final stateDirRe = RegExp(r'^\s*savestate_directory\s*=\s*"([^"]*)"');
     final boolRe = RegExp(
-        r'^\s*(sort_savefiles_enable|sort_savefiles_by_content_enable|savefiles_in_content_dir|sort_savestates_enable|sort_savestates_by_content_enable|savestates_in_content_dir)\s*=\s*"?(true|false)"?');
+      r'^\s*(sort_savefiles_enable|sort_savefiles_by_content_enable|savefiles_in_content_dir|sort_savestates_enable|sort_savestates_by_content_enable|savestates_in_content_dir)\s*=\s*"?(true|false)"?',
+    );
     final libretroPathRe = RegExp(r'^\s*libretro_path\s*=\s*"([^"]*)"');
 
     for (final cfgPath in candidates) {
@@ -515,12 +520,12 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   Future<String?> _ps2Serial(Game game, String romPath) => GameIdResolver.resolve(
-      label: 'LRPS2 ${game.name}',
-      server: GameIdResolver.discSerial(game, romPath),
-      shape: GameIdResolver.ps1ps2Serial,
-      local: () async => ps2SerialOverride != null
-          ? ps2SerialOverride!(romPath)
-          : _gameIds?.discSerial(romPath, platform: 'ps2'));
+    label: 'LRPS2 ${game.name}',
+    server: GameIdResolver.discSerial(game, romPath),
+    shape: GameIdResolver.ps1ps2Serial,
+    local: () async =>
+        ps2SerialOverride != null ? ps2SerialOverride!(romPath) : _gameIds?.discSerial(romPath, platform: 'ps2'),
+  );
 
   /// Which saves on LRPS2's cards are [romPath]'s: those named after its
   /// serial; every save on a per-game card when the serial is unknown. Null
@@ -531,7 +536,8 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return shared ? null : (_) => true;
   }
 
-  static const _lrps2NoSerial = "Gargosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how it "
+  static const _lrps2NoSerial =
+      "Gargosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how it "
       "tells this game's saves from the others on LRPS2's shared memory cards, so its saves weren't synced.";
 
   String get _lrps2TempRoot => p.join(io.Directory.systemTemp.path, 'gargosy_lrps2');
@@ -541,7 +547,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// [sessionStart].
   Future<List<io.File>> _lrps2SaveFolders(Game game, String romPath, DateTime? sessionStart) async {
     final setup = await _lrps2Cards(game, romPath);
-    final existing = [for (final c in setup.cards) if (await c.exists()) c];
+    final existing = [
+      for (final c in setup.cards)
+        if (await c.exists()) c,
+    ];
     if (existing.isEmpty) return const [];
     if (sessionStart != null) {
       final since = sessionStart.subtract(const Duration(seconds: 2));
@@ -580,8 +589,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
         folders.add(io.File(dir.path));
       }
     }
-    debugPrint('[SaveSync] [retroarch] LRPS2: ${folders.length} save folder(s) of this game: '
-        '${folders.map((f) => p.basename(f.path)).toList()}');
+    debugPrint(
+      '[SaveSync] [retroarch] LRPS2: ${folders.length} save folder(s) of this game: '
+      '${folders.map((f) => p.basename(f.path)).toList()}',
+    );
     return folders;
   }
 
@@ -595,7 +606,8 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       incoming = Ps2SaveFolders.savesFromUpload(data, filename);
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "The PS2 memory card from RomM ($filename) isn't one Gargosy can read ($e). Nothing was changed.");
+        "The PS2 memory card from RomM ($filename) isn't one Gargosy can read ($e). Nothing was changed.",
+      );
     }
     final setup = await _lrps2Cards(game, romPath);
     final belongs = await _lrps2SavesOf(game, romPath, setup.shared);
@@ -631,16 +643,20 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       merged = await Isolate.run(() => Ps2SaveFolders.merge(source, mine, belongs));
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "LRPS2's memory card (${p.basename(target.path)}) doesn't look like a PS2 memory card Gargosy can "
-          'safely change ($e), so it was left as it is.');
+        "LRPS2's memory card (${p.basename(target.path)}) doesn't look like a PS2 memory card Gargosy can "
+        'safely change ($e), so it was left as it is.',
+      );
     } on Ps2CardFullException catch (e) {
       throw SaveSyncNotPossibleException(
-          "The save from RomM doesn't fit on LRPS2's memory card (${p.basename(target.path)}) with the saves "
-          'already on it: ${e.needed} KB needed, ${e.capacity} KB on the card. Nothing was changed. Free some '
-          "space in the PS2 BIOS's memory card screen, then pull again.");
+        "The save from RomM doesn't fit on LRPS2's memory card (${p.basename(target.path)}) with the saves "
+        'already on it: ${e.needed} KB needed, ${e.capacity} KB on the card. Nothing was changed. Free some '
+        "space in the PS2 BIOS's memory card screen, then pull again.",
+      );
     }
     if (SaveRestoreGuard.restoreTooLate) {
-      debugPrint('[SaveSync] [retroarch] LRPS2: RetroArch has started without this pull — ${target.path} left as it is');
+      debugPrint(
+        '[SaveSync] [retroarch] LRPS2: RetroArch has started without this pull — ${target.path} left as it is',
+      );
       return;
     }
     await target.parent.create(recursive: true);
@@ -677,7 +693,6 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
   }
 
-
   String _getRetroArchExe() {
     if (_platform.isWindows) return 'RetroArch.exe';
     if (_platform.isMacOS) return 'RetroArch.app/Contents/MacOS/RetroArch';
@@ -697,7 +712,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     // Ensure config flags are parsed on all platforms (Linux, macOS, Windows).
     await _readConfigSaveRoot();
 
-    debugPrint('[SaveSync] [retroarch] getSaveDir: slug="$slug" core=${coreInfo.coreName} saveFolder=${coreInfo.saveFolder}');
+    debugPrint(
+      '[SaveSync] [retroarch] getSaveDir: slug="$slug" core=${coreInfo.coreName} saveFolder=${coreInfo.saveFolder}',
+    );
 
     if (_platform.isLinux) {
       final baseDir = await _linuxBaseDir(slug);
@@ -788,7 +805,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       // A save directly in saveRoot: RetroArch doesn't sort into core
       // folders, though the flag couldn't be read (issue #79, EmuDeck).
       await for (final f in rootDir.list()) {
-        if (f is io.File && isSaveNamedFor(p.basename(f.path), romStem) && _isSaveFile(p.basename(f.path).toLowerCase())) {
+        if (f is io.File &&
+            isSaveNamedFor(p.basename(f.path), romStem) &&
+            _isSaveFile(p.basename(f.path).toLowerCase())) {
           debugPrint('[SaveSync] [retroarch] getSaveDir save in saveRoot → $saveRoot');
           return saveRoot;
         }
@@ -843,13 +862,21 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       .toSet();
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final map = await getSaveFilesWithScreenshots(game, romPath, sessionStart: sessionStart, syncMode: syncMode);
     final slug = game.platformSlug?.toLowerCase() ?? '';
     if (!_isLrps2(slug)) return map.keys.toList();
     // Local backups keep LRPS2's whole cards, not the save folders the sync
     // takes out of them.
-    final files = [for (final f in map.keys) if (!p.isWithin(_lrps2TempRoot, f.path)) f];
+    final files = [
+      for (final f in map.keys)
+        if (!p.isWithin(_lrps2TempRoot, f.path)) f,
+    ];
     if (files.length != map.length) {
       for (final card in (await _lrps2Cards(game, romPath)).cards) {
         if (await card.exists()) files.add(card);
@@ -857,7 +884,6 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
     return files;
   }
-
 
   /// RetroArch's default states folder for [slug], without the per-core
   /// subfolder: `<RetroArch>/states` (EmuDeck and RetroDECK have their own
@@ -1013,7 +1039,12 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<Map<io.File, io.File?>> getSaveFilesWithScreenshots(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<Map<io.File, io.File?>> getSaveFilesWithScreenshots(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final slug = game.platformSlug?.toLowerCase() ?? '';
     final coreInfo = _getCoreInfo(slug);
 
@@ -1088,7 +1119,9 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
             // doesn't exist, the existence check below drops it and no save is
             // reported — which is correct for save-state-only platforms/cores
             // (e.g. Atari 2600/Stella) that have no battery-backed save file.
-            debugPrint('[SaveSync] [retroarch] getSaveFilesWithScreenshots no name-matching save found, probing for $stem.srm only');
+            debugPrint(
+              '[SaveSync] [retroarch] getSaveFilesWithScreenshots no name-matching save found, probing for $stem.srm only',
+            );
             filesToCheck.add(io.File(p.join(rootSaveDir, '$stem.srm')));
           }
         } else {
@@ -1158,7 +1191,12 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
             // Gargosy: a state in an older bundle (issue #30) only where this
             // PC has none of that name; never over one, sync on or off.
             statesDir ??= await _statesDir(slug, coreInfo, destPath);
-            await restoreStateIfMissing(statesDir, file.name, file.content as List<int>, modified: file.lastModDateTime);
+            await restoreStateIfMissing(
+              statesDir,
+              file.name,
+              file.content as List<int>,
+              modified: file.lastModDateTime,
+            );
             continue;
           } else {
             fileTargetDir = await getSaveDir(game, destPath);

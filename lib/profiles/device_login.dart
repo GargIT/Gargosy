@@ -4,8 +4,8 @@ import '../core/romm/romm_auth_client.dart';
 /// their phone, the code expires, or [cancel] is called.
 class DeviceLoginFlow {
   DeviceLoginFlow(this.auth, this.start, {Future<void> Function(Duration)? delay, DateTime Function()? now})
-      : _delay = delay ?? Future<void>.delayed,
-        _now = now ?? DateTime.now;
+    : _delay = delay ?? Future<void>.delayed,
+      _now = now ?? DateTime.now;
 
   final RommAuth auth;
   final DeviceAuthStart start;

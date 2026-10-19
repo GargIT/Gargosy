@@ -235,7 +235,11 @@ void main() {
       unitsDir: p.join(tmp.path, 'u'),
     )!;
     expect(s, isA<StateSyncCapable>());
-    final psp = Game.fromJson({...gameJson(5, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp', 'title_id': 'UCUS98618'});
+    final psp = Game.fromJson({
+      ...gameJson(5, 'Daxter', fsName: 'Daxter (USA).iso'),
+      'platform_slug': 'psp',
+      'title_id': 'UCUS98618',
+    });
     final st = s as StateSyncCapable;
     expect(await st.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'), p.join(dir, 'PSP', 'PPSSPP_STATE'));
     expect((await st.stateFileMatcher(psp, r'D:\roms\psp\Daxter (USA).iso'))!('UCUS98618_1.00_0.ppst'), isTrue);
@@ -252,7 +256,11 @@ void main() {
       unitsDir: p.join(tmp.path, 'u'),
     )!;
     expect(s, isA<StateSyncCapable>());
-    final gc = Game.fromJson({...gameJson(6, 'Zelda', fsName: 'Zelda.rvz'), 'platform_slug': 'ngc', 'save_target': 'GZLE'});
+    final gc = Game.fromJson({
+      ...gameJson(6, 'Zelda', fsName: 'Zelda.rvz'),
+      'platform_slug': 'ngc',
+      'save_target': 'GZLE',
+    });
     final st = s as StateSyncCapable;
     expect(await st.stateDirectory(gc, r'D:\roms\ngc\Zelda.rvz'), p.join(dir, 'StateSaves'));
     expect((await st.stateFileMatcher(gc, r'D:\roms\ngc\Zelda.rvz'))!('GZLE01.s01'), isTrue);

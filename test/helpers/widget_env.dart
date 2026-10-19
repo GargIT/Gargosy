@@ -14,7 +14,12 @@ import 'package:gargosy/ui/widgets/cover_image.dart';
 /// drawn as plain boxes so no test touches the network. Without [root] the
 /// Gargosy folder is one that doesn't exist: nothing is downloaded there and
 /// nothing may be written.
-Widget testApp(Widget child, {List<Override> overrides = const [], GlobalKey<NavigatorState>? navigatorKey, AppRoot? root}) {
+Widget testApp(
+  Widget child, {
+  List<Override> overrides = const [],
+  GlobalKey<NavigatorState>? navigatorKey,
+  AppRoot? root,
+}) {
   final nav = navigatorKey ?? GlobalKey<NavigatorState>();
   return ProviderScope(
     overrides: [

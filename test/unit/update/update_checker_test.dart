@@ -18,11 +18,11 @@ void main() {
   });
 
   UpdateChecker checker(String installed) => UpdateChecker(
-        dio: Dio()..httpClientAdapter = github,
-        prefs: prefs,
-        installed: UpdateVersion.parse(installed)!,
-        clock: () => now,
-      );
+    dio: Dio()..httpClientAdapter = github,
+    prefs: prefs,
+    installed: UpdateVersion.parse(installed)!,
+    clock: () => now,
+  );
 
   group('Latest', () {
     test('asks releases/latest and offers a newer release', () async {
@@ -59,10 +59,10 @@ void main() {
 
     test('picks the newest of releases and pre-releases', () async {
       github.handler = (r) => GitHubReply(200, [
-            githubRelease('0.2.0-preview.12', prerelease: true, tag: 'v0.2.0-preview'),
-            githubRelease('0.1.0'),
-            githubRelease('0.1.1'),
-          ]);
+        githubRelease('0.2.0-preview.12', prerelease: true, tag: 'v0.2.0-preview'),
+        githubRelease('0.1.0'),
+        githubRelease('0.1.1'),
+      ]);
       final result = await checker('0.1.0').check() as UpdateAvailable;
       expect(github.requests.single.uri.toString(), 'https://api.github.com/repos/GargIT/Gargosy/releases?per_page=10');
       expect(result.release.version.toString(), '0.2.0-preview.12');
@@ -71,9 +71,9 @@ void main() {
 
     test('once 0.2.0 ships, a preview user gets 0.2.0', () async {
       github.handler = (r) => GitHubReply(200, [
-            githubRelease('0.2.0'),
-            githubRelease('0.2.0-preview.12', prerelease: true, tag: 'v0.2.0-preview'),
-          ]);
+        githubRelease('0.2.0'),
+        githubRelease('0.2.0-preview.12', prerelease: true, tag: 'v0.2.0-preview'),
+      ]);
       final result = await checker('0.2.0-preview.12').check() as UpdateAvailable;
       expect(result.release.version.toString(), '0.2.0');
     });

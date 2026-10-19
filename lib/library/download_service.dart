@@ -88,7 +88,8 @@ class DownloadService {
         cancelToken: cancel,
         deleteOnError: true,
         onReceiveProgress: (received, total) => onProgress?.call(
-            DownloadProgress(DownloadPhase.downloading, received: received, total: total > 0 ? total : game.fileSize)),
+          DownloadProgress(DownloadPhase.downloading, received: received, total: total > 0 ? total : game.fileSize),
+        ),
       );
       await io.Directory(guard.check(p.dirname(target))).create(recursive: true);
       switch (shape) {

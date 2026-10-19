@@ -37,7 +37,11 @@ class _HalvesAdapter implements HttpClientAdapter {
   final gate = Completer<void>();
 
   @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
     final body = StreamController<Uint8List>();
     () async {
       body.add(Uint8List.fromList([1, 2]));
@@ -45,9 +49,13 @@ class _HalvesAdapter implements HttpClientAdapter {
       body.add(Uint8List.fromList([3, 4]));
       await body.close();
     }();
-    return ResponseBody(body.stream, 200, headers: {
-      'content-length': ['4'],
-    });
+    return ResponseBody(
+      body.stream,
+      200,
+      headers: {
+        'content-length': ['4'],
+      },
+    );
   }
 
   @override
@@ -65,7 +73,13 @@ void main() {
     final adapter = _HalvesAdapter();
     final dio = Dio()..httpClientAdapter = adapter;
     final dirs = _Dirs(tmp.path);
-    final service = EmulatorDownloadService(dio, dirs, _Extract(), _Registry(), platform: const PlatformInfo('windows'));
+    final service = EmulatorDownloadService(
+      dio,
+      dirs,
+      _Extract(),
+      _Registry(),
+      platform: const PlatformInfo('windows'),
+    );
 
     final half = Completer<void>();
     final done = Completer<void>();

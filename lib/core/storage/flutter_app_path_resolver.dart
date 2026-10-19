@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+
 import 'app_path_resolver.dart';
 
 /// [AppPathResolver] backed by `path_provider`/`rootBundle` — used by the

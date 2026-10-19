@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:flutter_test/flutter_test.dart';
+
 import '../helpers/state_sync_test_env.dart';
 
 void main() {
@@ -24,8 +25,7 @@ void main() {
       first = false;
       return failThis; // the first GET succeeds, every later one fails
     };
-    final result =
-        await env.service.pullStates(env.game, env.romPath, priority: stateFileB);
+    final result = await env.service.pullStates(env.game, env.romPath, priority: stateFileB);
     expect(result.downloaded, 1);
     expect(env.stateFile(stateFileB).readAsBytesSync(), stateBytes(2));
     expect(env.api.calls.where((c) => c.startsWith('GET ')).first, 'GET ${b.id}');

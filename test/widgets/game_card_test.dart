@@ -9,15 +9,19 @@ import '../helpers/widget_env.dart';
 void main() {
   testWidgets('shows the cover and the name; A opens, Y favourites', (tester) async {
     final calls = <String>[];
-    await tester.pumpWidget(testApp(Center(
-      child: GameCard(
-        game: game(1, 'Burnout 3'),
-        coverUrl: 'https://romm.example/c.png',
-        autofocus: true,
-        onOpen: () => calls.add('open'),
-        onFavorite: () => calls.add('fav'),
+    await tester.pumpWidget(
+      testApp(
+        Center(
+          child: GameCard(
+            game: game(1, 'Burnout 3'),
+            coverUrl: 'https://romm.example/c.png',
+            autofocus: true,
+            onOpen: () => calls.add('open'),
+            onFavorite: () => calls.add('fav'),
+          ),
+        ),
       ),
-    )));
+    );
     await tester.pumpAndSettle();
     expect(find.text('Burnout 3'), findsOneWidget);
     expect(find.byKey(const ValueKey('cover:https://romm.example/c.png')), findsOneWidget);
@@ -27,7 +31,9 @@ void main() {
   });
 
   testWidgets('marks downloaded and favourite games; no cover shows the title on art', (tester) async {
-    await tester.pumpWidget(testApp(Center(child: GameCard(game: game(1, 'Okami'), downloaded: true, favourite: true))));
+    await tester.pumpWidget(
+      testApp(Center(child: GameCard(game: game(1, 'Okami'), downloaded: true, favourite: true))),
+    );
     expect(find.byIcon(Icons.download_done), findsOneWidget);
     expect(find.byIcon(Icons.favorite), findsOneWidget);
     expect(find.text('Okami'), findsNWidgets(2));

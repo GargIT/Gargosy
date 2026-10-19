@@ -28,8 +28,13 @@ void main() {
   void layout(String profile) {
     final e = ProfilePaths(root, profile).emulatorsDir;
     for (final d in [
-      r'dolphin\GC', r'dolphin\Wii', r'pcsx2\PCSX2\memcards', r'duckstation\memcards', r'ppsspp\PSP\SAVEDATA',
-      r'xenia_canary\content', r'mgba\saves',
+      r'dolphin\GC',
+      r'dolphin\Wii',
+      r'pcsx2\PCSX2\memcards',
+      r'duckstation\memcards',
+      r'ppsspp\PSP\SAVEDATA',
+      r'xenia_canary\content',
+      r'mgba\saves',
     ]) {
       io.Directory(p.join(e, d)).createSync(recursive: true);
     }
@@ -53,7 +58,10 @@ void main() {
         await Pcsx2SaveStrategy(d, d.prefs, platform: platform).getSaveDir(game, r'C:\roms\ps2\g.chd'),
         await DuckstationSaveStrategy(d, d.prefs, platform: platform).getSaveDir(game, r'C:\roms\psx\g.chd'),
         await PpssppSaveStrategy(d, platform: platform).getSaveDir(game, r'C:\roms\psp\g.iso'),
-        await XeniaSaveStrategy(d, platform: platform).getSaveDir(Game.fromJson({...gameJson(2, 'x', platform: 'xbox360'), 'title_id': '4D5307E6'}), r'C:\roms\x\g.iso'),
+        await XeniaSaveStrategy(d, platform: platform).getSaveDir(
+          Game.fromJson({...gameJson(2, 'x', platform: 'xbox360'), 'title_id': '4D5307E6'}),
+          r'C:\roms\x\g.iso',
+        ),
         await MgbaSaveStrategy(d, platform: platform).getSaveDir(game, p.join(root.roms, 'gba', 'g.gba')),
       ];
     }
@@ -81,7 +89,10 @@ void main() {
     final rom = io.File(p.join(root.roms, 'gba', 'g.gba'))..createSync(recursive: true);
     io.File(p.join(root.roms, 'gba', 'g.sav')).writeAsStringSync('old save next to the rom');
     final d = dirs('aaa');
-    final dir = await MgbaSaveStrategy(d, platform: sandboxedPlatform(ProfilePaths(root, 'aaa'))).getSaveDir(game(1, 'g'), rom.path);
+    final dir = await MgbaSaveStrategy(
+      d,
+      platform: sandboxedPlatform(ProfilePaths(root, 'aaa')),
+    ).getSaveDir(game(1, 'g'), rom.path);
     expect(dir, p.join(d.dataDir('mgba'), 'saves'));
   });
 

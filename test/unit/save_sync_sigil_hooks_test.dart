@@ -211,7 +211,12 @@ void main() {
 
     test("an upload is tagged with the game's core, as RomM's player names it, and goes to autosave", () async {
       answerUpload(true);
-      await service.pushSaves(psx, p.join(tmp.path, 'FF7.chd'), emulatorId: 'retroarch', coreOverride: 'pcsx_rearmed_libretro');
+      await service.pushSaves(
+        psx,
+        p.join(tmp.path, 'FF7.chd'),
+        emulatorId: 'retroarch',
+        coreOverride: 'pcsx_rearmed_libretro',
+      );
       final captured = verify(
         romm.uploadSave(
           '42',

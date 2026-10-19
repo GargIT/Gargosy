@@ -15,7 +15,13 @@ void main() {
   late FakeEngine engine;
   late ProviderContainer c;
   const pcsx2 = SaveMaker('pcsx2');
-  final rommSave = SaveEntry(source: SaveSource.romm, fileName: 'g.ps2', savedAt: DateTime(2026), maker: pcsx2, rommSave: const {'id': 4});
+  final rommSave = SaveEntry(
+    source: SaveSource.romm,
+    fileName: 'g.ps2',
+    savedAt: DateTime(2026),
+    maker: pcsx2,
+    rommSave: const {'id': 4},
+  );
   final g = game(1, 'G');
 
   setUp(() {

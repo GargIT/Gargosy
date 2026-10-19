@@ -24,9 +24,13 @@ void main() {
       final ds = await StubDirectoryService.create(exePath: exe);
       final spy = SpyRomGameIds(await ds.appPrefs());
       return (
-        Pcsx2SaveStrategy(ds, await ds.appPrefs(),
-            platform: const PlatformInfo('windows', environment: {}), gameIds: spy),
-        spy
+        Pcsx2SaveStrategy(
+          ds,
+          await ds.appPrefs(),
+          platform: const PlatformInfo('windows', environment: {}),
+          gameIds: spy,
+        ),
+        spy,
       );
     }
 
@@ -60,7 +64,10 @@ void main() {
 
     test('without RomM\'s serial the ROM is read, as before', () async {
       final (pcsx2, spy) = await strategy();
-      await pcsx2.getSaveFiles(Game(id: 'g3', name: 'Game', platformSlug: 'ps2', fileSize: 0), p.join(base.path, 'Game.iso'));
+      await pcsx2.getSaveFiles(
+        Game(id: 'g3', name: 'Game', platformSlug: 'ps2', fileSize: 0),
+        p.join(base.path, 'Game.iso'),
+      );
       expect(spy.reads, greaterThan(0));
     });
   });
@@ -69,8 +76,12 @@ void main() {
     test('the state matcher uses RomM\'s serial, without reading the ROM', () async {
       final ds = await StubDirectoryService.create(appSupport: base.path);
       final spy = SpyRomGameIds(await ds.appPrefs());
-      final duck = DuckstationSaveStrategy(ds, await ds.appPrefs(),
-          platform: const PlatformInfo('windows', environment: {}), gameIds: spy);
+      final duck = DuckstationSaveStrategy(
+        ds,
+        await ds.appPrefs(),
+        platform: const PlatformInfo('windows', environment: {}),
+        gameIds: spy,
+      );
 
       final matches = await duck.stateFileMatcher(
         Game(id: 'd1', name: 'Chrono Cross', platformSlug: 'psx', fileSize: 0, titleId: 'SLUS-01041'),
@@ -93,9 +104,13 @@ void main() {
       final ds = await StubDirectoryService.create(exePath: exe);
       final spy = SpyRomGameIds(await ds.appPrefs());
       return (
-        Pcsx2SaveStrategy(ds, await ds.appPrefs(),
-            platform: const PlatformInfo('windows', environment: {}), gameIds: spy),
-        spy
+        Pcsx2SaveStrategy(
+          ds,
+          await ds.appPrefs(),
+          platform: const PlatformInfo('windows', environment: {}),
+          gameIds: spy,
+        ),
+        spy,
       );
     }
 
@@ -103,16 +118,17 @@ void main() {
       final (pcsx2, spy) = await strategy();
       await pcsx2.getSaveFiles(
         Game(
-            id: 'm',
-            name: 'Two Discs',
-            platformSlug: 'ps2',
-            fileSize: 0,
-            titleId: 'SLUS-11111',
-            hasMultipleFiles: true,
-            files: const [
-              {'file_name': 'Two Discs (Disc 1).chd'},
-              {'file_name': 'Two Discs (Disc 2).chd'},
-            ]),
+          id: 'm',
+          name: 'Two Discs',
+          platformSlug: 'ps2',
+          fileSize: 0,
+          titleId: 'SLUS-11111',
+          hasMultipleFiles: true,
+          files: const [
+            {'file_name': 'Two Discs (Disc 1).chd'},
+            {'file_name': 'Two Discs (Disc 2).chd'},
+          ],
+        ),
         p.join(base.path, 'Two Discs (Disc 2).chd'),
       );
       expect(spy.reads, greaterThan(0));
@@ -122,17 +138,18 @@ void main() {
       final (pcsx2, spy) = await strategy();
       await pcsx2.getSaveFiles(
         Game(
-            id: 'c',
-            name: 'Cue',
-            platformSlug: 'ps2',
-            fileSize: 0,
-            titleId: 'SLUS-22222',
-            hasMultipleFiles: true,
-            files: const [
-              {'file_name': 'Cue.cue'},
-              {'file_name': 'Cue (Track 1).bin'},
-              {'file_name': 'Cue (Track 2).bin'},
-            ]),
+          id: 'c',
+          name: 'Cue',
+          platformSlug: 'ps2',
+          fileSize: 0,
+          titleId: 'SLUS-22222',
+          hasMultipleFiles: true,
+          files: const [
+            {'file_name': 'Cue.cue'},
+            {'file_name': 'Cue (Track 1).bin'},
+            {'file_name': 'Cue (Track 2).bin'},
+          ],
+        ),
         p.join(base.path, 'Cue.cue'),
       );
       expect(spy.reads, 0);
@@ -141,7 +158,9 @@ void main() {
     test('a RomM value that isn\'t a serial is ignored', () async {
       final (pcsx2, spy) = await strategy();
       await pcsx2.getSaveFiles(
-          Game(id: 'b', name: 'Bad', platformSlug: 'ps2', fileSize: 0, titleId: '../../evil'), p.join(base.path, 'Bad.iso'));
+        Game(id: 'b', name: 'Bad', platformSlug: 'ps2', fileSize: 0, titleId: '../../evil'),
+        p.join(base.path, 'Bad.iso'),
+      );
       expect(spy.reads, greaterThan(0));
     });
   });
@@ -155,9 +174,13 @@ void main() {
       final ds = await StubDirectoryService.create(exePath: exe);
       final spy = SpyRomGameIds(await ds.appPrefs());
       return (
-        Pcsx2SaveStrategy(ds, await ds.appPrefs(),
-            platform: const PlatformInfo('windows', environment: {}), gameIds: spy),
-        spy
+        Pcsx2SaveStrategy(
+          ds,
+          await ds.appPrefs(),
+          platform: const PlatformInfo('windows', environment: {}),
+          gameIds: spy,
+        ),
+        spy,
       );
     }
 
@@ -180,17 +203,18 @@ void main() {
       final (pcsx2, spy) = await strategy();
       await pcsx2.getSaveFiles(
         Game(
-            id: 'm3u',
-            name: 'Two Discs',
-            platformSlug: 'ps2',
-            fileSize: 0,
-            titleId: 'SLUS-11111',
-            hasMultipleFiles: true,
-            files: const [
-              {'file_name': 'Two Discs.m3u'},
-              {'file_name': 'Two Discs (Disc 1).chd'},
-              {'file_name': 'Two Discs (Disc 2).chd'},
-            ]),
+          id: 'm3u',
+          name: 'Two Discs',
+          platformSlug: 'ps2',
+          fileSize: 0,
+          titleId: 'SLUS-11111',
+          hasMultipleFiles: true,
+          files: const [
+            {'file_name': 'Two Discs.m3u'},
+            {'file_name': 'Two Discs (Disc 1).chd'},
+            {'file_name': 'Two Discs (Disc 2).chd'},
+          ],
+        ),
         p.join(base.path, 'Two Discs.m3u'),
       );
       expect(spy.reads, 0);

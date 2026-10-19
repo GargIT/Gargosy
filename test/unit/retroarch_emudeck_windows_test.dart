@@ -30,9 +30,13 @@ void main() {
     when(dirService.findEmulatorExecutable(argThat(isA<String>()), argThat(isA<String>())))
         .thenAnswer((_) async => retroArchDir);
     when(dirService.linuxSyncPreset).thenReturn('default');
-    return RetroArchSaveStrategy(dirService,
-        platform: PlatformInfo('windows',
-            environment: {'APPDATA': p.join(home, 'AppData', 'Roaming'), 'USERPROFILE': home}));
+    return RetroArchSaveStrategy(
+      dirService,
+      platform: PlatformInfo(
+        'windows',
+        environment: {'APPDATA': p.join(home, 'AppData', 'Roaming'), 'USERPROFILE': home},
+      ),
+    );
   }
 
   Game psx(String rom) => Game(id: '1', name: rom, fsName: rom, platformSlug: 'psx', fileSize: 0);

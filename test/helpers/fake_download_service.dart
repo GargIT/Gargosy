@@ -10,7 +10,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 /// Writes a small file instead of downloading.
 class FakeDownloadService extends DownloadService {
   FakeDownloadService(RomFiles files, PathGuard guard)
-      : super(dio: Dio(), auth: Options.new, files: files, guard: guard, tempDir: files.root.appData, urlFor: (g) => '');
+    : super(dio: Dio(), auth: Options.new, files: files, guard: guard, tempDir: files.root.appData, urlFor: (g) => '');
 
   final started = <String>[];
 
@@ -25,7 +25,9 @@ class FakeDownloadService extends DownloadService {
     if (hold != null) {
       onProgress?.call(DownloadProgress(holdIn, received: 5, total: 10));
       cancel?.whenCancel.then((_) {
-        if (!hold!.isCompleted) hold!.completeError(DioException.requestCancelled(requestOptions: RequestOptions(), reason: 'cancelled'));
+        if (!hold!.isCompleted) {
+          hold!.completeError(DioException.requestCancelled(requestOptions: RequestOptions(), reason: 'cancelled'));
+        }
       });
       await hold!.future;
     }

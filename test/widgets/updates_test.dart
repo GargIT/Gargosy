@@ -43,16 +43,30 @@ class _GitHub implements HttpClientAdapter {
   final asked = <String>[];
 
   @override
-  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
     final url = options.uri.toString();
     asked.add(url);
     if (url == _zipUrl) {
-      return ResponseBody.fromBytes(zip, 200, headers: {Headers.contentLengthHeader: ['${zip.length}']});
+      return ResponseBody.fromBytes(
+        zip,
+        200,
+        headers: {
+          Headers.contentLengthHeader: ['${zip.length}'],
+        },
+      );
     }
     if (releases == null) throw DioException.connectionError(requestOptions: options, reason: 'offline');
-    return ResponseBody.fromString(jsonEncode(releases), 200, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(releases),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -102,34 +116,40 @@ void main() {
     quits = 0;
     opened = [];
     AppConstants.version = '0.1.0';
-    c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root),
-      appPreferencesProvider.overrideWithValue(prefs),
-      updateDioProvider.overrideWithValue(Dio()..httpClientAdapter = github),
-      installedVersionProvider.overrideWithValue(UpdateVersion.parse('0.1.0')!),
-      updateInstallerProvider.overrideWith((ref) => UpdateInstaller(
+    c = ProviderContainer(
+      overrides: [
+        appRootProvider.overrideWithValue(root),
+        appPreferencesProvider.overrideWithValue(prefs),
+        updateDioProvider.overrideWithValue(Dio()..httpClientAdapter = github),
+        installedVersionProvider.overrideWithValue(UpdateVersion.parse('0.1.0')!),
+        updateInstallerProvider.overrideWith(
+          (ref) => UpdateInstaller(
             root: root,
             pid: 77,
             args: const ['--fullscreen'],
             currentVersion: '0.1.0',
             platform: PlatformInfo('windows', environment: env),
             start: (exe, args) async => updaterStarts.add([exe, ...args]),
-          )),
-      appQuitProvider.overrideWithValue(() async => quits++),
-      externalOpenerProvider.overrideWithValue(opened.add),
-      rommServerVersionProvider.overrideWith((ref) async => null),
-    ]);
+          ),
+        ),
+        appQuitProvider.overrideWithValue(() async => quits++),
+        externalOpenerProvider.overrideWithValue(opened.add),
+        rommServerVersionProvider.overrideWith((ref) async => null),
+      ],
+    );
     addTearDown(c.dispose);
     final nav = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        navigatorKey: nav,
-        theme: gargosyTheme(),
-        builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: const Scaffold(body: SingleChildScrollView(child: AboutSection())),
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: c,
+        child: MaterialApp(
+          navigatorKey: nav,
+          theme: gargosyTheme(),
+          builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
+          home: const Scaffold(body: SingleChildScrollView(child: AboutSection())),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
@@ -172,7 +192,10 @@ void main() {
     expect(updaterStarts, hasLength(1));
     final args = updaterStarts.single;
     expect(args.first, p.join(root.appData, 'update', 'GargosyUpdate.exe'));
-    expect(args, containsAllInOrder(['--pid', '77', '--from', p.join(root.appData, 'update', 'Gargosy'), '--version', '0.2.0']));
+    expect(
+      args,
+      containsAllInOrder(['--pid', '77', '--from', p.join(root.appData, 'update', 'Gargosy'), '--version', '0.2.0']),
+    );
     expect(args.last, '--fullscreen');
     expect(io.File(p.join(root.appData, 'update', 'Gargosy', 'Gargosy.exe')).existsSync(), isTrue);
     expect(quits, 1);
@@ -262,14 +285,20 @@ void main() {
   test('the line in About after an update', () {
     expect(updateOutcomeLine(null, '0.2.0'), isNull);
     expect(updateOutcomeLine(const UpdatedFrom('0.1.0'), '0.2.0'), 'Updated from v0.1.0 to v0.2.0.');
-    expect(updateOutcomeLine(const UpdateFailed('Failed: x is locked.'), '0.1.0'),
-        "The update couldn't be installed: Failed: x is locked.");
+    expect(
+      updateOutcomeLine(const UpdateFailed('Failed: x is locked.'), '0.1.0'),
+      "The update couldn't be installed: Failed: x is locked.",
+    );
   });
 
   testWidgets('the dot shows only while an update is available', (tester) async {
     await pump(tester);
-    await tester.pumpWidget(UncontrolledProviderScope(
-        container: c, child: const MaterialApp(home: UpdateDot(child: SizedBox(width: 34, height: 34)))));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: c,
+        child: const MaterialApp(home: UpdateDot(child: SizedBox(width: 34, height: 34))),
+      ),
+    );
     expect(find.byKey(const Key('update-dot')), findsNothing);
     await tester.runAsync(() => c.read(updateStateProvider.notifier).checkNow());
     await tester.pump();
@@ -278,24 +307,29 @@ void main() {
 
   testWidgets("the user menu's Update available opens About", (tester) async {
     final profile = Profile(
-        id: 'p1',
-        name: 'Ann',
-        colorIndex: 0,
-        serverUrl: 'https://romm.local',
-        rommUserId: 1,
-        rommUsername: 'ann',
-        createdAt: DateTime(2026));
+      id: 'p1',
+      name: 'Ann',
+      colorIndex: 0,
+      serverUrl: 'https://romm.local',
+      rommUserId: 1,
+      rommUsername: 'ann',
+      createdAt: DateTime(2026),
+    );
     UserMenuChoice? picked;
-    await tester.pumpWidget(ProviderScope(
-      child: MaterialApp(
-        theme: gargosyTheme(),
-        home: Builder(
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: gargosyTheme(),
+          home: Builder(
             builder: (context) => TextButton(
-                onPressed: () async =>
-                    picked = await showUserMenu(context, profile: profile, update: 'Update available: 0.2.0'),
-                child: const Text('open'))),
+              onPressed: () async =>
+                  picked = await showUserMenu(context, profile: profile, update: 'Update available: 0.2.0'),
+              child: const Text('open'),
+            ),
+          ),
+        ),
       ),
-    ));
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Update available: 0.2.0'));

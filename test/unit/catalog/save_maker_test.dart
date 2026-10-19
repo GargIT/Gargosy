@@ -6,8 +6,14 @@ void main() {
   const ids = {'retroarch', 'ares', 'duckstation', 'mgba', 'pcsx2'};
 
   test('a RetroArch core name is RetroArch with that core', () {
-    expect(resolveSaveMaker('mupen64plus_next', emulatorIds: ids), const SaveMaker('retroarch', coreId: 'mupen64plus_next'));
-    expect(resolveSaveMaker('pcsx_rearmed_libretro', emulatorIds: ids), const SaveMaker('retroarch', coreId: 'pcsx_rearmed'));
+    expect(
+      resolveSaveMaker('mupen64plus_next', emulatorIds: ids),
+      const SaveMaker('retroarch', coreId: 'mupen64plus_next'),
+    );
+    expect(
+      resolveSaveMaker('pcsx_rearmed_libretro', emulatorIds: ids),
+      const SaveMaker('retroarch', coreId: 'pcsx_rearmed'),
+    );
   });
 
   test('a standalone emulator id is that emulator', () {

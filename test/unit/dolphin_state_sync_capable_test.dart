@@ -18,7 +18,12 @@ import '../helpers/profile_test_env.dart';
 
 /// A state as Dolphin writes it (State.cpp `WriteHeadersToFile`): the legacy
 /// header, the version header and the build string, then the payload.
-Uint8List dolphinState({String gameId = 'GZLE01', int lzo = 0, int stateVersion = 170, String version = 'Dolphin 2609a'}) {
+Uint8List dolphinState({
+  String gameId = 'GZLE01',
+  int lzo = 0,
+  int stateVersion = 170,
+  String version = 'Dolphin 2609a',
+}) {
   final b = Uint8List(32 + version.length + 64);
   final d = ByteData.sublistView(b);
   b.setAll(0, gameId.codeUnits);
@@ -39,10 +44,19 @@ void main() {
   late DolphinSaveStrategy s;
   setUp(() {
     read = [];
-    s = DolphinSaveStrategy(DirectoryService(MemoryPrefs()), identify: (path, {platform}) async {
-      read.add('$platform $path');
-      return const SigilId(titleId: '475A4C45', rawSerial: 'GZLE', saveId: '', platform: 'gamecube', fromBinary: true);
-    });
+    s = DolphinSaveStrategy(
+      DirectoryService(MemoryPrefs()),
+      identify: (path, {platform}) async {
+        read.add('$platform $path');
+        return const SigilId(
+          titleId: '475A4C45',
+          rawSerial: 'GZLE',
+          saveId: '',
+          platform: 'gamecube',
+          fromBinary: true,
+        );
+      },
+    );
   });
 
   group('the matcher', () {

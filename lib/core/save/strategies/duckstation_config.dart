@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
 import 'dart:isolate';
+
 import 'package:flutter/foundation.dart';
 
 import '../../platform/platform_info.dart';
@@ -18,8 +19,7 @@ enum DuckstationCardType {
   const DuckstationCardType(this.iniValue);
   final String iniValue;
 
-  bool get isPerGame =>
-      this == perGameSerial || this == perGameTitle || this == perGameFileTitle;
+  bool get isPerGame => this == perGameSerial || this == perGameTitle || this == perGameFileTitle;
 
   static DuckstationCardType? fromIni(String? value) {
     if (value == null) return null;
@@ -61,8 +61,7 @@ class DuckstationMemcardConfig {
   DuckstationCardType typeOf(int port) =>
       cardTypes[port] ?? (port == 1 ? DuckstationCardType.perGameTitle : DuckstationCardType.none);
 
-  Iterable<int> portsOfType(bool Function(DuckstationCardType type) test) =>
-      ports.where((port) => test(typeOf(port)));
+  Iterable<int> portsOfType(bool Function(DuckstationCardType type) test) => ports.where((port) => test(typeOf(port)));
 
   /// Builds the config from the `[MemoryCards]` sections of [globalIni] and
   /// [gameIni] (either may be null).
@@ -117,8 +116,8 @@ String duckstationSafeFileName(String name, PlatformInfo platform) {
   final forbidden = platform.isWindows
       ? RegExp(r'[\x00-\x1F/\\<>:"|?*]')
       : platform.isMacOS
-          ? RegExp(r'[\x00-\x1F/*:]')
-          : RegExp(r'[\x00-\x1F/*]');
+      ? RegExp(r'[\x00-\x1F/*:]')
+      : RegExp(r'[\x00-\x1F/*]');
   final safe = name.replaceAll(forbidden, '_');
   return platform.isWindows && safe.endsWith('.') ? '${safe.substring(0, safe.length - 1)}_' : safe;
 }
@@ -138,8 +137,7 @@ class DuckstationGameDb {
 
   /// The card title for [serial], or null when the database doesn't know it
   /// or can't be read.
-  static Future<String?> saveTitle(String resourcesDir, String serial,
-      {required bool usePlaylistTitle}) async {
+  static Future<String?> saveTitle(String resourcesDir, String serial, {required bool usePlaylistTitle}) async {
     final key = serial.toUpperCase();
     if (usePlaylistTitle) {
       final set = await _load(_discSetsPath(resourcesDir), 'titles', parseDiscSets);
@@ -292,9 +290,7 @@ class DuckstationGameDb {
   static String _yamlScalar(String raw) {
     final value = raw.trim();
     if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
-      return value
-          .substring(1, value.length - 1)
-          .replaceAllMapped(RegExp(r'\\(.)'), (m) => m.group(1)!);
+      return value.substring(1, value.length - 1).replaceAllMapped(RegExp(r'\\(.)'), (m) => m.group(1)!);
     }
     if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
       return value.substring(1, value.length - 1).replaceAll("''", "'");

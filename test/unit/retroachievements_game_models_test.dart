@@ -11,7 +11,15 @@ void main() {
       'ra_id': 1,
       'merged_ra_metadata': {
         'achievements': [
-          {'ra_id': 20, 'title': 'B', 'description': 'd', 'points': 10, 'badge_id': '2', 'display_order': 2, 'type': 'missable'},
+          {
+            'ra_id': 20,
+            'title': 'B',
+            'description': 'd',
+            'points': 10,
+            'badge_id': '2',
+            'display_order': 2,
+            'type': 'missable',
+          },
           {'ra_id': 10, 'title': 'A', 'description': 'd', 'points': 5, 'badge_id': '1', 'display_order': 1, 'type': ''},
         ],
       },

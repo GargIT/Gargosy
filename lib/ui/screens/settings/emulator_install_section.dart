@@ -58,10 +58,11 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     final refused = await ref.read(playControllerProvider.notifier).openEmulator(e.id, e.name, exe);
     if (!mounted) return;
     showToast(
-        context,
-        refused ??
-            "${e.name} is open with this profile's settings. Set it up there and close it when you're done. "
-                "A game started from it doesn't sync its saves: start games from Gargosy.");
+      context,
+      refused ??
+          "${e.name} is open with this profile's settings. Set it up there and close it when you're done. "
+              "A game started from it doesn't sync its saves: start games from Gargosy.",
+    );
   }
 
   Future<void> _import(EmulatorInfo e) async {
@@ -101,7 +102,11 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
           if (!mounted) return;
           if (pr.error != null) error = pr.error;
           if (pr.status == 'done' && pr.error == null) installed = true;
-          setState(() => _busy[e.id] = pr.status.startsWith('Extracting') ? 'Unpacking…' : 'Downloading ${(pr.percent * 100).round()} %');
+          setState(
+            () => _busy[e.id] = pr.status.startsWith('Extracting')
+                ? 'Unpacking…'
+                : 'Downloading ${(pr.percent * 100).round()} %',
+          );
         }
       }
     } on Object catch (err) {
@@ -132,13 +137,15 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
   }
 
   Future<void> _remove(EmulatorInfo e) async {
-    final ok = await showConfirm(context,
-        title: 'Remove ${e.name}?',
-        body: "The emulator's program is removed. Every profile's saves and settings for it stay.",
-        yes: 'Remove',
-        no: 'Keep',
-        focusYes: false,
-        danger: true);
+    final ok = await showConfirm(
+      context,
+      title: 'Remove ${e.name}?',
+      body: "The emulator's program is removed. Every profile's saves and settings for it stay.",
+      yes: 'Remove',
+      no: 'Keep',
+      focusYes: false,
+      danger: true,
+    );
     if (!ok) return;
     await ref.read(emulatorLibraryProvider)?.remove(e.id);
     ref.invalidate(emulatorsProvider);
@@ -169,41 +176,56 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     final state = !e.supported
         ? 'Not supported yet'
         : (!installed
-            ? e.downloadOff ?? 'Not installed'
-            : (e.version == null ? 'Installed' : 'Installed · ${e.version}'));
-    return Row(children: [
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(e.name,
-              style: TextStyle(
-                  fontSize: GFont.lg, fontWeight: FontWeight.w700, color: e.supported ? GColors.fg : GColors.fgMuted)),
-          Text(e.exe, style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
-        ]),
-      ),
-      Text(busy ?? state,
-          style: TextStyle(fontSize: GFont.md, color: installed && e.supported ? GColors.success : GColors.fgSecondary)),
-      if (busy == null && e.supported) ...[
-        const SizedBox(width: GSpace.s4),
-        if (installed) ...[
-          SettingsButton(label: 'Open', icon: Icons.open_in_new, onActivate: () => _open(e)),
-          const SizedBox(width: GSpace.s2),
-        ],
-        SettingsButton(label: 'Import from folder', icon: Icons.folder_open_outlined, onActivate: () => _import(e)),
-        if (e.downloadOff == null) ...[
-          const SizedBox(width: GSpace.s2),
-          SettingsButton(
-            label: installed ? 'Update' : 'Download',
-            icon: installed ? Icons.update : Icons.download_outlined,
-            kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
-            onActivate: () => _download(e),
+              ? e.downloadOff ?? 'Not installed'
+              : (e.version == null ? 'Installed' : 'Installed · ${e.version}'));
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                e.name,
+                style: TextStyle(
+                  fontSize: GFont.lg,
+                  fontWeight: FontWeight.w700,
+                  color: e.supported ? GColors.fg : GColors.fgMuted,
+                ),
+              ),
+              Text(
+                e.exe,
+                style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+              ),
+            ],
           ),
-        ],
-        if (installed) ...[
-          const SizedBox(width: GSpace.s2),
-          SettingsButton(label: 'Remove', icon: Icons.delete_outline, onActivate: () => _remove(e)),
+        ),
+        Text(
+          busy ?? state,
+          style: TextStyle(fontSize: GFont.md, color: installed && e.supported ? GColors.success : GColors.fgSecondary),
+        ),
+        if (busy == null && e.supported) ...[
+          const SizedBox(width: GSpace.s4),
+          if (installed) ...[
+            SettingsButton(label: 'Open', icon: Icons.open_in_new, onActivate: () => _open(e)),
+            const SizedBox(width: GSpace.s2),
+          ],
+          SettingsButton(label: 'Import from folder', icon: Icons.folder_open_outlined, onActivate: () => _import(e)),
+          if (e.downloadOff == null) ...[
+            const SizedBox(width: GSpace.s2),
+            SettingsButton(
+              label: installed ? 'Update' : 'Download',
+              icon: installed ? Icons.update : Icons.download_outlined,
+              kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
+              onActivate: () => _download(e),
+            ),
+          ],
+          if (installed) ...[
+            const SizedBox(width: GSpace.s2),
+            SettingsButton(label: 'Remove', icon: Icons.delete_outline, onActivate: () => _remove(e)),
+          ],
         ],
       ],
-    ]);
+    );
   }
 
   @override
@@ -213,48 +235,64 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('$e')),
       data: (list) {
-        final supported = [for (final e in list) if (e.supported) e];
-        final notYet = [for (final e in list) if (!e.supported) e];
-        final installed = {for (final e in supported) if (e.installedExe != null) e.id};
+        final supported = [
+          for (final e in list)
+            if (e.supported) e,
+        ];
+        final notYet = [
+          for (final e in list)
+            if (!e.supported) e,
+        ];
+        final installed = {
+          for (final e in supported)
+            if (e.installedExe != null) e.id,
+        };
         final rpcs3Exe = supported.where((e) => e.id == 'rpcs3').firstOrNull?.installedExe;
         final ps3Firmware = ref.watch(ps3FirmwareProvider);
-        return ListView(children: [
-          SettingsCard(
-            title: 'Emulators',
-            icon: Icons.videogame_asset,
-            note: 'Gargosy keeps its own copy of each emulator, in the Gargosy folder. '
-                'Every profile gets its own saves and settings for it.',
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(spacing: GSpace.s2, runSpacing: GSpace.s2, children: [
-                  SettingsButton(
-                    label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
-                    icon: Icons.memory,
-                    onActivate: _gettingBios ? null : () => _getBios(installed),
-                  ),
-                  if (rpcs3Exe != null && ps3Firmware != null)
-                    SettingsButton(
-                      key: const Key('ps3-firmware'),
-                      label: _installingFirmware
-                          ? 'Installing the PS3 firmware…'
-                          : 'Install PS3 firmware from bios\\ (${ps3Firmware.installed ? 'installed' : 'not installed'})',
-                      icon: Icons.system_update_alt,
-                      onActivate: _installingFirmware ? null : () => _installPs3Firmware(rpcs3Exe),
-                    ),
-                ]),
-              ),
-              for (final e in supported) _row(e),
-            ],
-          ),
-          if (notYet.isNotEmpty)
+        return ListView(
+          children: [
             SettingsCard(
-              title: 'Not supported yet',
-              icon: Icons.hourglass_empty,
-              note: "Gargosy can't point these at a profile's own folder yet, so it doesn't run them.",
-              children: [for (final e in notYet) _row(e)],
+              title: 'Emulators',
+              icon: Icons.videogame_asset,
+              note:
+                  'Gargosy keeps its own copy of each emulator, in the Gargosy folder. '
+                  'Every profile gets its own saves and settings for it.',
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: GSpace.s2,
+                    runSpacing: GSpace.s2,
+                    children: [
+                      SettingsButton(
+                        label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
+                        icon: Icons.memory,
+                        onActivate: _gettingBios ? null : () => _getBios(installed),
+                      ),
+                      if (rpcs3Exe != null && ps3Firmware != null)
+                        SettingsButton(
+                          key: const Key('ps3-firmware'),
+                          label: _installingFirmware
+                              ? 'Installing the PS3 firmware…'
+                              : 'Install PS3 firmware from bios\\ (${ps3Firmware.installed ? 'installed' : 'not installed'})',
+                          icon: Icons.system_update_alt,
+                          onActivate: _installingFirmware ? null : () => _installPs3Firmware(rpcs3Exe),
+                        ),
+                    ],
+                  ),
+                ),
+                for (final e in supported) _row(e),
+              ],
             ),
-        ]);
+            if (notYet.isNotEmpty)
+              SettingsCard(
+                title: 'Not supported yet',
+                icon: Icons.hourglass_empty,
+                note: "Gargosy can't point these at a profile's own folder yet, so it doesn't run them.",
+                children: [for (final e in notYet) _row(e)],
+              ),
+          ],
+        );
       },
     );
   }

@@ -10,7 +10,7 @@ import '../helpers/state_sync_test_env.dart';
 /// PCSX2's states, labelled as a core-running strategy labels them.
 class _Labelled extends Pcsx2SaveStrategy {
   _Labelled(StateSyncTestEnv env)
-      : super(env.pcsx2.directoryService, env.pcsx2.prefs, platform: const PlatformInfo('windows', environment: {}));
+    : super(env.pcsx2.directoryService, env.pcsx2.prefs, platform: const PlatformInfo('windows', environment: {}));
   String? label = 'PCSX ReARMed';
   @override
   String? stateLabelFor(Game game) => label;

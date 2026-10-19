@@ -127,8 +127,12 @@ enum _Phase { head, skip, probe, copy }
 
 /// Writes the game partition of the Redump image [src] to [dst] (an XISO).
 /// [onProgress] hears the bytes written and the total.
-Future<void> redumpToXiso(String src, String dst,
-    {int gamePartition = xgd1GamePartition, void Function(int done, int total)? onProgress}) async {
+Future<void> redumpToXiso(
+  String src,
+  String dst, {
+  int gamePartition = xgd1GamePartition,
+  void Function(int done, int total)? onProgress,
+}) async {
   final input = io.File(src).openSync();
   final output = io.File(dst).openSync(mode: io.FileMode.write);
   try {

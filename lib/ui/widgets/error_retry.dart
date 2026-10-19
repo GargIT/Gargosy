@@ -26,10 +26,7 @@ class ErrorRetry extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: GFont.lg,
-                color: GColors.fgSecondary,
-              ),
+              style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
             ),
             const SizedBox(height: GSpace.s4),
             GFocusable(
@@ -37,20 +34,11 @@ class ErrorRetry extends StatelessWidget {
               borderRadius: GRadius.pill,
               onActivate: onRetry,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: GSpace.s6,
-                  vertical: GSpace.s3,
-                ),
-                decoration: BoxDecoration(
-                  color: GColors.surface,
-                  borderRadius: BorderRadius.circular(GRadius.pill),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: GSpace.s6, vertical: GSpace.s3),
+                decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
                 child: const Text(
                   'Retry',
-                  style: TextStyle(
-                    fontSize: GFont.lg,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -70,7 +58,9 @@ String describeLoadError(Object error) {
   if (error is DioException) {
     final status = error.response?.statusCode;
     final path = error.requestOptions.path;
-    if (status != null && status >= 500) return 'RomM had a problem answering (error $status for $path). Try again in a moment.';
+    if (status != null && status >= 500) {
+      return 'RomM had a problem answering (error $status for $path). Try again in a moment.';
+    }
     if (status != null) return 'RomM said no (error $status for $path).';
   }
   return 'RomM could not be read ($text).';

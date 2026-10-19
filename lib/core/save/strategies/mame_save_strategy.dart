@@ -40,8 +40,12 @@ class MameSaveStrategy extends SaveStrategy with StateSyncCapable {
   Future<String?> getSaveDir(Game game, String romPath) async => null;
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async =>
-      const [];
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => const [];
 
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => false;

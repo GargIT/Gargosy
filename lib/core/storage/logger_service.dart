@@ -2,6 +2,7 @@
 // Gargosy: init() also writes every line, redacted, with time, level and the
 // profile's short id, to a FileLogSink (issue #1); error() for uncaught errors.
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'file_log_sink.dart';
@@ -12,8 +13,7 @@ class LogEntry {
   final String message;
   final String? level;
 
-  LogEntry(this.message, {this.level, DateTime? timestamp})
-      : timestamp = timestamp ?? DateTime.now();
+  LogEntry(this.message, {this.level, DateTime? timestamp}) : timestamp = timestamp ?? DateTime.now();
 
   @override
   String toString() => '[${timestamp.toIso8601String().substring(11, 19)}] ${level != null ? '[$level] ' : ''}$message';

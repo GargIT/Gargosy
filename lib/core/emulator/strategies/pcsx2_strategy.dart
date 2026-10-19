@@ -2,7 +2,9 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import '../../storage/profile_rooted.dart';
+
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
@@ -153,8 +155,13 @@ class Pcsx2Strategy extends EmulatorStrategy {
         return;
       }
 
-      await updateIniFile(io.File(p.join(dir, 'secrets.ini')), (secrets) => secrets.set(_raSection, 'Token', login.token),
-          private: true, create: true, windows: platform.isWindows);
+      await updateIniFile(
+        io.File(p.join(dir, 'secrets.ini')),
+        (secrets) => secrets.set(_raSection, 'Token', login.token),
+        private: true,
+        create: true,
+        windows: platform.isWindows,
+      );
 
       await updateIniFile(iniFile, (config) {
         var changed = false;
@@ -204,7 +211,7 @@ class Pcsx2Strategy extends EmulatorStrategy {
     // This ensures saves and settings are stored in the emulator directory.
     final exePath = await _directoryService.findEmulatorExecutable(emulatorId, windowsExecutable);
     final targetDir = exePath != null ? io.File(exePath).parent.path : installDir;
-    
+
     final portableIni = io.File(p.join(targetDir, 'portable.ini'));
     if (!await portableIni.exists()) {
       await portableIni.create();

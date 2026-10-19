@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/state_sync_capable.dart';
@@ -60,8 +61,11 @@ void main() {
   test('looksLikeValidState requires the zip header and end record PCSX2 states carry', () {
     const end = [0x50, 0x4B, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     expect(env.strategy.looksLikeValidState(Uint8List.fromList([0x50, 0x4B, 3, 4, 0, ...end])), isTrue);
-    expect(env.strategy.looksLikeValidState(Uint8List.fromList([0x50, 0x4B, 3, 4, ...List.filled(40, 0)])), isFalse,
-        reason: 'no end record: the write was cut off');
+    expect(
+      env.strategy.looksLikeValidState(Uint8List.fromList([0x50, 0x4B, 3, 4, ...List.filled(40, 0)])),
+      isFalse,
+      reason: 'no end record: the write was cut off',
+    );
     expect(env.strategy.looksLikeValidState(Uint8List.fromList([1, 2, 3, 4, 5, ...end])), isFalse);
     expect(env.strategy.looksLikeValidState(Uint8List(0)), isFalse);
   });

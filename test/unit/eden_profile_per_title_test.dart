@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -65,9 +66,13 @@ void main() {
     final saveDir = await strategy.getSaveDir(game, romPath);
 
     expect(saveDir, isNotNull);
-    expect(saveDir, contains(correctProfile),
-        reason: 'Should resolve to the profile that actually has a save for titleId=$thisTitleId, '
-            'not just the profile with the globally-newest file');
+    expect(
+      saveDir,
+      contains(correctProfile),
+      reason:
+          'Should resolve to the profile that actually has a save for titleId=$thisTitleId, '
+          'not just the profile with the globally-newest file',
+    );
     expect(saveDir, isNot(contains(newestProfile)));
   });
 }

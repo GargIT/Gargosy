@@ -42,7 +42,12 @@ class SigilStateStore {
     try {
       if (!f.existsSync()) return const [];
       final list = jsonDecode(f.readAsStringSync());
-      return list is List ? [for (final n in list) if (n is String) n] : const [];
+      return list is List
+          ? [
+              for (final n in list)
+                if (n is String) n,
+            ]
+          : const [];
     } catch (_) {
       return const [];
     }

@@ -19,8 +19,12 @@ class AzaharStrategy extends EmulatorStrategy {
 
   @override
   List<String> get supportedSlugs => [
-    '3ds', 'n3ds', 'nintendo-3ds', 'nintendo3ds',
-    'new-nintendo-3ds', 'new-nintendo-3ds-xl',
+    '3ds',
+    'n3ds',
+    'nintendo-3ds',
+    'nintendo3ds',
+    'new-nintendo-3ds',
+    'new-nintendo-3ds-xl',
   ];
 
   @override

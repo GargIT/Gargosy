@@ -1,7 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../romm/romm_models.dart';
 import '../romm/rom_constants.dart';
 import 'file_system_index.dart';
@@ -10,20 +12,16 @@ class RomLookupService {
   /// Tries to find the actual ROM file on disk.
   /// First checks the exact path, then tries common extensions for the platform.
   /// Returns the found path or null if not found.
-  static Future<String?> findExistingRomPath(
-    Game game, 
-    String romDir, {
-    FileSystemIndex? index,
-  }) async {
+  static Future<String?> findExistingRomPath(Game game, String romDir, {FileSystemIndex? index}) async {
     final platformLower = game.platformSlug?.toLowerCase();
-    
+
     debugPrint('[Matching] Searching for ${game.name} (Platform: $platformLower) in $romDir');
 
     // Names to check (in order of priority)
     final namesToCheck = <String>[];
     if (game.fsName != null) namesToCheck.add(game.fsName!);
     if (game.fileName != null) namesToCheck.add(game.fileName!);
-    
+
     final sanitizedName = game.name.replaceAll(RegExp(r'[<>:"/\\|?]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
     namesToCheck.add(sanitizedName);
 
@@ -31,13 +29,13 @@ class RomLookupService {
     if (index != null && (index.rootPath == romDir || index.rootPath == p.join(romDir, 'roms'))) {
       for (final name in namesToCheck) {
         final lowerName = name.toLowerCase();
-        
+
         // Try exact name match (files)
         if (index.files.containsKey(lowerName)) {
           debugPrint('[Matching] Index hit (file): $lowerName');
           return index.files[lowerName];
         }
-        
+
         // Try name match (dirs)
         if (index.dirs.containsKey(lowerName)) {
           debugPrint('[Matching] Index hit (dir): $lowerName');
@@ -52,12 +50,14 @@ class RomLookupService {
           if (index.files.containsKey(nameWithExt)) return index.files[nameWithExt];
         }
       }
-      
+
       // Fuzzy match in index (Last resort, only if name is very similar and not ambiguous)
       for (final name in namesToCheck) {
         final lowerName = name.toLowerCase();
         for (final entry in index.files.entries) {
-          if (entry.key.startsWith(lowerName) && entry.key.length < lowerName.length + 5 && !entry.key.endsWith('.part')) {
+          if (entry.key.startsWith(lowerName) &&
+              entry.key.length < lowerName.length + 5 &&
+              !entry.key.endsWith('.part')) {
             return entry.value;
           }
         }
@@ -66,11 +66,11 @@ class RomLookupService {
 
     // 2. Fallback to manual scanning (Legacy/Direct)
     final baseName = game.fsName ?? game.fileName ?? sanitizedName;
-    
+
     // Check exact path first
     final exactPath = p.join(romDir, baseName);
     if (await io.File(exactPath).exists()) return p.absolute(exactPath);
-    
+
     // Case-insensitive check by scanning parent directory manually
     final parentDir = io.Directory(romDir);
     if (await parentDir.exists()) {
@@ -91,7 +91,7 @@ class RomLookupService {
     // 3. Search for multi-file folder
     final folderName = sanitizedName;
     final searchDirs = [romDir, p.join(romDir, 'roms')];
-    
+
     for (final dirPath in searchDirs) {
       final pDir = io.Directory(dirPath);
       if (!await pDir.exists()) continue;
@@ -114,7 +114,7 @@ class RomLookupService {
     for (final dirPath in searchDirs) {
       final pDir = io.Directory(dirPath);
       if (!await pDir.exists()) continue;
-      
+
       try {
         final List<io.FileSystemEntity> entities = await pDir.list().toList();
         for (final ext in extensions) {
@@ -159,15 +159,16 @@ class RomLookupService {
   /// For other platforms, finds the largest file matching the platform's extensions.
   static Future<String?> findMainRomInFolder(Game game, String folderPath) async {
     final platform = game.platformSlug?.toLowerCase() ?? '';
-    final isFolderBased = ['windows', 'pc', 'win', 'ps3', 'switch', 'nintendo-switch'].contains(platform) ||
+    final isFolderBased =
+        ['windows', 'pc', 'win', 'ps3', 'switch', 'nintendo-switch'].contains(platform) ||
         RomConstants.isFolderGamePlatform(platform);
-    
+
     // Folder-based platforms: return folder directly. The emulator strategy
     // (e.g., WindowsStrategy, EdenStrategy) finds the executable inside.
     if (isFolderBased) {
       return p.absolute(folderPath);
     }
-    
+
     final extensions = RomConstants.platformExtensions[game.platformSlug?.toLowerCase()] ?? [];
 
     // Prefer an .m3u playlist over any individual disc image, if present.
@@ -301,12 +302,12 @@ class RomLookupService {
   static Set<String> _tokenize(String input) {
     return input
         .toLowerCase()
-        .replaceAll(RegExp(r'\[[^\]]*\]'), '') 
-        .replaceAll(RegExp(r'\([^)]*\)'), '') 
-        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ') 
+        .replaceAll(RegExp(r'\[[^\]]*\]'), '')
+        .replaceAll(RegExp(r'\([^)]*\)'), '')
+        .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
         .trim()
         .split(RegExp(r'\s+'))
-        .where((t) => t.length > 1) 
+        .where((t) => t.length > 1)
         .toSet();
   }
 }

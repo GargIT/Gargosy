@@ -1,8 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
-enum CustomSaveMethod {
-  file,
-  folder,
-}
+enum CustomSaveMethod { file, folder }
 
 class CustomEmulatorConfig {
   final String id;

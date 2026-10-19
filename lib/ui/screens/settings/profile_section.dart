@@ -35,16 +35,20 @@ class ProfileSection extends ConsumerWidget {
     final pin = p.pin;
     if (pin == null) return true;
     final gate = ref.read(pinGatesProvider).putIfAbsent(p.id, () => PinGate(pin));
-    final ok = await showPinEntry(context, title: 'Current PIN', check: (entered) async {
-      switch (await gate.attempt(entered)) {
-        case PinResult.ok:
-          return null;
-        case PinResult.wrong:
-          return 'Wrong PIN';
-        case PinResult.locked:
-          return 'Too many tries. Wait ${gate.lockedFor?.inSeconds ?? 30} seconds.';
-      }
-    });
+    final ok = await showPinEntry(
+      context,
+      title: 'Current PIN',
+      check: (entered) async {
+        switch (await gate.attempt(entered)) {
+          case PinResult.ok:
+            return null;
+          case PinResult.wrong:
+            return 'Wrong PIN';
+          case PinResult.locked:
+            return 'Too many tries. Wait ${gate.lockedFor?.inSeconds ?? 30} seconds.';
+        }
+      },
+    );
     return ok != null;
   }
 
@@ -52,8 +56,11 @@ class ProfileSection extends ConsumerWidget {
     if (!await _checkCurrent(context, ref, p) || !context.mounted) return;
     final first = await showPinEntry(context, title: 'Choose a PIN', check: (_) async => null);
     if (first == null || !context.mounted) return;
-    final second =
-        await showPinEntry(context, title: 'Enter the PIN again', check: (pin) async => pin == first ? null : "The PINs don't match");
+    final second = await showPinEntry(
+      context,
+      title: 'Enter the PIN again',
+      check: (pin) async => pin == first ? null : "The PINs don't match",
+    );
     if (second == null) return;
     final hash = await Isolate.run(() => PinHash.create(second));
     ref.read(pinGatesProvider).remove(p.id);
@@ -82,16 +89,19 @@ class ProfileSection extends ConsumerWidget {
     final lost = waiting.isEmpty
         ? ''
         : '\n\n${waiting.length == 1 ? "1 save hasn't" : "${waiting.length} saves haven't"} reached RomM yet '
-            '(${names.join(', ')}) and ${waiting.length == 1 ? 'is' : 'are'} lost with the profile.';
+              '(${names.join(', ')}) and ${waiting.length == 1 ? 'is' : 'are'} lost with the profile.';
     if (!context.mounted) return;
-    final ok = await showConfirm(context,
-        title: 'Delete ${p.name}?',
-        body: 'This removes the profile and its saves, states and emulator settings from this PC. '
-            'Nothing on the RomM server is deleted.$lost',
-        yes: 'Delete',
-        no: 'Keep',
-        focusYes: false,
-        danger: true);
+    final ok = await showConfirm(
+      context,
+      title: 'Delete ${p.name}?',
+      body:
+          'This removes the profile and its saves, states and emulator settings from this PC. '
+          'Nothing on the RomM server is deleted.$lost',
+      yes: 'Delete',
+      no: 'Keep',
+      focusYes: false,
+      danger: true,
+    );
     if (!ok || !context.mounted) return;
     if (!await _checkCurrent(context, ref, p) || !context.mounted) return;
     if (!await waitForSyncIdle(context, ref)) return;
@@ -112,73 +122,109 @@ class ProfileSection extends ConsumerWidget {
     final p = ctx?.profile;
     if (ctx == null || p == null) return const SizedBox.shrink();
     final host = Uri.tryParse(p.serverUrl)?.host ?? p.serverUrl;
-    return ListView(children: [
-      Padding(
-        padding: const EdgeInsets.only(bottom: GSpace.s6),
-        child: Row(children: [
-          ProfileAvatar(profile: p, avatarPath: ctx.paths.avatarFile, size: 94, ring: true),
-          const SizedBox(width: GSpace.s6),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
-              const SizedBox(height: GSpace.s1),
-              _InfoLine(Icons.dns_outlined, '${p.rommUsername} on $host'),
-              _InfoLine(Icons.calendar_today_outlined, 'Profile created ${DateFormat('d MMM y').format(p.createdAt)}'),
-            ]),
-          ),
-        ]),
-      ),
-      SettingsCard(
-        title: 'Profile',
-        icon: Icons.person,
-        note: 'One RomM user per profile. Its saves and emulator settings are its own.',
-        children: [
-          SettingsField(
-            label: 'Name',
-            icon: Icons.person_outline,
-            value: p.name,
-            action: 'Rename',
-            actionIcon: Icons.edit_outlined,
-            onActivate: () => _rename(context, ref, p),
-          ),
-          SettingsField(label: 'RomM account', icon: Icons.dns_outlined, value: '${p.rommUsername} on $host'),
-        ],
-      ),
-      SettingsCard(
-        title: 'PIN',
-        icon: Icons.lock,
-        note: "A PIN keeps others in the family from opening this profile. It's a family lock, not security: "
-            'anyone using this Windows account can open the Gargosy folder.',
-        children: [
-          Wrap(spacing: GSpace.s3, runSpacing: GSpace.s3, children: [
-            if (p.pin == null)
-              SettingsButton(
-                  label: 'Set a PIN',
-                  icon: Icons.lock_outline,
-                  kind: SettingsButtonKind.primary,
-                  onActivate: () => _choosePin(context, ref, p))
-            else ...[
-              SettingsButton(label: 'Change PIN', icon: Icons.key_outlined, onActivate: () => _choosePin(context, ref, p)),
-              SettingsButton(label: 'Remove PIN', icon: Icons.lock_open_outlined, onActivate: () => _removePin(context, ref, p)),
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: GSpace.s6),
+          child: Row(
+            children: [
+              ProfileAvatar(profile: p, avatarPath: ctx.paths.avatarFile, size: 94, ring: true),
+              const SizedBox(width: GSpace.s6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: GSpace.s1),
+                    _InfoLine(Icons.dns_outlined, '${p.rommUsername} on $host'),
+                    _InfoLine(
+                      Icons.calendar_today_outlined,
+                      'Profile created ${DateFormat('d MMM y').format(p.createdAt)}',
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ]),
-        ],
-      ),
-      SettingsCard(title: 'Delete', icon: Icons.delete, children: [
-        Row(children: [
-          const Expanded(
-            child: Text("Removes this profile's saves, states and emulator settings from this PC. What's on RomM stays.",
-                style: TextStyle(fontSize: GFont.md, color: GColors.fgSecondary)),
           ),
-          const SizedBox(width: GSpace.s4),
-          SettingsButton(
-              label: 'Delete profile',
-              icon: Icons.delete_outline,
-              kind: SettingsButtonKind.danger,
-              onActivate: () => _delete(context, ref, p)),
-        ]),
-      ]),
-    ]);
+        ),
+        SettingsCard(
+          title: 'Profile',
+          icon: Icons.person,
+          note: 'One RomM user per profile. Its saves and emulator settings are its own.',
+          children: [
+            SettingsField(
+              label: 'Name',
+              icon: Icons.person_outline,
+              value: p.name,
+              action: 'Rename',
+              actionIcon: Icons.edit_outlined,
+              onActivate: () => _rename(context, ref, p),
+            ),
+            SettingsField(label: 'RomM account', icon: Icons.dns_outlined, value: '${p.rommUsername} on $host'),
+          ],
+        ),
+        SettingsCard(
+          title: 'PIN',
+          icon: Icons.lock,
+          note:
+              "A PIN keeps others in the family from opening this profile. It's a family lock, not security: "
+              'anyone using this Windows account can open the Gargosy folder.',
+          children: [
+            Wrap(
+              spacing: GSpace.s3,
+              runSpacing: GSpace.s3,
+              children: [
+                if (p.pin == null)
+                  SettingsButton(
+                    label: 'Set a PIN',
+                    icon: Icons.lock_outline,
+                    kind: SettingsButtonKind.primary,
+                    onActivate: () => _choosePin(context, ref, p),
+                  )
+                else ...[
+                  SettingsButton(
+                    label: 'Change PIN',
+                    icon: Icons.key_outlined,
+                    onActivate: () => _choosePin(context, ref, p),
+                  ),
+                  SettingsButton(
+                    label: 'Remove PIN',
+                    icon: Icons.lock_open_outlined,
+                    onActivate: () => _removePin(context, ref, p),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+        SettingsCard(
+          title: 'Delete',
+          icon: Icons.delete,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    "Removes this profile's saves, states and emulator settings from this PC. What's on RomM stays.",
+                    style: TextStyle(fontSize: GFont.md, color: GColors.fgSecondary),
+                  ),
+                ),
+                const SizedBox(width: GSpace.s4),
+                SettingsButton(
+                  label: 'Delete profile',
+                  icon: Icons.delete_outline,
+                  kind: SettingsButtonKind.danger,
+                  onActivate: () => _delete(context, ref, p),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -190,14 +236,19 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: GSpace.s1),
-        child: Row(children: [
-          Icon(icon, size: 13, color: GColors.fgSecondary),
-          const SizedBox(width: 7),
-          Flexible(
-            child: Text(text,
-                overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary)),
+    padding: const EdgeInsets.only(top: GSpace.s1),
+    child: Row(
+      children: [
+        Icon(icon, size: 13, color: GColors.fgSecondary),
+        const SizedBox(width: 7),
+        Flexible(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
           ),
-        ]),
-      );
+        ),
+      ],
+    ),
+  );
 }

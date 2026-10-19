@@ -15,14 +15,16 @@ void main() {
   Future<void> pump(WidgetTester tester, Widget home) async {
     nav = GlobalKey<NavigatorState>();
     container = ProviderContainer();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        navigatorKey: nav,
-        builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: home,
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          navigatorKey: nav,
+          builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
+          home: home,
+        ),
       ),
-    ));
+    );
   }
 
   Future<void> send(WidgetTester tester, GameAction a) async {
@@ -32,7 +34,12 @@ void main() {
 
   testWidgets('A activates the focused button', (tester) async {
     var pressed = 0;
-    await pump(tester, Scaffold(body: TextButton(autofocus: true, onPressed: () => pressed++, child: const Text('Go'))));
+    await pump(
+      tester,
+      Scaffold(
+        body: TextButton(autofocus: true, onPressed: () => pressed++, child: const Text('Go')),
+      ),
+    );
     await tester.pump();
     await send(tester, GameAction.confirm);
     expect(pressed, 1);
@@ -58,7 +65,14 @@ void main() {
       ),
     );
     await tester.pump();
-    for (final a in [GameAction.detail, GameAction.favorite, GameAction.l1, GameAction.r1, GameAction.start, GameAction.confirmHold]) {
+    for (final a in [
+      GameAction.detail,
+      GameAction.favorite,
+      GameAction.l1,
+      GameAction.r1,
+      GameAction.start,
+      GameAction.confirmHold,
+    ]) {
       await send(tester, a);
     }
     expect(seen, [DetailIntent, FavoriteIntent, PrevTabIntent, NextTabIntent, MenuIntent, LongActivateIntent]);
@@ -66,7 +80,11 @@ void main() {
 
   testWidgets('B pops the route when nothing handles BackIntent', (tester) async {
     await pump(tester, const Scaffold(body: Text('home')));
-    nav.currentState!.push(MaterialPageRoute(builder: (_) => const Scaffold(body: Focus(autofocus: true, child: Text('second')))));
+    nav.currentState!.push(
+      MaterialPageRoute(
+        builder: (_) => const Scaffold(body: Focus(autofocus: true, child: Text('second'))),
+      ),
+    );
     await tester.pumpAndSettle();
     await send(tester, GameAction.back);
     await tester.pumpAndSettle();
@@ -77,11 +95,14 @@ void main() {
   testWidgets('a screen that handles BackIntent itself is not popped', (tester) async {
     var backs = 0;
     await pump(tester, const Scaffold(body: Text('home')));
-    nav.currentState!.push(MaterialPageRoute(
+    nav.currentState!.push(
+      MaterialPageRoute(
         builder: (_) => Actions(
-              actions: {BackIntent: CallbackAction<BackIntent>(onInvoke: (_) => backs++)},
-              child: const Focus(autofocus: true, child: Text('second')),
-            )));
+          actions: {BackIntent: CallbackAction<BackIntent>(onInvoke: (_) => backs++)},
+          child: const Focus(autofocus: true, child: Text('second')),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await send(tester, GameAction.back);
     await tester.pumpAndSettle();
@@ -91,7 +112,11 @@ void main() {
 
   testWidgets('Escape is back on the keyboard; keys set keyboard mode, a click sets mouse mode', (tester) async {
     await pump(tester, const Scaffold(body: Text('home')));
-    nav.currentState!.push(MaterialPageRoute(builder: (_) => const Scaffold(body: Focus(autofocus: true, child: Text('second')))));
+    nav.currentState!.push(
+      MaterialPageRoute(
+        builder: (_) => const Scaffold(body: Focus(autofocus: true, child: Text('second'))),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();

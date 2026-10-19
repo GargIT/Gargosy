@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -12,10 +13,12 @@ import 'package:http_mock_adapter/http_mock_adapter.dart';
 /// options, like Dio's real adapters do (the retry logic reads them back).
 class _ConnectionLostAdapter implements HttpClientAdapter {
   @override
-  Future<ResponseBody> fetch(RequestOptions options,
-      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
-    throw DioException.connectionError(
-        requestOptions: options, reason: 'connection lost');
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    throw DioException.connectionError(requestOptions: options, reason: 'connection lost');
   }
 
   @override
@@ -37,18 +40,21 @@ void main() {
     dio = Dio(BaseOptions(baseUrl: baseUrl));
     adapter = DioAdapter(dio: dio);
     requests = [];
-    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      requests.add(options);
-      handler.next(options);
-    }));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          requests.add(options);
+          handler.next(options);
+        },
+      ),
+    );
     service = RommService(
       RomMConfig(baseUrl: baseUrl, username: '', password: '', apiKey: 'key'),
       dio: dio,
       skipConnectivityCheck: true,
     );
     tmp = await Directory.systemTemp.createTemp('romm_states_client');
-    stateFile = File('${tmp.path}/SCUS-97113 (A1B2C3D4).01.p2s')
-      ..writeAsBytesSync(List.filled(256, 7));
+    stateFile = File('${tmp.path}/SCUS-97113 (A1B2C3D4).01.p2s')..writeAsBytesSync(List.filled(256, 7));
   });
 
   tearDown(() async {
@@ -62,11 +68,11 @@ void main() {
   });
 
   Map<String, dynamic> stateJson(int id, String name) => {
-        'id': id,
-        'rom_id': 42,
-        'file_name': name,
-        'updated_at': '2026-01-01T00:00:00Z',
-      };
+    'id': id,
+    'rom_id': 42,
+    'file_name': name,
+    'updated_at': '2026-01-01T00:00:00Z',
+  };
 
   test('listStates parses a bare list', () async {
     adapter.onGet(
@@ -86,7 +92,9 @@ void main() {
   test('listStates parses an {items: [...]} envelope', () async {
     adapter.onGet(
       '/api/states',
-      (server) => server.reply(200, {'items': [stateJson(8, 'b.p2s')]}),
+      (server) => server.reply(200, {
+        'items': [stateJson(8, 'b.p2s')],
+      }),
       queryParameters: {'rom_id': '42'},
     );
 
@@ -103,32 +111,48 @@ void main() {
       queryParameters: {'rom_id': '42', 'emulator': 'pcsx2'},
     );
 
-    final state = await service.uploadState('42', stateFile,
-        fileName: 'SCUS-97113 (A1B2C3D4).01.p2s', emulator: 'pcsx2');
+    final state = await service.uploadState(
+      '42',
+      stateFile,
+      fileName: 'SCUS-97113 (A1B2C3D4).01.p2s',
+      emulator: 'pcsx2',
+    );
 
     expect(state.id, 9);
   });
 
   test('uploadState without an emulator sends no emulator parameter', () async {
-    adapter.onPost('/api/states', (server) => server.reply(200, {'id': 5, 'file_name': 'a.p2s'}),
-        queryParameters: {'rom_id': '42'}, data: Matchers.any);
+    adapter.onPost(
+      '/api/states',
+      (server) => server.reply(200, {'id': 5, 'file_name': 'a.p2s'}),
+      queryParameters: {'rom_id': '42'},
+      data: Matchers.any,
+    );
     await service.uploadState('42', stateFile, fileName: 'a.p2s');
     expect(requests.single.queryParameters.containsKey('emulator'), isFalse);
   });
 
   test('uploadState sends screenshotFile when given', () async {
-    adapter.onPost('/api/states', (server) => server.reply(200, {'id': 5, 'file_name': 'a.p2s'}),
-        queryParameters: {'rom_id': '42', 'emulator': 'pcsx2'}, data: Matchers.any);
-    await service.uploadState('42', stateFile, fileName: 'a.p2s', emulator: 'pcsx2',
-        screenshot: Uint8List.fromList([1, 2, 3]));
+    adapter.onPost(
+      '/api/states',
+      (server) => server.reply(200, {'id': 5, 'file_name': 'a.p2s'}),
+      queryParameters: {'rom_id': '42', 'emulator': 'pcsx2'},
+      data: Matchers.any,
+    );
+    await service.uploadState(
+      '42',
+      stateFile,
+      fileName: 'a.p2s',
+      emulator: 'pcsx2',
+      screenshot: Uint8List.fromList([1, 2, 3]),
+    );
     final form = requests.single.data as FormData;
     expect(form.files.map((f) => f.key), containsAll(['stateFile', 'screenshotFile']));
     expect(form.files.firstWhere((f) => f.key == 'screenshotFile').value.filename, 'a.p2s.png');
   });
 
   test('updateState sends screenshotFile when given, and only stateFile otherwise', () async {
-    adapter.onPut('/api/states/7', (server) => server.reply(200, {'id': 7, 'file_name': 'a.p2s'}),
-        data: Matchers.any);
+    adapter.onPut('/api/states/7', (server) => server.reply(200, {'id': 7, 'file_name': 'a.p2s'}), data: Matchers.any);
     await service.updateState(7, stateFile, fileName: 'a.p2s', screenshot: Uint8List.fromList([9]));
     await service.updateState(7, stateFile, fileName: 'a.p2s');
     expect((requests[0].data as FormData).files.map((f) => f.key), ['stateFile', 'screenshotFile']);
@@ -136,12 +160,21 @@ void main() {
   });
 
   test('listStates reads emulator and screenshot download path, leniently', () async {
-    adapter.onGet('/api/states', (server) => server.reply(200, [
-          {'id': 1, 'file_name': 'a.p2s', 'updated_at': 'u1', 'emulator': 'pcsx2',
-           'screenshot': {'id': 3, 'download_path': '/api/raw/assets/s/3.png'}},
-          {'id': 2, 'file_name': 'b.p2s', 'updated_at': 'u2'},
-          {'id': 4, 'file_name': 'c.p2s', 'emulator': null, 'screenshot': null},
-        ]), queryParameters: {'rom_id': '42'});
+    adapter.onGet(
+      '/api/states',
+      (server) => server.reply(200, [
+        {
+          'id': 1,
+          'file_name': 'a.p2s',
+          'updated_at': 'u1',
+          'emulator': 'pcsx2',
+          'screenshot': {'id': 3, 'download_path': '/api/raw/assets/s/3.png'},
+        },
+        {'id': 2, 'file_name': 'b.p2s', 'updated_at': 'u2'},
+        {'id': 4, 'file_name': 'c.p2s', 'emulator': null, 'screenshot': null},
+      ]),
+      queryParameters: {'rom_id': '42'},
+    );
     final states = await service.listStates('42');
     expect(states[0].emulator, 'pcsx2');
     expect(states[0].screenshotUrl, '/api/raw/assets/s/3.png');
@@ -151,16 +184,12 @@ void main() {
   });
 
   test('downloadStateScreenshot rejects an absolute URL and makes no request', () async {
-    await expectLater(
-      service.downloadStateScreenshot('https://evil.example/x.png'),
-      throwsA(isA<ArgumentError>()),
-    );
+    await expectLater(service.downloadStateScreenshot('https://evil.example/x.png'), throwsA(isA<ArgumentError>()));
     expect(requests, isEmpty);
   });
 
   test('downloadStateScreenshot: authenticated, bounded, no retry', () async {
-    adapter.onGet(
-        '/api/raw/assets/s/3.png', (server) => server.reply(200, Uint8List.fromList([1, 2, 3])));
+    adapter.onGet('/api/raw/assets/s/3.png', (server) => server.reply(200, Uint8List.fromList([1, 2, 3])));
     final bytes = await service.downloadStateScreenshot('/api/raw/assets/s/3.png');
     expect(bytes, Uint8List.fromList([1, 2, 3]));
     final options = requests.single;
@@ -170,11 +199,7 @@ void main() {
   });
 
   test('updateState PUTs to the state id', () async {
-    adapter.onPut(
-      '/api/states/7',
-      (server) => server.reply(200, stateJson(7, 'a.p2s')),
-      data: Matchers.any,
-    );
+    adapter.onPut('/api/states/7', (server) => server.reply(200, stateJson(7, 'a.p2s')), data: Matchers.any);
 
     final state = await service.updateState(7, stateFile, fileName: 'a.p2s');
 
@@ -182,23 +207,13 @@ void main() {
   });
 
   test('updateState maps a 404 to RommStateNotFoundException', () async {
-    adapter.onPut(
-      '/api/states/7',
-      (server) => server.reply(404, {'detail': 'State not found'}),
-      data: Matchers.any,
-    );
+    adapter.onPut('/api/states/7', (server) => server.reply(404, {'detail': 'State not found'}), data: Matchers.any);
 
-    expect(
-      () => service.updateState(7, stateFile, fileName: 'a.p2s'),
-      throwsA(isA<RommStateNotFoundException>()),
-    );
+    expect(() => service.updateState(7, stateFile, fileName: 'a.p2s'), throwsA(isA<RommStateNotFoundException>()));
   });
 
   test('downloadState returns the raw bytes', () async {
-    adapter.onGet(
-      '/api/states/7/content',
-      (server) => server.reply(200, Uint8List.fromList([1, 2, 3])),
-    );
+    adapter.onGet('/api/states/7/content', (server) => server.reply(200, Uint8List.fromList([1, 2, 3])));
 
     final bytes = await service.downloadState(7);
 
@@ -206,20 +221,14 @@ void main() {
   });
 
   test('downloadState maps a 404 to RommStateNotFoundException', () async {
-    adapter.onGet(
-      '/api/states/7/content',
-      (server) => server.reply(404, {'detail': 'State not found'}),
-    );
+    adapter.onGet('/api/states/7/content', (server) => server.reply(404, {'detail': 'State not found'}));
 
     expect(() => service.downloadState(7), throwsA(isA<RommStateNotFoundException>()));
   });
 
   group('transfer bounds', () {
     test('downloadState carries the 30 s inactivity timeout and the no-retry flag', () async {
-      adapter.onGet(
-        '/api/states/7/content',
-        (server) => server.reply(200, Uint8List.fromList([1, 2, 3])),
-      );
+      adapter.onGet('/api/states/7/content', (server) => server.reply(200, Uint8List.fromList([1, 2, 3])));
 
       await service.downloadState(7);
 
@@ -254,11 +263,7 @@ void main() {
         data: Matchers.any,
         queryParameters: {'rom_id': '42', 'emulator': 'pcsx2'},
       );
-      adapter.onPut(
-        '/api/states/7',
-        (server) => server.reply(200, stateJson(7, 'a.p2s')),
-        data: Matchers.any,
-      );
+      adapter.onPut('/api/states/7', (server) => server.reply(200, stateJson(7, 'a.p2s')), data: Matchers.any);
 
       await service.uploadState('42', stateFile, fileName: 'a.p2s', emulator: 'pcsx2');
       await service.updateState(7, stateFile, fileName: 'a.p2s');

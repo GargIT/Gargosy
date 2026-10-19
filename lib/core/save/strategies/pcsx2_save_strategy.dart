@@ -2,9 +2,11 @@
 import 'dart:io' as io;
 import 'dart:isolate';
 import 'dart:math' as math;
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -28,10 +30,9 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   final PlatformInfo _platform;
   final RomGameIds _gameIds;
 
-  Pcsx2SaveStrategy(this._directoryService, AppPreferences prefs,
-      {PlatformInfo? platform, RomGameIds? gameIds})
-      : _platform = platform ?? PlatformInfo.current,
-        _gameIds = gameIds ?? RomGameIds(prefs);
+  Pcsx2SaveStrategy(this._directoryService, AppPreferences prefs, {PlatformInfo? platform, RomGameIds? gameIds})
+    : _platform = platform ?? PlatformInfo.current,
+      _gameIds = gameIds ?? RomGameIds(prefs);
 
   @override
   String get strategyId => 'pcsx2';
@@ -39,18 +40,17 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   /// The game's PS2 serial (e.g. "SLUS-12345"): RomM's, else read from the
   /// ROM through sigil ([RomGameIds]). Null if neither has it.
   Future<String?> _serial(Game game, String romPath) => GameIdResolver.resolve(
-        label: 'PCSX2 ${game.name}',
-        server: GameIdResolver.discSerial(game, romPath),
-        shape: GameIdResolver.ps1ps2Serial,
-        local: () => _gameIds.discSerial(romPath, platform: 'ps2'),
-      );
+    label: 'PCSX2 ${game.name}',
+    server: GameIdResolver.discSerial(game, romPath),
+    shape: GameIdResolver.ps1ps2Serial,
+    local: () => _gameIds.discSerial(romPath, platform: 'ps2'),
+  );
 
   String _normalizeMemcardFilename(String filename) {
     // Convert "Mcd001 [2026-04-03_20-31-19].ps2" -> "Mcd001.ps2"
     // Convert "Mcd002 [anything].ps2" -> "Mcd002.ps2"
     if (!filename.toLowerCase().endsWith('.ps2')) return filename;
-    final match =
-        RegExp(r'^(Mcd\d+)', caseSensitive: false).firstMatch(filename);
+    final match = RegExp(r'^(Mcd\d+)', caseSensitive: false).firstMatch(filename);
     if (match != null) {
       return '${match.group(1)}.ps2';
     }
@@ -66,24 +66,19 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   /// PCSX2's own state naming: `SERIAL (CRC).NN.p2s` or
   /// `SERIAL (CRC).resume.p2s` (VMManager::GetSaveStateFileName). The
   /// character class excludes path separators; `.p2s.backup` doesn't match.
-  static final _stateFilePattern = RegExp(
-      r'^([A-Za-z0-9_-]+) \([0-9A-Fa-f]{8}\)\.(?:\d{2}|resume)\.p2s$');
+  static final _stateFilePattern = RegExp(r'^([A-Za-z0-9_-]+) \([0-9A-Fa-f]{8}\)\.(?:\d{2}|resume)\.p2s$');
 
-  static String _serialKey(String serial) =>
-      serial.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+  static String _serialKey(String serial) => serial.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
 
   @override
   Future<String> stateDirectory(Game game, String romPath) async {
     final root = await _getSaveRoot();
     final isEmuDeck = p.basename(root) == 'saves';
-    return isEmuDeck
-        ? p.join(p.dirname(root), 'states')
-        : p.join(root, 'sstates');
+    return isEmuDeck ? p.join(p.dirname(root), 'states') : p.join(root, 'sstates');
   }
 
   @override
-  Future<bool Function(String fileName)?> stateFileMatcher(
-      Game game, String romPath) async {
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async {
     final serial = await _serial(game, romPath);
     if (serial == null) return null;
     final wanted = _serialKey(serial);
@@ -99,14 +94,12 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   /// ends also rejects a write that was cut off partway.
   @override
   bool looksLikeValidState(Uint8List bytes) {
-    if (bytes.length < 26 ||
-        bytes[0] != 0x50 || bytes[1] != 0x4B || bytes[2] != 0x03 || bytes[3] != 0x04) {
+    if (bytes.length < 26 || bytes[0] != 0x50 || bytes[1] != 0x4B || bytes[2] != 0x03 || bytes[3] != 0x04) {
       return false;
     }
     final earliest = math.max(4, bytes.length - 22 - 0xFFFF);
     for (var i = bytes.length - 22; i >= earliest; i--) {
-      if (bytes[i] == 0x50 && bytes[i + 1] == 0x4B &&
-          bytes[i + 2] == 0x05 && bytes[i + 3] == 0x06) {
+      if (bytes[i] == 0x50 && bytes[i + 1] == 0x4B && bytes[i + 2] == 0x05 && bytes[i + 3] == 0x06) {
         return true;
       }
     }
@@ -129,11 +122,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   Future<StateFileInfo> describeState(io.File file) async {
     final base = await super.describeState(file);
     final header = await Pcsx2StateFile.readVersion(file);
-    return StateFileInfo(
-      savedAt: base.savedAt,
-      emulatorVersion: header?.version,
-      formatId: header?.formatId,
-    );
+    return StateFileInfo(savedAt: base.savedAt, emulatorVersion: header?.version, formatId: header?.formatId);
   }
 
   @override
@@ -163,9 +152,8 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
     // 2. Linux integration (EmuDeck / RetroDECK)
     if (_platform.isLinux) {
       final baseDir = await _directoryService.getEmulatorAppSupportDirectory('pcsx2');
-      final bool isEmuDeck = _directoryService.linuxSyncPreset == 'emudeck' || 
-                             baseDir.contains('Emulation/saves');
-      
+      final bool isEmuDeck = _directoryService.linuxSyncPreset == 'emudeck' || baseDir.contains('Emulation/saves');
+
       if (isEmuDeck) {
         // EmuDeck: saves are in Emulation/saves/pcsx2/saves
         if (p.basename(baseDir) == 'saves') return baseDir;
@@ -173,12 +161,12 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
         if (await io.Directory(candidate).exists()) return candidate;
         return baseDir;
       }
-      
+
       if (_directoryService.linuxSyncPreset == 'retrodeck') {
         // RetroDECK: PCSX2/memcards/
         return baseDir;
       }
-      
+
       final home = _platform.environment['HOME'] ?? '';
       final linuxPath = p.join(home, '.config', 'PCSX2');
       if (await io.Directory(p.join(linuxPath, 'memcards')).exists()) {
@@ -199,7 +187,9 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
     final resolvedPath = await _directoryService.getEmulatorAppSupportDirectory('pcsx2');
     debugPrint('[PCSX2] app support save root candidate: $resolvedPath');
     if (!await io.Directory(resolvedPath).exists() && !resolvedPath.contains('Emulation/saves')) {
-      throw Exception('Save directory not found for PCSX2 at $resolvedPath. Please launch PCSX2 at least once to generate save data.');
+      throw Exception(
+        'Save directory not found for PCSX2 at $resolvedPath. Please launch PCSX2 at least once to generate save data.',
+      );
     }
     return resolvedPath;
   }
@@ -212,8 +202,12 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final root = await _getSaveRoot();
     final bool isEmuDeck = p.basename(root) == 'saves';
     debugPrint('[PCSX2] getSaveFiles root=$root  isEmuDeck=$isEmuDeck  syncMode=$syncMode  sessionStart=$sessionStart');
@@ -229,12 +223,9 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
       // third-party setups; it only fires if the folder actually exists.
       final serial = await _serial(game, romPath);
       if (serial != null) {
-        final perGameDir = io.Directory(isEmuDeck
-            ? p.join(root, serial)
-            : p.join(root, 'saves', serial));
+        final perGameDir = io.Directory(isEmuDeck ? p.join(root, serial) : p.join(root, 'saves', serial));
         // Also check without the saves/ sub-level (some portable installs)
-        final perGameDirAlt =
-            io.Directory(p.join(root, serial));
+        final perGameDirAlt = io.Directory(p.join(root, serial));
 
         io.Directory? foundDir;
         if (await perGameDir.exists()) {
@@ -245,12 +236,12 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
 
         if (foundDir != null) {
           debugPrint('[PCSX2]   per-game folder save found: ${foundDir.path}');
-          final hasChanges = sessionStart == null ||
+          final hasChanges =
+              sessionStart == null ||
               foundDir
                   .listSync(recursive: true)
                   .whereType<io.File>()
-                  .any((f) => f.statSync().modified.isAfter(
-                      sessionStart.subtract(const Duration(seconds: 2))));
+                  .any((f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))));
           if (hasChanges) {
             result.add(io.File(foundDir.path));
           } else {
@@ -269,8 +260,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
       // upstream via DirectoryExists on the .ps2 path). Both carry the same
       // McdXXX.ps2 name. Only fall back to this if no per-game folder matched.
       if (result.isEmpty) {
-        final memcardsDir =
-            io.Directory(isEmuDeck ? root : p.join(root, 'memcards'));
+        final memcardsDir = io.Directory(isEmuDeck ? root : p.join(root, 'memcards'));
         if (await memcardsDir.exists()) {
           debugPrint('[PCSX2]   scanning memcards at: ${memcardsDir.path}');
           await for (final entity in memcardsDir.list()) {
@@ -292,11 +282,11 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
             // the whole card here would just re-upload every other game
             // sharing it on every push.
             if (entity is io.Directory && serial != null) {
-              final childDirectories =
-                  entity.listSync().whereType<io.Directory>().toList();
+              final childDirectories = entity.listSync().whereType<io.Directory>().toList();
               if (childDirectories.isNotEmpty) {
-                final matchingDirectories = childDirectories.where((directory) =>
-                    _serialMatchesDirectory(p.basename(directory.path), serial)).toList();
+                final matchingDirectories = childDirectories
+                    .where((directory) => _serialMatchesDirectory(p.basename(directory.path), serial))
+                    .toList();
                 if (matchingDirectories.isEmpty) {
                   debugPrint('[PCSX2]   no serial folder for $serial in ${entity.path} — skipping folder card');
                   continue;
@@ -308,12 +298,12 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
                   // inside an existing artifact folder. Check each matching
                   // folder's contents recursively instead, the same way
                   // Layer 1 already does for saves/{Serial}/.
-                  final hasChanges = sessionStart == null ||
+                  final hasChanges =
+                      sessionStart == null ||
                       directory
                           .listSync(recursive: true)
                           .whereType<io.File>()
-                          .any((f) => f.statSync().modified.isAfter(
-                              sessionStart.subtract(const Duration(seconds: 2))));
+                          .any((f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))));
                   if (!hasChanges) {
                     debugPrint('[PCSX2]   ${directory.path} has no changes since sessionStart — skipping');
                     continue;
@@ -326,13 +316,14 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
             }
             if (sessionStart != null) {
               final stat = await entity.stat();
-              if (stat.modified
-                  .isBefore(sessionStart.subtract(const Duration(seconds: 2)))) {
+              if (stat.modified.isBefore(sessionStart.subtract(const Duration(seconds: 2)))) {
                 continue;
               }
             }
-            debugPrint('[PCSX2]   memcard added: ${entity.path} '
-                '(${entity is io.Directory ? "folder card" : "file card"})');
+            debugPrint(
+              '[PCSX2]   memcard added: ${entity.path} '
+              '(${entity is io.Directory ? "folder card" : "file card"})',
+            );
             result.add(io.File(entity.path));
           }
         } else {
@@ -386,7 +377,8 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
 
   String get _fileCardTempRoot => p.join(io.Directory.systemTemp.path, 'gargosy_pcsx2');
 
-  static const _noSerialMessage = "Gargosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how "
+  static const _noSerialMessage =
+      "Gargosy couldn't read this PS2 game's serial (e.g. SLUS-20851), which is how "
       "it tells this game's saves from the others on PCSX2's memory card, so its saves weren't synced.";
 
   /// PCSX2's memory cards in [memcardsDir]: `.ps2` files (file cards) and
@@ -414,8 +406,12 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   /// What the push uploads: [getSaveFiles], with each file card replaced by
   /// this game's save folders taken off it. Local backups keep the cards.
   @override
-  Future<Map<io.File, io.File?>> getSaveFilesWithScreenshots(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<Map<io.File, io.File?>> getSaveFilesWithScreenshots(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final files = await getSaveFiles(game, romPath, sessionStart: sessionStart, syncMode: syncMode);
     final fileCards = <io.File>[];
     final result = <io.File, io.File?>{};
@@ -442,7 +438,8 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
       final List<Ps2CardSave> saves;
       try {
         saves = await Isolate.run(
-            () => Ps2MemoryCard.parse(bytes).saves.where((s) => Ps2SaveFolders.isSaveOf(s.name, serial)).toList());
+          () => Ps2MemoryCard.parse(bytes).saves.where((s) => Ps2SaveFolders.isSaveOf(s.name, serial)).toList(),
+        );
       } on FormatException catch (e) {
         debugPrint('[PCSX2]   ${card.path} is not a card Gargosy can read, skipped: $e');
         continue;
@@ -471,7 +468,8 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
       incoming = Ps2SaveFolders.savesFromUpload(data, filename);
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "The PS2 memory card from RomM ($filename) isn't one Gargosy can read ($e). Nothing was changed.");
+        "The PS2 memory card from RomM ($filename) isn't one Gargosy can read ($e). Nothing was changed.",
+      );
     }
     if (incoming.isEmpty) return false;
     final incomingIsCard = Ps2MemoryCard.looksLikeCard(data);
@@ -484,7 +482,9 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
       for (final card in cards) {
         final bool holds;
         if (card is io.Directory) {
-          holds = card.listSync().whereType<io.Directory>().any((d) => Ps2SaveFolders.isSaveOf(p.basename(d.path), serial));
+          holds = card.listSync().whereType<io.Directory>().any(
+            (d) => Ps2SaveFolders.isSaveOf(p.basename(d.path), serial),
+          );
         } else {
           final bytes = await io.File(card.path).readAsBytes();
           holds = await Isolate.run(() {
@@ -539,16 +539,19 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
     final Uint8List merged;
     try {
       merged = await Isolate.run(
-          () => Ps2SaveFolders.merge(existing, mine, (name) => Ps2SaveFolders.isSaveOf(name, serial)));
+        () => Ps2SaveFolders.merge(existing, mine, (name) => Ps2SaveFolders.isSaveOf(name, serial)),
+      );
     } on FormatException catch (e) {
       throw SaveSyncNotPossibleException(
-          "PCSX2's memory card (${p.basename(card.path)}) doesn't look like a PS2 memory card Gargosy can safely "
-          'change ($e), so it was left as it is.');
+        "PCSX2's memory card (${p.basename(card.path)}) doesn't look like a PS2 memory card Gargosy can safely "
+        'change ($e), so it was left as it is.',
+      );
     } on Ps2CardFullException catch (e) {
       throw SaveSyncNotPossibleException(
-          "The save from RomM doesn't fit on PCSX2's memory card (${p.basename(card.path)}) with the saves already "
-          'on it: ${e.needed} KB needed, ${e.capacity} KB on the card. Nothing was changed. Free some space in '
-          "PCSX2's Memory Card settings, then pull again.");
+        "The save from RomM doesn't fit on PCSX2's memory card (${p.basename(card.path)}) with the saves already "
+        'on it: ${e.needed} KB needed, ${e.capacity} KB on the card. Nothing was changed. Free some space in '
+        "PCSX2's Memory Card settings, then pull again.",
+      );
     }
     await card.parent.create(recursive: true);
     if (await card.exists()) await backupSave(card.path);
@@ -592,8 +595,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<bool> restoreSave(
-      Game game, String destPath, Uint8List data, String filename) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       final root = await _getSaveRoot();
       final bool isEmuDeck = p.basename(root) == 'saves';
@@ -614,8 +616,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
         // how the push side packs folder-type memcards (see
         // encoder.addDirectory(...) on the push path) — the McdNNN.ps2
         // directory itself contains the per-game serial folders.
-        final memcardFolderPattern =
-            RegExp(r'^(Mcd\d+\.ps2)[/\\]', caseSensitive: false);
+        final memcardFolderPattern = RegExp(r'^(Mcd\d+\.ps2)[/\\]', caseSensitive: false);
 
         // A folder-type memcard bundle pushed by another RomM client (e.g.
         // Argosy, the Android launcher) may not use the McdNNN.ps2 naming
@@ -646,10 +647,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
         // fixed shape — real cards show both glued (e.g. "AC04") and
         // dash-separated (e.g. "-PROFILE") suffixes, and plenty of folders
         // have no suffix at all — so it's just "anything but a separator".
-        final ps2FolderArtifactPattern = RegExp(
-          r'^(B[AEI]S[A-Z]{3,4}-\d{5}[^/\\]*)[/\\]',
-          caseSensitive: false,
-        );
+        final ps2FolderArtifactPattern = RegExp(r'^(B[AEI]S[A-Z]{3,4}-\d{5}[^/\\]*)[/\\]', caseSensitive: false);
 
         // Both shapes above need to land inside whichever local
         // folder-type memcard slot already exists — the zip's own card
@@ -659,12 +657,10 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
         String? localFolderMemcardSlot;
         if (cardFolderWithSuperblock != null ||
             archive.any((e) => e.isFile && ps2FolderArtifactPattern.hasMatch(e.name))) {
-          final memcardsDirForLookup =
-              io.Directory(isEmuDeck ? root : p.join(root, 'memcards'));
+          final memcardsDirForLookup = io.Directory(isEmuDeck ? root : p.join(root, 'memcards'));
           if (await memcardsDirForLookup.exists()) {
             await for (final entity in memcardsDirForLookup.list()) {
-              if (entity is io.Directory &&
-                  p.basename(entity.path).toLowerCase().endsWith('.ps2')) {
+              if (entity is io.Directory && p.basename(entity.path).toLowerCase().endsWith('.ps2')) {
                 localFolderMemcardSlot = p.basename(entity.path);
                 break;
               }
@@ -704,18 +700,14 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
             // Folder-type memcard bundle — restore to memcards/{McdNNN.ps2}/
             final memcardFolderName = memcardFolderMatch.group(1)!;
             final memcardsDir = isEmuDeck ? root : p.join(root, 'memcards');
-            final relativePath =
-                entry.name.substring(memcardFolderMatch.group(0)!.length);
-            targetPath = p.normalize(
-                p.join(memcardsDir, memcardFolderName, relativePath));
+            final relativePath = entry.name.substring(memcardFolderMatch.group(0)!.length);
+            targetPath = p.normalize(p.join(memcardsDir, memcardFolderName, relativePath));
           } else if (superblockCardMatch != null) {
             // Folder-type memcard bundle from a non-Mcd-named card (see
             // detection above) — restore into the resolved local slot.
             final memcardsDir = isEmuDeck ? root : p.join(root, 'memcards');
-            final relativePath =
-                entry.name.substring(superblockCardMatch.group(0)!.length);
-            targetPath = p.normalize(
-                p.join(memcardsDir, localFolderMemcardSlot!, relativePath));
+            final relativePath = entry.name.substring(superblockCardMatch.group(0)!.length);
+            targetPath = p.normalize(p.join(memcardsDir, localFolderMemcardSlot!, relativePath));
           } else if (ps2ArtifactMatch != null) {
             // Bare per-game artifact folder, no card wrapper at all (the
             // narrowed push shape) — restore into the resolved local slot,
@@ -723,10 +715,8 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
             // "BASLUS-20152AC04") since that's what identifies it to PCSX2.
             final artifactFolderName = ps2ArtifactMatch.group(1)!;
             final memcardsDir = isEmuDeck ? root : p.join(root, 'memcards');
-            final relativePath =
-                entry.name.substring(ps2ArtifactMatch.group(0)!.length);
-            targetPath = p.normalize(
-                p.join(memcardsDir, localFolderMemcardSlot!, artifactFolderName, relativePath));
+            final relativePath = entry.name.substring(ps2ArtifactMatch.group(0)!.length);
+            targetPath = p.normalize(p.join(memcardsDir, localFolderMemcardSlot!, artifactFolderName, relativePath));
           } else if (entryLower.endsWith('.ps2')) {
             // Shared memcard — restore to memcards/ with normalized name
             final memcardsDir = isEmuDeck ? root : p.join(root, 'memcards');
@@ -754,7 +744,7 @@ class Pcsx2SaveStrategy extends SaveStrategy with StateSyncCapable {
         return true;
       }
       final targetDir = isEmuDeck ? root : p.join(root, 'memcards');
-      
+
       final normalizedFilename = filename.toLowerCase().endsWith('.ps2')
           ? _normalizeMemcardFilename(filename)
           : filename;

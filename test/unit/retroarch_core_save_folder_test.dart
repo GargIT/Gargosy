@@ -31,18 +31,18 @@ void main() {
     saveRoot = p.join(tempDir.path, 'saves');
     final configDir = p.join(tempDir.path, 'RetroArch');
     await Directory(configDir).create(recursive: true);
-    await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-      'savefile_directory = "$saveRoot"',
-      'sort_savefiles_enable = "true"',
-    ].join('\n'));
+    await File(p.join(configDir, 'retroarch.cfg'))
+        .writeAsString(['savefile_directory = "$saveRoot"', 'sort_savefiles_enable = "true"'].join('\n'));
     await Directory(saveRoot).create(recursive: true);
 
     final dirService = MockDirectoryService();
     when(dirService.findEmulatorExecutable(argThat(isA<String>()), argThat(isA<String>())))
         .thenAnswer((_) async => null);
     when(dirService.linuxSyncPreset).thenReturn('default');
-    strategy = RetroArchSaveStrategy(dirService,
-        platform: PlatformInfo('windows', environment: {'APPDATA': tempDir.path, 'USERPROFILE': tempDir.path}));
+    strategy = RetroArchSaveStrategy(
+      dirService,
+      platform: PlatformInfo('windows', environment: {'APPDATA': tempDir.path, 'USERPROFILE': tempDir.path}),
+    );
   });
 
   tearDown(() => tempDir.delete(recursive: true));
@@ -52,7 +52,11 @@ void main() {
 
   test('coreIdFor: the core as RomM\'s player and Argosy name it', () {
     expect(strategy.coreIdFor(game('gba', 'x.gba')), 'mgba');
-    expect(strategy.coreIdFor(game('psx', 'x.cue')), 'mednafen_psx_hw', reason: 'the core Gargosy launches PS1 games with');
+    expect(
+      strategy.coreIdFor(game('psx', 'x.cue')),
+      'mednafen_psx_hw',
+      reason: 'the core Gargosy launches PS1 games with',
+    );
     expect(strategy.coreIdFor(game('n64', 'x.z64')), 'mupen64plus_next');
     expect(strategy.coreIdFor(game('nds', 'x.nds')), 'melonds');
     expect(strategy.coreIdFor(game('turbografx-cd', 'x.cue')), 'mednafen_pce');
@@ -74,8 +78,10 @@ void main() {
     final nes = game('nes', 'Castlevania (USA).nes');
     expect(await strategy.getSaveDir(nes, romPath(nes.fsName!)), p.join(saveRoot, 'Mesen'));
 
-    expect(await strategy.restoreSave(nes, romPath(nes.fsName!), Uint8List.fromList([1, 2, 3]), 'Castlevania (USA).srm'),
-        isTrue);
+    expect(
+      await strategy.restoreSave(nes, romPath(nes.fsName!), Uint8List.fromList([1, 2, 3]), 'Castlevania (USA).srm'),
+      isTrue,
+    );
     expect(File(p.join(saveRoot, 'Mesen', 'Castlevania (USA).srm')).existsSync(), isTrue);
     expect(n64.listSync().map((e) => p.basename(e.path)), ['Wipeout 64 (Europe).srm']);
   });
@@ -153,11 +159,13 @@ void main() {
   test('RetroArch\'s last-used core only counts for a platform it runs', () async {
     // retroarch.cfg's libretro_path is the last core RetroArch loaded. A GBA
     // core there must not send a PS1 save to saves/mGBA/.
-    File(p.join(tempDir.path, 'RetroArch', 'retroarch.cfg')).writeAsStringSync([
-      'savefile_directory = "$saveRoot"',
-      'sort_savefiles_enable = "true"',
-      'libretro_path = "C:/RetroArch/cores/mgba_libretro.dll"',
-    ].join('\n'));
+    File(p.join(tempDir.path, 'RetroArch', 'retroarch.cfg')).writeAsStringSync(
+      [
+        'savefile_directory = "$saveRoot"',
+        'sort_savefiles_enable = "true"',
+        'libretro_path = "C:/RetroArch/cores/mgba_libretro.dll"',
+      ].join('\n'),
+    );
     final gba = game('gba', 'Metroid (USA).gba');
     expect(await strategy.getSaveDir(gba, romPath(gba.fsName!)), p.join(saveRoot, 'mGBA'));
     // retroarch.cfg has been read now.
