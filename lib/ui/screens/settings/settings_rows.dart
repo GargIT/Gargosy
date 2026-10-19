@@ -39,27 +39,37 @@ class SettingsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(GRadius.md),
         border: Border.all(color: GColors.border),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        SizedBox(
-          height: 40,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Row(children: [
-              Icon(icon, size: 15),
-              const SizedBox(width: GSpace.s3),
-              Expanded(child: Text(title.toUpperCase(), style: _titleStyle, overflow: TextOverflow.ellipsis)),
-              ?trailing,
-            ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 40,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                children: [
+                  Icon(icon, size: 15),
+                  const SizedBox(width: GSpace.s3),
+                  Expanded(
+                    child: Text(title.toUpperCase(), style: _titleStyle, overflow: TextOverflow.ellipsis),
+                  ),
+                  ?trailing,
+                ],
+              ),
+            ),
           ),
-        ),
-        line,
-        if (note != null)
-          Padding(padding: const EdgeInsets.fromLTRB(18, 14, 18, 0), child: Text(note!, style: _noteStyle)),
-        for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) line,
-          Padding(padding: rowPadding, child: children[i]),
+          line,
+          if (note != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+              child: Text(note!, style: _noteStyle),
+            ),
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) line,
+            Padding(padding: rowPadding, child: children[i]),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -98,31 +108,49 @@ class SettingsField extends StatelessWidget {
         borderRadius: BorderRadius.circular(GRadius.chip),
         border: Border.all(color: readOnly ? GColors.border : GColors.borderStrong),
       ),
-      child: Row(children: [
-        Expanded(
-          child: Text(value,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              value,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: GFont.md, color: readOnly ? GColors.fgSecondary : GColors.fg)),
-        ),
-        if (actionIcon != null) ...[const SizedBox(width: GSpace.s2), Icon(actionIcon, size: 15)],
-        if (action != null) ...[
-          const SizedBox(width: 6),
-          Text(action!, style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700)),
+              style: TextStyle(fontSize: GFont.md, color: readOnly ? GColors.fgSecondary : GColors.fg),
+            ),
+          ),
+          if (actionIcon != null) ...[const SizedBox(width: GSpace.s2), Icon(actionIcon, size: 15)],
+          if (action != null) ...[
+            const SizedBox(width: 6),
+            Text(
+              action!,
+              style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700),
+            ),
+          ],
         ],
-      ]),
-    );
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
-      // The label is clickable too, like the box.
-      GestureDetector(
-        onTap: onActivate,
-        child: Row(children: [
-          if (icon != null) ...[Icon(icon, size: 13, color: GColors.fgSecondary), const SizedBox(width: 7)],
-          Flexible(child: Text(label, style: _labelStyle, overflow: TextOverflow.ellipsis)),
-        ]),
       ),
-      const SizedBox(height: GSpace.s2),
-      if (readOnly) box else GFocusable(borderRadius: GRadius.chip, autofocus: autofocus, onActivate: onActivate, child: box),
-    ]);
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // The label is clickable too, like the box.
+        GestureDetector(
+          onTap: onActivate,
+          child: Row(
+            children: [
+              if (icon != null) ...[Icon(icon, size: 13, color: GColors.fgSecondary), const SizedBox(width: 7)],
+              Flexible(
+                child: Text(label, style: _labelStyle, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: GSpace.s2),
+        if (readOnly)
+          box
+        else
+          GFocusable(borderRadius: GRadius.chip, autofocus: autofocus, onActivate: onActivate, child: box),
+      ],
+    );
   }
 }
 
@@ -134,16 +162,22 @@ class SettingsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 20,
-        padding: const EdgeInsets.symmetric(horizontal: GSpace.s2),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(GRadius.sm),
-          border: Border.all(color: color.withValues(alpha: 0.6)),
-        ),
-        child: Text(text, style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w600, color: color)),
-      );
+    height: 20,
+    padding: const EdgeInsets.symmetric(horizontal: GSpace.s2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(GRadius.sm),
+      border: Border.all(color: color.withValues(alpha: 0.6)),
+    ),
+    // As wide as the text wherever it sits: a Container's alignment would fill a Wrap's line.
+    child: Center(
+      widthFactor: 1,
+      child: Text(
+        text,
+        style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w600, color: color),
+      ),
+    ),
+  );
 }
 
 enum SettingsButtonKind { tonal, primary, danger }
@@ -191,13 +225,20 @@ class SettingsButton extends StatelessWidget {
         width: label == null ? 40 : null,
         padding: label == null ? null : const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(GRadius.chip)),
-        child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, size: 16, color: fg),
-          if (label != null) ...[
-            const SizedBox(width: GSpace.s2),
-            Text(label!, style: TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700, color: fg)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: fg),
+            if (label != null) ...[
+              const SizedBox(width: GSpace.s2),
+              Text(
+                label!,
+                style: TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700, color: fg),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -214,44 +255,59 @@ class SettingsToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GFocusable(
-        borderRadius: GRadius.chip,
-        onActivate: () => onChanged(!on),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 40),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                Text(label, style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700)),
+    borderRadius: GRadius.chip,
+    onActivate: () => onChanged(!on),
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 40),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700),
+                ),
                 if (note != null) ...[const SizedBox(height: 2), Text(note!, style: _noteStyle)],
-              ]),
+              ],
             ),
-            const SizedBox(width: GSpace.s4),
-            AnimatedContainer(
-              duration: GMotion.fast,
-              width: 40,
-              height: 22,
-              padding: const EdgeInsets.all(3),
-              alignment: on ? Alignment.centerRight : Alignment.centerLeft,
-              decoration: BoxDecoration(
-                color: on ? GColors.primary : GColors.borderStrong,
-                borderRadius: BorderRadius.circular(GRadius.pill),
-              ),
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(color: GColors.fg, shape: BoxShape.circle),
-              ),
+          ),
+          const SizedBox(width: GSpace.s4),
+          AnimatedContainer(
+            duration: GMotion.fast,
+            width: 40,
+            height: 22,
+            padding: const EdgeInsets.all(3),
+            alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+            decoration: BoxDecoration(
+              color: on ? GColors.primary : GColors.borderStrong,
+              borderRadius: BorderRadius.circular(GRadius.pill),
             ),
-          ]),
-        ),
-      );
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(color: GColors.fg, shape: BoxShape.circle),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// A row that opens something: an icon, the label, a hint on the right and
 /// a chevron.
 class SettingsLinkRow extends StatelessWidget {
-  const SettingsLinkRow(
-      {super.key, required this.icon, required this.label, this.value, required this.onActivate, this.autofocus = false});
+  const SettingsLinkRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.value,
+    required this.onActivate,
+    this.autofocus = false,
+  });
 
   final IconData icon;
   final String label;
@@ -261,26 +317,36 @@ class SettingsLinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GFocusable(
-        borderRadius: GRadius.chip,
-        autofocus: autofocus,
-        onActivate: onActivate,
-        child: SizedBox(
-          height: 40,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: GSpace.s2),
-            child: Row(children: [
-              Icon(icon, size: 17, color: GColors.fgSecondary),
-              const SizedBox(width: GSpace.s3),
-              Expanded(child: Text(label, style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600))),
-              if (value != null)
-                Flexible(
-                  child: Text(value!,
-                      overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
+    borderRadius: GRadius.chip,
+    autofocus: autofocus,
+    onActivate: onActivate,
+    child: SizedBox(
+      height: 40,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: GSpace.s2),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: GColors.fgSecondary),
+            const SizedBox(width: GSpace.s3),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600),
+              ),
+            ),
+            if (value != null)
+              Flexible(
+                child: Text(
+                  value!,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                 ),
-              const SizedBox(width: GSpace.s2),
-              const Icon(Icons.chevron_right, size: 18, color: GColors.fgMuted),
-            ]),
-          ),
+              ),
+            const SizedBox(width: GSpace.s2),
+            const Icon(Icons.chevron_right, size: 18, color: GColors.fgMuted),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
