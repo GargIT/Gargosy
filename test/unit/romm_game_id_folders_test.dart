@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
-import 'package:gargosy/core/save/strategies/ppsspp_save_strategy.dart';
 import 'package:gargosy/core/save/strategies/rpcs3_save_strategy.dart';
 import 'package:path/path.dart' as p;
 
@@ -95,41 +94,8 @@ void main() {
     });
   });
 
-  group('PPSSPP', () {
-    Future<PpssppSaveStrategy> ppsspp() async => PpssppSaveStrategy(
-      await StubDirectoryService.create(),
-      platform: PlatformInfo('windows', environment: {'USERPROFILE': base.path}),
-    );
-
-    String savedata() => p.join(base.path, 'Documents', 'PPSSPP', 'PSP', 'SAVEDATA');
-
-    test('every folder starting with RomM\'s save_target, and no other game\'s', () async {
-      folder(p.join(savedata(), 'ULUS10064DATA00'));
-      folder(p.join(savedata(), 'ULUS10064SETTINGS'));
-      folder(p.join(savedata(), 'NPUH10000X'));
-
-      final files = await (await ppsspp()).getSaveFiles(
-        Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS10064'),
-        r'C:\nope\g.iso',
-      );
-
-      expect(files.map((f) => p.basename(f.path)).toSet(), {'ULUS10064DATA00', 'ULUS10064SETTINGS'});
-    });
-
-    test('a game RomM identified with no folder yet has no saves (not the newest folder)', () async {
-      folder(p.join(savedata(), 'NPUH10000X'));
-      paramSfo(p.join(savedata(), 'NPUH10000X'), 'Some Game');
-      final files = await (await ppsspp()).getSaveFiles(
-        Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS10064'),
-        r'C:\nope\g.iso',
-      );
-      expect(files.where((f) => p.isWithin(savedata(), f.path)), isEmpty);
-    });
-  });
-
-  group('RomM PS3/PSP ids that need care', () {
+  group('RomM PS3 ids that need care', () {
     String rpcs3Savedata() => p.join(base.path, 'rpcs3', 'dev_hdd0', 'home', '00000001', 'savedata');
-    String pspSavedata() => p.join(base.path, 'Documents', 'PPSSPP', 'PSP', 'SAVEDATA');
 
     Future<Rpcs3SaveStrategy> rpcs3() async {
       final exe = p.join(base.path, 'rpcs3', 'rpcs3.exe');
@@ -152,25 +118,6 @@ void main() {
         final files = await strategy.getSaveFiles(g, r'C:\nope\game');
         expect(files.map((f) => p.basename(f.path)).toSet(), {'BLUS31426', 'BLUS31426-AUTOSAVE'}, reason: g.titleId);
       }
-    });
-
-    test('PPSSPP: installed game data under the same id stays out; saves (and folders without PARAM.SFO) go', () async {
-      folder(p.join(pspSavedata(), 'ULUS10064DATA00'));
-      paramSfo(p.join(pspSavedata(), 'ULUS10064DATA00'), 'Save', keys: const ['SAVEDATA_FILE_LIST', 'SAVEDATA_PARAMS']);
-      folder(p.join(pspSavedata(), 'ULUS10064SETTINGS'));
-      folder(p.join(pspSavedata(), 'ULUS10064INSTALL'));
-      paramSfo(p.join(pspSavedata(), 'ULUS10064INSTALL'), 'Install');
-
-      final files =
-          await PpssppSaveStrategy(
-            await StubDirectoryService.create(),
-            platform: PlatformInfo('windows', environment: {'USERPROFILE': base.path}),
-          ).getSaveFiles(
-            Game(id: 'p', name: 'Some Game', platformSlug: 'psp', fileSize: 0, saveTarget: 'ULUS-10064'),
-            r'C:\nope\g.iso',
-          );
-
-      expect(files.map((f) => p.basename(f.path)).toSet(), {'ULUS10064DATA00', 'ULUS10064SETTINGS'});
     });
   });
 }

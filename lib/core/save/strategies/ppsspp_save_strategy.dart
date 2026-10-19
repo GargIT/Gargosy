@@ -1,11 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 // Gargosy: StateSyncCapable (#59): states in PSP\PPSSPP_STATE, the game by
 // its disc id (RomM's, else sigil's), Resume with `--state=`.
-import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:io' show File;
 
-import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
@@ -20,7 +18,7 @@ import '../save_strategy.dart';
 import '../state_sync_capable.dart';
 import 'ppsspp_state_file.dart';
 
-/// Save strategy for PPSSPP (PSP).
+/// PPSSPP's save states (PSP); its saves go through sigil (#57).
 class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
   final PlatformInfo _platform;
@@ -87,118 +85,21 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
     return resolvedBase;
   }
 
-  /// Reads PARAM.SFO file and extracts the game title.
-  Future<String?> _readParamSfoTitle(String folderPath) async {
-    try {
-      final sfoFile = io.File(p.join(folderPath, 'PARAM.SFO'));
-      if (!await sfoFile.exists()) return null;
-
-      final bytes = await sfoFile.readAsBytes();
-      if (bytes.length < 20) return null;
-      final byteData = ByteData.view(bytes.buffer);
-
-      if (bytes[0] != 0x00 || bytes[1] != 0x50 || bytes[2] != 0x53 || bytes[3] != 0x46) return null;
-
-      final keyTableOffset = byteData.getUint32(8, Endian.little);
-      final dataTableOffset = byteData.getUint32(12, Endian.little);
-      final entriesCount = byteData.getUint32(16, Endian.little);
-
-      for (int i = 0; i < entriesCount; i++) {
-        final entryBase = 20 + i * 16;
-        if (entryBase + 16 > bytes.length) break;
-        final keyRelOffset = byteData.getUint16(entryBase + 0, Endian.little);
-        final dataLen = byteData.getUint32(entryBase + 4, Endian.little);
-        final dataRelOffset = byteData.getUint32(entryBase + 12, Endian.little);
-
-        final keyStart = keyTableOffset + keyRelOffset;
-        final keyBytes = <int>[];
-        int j = keyStart;
-        while (j < bytes.length && bytes[j] != 0) {
-          keyBytes.add(bytes[j++]);
-        }
-        final key = utf8.decode(keyBytes);
-
-        if (key == 'TITLE') {
-          final valueStart = dataTableOffset + dataRelOffset;
-          final titleBytes = bytes.sublist(valueStart, valueStart + dataLen);
-          final nullIdx = titleBytes.indexOf(0);
-          return utf8.decode(nullIdx != -1 ? titleBytes.sublist(0, nullIdx) : titleBytes);
-        }
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Whether a SAVEDATA folder holds game data a game installed from its
-  /// disc rather than a save (PPSSPP's install dialog writes those under the
-  /// same id). Every save's PARAM.SFO names SAVEDATA_PARAMS and
-  /// SAVEDATA_FILE_LIST; an install's names neither. A folder with no
-  /// readable PARAM.SFO counts as a save, so nothing is dropped by mistake.
-  static Future<bool> _isGameDataInstall(String folderPath) async {
-    try {
-      final sfo = io.File(p.join(folderPath, 'PARAM.SFO'));
-      if (!await sfo.exists() || await sfo.length() > 64 * 1024) return false;
-      final text = latin1.decode(await sfo.readAsBytes());
-      return !text.contains('SAVEDATA_PARAMS') && !text.contains('SAVEDATA_FILE_LIST');
-    } catch (_) {
-      return false;
-    }
-  }
-
-  /// The save folder whose PARAM.SFO title best matches [game]'s name, else
-  /// the newest folder: the guess used when RomM doesn't know the game's id.
-  Future<List<io.Directory>> _foldersByTitle(List<io.Directory> allSubdirs, Game game) async {
-    final foldersWithTitles = <Map<String, dynamic>>[];
-    for (final dir in allSubdirs) {
-      final title = await _readParamSfoTitle(dir.path);
-      if (title != null) {
-        foldersWithTitles.add({'dir': dir, 'title': title, 'modified': (await dir.stat()).modified});
-      }
-    }
-
-    final gameWords = game.name
-        .toLowerCase()
-        .replaceAll(RegExp(r"[^a-z0-9\s]"), '')
-        .split(' ')
-        .where((w) => w.length >= 2)
-        .toList();
-
-    // Score each folder by how many game name words appear in its PARAM.SFO title,
-    // then pick only the single best-scoring folder to avoid uploading saves from
-    // unrelated games that share a common word (e.g. "Grand", "Battle", "War").
-    List<io.Directory> foldersToBundle = [];
-    if (foldersWithTitles.isNotEmpty) {
-      int bestScore = 0;
-      io.Directory? bestDir;
-      DateTime? bestMtime;
-      for (final entry in foldersWithTitles) {
-        final title = (entry['title'] as String).toLowerCase();
-        final score = gameWords.where((w) => title.contains(w)).length;
-        if (score > bestScore ||
-            (score == bestScore && bestScore > 0 && (entry['modified'] as DateTime).isAfter(bestMtime!))) {
-          bestScore = score;
-          bestDir = entry['dir'] as io.Directory;
-          bestMtime = entry['modified'] as DateTime;
-        }
-      }
-      if (bestScore > 0 && bestDir != null) {
-        foldersToBundle.add(bestDir);
-      } else {
-        // No title match — fall back to most recently modified folder
-        foldersWithTitles.sort((a, b) => (b['modified'] as DateTime).compareTo(a['modified'] as DateTime));
-        foldersToBundle.add(foldersWithTitles.first['dir'] as io.Directory);
-      }
-    }
-    return foldersToBundle;
-  }
+  // Gargosy (#57): PPSSPP's saves (PSP\SAVEDATA) go through sigil, which
+  // answers for every PSP game (SigilSaveStrategy); this strategy is for states.
+  @override
+  Future<String?> getSaveDir(Game game, String romPath) async => null;
 
   @override
-  Future<String?> getSaveDir(Game game, String romPath) async {
-    final pspDir = await _getPspDir(platformSlug: game.platformSlug);
-    return p.join(pspDir, 'SAVEDATA');
-  }
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => const [];
+
+  @override
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => false;
 
   // ─── Save states (Gargosy, #59) ──────────────────────────────────────────
   //
@@ -272,104 +173,6 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
       return await shot.exists() ? await shot.readAsBytes() : null;
     } catch (_) {
       return null;
-    }
-  }
-
-  @override
-  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
-    final pspDir = await _getPspDir(platformSlug: game.platformSlug);
-    final result = <File>[];
-
-    final saveDataDir = io.Directory(p.join(pspDir, 'SAVEDATA'));
-    if (await saveDataDir.exists()) {
-      final allSubdirs = await saveDataDir.list().where((e) => e is io.Directory).cast<io.Directory>().toList();
-      final fromRomm = GameIdResolver.discFolderId('PPSSPP ${game.name}', game);
-      final foldersToBundle = fromRomm != null
-          ? [
-              for (final d in allSubdirs)
-                if (p.basename(d.path).toUpperCase().startsWith(fromRomm) && !await _isGameDataInstall(d.path)) d,
-            ]
-          : await _foldersByTitle(allSubdirs, game);
-
-      for (final dir in foldersToBundle) {
-        result.add(io.File(dir.path));
-      }
-    }
-
-    // Gargosy: states never ride in game saves (issue #30); StateSyncService
-    // carries them.
-
-    return result;
-  }
-
-  @override
-  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
-    try {
-      final pspDir = await _getPspDir(platformSlug: game.platformSlug);
-      final targetSaveDir = p.join(pspDir, 'SAVEDATA');
-      final targetStateDir = p.join(pspDir, 'PPSSPP_STATE');
-
-      if (filename.toLowerCase().endsWith('.zip')) {
-        final archive = ZipDecoder().decodeBytes(data);
-        await io.Directory(targetSaveDir).create(recursive: true);
-        await io.Directory(targetStateDir).create(recursive: true);
-
-        for (final entry in archive) {
-          if (entry.name.contains('.bak') || entry.name == 'freegosy_sync.txt') continue;
-
-          // SMART FLATTENING: Strip redundant psp/PSP/SAVEDATA prefixes
-          String cleanName = entry.name.replaceAll('\\', '/');
-          final parts = cleanName.split('/');
-
-          // If the ZIP contains "psp/PSP/SAVEDATA/ULUS...", we want just "ULUS..."
-          int skipCount = 0;
-          for (int i = 0; i < parts.length; i++) {
-            final p = parts[i].toUpperCase();
-            if (p == 'PSP' || p == 'SAVEDATA' || p == 'PPSSPP_STATE') {
-              skipCount = i + 1;
-            }
-          }
-          if (skipCount > 0) {
-            cleanName = p.joinAll(parts.sublist(skipCount));
-          }
-          if (cleanName.isEmpty) continue;
-
-          final targetPath = p.normalize(
-            entry.name.toLowerCase().endsWith('.ppst')
-                ? p.join(targetStateDir, cleanName)
-                : p.join(targetSaveDir, cleanName),
-          );
-
-          if (entry.isFile && entry.name.toLowerCase().endsWith('.ppst')) {
-            // Gargosy: a state in an older bundle (issue #30), only when this
-            // PC has none of that name; never over one.
-            await restoreStateIfMissing(
-              targetStateDir,
-              entry.name,
-              entry.content as List<int>,
-              modified: entry.lastModDateTime,
-            );
-          } else if (entry.isFile) {
-            await backupSave(targetPath);
-            final outFile = io.File(targetPath);
-            await outFile.parent.create(recursive: true);
-            await outFile.writeAsBytes(entry.content as List<int>);
-          } else {
-            await io.Directory(targetPath).create(recursive: true);
-          }
-        }
-        return true;
-      }
-
-      if (filename.toLowerCase().endsWith('.ppst')) {
-        // Gargosy: only when this PC has no state of that name (issue #30).
-        await restoreStateIfMissing(targetStateDir, filename, data);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint('[PPSSPP] Restore error: $e');
-      rethrow;
     }
   }
 }
