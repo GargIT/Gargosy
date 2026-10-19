@@ -48,7 +48,6 @@ void main() {
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     final dolphin = p.join(tmp.path, 'dolphin');
     final retroarch = p.join(tmp.path, 'retroarch');
-    io.Directory(p.join(dolphin, 'User', 'GC', 'USA', 'Card A')).createSync(recursive: true);
     io.Directory(p.join(retroarch, 'saves')).createSync(recursive: true);
     put(p.join(dolphin, 'Dolphin.exe'), const []);
     put(p.join(retroarch, 'retroarch.exe'), const []);
@@ -65,38 +64,39 @@ void main() {
 
   tearDown(() => tmp.deleteSync(recursive: true));
 
-  group('Dolphin', () {
-    const rom = 'Super Mario Sunshine (USA)';
-    final game = Game(id: 'gc', name: 'Super Mario Sunshine', fsName: '$rom.iso', platformSlug: 'ngc', fileSize: 0);
+  // Gargosy (#57): GameCube saves are sigil's; Dolphin's own are Wii's.
+  group('Dolphin (Wii)', () {
+    const rom = 'Super Mario Galaxy (USA)';
+    final game = Game(id: 'wii', name: 'Super Mario Galaxy', fsName: '$rom.iso', platformSlug: 'wii', fileSize: 0);
     late String romPath;
     late String states;
+    late String title;
     setUp(() {
       romPath = p.join(tmp.path, 'roms', '$rom.iso');
-      put(romPath, [...'GMSE01'.codeUnits, ...List.filled(64, 0)]);
-      put(
-        p.join(tmp.path, 'dolphin', 'User', 'GC', 'USA', 'Card A', '01-GMSE01-Super Mario Sunshine.gci'),
-        List.filled(8256, 1),
-      );
+      put(romPath, [...'RMGE01'.codeUnits, ...List.filled(64, 0)]);
+      // RMGE as hex: Wii/title/00010000/524d4745.
+      title = p.join(tmp.path, 'dolphin', 'User', 'Wii', 'title', '00010000', '524d4745');
+      put(p.join(title, 'data', 'GameData.bin'), List.filled(64, 1));
       states = p.join(tmp.path, 'dolphin', 'User', 'StateSaves');
-      put(p.join(states, 'GMSE01.s01'), List.filled(64, 2));
+      put(p.join(states, 'RMGE01.s01'), List.filled(64, 2));
     });
 
     test('the save files hold the save, never a state', () async {
       final files = await DolphinSaveStrategy(dirs, platform: windows).getSaveFiles(game, romPath);
-      expect(files.map((f) => p.basename(f.path)), ['01-GMSE01-Super Mario Sunshine.gci']);
+      expect(files.map((f) => f.path), [title]);
     });
 
     test("an older bundle's state goes to StateSaves only when there's none of that name", () async {
       final strategy = DolphinSaveStrategy(dirs, platform: windows);
-      final bundle = _zip({'GMSE01.s01': List.filled(64, 9), 'GMSE01.s02': List.filled(64, 8)});
+      final bundle = _zip({'RMGE01.s01': List.filled(64, 9), 'RMGE01.s02': List.filled(64, 8)});
       expect(await strategy.restoreSave(game, romPath, bundle, 'save.zip'), isTrue);
       expect(
-        io.File(p.join(states, 'GMSE01.s01')).readAsBytesSync(),
+        io.File(p.join(states, 'RMGE01.s01')).readAsBytesSync(),
         List.filled(64, 2),
         reason: "this PC's state stays",
       );
       expect(
-        io.File(p.join(states, 'GMSE01.s02')).readAsBytesSync(),
+        io.File(p.join(states, 'RMGE01.s02')).readAsBytesSync(),
         List.filled(64, 8),
         reason: 'a state only the bundle had',
       );
