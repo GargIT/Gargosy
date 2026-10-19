@@ -57,7 +57,8 @@ void main() {
         await DolphinSaveStrategy(d, platform: platform).getSaveDir(game, r'C:\roms\gc\g.iso'),
         await Pcsx2SaveStrategy(d, d.prefs, platform: platform).getSaveDir(game, r'C:\roms\ps2\g.chd'),
         await DuckstationSaveStrategy(d, d.prefs, platform: platform).getSaveDir(game, r'C:\roms\psx\g.chd'),
-        await PpssppSaveStrategy(d, platform: platform).getSaveDir(game, r'C:\roms\psp\g.iso'),
+        // PPSSPP's saves are sigil's (#57): its own folder is the states'.
+        await PpssppSaveStrategy(d, platform: platform).stateDirectory(game, r'C:\roms\psp\g.iso'),
         await XeniaSaveStrategy(d, platform: platform).getSaveDir(
           Game.fromJson({...gameJson(2, 'x', platform: 'xbox360'), 'title_id': '4D5307E6'}),
           r'C:\roms\x\g.iso',
