@@ -63,6 +63,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `core/security/dpapi.dart` (adapted) — `DataProtector`, DPAPI, `readMachineGuid()`.
 - `core/romm/romm_models.dart`, `save_target_layout.dart`, `core/retroachievements/retroachievements_game_models.dart` — RomM models.
 - `core/romm/romm_auth_client.dart` (new) — `RommAuth`: device pairing (`/api/auth/device/init|token`), password → never-expiring client token (Basic auth, `/api/client-tokens`), `/api/users/me`, avatar. `gargosyScopes`. Never follows redirects.
+- `third_party/gamepads_windows/` — the `gamepads` plugin's Windows part (0.3.2, MIT), patched and used through `dependency_overrides`: upstream's `stop()` read through a null callback token, so Gargosy crashed on every exit; `GARGOSY.md` lists the changes. Drop it when a release fixes the token.
 - `core/input/` — `gamepad_service.dart` (moves focus with the D-pad, sets gamepad mode), `input_action_bus.dart`, mappings, SDL DB, deadzone. `providers/ui_provider.dart` (trimmed): `InputMode`, `inputModeProvider`, `navigationLockedProvider`.
 
 ### Profiles (new)

@@ -116,6 +116,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- Gargosy no longer crashes when it closes (an error in the controller
+  plugin, `gamepads_windows_plugin.dll`).
 - Resume starts a RetroArch state in the core it was made with (PCSX ReARMed,
   say), not the platform's default core.
 - RetroArch's Auto save state slot is in the States list and Resume starts

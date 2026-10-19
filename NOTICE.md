@@ -19,6 +19,11 @@ source code is available at https://github.com/rommapp/argosy-sigil/tree/v1.0.0 
 tiny-AES-c, libchdr, and dr_flac inside libchdr, public domain) are in [LICENSES/argosy-sigil-MPL-2.0.txt](LICENSES/argosy-sigil-MPL-2.0.txt)
 and [LICENSES/libchdr.txt](LICENSES/libchdr.txt).
 
+`gamepads_windows_plugin.dll` is built from gamepads_windows 0.3.2 (https://github.com/flame-engine/gamepads),
+Copyright (c) 2023 Blue Fire, under the MIT License, patched so Gargosy doesn't crash when it closes. The
+patched source and its licence are in this repository's `third_party/gamepads_windows` (`GARGOSY.md` lists the
+changes).
+
 Gargosy's look follows the design token values of RomM's v2 web UI (https://github.com/rommapp/romm).
 No RomM code, stylesheets, icons or logos are included.
 
