@@ -1345,30 +1345,33 @@ void main() {
 
     // Gargosy: states never ride in game saves (issue #30), so a state file
     // adds no second hash; RomM's copy of the save still matches.
+    // Gargosy (#57): GameCube saves are sigil's; Dolphin's own are Wii's.
     test("a Dolphin state file beside the save changes nothing: one hash, the save's", () async {
       final exeDir = Directory(p.join(tempDir.path, 'dolphin'))..createSync();
       File(p.join(exeDir.path, 'Dolphin')).writeAsStringSync('');
-      final card = Directory(p.join(exeDir.path, 'User', 'GC', 'USA', 'Card A'))..createSync(recursive: true);
+      // RMGE as hex: Wii/title/00010000/524d4745.
+      final title = Directory(p.join(exeDir.path, 'User', 'Wii', 'title', '00010000', '524d4745'))
+        ..createSync(recursive: true);
       final states = Directory(p.join(exeDir.path, 'User', 'StateSaves'))..createSync(recursive: true);
       when(mockDirectoryService.findEmulatorExecutable('dolphin', any))
           .thenAnswer((_) async => p.join(exeDir.path, 'Dolphin'));
-      const rom = 'Super Mario Sunshine (USA)';
+      const rom = 'Super Mario Galaxy (USA)';
       final game = Game(
-        id: 'gcgame',
-        name: 'Super Mario Sunshine',
+        id: 'wiigame',
+        name: 'Super Mario Galaxy',
         fsName: '$rom.iso',
-        platformSlug: 'ngc',
+        platformSlug: 'wii',
         fileSize: 0,
       );
       final romFile = p.join(tempDir.path, 'roms', '$rom.iso');
       // Dolphin reads the game ID from the disc header.
       File(romFile)
         ..createSync(recursive: true)
-        ..writeAsBytesSync([...'GMSE01'.codeUnits, ...List.filled(64, 0)]);
-      File(p.join(card.path, '01-GMSE01-Super Mario Sunshine.gci')).writeAsBytesSync(pattern(8256, 1));
+        ..writeAsBytesSync([...'RMGE01'.codeUnits, ...List.filled(64, 0)]);
+      File(p.join(title.path, 'data.bin')).writeAsBytesSync(pattern(8256, 1));
 
       final saveOnly = await sync.rommHashesOfLocal(game, romFile, emulatorId: 'dolphin');
-      File(p.join(states.path, '$rom.s01')).writeAsBytesSync(pattern(4096, 2));
+      File(p.join(states.path, 'RMGE01.s01')).writeAsBytesSync(pattern(4096, 2));
       final withState = await sync.rommHashesOfLocal(game, romFile, emulatorId: 'dolphin');
 
       expect(saveOnly, hasLength(1));
