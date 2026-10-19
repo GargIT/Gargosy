@@ -876,24 +876,26 @@ void main() {
     });
   });
 
-  group('SaveSyncService PCSX2 content-hash dedup (device sync)', () {
-    Future<Directory> setUpPcsx2Fixture(String saveContent) async {
-      final tempDir = await Directory.systemTemp.createTemp('pcsx2_hash_test');
-      final exeDir = Directory(p.join(tempDir.path, 'pcsx2'));
-      await Directory(p.join(exeDir.path, 'memcards')).create(recursive: true);
-      final perGameDir = Directory(p.join(exeDir.path, 'saves', 'SLUS-12345'));
+  group('SaveSyncService content-hash dedup (device sync), a folder save', () {
+    // Gargosy (#57): PCSX2's saves are sigil's now; RPCS3 keeps a folder save
+    // of its own, so it carries these tests of the push and pull.
+    Future<Directory> setUpFolderSave(String saveContent) async {
+      final tempDir = await Directory.systemTemp.createTemp('folder_save_hash_test');
+      final exeDir = Directory(p.join(tempDir.path, 'rpcs3'));
+      final perGameDir = Directory(p.join(exeDir.path, 'dev_hdd0', 'home', '00000001', 'savedata', 'BLUS31426'));
       await perGameDir.create(recursive: true);
       await File(p.join(perGameDir.path, 'save.bin')).writeAsString(saveContent);
-      final fakeExe = File(p.join(exeDir.path, 'pcsx2-qt.exe'));
+      final fakeExe = File(p.join(exeDir.path, 'rpcs3.exe'));
       await fakeExe.writeAsString('');
       when(mockDirectoryService.findEmulatorExecutable(any, any)).thenAnswer((_) async => fakeExe.path);
       return tempDir;
     }
 
-    Game pcsx2Game() => Game(id: 'pcsx2game', name: 'Ico (SLUS-12345)', platformSlug: 'ps2', fileSize: 0);
+    Game folderGame() =>
+        Game(id: 'ps3game', name: 'Some Game', platformSlug: 'ps3', fileSize: 0, titleId: 'BLUS-31426');
 
     Future<String> localSaveFilePath(Directory tempDir) async =>
-        p.join(tempDir.path, 'pcsx2', 'saves', 'SLUS-12345', 'save.bin');
+        p.join(tempDir.path, 'rpcs3', 'dev_hdd0', 'home', '00000001', 'savedata', 'BLUS31426', 'save.bin');
 
     setUp(() {
       when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities(version: '4.9.0'));
@@ -920,11 +922,11 @@ void main() {
     }
 
     test('the upload is tagged with the emulator that made the save, in the gargosy slot', () async {
-      final tempDir = await setUpPcsx2Fixture('SAVE_DATA_V1');
+      final tempDir = await setUpFolderSave('SAVE_DATA_V1');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       stubUpload((file) async => Uint8List(0));
 
-      await service.pushSaves(pcsx2Game(), romPath);
+      await service.pushSaves(folderGame(), romPath);
 
       final captured = verify(
         mockRommService.uploadSave(
@@ -940,36 +942,36 @@ void main() {
           overrideFilename: anyNamed('overrideFilename'),
         ),
       ).captured;
-      expect(captured, ['pcsx2', 'gargosy']);
+      expect(captured, ['rpcs3', 'gargosy']);
 
       await tempDir.delete(recursive: true);
     });
 
     test('a bundle is a plain zip: no freegosy_sync.txt, and RomM\'s hash is the local one', () async {
-      final tempDir = await setUpPcsx2Fixture('SAVE_DATA_V1');
+      final tempDir = await setUpFolderSave('SAVE_DATA_V1');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       Uint8List? uploadedBytes;
       stubUpload((file) async => uploadedBytes = await file.readAsBytes());
 
-      final local = await service.rommHashOfLocal(pcsx2Game(), romPath, emulatorId: 'pcsx2');
-      final ok = await service.pushSaves(pcsx2Game(), romPath);
+      final local = await service.rommHashOfLocal(folderGame(), romPath, emulatorId: 'rpcs3');
+      final ok = await service.pushSaves(folderGame(), romPath);
 
       expect(ok, isTrue);
       final names = ZipDecoder().decodeBytes(uploadedBytes!).files.where((f) => f.isFile).map((f) => f.name);
       expect(names, isNot(contains('freegosy_sync.txt')));
-      expect(names, contains('SLUS-12345/save.bin'));
+      expect(names, contains('BLUS31426/save.bin'));
       expect(local, rommHashOfUpload(uploadedBytes!));
 
       await tempDir.delete(recursive: true);
     });
 
-    test('pushing an unchanged PCSX2 bundle a second time does not re-upload', () async {
-      final tempDir = await setUpPcsx2Fixture('SAVE_DATA_V1');
+    test('pushing an unchanged bundle a second time does not re-upload', () async {
+      final tempDir = await setUpFolderSave('SAVE_DATA_V1');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       stubUpload((_) async => Uint8List(0));
 
-      await service.pushSaves(pcsx2Game(), romPath);
-      await service.pushSaves(pcsx2Game(), romPath);
+      await service.pushSaves(folderGame(), romPath);
+      await service.pushSaves(folderGame(), romPath);
 
       verify(
         mockRommService.uploadSave(
@@ -990,11 +992,11 @@ void main() {
     });
 
     test('pull: RomM\'s copy of the save on this PC is kept as it is', () async {
-      final tempDir = await setUpPcsx2Fixture('LOCAL_UNCHANGED');
+      final tempDir = await setUpFolderSave('LOCAL_UNCHANGED');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       Uint8List? uploadedBytes;
       stubUpload((file) async => uploadedBytes = await file.readAsBytes());
-      await service.pushSaves(pcsx2Game(), romPath);
+      await service.pushSaves(folderGame(), romPath);
       expect(uploadedBytes, isNotNull);
 
       when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
@@ -1006,24 +1008,21 @@ void main() {
       );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => uploadedBytes);
 
-      await service.pullSave(pcsx2Game(), romPath);
+      await service.pullSave(folderGame(), romPath);
 
       expect(await File(await localSaveFilePath(tempDir)).readAsString(), 'LOCAL_UNCHANGED');
       await tempDir.delete(recursive: true);
     });
 
     test('pull: an old bundle with a freegosy_sync.txt hash is put back like any other, without that file', () async {
-      final tempDir = await setUpPcsx2Fixture('LOCAL_UNCHANGED');
+      final tempDir = await setUpFolderSave('LOCAL_UNCHANGED');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       // An upload from before plain zips: freegosy_sync.txt holds the
       // saveContentHash of the folder it zips (name bytes, then file bytes).
-      final oldHash = md5.convert([
-        ...utf8.encode('SLUS-12345/save.bin'),
-        ...utf8.encode('LOCAL_UNCHANGED'),
-      ]).toString();
+      final oldHash = md5.convert([...utf8.encode('BLUS31426/save.bin'), ...utf8.encode('LOCAL_UNCHANGED')]).toString();
       final old = Archive()
         ..addFile(ArchiveFile.string('freegosy_sync.txt', jsonEncode({'contentHash': oldHash})))
-        ..addFile(ArchiveFile.string('SLUS-12345/save.bin', 'LOCAL_UNCHANGED'));
+        ..addFile(ArchiveFile.string('BLUS31426/save.bin', 'LOCAL_UNCHANGED'));
 
       when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
         (_) async => {
@@ -1035,7 +1034,7 @@ void main() {
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
           .thenAnswer((_) async => Uint8List.fromList(ZipEncoder().encode(old)));
 
-      expect(await service.pullSave(pcsx2Game(), romPath), isTrue);
+      expect(await service.pullSave(folderGame(), romPath), isTrue);
       final saved = File(await localSaveFilePath(tempDir));
       expect(await saved.readAsString(), 'LOCAL_UNCHANGED');
       expect(
@@ -1046,12 +1045,12 @@ void main() {
     });
 
     test('pull restores when the cloud bundle content hash does not match local', () async {
-      final tempDir = await setUpPcsx2Fixture('LOCAL_OLD');
+      final tempDir = await setUpFolderSave('LOCAL_OLD');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
 
       final archive = Archive();
       archive.addFile(ArchiveFile.string('freegosy_sync.txt', jsonEncode({'contentHash': 'deadbeef'})));
-      archive.addFile(ArchiveFile.string('SLUS-12345/save.bin', 'CLOUD_NEW'));
+      archive.addFile(ArchiveFile.string('BLUS31426/save.bin', 'CLOUD_NEW'));
       final cloudZipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
 
       when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
@@ -1063,7 +1062,7 @@ void main() {
       );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => cloudZipBytes);
 
-      final ok = await service.pullSave(pcsx2Game(), romPath);
+      final ok = await service.pullSave(folderGame(), romPath);
 
       expect(ok, isTrue);
       expect(await File(await localSaveFilePath(tempDir)).readAsString(), 'CLOUD_NEW');
@@ -1072,11 +1071,11 @@ void main() {
     });
 
     test('a compressed download is unpacked before it is restored', () async {
-      final tempDir = await setUpPcsx2Fixture('LOCAL_OLD');
+      final tempDir = await setUpFolderSave('LOCAL_OLD');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       final archive = Archive();
       archive.addFile(ArchiveFile.string('freegosy_sync.txt', jsonEncode({'contentHash': 'deadbeef'})));
-      archive.addFile(ArchiveFile.string('SLUS-12345/save.bin', 'CLOUD_NEW'));
+      archive.addFile(ArchiveFile.string('BLUS31426/save.bin', 'CLOUD_NEW'));
       final zipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
 
       when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
@@ -1089,19 +1088,19 @@ void main() {
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
           .thenAnswer((_) async => buildRzip(zipBytes));
 
-      expect(await service.pullSave(pcsx2Game(), romPath), isTrue);
+      expect(await service.pullSave(folderGame(), romPath), isTrue);
       expect(await File(await localSaveFilePath(tempDir)).readAsString(), 'CLOUD_NEW');
 
       await tempDir.delete(recursive: true);
     });
 
     test('a pull the launch went ahead without writes nothing', () async {
-      final tempDir = await setUpPcsx2Fixture('LOCAL_OLD');
+      final tempDir = await setUpFolderSave('LOCAL_OLD');
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
 
       final archive = Archive();
       archive.addFile(ArchiveFile.string('freegosy_sync.txt', jsonEncode({'contentHash': 'deadbeef'})));
-      archive.addFile(ArchiveFile.string('SLUS-12345/save.bin', 'CLOUD_NEW'));
+      archive.addFile(ArchiveFile.string('BLUS31426/save.bin', 'CLOUD_NEW'));
       final cloudZipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
 
       final guard = SaveRestoreGuard();
@@ -1118,7 +1117,7 @@ void main() {
         return cloudZipBytes;
       });
 
-      final ok = await guard.run(() => service.pullSave(pcsx2Game(), romPath));
+      final ok = await guard.run(() => service.pullSave(folderGame(), romPath));
 
       expect(ok, isFalse);
       expect(await File(await localSaveFilePath(tempDir)).readAsString(), 'LOCAL_OLD');
@@ -1307,30 +1306,33 @@ void main() {
 
     // Gargosy: states never ride in game saves (issue #30), so a state file
     // adds no second hash; RomM's copy of the save still matches.
+    // Gargosy (#57): GameCube saves are sigil's; Dolphin's own are Wii's.
     test("a Dolphin state file beside the save changes nothing: one hash, the save's", () async {
       final exeDir = Directory(p.join(tempDir.path, 'dolphin'))..createSync();
       File(p.join(exeDir.path, 'Dolphin')).writeAsStringSync('');
-      final card = Directory(p.join(exeDir.path, 'User', 'GC', 'USA', 'Card A'))..createSync(recursive: true);
+      // RMGE as hex: Wii/title/00010000/524d4745.
+      final title = Directory(p.join(exeDir.path, 'User', 'Wii', 'title', '00010000', '524d4745'))
+        ..createSync(recursive: true);
       final states = Directory(p.join(exeDir.path, 'User', 'StateSaves'))..createSync(recursive: true);
       when(mockDirectoryService.findEmulatorExecutable('dolphin', any))
           .thenAnswer((_) async => p.join(exeDir.path, 'Dolphin'));
-      const rom = 'Super Mario Sunshine (USA)';
+      const rom = 'Super Mario Galaxy (USA)';
       final game = Game(
-        id: 'gcgame',
-        name: 'Super Mario Sunshine',
+        id: 'wiigame',
+        name: 'Super Mario Galaxy',
         fsName: '$rom.iso',
-        platformSlug: 'ngc',
+        platformSlug: 'wii',
         fileSize: 0,
       );
       final romFile = p.join(tempDir.path, 'roms', '$rom.iso');
       // Dolphin reads the game ID from the disc header.
       File(romFile)
         ..createSync(recursive: true)
-        ..writeAsBytesSync([...'GMSE01'.codeUnits, ...List.filled(64, 0)]);
-      File(p.join(card.path, '01-GMSE01-Super Mario Sunshine.gci')).writeAsBytesSync(pattern(8256, 1));
+        ..writeAsBytesSync([...'RMGE01'.codeUnits, ...List.filled(64, 0)]);
+      File(p.join(title.path, 'data.bin')).writeAsBytesSync(pattern(8256, 1));
 
       final saveOnly = await sync.rommHashesOfLocal(game, romFile, emulatorId: 'dolphin');
-      File(p.join(states.path, '$rom.s01')).writeAsBytesSync(pattern(4096, 2));
+      File(p.join(states.path, 'RMGE01.s01')).writeAsBytesSync(pattern(4096, 2));
       final withState = await sync.rommHashesOfLocal(game, romFile, emulatorId: 'dolphin');
 
       expect(saveOnly, hasLength(1));

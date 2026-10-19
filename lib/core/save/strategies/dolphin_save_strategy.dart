@@ -37,9 +37,6 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
   String get strategyId => 'dolphin';
 
   /// Wii saves are directories (title/00010000/`hexId`/) that must be zipped.
-  /// GameCube saves are individual .gci files — no zip needed.
-  /// We return true so the service always bundles correctly; the restore path
-  /// already handles both raw .gci and ZIP extraction.
   @override
   bool get shouldZip => true;
 
@@ -83,19 +80,6 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
       );
     }
     return resolvedPath;
-  }
-
-  /// Detects region code from [romPath].
-  String _detectRegion(String romPath) {
-    final upper = romPath.toUpperCase();
-    if (upper.contains('EUR') || upper.contains('PAL')) return 'EUR';
-    if (upper.contains('JAP') || upper.contains('JPN')) return 'JAP';
-    return 'USA';
-  }
-
-  /// Normalizes game name for comparison.
-  String _normalizeGameName(String name) {
-    return name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
   bool _isValidGameIdByte(int byte) {
@@ -235,44 +219,32 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
     return null;
   }
 
+  // Gargosy (#57): GameCube saves go through sigil, which covers every
+  // GameCube game (SigilSaveStrategy); this strategy's saves are Wii's.
+  static bool _isWii(Game game) => game.platformSlug?.toLowerCase() == 'wii';
+
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
+    if (!_isWii(game)) return null;
     final userDir = await _getUserDir(platformSlug: game.platformSlug);
     final bool isIntegratedEnv =
         _platform.isLinux &&
         (_directoryService.linuxSyncPreset == 'emudeck' || _directoryService.linuxSyncPreset == 'retrodeck');
 
-    final isWii = game.platformSlug?.toLowerCase() == 'wii';
+    // Wii saves are in Wii/title/00010000/[TITLE_ID_HEX]
+    String? titleId = await gameIdFor(game, romPath);
 
-    if (isWii) {
-      // Wii saves are in Wii/title/00010000/[TITLE_ID_HEX]
-      String? titleId = await gameIdFor(game, romPath);
+    final String wiiBase = (isIntegratedEnv && p.basename(userDir).toLowerCase() == 'wii')
+        ? userDir
+        : p.join(userDir, 'Wii');
 
-      final String wiiBase = (isIntegratedEnv && p.basename(userDir).toLowerCase() == 'wii')
-          ? userDir
-          : p.join(userDir, 'Wii');
-
-      if (titleId != null && titleId.length >= 4) {
-        final hexId = titleId.substring(0, 4).codeUnits.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
-        final wiiPath = p.join(wiiBase, 'title', '00010000', hexId);
-        if (await io.Directory(wiiPath).exists()) return wiiPath;
-      }
-
-      return p.join(wiiBase, 'title', '00010000');
-    } else {
-      // GameCube
-      final region = _detectRegion(romPath);
-      final String gcBase = (isIntegratedEnv && p.basename(userDir).toLowerCase() == 'gc')
-          ? userDir
-          : p.join(userDir, 'GC');
-
-      // First, check for GCI folder (preferred for sync)
-      final gciPath = p.join(gcBase, region, 'Card A');
-      if (await io.Directory(gciPath).exists()) return gciPath;
-
-      // Fallback to the general GC folder for memory cards
-      return gcBase;
+    if (titleId != null && titleId.length >= 4) {
+      final hexId = titleId.substring(0, 4).codeUnits.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
+      final wiiPath = p.join(wiiBase, 'title', '00010000', hexId);
+      if (await io.Directory(wiiPath).exists()) return wiiPath;
     }
+
+    return p.join(wiiBase, 'title', '00010000');
   }
 
   @override
@@ -282,85 +254,13 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
     DateTime? sessionStart,
     String syncMode = 'both',
   }) async {
+    if (syncMode != 'saves' && syncMode != 'both') return [];
     final rootSaveDir = await getSaveDir(game, romPath);
-    if (rootSaveDir == null) return [];
-
-    final isWii = game.platformSlug?.toLowerCase() == 'wii';
-    final result = <io.File>[];
-
-    if (syncMode == 'saves' || syncMode == 'both') {
-      if (isWii) {
-        // For Wii, if we have the specific folder, sync it (SaveSyncService will zip it)
-        if (p.basename(rootSaveDir) != '00010000') {
-          result.add(io.File(rootSaveDir));
-        }
-      } else {
-        // GameCube save matching
-        final dir = io.Directory(rootSaveDir);
-        if (await dir.exists()) {
-          final gameId = (await gameIdFor(game, romPath))?.toUpperCase();
-          final normalizedTarget = _normalizeGameName(game.displayName);
-
-          // Dolphin timestamps backups with [YYYY-MM-DD_HH-MM-SS] in the filename.
-          // These are internal backups — never sync them.
-          final backupPattern = RegExp(r'\[\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\]');
-
-          io.File? bestGci;
-          DateTime? bestGciMtime;
-
-          await for (final entity in dir.list(recursive: true)) {
-            if (entity is! io.File) continue;
-            final filename = p.basename(entity.path).toUpperCase();
-
-            // 1. Match .gci files
-            if (filename.endsWith('.GCI')) {
-              // Skip Dolphin's own timestamped backup copies
-              if (backupPattern.hasMatch(filename)) continue;
-
-              bool match = false;
-              if (gameId != null && filename.contains(gameId)) {
-                // Strict game ID match — highest confidence
-                match = true;
-              } else if (gameId == null) {
-                // No ID available — fall back to name match
-                final normalizedGci = _normalizeGameName(filename);
-                if (normalizedGci.contains(normalizedTarget) || normalizedTarget.contains(normalizedGci)) {
-                  match = true;
-                }
-              }
-
-              if (match) {
-                final mtime = (await entity.stat()).modified;
-                if (sessionStart == null || mtime.isAfter(sessionStart.subtract(const Duration(seconds: 2)))) {
-                  // Keep only the newest matching .gci
-                  if (bestGci == null || mtime.isAfter(bestGciMtime!)) {
-                    bestGci = entity;
-                    bestGciMtime = mtime;
-                  }
-                }
-              }
-            }
-            // 2. Match Memory Card files (.raw, .mcp) - only if they match region
-            else if (filename.startsWith('MEMORYCARDA') && (filename.endsWith('.RAW') || filename.endsWith('.MCP'))) {
-              final region = _detectRegion(romPath);
-              if (filename.contains(region)) {
-                if (sessionStart == null ||
-                    (await entity.stat()).modified.isAfter(sessionStart.subtract(const Duration(seconds: 2)))) {
-                  result.add(entity);
-                }
-              }
-            }
-          }
-
-          if (bestGci != null) result.add(bestGci);
-        }
-      }
-    }
-
-    // Gargosy: states never ride in game saves (issue #30, state-sync plan
-    // S0.3); they reach RomM only through StateSyncService.
-
-    return result;
+    // The game's own title folder (SaveSyncService zips it), never the
+    // folder of every title. States never ride in game saves (issue #30,
+    // state-sync plan S0.3); they reach RomM only through StateSyncService.
+    if (rootSaveDir == null || p.basename(rootSaveDir) == '00010000') return [];
+    return [io.File(rootSaveDir)];
   }
 
   @override
