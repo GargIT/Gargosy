@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../helpers/duckstation_test_env.dart';
 import '../helpers/ps1_card_builder.dart';
 import 'save_sync_service_test.mocks.dart';
+import '../helpers/without_sigil.dart';
 
 void main() {
   late Directory base;
@@ -343,7 +344,13 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
       final romm = MockRommService();
-      final sync = SaveSyncService(romm, env.directoryService, StrategyRegistry(env.directoryService, prefs), prefs);
+      final sync = SaveSyncService(
+        romm,
+        env.directoryService,
+        StrategyRegistry(env.directoryService, prefs),
+        prefs,
+        wrapSaves: withoutSigil,
+      );
 
       await expectLater(
         sync.pushSaves(game, romPath(), emulatorId: 'duckstation'),

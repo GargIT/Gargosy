@@ -22,6 +22,7 @@ import 'dart:io' as io;
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/without_sigil.dart';
 
 /// A state's start as MAME writes it (src/emu/save.cpp): magic, version,
 /// flags, the system name.
@@ -109,6 +110,7 @@ void main() {
         dirs,
         StrategyRegistry(dirs, prefs),
         prefs,
+        wrapSaves: withoutSigil,
       );
       expect(sync.strategyForGame(game, emulatorId: 'mame'), isNot(isA<MameSaveStrategy>()));
       expect(sync.stateStrategyForGame(game, emulatorId: 'mame'), isA<MameSaveStrategy>());

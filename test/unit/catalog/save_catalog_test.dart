@@ -13,6 +13,8 @@ import 'package:gargosy/core/save/catalog/save_catalog_sources.dart';
 import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 
+import '../../helpers/without_sigil.dart';
+
 class _Sources implements SaveCatalogSources {
   _Sources({this.local = const [], this.backupRows = const [], this.romm});
   final List<SaveEntry> local;
@@ -52,7 +54,13 @@ void main() {
     final dirs = DirectoryService(prefs);
     final registry = StrategyRegistry(dirs, prefs);
     final sources = LiveSaveCatalogSources(
-      sync: SaveSyncService(RommService(RomMConfig(baseUrl: '', username: '', password: '')), dirs, registry, prefs),
+      sync: SaveSyncService(
+        RommService(RomMConfig(baseUrl: '', username: '', password: '')),
+        dirs,
+        registry,
+        prefs,
+        wrapSaves: withoutSigil,
+      ),
       registry: registry,
       backupRepository: _Repo([BackupEntry(timestamp: DateTime(2026), md5Hash: 'save', localZipPath: '/b/b.zip')]),
       rommService: null,
@@ -67,7 +75,13 @@ void main() {
     final dirs = DirectoryService(prefs);
     final registry = StrategyRegistry(dirs, prefs);
     final sources = LiveSaveCatalogSources(
-      sync: SaveSyncService(RommService(RomMConfig(baseUrl: '', username: '', password: '')), dirs, registry, prefs),
+      sync: SaveSyncService(
+        RommService(RomMConfig(baseUrl: '', username: '', password: '')),
+        dirs,
+        registry,
+        prefs,
+        wrapSaves: withoutSigil,
+      ),
       registry: registry,
       backupRepository: _Repo([
         BackupEntry(

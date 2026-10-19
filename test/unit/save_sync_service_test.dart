@@ -29,6 +29,7 @@ import '../helpers/duckstation_test_env.dart';
 import '../helpers/ps1_card_builder.dart';
 import '../helpers/rzip_builder.dart';
 import 'save_sync_service_test.mocks.dart';
+import '../helpers/without_sigil.dart';
 
 @GenerateMocks([RommService, DirectoryService, StrategyRegistry])
 void main() {
@@ -60,7 +61,13 @@ void main() {
     when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
     // Default to legacy mode so existing tests are unaffected
     when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities.unknown());
-    service = SaveSyncService(mockRommService, mockDirectoryService, mockStrategyRegistry, prefs);
+    service = SaveSyncService(
+      mockRommService,
+      mockDirectoryService,
+      mockStrategyRegistry,
+      prefs,
+      wrapSaves: withoutSigil,
+    );
   });
 
   group('SaveSyncService', () {
@@ -1187,6 +1194,7 @@ void main() {
         SharedPreferencesAppPreferences(await SharedPreferences.getInstance()),
         platform: PlatformInfo('linux', environment: {'HOME': tempDir.path}),
         zstd: (_) async => throw UnsupportedError('no zstd library'),
+        wrapSaves: withoutSigil,
       );
     });
 
@@ -1722,7 +1730,7 @@ class _SharedCardStrategy implements SaveStrategy {
 
 /// Save sync where every game uses [strategy].
 class _OneStrategySync extends SaveSyncService {
-  _OneStrategySync(this.strategy, super.romm, super.dirs, super.registry, super.prefs);
+  _OneStrategySync(this.strategy, super.romm, super.dirs, super.registry, super.prefs) : super(wrapSaves: withoutSigil);
   final SaveStrategy strategy;
   @override
   SaveStrategy? getStrategyForGame(Game game, {String? emulatorId}) => strategy;

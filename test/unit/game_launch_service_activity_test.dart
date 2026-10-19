@@ -16,6 +16,8 @@ import 'package:gargosy/core/save/save_sync_service.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 
+import '../helpers/without_sigil.dart';
+
 class _ThrowingLaunchStrategy extends Pcsx2Strategy {
   _ThrowingLaunchStrategy(super.directoryService);
 
@@ -82,7 +84,7 @@ void main() {
     service = GameLaunchService(
       directoryService: dirService,
       strategyRegistry: registry,
-      saveSyncService: SaveSyncService(rommService, dirService, registry, prefs),
+      saveSyncService: SaveSyncService(rommService, dirService, registry, prefs, wrapSaves: withoutSigil),
       backupService: BackupService(),
       backupRepository: BackupRepository(),
       prefs: prefs,

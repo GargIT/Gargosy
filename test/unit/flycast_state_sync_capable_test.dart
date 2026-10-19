@@ -20,6 +20,7 @@ import 'package:path/path.dart' as p;
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/without_sigil.dart';
 
 /// A state as Flycast writes it (core/nullDC.cpp): the header, the PNG, the data.
 Uint8List flycastState({List<int> png = const [0x89, 0x50, 0x4E, 0x47], int version = 850}) {
@@ -125,6 +126,7 @@ void main() {
       dirs,
       StrategyRegistry(dirs, prefs),
       prefs,
+      wrapSaves: withoutSigil,
     );
     expect(sync.strategyForGame(game, emulatorId: 'flycast'), isNot(isA<FlycastSaveStrategy>()));
     expect(sync.stateStrategyForGame(game, emulatorId: 'flycast'), isA<FlycastSaveStrategy>());

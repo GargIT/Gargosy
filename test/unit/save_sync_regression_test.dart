@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
 
 import 'save_sync_regression_test.mocks.dart';
+import '../helpers/without_sigil.dart';
 
 @GenerateMocks([RommService, DirectoryService, StrategyRegistry])
 void main() {
@@ -41,7 +42,13 @@ void main() {
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
     when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities.unknown());
-    service = SaveSyncService(mockRommService, mockDirectoryService, mockStrategyRegistry, prefs);
+    service = SaveSyncService(
+      mockRommService,
+      mockDirectoryService,
+      mockStrategyRegistry,
+      prefs,
+      wrapSaves: withoutSigil,
+    );
   });
 
   group('Filename normalization', () {

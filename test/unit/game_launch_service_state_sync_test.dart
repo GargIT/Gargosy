@@ -19,6 +19,7 @@ import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/fake_romm_states_api.dart';
+import '../helpers/without_sigil.dart';
 
 /// A StateSyncService whose pushStates throws, like an unexpected failure.
 class _ThrowingStateSync extends StateSyncService {
@@ -95,7 +96,8 @@ class _RecordingSaveSync extends SaveSyncService {
     this.steps,
     this.conflict = false,
     this.pushOk = true,
-  }) : marked = marked ?? [];
+  }) : marked = marked ?? [],
+       super(wrapSaves: withoutSigil);
   final List<String> log;
 
   /// Every save step and the save lock around them, in order.
@@ -230,7 +232,7 @@ Future<GameLaunchService> _launchServiceWith(StateSyncService? Function(AppPrefe
   return GameLaunchService(
     directoryService: dirService,
     strategyRegistry: registry,
-    saveSyncService: SaveSyncService(rommService, dirService, registry, prefs),
+    saveSyncService: SaveSyncService(rommService, dirService, registry, prefs, wrapSaves: withoutSigil),
     backupService: BackupService(),
     backupRepository: BackupRepository(),
     prefs: prefs,
@@ -271,7 +273,7 @@ void main() {
       dio: Dio(BaseOptions(baseUrl: 'https://romm.example.com')),
       skipConnectivityCheck: true,
     );
-    final saveSync = SaveSyncService(rommService, dirService, registry, prefs);
+    final saveSync = SaveSyncService(rommService, dirService, registry, prefs, wrapSaves: withoutSigil);
 
     final service = GameLaunchService(
       directoryService: dirService,

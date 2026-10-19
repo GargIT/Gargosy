@@ -10,6 +10,8 @@ import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/without_sigil.dart';
+
 /// Any game: the lookup goes by emulator (MAME's states-only strategy too).
 final _anyGame = Game(id: '1', name: 'Game', fileSize: 0);
 
@@ -27,6 +29,7 @@ void main() {
       directoryService,
       registry,
       prefs,
+      wrapSaves: withoutSigil,
     );
 
     final advertising = <String>[];
@@ -74,6 +77,7 @@ void main() {
       directoryService,
       registry,
       prefs,
+      wrapSaves: withoutSigil,
     );
 
     final advertising = <String>[];

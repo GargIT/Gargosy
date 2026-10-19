@@ -156,10 +156,11 @@ class SaveSyncService {
     this._prefs, {
     ZstdDecompressor? zstd,
     PlatformInfo? platform,
-    SaveStrategyWrapper? wrapSaves,
+    required SaveStrategyWrapper wrapSaves,
   }) : _zstd = zstd {
-    // Gargosy: sigil's strategies take over these emulators' saves (lib/sigil).
-    SaveStrategy wrap(String id, SaveStrategy base) => wrapSaves?.call(id, base) ?? base;
+    // Gargosy: sigil's strategies take over these emulators' saves (lib/sigil;
+    // required, #57: Gargosy doesn't start without sigil.dll).
+    SaveStrategy wrap(String id, SaveStrategy base) => wrapSaves(id, base) ?? base;
     _retroarch = RetroArchSaveStrategy(_directoryService, prefs: _prefs, platform: platform);
     _retroarchSaves = wrap('retroarch', _retroarch);
     _dolphin = wrap('dolphin', DolphinSaveStrategy(_directoryService, platform: platform));
@@ -180,7 +181,7 @@ class SaveSyncService {
     _melonds = MelonDsSaveStrategy(_directoryService, platform: platform);
     _mgba = wrap('mgba', MgbaSaveStrategy(_directoryService, platform: platform));
     _ppsspp = wrap('ppsspp', PpssppSaveStrategy(_directoryService, platform: platform));
-    _flycast = wrapSaves?.call('flycast', null);
+    _flycast = wrapSaves('flycast', null);
     _cemu = CemuSaveStrategy(_directoryService, platform: platform);
     _azahar = AzaharSaveStrategy(_directoryService, onMappingResolved: saveMappedFolder, platform: platform);
     _ares = AresSaveStrategy(_directoryService, platform: platform);

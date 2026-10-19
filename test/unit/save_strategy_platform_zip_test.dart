@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 import 'package:archive/archive_io.dart';
 
 import 'save_sync_service_test.mocks.dart';
+import '../helpers/without_sigil.dart';
 
 void main() {
   late SaveSyncService service;
@@ -40,7 +41,13 @@ void main() {
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
     when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities.unknown());
-    service = SaveSyncService(mockRommService, mockDirectoryService, mockStrategyRegistry, prefs);
+    service = SaveSyncService(
+      mockRommService,
+      mockDirectoryService,
+      mockStrategyRegistry,
+      prefs,
+      wrapSaves: withoutSigil,
+    );
 
     // Prevent RetroArch strategy from reading real retroarch.cfg during tests
     final retroarch = service.getStrategyForSlug('snes');

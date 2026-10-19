@@ -16,8 +16,11 @@ import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helpers/without_sigil.dart';
+
 class _Sync extends SaveSyncService {
-  _Sync(super.romm, super.dirs, super.registry, super.prefs, this.log, {this.fail = false, this.saveDirs = const {}});
+  _Sync(super.romm, super.dirs, super.registry, super.prefs, this.log, {this.fail = false, this.saveDirs = const {}})
+    : super(wrapSaves: withoutSigil);
   final List<String> log;
   final bool fail;
 
