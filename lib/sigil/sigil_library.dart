@@ -50,6 +50,17 @@ abstract final class SigilLibrary {
     return lib;
   }
 
+  /// Why the library can't be used, null when it can (checked at start: Gargosy
+  /// doesn't run without it, #57).
+  static SigilUnavailable? problem() {
+    try {
+      open();
+      return null;
+    } on SigilUnavailable catch (e) {
+      return e;
+    }
+  }
+
   /// Throws unless [reported] is the version Gargosy's bindings fit.
   static void checkVersion(String file, String reported) {
     if (reported != sigilPinnedVersion) {

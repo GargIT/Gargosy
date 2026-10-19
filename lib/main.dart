@@ -22,6 +22,7 @@ import 'profiles/path_guard.dart';
 import 'profiles/portable_temp.dart';
 import 'profiles/profile_providers.dart';
 import 'providers/update_providers.dart';
+import 'sigil/sigil_library.dart';
 import 'core/platform/platform_info.dart';
 import 'update/update_installer.dart';
 import 'ui/screens/startup_error_app.dart';
@@ -39,6 +40,13 @@ Future<void> main(List<String> args) async {
     return;
   }
   startFileLog(root);
+  // Saves go through sigil only (#57): without it, Gargosy doesn't start.
+  final sigil = SigilLibrary.problem();
+  if (sigil != null) {
+    LoggerService().error(sigil, null, context: 'Start');
+    runApp(StartupErrorApp.sigil(sigil));
+    return;
+  }
   // Portable: plugins, settings and temp files stay in userdata\, never
   // AppData (spec §3).
   usePortableTemp(p.join(root.appData, 'temp'));

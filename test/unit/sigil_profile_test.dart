@@ -6,7 +6,6 @@ import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
-import 'package:gargosy/sigil/sigil_library.dart';
 import 'package:gargosy/sigil/sigil_profile.dart';
 import 'package:gargosy/sigil/sigil_save_strategy.dart';
 import 'package:path/path.dart' as p;
@@ -31,7 +30,7 @@ void main() {
   final paths = ProfilePaths(AppRoot(r'C:\gargosy-test'), 'aaa');
 
   test("the profile's sigil strategies: the seven emulators, their folders and sigil's files inside the profile", () {
-    final wrap = sigilSavesFor(paths)!;
+    final wrap = sigilSavesFor(paths);
     final pcsx2 = wrap('pcsx2', _Old()) as SigilSaveStrategy;
     expect(pcsx2.emulatorDir(), paths.emulatorDir('pcsx2'));
     expect(pcsx2.states.dir, p.join(paths.dir, 'sigil'));
@@ -47,12 +46,5 @@ void main() {
     expect(retroarch!.wrapped, same(old));
     final other = _Old();
     expect(wrap('melonds', other), same(other), reason: 'an emulator sigil does not sync here keeps its own');
-  });
-
-  test("without a usable sigil.dll the old strategies stay (and it says why in the log)", () {
-    final was = SigilLibrary.path;
-    addTearDown(() => SigilLibrary.path = was);
-    SigilLibrary.path = r'C:\nowhere\sigil.dll';
-    expect(sigilSavesFor(paths), isNull);
   });
 }

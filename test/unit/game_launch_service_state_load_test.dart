@@ -17,6 +17,7 @@ import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/pcsx2_test_env.dart';
+import '../helpers/without_sigil.dart';
 
 /// Records which launch methods GameLaunchService calls and the extra
 /// arguments each got, then optionally fails like a missing emulator. The
@@ -185,7 +186,9 @@ void main() {
     base = await Directory.systemTemp.createTemp('state_load_launch');
     env = await Pcsx2TestEnv.create(base);
     romPath = p.join(base.path, 'Ico (SCUS-97113).iso');
-    service = buildService((romm, registry) => SaveSyncService(romm, env.directoryService, registry, env.prefs));
+    service = buildService(
+      (romm, registry) => SaveSyncService(romm, env.directoryService, registry, env.prefs, wrapSaves: withoutSigil),
+    );
   });
 
   tearDown(() => base.delete(recursive: true));
@@ -255,7 +258,13 @@ void main() {
       final tracked = GameLaunchService(
         directoryService: env.directoryService,
         strategyRegistry: registry,
-        saveSyncService: SaveSyncService(rommService, env.directoryService, registry, env.prefs),
+        saveSyncService: SaveSyncService(
+          rommService,
+          env.directoryService,
+          registry,
+          env.prefs,
+          wrapSaves: withoutSigil,
+        ),
         backupService: BackupService(),
         backupRepository: BackupRepository(),
         prefs: env.prefs,

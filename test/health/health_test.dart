@@ -9,6 +9,8 @@ import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/without_sigil.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -91,7 +93,7 @@ void main() {
       final ds = DirectoryService(prefs);
       final rs = RommService(RomMConfig(baseUrl: 'https://test.com', username: 'u', password: 'p'));
       final reg = StrategyRegistry(ds, prefs);
-      expect(() => SaveSyncService(rs, ds, reg, prefs), returnsNormally);
+      expect(() => SaveSyncService(rs, ds, reg, prefs, wrapSaves: withoutSigil), returnsNormally);
     });
 
     test('All Save strategies can be instantiated', () async {
@@ -99,7 +101,7 @@ void main() {
       final ds = DirectoryService(prefs);
       final rs = RommService(RomMConfig(baseUrl: 'https://test.com', username: 'u', password: 'p'));
       final reg = StrategyRegistry(ds, prefs);
-      final sss = SaveSyncService(rs, ds, reg, prefs);
+      final sss = SaveSyncService(rs, ds, reg, prefs, wrapSaves: withoutSigil);
 
       expect(sss.getStrategyForSlug('gba'), isNotNull);
       expect(sss.getStrategyForSlug('gc'), isNotNull);

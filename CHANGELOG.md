@@ -90,6 +90,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- Gargosy doesn't start without `sigil.dll`, which syncs the saves: it says
+  so and to unpack the Gargosy zip again. Before, saves quietly went through
+  older code that could store them differently on RomM (#57).
 - On a drive that can't hold folder links (FAT32, exFAT), starting Eden,
   Azahar, Cemu or melonDS is refused before anything is moved: the
   emulator's own `user\` or `portable\` folder stays where it was (#49).

@@ -15,6 +15,7 @@ import 'package:path/path.dart' as p;
 
 import '../helpers/fake_romm_states_api.dart';
 import '../helpers/pcsx2_test_env.dart';
+import '../helpers/without_sigil.dart';
 
 /// Captures the debugPrints of the current test that start with [tag], in order
 /// (other components log during a launch too).
@@ -43,7 +44,7 @@ void main() {
     return GameLaunchService(
       directoryService: env.directoryService,
       strategyRegistry: registry,
-      saveSyncService: SaveSyncService(rommService, env.directoryService, registry, env.prefs),
+      saveSyncService: SaveSyncService(rommService, env.directoryService, registry, env.prefs, wrapSaves: withoutSigil),
       backupService: BackupService(),
       backupRepository: BackupRepository(),
       prefs: env.prefs,

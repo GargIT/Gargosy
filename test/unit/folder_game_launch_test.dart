@@ -16,6 +16,7 @@ import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firmware_service_test.mocks.dart';
+import '../helpers/without_sigil.dart';
 
 /// Folder games (ScummVM) launch from their whole folder: nothing inside
 /// the folder may be picked as "the ROM".
@@ -39,7 +40,7 @@ void main() {
     launchService = GameLaunchService(
       directoryService: dirService,
       strategyRegistry: registry,
-      saveSyncService: SaveSyncService(MockRommService(), dirService, registry, prefs),
+      saveSyncService: SaveSyncService(MockRommService(), dirService, registry, prefs, wrapSaves: withoutSigil),
       backupService: BackupService(),
       backupRepository: BackupRepository(),
       prefs: prefs,

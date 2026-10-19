@@ -8,6 +8,8 @@ import 'package:gargosy/core/save/save_sync_service.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/storage/shared_preferences_app_preferences.dart';
 
+import '../helpers/without_sigil.dart';
+
 /// Regression coverage for issue #28/#42: reports of save sync silently
 /// resolving a *different* emulator than the one actually used to launch
 /// (e.g. GBA launching via RetroArch but sync looking in mGBA standalone's
@@ -28,7 +30,7 @@ void main() {
       final dirService = DirectoryService(prefs);
       registry = StrategyRegistry(dirService, prefs);
       final rommService = RommService(RomMConfig(baseUrl: '', username: '', password: ''));
-      syncService = SaveSyncService(rommService, dirService, registry, prefs);
+      syncService = SaveSyncService(rommService, dirService, registry, prefs, wrapSaves: withoutSigil);
     });
 
     test('GBA: launch strategy and no-preference sync strategy agree', () {

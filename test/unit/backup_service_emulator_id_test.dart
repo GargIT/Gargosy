@@ -18,6 +18,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import '../helpers/without_sigil.dart';
+
 class _FakePathProvider extends PathProviderPlatform with MockPlatformInterfaceMixin {
   _FakePathProvider(this.path);
   final String path;
@@ -92,7 +94,7 @@ void main() {
       final dirService = DirectoryService(prefs);
       registry = StrategyRegistry(dirService, prefs);
       final rommService = RommService(RomMConfig(baseUrl: '', username: '', password: ''));
-      syncService = SaveSyncService(rommService, dirService, registry, prefs);
+      syncService = SaveSyncService(rommService, dirService, registry, prefs, wrapSaves: withoutSigil);
       backupService = BackupService();
 
       tempDir = await Directory.systemTemp.createTemp('backup_emulator_id_test');
