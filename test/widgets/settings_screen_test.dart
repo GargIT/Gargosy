@@ -21,6 +21,7 @@ import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/retroachievements/ra_account.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/screens/settings/settings_screen.dart';
+import 'package:gargosy/ui/screens/settings/settings_rows.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
@@ -41,42 +42,76 @@ Future<void> settleIo(WidgetTester tester) async {
 void main() {
   late ProviderContainer c;
 
-  Future<void> pump(WidgetTester tester,
-      {PinHash? pin, UploadQueue? queue, BiosSync? bios, SettingsPage initial = SettingsPage.profile}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    PinHash? pin,
+    UploadQueue? queue,
+    BiosSync? bios,
+    SettingsPage initial = SettingsPage.profile,
+  }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final root = await tester.runAsync(tempAppRoot);
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
-    c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root!),
-      appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-      coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
-      rommHeartbeatEnabledProvider.overrideWithValue(false),
-      uploadQueueProvider.overrideWith((ref) async => queue),
-      biosSyncProvider.overrideWithValue(bios),
-      platformsProvider.overrideWith((ref) async => [Platform(id: 1, name: 'PlayStation', slug: 'psx')]),
-      emulatorsProvider.overrideWith((ref) async => const [
-            EmulatorInfo(id: 'duckstation', name: 'DuckStation', exe: 'duckstation-qt-x64-ReleaseLTCG.exe', supported: true, installedExe: r'C:\G\e\d.exe'),
-            EmulatorInfo(id: 'retroarch', name: 'RetroArch', exe: 'retroarch.exe', supported: true, installedExe: r'C:\G\e\r.exe'),
-            EmulatorInfo(id: 'melonds', name: 'melonDS', exe: 'melonDS.exe', supported: true, installedExe: r'C:\G\e\m.exe'),
+    c = ProviderContainer(
+      overrides: [
+        appRootProvider.overrideWithValue(root!),
+        appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+        coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+        rommHeartbeatEnabledProvider.overrideWithValue(false),
+        uploadQueueProvider.overrideWith((ref) async => queue),
+        biosSyncProvider.overrideWithValue(bios),
+        platformsProvider.overrideWith((ref) async => [Platform(id: 1, name: 'PlayStation', slug: 'psx')]),
+        emulatorsProvider.overrideWith(
+          (ref) async => const [
+            EmulatorInfo(
+              id: 'duckstation',
+              name: 'DuckStation',
+              exe: 'duckstation-qt-x64-ReleaseLTCG.exe',
+              supported: true,
+              installedExe: r'C:\G\e\d.exe',
+            ),
+            EmulatorInfo(
+              id: 'retroarch',
+              name: 'RetroArch',
+              exe: 'retroarch.exe',
+              supported: true,
+              installedExe: r'C:\G\e\r.exe',
+            ),
+            EmulatorInfo(
+              id: 'melonds',
+              name: 'melonDS',
+              exe: 'melonDS.exe',
+              supported: true,
+              installedExe: r'C:\G\e\m.exe',
+            ),
             EmulatorInfo(id: 'cemu', name: 'Cemu', exe: 'Cemu.exe', supported: true, installedExe: r'C:\G\e\c.exe'),
-          ]),
-    ]);
+          ],
+        ),
+      ],
+    );
     addTearDown(c.dispose);
-    final anna = await tester.runAsync(() => c.read(profileStoreProvider).create(
-        name: 'Anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna', pin: pin));
-    await tester.runAsync(() => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')));
+    final anna = await tester.runAsync(
+      () => c
+          .read(profileStoreProvider)
+          .create(name: 'Anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna', pin: pin),
+    );
+    await tester.runAsync(
+      () => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')),
+    );
     final nav = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        navigatorKey: nav,
-        theme: gargosyTheme(),
-        builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: SettingsScreen(initial: initial),
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: c,
+        child: MaterialApp(
+          navigatorKey: nav,
+          theme: gargosyTheme(),
+          builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
+          home: SettingsScreen(initial: initial),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
@@ -98,7 +133,11 @@ void main() {
     for (final h in ['PROFILE', 'LIBRARY', 'THIS PC', 'GARGOSY']) {
       final heading = find.descendant(of: find.byKey(const Key('settings-sidebar')), matching: find.text(h));
       expect(heading, findsOneWidget, reason: h);
-      expect(find.ancestor(of: heading, matching: find.byType(GFocusable)), findsNothing, reason: h);
+      expect(
+        find.ancestor(of: heading, matching: find.byType(GFocusable)),
+        findsNothing,
+        reason: h,
+      );
     }
     expect(find.text('Settings'), findsNothing, reason: 'the big title is gone');
     // Down through the sidebar lands on each item in turn, never a heading.
@@ -106,7 +145,8 @@ void main() {
     for (var i = 0; i < SettingsPage.values.length; i++) {
       for (final page in SettingsPage.values) {
         final item = find.byKey(ValueKey('settings-${page.name}'));
-        if (Focus.of(tester.element(find.descendant(of: item, matching: find.byType(Container)).first)).hasPrimaryFocus) {
+        if (Focus.of(tester.element(find.descendant(of: item, matching: find.byType(Container)).first))
+            .hasPrimaryFocus) {
           seen.add(page);
         }
       }
@@ -119,7 +159,10 @@ void main() {
     await pump(tester, initial: SettingsPage.controller);
     expect(find.textContaining('Stick deadzone'), findsOneWidget);
     final item = find.byKey(const ValueKey('settings-controller'));
-    expect(Focus.of(tester.element(find.descendant(of: item, matching: find.byType(Container)).first)).hasPrimaryFocus, isTrue);
+    expect(
+      Focus.of(tester.element(find.descendant(of: item, matching: find.byType(Container)).first)).hasPrimaryFocus,
+      isTrue,
+    );
   });
 
   testWidgets('LB/RB walk the sections in order and stop at the ends', (tester) async {
@@ -178,7 +221,10 @@ void main() {
     }
     expect(registry.getPreferredEmulatorId('psx'), 'duckstation');
     // The field shows the choice once its provider has read it back; give a slow machine time.
-    final shown = find.descendant(of: find.byKey(const ValueKey('emulator-for-psx')), matching: find.text('DuckStation'));
+    final shown = find.descendant(
+      of: find.byKey(const ValueKey('emulator-for-psx')),
+      matching: find.text('DuckStation'),
+    );
     for (var i = 0; i < 100 && shown.evaluate().isEmpty; i++) {
       await settleIo(tester);
     }
@@ -195,11 +241,24 @@ void main() {
     // DuckStation, RetroArch and melonDS sync states (melonDS without Resume); Cemu doesn't; PCSX2 isn't installed.
     final synced = find.byKey(const ValueKey('state-sync-synced'));
     for (final name in ['DuckStation', 'RetroArch', 'melonDS']) {
-      expect(find.descendant(of: synced, matching: find.text(name)), findsOneWidget, reason: name);
+      expect(
+        find.descendant(of: synced, matching: find.text(name)),
+        findsOneWidget,
+        reason: name,
+      );
     }
     final local = find.byKey(const ValueKey('state-sync-local'));
     expect(find.descendant(of: local, matching: find.text('Cemu')), findsOneWidget);
     expect(find.descendant(of: local, matching: find.text('DuckStation')), findsNothing);
+    // The names are chips side by side, each as wide as its name, not one line each across the card.
+    Rect chip(String name) => tester.getRect(
+      find.ancestor(
+        of: find.descendant(of: synced, matching: find.text(name)),
+        matching: find.byType(SettingsBadge),
+      ),
+    );
+    expect(chip('DuckStation').width, lessThan(200));
+    expect(chip('RetroArch').top, chip('DuckStation').top);
     // melonDS syncs but can't start in a state: the list says where to load one.
     expect(find.text("melonDS: start the game, then load the state from the emulator's own menu."), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('state-sync')));
