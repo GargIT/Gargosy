@@ -27,15 +27,17 @@ void main() {
     final paths = ProfilePaths(root, 'aaa');
     final dirs = ProfileSaveDirectories(root: root, paths: paths, prefs: MemoryPrefs());
     EmulatorLayout.of('ares').ensureFolders(dirs.dataDir('ares'));
-    final args = await ProfileLaunchConfig.of('ares')!.prepare(LaunchContext(
-      data: paths.emulatorDir('ares'),
-      exeDir: (io.Directory(p.join(root.emulators, 'ares'))..createSync(recursive: true)).path,
-      bios: root.bios,
-      profileId: 'aaa',
-      profilesDir: root.profiles,
-      guard: PathGuard(root, activeProfileId: 'aaa'),
-      roms: root.roms,
-    ));
+    final args = await ProfileLaunchConfig.of('ares')!.prepare(
+      LaunchContext(
+        data: paths.emulatorDir('ares'),
+        exeDir: (io.Directory(p.join(root.emulators, 'ares'))..createSync(recursive: true)).path,
+        bios: root.bios,
+        profileId: 'aaa',
+        profilesDir: root.profiles,
+        guard: PathGuard(root, activeProfileId: 'aaa'),
+        roms: root.roms,
+      ),
+    );
     final told = args.firstWhere((a) => a.startsWith('Paths/Saves=')).substring('Paths/Saves='.length);
     final dir = await AresSaveStrategy(dirs).stateDirectory(n64, rom);
     expect(p.dirname(dir), p.normalize(told));

@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
 import 'dart:isolate';
+
 import 'package:flutter/foundation.dart';
 
 /// Reads the file version from a Windows executable's `VS_FIXEDFILEINFO`

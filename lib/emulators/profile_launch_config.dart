@@ -1,4 +1,5 @@
 import '../core/retroachievements/retroachievements_emulator_login.dart';
+
 import 'dart:convert';
 import 'dart:io' as io;
 
@@ -92,40 +93,62 @@ abstract class ProfileLaunchConfig {
 
   static final Map<String, ProfileLaunchConfig> _configs = {
     'dolphin': _Args((c) => ['--user=${c.data}'], before: (c) async => _dolphinGameFolders(c)),
-    'pcsx2': _Args((c) => ['-datapath', c.data], before: (c) async {
-      await _turnOff(c, const ['portable.txt', 'portable.ini']);
-      _pcsx2Settings(c);
-    }),
+    'pcsx2': _Args(
+      (c) => ['-datapath', c.data],
+      before: (c) async {
+        await _turnOff(c, const ['portable.txt', 'portable.ini']);
+        _pcsx2Settings(c);
+      },
+    ),
     'retroarch': const _RetroArch(),
-    'mame': _Mame((c) => [
-          '-inipath', c.data,
-          '-homepath', c.data,
-          '-cfg_directory', p.join(c.data, 'cfg'),
-          '-nvram_directory', p.join(c.data, 'nvram'),
-          '-state_directory', p.join(c.data, 'sta'),
-          '-input_directory', p.join(c.data, 'inp'),
-          '-snapshot_directory', p.join(c.data, 'snap'),
-          '-diff_directory', p.join(c.data, 'diff'),
-          '-comment_directory', p.join(c.data, 'comments'),
-        ]),
-    'xenia_canary': _Args((c) => [
-          '--content_root=${p.join(c.data, 'content')}',
-          '--storage_root=${p.join(c.data, 'storage')}',
-          '--cache_root=${p.join(c.data, 'cache')}',
-          '--log_file=${p.join(c.data, 'xenia.log')}',
-        ]),
-    'ares': _Args((c) => [
-          '--settings-file', p.join(c.data, 'settings.bml'),
-          '--setting', 'Paths/Saves=${p.join(c.data, 'saves')}\\',
-          '--setting', 'Paths/Firmware=${c.bios}\\',
-        ]),
+    'mame': _Mame(
+      (c) => [
+        '-inipath',
+        c.data,
+        '-homepath',
+        c.data,
+        '-cfg_directory',
+        p.join(c.data, 'cfg'),
+        '-nvram_directory',
+        p.join(c.data, 'nvram'),
+        '-state_directory',
+        p.join(c.data, 'sta'),
+        '-input_directory',
+        p.join(c.data, 'inp'),
+        '-snapshot_directory',
+        p.join(c.data, 'snap'),
+        '-diff_directory',
+        p.join(c.data, 'diff'),
+        '-comment_directory',
+        p.join(c.data, 'comments'),
+      ],
+    ),
+    'xenia_canary': _Args(
+      (c) => [
+        '--content_root=${p.join(c.data, 'content')}',
+        '--storage_root=${p.join(c.data, 'storage')}',
+        '--cache_root=${p.join(c.data, 'cache')}',
+        '--log_file=${p.join(c.data, 'xenia.log')}',
+      ],
+    ),
+    'ares': _Args(
+      (c) => [
+        '--settings-file',
+        p.join(c.data, 'settings.bml'),
+        '--setting',
+        'Paths/Saves=${p.join(c.data, 'saves')}\\',
+        '--setting',
+        'Paths/Firmware=${c.bios}\\',
+      ],
+    ),
     'xemu': const _Xemu(),
     'ppsspp': const _Ppsspp(),
     'duckstation': const _Swap(['settings.ini'], marker: 'portable.txt', edit: _duckstationFolders),
-    'mgba': _Swap(const ['config.ini', 'qt.ini'], marker: 'portable.ini', args: (c) => [
-          '-C', 'savegamePath=${p.join(c.data, 'saves')}',
-          '-C', 'savestatePath=${p.join(c.data, 'states')}',
-        ]),
+    'mgba': _Swap(
+      const ['config.ini', 'qt.ini'],
+      marker: 'portable.ini',
+      args: (c) => ['-C', 'savegamePath=${p.join(c.data, 'saves')}', '-C', 'savestatePath=${p.join(c.data, 'states')}'],
+    ),
     // Ryujinx (Switch, issue #9): its whole data folder by argument (Ryubing's
     // CommandLineState: -r / --root-data-dir), and the keys from bios\.
     'ryujinx': _Args((c) => ['-r', c.data], before: (c) async => _ryujinxKeys(c)),
@@ -134,17 +157,24 @@ abstract class ProfileLaunchConfig {
     'rpcs3': const Rpcs3Config(),
     // ScummVM (issue #11): its config by argument; each game's own save
     // folder and the game folder last (_ScummVm.gameArgs).
-    'scummvm': _ScummVm((c) => [
-          '--config=${p.join(c.data, 'scummvm.ini')}',
-          // Its log would go to %APPDATA%\ScummVM\Logs otherwise.
-          '--logfile=${p.join(c.data, 'scummvm.log')}',
-        ], before: (c) async => _scummVmFolders(c)),
-    'flycast': _Swap(const ['emu.cfg'], createMissing: true, args: (c) => [
-          '-config',
-          'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'
-              'config:Dreamcast.VMUPath=${p.join(c.data, 'vmu')},'
-              'config:Dreamcast.SavestatePath=${p.join(c.data, 'states')}',
-        ]),
+    'scummvm': _ScummVm(
+      (c) => [
+        '--config=${p.join(c.data, 'scummvm.ini')}',
+        // Its log would go to %APPDATA%\ScummVM\Logs otherwise.
+        '--logfile=${p.join(c.data, 'scummvm.log')}',
+      ],
+      before: (c) async => _scummVmFolders(c),
+    ),
+    'flycast': _Swap(
+      const ['emu.cfg'],
+      createMissing: true,
+      args: (c) => [
+        '-config',
+        'config:Dreamcast.SavePath=${p.join(c.data, 'saves')},'
+            'config:Dreamcast.VMUPath=${p.join(c.data, 'vmu')},'
+            'config:Dreamcast.SavestatePath=${p.join(c.data, 'states')}',
+      ],
+    ),
   };
 
   static Set<String> get supported => _configs.keys.toSet();
@@ -233,8 +263,11 @@ class _Mame extends _Args {
   const _Mame(super.args);
 
   @override
-  List<String> gameArgs(LaunchContext c, String romPath) =>
-      ['-rompath', '${p.dirname(romPath)};${p.join(c.exeDir, 'roms')}', p.basenameWithoutExtension(romPath)];
+  List<String> gameArgs(LaunchContext c, String romPath) => [
+    '-rompath',
+    '${p.dirname(romPath)};${p.join(c.exeDir, 'roms')}',
+    p.basenameWithoutExtension(romPath),
+  ];
 }
 
 /// ScummVM is started on the game's folder: `--auto-detect --path=<folder>`,
@@ -322,46 +355,48 @@ class _RetroArch extends ProfileLaunchConfig {
     if (RegExp(r'^\s*sort_savefiles(_by_content)?_enable\s*=\s*"true"', multiLine: true).hasMatch(text)) {
       flattenRetroArchSaves(p.join(c.data, 'saves'), c.guard);
     }
-    cfg.writeAsStringSync(setRetroArchKeys(text, {
-      'savefile_directory': p.join(c.data, 'saves'),
-      // Saves flat in saves\, never in a core or content subfolder, nor next
-      // to the ROM: sigil's save root (issue #7) and the old strategy both
-      // read them there, and roms\ holds only ROMs.
-      'sort_savefiles_enable': 'false',
-      'sort_savefiles_by_content_enable': 'false',
-      'savefiles_in_content_dir': 'false',
-      'savestates_in_content_dir': 'false',
-      'savestate_directory': p.join(c.data, 'states'),
-      // States sorted by core, as RetroArch does by default and the save code
-      // assumes: pinned before its first exit writes them (state-sync plan
-      // S0.2); a choice already in the profile's config stays.
-      if (!_hasKey(text, 'sort_savestates_enable')) 'sort_savestates_enable': 'true',
-      if (!_hasKey(text, 'sort_savestates_by_content_enable')) 'sort_savestates_by_content_enable': 'false',
-      // Auto Load State only when Resume starts the auto slot, which
-      // --entryslot can't load; off for every other launch, so a plain Play
-      // never starts in it.
-      'savestate_auto_load': '${c.resumeAutoState}',
-      'system_directory': systemDir(c),
-      if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
-      'playlist_directory': p.join(c.data, 'playlists'),
-      'content_history_directory': p.join(c.data, 'playlists'),
-      'input_remapping_directory': p.join(c.data, 'config', 'remaps'),
-      'rgui_config_directory': p.join(c.data, 'config'),
-      'log_dir': p.join(c.data, 'logs'),
-      'core_info_cache_enable': 'false',
-      'config_save_on_exit': 'true',
-      // On is --fullscreen at launch; off has no flag, so it goes here.
-      if (!c.fullscreen) 'video_fullscreen': 'false',
-      // The profile's RetroAchievements login, in its own config (Gargosy
-      // owns it, so RetroArch may save it on exit).
-      if (c.raLogin case final ra?) ...{
-        'cheevos_enable': 'true',
-        'cheevos_username': ra.username,
-        'cheevos_password': '',
-        'cheevos_token': ra.token,
-        'cheevos_hardcore_mode_enable': '${ra.hardcore ?? false}',
-      },
-    }));
+    cfg.writeAsStringSync(
+      setRetroArchKeys(text, {
+        'savefile_directory': p.join(c.data, 'saves'),
+        // Saves flat in saves\, never in a core or content subfolder, nor next
+        // to the ROM: sigil's save root (issue #7) and the old strategy both
+        // read them there, and roms\ holds only ROMs.
+        'sort_savefiles_enable': 'false',
+        'sort_savefiles_by_content_enable': 'false',
+        'savefiles_in_content_dir': 'false',
+        'savestates_in_content_dir': 'false',
+        'savestate_directory': p.join(c.data, 'states'),
+        // States sorted by core, as RetroArch does by default and the save code
+        // assumes: pinned before its first exit writes them (state-sync plan
+        // S0.2); a choice already in the profile's config stays.
+        if (!_hasKey(text, 'sort_savestates_enable')) 'sort_savestates_enable': 'true',
+        if (!_hasKey(text, 'sort_savestates_by_content_enable')) 'sort_savestates_by_content_enable': 'false',
+        // Auto Load State only when Resume starts the auto slot, which
+        // --entryslot can't load; off for every other launch, so a plain Play
+        // never starts in it.
+        'savestate_auto_load': '${c.resumeAutoState}',
+        'system_directory': systemDir(c),
+        if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
+        'playlist_directory': p.join(c.data, 'playlists'),
+        'content_history_directory': p.join(c.data, 'playlists'),
+        'input_remapping_directory': p.join(c.data, 'config', 'remaps'),
+        'rgui_config_directory': p.join(c.data, 'config'),
+        'log_dir': p.join(c.data, 'logs'),
+        'core_info_cache_enable': 'false',
+        'config_save_on_exit': 'true',
+        // On is --fullscreen at launch; off has no flag, so it goes here.
+        if (!c.fullscreen) 'video_fullscreen': 'false',
+        // The profile's RetroAchievements login, in its own config (Gargosy
+        // owns it, so RetroArch may save it on exit).
+        if (c.raLogin case final ra?) ...{
+          'cheevos_enable': 'true',
+          'cheevos_username': ra.username,
+          'cheevos_password': '',
+          'cheevos_token': ra.token,
+          'cheevos_hardcore_mode_enable': '${ra.hardcore ?? false}',
+        },
+      }),
+    );
     return cfg;
   }
 }
@@ -378,12 +413,14 @@ class _Xemu extends ProfileLaunchConfig {
     _seedHdd(c, hdd);
     final bootrom = _rom(c, text, 'bootrom_path', const ['mcpx_1.0.bin']);
     final flashrom = _rom(c, text, 'flashrom_path', const ['Complex_4627.bin', 'Complex_4627v1.03.bin', 'Complex.bin']);
-    toml.writeAsStringSync(setTomlKeys(text, 'sys.files', {
-      'eeprom_path': p.join(c.data, 'eeprom.bin'),
-      'hdd_path': hdd,
-      'bootrom_path': ?bootrom,
-      'flashrom_path': ?flashrom,
-    }));
+    toml.writeAsStringSync(
+      setTomlKeys(text, 'sys.files', {
+        'eeprom_path': p.join(c.data, 'eeprom.bin'),
+        'hdd_path': hdd,
+        'bootrom_path': ?bootrom,
+        'flashrom_path': ?flashrom,
+      }),
+    );
     return ['-config_path', toml.path];
   }
 
@@ -443,8 +480,20 @@ IniFile _duckstationFolders(IniFile ini, LaunchContext c) {
   }
   ini.set('BIOS', 'SearchDirectory', c.bios);
   for (final key in const [
-    'Cache', 'Cheats', 'Covers', 'GameIcons', 'GameSettings', 'InputProfiles', 'Patches',
-    'SaveStates', 'Screenshots', 'Shaders', 'Subchannels', 'Textures', 'UserResources', 'Videos',
+    'Cache',
+    'Cheats',
+    'Covers',
+    'GameIcons',
+    'GameSettings',
+    'InputProfiles',
+    'Patches',
+    'SaveStates',
+    'Screenshots',
+    'Shaders',
+    'Subchannels',
+    'Textures',
+    'UserResources',
+    'Videos',
   ]) {
     ini.set('Folders', key, p.join(c.data, key.toLowerCase()));
   }
@@ -515,7 +564,8 @@ class _Swap extends ProfileLaunchConfig {
       final m = io.File(c.guard.check(p.join(c.exeDir, marker!)));
       if (!m.existsSync()) m.writeAsStringSync('');
     }
-    io.File(c.guard.check(p.join(c.exeDir, _swapFile))).writeAsStringSync(jsonEncode({'profile': c.profileId, 'emulator': p.basename(c.data)}));
+    io.File(c.guard.check(p.join(c.exeDir, _swapFile)))
+        .writeAsStringSync(jsonEncode({'profile': c.profileId, 'emulator': p.basename(c.data)}));
     return args?.call(c) ?? const [];
   }
 

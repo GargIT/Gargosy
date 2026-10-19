@@ -47,7 +47,10 @@ class NotesTab extends ConsumerWidget {
           GFocusable(
             borderRadius: GRadius.pill,
             onActivate: () => Navigator.of(c).pop(true),
-            child: const Padding(padding: EdgeInsets.all(GSpace.s3), child: Text('Delete', style: TextStyle(color: GColors.danger))),
+            child: const Padding(
+              padding: EdgeInsets.all(GSpace.s3),
+              child: Text('Delete', style: TextStyle(color: GColors.danger)),
+            ),
           ),
         ],
       ),
@@ -65,51 +68,75 @@ class NotesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notes = ref.watch(romNotesProvider(game.id));
-    return ListView(padding: const EdgeInsets.only(bottom: GSpace.s14), children: [
-      Align(
-        alignment: Alignment.centerLeft,
-        child: GFocusable(
-          borderRadius: GRadius.pill,
-          onActivate: () => _add(context, ref),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
-            decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.add, size: 18),
-              SizedBox(width: GSpace.s2),
-              Text('Add a note', style: TextStyle(fontWeight: FontWeight.w600)),
-            ]),
+    return ListView(
+      padding: const EdgeInsets.only(bottom: GSpace.s14),
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: GFocusable(
+            borderRadius: GRadius.pill,
+            onActivate: () => _add(context, ref),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
+              decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 18),
+                  SizedBox(width: GSpace.s2),
+                  Text('Add a note', style: TextStyle(fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: GSpace.s4),
-      ...notes.when(
-        loading: () => [const LinearProgressIndicator()],
-        error: (e, _) => [
-          SizedBox(height: 180, child: ErrorRetry(message: describeLoadError(e), onRetry: () => ref.invalidate(romNotesProvider(game.id)))),
-        ],
-        data: (list) => list.isEmpty
-            ? [const Text('No notes yet.', style: TextStyle(color: GColors.fgMuted))]
-            : [
-                for (final n in list)
-                  GFocusable(
-                    borderRadius: GRadius.md,
-                    onDetail: () => _delete(context, ref, n),
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: GSpace.s2),
-                      padding: const EdgeInsets.all(GSpace.s3),
-                      decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.md)),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(n.title, style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: GSpace.s1),
-                        Text(n.content, style: const TextStyle(color: GColors.fgSecondary)),
-                        if (n.updatedAt ?? n.createdAt case final d?)
-                          Text(formatDate(d), style: const TextStyle(fontSize: GFont.xs, color: GColors.fgFaint)),
-                      ]),
+        const SizedBox(height: GSpace.s4),
+        ...notes.when(
+          loading: () => [const LinearProgressIndicator()],
+          error: (e, _) => [
+            SizedBox(
+              height: 180,
+              child: ErrorRetry(
+                message: describeLoadError(e),
+                onRetry: () => ref.invalidate(romNotesProvider(game.id)),
+              ),
+            ),
+          ],
+          data: (list) => list.isEmpty
+              ? [const Text('No notes yet.', style: TextStyle(color: GColors.fgMuted))]
+              : [
+                  for (final n in list)
+                    GFocusable(
+                      borderRadius: GRadius.md,
+                      onDetail: () => _delete(context, ref, n),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: GSpace.s2),
+                        padding: const EdgeInsets.all(GSpace.s3),
+                        decoration: BoxDecoration(
+                          color: GColors.surface,
+                          borderRadius: BorderRadius.circular(GRadius.md),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              n.title,
+                              style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: GSpace.s1),
+                            Text(n.content, style: const TextStyle(color: GColors.fgSecondary)),
+                            if (n.updatedAt ?? n.createdAt case final d?)
+                              Text(
+                                formatDate(d),
+                                style: const TextStyle(fontSize: GFont.xs, color: GColors.fgFaint),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-              ],
-      ),
-    ]);
+                ],
+        ),
+      ],
+    );
   }
 }

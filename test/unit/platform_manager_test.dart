@@ -44,8 +44,7 @@ void main() {
         final conflicts = registry.detectConflicts();
         for (final entry in conflicts.entries) {
           // Canonical slug should not contain hyphens if possible
-          expect(entry.key.contains('-'), isFalse,
-              reason: 'Canonical slug ${entry.key} should not contain hyphens');
+          expect(entry.key.contains('-'), isFalse, reason: 'Canonical slug ${entry.key} should not contain hyphens');
         }
       });
 

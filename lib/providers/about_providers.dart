@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'romm_providers.dart';
 
 /// Opens a web address or a file with Windows' default program; tests replace it.
-final externalOpenerProvider = Provider<void Function(String target)>((ref) => (target) {
-      io.Process.start('cmd', ['/c', 'start', '', target]);
-    });
+final externalOpenerProvider = Provider<void Function(String target)>(
+  (ref) => (target) {
+    io.Process.start('cmd', ['/c', 'start', '', target]);
+  },
+);
 
 /// The active profile's RomM version, or null when the server can't be asked.
 final rommServerVersionProvider = FutureProvider<String?>((ref) async {

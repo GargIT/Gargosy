@@ -63,8 +63,10 @@ SaveFit fitFor(
       maker.emulatorId == target.emulatorId &&
       maker.coreId != target.coreId &&
       !coreUnknownBackup) {
-    return SaveFit(SaveFitKind.unusable,
-        reason: 'This save belongs to the ${maker.coreId ?? 'default'} core; pick that core to play it');
+    return SaveFit(
+      SaveFitKind.unusable,
+      reason: 'This save belongs to the ${maker.coreId ?? 'default'} core; pick that core to play it',
+    );
   }
   // A backup is restored as it was zipped, unconverted.
   if (entry.source == SaveSource.backup && maker.emulatorId != target.emulatorId) {
@@ -96,6 +98,5 @@ SaveFit fitFor(
   if (targetFormat != null) {
     return SaveFit(makerFormat == targetFormat ? SaveFitKind.native : SaveFitKind.converted, playsIn: target);
   }
-  return SaveFit(SaveFitKind.unusable,
-      reason: "${maker.emulatorId} saves can't be used by ${target.emulatorId}");
+  return SaveFit(SaveFitKind.unusable, reason: "${maker.emulatorId} saves can't be used by ${target.emulatorId}");
 }

@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gargosy/core/emulator/strategies/ares_strategy.dart';
@@ -22,16 +23,26 @@ class _MockDirectoryService extends DirectoryService {
   }
 
   @override
-  Future<void> launchGame(Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+  Future<void> launchGame(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     onLaunch?.call();
     lastArgs = args;
     lastExePath = exePath;
   }
 
   @override
-  Future<Process?> launchGameWithHandle(Game game, String romPath, String emulatorId,
-      String exePath, {List<String> args = const []}) async {
+  Future<Process?> launchGameWithHandle(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     onLaunch?.call();
     lastArgs = args;
     lastExePath = exePath;
@@ -39,8 +50,7 @@ class _MockDirectoryService extends DirectoryService {
   }
 
   @override
-  Future<void> launchStandalone(String emulatorId, String exePath,
-      {List<String> args = const []}) async {}
+  Future<void> launchStandalone(String emulatorId, String exePath, {List<String> args = const []}) async {}
 }
 
 Game _makeGame(String name, String slug) {
@@ -145,10 +155,8 @@ void main() {
       await strategy.launch(game, '/roms/test.gba');
 
       expect(mockDir.lastArgs, ['--system', 'Game Boy Advance']);
-      expect(mockDir.lastArgs, isNot(contains('--fullscreen')),
-          reason: 'Ares does not support --fullscreen');
-      expect(mockDir.lastArgs, isNot(contains('--no-file-prompt')),
-          reason: 'Ares does not support --no-file-prompt');
+      expect(mockDir.lastArgs, isNot(contains('--fullscreen')), reason: 'Ares does not support --fullscreen');
+      expect(mockDir.lastArgs, isNot(contains('--no-file-prompt')), reason: 'Ares does not support --no-file-prompt');
     });
 
     test('launchWithHandle passes only --system flag', () async {
@@ -162,8 +170,11 @@ void main() {
 
     test("a Resume (#66): --system, then --save-state with the state's slot", () async {
       final game = _makeGame('Test.n64', 'n64');
-      await strategy.launchWithHandleAndExtraArgs(game, '/roms/test.n64',
-          extraArgs: strategy.stateLoadArgs('/data/saves/Nintendo 64/test.bs3'));
+      await strategy.launchWithHandleAndExtraArgs(
+        game,
+        '/roms/test.n64',
+        extraArgs: strategy.stateLoadArgs('/data/saves/Nintendo 64/test.bs3'),
+      );
       expect(mockDir.lastArgs, ['--system', 'Nintendo 64', '--save-state', '3']);
       await strategy.launchWithExtraArgs(game, '/roms/test.n64', extraArgs: strategy.stateLoadArgs('/x/test.bs7'));
       expect(mockDir.lastArgs, ['--system', 'Nintendo 64', '--save-state', '7']);
@@ -190,11 +201,7 @@ void main() {
 
       expect(
         () => strategy.launch(game, '/roms/game.ps5'),
-        throwsA(isA<Exception>().having(
-          (e) => e.toString(),
-          'message',
-          contains('does not support platform'),
-        )),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('does not support platform'))),
       );
     });
 
@@ -206,11 +213,7 @@ void main() {
 
       expect(
         () => strategy.launchWithHandle(game, '/roms/game.switch'),
-        throwsA(isA<Exception>().having(
-          (e) => e.toString(),
-          'message',
-          contains('does not support platform'),
-        )),
+        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('does not support platform'))),
       );
     });
   });

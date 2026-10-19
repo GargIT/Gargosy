@@ -41,8 +41,14 @@ final _systems = <SaveSystem<Object>>[
 
 SaveBlob _blob(String name, String text) => SaveBlob(name, Uint8List.fromList(utf8.encode(text)));
 
-SaveConversion _convert(String slug, List<SaveBlob> files, {String? from, required String to}) =>
-    convertSave(platformSlug: slug, files: files, sourceTag: from, targetTag: to, stem: 'Game (USA)', systems: _systems);
+SaveConversion _convert(String slug, List<SaveBlob> files, {String? from, required String to}) => convertSave(
+  platformSlug: slug,
+  files: files,
+  sourceTag: from,
+  targetTag: to,
+  stem: 'Game (USA)',
+  systems: _systems,
+);
 
 /// The converted files' names; fails the test when it wasn't converted.
 List<String> _names(SaveConversion c) {

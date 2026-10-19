@@ -1,10 +1,12 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+
 import '../downloader/download_service.dart';
 import '../platform/platform_info.dart';
 import '../storage/directory_service.dart';
@@ -21,8 +23,13 @@ class EmulatorDownloadService {
   final PlatformInfo _platform;
   late final ReleaseService _releaseService;
 
-  EmulatorDownloadService(this._dio, this._directoryService, this._extractionService, this._strategyRegistry, {PlatformInfo? platform})
-    : _platform = platform ?? PlatformInfo.current {
+  EmulatorDownloadService(
+    this._dio,
+    this._directoryService,
+    this._extractionService,
+    this._strategyRegistry, {
+    PlatformInfo? platform,
+  }) : _platform = platform ?? PlatformInfo.current {
     _releaseService = ReleaseService(_dio);
   }
 
@@ -41,11 +48,16 @@ class EmulatorDownloadService {
     if (typeFor(definition, _platform, fallback: 'github') == 'direct') {
       final key = _platform.isWindows ? 'windows_url' : (_platform.isMacOS ? 'macos_url' : 'linux_url');
       final url = definition[key] as String?;
-      return url == null ? const [] : [{'name': url.split('/').last, 'url': url}];
+      return url == null
+          ? const []
+          : [
+              {'name': url.split('/').last, 'url': url},
+            ];
     }
     final os = _platform.isWindows ? 'windows' : (_platform.isMacOS ? 'macos' : 'linux');
     // Gargosy: an OS-specific repo, as downloadEmulator uses.
-    final repo = definition['github_repo_$os'] as String? ??
+    final repo =
+        definition['github_repo_$os'] as String? ??
         definition['github_repo'] as String? ??
         definition['gitea_repo'] as String? ??
         definition['gitlab_repo'] as String? ??
@@ -63,11 +75,13 @@ class EmulatorDownloadService {
         baseUrl: 'https://$host',
       );
     }
-    final platform = type == 'github' || type == 'github_multi' ? ReleasePlatform.github : (type == 'dolphin' ? ReleasePlatform.dolphin : ReleasePlatform.gitea);
-    
+    final platform = type == 'github' || type == 'github_multi'
+        ? ReleasePlatform.github
+        : (type == 'dolphin' ? ReleasePlatform.dolphin : ReleasePlatform.gitea);
+
     String requiredKey;
     String excludedKey;
-    
+
     if (type == 'gitea') {
       requiredKey = _platform.isWindows ? 'gitea_asset_required_windows' : 'gitea_asset_required_linux';
       excludedKey = 'gitea_asset_excluded';
@@ -80,10 +94,12 @@ class EmulatorDownloadService {
       // the definition has one, else the plain one (PCSX2 and DuckStation keep
       // their Windows filters there). Without this the release's first file,
       // a Linux AppImage, was taken.
-      requiredKey = definition.containsKey('github_asset_required_$os') ? 'github_asset_required_$os' : 'github_asset_required';
+      requiredKey = definition.containsKey('github_asset_required_$os')
+          ? 'github_asset_required_$os'
+          : 'github_asset_required';
       excludedKey = 'github_asset_excluded';
     }
-    
+
     final baseUrl = definition['gitea_host'] != null ? 'https://${definition['gitea_host']}' : null;
 
     return await _releaseService.getLatestReleaseAssets(
@@ -114,7 +130,7 @@ class EmulatorDownloadService {
 
   Future<void> _reSignRyujinx(String exePath) async {
     final appPath = exePath.split('/Contents/MacOS/').first;
-    
+
     final entitlements = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -137,10 +153,12 @@ class EmulatorDownloadService {
 
     try {
       final signResult = await Process.run('codesign', [
-        '--sign', '-',
+        '--sign',
+        '-',
         '--force',
         '--deep',
-        '--entitlements', tempFile.path,
+        '--entitlements',
+        tempFile.path,
         appPath,
       ]);
 
@@ -156,29 +174,24 @@ class EmulatorDownloadService {
     }
   }
 
-  Stream<DownloadProgress> downloadEmulator(String emulatorId, {String? architecture, String? buildType, String? urlOverride, CancelToken? cancelToken}) async* {
-    final definition = kEmulatorDefinitions.firstWhere(
-      (d) => d['id'] == emulatorId,
-      orElse: () => {},
-    );
+  Stream<DownloadProgress> downloadEmulator(
+    String emulatorId, {
+    String? architecture,
+    String? buildType,
+    String? urlOverride,
+    CancelToken? cancelToken,
+  }) async* {
+    final definition = kEmulatorDefinitions.firstWhere((d) => d['id'] == emulatorId, orElse: () => {});
 
     if (definition.isEmpty) {
-      yield DownloadProgress(
-        id: emulatorId,
-        gameName: emulatorId,
-        error: 'Emulator definition not found',
-      );
+      yield DownloadProgress(id: emulatorId, gameName: emulatorId, error: 'Emulator definition not found');
       return;
     }
 
     final String emulatorName = definition['name'] as String? ?? emulatorId;
     final String type = typeFor(definition, _platform, fallback: 'direct');
 
-    yield DownloadProgress(
-      id: emulatorId,
-      gameName: emulatorName,
-      status: 'Downloading...',
-    );
+    yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'Downloading...');
 
     String? downloadUrl = urlOverride;
     downloadUrl ??= await _directoryService.getEmulatorUrlOverride(emulatorId);
@@ -207,8 +220,6 @@ class EmulatorDownloadService {
           }
         }
 
-
-
         final assets = await _releaseService.getLatestReleaseAssets(
           platform: ReleasePlatform.gitea,
           repo: repo,
@@ -218,7 +229,11 @@ class EmulatorDownloadService {
         );
 
         if (assets.isEmpty) {
-          yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on Gitea');
+          yield DownloadProgress(
+            id: emulatorId,
+            gameName: emulatorName,
+            error: 'No matching release asset found on Gitea',
+          );
           return;
         } else if (assets.length > 1) {
           yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'selection_required');
@@ -229,8 +244,6 @@ class EmulatorDownloadService {
     }
 
     if (downloadUrl == null && (type == 'github' || type == 'github_multi')) {
-
-      
       String repo = definition['github_repo'] as String;
       if (_platform.isWindows && definition.containsKey('github_repo_windows')) {
         repo = definition['github_repo_windows'] as String;
@@ -263,7 +276,11 @@ class EmulatorDownloadService {
       );
 
       if (assets.isEmpty) {
-        yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on GitHub');
+        yield DownloadProgress(
+          id: emulatorId,
+          gameName: emulatorName,
+          error: 'No matching release asset found on GitHub',
+        );
         return;
       } else if (assets.length > 1) {
         yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'selection_required');
@@ -271,9 +288,9 @@ class EmulatorDownloadService {
       }
       downloadUrl = assets.first['url'];
     } else if (downloadUrl == null && type == 'dolphin') {
-
-
-      final requiredKey = _platform.isWindows ? 'asset_required_windows' : (_platform.isMacOS ? 'asset_required_macos' : 'asset_required_linux');
+      final requiredKey = _platform.isWindows
+          ? 'asset_required_windows'
+          : (_platform.isMacOS ? 'asset_required_macos' : 'asset_required_linux');
       final required = List<String>.from(definition[requiredKey] ?? []);
 
       final assets = await _releaseService.getLatestReleaseAssets(
@@ -283,13 +300,15 @@ class EmulatorDownloadService {
       );
 
       if (assets.isEmpty) {
-        yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on Dolphin site');
+        yield DownloadProgress(
+          id: emulatorId,
+          gameName: emulatorName,
+          error: 'No matching release asset found on Dolphin site',
+        );
         return;
       }
       downloadUrl = assets.first['url'];
     } else if (downloadUrl == null && type == 'gitea') {
-
-
       final repo = definition['gitea_repo'] as String;
       final baseUrl = definition['gitea_host'] != null ? 'https://${definition['gitea_host']}' : null;
 
@@ -317,7 +336,11 @@ class EmulatorDownloadService {
       );
 
       if (assets.isEmpty) {
-        yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on Gitea');
+        yield DownloadProgress(
+          id: emulatorId,
+          gameName: emulatorName,
+          error: 'No matching release asset found on Gitea',
+        );
         return;
       } else if (assets.length > 1) {
         yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'selection_required');
@@ -328,7 +351,11 @@ class EmulatorDownloadService {
       // Gargosy: GitLab releases (Ryujinx's Ryubing, issue #9).
       final assets = await getLatestAssetsForEmulator(emulatorId);
       if (assets.isEmpty) {
-        yield DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'No matching release asset found on GitLab');
+        yield DownloadProgress(
+          id: emulatorId,
+          gameName: emulatorName,
+          error: 'No matching release asset found on GitLab',
+        );
         return;
       } else if (assets.length > 1) {
         yield DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'selection_required');
@@ -362,12 +389,7 @@ class EmulatorDownloadService {
     final controller = StreamController<DownloadProgress>();
 
     // Initial status update before starting the download
-    controller.add(DownloadProgress(
-      id: emulatorId,
-      gameName: emulatorName,
-      status: 'Downloading...',
-      percent: 0.0,
-    ));
+    controller.add(DownloadProgress(id: emulatorId, gameName: emulatorName, status: 'Downloading...', percent: 0.0));
 
     // Gargosy: the download runs on its own while its progress is passed on
     // as it comes; awaiting it here first showed "Downloading 0 %" until
@@ -377,7 +399,7 @@ class EmulatorDownloadService {
       try {
         final options = Options(responseType: ResponseType.stream);
         final response = await _dio.get(url, options: options, cancelToken: cancelToken);
-        
+
         final totalBytes = int.tryParse(response.headers.value('content-length') ?? '0') ?? 0;
         final file = File(tempFilePath);
         final sink = await file.open(mode: FileMode.write);
@@ -388,14 +410,16 @@ class EmulatorDownloadService {
           await for (final chunk in stream) {
             await sink.writeFrom(chunk);
             receivedBytes += chunk.length;
-            controller.add(DownloadProgress(
-              id: emulatorId,
-              gameName: emulatorName,
-              percent: totalBytes > 0 ? receivedBytes / totalBytes : 0,
-              bytesReceived: receivedBytes,
-              totalBytes: totalBytes,
-              status: 'Downloading...',
-            ));
+            controller.add(
+              DownloadProgress(
+                id: emulatorId,
+                gameName: emulatorName,
+                percent: totalBytes > 0 ? receivedBytes / totalBytes : 0,
+                bytesReceived: receivedBytes,
+                totalBytes: totalBytes,
+                status: 'Downloading...',
+              ),
+            );
           }
         } finally {
           await sink.close();
@@ -403,22 +427,26 @@ class EmulatorDownloadService {
 
         try {
           final extension = url.split('.').last.toLowerCase();
-          controller.add(DownloadProgress(
-            id: emulatorId,
-            gameName: emulatorName,
-            percent: 1.0,
-            status: 'Extracting ($extension)...',
-          ));
+          controller.add(
+            DownloadProgress(
+              id: emulatorId,
+              gameName: emulatorName,
+              percent: 1.0,
+              status: 'Extracting ($extension)...',
+            ),
+          );
           await _extractionService.extract(tempFilePath, emulatorDir);
 
-          final exeName = _platform.isWindows ? definition['windows_executable'] : (_platform.isMacOS ? definition['macos_executable'] : definition['linux_executable']);
+          final exeName = _platform.isWindows
+              ? definition['windows_executable']
+              : (_platform.isMacOS ? definition['macos_executable'] : definition['linux_executable']);
           if (exeName != null) {
             final exePath = await _directoryService.findEmulatorExecutable(emulatorId, exeName as String);
             if (exePath != null) {
               if (_platform.isLinux || _platform.isMacOS) {
                 await Process.run('chmod', ['+x', exePath]);
               }
-              
+
               if (_platform.isMacOS) {
                 await Process.run('xattr', ['-cr', emulatorDir]);
                 if (emulatorId == 'ryujinx') {
@@ -427,26 +455,18 @@ class EmulatorDownloadService {
               }
             }
           }
-          
+
           // Run post-install hooks
           final strategy = _strategyRegistry.getStrategyById(emulatorId);
           if (strategy != null) {
             await strategy.postInstall(emulatorDir);
           }
 
-          controller.add(DownloadProgress(
-            id: emulatorId,
-            gameName: emulatorName,
-            percent: 1.0,
-            isComplete: true,
-            status: 'Done!',
-          ));
+          controller.add(
+            DownloadProgress(id: emulatorId, gameName: emulatorName, percent: 1.0, isComplete: true, status: 'Done!'),
+          );
         } catch (e) {
-          controller.add(DownloadProgress(
-            id: emulatorId,
-            gameName: emulatorName,
-            error: 'Extraction failed: $e',
-          ));
+          controller.add(DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'Extraction failed: $e'));
         } finally {
           final f = File(tempFilePath);
           if (await f.exists()) await f.delete();
@@ -455,16 +475,11 @@ class EmulatorDownloadService {
         if (e is DioException && CancelToken.isCancel(e)) {
           debugPrint("[EmulatorDownloadService] Download canceled: $emulatorId");
         } else {
-          controller.add(DownloadProgress(
-            id: emulatorId,
-            gameName: emulatorName,
-            error: 'Download failed: $e',
-          ));
+          controller.add(DownloadProgress(id: emulatorId, gameName: emulatorName, error: 'Download failed: $e'));
         }
       } finally {
         await controller.close();
       }
-
     }
 
     unawaited(run());

@@ -34,14 +34,19 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
   }
   if (ref.read(activeProfileProvider) != null && !await waitForSyncIdle(context, ref)) return;
   if (!context.mounted) return;
-  final ok = await showConfirm(context,
-      title: 'Update to ${release.version}?',
-      body: 'Gargosy will close, update and start again. Your games, emulators and saves are not touched.',
-      yes: 'Update');
+  final ok = await showConfirm(
+    context,
+    title: 'Update to ${release.version}?',
+    body: 'Gargosy will close, update and start again. Your games, emulators and saves are not touched.',
+    yes: 'Update',
+  );
   if (!ok || !context.mounted) return;
 
   final unpacked = await showDialog<String>(
-      context: context, barrierDismissible: false, builder: (_) => _DownloadDialog(release: release));
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => _DownloadDialog(release: release),
+  );
   if (unpacked == null || !context.mounted) return;
   // A game or a sync may have started while it downloaded (RomM came back
   // and the upload queue runs): Gargosy quits only once both are done.
@@ -97,16 +102,20 @@ class _DownloadDialogState extends ConsumerState<_DownloadDialog> {
 
   Future<void> _run() async {
     try {
-      final unpacked = await ref.read(updateDownloaderProvider).download(widget.release,
-          cancel: _cancel,
-          onProgress: (r, t) {
-            if (mounted) {
-              setState(() {
-                _received = r;
-                _total = t;
-              });
-            }
-          });
+      final unpacked = await ref
+          .read(updateDownloaderProvider)
+          .download(
+            widget.release,
+            cancel: _cancel,
+            onProgress: (r, t) {
+              if (mounted) {
+                setState(() {
+                  _received = r;
+                  _total = t;
+                });
+              }
+            },
+          );
       if (mounted) Navigator.of(context).pop(unpacked);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) return; // B already closed it
@@ -135,19 +144,28 @@ class _DownloadDialogState extends ConsumerState<_DownloadDialog> {
             width: 460,
             child: Padding(
               padding: const EdgeInsets.all(GSpace.s5),
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                Text(_error == null ? 'Downloading Gargosy ${widget.release.version}…' : "The update can't be used",
-                    style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700)),
-                const SizedBox(height: GSpace.s4),
-                if (_error == null) ...[
-                  LinearProgressIndicator(value: fraction, color: GColors.primary, backgroundColor: GColors.surface),
-                  const SizedBox(height: GSpace.s2),
-                  Text(fraction == null ? '' : '${(fraction * 100).round()} %', style: const TextStyle(color: GColors.fgMuted)),
-                ] else
-                  Text('$_error Nothing was changed.', style: const TextStyle(color: GColors.fgSecondary)),
-                const SizedBox(height: GSpace.s4),
-                HintBar(hints: [Hint(GameAction.back, _error == null ? 'Cancel' : 'Close')]),
-              ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    _error == null ? 'Downloading Gargosy ${widget.release.version}…' : "The update can't be used",
+                    style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: GSpace.s4),
+                  if (_error == null) ...[
+                    LinearProgressIndicator(value: fraction, color: GColors.primary, backgroundColor: GColors.surface),
+                    const SizedBox(height: GSpace.s2),
+                    Text(
+                      fraction == null ? '' : '${(fraction * 100).round()} %',
+                      style: const TextStyle(color: GColors.fgMuted),
+                    ),
+                  ] else
+                    Text('$_error Nothing was changed.', style: const TextStyle(color: GColors.fgSecondary)),
+                  const SizedBox(height: GSpace.s4),
+                  HintBar(hints: [Hint(GameAction.back, _error == null ? 'Cancel' : 'Close')]),
+                ],
+              ),
             ),
           ),
         ),
@@ -161,20 +179,23 @@ class _Restarting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const PopScope(
-        canPop: false,
-        child: Center(
-          child: Material(
-            color: GColors.panel,
-            borderRadius: BorderRadius.all(Radius.circular(GRadius.lg)),
-            child: Padding(
-              padding: EdgeInsets.all(GSpace.s6),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3)),
-                SizedBox(width: GSpace.s4),
-                Text('Restarting…', style: TextStyle(fontSize: GFont.lg)),
-              ]),
-            ),
+    canPop: false,
+    child: Center(
+      child: Material(
+        color: GColors.panel,
+        borderRadius: BorderRadius.all(Radius.circular(GRadius.lg)),
+        child: Padding(
+          padding: EdgeInsets.all(GSpace.s6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3)),
+              SizedBox(width: GSpace.s4),
+              Text('Restarting…', style: TextStyle(fontSize: GFont.lg)),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }

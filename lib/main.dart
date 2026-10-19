@@ -42,7 +42,10 @@ Future<void> main(List<String> args) async {
   // Portable: plugins, settings and temp files stay in userdata\, never
   // AppData (spec §3).
   usePortableTemp(p.join(root.appData, 'temp'));
-  PathProviderPlatform.instance = GargosyPathProvider(appDataDir: root.appData, previous: PathProviderPlatform.instance);
+  PathProviderPlatform.instance = GargosyPathProvider(
+    appDataDir: root.appData,
+    previous: PathProviderPlatform.instance,
+  );
   SharedPreferencesStorePlatform.instance = JsonFilePreferencesStore(io.File(root.settingsFile));
   final prefs = await SharedPreferences.getInstance();
   // Started by GargosyUpdate.exe: clean up after the update, or say why it failed.
@@ -54,16 +57,19 @@ Future<void> main(List<String> args) async {
     platform: PlatformInfo.current,
   ).afterStart(args);
   await WindowService.init(
-      fullscreen: WindowService.shouldStartFullscreen(args, prefs.getBool(WindowService.launchFullscreenPrefKey)));
-  runApp(ProviderScope(
-    overrides: [
-      appRootProvider.overrideWithValue(root),
-      appPreferencesProvider.overrideWithValue(SharedPreferencesAppPreferences(prefs)),
-      launchArgsProvider.overrideWithValue(args),
-      updateOutcomeProvider.overrideWithValue(updateOutcome),
-    ],
-    child: const GargosyApp(),
-  ));
+    fullscreen: WindowService.shouldStartFullscreen(args, prefs.getBool(WindowService.launchFullscreenPrefKey)),
+  );
+  runApp(
+    ProviderScope(
+      overrides: [
+        appRootProvider.overrideWithValue(root),
+        appPreferencesProvider.overrideWithValue(SharedPreferencesAppPreferences(prefs)),
+        launchArgsProvider.overrideWithValue(args),
+        updateOutcomeProvider.overrideWithValue(updateOutcome),
+      ],
+      child: const GargosyApp(),
+    ),
+  );
 }
 
 /// The log in `userdata\app\logs\` (issue #1): every `debugPrint`, redacted,

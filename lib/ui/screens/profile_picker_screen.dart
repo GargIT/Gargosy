@@ -39,16 +39,20 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     final pin = p.pin;
     if (pin == null) return true;
     final gate = ref.read(pinGatesProvider).putIfAbsent(p.id, () => PinGate(pin));
-    final ok = await showPinEntry(context, title: 'PIN for ${p.name}', check: (entered) async {
-      switch (await gate.attempt(entered)) {
-        case PinResult.ok:
-          return null;
-        case PinResult.wrong:
-          return 'Wrong PIN';
-        case PinResult.locked:
-          return 'Too many tries. Wait ${gate.lockedFor?.inSeconds ?? 30} seconds.';
-      }
-    });
+    final ok = await showPinEntry(
+      context,
+      title: 'PIN for ${p.name}',
+      check: (entered) async {
+        switch (await gate.attempt(entered)) {
+          case PinResult.ok:
+            return null;
+          case PinResult.wrong:
+            return 'Wrong PIN';
+          case PinResult.locked:
+            return 'Too many tries. Wait ${gate.lockedFor?.inSeconds ?? 30} seconds.';
+        }
+      },
+    );
     return ok != null;
   }
 
@@ -60,24 +64,26 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       return;
     }
     if (!mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (routeContext) => Scaffold(
-        body: LoginStep(
-          serverUrl: p.serverUrl,
-          trustSelfSigned: p.trustSelfSigned,
-          deviceName: 'Gargosy on ${ref.read(pcIdentityProvider).machineName}',
-          expectedUserId: p.rommUserId,
-          expectedUsername: p.rommUsername,
-          onBack: () => Navigator.of(routeContext).pop(),
-          onLoggedIn: (login, me) async {
-            await loginStoreForWidget(ref, p).write(ProfilePaths(ref.read(appRootProvider), p.id).guard, login);
-            _hasLogin[p.id] = true;
-            // GargosyApp pops this page when the profile becomes active.
-            await ref.read(activeProfileProvider.notifier).activate(p, login);
-          },
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (routeContext) => Scaffold(
+          body: LoginStep(
+            serverUrl: p.serverUrl,
+            trustSelfSigned: p.trustSelfSigned,
+            deviceName: 'Gargosy on ${ref.read(pcIdentityProvider).machineName}',
+            expectedUserId: p.rommUserId,
+            expectedUsername: p.rommUsername,
+            onBack: () => Navigator.of(routeContext).pop(),
+            onLoggedIn: (login, me) async {
+              await loginStoreForWidget(ref, p).write(ProfilePaths(ref.read(appRootProvider), p.id).guard, login);
+              _hasLogin[p.id] = true;
+              // GargosyApp pops this page when the profile becomes active.
+              await ref.read(activeProfileProvider.notifier).activate(p, login);
+            },
+          ),
         ),
       ),
-    ));
+    );
   }
 
   Future<void> _options(Profile p) async {
@@ -92,9 +98,11 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   }
 
   Future<void> _add(List<Profile> profiles) async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => AddProfileScreen(suggestedServer: profiles.isEmpty ? '' : profiles.last.serverUrl),
-    ));
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddProfileScreen(suggestedServer: profiles.isEmpty ? '' : profiles.last.serverUrl),
+      ),
+    );
   }
 
   @override
@@ -110,51 +118,79 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
           data: (list) {
             _loadLogins(list);
             final focusId = list.any((p) => p.id == lastUsed) ? lastUsed : (list.isEmpty ? null : list.first.id);
-            return Column(children: [
-              Expanded(
-                child: Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Image.asset('assets/branding/gargosy_logo.png', width: 180, height: 180),
-                    const SizedBox(height: GSpace.s6),
-                    const Text('Who is playing?', style: TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: GSpace.s10),
-                    Wrap(spacing: GSpace.s10, runSpacing: GSpace.s8, alignment: WrapAlignment.center, children: [
-                      for (final p in list)
-                        Column(mainAxisSize: MainAxisSize.min, children: [
-                          ProfileBadge(
-                            profile: p,
-                            avatarPath: ProfilePaths(ref.read(appRootProvider), p.id).avatarFile,
-                            autofocus: p.id == focusId,
-                            onActivate: () => _open(p),
-                            onDetail: () => _options(p),
-                          ),
-                          if (_hasLogin[p.id] == false)
-                            const Text('Log in again', style: TextStyle(fontSize: GFont.sm, color: GColors.accent)),
-                        ]),
-                      Column(mainAxisSize: MainAxisSize.min, children: [
-                        GFocusable(
-                          autofocus: focusId == null,
-                          borderRadius: GRadius.pill,
-                          onActivate: () => _add(list),
-                          child: Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: GColors.borderStrong, width: 2)),
-                            child: const Icon(Icons.add, size: 48, color: GColors.fgSecondary),
-                          ),
+            return Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/branding/gargosy_logo.png', width: 180, height: 180),
+                        const SizedBox(height: GSpace.s6),
+                        const Text(
+                          'Who is playing?',
+                          style: TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: GSpace.s3),
-                        GestureDetector(
-                          onTap: () => _add(list),
-                          child: const Text('Add profile', style: TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: GSpace.s10),
+                        Wrap(
+                          spacing: GSpace.s10,
+                          runSpacing: GSpace.s8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            for (final p in list)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ProfileBadge(
+                                    profile: p,
+                                    avatarPath: ProfilePaths(ref.read(appRootProvider), p.id).avatarFile,
+                                    autofocus: p.id == focusId,
+                                    onActivate: () => _open(p),
+                                    onDetail: () => _options(p),
+                                  ),
+                                  if (_hasLogin[p.id] == false)
+                                    const Text(
+                                      'Log in again',
+                                      style: TextStyle(fontSize: GFont.sm, color: GColors.accent),
+                                    ),
+                                ],
+                              ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GFocusable(
+                                  autofocus: focusId == null,
+                                  borderRadius: GRadius.pill,
+                                  onActivate: () => _add(list),
+                                  child: Container(
+                                    width: 120,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: GColors.borderStrong, width: 2),
+                                    ),
+                                    child: const Icon(Icons.add, size: 48, color: GColors.fgSecondary),
+                                  ),
+                                ),
+                                const SizedBox(height: GSpace.s3),
+                                GestureDetector(
+                                  onTap: () => _add(list),
+                                  child: const Text(
+                                    'Add profile',
+                                    style: TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ]),
-                    ]),
-                  ]),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const HintBar(hints: [Hint(GameAction.confirm, 'Play'), Hint(GameAction.detail, 'Options')]),
-            ]);
+                const HintBar(hints: [Hint(GameAction.confirm, 'Play'), Hint(GameAction.detail, 'Options')]),
+              ],
+            );
           },
         ),
       ),

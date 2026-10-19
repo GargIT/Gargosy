@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/pcsx2_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
@@ -20,7 +21,8 @@ class _FixedExeDirectoryService extends DirectoryService {
   Future<String?> findEmulatorExecutable(String emulatorId, String executableName) async => exe;
 }
 
-const _iniBefore = '[UI]\nTheme = dark\n\n[Achievements]\nEnabled = false\nChallengeMode = true\nNotifications = true\n\n[Folders]\nBios = bios\n';
+const _iniBefore =
+    '[UI]\nTheme = dark\n\n[Achievements]\nEnabled = false\nChallengeMode = true\nNotifications = true\n\n[Folders]\nBios = bios\n';
 
 void main() {
   late io.Directory home;
@@ -32,9 +34,11 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     directoryService = _FixedExeDirectoryService(prefs, exe);
-    return Pcsx2Strategy(directoryService,
-        platform: platform ?? PlatformInfo('linux', environment: {'HOME': home.path}),
-        raLoginLoader: () async => loaded);
+    return Pcsx2Strategy(
+      directoryService,
+      platform: platform ?? PlatformInfo('linux', environment: {'HOME': home.path}),
+      raLoginLoader: () async => loaded,
+    );
   }
 
   String inis() => p.join(home.path, '.config', 'PCSX2', 'inis');
@@ -57,14 +61,11 @@ void main() {
   });
 
   group('settings folder', () {
-
     test('a portable install (portable.ini beside the executable) uses its own inis folder', () async {
       final exe = p.join(home.path, 'pcsx2', 'pcsx2-qt');
       await io.File(p.join(p.dirname(exe), 'portable.ini')).create(recursive: true);
       expect(await (await build(exe: exe)).settingsDirectory(), p.join(home.path, 'pcsx2', 'inis'));
     });
-
-
 
     test('Windows default is Documents/PCSX2/inis', () async {
       final strategy = await build(platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path}));
@@ -93,7 +94,8 @@ void main() {
     test('hardcore on in Settings turns ChallengeMode on', () async {
       await givenPcsx2Ini(_iniBefore.replaceFirst('ChallengeMode = true', 'ChallengeMode = false'));
       await (await build()).applyRetroAchievementsLogin(
-          const RetroAchievementsEmulatorLogin(username: 'Player', token: 't', hardcore: true));
+        const RetroAchievementsEmulatorLogin(username: 'Player', token: 't', hardcore: true),
+      );
       expect(IniFile(await ini().readAsString()).get('Achievements', 'ChallengeMode'), 'true');
     });
 

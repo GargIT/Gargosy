@@ -18,15 +18,29 @@ void main() {
     final root = await tempAppRoot();
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final fake = FakeDownloadService(RomFiles(root), PathGuard(root))..hold = Completer<void>();
-    final c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root),
-      appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-      downloadServiceProvider.overrideWithValue(fake),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        appRootProvider.overrideWithValue(root),
+        appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+        downloadServiceProvider.overrideWithValue(fake),
+      ],
+    );
     addTearDown(c.dispose);
     final store = c.read(profileStoreProvider);
-    final anna = await store.create(name: 'Anna', colorIndex: 0, serverUrl: 'https://a', rommUserId: 7, rommUsername: 'anna');
-    final bob = await store.create(name: 'Bob', colorIndex: 0, serverUrl: 'https://b', rommUserId: 8, rommUsername: 'bob');
+    final anna = await store.create(
+      name: 'Anna',
+      colorIndex: 0,
+      serverUrl: 'https://a',
+      rommUserId: 7,
+      rommUsername: 'anna',
+    );
+    final bob = await store.create(
+      name: 'Bob',
+      colorIndex: 0,
+      serverUrl: 'https://b',
+      rommUserId: 8,
+      rommUsername: 'bob',
+    );
     await c.read(activeProfileProvider.notifier).activate(anna, const ProfileLogin(token: 'a', kind: 'device'));
 
     final sub = c.listen(downloadsProvider, (_, _) {});

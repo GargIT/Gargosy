@@ -24,13 +24,17 @@ void main() {
     heartbeatCount = 0;
     clearCount = 0;
 
-    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      if (options.path == '/api/activity/heartbeat') {
-        if (options.method == 'POST') heartbeatCount++;
-        if (options.method == 'DELETE') clearCount++;
-      }
-      handler.next(options);
-    }));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.path == '/api/activity/heartbeat') {
+            if (options.method == 'POST') heartbeatCount++;
+            if (options.method == 'DELETE') clearCount++;
+          }
+          handler.next(options);
+        },
+      ),
+    );
 
     dioAdapter.onPost(
       '/api/activity/heartbeat',

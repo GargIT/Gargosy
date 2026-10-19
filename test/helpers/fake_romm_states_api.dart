@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:gargosy/core/romm/romm_state.dart';
 
 class _Stored {
@@ -62,8 +63,7 @@ class FakeRommStatesApi implements RommStatesApi {
   /// download like a stall.
   bool Function()? failDownloadsAfterFirst;
 
-  String _stamp() =>
-      DateTime.utc(2026, 1, 1).add(Duration(minutes: ++_clock)).toIso8601String();
+  String _stamp() => DateTime.utc(2026, 1, 1).add(Duration(minutes: ++_clock)).toIso8601String();
 
   RommState _view(int id) {
     final stored = _states[id]!;
@@ -97,11 +97,9 @@ class FakeRommStatesApi implements RommStatesApi {
   }
 
   /// Simulates a state uploaded from another machine.
-  RommState seed(String romId, String fileName, List<int> bytes,
-      {String? emulator, List<int>? screenshot}) {
+  RommState seed(String romId, String fileName, List<int> bytes, {String? emulator, List<int>? screenshot}) {
     final id = _nextId++;
-    _states[id] = _Stored(romId, fileName, bytes, _stamp(),
-        emulator: emulator, screenshot: screenshot);
+    _states[id] = _Stored(romId, fileName, bytes, _stamp(), emulator: emulator, screenshot: screenshot);
     return _view(id);
   }
 
@@ -134,20 +132,30 @@ class FakeRommStatesApi implements RommStatesApi {
   }
 
   @override
-  Future<RommState> uploadState(String romId, File file,
-      {required String fileName, String? emulator, Uint8List? screenshot}) async {
+  Future<RommState> uploadState(
+    String romId,
+    File file, {
+    required String fileName,
+    String? emulator,
+    Uint8List? screenshot,
+  }) async {
     calls.add('POST $fileName');
     final gate = uploadGates[fileName];
     if (gate != null) await gate.future;
     final id = _nextId++;
-    _states[id] = _Stored(romId, fileName, await file.readAsBytes(), _stamp(),
-        emulator: emulator, screenshot: screenshot);
+    _states[id] = _Stored(
+      romId,
+      fileName,
+      await file.readAsBytes(),
+      _stamp(),
+      emulator: emulator,
+      screenshot: screenshot,
+    );
     return _view(id);
   }
 
   @override
-  Future<RommState> updateState(int stateId, File file,
-      {required String fileName, Uint8List? screenshot}) async {
+  Future<RommState> updateState(int stateId, File file, {required String fileName, Uint8List? screenshot}) async {
     calls.add('PUT $stateId');
     if (nextUpdateIs404) {
       nextUpdateIs404 = false;

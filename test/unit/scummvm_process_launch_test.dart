@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:path/path.dart' as p;
@@ -31,8 +32,10 @@ void main() {
     final strategy = ScummVMStrategy(dirService, platform: const PlatformInfo('windows'));
 
     expect(await strategy.findExecutable(), isNull);
-    await expectLater(strategy.launchWithHandle(game, gameDir.path),
-        throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('ScummVM not found'))));
+    await expectLater(
+      strategy.launchWithHandle(game, gameDir.path),
+      throwsA(isA<Exception>().having((e) => e.toString(), 'message', contains('ScummVM not found'))),
+    );
   });
 
   test('looks up scummvm.exe', () async {

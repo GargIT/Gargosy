@@ -7,13 +7,19 @@ import 'package:flutter/foundation.dart';
 
 /// The RomM scopes Gargosy asks for (spec §5). Admin scopes are never asked for.
 const gargosyScopes = [
-  'me.read', 'me.write',
-  'roms.read', 'roms.user.read', 'roms.user.write',
+  'me.read',
+  'me.write',
+  'roms.read',
+  'roms.user.read',
+  'roms.user.write',
   'platforms.read',
-  'assets.read', 'assets.write',
-  'devices.read', 'devices.write',
+  'assets.read',
+  'assets.write',
+  'devices.read',
+  'devices.write',
   'firmware.read',
-  'collections.read', 'collections.write',
+  'collections.read',
+  'collections.write',
 ];
 
 class RommUser {
@@ -25,11 +31,11 @@ class RommUser {
   final List<String> oauthScopes;
 
   factory RommUser.fromJson(Map<String, dynamic> json) => RommUser(
-        id: json['id'] as int,
-        username: json['username'] as String,
-        avatarPath: json['avatar_path'] as String? ?? '',
-        oauthScopes: [for (final s in (json['oauth_scopes'] as List? ?? const [])) s as String],
-      );
+    id: json['id'] as int,
+    username: json['username'] as String,
+    avatarPath: json['avatar_path'] as String? ?? '',
+    oauthScopes: [for (final s in (json['oauth_scopes'] as List? ?? const [])) s as String],
+  );
 }
 
 class DeviceAuthStart {
@@ -116,24 +122,31 @@ abstract class RommAuth {
   ///
   /// With [expectedUserId], another RomM user is refused (`wrongUser`) before
   /// any token is made.
-  Future<String> loginWithPassword(
-      {required String username, required String password, required String tokenName, int? expectedUserId});
+  Future<String> loginWithPassword({
+    required String username,
+    required String password,
+    required String tokenName,
+    int? expectedUserId,
+  });
   Future<RommUser> fetchMe(String token);
   Future<Uint8List?> fetchAvatar(String token, int userId);
 }
 
 class RommAuthClient implements RommAuth {
   RommAuthClient(String baseUrl, {Dio? dio, bool trustSelfSigned = false})
-      : baseUrl = normalizeBaseUrl(baseUrl),
-        _dio = dio ??
-            Dio(BaseOptions(
+    : baseUrl = normalizeBaseUrl(baseUrl),
+      _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               connectTimeout: const Duration(seconds: 15),
               receiveTimeout: const Duration(seconds: 30),
               headers: {'User-Agent': 'Gargosy', 'Accept': 'application/json'},
               // A redirect could carry the Basic header to another host.
               followRedirects: false,
               validateStatus: (s) => s != null && s >= 200 && s < 300,
-            )) {
+            ),
+          ) {
     _dio.options.baseUrl = this.baseUrl;
     if (dio == null && trustSelfSigned) {
       _dio.httpClientAdapter = IOHttpClientAdapter(
@@ -173,7 +186,9 @@ class RommAuthClient implements RommAuth {
 
   static Never _fail(DioException e, {RommAuthFailure on404 = RommAuthFailure.other}) {
     final status = e.response?.statusCode;
-    if (status == null) throw RommAuthException(RommAuthFailure.network, e.message ?? 'The server could not be reached');
+    if (status == null) {
+      throw RommAuthException(RommAuthFailure.network, e.message ?? 'The server could not be reached');
+    }
     if (status == 401) throw const RommAuthException(RommAuthFailure.badCredentials, 'Wrong username or password');
     if (status == 404 || status == 405) throw RommAuthException(on404, 'The server does not support this');
     if (status >= 500 || status == 408) throw RommAuthException(RommAuthFailure.server, 'RomM answered $status');
@@ -184,20 +199,26 @@ class RommAuthClient implements RommAuth {
   @override
   Future<DeviceAuthStart?> startDeviceAuth({required String deviceIdentifier, required String deviceName}) async {
     try {
-      final r = await _dio.post('/api/auth/device/init', data: {
-        'client_device_identifier': deviceIdentifier,
-        'name': deviceName,
-        'client': 'Gargosy',
-        'platform': 'windows',
-        'requested_scopes': gargosyScopes,
-      });
-      return _parse<DeviceAuthStart>(r.data, (d) => DeviceAuthStart(
-            deviceCode: d['device_code'] as String,
-            userCode: d['user_code'] as String,
-            verificationUrl: '$baseUrl${d['verification_path_complete'] as String}',
-            expiresIn: d['expires_in'] as int,
-            interval: d['interval'] as int,
-          ));
+      final r = await _dio.post(
+        '/api/auth/device/init',
+        data: {
+          'client_device_identifier': deviceIdentifier,
+          'name': deviceName,
+          'client': 'Gargosy',
+          'platform': 'windows',
+          'requested_scopes': gargosyScopes,
+        },
+      );
+      return _parse<DeviceAuthStart>(
+        r.data,
+        (d) => DeviceAuthStart(
+          deviceCode: d['device_code'] as String,
+          userCode: d['user_code'] as String,
+          verificationUrl: '$baseUrl${d['verification_path_complete'] as String}',
+          expiresIn: d['expires_in'] as int,
+          interval: d['interval'] as int,
+        ),
+      );
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 404 || status == 405) return null;
@@ -209,7 +230,10 @@ class RommAuthClient implements RommAuth {
   Future<DevicePoll> pollDeviceAuth(String deviceCode) async {
     try {
       final r = await _dio.post('/api/auth/device/token', data: {'device_code': deviceCode});
-      return _parse<DevicePoll>(r.data, (d) => DeviceApproved(token: d['access_token'] as String, deviceId: d['device_id'] as String));
+      return _parse<DevicePoll>(
+        r.data,
+        (d) => DeviceApproved(token: d['access_token'] as String, deviceId: d['device_id'] as String),
+      );
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 429) return const DeviceSlowDown();
@@ -231,8 +255,12 @@ class RommAuthClient implements RommAuth {
   }
 
   @override
-  Future<String> loginWithPassword(
-      {required String username, required String password, required String tokenName, int? expectedUserId}) async {
+  Future<String> loginWithPassword({
+    required String username,
+    required String password,
+    required String tokenName,
+    int? expectedUserId,
+  }) async {
     final basic = Options(headers: {'Authorization': 'Basic ${base64Encode(utf8.encode('$username:$password'))}'});
     final RommUser me;
     try {
@@ -246,10 +274,16 @@ class RommAuthClient implements RommAuth {
     if (!me.oauthScopes.contains('me.write')) {
       throw const RommAuthException(RommAuthFailure.insufficientScope, 'This RomM user may not create device tokens');
     }
-    final scopes = [for (final s in gargosyScopes) if (me.oauthScopes.contains(s)) s];
+    final scopes = [
+      for (final s in gargosyScopes)
+        if (me.oauthScopes.contains(s)) s,
+    ];
     try {
-      final r = await _dio.post('/api/client-tokens',
-          data: {'name': tokenName, 'scopes': scopes, 'expires_in': null}, options: basic);
+      final r = await _dio.post(
+        '/api/client-tokens',
+        data: {'name': tokenName, 'scopes': scopes, 'expires_in': null},
+        options: basic,
+      );
       return _parse<String>(r.data, (d) => d['raw_token'] as String);
     } on DioException catch (e) {
       _fail(e, on404: RommAuthFailure.serverTooOld);
@@ -268,8 +302,10 @@ class RommAuthClient implements RommAuth {
   @override
   Future<Uint8List?> fetchAvatar(String token, int userId) async {
     try {
-      final r = await _dio.get<List<int>>('/api/users/$userId/avatar',
-          options: _bearer(token).copyWith(responseType: ResponseType.bytes));
+      final r = await _dio.get<List<int>>(
+        '/api/users/$userId/avatar',
+        options: _bearer(token).copyWith(responseType: ResponseType.bytes),
+      );
       final bytes = r.data;
       return bytes == null || bytes.isEmpty ? null : Uint8List.fromList(bytes);
     } on DioException {

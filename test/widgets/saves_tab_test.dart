@@ -21,17 +21,37 @@ import '../unit/play_controller_test.dart' show FakeEngine;
 
 const _pcsx2 = SaveMaker('pcsx2');
 
-SaveEntry _local(int day) =>
-    SaveEntry(source: SaveSource.local, fileName: 'Mcd001.ps2', savedAt: DateTime(2026, 10, day), maker: _pcsx2, tag: 'pcsx2', sameAsRommId: '9');
-SaveEntry _romm(String name, int day) =>
-    SaveEntry(source: SaveSource.romm, fileName: name, savedAt: DateTime(2026, 10, day), maker: _pcsx2, tag: 'pcsx2', slot: 'gargosy', rommSave: const {'id': 4});
+SaveEntry _local(int day) => SaveEntry(
+  source: SaveSource.local,
+  fileName: 'Mcd001.ps2',
+  savedAt: DateTime(2026, 10, day),
+  maker: _pcsx2,
+  tag: 'pcsx2',
+  sameAsRommId: '9',
+);
+SaveEntry _romm(String name, int day) => SaveEntry(
+  source: SaveSource.romm,
+  fileName: name,
+  savedAt: DateTime(2026, 10, day),
+  maker: _pcsx2,
+  tag: 'pcsx2',
+  slot: 'gargosy',
+  rommSave: const {'id': 4},
+);
 
 void main() {
   late FakeEngine engine;
   final g = Game.fromJson(gameJson(1, 'G', fsName: 'G.chd'));
 
-  Future<void> pump(WidgetTester tester, {List<SaveEntry> local = const [], List<SaveEntry> romm = const [], bool offline = false,
-      List<BackupEntry> waiting = const [], List<ResumeEntry> states = const [], List<String> unclaimed = const []}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    List<SaveEntry> local = const [],
+    List<SaveEntry> romm = const [],
+    bool offline = false,
+    List<BackupEntry> waiting = const [],
+    List<ResumeEntry> states = const [],
+    List<String> unclaimed = const [],
+  }) async {
     await setDesktopSize(tester);
     engine = FakeEngine()
       ..menu = PlayMenu(
@@ -46,10 +66,15 @@ void main() {
       )
       ..states = states
       ..unclaimed = unclaimed;
-    await tester.pumpWidget(testApp(SavesTab(game: g), overrides: [
-      playEngineProvider.overrideWithValue(engine),
-      uploadsWaitingProvider.overrideWith((ref, id) => waiting),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        SavesTab(game: g),
+        overrides: [
+          playEngineProvider.overrideWithValue(engine),
+          uploadsWaitingProvider.overrideWith((ref, id) => waiting),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -96,14 +121,27 @@ void main() {
   });
 
   testWidgets('a save waiting to upload shows', (tester) async {
-    await pump(tester, waiting: [BackupEntry(timestamp: DateTime(2026, 10, 9, 21), md5Hash: 'h', localZipPath: 'z')]);
+    await pump(
+      tester,
+      waiting: [BackupEntry(timestamp: DateTime(2026, 10, 9, 21), md5Hash: 'h', localZipPath: 'z')],
+    );
     expect(find.textContaining('Waiting to upload'), findsOneWidget);
   });
 
   testWidgets('Saves | States switches the list; states are for looking at', (tester) async {
-    await pump(tester, states: [
-      ResumeEntry(emulatorId: 'pcsx2', emulatorName: 'PCSX2', fileName: 's1.p2s', slot: const NumberedStateSlot(1), savedAt: DateTime(2026, 10, 9), where: ResumeWhere.thisPc),
-    ]);
+    await pump(
+      tester,
+      states: [
+        ResumeEntry(
+          emulatorId: 'pcsx2',
+          emulatorName: 'PCSX2',
+          fileName: 's1.p2s',
+          slot: const NumberedStateSlot(1),
+          savedAt: DateTime(2026, 10, 9),
+          where: ResumeWhere.thisPc,
+        ),
+      ],
+    );
     await tester.tap(find.textContaining('States'));
     await tester.pumpAndSettle();
     expect(find.text('Slot 1'), findsOneWidget);
@@ -125,10 +163,15 @@ void main() {
   testWidgets('RomM failing to answer shows the error with Retry', (tester) async {
     await setDesktopSize(tester);
     engine = FakeEngine()..menuError = StateError('RomM did not answer');
-    await tester.pumpWidget(testApp(SavesTab(game: g), overrides: [
-      playEngineProvider.overrideWithValue(engine),
-      uploadsWaitingProvider.overrideWith((ref, id) => const []),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        SavesTab(game: g),
+        overrides: [
+          playEngineProvider.overrideWithValue(engine),
+          uploadsWaitingProvider.overrideWith((ref, id) => const []),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Retry'), findsOneWidget);
   });

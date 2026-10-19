@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+
 import '../constants/app_constants.dart';
 import 'retroachievements_game_models.dart';
 import 'retroachievements_models.dart';
@@ -23,8 +24,10 @@ class RetroAchievementsService {
   final Dio _dio;
 
   RetroAchievementsService({Dio? dio})
-      : _dio = dio ??
-            Dio(BaseOptions(
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               baseUrl: _baseUrl,
               connectTimeout: const Duration(seconds: 15),
               receiveTimeout: const Duration(seconds: 15),
@@ -33,7 +36,8 @@ class RetroAchievementsService {
                 'User-Agent': 'Gargosy/${AppConstants.version} (${defaultTargetPlatform.name})',
                 'Accept': 'application/json',
               },
-            ));
+            ),
+          );
 
   /// Fetches the profile summary for [credentials.username], also
   /// validating that the API key is correct.
@@ -47,12 +51,10 @@ class RetroAchievementsService {
     }
 
     try {
-      final response = await _dio.get('/API_GetUserSummary.php', queryParameters: {
-        'u': credentials.username,
-        'y': credentials.webApiKey,
-        'g': 0,
-        'a': 0,
-      });
+      final response = await _dio.get(
+        '/API_GetUserSummary.php',
+        queryParameters: {'u': credentials.username, 'y': credentials.webApiKey, 'g': 0, 'a': 0},
+      );
 
       final data = response.data;
       if (data is! Map<String, dynamic> || data.isEmpty) {
@@ -83,23 +85,23 @@ class RetroAchievementsService {
   /// [gameId] is the RetroAchievements game ID, which RomM exposes as a
   /// ROM's `ra_id`. Throws [RetroAchievementsAuthException] on rejected
   /// credentials; other failures propagate as [DioException].
-  Future<RetroAchievementsGameProgress> fetchGameProgress(
-    RetroAchievementsCredentials credentials,
-    int gameId,
-  ) async {
+  Future<RetroAchievementsGameProgress> fetchGameProgress(RetroAchievementsCredentials credentials, int gameId) async {
     if (credentials.isEmpty) {
       throw const RetroAchievementsAuthException('Username and Web API key are required.');
     }
 
     try {
-      final response = await _dio.get('/API_GetGameInfoAndUserProgress.php', queryParameters: {
-        'u': credentials.username,
-        'y': credentials.webApiKey,
-        'g': gameId,
-        // Without this, RA omits HighestAwardKind/HighestAwardDate entirely,
-        // so the Beaten/Completed/Mastered chip would never show.
-        'a': 1,
-      });
+      final response = await _dio.get(
+        '/API_GetGameInfoAndUserProgress.php',
+        queryParameters: {
+          'u': credentials.username,
+          'y': credentials.webApiKey,
+          'g': gameId,
+          // Without this, RA omits HighestAwardKind/HighestAwardDate entirely,
+          // so the Beaten/Completed/Mastered chip would never show.
+          'a': 1,
+        },
+      );
 
       final data = response.data;
       if (data is! Map<String, dynamic> || data.isEmpty) {

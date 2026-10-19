@@ -16,14 +16,9 @@ void main() {
   setUp(() {
     dio = Dio(BaseOptions(baseUrl: testBaseUrl));
     dioAdapter = DioAdapter(dio: dio);
-    
-    final config = RomMConfig(
-      baseUrl: testBaseUrl,
-      username: '',
-      password: '',
-      apiKey: testApiKey,
-    );
-    
+
+    final config = RomMConfig(baseUrl: testBaseUrl, username: '', password: '', apiKey: testApiKey);
+
     rommService = RommService(config, dio: dio);
   });
 
@@ -33,10 +28,7 @@ void main() {
       dioAdapter.onGet(
         '/api/platforms',
         (server) => server.reply(200, {'items': []}),
-        headers: {
-          'Authorization': 'Bearer $testApiKey',
-          'X-Api-Key': testApiKey,
-        },
+        headers: {'Authorization': 'Bearer $testApiKey', 'X-Api-Key': testApiKey},
       );
 
       // Call the API
@@ -50,27 +42,12 @@ void main() {
       // Mock data
       final mockData = {
         'items': [
-          {
-            'id': 1,
-            'name': 'Nintendo Switch',
-            'slug': 'switch',
-            'display_name': 'Switch',
-            'rom_count': 10,
-          },
-          {
-            'id': 2,
-            'name': 'PlayStation 2',
-            'slug': 'ps2',
-            'display_name': 'PS2',
-            'rom_count': 5,
-          }
-        ]
+          {'id': 1, 'name': 'Nintendo Switch', 'slug': 'switch', 'display_name': 'Switch', 'rom_count': 10},
+          {'id': 2, 'name': 'PlayStation 2', 'slug': 'ps2', 'display_name': 'PS2', 'rom_count': 5},
+        ],
       };
 
-      dioAdapter.onGet(
-        '/api/platforms',
-        (server) => server.reply(200, mockData),
-      );
+      dioAdapter.onGet('/api/platforms', (server) => server.reply(200, mockData));
 
       final platforms = await rommService.getPlatforms();
 
@@ -81,10 +58,7 @@ void main() {
     });
 
     test('getPlatforms throws DioException on error response', () async {
-      dioAdapter.onGet(
-        '/api/platforms',
-        (server) => server.reply(401, {'message': 'Unauthorized'}),
-      );
+      dioAdapter.onGet('/api/platforms', (server) => server.reply(401, {'message': 'Unauthorized'}));
 
       expect(() => rommService.getPlatforms(), throwsA(isA<DioException>()));
     });
@@ -97,10 +71,14 @@ void main() {
       // the actual outgoing request via a Dio interceptor instead — that's
       // independent of whether the mock adapter matched anything.
       RequestOptions? captured;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/play-sessions') captured = options;
-        handler.next(options);
-      }));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == '/api/play-sessions') captured = options;
+            handler.next(options);
+          },
+        ),
+      );
       dioAdapter.onPost(
         '/api/play-sessions',
         (server) => server.reply(201, {'results': [], 'created_count': 1, 'skipped_count': 0}),
@@ -109,12 +87,7 @@ void main() {
 
       final start = DateTime.utc(2026, 1, 1, 10);
       final end = DateTime.utc(2026, 1, 1, 10, 5);
-      await rommService.recordPlaySession(
-        romId: '42',
-        deviceId: 'device-1',
-        startTime: start,
-        endTime: end,
-      );
+      await rommService.recordPlaySession(romId: '42', deviceId: 'device-1', startTime: start, endTime: end);
 
       expect(captured, isNotNull);
       expect(captured!.data, {
@@ -125,17 +98,21 @@ void main() {
             'start_time': start.toIso8601String(),
             'end_time': end.toIso8601String(),
             'duration_ms': end.difference(start).inMilliseconds,
-          }
+          },
         ],
       });
     });
 
     test('does not throw, and sends no request, for a non-numeric romId', () async {
       var requestSent = false;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/play-sessions') requestSent = true;
-        handler.next(options);
-      }));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == '/api/play-sessions') requestSent = true;
+            handler.next(options);
+          },
+        ),
+      );
 
       await rommService.recordPlaySession(
         romId: 'not-a-number',
@@ -151,10 +128,14 @@ void main() {
   group('sendActivityHeartbeat', () {
     test('POSTs rom_id (as an int) and device_id to /api/activity/heartbeat', () async {
       RequestOptions? captured;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/activity/heartbeat') captured = options;
-        handler.next(options);
-      }));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == '/api/activity/heartbeat') captured = options;
+            handler.next(options);
+          },
+        ),
+      );
       dioAdapter.onPost(
         '/api/activity/heartbeat',
         (server) => server.reply(200, {
@@ -190,10 +171,14 @@ void main() {
 
     test('does not throw, and sends no request, for a non-numeric romId', () async {
       var requestSent = false;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/activity/heartbeat') requestSent = true;
-        handler.next(options);
-      }));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == '/api/activity/heartbeat') requestSent = true;
+            handler.next(options);
+          },
+        ),
+      );
 
       await rommService.sendActivityHeartbeat(romId: 'not-a-number', deviceId: 'device-1');
 
@@ -204,14 +189,15 @@ void main() {
   group('clearActivityHeartbeat', () {
     test('DELETEs /api/activity/heartbeat with device_id as a query param', () async {
       RequestOptions? captured;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/activity/heartbeat') captured = options;
-        handler.next(options);
-      }));
-      dioAdapter.onDelete(
-        '/api/activity/heartbeat',
-        (server) => server.reply(204, null),
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == '/api/activity/heartbeat') captured = options;
+            handler.next(options);
+          },
+        ),
       );
+      dioAdapter.onDelete('/api/activity/heartbeat', (server) => server.reply(204, null));
 
       await rommService.clearActivityHeartbeat(deviceId: 'device-1');
 
@@ -221,10 +207,7 @@ void main() {
     });
 
     test('does not throw when the server errors (must fail silently)', () async {
-      dioAdapter.onDelete(
-        '/api/activity/heartbeat',
-        (server) => server.reply(500, {'message': 'error'}),
-      );
+      dioAdapter.onDelete('/api/activity/heartbeat', (server) => server.reply(500, {'message': 'error'}));
 
       await rommService.clearActivityHeartbeat(deviceId: 'device-1');
     });
@@ -234,27 +217,37 @@ void main() {
     // /api/activity/heartbeat contains the substring '/api/heartbeat' (the
     // connectivity/capabilities poll path) — a naive `.contains()` check
     // conflates the two and silently drops activity-heartbeat retries.
-    test('a transient (connection-level) failure on /api/activity/heartbeat is retried, unlike /api/heartbeat', () async {
-      // A plain error *response* (e.g. 500) is DioExceptionType.badResponse,
-      // which is never retried regardless of path — use a connection-level
-      // error instead, the case the retry logic actually targets.
-      var attempts = 0;
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/activity/heartbeat') attempts++;
-        handler.next(options);
-      }));
-      dioAdapter.onPost(
-        '/api/activity/heartbeat',
-        (server) => server.throws(
-          0,
-          DioException(requestOptions: RequestOptions(path: '/api/activity/heartbeat'), type: DioExceptionType.connectionError),
-        ),
-        data: Matchers.any,
-      );
+    test(
+      'a transient (connection-level) failure on /api/activity/heartbeat is retried, unlike /api/heartbeat',
+      () async {
+        // A plain error *response* (e.g. 500) is DioExceptionType.badResponse,
+        // which is never retried regardless of path — use a connection-level
+        // error instead, the case the retry logic actually targets.
+        var attempts = 0;
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              if (options.path == '/api/activity/heartbeat') attempts++;
+              handler.next(options);
+            },
+          ),
+        );
+        dioAdapter.onPost(
+          '/api/activity/heartbeat',
+          (server) => server.throws(
+            0,
+            DioException(
+              requestOptions: RequestOptions(path: '/api/activity/heartbeat'),
+              type: DioExceptionType.connectionError,
+            ),
+          ),
+          data: Matchers.any,
+        );
 
-      await rommService.sendActivityHeartbeat(romId: '42', deviceId: 'device-1');
+        await rommService.sendActivityHeartbeat(romId: '42', deviceId: 'device-1');
 
-      expect(attempts, greaterThan(1));
-    });
+        expect(attempts, greaterThan(1));
+      },
+    );
   });
 }

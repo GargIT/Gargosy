@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:archive/archive_io.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,7 +42,7 @@ void main() {
     mockRommService = MockRommService();
     mockDirectoryService = MockDirectoryService();
     mockStrategyRegistry = MockStrategyRegistry();
-    
+
     // Default preferred emulator is null to use built-in fallbacks
     when(mockStrategyRegistry.getPreferredEmulatorId(any)).thenReturn(null);
     when(mockStrategyRegistry.getStrategyForSlug(any)).thenReturn(null);
@@ -53,14 +54,12 @@ void main() {
         .thenAnswer((_) async => '/nonexistent_directory_for_testing');
 
     final sysTemp = Directory.systemTemp.path;
-    when(mockDirectoryService.getEmulatorDirectory('temp'))
-        .thenAnswer((_) async => sysTemp);
-    
+    when(mockDirectoryService.getEmulatorDirectory('temp')).thenAnswer((_) async => sysTemp);
+
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
     // Default to legacy mode so existing tests are unaffected
-    when(mockRommService.fetchCapabilities())
-        .thenAnswer((_) async => RommCapabilities.unknown());
+    when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities.unknown());
     service = SaveSyncService(mockRommService, mockDirectoryService, mockStrategyRegistry, prefs);
   });
 
@@ -68,10 +67,15 @@ void main() {
     test('withStrategy: two games at once each see their own RetroArch core', () async {
       final a = Game(id: '1', name: 'A', fsName: 'a', platformSlug: 'gba', fileSize: 0);
       final b = Game(id: '2', name: 'B', fsName: 'b', platformSlug: 'gba', fileSize: 0);
-      Future<String?> coreSeen(Game g, String core) => service.withStrategy<String?>(g, (s) async {
-            await Future<void>.delayed(const Duration(milliseconds: 10));
-            return (s as RetroArchSaveStrategy).coreIdFor(g);
-          }, emulatorId: 'retroarch', coreOverride: '${core}_libretro');
+      Future<String?> coreSeen(Game g, String core) => service.withStrategy<String?>(
+        g,
+        (s) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          return (s as RetroArchSaveStrategy).coreIdFor(g);
+        },
+        emulatorId: 'retroarch',
+        coreOverride: '${core}_libretro',
+      );
 
       final seen = await Future.wait([coreSeen(a, 'mgba'), coreSeen(b, 'gpsp')]);
       expect(seen, ['mgba', 'gpsp']);
@@ -83,7 +87,7 @@ void main() {
 
     test('getStrategyForSlug() checks StrategyRegistry user preferences', () async {
       when(mockStrategyRegistry.getPreferredEmulatorId('gba')).thenReturn('retroarch');
-      
+
       final strategy = service.getStrategyForSlug('gba');
       expect(strategy?.strategyId, 'retroarch');
     });
@@ -96,36 +100,40 @@ void main() {
 
       final game = Game(id: 'game1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
       when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount'))).thenAnswer((_) async {});
 
       final ok = await service.pushSaves(game, romPath);
-      
+
       expect(ok, isTrue, reason: 'Should have found and uploaded game.sav');
-      verify(mockRommService.uploadSave(
-        'game1',
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(1);
-      
+      verify(
+        mockRommService.uploadSave(
+          'game1',
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(1);
+
       await tempDir.delete(recursive: true);
     });
 
@@ -135,18 +143,20 @@ void main() {
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
       final game = Game(id: 'game41', name: 'game', platformSlug: 'gba', fileSize: 0);
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: <String, dynamic>{'id': 41}));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: <String, dynamic>{'id': 41}));
 
       expect(await service.pushSaves(game, romPath, emulatorId: 'mgba', syncMode: 'saves'), isTrue);
       await service.markSaveSynced(game, romPath, emulatorId: 'mgba', syncMode: 'saves');
@@ -177,35 +187,39 @@ void main() {
       final romPath = p.join(tempDir.path, 'game.gba');
       await File(p.join(tempDir.path, 'game.sav')).writeAsString('x' * 150);
       final game = Game(id: 'game88', name: 'game', platformSlug: 'gba', fileSize: 0);
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
       await service.pushSaves(game, romPath, emulatorId: 'mgba', syncMode: 'saves');
       await service.forgetSynced(game); // its RomM save was deleted
       await service.pushSaves(game, romPath, emulatorId: 'mgba', syncMode: 'saves');
 
-      verify(mockRommService.uploadSave(
-        'game88',
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(2);
+      verify(
+        mockRommService.uploadSave(
+          'game88',
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(2);
       await tempDir.delete(recursive: true);
     });
 
@@ -218,18 +232,20 @@ void main() {
       await b.writeAsString('b' * 150);
       final game = Game(id: 'game99', name: 'MyGame', platformSlug: 'windows', fileSize: 0);
       await service.windowsSaveStrategy.setManualOverride(game.id, saveDir.path);
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
       await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
       // The game rewrites the same save on exit: new times, same bytes.
@@ -238,18 +254,20 @@ void main() {
       await b.writeAsString('b' * 150);
       await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
 
-      verify(mockRommService.uploadSave(
-        'game99',
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(1);
+      verify(
+        mockRommService.uploadSave(
+          'game99',
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(1);
       await tempDir.delete(recursive: true);
     });
 
@@ -277,18 +295,20 @@ void main() {
       await File(p.join(tempDir.path, 'game.sav')).writeAsString('x' * 150);
       final game = Game(id: 'act1', name: 'Mario Kart 64', fsName: 'game', platformSlug: 'gba', fileSize: 0);
       String? during;
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async {
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async {
         during = service.activity.value;
         return (ok: true, conflict: null, saved: null);
       });
@@ -306,21 +326,25 @@ void main() {
       final game = Game(id: 'own1', name: 'game', platformSlug: 'gba', fileSize: 0);
       DateTime? uploadedAt;
       // Pulled an hour ago.
-      (await SharedPreferences.getInstance())
-          .setString('last_pull_own1', DateTime.now().subtract(const Duration(hours: 1)).toIso8601String());
+      (await SharedPreferences.getInstance()).setString(
+        'last_pull_own1',
+        DateTime.now().subtract(const Duration(hours: 1)).toIso8601String(),
+      );
       when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async {
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async {
         uploadedAt = DateTime.now().toUtc(); // RomM stamps the save as it receives it
         return (ok: true, conflict: null, saved: null);
       });
@@ -343,37 +367,41 @@ void main() {
 
       final game = Game(id: 'game1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
       when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount'))).thenAnswer((_) async {});
 
       await service.pushSaves(game, romPath);
-      verify(mockRommService.uploadSave(
-        'game1',
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(1);
+      verify(
+        mockRommService.uploadSave(
+          'game1',
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(1);
 
       // Second time should skip
       clearInteractions(mockRommService);
-      // We must re-stub because clearInteractions might affect stubs depending on implementation, 
+      // We must re-stub because clearInteractions might affect stubs depending on implementation,
       // though usually it only clears call history. But to be safe:
       when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
 
@@ -390,17 +418,20 @@ void main() {
       setUp(() {
         uploaded = null;
         uploads = 0;
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'),
-          deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'),
-          autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'),
-          screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((invocation) async {
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((invocation) async {
           uploads++;
           uploaded = await (invocation.positionalArguments[1] as File).readAsBytes();
           return (ok: true, conflict: null, saved: null);
@@ -434,8 +465,10 @@ void main() {
           await File(p.join(tempDir.path, 'game.sav')).writeAsBytes(buildRzip(raw));
           final game = Game(id: 'h2_$label', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-          expect(await service.rommHashOfLocal(game, p.join(tempDir.path, 'game.gba'), emulatorId: 'mgba'),
-              rommHashOfFile(raw));
+          expect(
+            await service.rommHashOfLocal(game, p.join(tempDir.path, 'game.gba'), emulatorId: 'mgba'),
+            rommHashOfFile(raw),
+          );
           await tempDir.delete(recursive: true);
         });
 
@@ -443,12 +476,16 @@ void main() {
           when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
           final tempDir = await Directory.systemTemp.createTemp('romm_hash_zip');
           final inner = Uint8List.fromList(List.generate(200, (i) => i % 13));
-          final zip = Uint8List.fromList(ZipEncoder().encode(Archive()..addFile(ArchiveFile('in.dat', inner.length, inner))));
+          final zip = Uint8List.fromList(
+            ZipEncoder().encode(Archive()..addFile(ArchiveFile('in.dat', inner.length, inner))),
+          );
           await File(p.join(tempDir.path, 'game.sav')).writeAsBytes(zip);
           final game = Game(id: 'h4_$label', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-          expect(await service.rommHashOfLocal(game, p.join(tempDir.path, 'game.gba'), emulatorId: 'mgba'),
-              rommHashOfUpload(zip));
+          expect(
+            await service.rommHashOfLocal(game, p.join(tempDir.path, 'game.gba'), emulatorId: 'mgba'),
+            rommHashOfUpload(zip),
+          );
           await tempDir.delete(recursive: true);
         });
 
@@ -466,7 +503,9 @@ void main() {
 
           final local = await service.rommHashOfLocal(game, tempDir.path, emulatorId: 'windows_native');
           await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
-          final names = [for (final h in (ZipDirectory()..read(InputMemoryStream(uploaded!))).fileHeaders) h.file!.filename];
+          final names = [
+            for (final h in (ZipDirectory()..read(InputMemoryStream(uploaded!))).fileHeaders) h.file!.filename,
+          ];
           expect(names.where((n) => n == 'save.dat').length, 2, reason: 'the upload keeps both files');
           expect(local, rommHashOfUpload(uploaded!));
           await tempDir.delete(recursive: true);
@@ -497,48 +536,55 @@ void main() {
           await File(p.join(tempDir.path, 'game.sav')).writeAsBytes(bytes);
           final game = Game(id: 'h7_$label', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-          expect(await service.rommHashesOfLocal(game, p.join(tempDir.path, 'game.gba'), emulatorId: 'mgba'),
-              {rommHashOfFile(bytes)});
+          expect(await service.rommHashesOfLocal(game, p.join(tempDir.path, 'game.gba'), emulatorId: 'mgba'), {
+            rommHashOfFile(bytes),
+          });
           await tempDir.delete(recursive: true);
         });
 
-        test('a save folder: RomM\'s hash of the zip that is uploaded, and unchanged it is uploaded once ($label)', () async {
-          when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
-          final tempDir = await Directory.systemTemp.createTemp('romm_hash_folder');
-          final saveDir = Directory(p.join(tempDir.path, 'MyGame Saves'))..createSync();
-          File(p.join(saveDir.path, 'slot1.sav')).writeAsStringSync('a' * 150);
-          Directory(p.join(saveDir.path, 'profiles')).createSync();
-          File(p.join(saveDir.path, 'profiles', 'p1.dat')).writeAsStringSync('b' * 150);
-          final game = Game(id: 'h3_$label', name: 'MyGame', platformSlug: 'windows', fileSize: 0);
-          await service.windowsSaveStrategy.setManualOverride(game.id, saveDir.path);
+        test(
+          'a save folder: RomM\'s hash of the zip that is uploaded, and unchanged it is uploaded once ($label)',
+          () async {
+            when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
+            final tempDir = await Directory.systemTemp.createTemp('romm_hash_folder');
+            final saveDir = Directory(p.join(tempDir.path, 'MyGame Saves'))..createSync();
+            File(p.join(saveDir.path, 'slot1.sav')).writeAsStringSync('a' * 150);
+            Directory(p.join(saveDir.path, 'profiles')).createSync();
+            File(p.join(saveDir.path, 'profiles', 'p1.dat')).writeAsStringSync('b' * 150);
+            final game = Game(id: 'h3_$label', name: 'MyGame', platformSlug: 'windows', fileSize: 0);
+            await service.windowsSaveStrategy.setManualOverride(game.id, saveDir.path);
 
-          final local = await service.rommHashOfLocal(game, tempDir.path, emulatorId: 'windows_native');
-          await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
-          expect(local, isNotNull);
-          expect(local, rommHashOfUpload(uploaded!));
+            final local = await service.rommHashOfLocal(game, tempDir.path, emulatorId: 'windows_native');
+            await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
+            expect(local, isNotNull);
+            expect(local, rommHashOfUpload(uploaded!));
 
-          await Future<void>.delayed(const Duration(milliseconds: 1100));
-          File(p.join(saveDir.path, 'slot1.sav')).writeAsStringSync('a' * 150);
-          await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
-          expect(uploads, 1);
-          await tempDir.delete(recursive: true);
-        });
+            await Future<void>.delayed(const Duration(milliseconds: 1100));
+            File(p.join(saveDir.path, 'slot1.sav')).writeAsStringSync('a' * 150);
+            await service.pushSaves(game, tempDir.path, emulatorId: 'windows_native');
+            expect(uploads, 1);
+            await tempDir.delete(recursive: true);
+          },
+        );
       }
     });
 
     group('RetroArch "SaveRAM compression" (RZIP)', () {
       void stubUploadCapturing(void Function(Uint8List bytes) capture) {
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'),
-          deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'),
-          autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'),
-          screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((invocation) async {
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((invocation) async {
           capture(await (invocation.positionalArguments[1] as File).readAsBytes());
           return (ok: true, conflict: null, saved: null);
         });
@@ -594,34 +640,39 @@ void main() {
 
         final game = Game(id: 'g1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'),
-          deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'),
-          autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'),
-          screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
-        when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount')))
-            .thenAnswer((_) async {});
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+        when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount'))).thenAnswer((_) async {});
 
         await service.pushSaves(game, romPath);
 
         // Legacy path: deviceId must be null
-        final captured = verify(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'),
-          deviceId: captureAnyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'),
-          autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'),
-          screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).captured;
+        final captured = verify(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: captureAnyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).captured;
         expect(captured.first, isNull, reason: 'Legacy path must not pass deviceId');
 
         await tempDir.delete(recursive: true);
@@ -629,8 +680,7 @@ void main() {
 
       test('pushSaves() uses device path when capabilities are 4.9', () async {
         // Override to 4.9
-        when(mockRommService.fetchCapabilities())
-            .thenAnswer((_) async => RommCapabilities(version: '4.9.0'));
+        when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities(version: '4.9.0'));
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('romm_device_id', 'test-device-uuid');
@@ -641,36 +691,40 @@ void main() {
 
         final game = Game(id: 'g2', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-        when(mockRommService.getLatestSave('g2', deviceId: anyNamed('deviceId')))
-            .thenAnswer((_) async => null);
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'),
-          deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'),
-          autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'),
-          screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+        when(mockRommService.getLatestSave('g2', deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
         await service.pushSaves(game, romPath);
 
         // Device path: deviceId must be non-null
-        final captured = verify(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'),
-          deviceId: captureAnyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'),
-          autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'),
-          screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).captured;
-        expect(captured.first, 'test-device-uuid',
-            reason: 'Device path must pass stored deviceId');
+        final captured = verify(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: captureAnyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).captured;
+        expect(captured.first, 'test-device-uuid', reason: 'Device path must pass stored deviceId');
 
         await tempDir.delete(recursive: true);
       });
@@ -685,23 +739,31 @@ void main() {
 
         final game = Game(id: 'sg1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'), deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'), autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'), screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
-        when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount')))
-            .thenAnswer((_) async {});
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+        when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount'))).thenAnswer((_) async {});
 
         // sessionStart is 1 second AFTER the file was last modified — within grace window
         final sessionStart = (await saveFile.lastModified()).add(const Duration(seconds: 1));
 
         final ok = await service.pushSaves(game, romPath, sessionStart: sessionStart);
-        expect(ok, isTrue,
-            reason: 'File within 2s grace window should be included despite sessionStart being after mtime');
+        expect(
+          ok,
+          isTrue,
+          reason: 'File within 2s grace window should be included despite sessionStart being after mtime',
+        );
 
         await tempDir.delete(recursive: true);
       });
@@ -714,23 +776,27 @@ void main() {
 
         final game = Game(id: 'sg2', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'), deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'), autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'), screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
-        when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount')))
-            .thenAnswer((_) async {});
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+        when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount'))).thenAnswer((_) async {});
 
         // sessionStart is 60 seconds after the file — clearly outside grace window
         final sessionStart = (await saveFile.lastModified()).add(const Duration(seconds: 60));
 
         final ok = await service.pushSaves(game, romPath, sessionStart: sessionStart);
-        expect(ok, isFalse,
-            reason: 'File 60s before sessionStart should be excluded');
+        expect(ok, isFalse, reason: 'File 60s before sessionStart should be excluded');
 
         await tempDir.delete(recursive: true);
       });
@@ -750,20 +816,24 @@ void main() {
         final game = Game(id: 'wii1', name: 'game', platformSlug: 'wii', fileSize: 0);
         when(mockStrategyRegistry.getPreferredEmulatorId('wii')).thenReturn('dolphin');
 
-        when(mockDirectoryService.findEmulatorExecutable(any, any))
-            .thenAnswer((_) async => null);
-        when(mockDirectoryService.getEmulatorAppSupportDirectory('Dolphin',
-                platformSlug: anyNamed('platformSlug')))
+        when(mockDirectoryService.findEmulatorExecutable(any, any)).thenAnswer((_) async => null);
+        when(mockDirectoryService.getEmulatorAppSupportDirectory('Dolphin', platformSlug: anyNamed('platformSlug')))
             .thenAnswer((_) async => tempDir.path);
 
-        when(mockRommService.uploadSave(
-          any, any,
-          emulator: anyNamed('emulator'),
-          slot: anyNamed('slot'), deviceId: anyNamed('deviceId'),
-          autocleanup: anyNamed('autocleanup'), autocleanupLimit: anyNamed('autocleanupLimit'),
-          overwrite: anyNamed('overwrite'), screenshotFile: anyNamed('screenshotFile'),
-          overrideFilename: anyNamed('overrideFilename'),
-        )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+        when(
+          mockRommService.uploadSave(
+            any,
+            any,
+            emulator: anyNamed('emulator'),
+            slot: anyNamed('slot'),
+            deviceId: anyNamed('deviceId'),
+            autocleanup: anyNamed('autocleanup'),
+            autocleanupLimit: anyNamed('autocleanupLimit'),
+            overwrite: anyNamed('overwrite'),
+            screenshotFile: anyNamed('screenshotFile'),
+            overrideFilename: anyNamed('overrideFilename'),
+          ),
+        ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
         // We only verify the filter itself — the strategy path resolution may
         // still return empty on the test machine, so we just confirm no crash
@@ -780,25 +850,21 @@ void main() {
       final romPath = p.join(tempDir.path, 'game.gba');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
-      
+
       final game = Game(id: 'game1', name: 'game', platformSlug: 'gba', fileSize: 0);
-      
+
       // Setup a last pull time (1 hour ago)
       final prefs = await SharedPreferences.getInstance();
       final lastPull = DateTime.now().subtract(const Duration(hours: 1));
       await prefs.setString('last_pull_game1', lastPull.toIso8601String());
-      
+
       // Mock remote to be NEWER than last pull (30 mins ago)
       final remoteTime = DateTime.now().subtract(const Duration(minutes: 30));
-      when(mockRommService.getLatestSave('game1', deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-        'updated_at': remoteTime.toIso8601String(),
-        'screenshot_url': 'http://remote-screenshot.png',
-      });
-      
-      await expectLater(
-        service.pushSaves(game, romPath),
-        throwsA(isA<SaveConflictException>()),
+      when(mockRommService.getLatestSave('game1', deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {'updated_at': remoteTime.toIso8601String(), 'screenshot_url': 'http://remote-screenshot.png'},
       );
+
+      await expectLater(service.pushSaves(game, romPath), throwsA(isA<SaveConflictException>()));
 
       await tempDir.delete(recursive: true);
     });
@@ -814,34 +880,34 @@ void main() {
       await File(p.join(perGameDir.path, 'save.bin')).writeAsString(saveContent);
       final fakeExe = File(p.join(exeDir.path, 'pcsx2-qt.exe'));
       await fakeExe.writeAsString('');
-      when(mockDirectoryService.findEmulatorExecutable(any, any))
-          .thenAnswer((_) async => fakeExe.path);
+      when(mockDirectoryService.findEmulatorExecutable(any, any)).thenAnswer((_) async => fakeExe.path);
       return tempDir;
     }
 
-    Game pcsx2Game() =>
-        Game(id: 'pcsx2game', name: 'Ico (SLUS-12345)', platformSlug: 'ps2', fileSize: 0);
+    Game pcsx2Game() => Game(id: 'pcsx2game', name: 'Ico (SLUS-12345)', platformSlug: 'ps2', fileSize: 0);
 
     Future<String> localSaveFilePath(Directory tempDir) async =>
         p.join(tempDir.path, 'pcsx2', 'saves', 'SLUS-12345', 'save.bin');
 
     setUp(() {
-      when(mockRommService.fetchCapabilities())
-          .thenAnswer((_) async => RommCapabilities(version: '4.9.0'));
+      when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities(version: '4.9.0'));
     });
 
     void stubUpload(Future<Uint8List> Function(File) captureBytes) {
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((invocation) async {
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((invocation) async {
         await captureBytes(invocation.positionalArguments[1] as File);
         return (ok: true, conflict: null, saved: null);
       });
@@ -854,17 +920,20 @@ void main() {
 
       await service.pushSaves(pcsx2Game(), romPath);
 
-      final captured = verify(mockRommService.uploadSave(
-        any, any,
-        emulator: captureAnyNamed('emulator'),
-        slot: captureAnyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).captured;
+      final captured = verify(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: captureAnyNamed('emulator'),
+          slot: captureAnyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).captured;
       expect(captured, ['pcsx2', 'gargosy']);
 
       await tempDir.delete(recursive: true);
@@ -896,17 +965,20 @@ void main() {
       await service.pushSaves(pcsx2Game(), romPath);
       await service.pushSaves(pcsx2Game(), romPath);
 
-      verify(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(1);
+      verify(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(1);
 
       await tempDir.delete(recursive: true);
     });
@@ -919,11 +991,13 @@ void main() {
       await service.pushSaves(pcsx2Game(), romPath);
       expect(uploadedBytes, isNotNull);
 
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-            'download_path': 'https://example.test/save.zip',
-            'file_name': 'Ico (SLUS-12345).zip',
-            'device_syncs': <dynamic>[],
-          });
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'download_path': 'https://example.test/save.zip',
+          'file_name': 'Ico (SLUS-12345).zip',
+          'device_syncs': <dynamic>[],
+        },
+      );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => uploadedBytes);
 
       await service.pullSave(pcsx2Game(), romPath);
@@ -937,23 +1011,31 @@ void main() {
       final romPath = p.join(tempDir.path, 'Ico (SLUS-12345).iso');
       // An upload from before plain zips: freegosy_sync.txt holds the
       // saveContentHash of the folder it zips (name bytes, then file bytes).
-      final oldHash = md5.convert([...utf8.encode('SLUS-12345/save.bin'), ...utf8.encode('LOCAL_UNCHANGED')]).toString();
+      final oldHash = md5.convert([
+        ...utf8.encode('SLUS-12345/save.bin'),
+        ...utf8.encode('LOCAL_UNCHANGED'),
+      ]).toString();
       final old = Archive()
         ..addFile(ArchiveFile.string('freegosy_sync.txt', jsonEncode({'contentHash': oldHash})))
         ..addFile(ArchiveFile.string('SLUS-12345/save.bin', 'LOCAL_UNCHANGED'));
 
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-            'download_path': 'https://example.test/save.zip',
-            'file_name': 'Ico (SLUS-12345).zip',
-            'device_syncs': <dynamic>[],
-          });
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'download_path': 'https://example.test/save.zip',
+          'file_name': 'Ico (SLUS-12345).zip',
+          'device_syncs': <dynamic>[],
+        },
+      );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
           .thenAnswer((_) async => Uint8List.fromList(ZipEncoder().encode(old)));
 
       expect(await service.pullSave(pcsx2Game(), romPath), isTrue);
       final saved = File(await localSaveFilePath(tempDir));
       expect(await saved.readAsString(), 'LOCAL_UNCHANGED');
-      expect(saved.parent.listSync(recursive: true).map((e) => p.basename(e.path)), isNot(contains('freegosy_sync.txt')));
+      expect(
+        saved.parent.listSync(recursive: true).map((e) => p.basename(e.path)),
+        isNot(contains('freegosy_sync.txt')),
+      );
       await tempDir.delete(recursive: true);
     });
 
@@ -966,14 +1048,14 @@ void main() {
       archive.addFile(ArchiveFile.string('SLUS-12345/save.bin', 'CLOUD_NEW'));
       final cloudZipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
 
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId')))
-          .thenAnswer((_) async => {
-                'download_path': 'https://example.test/save.zip',
-                'file_name': 'Ico (SLUS-12345).zip',
-                'device_syncs': <dynamic>[],
-              });
-      when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
-          .thenAnswer((_) async => cloudZipBytes);
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'download_path': 'https://example.test/save.zip',
+          'file_name': 'Ico (SLUS-12345).zip',
+          'device_syncs': <dynamic>[],
+        },
+      );
+      when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => cloudZipBytes);
 
       final ok = await service.pullSave(pcsx2Game(), romPath);
 
@@ -991,12 +1073,13 @@ void main() {
       archive.addFile(ArchiveFile.string('SLUS-12345/save.bin', 'CLOUD_NEW'));
       final zipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
 
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId')))
-          .thenAnswer((_) async => {
-                'download_path': 'https://example.test/save.zip',
-                'file_name': 'Ico (SLUS-12345).zip',
-                'device_syncs': <dynamic>[],
-              });
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'download_path': 'https://example.test/save.zip',
+          'file_name': 'Ico (SLUS-12345).zip',
+          'device_syncs': <dynamic>[],
+        },
+      );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
           .thenAnswer((_) async => buildRzip(zipBytes));
 
@@ -1016,12 +1099,13 @@ void main() {
       final cloudZipBytes = Uint8List.fromList(ZipEncoder().encode(archive));
 
       final guard = SaveRestoreGuard();
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId')))
-          .thenAnswer((_) async => {
-                'download_path': 'https://example.test/save.zip',
-                'file_name': 'Ico (SLUS-12345).zip',
-                'device_syncs': <dynamic>[],
-              });
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'download_path': 'https://example.test/save.zip',
+          'file_name': 'Ico (SLUS-12345).zip',
+          'device_syncs': <dynamic>[],
+        },
+      );
       // RomM is slow: the pre-launch wait gives up while the save downloads.
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async {
         guard.markTooLate();
@@ -1063,8 +1147,7 @@ void main() {
     late String retroarchSaves;
 
     Uint8List blankSrm() => Uint8List(0x48800)..fillRange(0, 0x48800, 0xFF);
-    Uint8List pattern(int size, [int seed = 0]) =>
-        Uint8List.fromList(List.generate(size, (i) => (i + seed) % 251));
+    Uint8List pattern(int size, [int seed = 0]) => Uint8List.fromList(List.generate(size, (i) => (i + seed) % 251));
     Game n64Game() =>
         Game(id: 'n64game', name: 'Mario Kart 64', fsName: '$romName.z64', platformSlug: 'n64', fileSize: 0);
     String romPath() => p.join(tempDir.path, 'roms', '$romName.z64');
@@ -1076,11 +1159,9 @@ void main() {
         : <String>[];
 
     void cloudSave(String fileName, Uint8List bytes, {String? emulator}) {
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-            'download_path': 'https://example.test/$fileName',
-            'file_name': fileName,
-            'emulator': emulator,
-          });
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {'download_path': 'https://example.test/$fileName', 'file_name': fileName, 'emulator': emulator},
+      );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => bytes);
     }
 
@@ -1099,10 +1180,14 @@ void main() {
       when(mockDirectoryService.linuxSyncPreset).thenReturn('default');
       await Directory(aresDir()).create(recursive: true);
       await File(p.join(aresDir(), 'settings.bml')).writeAsString('Paths\n  Home\n  Saves\n');
-      sync = SaveSyncService(mockRommService, mockDirectoryService, mockStrategyRegistry,
-          SharedPreferencesAppPreferences(await SharedPreferences.getInstance()),
-          platform: PlatformInfo('linux', environment: {'HOME': tempDir.path}),
-          zstd: (_) async => throw UnsupportedError('no zstd library'));
+      sync = SaveSyncService(
+        mockRommService,
+        mockDirectoryService,
+        mockStrategyRegistry,
+        SharedPreferencesAppPreferences(await SharedPreferences.getInstance()),
+        platform: PlatformInfo('linux', environment: {'HOME': tempDir.path}),
+        zstd: (_) async => throw UnsupportedError('no zstd library'),
+      );
     });
 
     tearDown(() => tempDir.delete(recursive: true));
@@ -1115,21 +1200,26 @@ void main() {
         when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
         final local = pattern(4096, 3);
         await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(local);
-        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-              'id': 77,
-              'download_path': 'https://example.test/x.srm',
-              'file_name': '$romName.srm',
-              'emulator': 'mupen64plus_next',
-              'content_hash': rommHashOfFile(local),
-            });
+        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+          (_) async => {
+            'id': 77,
+            'download_path': 'https://example.test/x.srm',
+            'file_name': '$romName.srm',
+            'emulator': 'mupen64plus_next',
+            'content_hash': rommHashOfFile(local),
+          },
+        );
         when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => local);
 
         expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isFalse);
         verifyNever(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')));
         // Known to be RomM's content: an unchanged session doesn't upload it.
         expect(await sync.saveIsSynced(n64Game(), romPath(), emulatorId: 'retroarch', syncMode: 'saves'), isTrue);
-        expect(await sync.saveIsSynced(n64Game(), romPath(), emulatorId: 'retroarch', syncMode: 'both'), isTrue,
-            reason: "'both' is the default sync mode");
+        expect(
+          await sync.saveIsSynced(n64Game(), romPath(), emulatorId: 'retroarch', syncMode: 'both'),
+          isTrue,
+          reason: "'both' is the default sync mode",
+        );
         await sync.markSaveSynced(n64Game(), romPath(), emulatorId: 'retroarch', syncMode: 'saves');
         expect(await sync.rommCopyOfLocal(n64Game(), romPath(), emulatorId: 'retroarch'), '77');
       });
@@ -1138,13 +1228,15 @@ void main() {
         test('a pull downloads RomM\'s save when its content_hash is ${hash ?? 'missing'} ($label)', () async {
           when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
           await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(pattern(4096, 3));
-          when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-                'id': 78,
-                'download_path': 'https://example.test/y.srm',
-                'file_name': '$romName.srm',
-                'emulator': 'mupen64plus_next',
-                'content_hash': hash,
-              });
+          when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+            (_) async => {
+              'id': 78,
+              'download_path': 'https://example.test/y.srm',
+              'file_name': '$romName.srm',
+              'emulator': 'mupen64plus_next',
+              'content_hash': hash,
+            },
+          );
           when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
               .thenAnswer((_) async => pattern(4096, 4));
           await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch');
@@ -1158,13 +1250,15 @@ void main() {
       (await SharedPreferences.getInstance()).setString('romm_device_id', 'dev-1');
       final local = pattern(4096, 5);
       await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(local);
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-            'id': 79,
-            'download_path': 'https://example.test/z.srm',
-            'file_name': '$romName.srm',
-            'emulator': 'mupen64plus_next',
-            'content_hash': rommHashOfFile(local),
-          });
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'id': 79,
+          'download_path': 'https://example.test/z.srm',
+          'file_name': '$romName.srm',
+          'emulator': 'mupen64plus_next',
+          'content_hash': rommHashOfFile(local),
+        },
+      );
       when(mockRommService.confirmSaveDownloaded(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => true);
 
       expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isFalse);
@@ -1176,44 +1270,69 @@ void main() {
       when(mockDirectoryService.findEmulatorExecutable('duckstation', any))
           .thenAnswer((_) async => p.join(env.exeDir, 'duckstation-qt-x64-ReleaseLTCG.exe'));
       const rom = 'Colin McRae Rally 2.0 (Europe) (En,Fr,De,Es,It)';
-      final game = Game(id: 'ps1ignored', name: 'Colin McRae Rally 2.0', fsName: '$rom.cue', platformSlug: 'psx', fileSize: 0);
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-            'id': 90,
-            'download_path': 'https://example.test/notes.txt',
-            'file_name': 'notes.txt',
-            'emulator': 'duckstation',
-          });
+      final game = Game(
+        id: 'ps1ignored',
+        name: 'Colin McRae Rally 2.0',
+        fsName: '$rom.cue',
+        platformSlug: 'psx',
+        fileSize: 0,
+      );
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'id': 90,
+          'download_path': 'https://example.test/notes.txt',
+          'file_name': 'notes.txt',
+          'emulator': 'duckstation',
+        },
+      );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
           .thenAnswer((_) async => Uint8List.fromList(List.filled(300, 7)));
 
       expect(await sync.pullSave(game, p.join(tempDir.path, 'roms', '$rom.cue'), emulatorId: 'duckstation'), isFalse);
-      await sync.markSaveSynced(game, p.join(tempDir.path, 'roms', '$rom.cue'), emulatorId: 'duckstation', syncMode: 'saves');
-      expect(await sync.rommCopyOfLocal(game, p.join(tempDir.path, 'roms', '$rom.cue'), emulatorId: 'duckstation'), isNull,
-          reason: 'RomM\'s save 90 is not what this PC has');
+      await sync.markSaveSynced(
+        game,
+        p.join(tempDir.path, 'roms', '$rom.cue'),
+        emulatorId: 'duckstation',
+        syncMode: 'saves',
+      );
+      expect(
+        await sync.rommCopyOfLocal(game, p.join(tempDir.path, 'roms', '$rom.cue'), emulatorId: 'duckstation'),
+        isNull,
+        reason: 'RomM\'s save 90 is not what this PC has',
+      );
     });
 
     for (final (label, capabilities) in [
       ('legacy', RommCapabilities.unknown()),
       ('4.9', RommCapabilities(version: '4.9.0')),
     ]) {
-      test('a downloaded save identical to the one on this PC (no content_hash) counts as pulled and synced ($label)', () async {
-        when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
-        final local = pattern(4096, 6);
-        await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(local);
-        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
+      test(
+        'a downloaded save identical to the one on this PC (no content_hash) counts as pulled and synced ($label)',
+        () async {
+          when(mockRommService.fetchCapabilities()).thenAnswer((_) async => capabilities);
+          final local = pattern(4096, 6);
+          await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(local);
+          when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+            (_) async => {
               'id': 81,
               'download_path': 'https://example.test/same.srm',
               'file_name': '$romName.srm',
               'emulator': 'mupen64plus_next',
-            });
-        when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => local);
+            },
+          );
+          when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => local);
 
-        expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isTrue);
-        for (final mode in const ['saves', 'both']) {
-          expect(await sync.saveIsSynced(n64Game(), romPath(), emulatorId: 'retroarch', syncMode: mode), isTrue, reason: mode);
-        }
-        expect(await sync.rommCopyOfLocal(n64Game(), romPath(), emulatorId: 'retroarch'), '81');
-      });
+          expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isTrue);
+          for (final mode in const ['saves', 'both']) {
+            expect(
+              await sync.saveIsSynced(n64Game(), romPath(), emulatorId: 'retroarch', syncMode: mode),
+              isTrue,
+              reason: mode,
+            );
+          }
+          expect(await sync.rommCopyOfLocal(n64Game(), romPath(), emulatorId: 'retroarch'), '81');
+        },
+      );
     }
 
     // Gargosy: states never ride in game saves (issue #30), so a state file
@@ -1226,7 +1345,13 @@ void main() {
       when(mockDirectoryService.findEmulatorExecutable('dolphin', any))
           .thenAnswer((_) async => p.join(exeDir.path, 'Dolphin'));
       const rom = 'Super Mario Sunshine (USA)';
-      final game = Game(id: 'gcgame', name: 'Super Mario Sunshine', fsName: '$rom.iso', platformSlug: 'ngc', fileSize: 0);
+      final game = Game(
+        id: 'gcgame',
+        name: 'Super Mario Sunshine',
+        fsName: '$rom.iso',
+        platformSlug: 'ngc',
+        fileSize: 0,
+      );
       final romFile = p.join(tempDir.path, 'roms', '$rom.iso');
       // Dolphin reads the game ID from the disc header.
       File(romFile)
@@ -1244,8 +1369,16 @@ void main() {
 
     test('a DuckStation PS1 card becomes the RetroArch core\'s .srm', () async {
       const cardRom = 'Colin McRae Rally 2.0 (Europe) (En,Fr,De,Es,It)';
-      final card = buildPs1Card([(name: 'BESLES-02605-SETTING', blocks: [1], fill: 0x11)]);
-      final game = Game(id: 'ps1game', name: 'Colin McRae Rally 2.0', fsName: '$cardRom.cue', platformSlug: 'psx', fileSize: 0);
+      final card = buildPs1Card([
+        (name: 'BESLES-02605-SETTING', blocks: [1], fill: 0x11),
+      ]);
+      final game = Game(
+        id: 'ps1game',
+        name: 'Colin McRae Rally 2.0',
+        fsName: '$cardRom.cue',
+        platformSlug: 'psx',
+        fileSize: 0,
+      );
       cloudSave('${cardRom}_1.mcd', card, emulator: 'duckstation');
 
       expect(await sync.pullSave(game, p.join(tempDir.path, 'roms', '$cardRom.cue'), emulatorId: 'retroarch'), isTrue);
@@ -1257,8 +1390,11 @@ void main() {
     test('a save no format recognises is restored as it came', () async {
       cloudSave('$romName.srm', pattern(4096), emulator: 'mupen64plus_next');
 
-      expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'ares'), isFalse,
-          reason: 'written as it came, but ares reads no .srm: its save is unchanged');
+      expect(
+        await sync.pullSave(n64Game(), romPath(), emulatorId: 'ares'),
+        isFalse,
+        reason: 'written as it came, but ares reads no .srm: its save is unchanged',
+      );
 
       expect(filesIn(aresSaves()), ['$romName.srm']);
       expect(filesIn(p.join(tempDir.path, 'roms')), isEmpty, reason: 'nothing in the ROM folder');
@@ -1268,8 +1404,11 @@ void main() {
       final packed = buildRzip(blankSrm(), version: 2, compress: (c) => c);
       cloudSave('$romName.srm', packed, emulator: 'mupen64plus_next');
 
-      expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'ares'), isFalse,
-          reason: 'written as it came, but ares reads no .srm: its save is unchanged');
+      expect(
+        await sync.pullSave(n64Game(), romPath(), emulatorId: 'ares'),
+        isFalse,
+        reason: 'written as it came, but ares reads no .srm: its save is unchanged',
+      );
 
       expect(File(p.join(aresSaves(), '$romName.srm')).readAsBytesSync(), packed);
     });
@@ -1277,16 +1416,21 @@ void main() {
     group('an automatic pull never replaces a newer local save', () {
       // ares has played before: its saves folder is set, so the local save
       // is read from there (an empty Saves path reads next to the ROM).
-      setUp(() => File(p.join(aresDir(), 'settings.bml'))
-          .writeAsString('Paths\n  Home\n  Saves: ${p.join(aresDir(), 'Saves').replaceAll(r'\', '/')}/\n'));
+      setUp(
+        () =>
+            File(p.join(aresDir(), 'settings.bml'))
+                .writeAsString('Paths\n  Home\n  Saves: ${p.join(aresDir(), 'Saves').replaceAll(r'\', '/')}/\n'),
+      );
 
       void cloudSaveAt(String fileName, Uint8List bytes, String updatedAt, {String? emulator}) {
-        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-              'download_path': 'https://example.test/$fileName',
-              'file_name': fileName,
-              'emulator': emulator,
-              'updated_at': updatedAt,
-            });
+        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+          (_) async => {
+            'download_path': 'https://example.test/$fileName',
+            'file_name': fileName,
+            'emulator': emulator,
+            'updated_at': updatedAt,
+          },
+        );
         when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => bytes);
       }
 
@@ -1320,7 +1464,8 @@ void main() {
           'emulator': 'ares',
           'updated_at': '2026-09-28T16:40:00Z',
         };
-        when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => pattern(512, 1));
+        when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
+            .thenAnswer((_) async => pattern(512, 1));
 
         expect(await sync.pullSave(n64Game(), romPath(), saveData: chosen, emulatorId: 'ares'), isTrue);
         expect(local.readAsBytesSync(), pattern(512, 1));
@@ -1329,13 +1474,24 @@ void main() {
 
     group('a chosen save is put in place, or says why not', () {
       // ares has played before: its saves folder is set.
-      setUp(() => File(p.join(aresDir(), 'settings.bml'))
-          .writeAsString('Paths\n  Home\n  Saves: ${p.join(aresDir(), 'Saves').replaceAll(r'\', '/')}/\n'));
+      setUp(
+        () =>
+            File(p.join(aresDir(), 'settings.bml'))
+                .writeAsString('Paths\n  Home\n  Saves: ${p.join(aresDir(), 'Saves').replaceAll(r'\', '/')}/\n'),
+      );
 
       test('a RomM save is downloaded and converted for the picked emulator', () async {
         const cardRom = 'Colin McRae Rally 2.0 (Europe) (En,Fr,De,Es,It)';
-        final card = buildPs1Card([(name: 'BESLES-02605-SETTING', blocks: [1], fill: 0x12)]);
-        final game = Game(id: 'ps1game', name: 'Colin McRae Rally 2.0', fsName: '$cardRom.cue', platformSlug: 'psx', fileSize: 0);
+        final card = buildPs1Card([
+          (name: 'BESLES-02605-SETTING', blocks: [1], fill: 0x12),
+        ]);
+        final game = Game(
+          id: 'ps1game',
+          name: 'Colin McRae Rally 2.0',
+          fsName: '$cardRom.cue',
+          platformSlug: 'psx',
+          fileSize: 0,
+        );
         when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => card);
         await sync.restoreChosenSave(game, p.join(tempDir.path, 'roms', '$cardRom.cue'), {
           'download_path': 'https://example.test/x.mcd',
@@ -1348,7 +1504,10 @@ void main() {
       test('a failed download throws and writes nothing', () async {
         when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
         await expectLater(
-          sync.restoreChosenSave(n64Game(), romPath(), {'download_path': 'https://example.test/x', 'file_name': 'x.srm'}, emulatorId: 'ares'),
+          sync.restoreChosenSave(n64Game(), romPath(), {
+            'download_path': 'https://example.test/x',
+            'file_name': 'x.srm',
+          }, emulatorId: 'ares'),
           throwsA(isA<SaveChoiceException>()),
         );
         expect(filesIn(aresSaves()), isEmpty);
@@ -1357,7 +1516,13 @@ void main() {
       test('an N64 RetroArch save on this PC is not moved into ares (no N64 conversion)', () async {
         await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(blankSrm()..setRange(0, 512, pattern(512, 7)));
         await expectLater(
-          sync.convertLocalSave(n64Game(), romPath(), fromEmulatorId: 'retroarch', fromTag: 'mupen64plus_next', emulatorId: 'ares'),
+          sync.convertLocalSave(
+            n64Game(),
+            romPath(),
+            fromEmulatorId: 'retroarch',
+            fromTag: 'mupen64plus_next',
+            emulatorId: 'ares',
+          ),
           throwsA(isA<SaveChoiceException>()),
         );
         expect(Directory(aresSaves()).existsSync() ? filesIn(aresSaves()) : <String>[], isEmpty);
@@ -1366,7 +1531,13 @@ void main() {
       test('a local save that does not convert throws', () async {
         await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(pattern(4096));
         await expectLater(
-          sync.convertLocalSave(n64Game(), romPath(), fromEmulatorId: 'retroarch', fromTag: 'mupen64plus_next', emulatorId: 'ares'),
+          sync.convertLocalSave(
+            n64Game(),
+            romPath(),
+            fromEmulatorId: 'retroarch',
+            fromTag: 'mupen64plus_next',
+            emulatorId: 'ares',
+          ),
           throwsA(isA<SaveChoiceException>()),
         );
       });
@@ -1395,21 +1566,25 @@ void main() {
           await File(p.join(tempDir.path, '.config', 'retroarch', 'retroarch.cfg'))
               .writeAsString('savefile_directory = "$retroarchSaves"\nsort_savefiles_enable = "$sorted"\n');
           for (final (folder, seed) in [('Mupen64Plus-Next', 1), ('ParaLLEl N64', 2)]) {
-            final dir = Directory(sorted ? p.join(retroarchSaves, folder) : retroarchSaves)..createSync(recursive: true);
+            final dir = Directory(sorted ? p.join(retroarchSaves, folder) : retroarchSaves)
+              ..createSync(recursive: true);
             File(p.join(dir.path, '$romName.srm')).writeAsBytesSync(blankSrm()..setRange(0, 512, pattern(512, seed)));
           }
           when(mockStrategyRegistry.getAllStrategiesForSlug('n64')).thenReturn([_Emulator('retroarch')]);
           final sources = LiveSaveCatalogSources(
-              sync: sync,
-              registry: mockStrategyRegistry,
-              backupRepository: BackupRepository(),
-              rommService: null,
-              installed: const {'retroarch': true});
+            sync: sync,
+            registry: mockStrategyRegistry,
+            backupRepository: BackupRepository(),
+            rommService: null,
+            installed: const {'retroarch': true},
+          );
 
           final rows = await sources.localSaves(n64Game(), romPath());
 
-          expect(rows.map((r) => r.maker?.tag).toList(),
-              sorted ? ['mupen64plus_next', 'parallel_n64'] : [rows.single.maker?.tag]);
+          expect(
+            rows.map((r) => r.maker?.tag).toList(),
+            sorted ? ['mupen64plus_next', 'parallel_n64'] : [rows.single.maker?.tag],
+          );
         });
       }
 
@@ -1432,13 +1607,16 @@ void main() {
         await sync.markSaveSynced(n64Game(), romPath(), emulatorId: 'ares', syncMode: 'saves');
         // The emulator wrote the same save again on exit: newer time, same content.
         local.setLastModifiedSync(DateTime.utc(2026, 10, 1, 12));
-        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-              'download_path': 'https://example.test/b.eeprom',
-              'file_name': '$romName.eeprom',
-              'emulator': 'ares',
-              'updated_at': '2026-09-28T16:40:00Z',
-            });
-        when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => pattern(512, 3));
+        when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+          (_) async => {
+            'download_path': 'https://example.test/b.eeprom',
+            'file_name': '$romName.eeprom',
+            'emulator': 'ares',
+            'updated_at': '2026-09-28T16:40:00Z',
+          },
+        );
+        when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId')))
+            .thenAnswer((_) async => pattern(512, 3));
 
         expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'ares'), isTrue);
         expect(local.readAsBytesSync(), pattern(512, 3));
@@ -1450,7 +1628,11 @@ void main() {
         final f = File(p.join(aresSaves(), '$romName.eeprom'))..writeAsBytesSync(pattern(512, 1));
         final a = await sync.saveFingerprint(n64Game(), romPath(), emulatorId: 'ares');
         f.setLastModifiedSync(DateTime(2030));
-        expect(await sync.saveFingerprint(n64Game(), romPath(), emulatorId: 'ares'), a, reason: 'time alone is no change');
+        expect(
+          await sync.saveFingerprint(n64Game(), romPath(), emulatorId: 'ares'),
+          a,
+          reason: 'time alone is no change',
+        );
         f.writeAsBytesSync(pattern(512, 2));
         expect(await sync.saveFingerprint(n64Game(), romPath(), emulatorId: 'ares'), isNot(a));
       });
@@ -1466,13 +1648,20 @@ void main() {
       final card = File(p.join(tmp.path, 'shared.mcd'))..writeAsBytesSync(List.filled(128, 1));
       card.setLastModifiedSync(DateTime.utc(2026, 10, 1, 12)); // another game played on it
       final strategy = _SharedCardStrategy(card);
-      final sync = _OneStrategySync(strategy, mockRommService, mockDirectoryService, mockStrategyRegistry,
-          SharedPreferencesAppPreferences(await SharedPreferences.getInstance()));
-      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => {
-            'download_path': 'https://example.test/x.mcd',
-            'file_name': 'x.mcd',
-            'updated_at': '2026-09-28T16:40:00Z',
-          });
+      final sync = _OneStrategySync(
+        strategy,
+        mockRommService,
+        mockDirectoryService,
+        mockStrategyRegistry,
+        SharedPreferencesAppPreferences(await SharedPreferences.getInstance()),
+      );
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'download_path': 'https://example.test/x.mcd',
+          'file_name': 'x.mcd',
+          'updated_at': '2026-09-28T16:40:00Z',
+        },
+      );
       when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => Uint8List(128));
 
       final game = Game(id: 'gx', name: 'X', fsName: 'X.cue', platformSlug: 'gba', fileSize: 0);
@@ -1513,7 +1702,12 @@ class _SharedCardStrategy implements SaveStrategy {
   @override
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async => true;
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async => [card];
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => [card];
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     restored.add(filename);

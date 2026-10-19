@@ -33,9 +33,12 @@ class _PermissiveSaveStrategy extends SaveStrategy with StateSyncCapable {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async => null;
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath,
-          {DateTime? sessionStart, String syncMode = 'both'}) async =>
-      [];
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => [];
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => false;
   @override
@@ -100,17 +103,15 @@ void main() {
     SaveStrategy? Function(Game game, {String? emulatorId})? resolveSaveStrategy,
     StrategyExclusive? exclusive,
     Future<void> Function(EmulatorStrategy emulator)? prepareFolders,
-  }) =>
-      ResumeService(
-        emulatorsFor: (slug) => slug == 'fakeplatform' ? (emulators ?? [emu]) : [],
-        resolveSaveStrategy: resolveSaveStrategy ??
-            (g, {emulatorId}) => emulatorId == emu.emulatorId ? save : null,
-        prefs: prefs,
-        api: withApi ? api : null,
-        isOffline: () => offline,
-        exclusive: exclusive,
-        prepareFolders: prepareFolders,
-      );
+  }) => ResumeService(
+    emulatorsFor: (slug) => slug == 'fakeplatform' ? (emulators ?? [emu]) : [],
+    resolveSaveStrategy: resolveSaveStrategy ?? (g, {emulatorId}) => emulatorId == emu.emulatorId ? save : null,
+    prefs: prefs,
+    api: withApi ? api : null,
+    isOffline: () => offline,
+    exclusive: exclusive,
+    prepareFolders: prepareFolders,
+  );
 
   Future<List<ResumeEntry>> lastOf(Stream<List<ResumeEntry>> s) async => (await s.toList()).last;
 
@@ -125,9 +126,10 @@ void main() {
   /// The profile's one state-sync switch (state-sync plan S0.4).
   Future<void> syncOn() => prefs.setBool(StateSyncService.enabledKey, true);
 
-  ResumeEntry entryFor(List<ResumeEntry> entries, String fileName) =>
-      entries.firstWhere((e) => e.fileName == fileName,
-          orElse: () => throw StateError('no entry for $fileName in $entries'));
+  ResumeEntry entryFor(List<ResumeEntry> entries, String fileName) => entries.firstWhere(
+    (e) => e.fileName == fileName,
+    orElse: () => throw StateError('no entry for $fileName in $entries'),
+  );
 
   // ─── 1 ────────────────────────────────────────────────────────────────────
   test('local states, newest first, with slot, version and compat', () async {
@@ -152,10 +154,12 @@ void main() {
   // ─── 2 ────────────────────────────────────────────────────────────────────
   test('states are found under the save lock (the strategies are shared by every game)', () async {
     var locked = 0;
-    final service = build(exclusive: <T>(Future<T> Function() body) {
-      locked++;
-      return body();
-    });
+    final service = build(
+      exclusive: <T>(Future<T> Function() body) {
+        locked++;
+        return body();
+      },
+    );
     writeLocal('GAME.1.st', '1.2.0');
     await lastOf(service.entriesFor(game, [romPath]));
     expect(locked, greaterThan(0));
@@ -236,26 +240,28 @@ void main() {
 
     final emissions = await service.entriesFor(game, [romPath]).toList();
 
-    expect(emissions.expand((list) => list).map((e) => e.romPath).toSet(), {romPath},
-        reason: 'local, both and RomM-only entries all carry the ROM the list was built from');
+    expect(emissions.expand((list) => list).map((e) => e.romPath).toSet(), {
+      romPath,
+    }, reason: 'local, both and RomM-only entries all carry the ROM the list was built from');
   });
 
-  test('a RomM-only state that was synced and then deleted locally is not listed (the pull never restores it)',
-      () async {
-    await syncOn();
-    final state = api.seed('42', 'GAME.1.st', fakeState('1.2.0'));
-    api.seed('42', 'GAME.2.st', fakeState('1.2.0')); // no record: never synced here
-    await StateRecordStore(prefs).save('42', {
-      'GAME.1.st':
-          StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: state.updatedAt),
-    });
-    final service = build();
+  test(
+    'a RomM-only state that was synced and then deleted locally is not listed (the pull never restores it)',
+    () async {
+      await syncOn();
+      final state = api.seed('42', 'GAME.1.st', fakeState('1.2.0'));
+      api.seed('42', 'GAME.2.st', fakeState('1.2.0')); // no record: never synced here
+      await StateRecordStore(prefs).save('42', {
+        'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: state.updatedAt),
+      });
+      final service = build();
 
-    final entries = await lastOf(service.entriesFor(game, [romPath]));
+      final entries = await lastOf(service.entriesFor(game, [romPath]));
 
-    expect(entries.any((e) => e.fileName == 'GAME.1.st'), isFalse);
-    expect(entryFor(entries, 'GAME.2.st').where, ResumeWhere.romm);
-  });
+      expect(entries.any((e) => e.fileName == 'GAME.1.st'), isFalse);
+      expect(entryFor(entries, 'GAME.2.st').where, ResumeWhere.romm);
+    },
+  );
 
   test("multi-disc: every disc's states are listed, each with its own disc; RomM is asked once", () async {
     final perDisc = FakeStateSaveStrategy(statesDir, perDisc: true);
@@ -271,44 +277,46 @@ void main() {
 
     final emissions = await service.entriesFor(game, [disc1, disc2]).toList();
 
-    expect({for (final e in emissions.first) e.fileName: e.romPath},
-        {'GAME-Disc 1.auto.st': disc1, 'GAME-Disc 2.1.st': disc2});
-    expect({for (final e in emissions.last) e.fileName: e.romPath}, {
-      'GAME-Disc 1.auto.st': disc1,
-      'GAME-Disc 2.1.st': disc2,
-      'GAME-Disc 2.3.st': disc2,
-      'GAME-Disc 1.2.st': disc1,
-    });
+    expect(
+      {for (final e in emissions.first) e.fileName: e.romPath},
+      {'GAME-Disc 1.auto.st': disc1, 'GAME-Disc 2.1.st': disc2},
+    );
+    expect(
+      {for (final e in emissions.last) e.fileName: e.romPath},
+      {'GAME-Disc 1.auto.st': disc1, 'GAME-Disc 2.1.st': disc2, 'GAME-Disc 2.3.st': disc2, 'GAME-Disc 1.2.st': disc1},
+    );
     expect(entryFor(emissions.last, 'GAME-Disc 1.auto.st').where, ResumeWhere.both);
     expect(entryFor(emissions.last, 'GAME-Disc 2.3.st').slot, const NumberedStateSlot(3));
     expect(api.calls.where((c) => c == 'list').length, 1);
 
-    final check = await service.checkBeforeLaunch(
-        entryFor(emissions.last, 'GAME-Disc 2.1.st'), game, disc2) as ResumeReady;
+    final check =
+        await service.checkBeforeLaunch(entryFor(emissions.last, 'GAME-Disc 2.1.st'), game, disc2) as ResumeReady;
     expect(check.path, p.join(statesDir, 'GAME-Disc 2.1.st'));
   });
 
-  test('several ROM files of one emulator claiming the same states (cue/bin tracks): listed once, first path owns them',
-      () async {
-    // The plain fake matcher accepts GAME.*.st whatever the ROM file.
-    await syncOn();
-    writeLocal('GAME.auto.st', '1.2.0');
-    api.seed('42', 'GAME.auto.st', fakeState('1.2.0'));
-    api.seed('42', 'GAME.2.st', fakeState('1.2.0'), emulator: 'fakeemu');
-    api.seed('42', 'GAME.3.st', fakeState('1.2.0'));
-    final track1 = p.join(tmp.path, 'G', 'Track 01.bin');
-    final track2 = p.join(tmp.path, 'G', 'Track 02.bin');
-    final service = build();
+  test(
+    'several ROM files of one emulator claiming the same states (cue/bin tracks): listed once, first path owns them',
+    () async {
+      // The plain fake matcher accepts GAME.*.st whatever the ROM file.
+      await syncOn();
+      writeLocal('GAME.auto.st', '1.2.0');
+      api.seed('42', 'GAME.auto.st', fakeState('1.2.0'));
+      api.seed('42', 'GAME.2.st', fakeState('1.2.0'), emulator: 'fakeemu');
+      api.seed('42', 'GAME.3.st', fakeState('1.2.0'));
+      final track1 = p.join(tmp.path, 'G', 'Track 01.bin');
+      final track2 = p.join(tmp.path, 'G', 'Track 02.bin');
+      final service = build();
 
-    // Given out of order: ownership follows sorted path order, not argument order.
-    final emissions = await service.entriesFor(game, [track2, track1]).toList();
+      // Given out of order: ownership follows sorted path order, not argument order.
+      final emissions = await service.entriesFor(game, [track2, track1]).toList();
 
-    expect(emissions.first.map((e) => (e.fileName, e.romPath)).toList(), [('GAME.auto.st', track1)]);
-    final last = emissions.last;
-    expect(last.map((e) => e.fileName).toList()..sort(), ['GAME.2.st', 'GAME.3.st', 'GAME.auto.st']);
-    expect(last.every((e) => e.romPath == track1), isTrue);
-    expect(entryFor(last, 'GAME.auto.st').where, ResumeWhere.both);
-  });
+      expect(emissions.first.map((e) => (e.fileName, e.romPath)).toList(), [('GAME.auto.st', track1)]);
+      final last = emissions.last;
+      expect(last.map((e) => e.fileName).toList()..sort(), ['GAME.2.st', 'GAME.3.st', 'GAME.auto.st']);
+      expect(last.every((e) => e.romPath == track1), isTrue);
+      expect(entryFor(last, 'GAME.auto.st').where, ResumeWhere.both);
+    },
+  );
 
   test('a RomM state two different emulators both match, with no tag deciding, is left out', () async {
     final emu2 = FakeStateEmulator(ds, id: 'fakeemu2');
@@ -320,8 +328,7 @@ void main() {
       resolveSaveStrategy: (g, {emulatorId}) => emulatorId == 'fakeemu2' ? save2 : save,
     );
 
-    final entries =
-        await lastOf(service.entriesFor(game, [p.join(tmp.path, 'd1.iso'), p.join(tmp.path, 'd2.iso')]));
+    final entries = await lastOf(service.entriesFor(game, [p.join(tmp.path, 'd1.iso'), p.join(tmp.path, 'd2.iso')]));
 
     expect(entries.any((e) => e.fileName == 'GAME.4.st'), isFalse);
   });
@@ -332,8 +339,9 @@ void main() {
     writeLocal('GAME-d2.auto.st', '1.2.0');
     final service = build(resolveSaveStrategy: (g, {emulatorId}) => perDisc);
 
-    final entries = await lastOf(service.entriesFor(
-        game, [p.join(tmp.path, 'd1.iso'), p.join(tmp.path, 'd2.iso'), p.join(tmp.path, 'd3.iso')]));
+    final entries = await lastOf(
+      service.entriesFor(game, [p.join(tmp.path, 'd1.iso'), p.join(tmp.path, 'd2.iso'), p.join(tmp.path, 'd3.iso')]),
+    );
 
     expect(entries.length, 2);
     expect(emu.versionCalls, 1);
@@ -411,9 +419,8 @@ void main() {
     await syncOn();
     writeLocal('GAME.1.st', '1.2.0');
     final state = api.seed('42', 'GAME.1.st', fakeState('1.2.0'));
-    await StateRecordStore(prefs).save('42', {
-      'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: 'old'),
-    });
+    await StateRecordStore(prefs)
+        .save('42', {'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: 'old')});
     final service = build();
 
     var entries = await lastOf(service.entriesFor(game, [romPath]));
@@ -424,8 +431,7 @@ void main() {
     expect(entry.remoteUpdatedAt, state.updatedAt);
 
     await StateRecordStore(prefs).save('42', {
-      'GAME.1.st':
-          StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: state.updatedAt),
+      'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: state.updatedAt),
     });
     entries = await lastOf(service.entriesFor(game, [romPath]));
     entry = entryFor(entries, 'GAME.1.st');
@@ -453,9 +459,8 @@ void main() {
       ..parent.createSync(recursive: true)
       ..writeAsBytesSync(fakeFormatOnlyState('86'));
     final state = api.seed('42', 'GAME.1.st', fakeFormatOnlyState('87'));
-    await StateRecordStore(prefs).save('42', {
-      'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: 'old'),
-    });
+    await StateRecordStore(prefs)
+        .save('42', {'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: 'old')});
     final service = build();
 
     final entry = entryFor(await lastOf(service.entriesFor(game, [romPath])), 'GAME.1.st');
@@ -491,8 +496,10 @@ void main() {
     expect(entryFor(local, 'GAME.1.st').resumable, isTrue);
 
     writeLocal('GAME.auto.st', '1.2.0');
-    expect(entryFor(await lastOf(build(emulators: [retroarchLike]).entriesFor(game, [romPath])), 'GAME.auto.st').resumable,
-        isFalse);
+    expect(
+      entryFor(await lastOf(build(emulators: [retroarchLike]).entriesFor(game, [romPath])), 'GAME.auto.st').resumable,
+      isFalse,
+    );
 
     File(p.join(statesDir, 'GAME.auto.st')).deleteSync();
     await syncOn();
@@ -575,8 +582,7 @@ void main() {
   });
 
   // ─── 15 ───────────────────────────────────────────────────────────────────
-  test('checkBeforeLaunch: local file present → ready, no prompt when the list already showed the version',
-      () async {
+  test('checkBeforeLaunch: local file present → ready, no prompt when the list already showed the version', () async {
     writeLocal('GAME.1.st', '1.0.0');
     final service = build();
     final entries = await lastOf(service.entriesFor(game, [romPath]));
@@ -640,9 +646,8 @@ void main() {
     await syncOn();
     writeLocal('GAME.1.st', '1.2.0');
     final state = api.seed('42', 'GAME.1.st', fakeState('1.2.0'));
-    await StateRecordStore(prefs).save('42', {
-      'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: 'old'),
-    });
+    await StateRecordStore(prefs)
+        .save('42', {'GAME.1.st': StateSyncRecord(rommStateId: state.id, lastSyncedHash: 'x', serverUpdatedAt: 'old')});
     final service = build();
     final entries = await lastOf(service.entriesFor(game, [romPath]));
     final entry = entryFor(entries, 'GAME.1.st');
@@ -653,26 +658,45 @@ void main() {
     expect(check.stale, isTrue);
 
     // A pull ran but did not bring this file down.
-    check = await service.checkBeforeLaunch(entry, game, romPath,
-        pulled: {'GAME.2.st'}, conflicted: const {}) as ResumeReady;
+    check = await service.checkBeforeLaunch(
+      entry,
+      game,
+      romPath,
+      pulled: {'GAME.2.st'},
+      conflicted: const {},
+    ) as ResumeReady;
     expect(check.stale, isTrue);
 
     // The pull downloaded it.
-    check = await service.checkBeforeLaunch(entry, game, romPath,
-        pulled: {'GAME.1.st'}, conflicted: const {}) as ResumeReady;
+    check = await service.checkBeforeLaunch(
+      entry,
+      game,
+      romPath,
+      pulled: {'GAME.1.st'},
+      conflicted: const {},
+    ) as ResumeReady;
     expect(check.stale, isFalse);
 
     // RomM had only re-stamped it: the pull confirmed the local copy is the
     // current one (handleLaunch passes the pull's currentFiles as pulled).
     final restamp = const StateSyncResult(upToDateFiles: {'GAME.1.st'});
-    check = await service.checkBeforeLaunch(entry, game, romPath,
-        pulled: restamp.currentFiles,
-        conflicted: const {}) as ResumeReady;
+    check = await service.checkBeforeLaunch(
+      entry,
+      game,
+      romPath,
+      pulled: restamp.currentFiles,
+      conflicted: const {},
+    ) as ResumeReady;
     expect(check.stale, isFalse);
 
     // It was a conflict: whichever copy is on disk is the user's own choice.
-    check = await service.checkBeforeLaunch(entry, game, romPath,
-        pulled: const {}, conflicted: {'GAME.1.st'}) as ResumeReady;
+    check = await service.checkBeforeLaunch(
+      entry,
+      game,
+      romPath,
+      pulled: const {},
+      conflicted: {'GAME.1.st'},
+    ) as ResumeReady;
     expect(check.stale, isFalse);
   });
 
@@ -776,45 +800,57 @@ void main() {
   test('thumbnailFor: the cache keeps at most 32 thumbnails', () async {
     final service = build(withApi: false);
     for (var i = 0; i < 33; i++) {
-      await service.thumbnailFor(ResumeEntry(
-        emulatorId: 'fakeemu',
-        emulatorName: 'FakeEmu',
-        fileName: 'GAME.$i.st',
-        slot: NumberedStateSlot(i),
-        savedAt: DateTime(2026, 1, 1),
-        where: ResumeWhere.romm,
-      ));
+      await service.thumbnailFor(
+        ResumeEntry(
+          emulatorId: 'fakeemu',
+          emulatorName: 'FakeEmu',
+          fileName: 'GAME.$i.st',
+          slot: NumberedStateSlot(i),
+          savedAt: DateTime(2026, 1, 1),
+          where: ResumeWhere.romm,
+        ),
+      );
     }
     expect(service.thumbnailCacheSize, 32);
   });
   group('resumeMissingMessage', () {
     ResumeEntry entry(ResumeWhere where, {bool newerOnRomm = false}) => ResumeEntry(
-          emulatorId: 'fakeemu',
-          emulatorName: 'FakeEmu',
-          fileName: 'GAME.1.st',
-          slot: const NumberedStateSlot(1),
-          savedAt: DateTime(2026, 1, 1),
-          where: where,
-          newerOnRomm: newerOnRomm,
-        );
+      emulatorId: 'fakeemu',
+      emulatorName: 'FakeEmu',
+      fileName: 'GAME.1.st',
+      slot: const NumberedStateSlot(1),
+      savedAt: DateTime(2026, 1, 1),
+      where: where,
+      newerOnRomm: newerOnRomm,
+    );
 
     test('RomM-only or newer on RomM: it could not be fetched from RomM', () {
-      expect(resumeMissingMessage(entry(ResumeWhere.romm), serviceAvailable: true),
-          "Couldn't get Slot 1 from RomM. Nothing was started.");
-      expect(resumeMissingMessage(entry(ResumeWhere.both, newerOnRomm: true), serviceAvailable: true),
-          "Couldn't get Slot 1 from RomM. Nothing was started.");
+      expect(
+        resumeMissingMessage(entry(ResumeWhere.romm), serviceAvailable: true),
+        "Couldn't get Slot 1 from RomM. Nothing was started.",
+      );
+      expect(
+        resumeMissingMessage(entry(ResumeWhere.both, newerOnRomm: true), serviceAvailable: true),
+        "Couldn't get Slot 1 from RomM. Nothing was started.",
+      );
     });
 
     test('a local copy that is gone: not found on this PC', () {
-      expect(resumeMissingMessage(entry(ResumeWhere.thisPc), serviceAvailable: true),
-          "Couldn't find Slot 1 on this PC. Nothing was started.");
-      expect(resumeMissingMessage(entry(ResumeWhere.both), serviceAvailable: true),
-          "Couldn't find Slot 1 on this PC. Nothing was started.");
+      expect(
+        resumeMissingMessage(entry(ResumeWhere.thisPc), serviceAvailable: true),
+        "Couldn't find Slot 1 on this PC. Nothing was started.",
+      );
+      expect(
+        resumeMissingMessage(entry(ResumeWhere.both), serviceAvailable: true),
+        "Couldn't find Slot 1 on this PC. Nothing was started.",
+      );
     });
 
     test('no resume service: resume is not available', () {
-      expect(resumeMissingMessage(entry(ResumeWhere.romm), serviceAvailable: false),
-          "Resume isn't available right now. Nothing was started.");
+      expect(
+        resumeMissingMessage(entry(ResumeWhere.romm), serviceAvailable: false),
+        "Resume isn't available right now. Nothing was started.",
+      );
     });
   });
 
@@ -842,8 +878,9 @@ void main() {
       expect(prepared, isEmpty, reason: 'sync off');
       await syncOn();
       final local = FakeStateEmulator(ds, syncsStates: false);
-      await lastOf(build(emulators: [local], prepareFolders: (e) async => prepared.add(e.emulatorId))
-          .entriesFor(game, [romPath]));
+      await lastOf(
+        build(emulators: [local], prepareFolders: (e) async => prepared.add(e.emulatorId)).entriesFor(game, [romPath]),
+      );
       expect(prepared, isEmpty, reason: 'keeps its states on this PC');
     });
   });

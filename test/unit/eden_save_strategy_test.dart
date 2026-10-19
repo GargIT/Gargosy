@@ -2,6 +2,7 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -17,17 +18,11 @@ class _StubDirectoryService extends DirectoryService {
   final String? _exePath;
   final String _appSupport;
 
-  _StubDirectoryService._internal(
-    super.prefs, {
-    required String? exePath,
-    required String appSupport,
-  })  : _exePath = exePath,
-        _appSupport = appSupport;
+  _StubDirectoryService._internal(super.prefs, {required String? exePath, required String appSupport})
+    : _exePath = exePath,
+      _appSupport = appSupport;
 
-  static Future<_StubDirectoryService> create({
-    String? exePath,
-    String appSupport = '',
-  }) async {
+  static Future<_StubDirectoryService> create({String? exePath, String appSupport = ''}) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     return _StubDirectoryService._internal(prefs, exePath: exePath, appSupport: appSupport);
@@ -61,10 +56,7 @@ void main() {
         await File(fakeExe).writeAsString('');
 
         final ds = await _StubDirectoryService.create(exePath: fakeExe);
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: const PlatformInfo('windows', environment: {'APPDATA': ''}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: const PlatformInfo('windows', environment: {'APPDATA': ''}));
 
         final saveDir = await strategy.getSaveDir(
           Game(id: 'g1', name: 'Test Game', platformSlug: 'switch', fileSize: 0),
@@ -72,8 +64,7 @@ void main() {
         );
 
         expect(saveDir, isNotNull);
-        expect(p.isWithin(portableBase, saveDir!), isTrue,
-            reason: 'Expected save inside portable user/ folder');
+        expect(p.isWithin(portableBase, saveDir!), isTrue, reason: 'Expected save inside portable user/ folder');
       } finally {
         await tempDir.delete(recursive: true);
       }
@@ -90,10 +81,7 @@ void main() {
         final fakeExe = p.join(exeTempDir.path, 'eden.exe');
         await File(fakeExe).writeAsString('');
 
-        final ds = await _StubDirectoryService.create(
-          exePath: fakeExe,
-          appSupport: appdataEden,
-        );
+        final ds = await _StubDirectoryService.create(exePath: fakeExe, appSupport: appdataEden);
         final strategy = EdenSaveStrategy(
           ds,
           platform: PlatformInfo('windows', environment: {'APPDATA': tempDir.path}),
@@ -105,8 +93,7 @@ void main() {
         );
 
         expect(saveDir, isNotNull);
-        expect(p.isWithin(appdataEden, saveDir!), isTrue,
-            reason: 'Expected save inside APPDATA eden/ folder');
+        expect(p.isWithin(appdataEden, saveDir!), isTrue, reason: 'Expected save inside APPDATA eden/ folder');
       } finally {
         await tempDir.delete(recursive: true);
         await exeTempDir.delete(recursive: true);
@@ -132,10 +119,7 @@ void main() {
         await File(fakeExe).writeAsString('');
 
         final ds = await _StubDirectoryService.create(exePath: fakeExe);
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: const PlatformInfo('windows', environment: {'APPDATA': ''}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: const PlatformInfo('windows', environment: {'APPDATA': ''}));
 
         final saveDir = await strategy.getSaveDir(
           Game(id: 'g3', name: 'Spaced Game', platformSlug: 'switch', fileSize: 0),
@@ -160,10 +144,7 @@ void main() {
           exePath: null, // no exe → skip portable check
           appSupport: appdataEden,
         );
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: PlatformInfo('windows', environment: {'APPDATA': appdata}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: PlatformInfo('windows', environment: {'APPDATA': appdata}));
 
         final saveDir = await strategy.getSaveDir(
           Game(id: 'g4', name: 'Space User Game', platformSlug: 'switch', fileSize: 0),
@@ -190,10 +171,7 @@ void main() {
         await File(fakeExe).writeAsString('');
 
         final ds = await _StubDirectoryService.create(exePath: fakeExe);
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: const PlatformInfo('windows', environment: {'APPDATA': ''}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: const PlatformInfo('windows', environment: {'APPDATA': ''}));
 
         final saveDir = await strategy.getSaveDir(
           Game(id: 'g5', name: 'Unicode Game', platformSlug: 'switch', fileSize: 0),
@@ -214,14 +192,8 @@ void main() {
         final appdataEden = p.join(appdata, 'eden');
         await _createSaveStructure(appdataEden, 'f' * 32, '0100000000050000');
 
-        final ds = await _StubDirectoryService.create(
-          exePath: null,
-          appSupport: appdataEden,
-        );
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: PlatformInfo('windows', environment: {'APPDATA': appdata}),
-        );
+        final ds = await _StubDirectoryService.create(exePath: null, appSupport: appdataEden);
+        final strategy = EdenSaveStrategy(ds, platform: PlatformInfo('windows', environment: {'APPDATA': appdata}));
 
         final saveDir = await strategy.getSaveDir(
           Game(id: 'g6', name: 'Unicode User Game', platformSlug: 'switch', fileSize: 0),
@@ -254,10 +226,7 @@ void main() {
         await File(fakeExe).writeAsString('');
 
         final ds = await _StubDirectoryService.create(exePath: fakeExe);
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: const PlatformInfo('windows', environment: {'APPDATA': ''}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: const PlatformInfo('windows', environment: {'APPDATA': ''}));
 
         final saveDir = await strategy.getSaveDir(
           Game(id: 'g7', name: 'Flat Profile Game', platformSlug: 'switch', fileSize: 0),
@@ -265,10 +234,8 @@ void main() {
         );
 
         expect(saveDir, isNotNull);
-        expect(p.isWithin(flatBase, saveDir!), isTrue,
-            reason: 'Expected save under flat profile base');
-        expect(saveDir, contains('a' * 32),
-            reason: 'Expected the flat profile folder in the resolved path');
+        expect(p.isWithin(flatBase, saveDir!), isTrue, reason: 'Expected save under flat profile base');
+        expect(saveDir, contains('a' * 32), reason: 'Expected the flat profile folder in the resolved path');
       } finally {
         await base.delete(recursive: true);
       }
@@ -289,21 +256,20 @@ void main() {
         await File(fakeExe).writeAsString('');
 
         final ds = await _StubDirectoryService.create(exePath: fakeExe);
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: const PlatformInfo('windows', environment: {'APPDATA': ''}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: const PlatformInfo('windows', environment: {'APPDATA': ''}));
 
         await expectLater(
           strategy.getSaveDir(
             Game(id: 'g8', name: 'No Profile Game', platformSlug: 'switch', fileSize: 0),
             p.join(exeDir, '0100000000070000.nsp'),
           ),
-          throwsA(isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('No active Eden profiles found in $saveBase'),
-          )),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('No active Eden profiles found in $saveBase'),
+            ),
+          ),
         );
       } finally {
         await base.delete(recursive: true);
@@ -328,10 +294,7 @@ void main() {
         await File(fakeExe).writeAsString('');
 
         final ds = await _StubDirectoryService.create(exePath: fakeExe);
-        final strategy = EdenSaveStrategy(
-          ds,
-          platform: const PlatformInfo('windows', environment: {'APPDATA': ''}),
-        );
+        final strategy = EdenSaveStrategy(ds, platform: const PlatformInfo('windows', environment: {'APPDATA': ''}));
 
         await expectLater(
           strategy.getSaveDir(

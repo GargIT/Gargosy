@@ -23,13 +23,13 @@ class PathGuard {
   PathGuard forProfile(String id) => PathGuard(root, activeProfileId: id);
 
   List<String> get _allowedDirs => [
-        root.roms,
-        root.emulators,
-        root.bios,
-        root.templates,
-        root.appData,
-        if (activeProfileId != null) p.join(root.profiles, activeProfileId),
-      ];
+    root.roms,
+    root.emulators,
+    root.bios,
+    root.templates,
+    root.appData,
+    if (activeProfileId != null) p.join(root.profiles, activeProfileId),
+  ];
 
   /// [path], absolute and normalized, if it may be written; throws otherwise.
   String check(String path) {

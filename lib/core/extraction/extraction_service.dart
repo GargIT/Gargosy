@@ -1,8 +1,10 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../storage/directory_service.dart';
 import '../platform/platform_info.dart';
 
@@ -19,8 +21,7 @@ class ExtractionService {
   final DirectoryService directoryService;
   final PlatformInfo _platform;
 
-  ExtractionService(this.directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  ExtractionService(this.directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   /// Unpacks the zip at [archivePath] into [destDir] with the archive package,
   /// in an isolate.
@@ -36,8 +37,10 @@ class ExtractionService {
     try {
       if (pathLower.endsWith('.dmg')) {
         await _handleDmg(archivePath, destDir);
-      } else if (pathLower.endsWith('.tar.gz') || pathLower.endsWith('.tgz') || 
-                 pathLower.endsWith('.tar.xz') || pathLower.endsWith('.tar')) {
+      } else if (pathLower.endsWith('.tar.gz') ||
+          pathLower.endsWith('.tgz') ||
+          pathLower.endsWith('.tar.xz') ||
+          pathLower.endsWith('.tar')) {
         await _handleTar(archivePath, destDir);
       } else if (pathLower.endsWith('.zip')) {
         await _handleZip(archivePath, destDir);
@@ -66,7 +69,7 @@ class ExtractionService {
     // and make it executable.
     final fileName = p.basename(archivePath);
     final destPath = p.join(destDir, fileName);
-    
+
     final file = File(archivePath);
     await file.copy(destPath);
     await Process.run('chmod', ['+x', destPath]);
@@ -75,11 +78,7 @@ class ExtractionService {
   Future<void> _handleTar(String archivePath, String destDir) async {
     if (_platform.isMacOS || _platform.isLinux || _platform.isWindows) {
       try {
-        final result = await Process.run(
-          'tar',
-          ['-xf', archivePath, '-C', destDir],
-          runInShell: _platform.isWindows,
-        );
+        final result = await Process.run('tar', ['-xf', archivePath, '-C', destDir], runInShell: _platform.isWindows);
         if (result.exitCode != 0) {
           throw Exception('tar failed: ${result.stderr}');
         }
@@ -101,10 +100,7 @@ class ExtractionService {
       throw Exception('DMG extraction is only supported on macOS');
     }
 
-    final mountResult = await Process.run(
-      'hdiutil',
-      ['attach', archivePath, '-nobrowse', '-readonly'],
-    );
+    final mountResult = await Process.run('hdiutil', ['attach', archivePath, '-nobrowse', '-readonly']);
     if (mountResult.exitCode != 0) {
       throw Exception('Failed to mount DMG: ${mountResult.stderr}');
     }
@@ -137,7 +133,7 @@ class ExtractionService {
           if (cpResult.exitCode != 0) {
             throw Exception('Failed to copy .app bundle: ${cpResult.stderr}');
           }
-          
+
           await _postExtractSanitize(destDir);
           break;
         }
@@ -152,15 +148,11 @@ class ExtractionService {
 
   Future<void> _handleZip(String archivePath, String destDir) async {
     if (_platform.isMacOS || _platform.isLinux) {
-      final result = await Process.run(
-        'unzip',
-        ['-o', archivePath, '-d', destDir],
-        runInShell: false,
-      );
+      final result = await Process.run('unzip', ['-o', archivePath, '-d', destDir], runInShell: false);
       if (result.exitCode != 0) {
         throw Exception('unzip failed: ${result.stderr}');
       }
-      
+
       if (_platform.isMacOS) {
         await _postExtractSanitize(destDir);
       }
@@ -171,10 +163,12 @@ class ExtractionService {
         // tar first, which reads `C:\...` as a remote host and fails.
         final systemRoot = _platform.environment['SystemRoot'] ?? r'C:\Windows';
         final windowsTar = p.join(systemRoot, 'System32', 'tar.exe');
-        final result = await Process.run(
-          File(windowsTar).existsSync() ? windowsTar : 'tar',
-          ['-xf', archivePath, '-C', destDir],
-        );
+        final result = await Process.run(File(windowsTar).existsSync() ? windowsTar : 'tar', [
+          '-xf',
+          archivePath,
+          '-C',
+          destDir,
+        ]);
         if (result.exitCode == 0) return;
 
         debugPrint('tar failed with exit code ${result.exitCode} (${result.stderr}), falling back to archive package');
@@ -195,11 +189,7 @@ class ExtractionService {
     if (sevenZipExe == null) {
       throw Exception('7zr.exe could not be initialized. Try reinstalling Gargosy.');
     }
-    final result = await Process.run(
-      sevenZipExe,
-      ['x', archivePath, '-o$destDir', '-y'],
-      runInShell: false,
-    );
+    final result = await Process.run(sevenZipExe, ['x', archivePath, '-o$destDir', '-y'], runInShell: false);
     if (result.exitCode != 0) {
       throw Exception('7z extraction failed: ${result.stderr}');
     }
@@ -224,9 +214,15 @@ class ExtractionService {
     }
     for (final root in roots) {
       // UnRAR takes the destination as a trailing folder, with a separator.
-      tools.add((exe: p.join(root, 'WinRAR', 'UnRAR.exe'), args: ['x', '-y', '-o+', archivePath, '$destDir${p.separator}']));
+      tools.add((
+        exe: p.join(root, 'WinRAR', 'UnRAR.exe'),
+        args: ['x', '-y', '-o+', archivePath, '$destDir${p.separator}'],
+      ));
     }
-    return [for (final tool in tools) if (await File(tool.exe).exists()) tool];
+    return [
+      for (final tool in tools)
+        if (await File(tool.exe).exists()) tool,
+    ];
   }
 
   /// RAR. Linux and macOS use the bundled 7-Zip (`7zz` reads RAR). Windows has
@@ -255,22 +251,16 @@ class ExtractionService {
     } catch (e) {
       failures.add('tar: $e');
     }
-    throw Exception("Couldn't extract the RAR archive. Install 7-Zip (7-zip.org) or WinRAR and download the game again, "
-        'or extract the file by hand. (${failures.join('; ')})');
+    throw Exception(
+      "Couldn't extract the RAR archive. Install 7-Zip (7-zip.org) or WinRAR and download the game again, "
+      'or extract the file by hand. (${failures.join('; ')})',
+    );
   }
 
   Future<void> _handleExe(String archivePath, String destDir) async {
-    var result = await Process.run(
-      archivePath,
-      ['-o$destDir', '-y'],
-      runInShell: false,
-    );
+    var result = await Process.run(archivePath, ['-o$destDir', '-y'], runInShell: false);
     if (result.exitCode != 0) {
-      result = await Process.run(
-        archivePath,
-        [],
-        workingDirectory: destDir,
-      );
+      result = await Process.run(archivePath, [], workingDirectory: destDir);
     }
   }
 
@@ -294,17 +284,14 @@ class ExtractionService {
     if (!_platform.isMacOS) return;
 
     // Find all .app bundles (case-insensitive)
-    final findResult = await Process.run(
-      'find', [destDir, '-iname', '*.app', '-maxdepth', '3'],
-      runInShell: false,
-    );
-    
+    final findResult = await Process.run('find', [destDir, '-iname', '*.app', '-maxdepth', '3'], runInShell: false);
+
     final appPaths = findResult.stdout.toString().trim().split('\n').where((p) => p.isNotEmpty);
-    
+
     for (final appPath in appPaths) {
       String finalAppPath = appPath;
       final name = p.basename(appPath);
-      
+
       // Feature: Rename versioned apps to canonical names (e.g. PCSX2-v2.6.3.app -> PCSX2.app)
       // Standard versioning patterns like -v1.0, _v2.0, or just -2.0
       if (name.contains('-') || name.contains('_') || RegExp(r'\d').hasMatch(name)) {
@@ -330,7 +317,7 @@ class ExtractionService {
 
   Future<void> _sanitizeAppBundle(String appPath) async {
     if (!_platform.isMacOS) return;
-    
+
     try {
       // Ensure it's executable
       await Process.run('chmod', ['-R', '+x', appPath]);

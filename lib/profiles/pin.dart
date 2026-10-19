@@ -49,11 +49,8 @@ class PinHash {
 
   Map<String, dynamic> toJson() => {'salt': salt, 'hash': hash, 'iterations': iterations};
 
-  factory PinHash.fromJson(Map<String, dynamic> json) => PinHash(
-        salt: json['salt'] as String,
-        hash: json['hash'] as String,
-        iterations: json['iterations'] as int,
-      );
+  factory PinHash.fromJson(Map<String, dynamic> json) =>
+      PinHash(salt: json['salt'] as String, hash: json['hash'] as String, iterations: json['iterations'] as int);
 }
 
 enum PinResult { ok, wrong, locked }

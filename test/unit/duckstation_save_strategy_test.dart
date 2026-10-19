@@ -2,6 +2,7 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -19,18 +20,12 @@ class _StubDirectoryService extends DirectoryService {
   final String? _exePath;
   final String _appSupport;
 
-  _StubDirectoryService._internal(
-    this.testPrefs, {
-    required String? exePath,
-    required String appSupport,
-  })  : _exePath = exePath,
-        _appSupport = appSupport,
-        super(testPrefs);
+  _StubDirectoryService._internal(this.testPrefs, {required String? exePath, required String appSupport})
+    : _exePath = exePath,
+      _appSupport = appSupport,
+      super(testPrefs);
 
-  static Future<_StubDirectoryService> create({
-    String? exePath,
-    String appSupport = '',
-  }) async {
+  static Future<_StubDirectoryService> create({String? exePath, String appSupport = ''}) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     return _StubDirectoryService._internal(prefs, exePath: exePath, appSupport: appSupport);
@@ -57,10 +52,7 @@ void main() {
         // Shared cards also exist but per-game card must win.
         await File(p.join(memcardsDir.path, 'shared_card_1.mcd')).writeAsBytes(List.filled(150, 2));
 
-        final ds = await _StubDirectoryService.create(
-          exePath: null,
-          appSupport: base.path,
-        );
+        final ds = await _StubDirectoryService.create(exePath: null, appSupport: base.path);
         final strategy = DuckstationSaveStrategy(
           ds,
           ds.testPrefs,
@@ -91,10 +83,7 @@ void main() {
         await File(p.join(memcardsDir.path, 'shared_card_2.mcd')).writeAsBytes(List.filled(150, 2));
         await File(p.join(memcardsDir.path, 'Mcd001.mcd')).writeAsBytes(List.filled(150, 3));
 
-        final ds = await _StubDirectoryService.create(
-          exePath: null,
-          appSupport: base.path,
-        );
+        final ds = await _StubDirectoryService.create(exePath: null, appSupport: base.path);
         final strategy = DuckstationSaveStrategy(
           ds,
           ds.testPrefs,
@@ -115,10 +104,7 @@ void main() {
     test('returns empty list when memcards dir is missing', () async {
       final base = await Directory.systemTemp.createTemp('duckstation_empty');
       try {
-        final ds = await _StubDirectoryService.create(
-          exePath: null,
-          appSupport: base.path,
-        );
+        final ds = await _StubDirectoryService.create(exePath: null, appSupport: base.path);
         final strategy = DuckstationSaveStrategy(
           ds,
           ds.testPrefs,
@@ -143,13 +129,9 @@ void main() {
         await memcardsDir.create(recursive: true);
         // DuckStation PerGameTitle card uses the bare disc-set title, while
         // RomM exposes the multidisc ROM as "Final Fantasy VII (USA).m3u".
-        await File(p.join(memcardsDir.path, 'Final Fantasy VII_1.mcd'))
-            .writeAsBytes(List.filled(150, 1));
+        await File(p.join(memcardsDir.path, 'Final Fantasy VII_1.mcd')).writeAsBytes(List.filled(150, 1));
 
-        final ds = await _StubDirectoryService.create(
-          exePath: null,
-          appSupport: base.path,
-        );
+        final ds = await _StubDirectoryService.create(exePath: null, appSupport: base.path);
         final strategy = DuckstationSaveStrategy(
           ds,
           ds.testPrefs,
@@ -174,13 +156,9 @@ void main() {
         final memcardsDir = Directory(p.join(base.path, 'memcards'));
         await memcardsDir.create(recursive: true);
         // Card for a different game in the same series.
-        await File(p.join(memcardsDir.path, 'Final Fantasy VIII_1.mcd'))
-            .writeAsBytes(List.filled(150, 1));
+        await File(p.join(memcardsDir.path, 'Final Fantasy VIII_1.mcd')).writeAsBytes(List.filled(150, 1));
 
-        final ds = await _StubDirectoryService.create(
-          exePath: null,
-          appSupport: base.path,
-        );
+        final ds = await _StubDirectoryService.create(exePath: null, appSupport: base.path);
         final strategy = DuckstationSaveStrategy(
           ds,
           ds.testPrefs,
@@ -225,8 +203,7 @@ void main() {
           Game(id: 'g_scoop', name: 'Suikoden II.bin', platformSlug: 'ps1', fileSize: 0),
           '/roms/ps1/Suikoden II.bin',
         );
-        expect(saveDir, p.join(exeDir, 'memcards'),
-            reason: 'settings.ini next to exe should trigger portable mode');
+        expect(saveDir, p.join(exeDir, 'memcards'), reason: 'settings.ini next to exe should trigger portable mode');
 
         final files = await strategy.getSaveFiles(
           Game(id: 'g_scoop', name: 'Suikoden II.bin', platformSlug: 'ps1', fileSize: 0),

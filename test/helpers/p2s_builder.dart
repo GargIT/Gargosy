@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:typed_data';
+
 import 'package:archive/archive.dart';
 import 'package:gargosy/core/save/strategies/pcsx2_state_file.dart';
 
@@ -17,8 +18,10 @@ Uint8List buildP2s({
     final data = ByteData(36)..setUint32(0, formatId, Endian.little);
     final bytes = data.buffer.asUint8List();
     bytes.setRange(4, 4 + version.length, version.codeUnits);
-    archive.add(ArchiveFile.bytes(Pcsx2StateFile.versionEntryName, bytes)
-      ..compression = storedVersionEntry ? CompressionType.none : CompressionType.deflate);
+    archive.add(
+      ArchiveFile.bytes(Pcsx2StateFile.versionEntryName, bytes)
+        ..compression = storedVersionEntry ? CompressionType.none : CompressionType.deflate,
+    );
   }
   archive.add(ArchiveFile.bytes('eeMemory.bin', List.filled(4096, 7)));
   if (screenshot != null) {

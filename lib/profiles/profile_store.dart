@@ -16,8 +16,8 @@ import 'profile_paths.dart';
 /// `profile.json` is written, which is the last step of [create].
 class ProfileStore {
   ProfileStore(this.root, this.prefs, {String Function()? newId, DateTime Function()? now})
-      : _newId = newId ?? (() => const Uuid().v4()),
-        _now = now ?? DateTime.now;
+    : _newId = newId ?? (() => const Uuid().v4()),
+      _now = now ?? DateTime.now;
 
   final AppRoot root;
   final AppPreferences prefs;
@@ -71,8 +71,17 @@ class ProfileStore {
     }
   }
 
-  Future<Profile> _create(ProfilePaths paths, PathGuard guard, String name, int colorIndex, String serverUrl,
-      int rommUserId, String rommUsername, PinHash? pin, bool trustSelfSigned) async {
+  Future<Profile> _create(
+    ProfilePaths paths,
+    PathGuard guard,
+    String name,
+    int colorIndex,
+    String serverUrl,
+    int rommUserId,
+    String rommUsername,
+    PinHash? pin,
+    bool trustSelfSigned,
+  ) async {
     for (final d in [paths.dir, paths.emulatorsDir, paths.backups, paths.cache]) {
       await io.Directory(guard.check(d)).create(recursive: true);
     }

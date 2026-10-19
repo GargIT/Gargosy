@@ -39,7 +39,8 @@ void main() {
       expect(
         syncStrategy!.strategyId,
         launchStrategy!.emulatorId,
-        reason: 'SaveSyncService resolved "${syncStrategy.strategyId}" but the game '
+        reason:
+            'SaveSyncService resolved "${syncStrategy.strategyId}" but the game '
             'would actually launch via "${launchStrategy.emulatorId}" — saves would '
             'be looked up in the wrong emulator\'s folder.',
       );
@@ -55,7 +56,8 @@ void main() {
         expect(
           syncStrategy.strategyId,
           launchStrategy.emulatorId,
-          reason: 'slug="$slug": sync resolved "${syncStrategy.strategyId}" but launch '
+          reason:
+              'slug="$slug": sync resolved "${syncStrategy.strategyId}" but launch '
               'resolves "${launchStrategy.emulatorId}"',
         );
       }

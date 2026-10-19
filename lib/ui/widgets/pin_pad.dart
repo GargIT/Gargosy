@@ -75,20 +75,23 @@ class _PinPadState extends State<PinPad> {
   }
 
   Widget _key(String label, VoidCallback onPress, {bool autofocus = false}) => Padding(
-        padding: const EdgeInsets.all(GSpace.s2),
-        child: GFocusable(
-          autofocus: autofocus,
-          borderRadius: GRadius.pill,
-          onActivate: onPress,
-          child: Container(
-            width: 76,
-            height: 76,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(color: GColors.surface, shape: BoxShape.circle),
-            child: Text(label, style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w600)),
-          ),
+    padding: const EdgeInsets.all(GSpace.s2),
+    child: GFocusable(
+      autofocus: autofocus,
+      borderRadius: GRadius.pill,
+      onActivate: onPress,
+      child: Container(
+        width: 76,
+        height: 76,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(color: GColors.surface, shape: BoxShape.circle),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w600),
         ),
-      );
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -97,39 +100,61 @@ class _PinPadState extends State<PinPad> {
       child: Focus(
         onKeyEvent: _onKey,
         child: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(widget.title, style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
-            const SizedBox(height: GSpace.s5),
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              for (var i = 0; i < 4; i++)
-                Container(
-                  key: ValueKey('pin-dot-$i'),
-                  margin: const EdgeInsets.all(GSpace.s2),
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: i < _digits.length ? GColors.primary : null,
-                    border: Border.all(color: GColors.borderStrong, width: 2),
-                  ),
-                  child: SizedBox.expand(key: Key(i < _digits.length ? 'pin-dot-filled' : 'pin-dot-empty')),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.title,
+                style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: GSpace.s5),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < 4; i++)
+                    Container(
+                      key: ValueKey('pin-dot-$i'),
+                      margin: const EdgeInsets.all(GSpace.s2),
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i < _digits.length ? GColors.primary : null,
+                        border: Border.all(color: GColors.borderStrong, width: 2),
+                      ),
+                      child: SizedBox.expand(key: Key(i < _digits.length ? 'pin-dot-filled' : 'pin-dot-empty')),
+                    ),
+                ],
+              ),
+              SizedBox(
+                height: 28,
+                child: _error == null
+                    ? null
+                    : Text(
+                        _error!,
+                        style: const TextStyle(color: GColors.danger, fontSize: GFont.lg),
+                      ),
+              ),
+              for (final row in const [
+                ['1', '2', '3'],
+                ['4', '5', '6'],
+                ['7', '8', '9'],
+              ])
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [for (final d in row) _key(d, () => _press(d), autofocus: d == '1')],
                 ),
-            ]),
-            SizedBox(
-              height: 28,
-              child: _error == null ? null : Text(_error!, style: const TextStyle(color: GColors.danger, fontSize: GFont.lg)),
-            ),
-            for (final row in const [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']])
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                for (final d in row) _key(d, () => _press(d), autofocus: d == '1'),
-              ]),
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              _key('⌫', _back),
-              _key('0', () => _press('0')),
-              const SizedBox(width: 76 + GSpace.s4),
-            ]),
-            const HintBar(hints: [Hint(GameAction.confirm, 'Press'), Hint(GameAction.back, 'Delete / Back')]),
-          ]),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _key('⌫', _back),
+                  _key('0', () => _press('0')),
+                  const SizedBox(width: 76 + GSpace.s4),
+                ],
+              ),
+              const HintBar(hints: [Hint(GameAction.confirm, 'Press'), Hint(GameAction.back, 'Delete / Back')]),
+            ],
+          ),
         ),
       ),
     );
@@ -138,7 +163,11 @@ class _PinPadState extends State<PinPad> {
 
 /// Shows [PinPad] until [check] accepts a PIN (returns null); returns that PIN,
 /// or null when cancelled.
-Future<String?> showPinEntry(BuildContext context, {required String title, required Future<String?> Function(String pin) check}) {
+Future<String?> showPinEntry(
+  BuildContext context, {
+  required String title,
+  required Future<String?> Function(String pin) check,
+}) {
   return showDialog<String>(
     context: context,
     barrierColor: GColors.bg.withValues(alpha: 0.92),

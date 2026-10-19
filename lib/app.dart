@@ -35,9 +35,11 @@ class _GargosyAppState extends ConsumerState<GargosyApp> {
       final outcome = ref.read(updateOutcomeProvider);
       final nav = _navigatorKey.currentContext;
       if (outcome is UpdateFailed && nav != null) {
-        showNotice(nav,
-            title: "The update couldn't be installed",
-            body: '${outcome.detail ?? 'The updater stopped.'}\n\nThis version is the one that runs; nothing was lost.');
+        showNotice(
+          nav,
+          title: "The update couldn't be installed",
+          body: '${outcome.detail ?? 'The updater stopped.'}\n\nThis version is the one that runs; nothing was lost.',
+        );
       }
     });
   }
@@ -67,7 +69,8 @@ class _GargosyAppState extends ConsumerState<GargosyApp> {
         child: Actions(
           actions: {
             ToggleFullscreenIntent: CallbackAction<ToggleFullscreenIntent>(
-                onInvoke: (_) => toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool)),
+              onInvoke: (_) => toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool),
+            ),
           },
           child: child!,
         ),

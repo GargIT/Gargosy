@@ -21,15 +21,22 @@ void main() {
         ],
       },
     });
-    await tester.pumpWidget(testApp(AchievementsTab(game: g), overrides: [
-      raProgressionProvider.overrideWith((ref) async => {
-            100: {
-              'earned_achievements': [
-                {'id': '1', 'date': '2026-10-01 10:00:00'},
-              ],
+    await tester.pumpWidget(
+      testApp(
+        AchievementsTab(game: g),
+        overrides: [
+          raProgressionProvider.overrideWith(
+            (ref) async => {
+              100: {
+                'earned_achievements': [
+                  {'id': '1', 'date': '2026-10-01 10:00:00'},
+                ],
+              },
             },
-          }),
-    ]));
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('First brush'), findsOneWidget);
     expect(find.text('Sun up'), findsOneWidget);
@@ -42,9 +49,18 @@ void main() {
   });
 
   testWidgets('Notes are listed', (tester) async {
-    await tester.pumpWidget(testApp(NotesTab(game: game(1, 'Okami')), overrides: [
-      romNotesProvider.overrideWith((ref, id) async => [RomNote(id: 1, title: 'Boss', content: 'Use the brush on the eye', createdAt: DateTime(2026, 10, 1))]),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        NotesTab(game: game(1, 'Okami')),
+        overrides: [
+          romNotesProvider.overrideWith(
+            (ref, id) async => [
+              RomNote(id: 1, title: 'Boss', content: 'Use the brush on the eye', createdAt: DateTime(2026, 10, 1)),
+            ],
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Boss'), findsOneWidget);
     expect(find.text('Use the brush on the eye'), findsOneWidget);
@@ -52,11 +68,17 @@ void main() {
   });
 
   testWidgets('Notes with RomM down show the error with retry', (tester) async {
-    await tester.pumpWidget(testApp(NotesTab(game: game(1, 'Okami')), overrides: [
-      libraryApiProvider.overrideWithValue(FakeLibraryApi(const [])..failWith = Exception('SocketException: connection refused')),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        NotesTab(game: game(1, 'Okami')),
+        overrides: [
+          libraryApiProvider.overrideWithValue(
+            FakeLibraryApi(const [])..failWith = Exception('SocketException: connection refused'),
+          ),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Retry'), findsOneWidget);
   });
-
 }

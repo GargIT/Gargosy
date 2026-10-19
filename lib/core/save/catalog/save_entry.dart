@@ -28,7 +28,8 @@ class SaveEntry {
   /// A save from RomM's save list ([save] is the list item as RomM sent it).
   factory SaveEntry.fromRomm(Map<String, dynamic> save, {required Set<String> emulatorIds}) {
     final tag = save['emulator']?.toString();
-    final time = DateTime.tryParse(save['updated_at']?.toString() ?? '') ??
+    final time =
+        DateTime.tryParse(save['updated_at']?.toString() ?? '') ??
         DateTime.tryParse(save['created_at']?.toString() ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
     final size = save['file_size_bytes'];

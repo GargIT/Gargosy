@@ -27,12 +27,15 @@ void main() {
     Directory(base).createSync();
     read = [];
     fromRom = null;
-    azahar = AzaharSaveStrategy(await StubDirectoryService.create(exePath: exe),
-        platform: const PlatformInfo('windows', environment: {}), identify: (path, {platform}) async {
-      expect(platform, '3ds');
-      read.add(path);
-      return fromRom;
-    });
+    azahar = AzaharSaveStrategy(
+      await StubDirectoryService.create(exePath: exe),
+      platform: const PlatformInfo('windows', environment: {}),
+      identify: (path, {platform}) async {
+        expect(platform, '3ds');
+        read.add(path);
+        return fromRom;
+      },
+    );
   });
   tearDown(() => dir.delete(recursive: true));
 
@@ -64,7 +67,13 @@ void main() {
 
   test('no RomM id: the ROM\'s own title id, read through sigil once', () async {
     fromRom = const SigilId(
-        titleId: '0004000000033500', rawSerial: '', saveId: '00040000/00033500', platform: '3ds', fromBinary: true, usage: 4);
+      titleId: '0004000000033500',
+      rawSerial: '',
+      saveId: '00040000/00033500',
+      platform: '3ds',
+      fromBinary: true,
+      usage: 4,
+    );
     expect(await azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\p.3ds'), titleFolder(zeros, zeros));
     expect(await azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\p.3ds'), titleFolder(zeros, zeros));
     expect(read, [r'C:\roms\p.3ds']);
@@ -76,37 +85,53 @@ void main() {
   });
 
   test('neither RomM nor the ROM: asks for the folder, as before', () async {
-    expect(() => azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\nope\p.3ds'),
-        throwsA(isA<SaveMappingRequiredException>()));
+    expect(
+      () => azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\nope\p.3ds'),
+      throwsA(isA<SaveMappingRequiredException>()),
+    );
   });
 
   test('a ROM id that isn\'t a 3DS title path, or a failed read, asks for the folder', () async {
     fromRom = const SigilId(titleId: 'x', rawSerial: '', saveId: '../../x', platform: '3ds', fromBinary: false);
-    expect(() => azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\a.3ds'),
-        throwsA(isA<SaveMappingRequiredException>()));
-    final failing = AzaharSaveStrategy(await StubDirectoryService.create(exePath: p.join(dir.path, 'azahar.exe')),
-        platform: const PlatformInfo('windows', environment: {}),
-        identify: (path, {platform}) async => throw const SigilException(-1, 'unreadable'));
-    expect(() => failing.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\b.3ds'),
-        throwsA(isA<SaveMappingRequiredException>()));
+    expect(
+      () => azahar.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\a.3ds'),
+      throwsA(isA<SaveMappingRequiredException>()),
+    );
+    final failing = AzaharSaveStrategy(
+      await StubDirectoryService.create(exePath: p.join(dir.path, 'azahar.exe')),
+      platform: const PlatformInfo('windows', environment: {}),
+      identify: (path, {platform}) async => throw const SigilException(-1, 'unreadable'),
+    );
+    expect(
+      () => failing.getSaveDir(pilotwings(saveTarget: null), r'C:\roms\b.3ds'),
+      throwsA(isA<SaveMappingRequiredException>()),
+    );
   });
 
   group('RomM 3DS ids that need care', () {
     test('an update or DLC id points at the base game\'s save', () async {
-      expect(await azahar.getSaveDir(pilotwings(saveTarget: '0004000e/00033500'), r'C:\nope\p.3ds'),
-          titleFolder(zeros, zeros));
-      expect(await azahar.getSaveDir(pilotwings(saveTarget: '0004008c/00033500'), r'C:\nope\p.3ds'),
-          titleFolder(zeros, zeros));
+      expect(
+        await azahar.getSaveDir(pilotwings(saveTarget: '0004000e/00033500'), r'C:\nope\p.3ds'),
+        titleFolder(zeros, zeros),
+      );
+      expect(
+        await azahar.getSaveDir(pilotwings(saveTarget: '0004008c/00033500'), r'C:\nope\p.3ds'),
+        titleFolder(zeros, zeros),
+      );
     });
 
     test('a flat 16-hex title id is split into its two folders', () async {
-      expect(await azahar.getSaveDir(pilotwings(saveTarget: '0004000000033500'), r'C:\nope\p.3ds'),
-          titleFolder(zeros, zeros));
+      expect(
+        await azahar.getSaveDir(pilotwings(saveTarget: '0004000000033500'), r'C:\nope\p.3ds'),
+        titleFolder(zeros, zeros),
+      );
     });
 
     test('a RomM value that isn\'t a 3DS title is ignored (asks for the folder)', () async {
-      expect(() => azahar.getSaveDir(pilotwings(saveTarget: '../../../x'), r'C:\nope\p.3ds'),
-          throwsA(isA<SaveMappingRequiredException>()));
+      expect(
+        () => azahar.getSaveDir(pilotwings(saveTarget: '../../../x'), r'C:\nope\p.3ds'),
+        throwsA(isA<SaveMappingRequiredException>()),
+      );
     });
   });
 

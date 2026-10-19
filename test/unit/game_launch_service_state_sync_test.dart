@@ -23,19 +23,23 @@ import '../helpers/fake_romm_states_api.dart';
 /// A StateSyncService whose pushStates throws, like an unexpected failure.
 class _ThrowingStateSync extends StateSyncService {
   _ThrowingStateSync(AppPreferences prefs)
-      : super(FakeRommStatesApi(), prefs, (game, {emulatorId, coreOverride}) => null);
+    : super(FakeRommStatesApi(), prefs, (game, {emulatorId, coreOverride}) => null);
 
   @override
-  Future<StateSyncResult> pushStates(Game game, String romPath,
-          {DateTime? sessionStart, String? emulatorId, String? coreOverride}) async =>
-      throw StateError('push exploded');
+  Future<StateSyncResult> pushStates(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String? emulatorId,
+    String? coreOverride,
+  }) async => throw StateError('push exploded');
 }
 
 /// A StateSyncService whose pushStates reports two conflicts and remembers
 /// what it was asked to push.
 class _ConflictingStateSync extends StateSyncService {
   _ConflictingStateSync(AppPreferences prefs)
-      : super(FakeRommStatesApi(), prefs, (game, {emulatorId, coreOverride}) => null);
+    : super(FakeRommStatesApi(), prefs, (game, {emulatorId, coreOverride}) => null);
 
   DateTime? seenSessionStart;
   String? seenEmulatorId;
@@ -43,23 +47,28 @@ class _ConflictingStateSync extends StateSyncService {
   String? seenRomPath;
 
   @override
-  Future<StateSyncResult> pushStates(Game game, String romPath,
-      {DateTime? sessionStart, String? emulatorId, String? coreOverride}) async {
+  Future<StateSyncResult> pushStates(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String? emulatorId,
+    String? coreOverride,
+  }) async {
     seenSessionStart = sessionStart;
     seenEmulatorId = emulatorId;
     seenCoreOverride = coreOverride;
     seenRomPath = romPath;
     StateConflict conflict(String name) => StateConflict(
-          game: game,
-          romPath: romPath,
-          emulatorId: emulatorId,
-          fileName: name,
-          localPath: name,
-          cloudStateId: 1,
-          cloudUpdatedAt: null,
-          localTime: DateTime(2026, 1, 1),
-          cloudTime: DateTime(2026, 1, 1),
-        );
+      game: game,
+      romPath: romPath,
+      emulatorId: emulatorId,
+      fileName: name,
+      localPath: name,
+      cloudStateId: 1,
+      cloudUpdatedAt: null,
+      localTime: DateTime(2026, 1, 1),
+      cloudTime: DateTime(2026, 1, 1),
+    );
     return StateSyncResult(conflicts: [conflict('a.p2s'), conflict('b.p2s')]);
   }
 }
@@ -74,9 +83,19 @@ class _ExitedProcess implements io.Process {
 
 /// A SaveSyncService whose pushSaves only records that it ran.
 class _RecordingSaveSync extends SaveSyncService {
-  _RecordingSaveSync(super.romm, super.dirs, super.registry, super.prefs, this.log,
-      {this.blockedReason, this.synced = false, List<String>? marked, this.steps, this.conflict = false, this.pushOk = true})
-      : marked = marked ?? [];
+  _RecordingSaveSync(
+    super.romm,
+    super.dirs,
+    super.registry,
+    super.prefs,
+    this.log, {
+    this.blockedReason,
+    this.synced = false,
+    List<String>? marked,
+    this.steps,
+    this.conflict = false,
+    this.pushOk = true,
+  }) : marked = marked ?? [];
   final List<String> log;
 
   /// Every save step and the save lock around them, in order.
@@ -113,26 +132,39 @@ class _RecordingSaveSync extends SaveSyncService {
   final List<String> marked;
 
   @override
-  Future<bool> saveIsSynced(Game game, String romPath,
-          {required String emulatorId, required String syncMode, String? coreOverride}) async {
+  Future<bool> saveIsSynced(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    required String syncMode,
+    String? coreOverride,
+  }) async {
     steps?.add('isSynced');
     return synced;
   }
 
   @override
-  Future<void> markSaveSynced(Game game, String romPath,
-          {required String emulatorId, required String syncMode, String? coreOverride}) async {
+  Future<void> markSaveSynced(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    required String syncMode,
+    String? coreOverride,
+  }) async {
     steps?.add('mark');
     marked.add(syncMode);
   }
 
   @override
-  Future<bool> pushSaves(Game game, String romPath,
-      {DateTime? sessionStart,
-      String syncMode = 'both',
-      bool force = false,
-      String? coreOverride,
-      String? emulatorId}) async {
+  Future<bool> pushSaves(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+    bool force = false,
+    String? coreOverride,
+    String? emulatorId,
+  }) async {
     log.add('push');
     steps?.add('push');
     if (blockedReason != null) throw SaveSyncNotPossibleException(blockedReason!);
@@ -142,15 +174,17 @@ class _RecordingSaveSync extends SaveSyncService {
 }
 
 /// A GameLaunchService whose save push appends 'push' to [log].
-Future<GameLaunchService> _launchServiceLogging(List<String> log,
-    {String? blockedReason,
-    bool synced = false,
-    List<String>? marked,
-    List<String>? steps,
-    bool conflict = false,
-    bool pushOk = true,
-    BackupService? backupService,
-    BackupRepository? backupRepository}) async {
+Future<GameLaunchService> _launchServiceLogging(
+  List<String> log, {
+  String? blockedReason,
+  bool synced = false,
+  List<String>? marked,
+  List<String>? steps,
+  bool conflict = false,
+  bool pushOk = true,
+  BackupService? backupService,
+  BackupRepository? backupRepository,
+}) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
   final dirService = DirectoryService(prefs);
@@ -163,8 +197,19 @@ Future<GameLaunchService> _launchServiceLogging(List<String> log,
   return GameLaunchService(
     directoryService: dirService,
     strategyRegistry: registry,
-    saveSyncService: _RecordingSaveSync(rommService, dirService, registry, prefs, log,
-        blockedReason: blockedReason, synced: synced, marked: marked, steps: steps, conflict: conflict, pushOk: pushOk),
+    saveSyncService: _RecordingSaveSync(
+      rommService,
+      dirService,
+      registry,
+      prefs,
+      log,
+      blockedReason: blockedReason,
+      synced: synced,
+      marked: marked,
+      steps: steps,
+      conflict: conflict,
+      pushOk: pushOk,
+    ),
     backupService: backupService ?? BackupService(),
     backupRepository: backupRepository ?? BackupRepository(),
     prefs: prefs,
@@ -172,8 +217,7 @@ Future<GameLaunchService> _launchServiceLogging(List<String> log,
 }
 
 /// A GameLaunchService wired to real (in-memory) collaborators and [stateSync].
-Future<GameLaunchService> _launchServiceWith(
-    StateSyncService? Function(AppPreferences prefs) stateSync) async {
+Future<GameLaunchService> _launchServiceWith(StateSyncService? Function(AppPreferences prefs) stateSync) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
   final dirService = DirectoryService(prefs);
@@ -196,11 +240,11 @@ Future<GameLaunchService> _launchServiceWith(
 }
 
 GameSession _session() => GameSession(
-      process: null,
-      sessionStart: DateTime(2026, 1, 1),
-      emulatorId: 'pcsx2',
-      activityTrackerFuture: Future.value(null),
-    );
+  process: null,
+  sessionStart: DateTime(2026, 1, 1),
+  emulatorId: 'pcsx2',
+  activityTrackerFuture: Future.value(null),
+);
 
 final _game = Game(id: '42', name: 'Ico (SCUS-97113)', platformSlug: 'ps2', fileSize: 0);
 
@@ -282,11 +326,11 @@ void main() {
   });
   group('awaitExitAndSync onExited', () {
     GameSession exited() => GameSession(
-          process: _ExitedProcess(),
-          sessionStart: DateTime(2026, 1, 1),
-          emulatorId: 'pcsx2',
-          activityTrackerFuture: Future.value(null),
-        );
+      process: _ExitedProcess(),
+      sessionStart: DateTime(2026, 1, 1),
+      emulatorId: 'pcsx2',
+      activityTrackerFuture: Future.value(null),
+    );
 
     test('an upload RomM refuses (a newer save from another PC) is reported, not thrown away', () async {
       final service = await _launchServiceLogging([], conflict: true);
@@ -304,8 +348,14 @@ void main() {
         (false, null, false, true), // nothing reached RomM
       ]) {
         final repo = _MemoryBackups();
-        final service = await _launchServiceLogging([],
-            conflict: conflict, blockedReason: blocked, pushOk: pushOk, backupService: _OneBackup(), backupRepository: repo);
+        final service = await _launchServiceLogging(
+          [],
+          conflict: conflict,
+          blockedReason: blocked,
+          pushOk: pushOk,
+          backupService: _OneBackup(),
+          backupRepository: repo,
+        );
         await service.awaitExitAndSync(exited(), _game, 'Ico.iso', syncMode: 'both');
         expect(repo.added.single.isSynced, !queued, reason: 'conflict $conflict, blocked $blocked, pushed $pushOk');
       }
@@ -316,16 +366,24 @@ void main() {
       final service = await _launchServiceLogging([], steps: steps);
       await service.awaitExitAndSync(exited(), _game, 'Ico.iso', syncMode: 'both');
       expect(steps.take(5).toList(), ['lock', 'isSynced', 'push', 'mark', 'unlock']);
-      expect((service.saveSyncService as _RecordingSaveSync).doing, "Syncing ${_game.displayName}'s save",
-          reason: 'the play screen and Saves tab show it while they wait');
+      expect(
+        (service.saveSyncService as _RecordingSaveSync).doing,
+        "Syncing ${_game.displayName}'s save",
+        reason: 'the play screen and Saves tab show it while they wait',
+      );
     });
 
     test('is called once, right after the exit and before the save push', () async {
       final log = <String>[];
       final service = await _launchServiceLogging(log);
 
-      final result = await service.awaitExitAndSync(exited(), _game, 'Ico.iso',
-          syncMode: 'both', onExited: () => log.add('exited'));
+      final result = await service.awaitExitAndSync(
+        exited(),
+        _game,
+        'Ico.iso',
+        syncMode: 'both',
+        onExited: () => log.add('exited'),
+      );
 
       expect(result, isNotNull);
       expect(log, ['exited', 'push']);
@@ -335,8 +393,13 @@ void main() {
       final log = <String>[];
       final service = await _launchServiceLogging(log);
 
-      final result = await service.awaitExitAndSync(exited(), _game, 'Ico.iso',
-          syncMode: 'both', onExited: () => throw StateError('listener exploded'));
+      final result = await service.awaitExitAndSync(
+        exited(),
+        _game,
+        'Ico.iso',
+        syncMode: 'both',
+        onExited: () => throw StateError('listener exploded'),
+      );
 
       expect(result, isNotNull);
       expect(log, ['push']);
@@ -346,8 +409,13 @@ void main() {
       final log = <String>[];
       final service = await _launchServiceLogging(log, blockedReason: 'one shared card');
 
-      final result = await service.awaitExitAndSync(exited(), _game, 'Ico.iso',
-          syncMode: 'both', onExited: () => log.add('exited'));
+      final result = await service.awaitExitAndSync(
+        exited(),
+        _game,
+        'Ico.iso',
+        syncMode: 'both',
+        onExited: () => log.add('exited'),
+      );
 
       expect(result, isNotNull);
       expect(result!.syncOk, isFalse);
@@ -358,11 +426,11 @@ void main() {
 
   group('awaitExitAndSync uploads only a save RomM does not have', () {
     GameSession exited() => GameSession(
-          process: _ExitedProcess(),
-          sessionStart: DateTime(2026, 1, 1),
-          emulatorId: 'pcsx2',
-          activityTrackerFuture: Future.value(null),
-        );
+      process: _ExitedProcess(),
+      sessionStart: DateTime(2026, 1, 1),
+      emulatorId: 'pcsx2',
+      activityTrackerFuture: Future.value(null),
+    );
 
     test('the save is what RomM has (e.g. an older RomM save, played without saving): no push', () async {
       final log = <String>[];
@@ -395,9 +463,13 @@ void main() {
 /// A backup service that always makes one backup.
 class _OneBackup extends BackupService {
   @override
-  Future<BackupResult?> createImmediate(Game game, String romPath, SaveSyncService syncService,
-          {String? emulatorId, String? coreOverride}) async =>
-      (zipPath: 'b.zip', md5: 'm', coreId: null);
+  Future<BackupResult?> createImmediate(
+    Game game,
+    String romPath,
+    SaveSyncService syncService, {
+    String? emulatorId,
+    String? coreOverride,
+  }) async => (zipPath: 'b.zip', md5: 'm', coreId: null);
 }
 
 /// Backups kept in memory.

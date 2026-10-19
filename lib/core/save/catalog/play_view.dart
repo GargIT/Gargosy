@@ -55,10 +55,10 @@ class PlayView {
   final PlayItem? preselected;
 
   List<PlayRow> get saveRows => [
-        ...thisPc,
-        ...backups,
-        for (final g in romm) ...[g.newest, ...g.older],
-      ];
+    ...thisPc,
+    ...backups,
+    for (final g in romm) ...[g.newest, ...g.older],
+  ];
 
   /// When [target]'s own save on this PC was made; null when it has none.
   DateTime? newestLocalFor(SaveMaker target) {
@@ -137,7 +137,9 @@ PlayView buildPlayView({
     final rows = <PlayRow>[];
     for (final e in entries) {
       final r = PlayRow(
-          e, fitFor(e, platformSlug: platformSlug, picked: picked, platformDefault: platformDefault, installed: installed));
+        e,
+        fitFor(e, platformSlug: platformSlug, picked: picked, platformDefault: platformDefault, installed: installed),
+      );
       if (r.fit.usable || picked == null || showAll) {
         rows.add(r);
       } else {
@@ -175,8 +177,15 @@ PlayView buildPlayView({
     final rows = keep([g.newest, ...g.older]).map(marked).toList();
     if (rows.isNotEmpty) romm.add(PlayRommGroup(g, rows.first, rows.sublist(1)));
   }
-  final shownStates = picked == null ? states : [for (final s in states) if (s.emulatorId == picked.emulatorId) s];
-  final rommRows = [for (final g in romm) ...[g.newest, ...g.older]];
+  final shownStates = picked == null
+      ? states
+      : [
+          for (final s in states)
+            if (s.emulatorId == picked.emulatorId) s,
+        ];
+  final rommRows = [
+    for (final g in romm) ...[g.newest, ...g.older],
+  ];
   // A save on a shared card is dated by the card, which any game on it
   // changes. With a usable RomM save, it stands in with its RomM copy's
   // time, or not at all when RomM has no copy of it.
@@ -202,9 +211,15 @@ PlayView buildPlayView({
       standIns[item] = r.item;
     }
   }
-  saves.addAll([for (final r in rommRows) if (!r.sameAsLocal) r.item]);
+  saves.addAll([
+    for (final r in rommRows)
+      if (!r.sameAsLocal) r.item,
+  ]);
   // A state the emulator can't start in is listed, never chosen.
-  final pre = choice.preselect(saves, [for (final s in shownStates) if (s.resumable) StatePlay(s)]);
+  final pre = choice.preselect(saves, [
+    for (final s in shownStates)
+      if (s.resumable) StatePlay(s),
+  ]);
   return PlayView(
     thisPc: thisPc,
     backups: backups,

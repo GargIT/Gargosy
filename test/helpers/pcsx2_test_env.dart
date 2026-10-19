@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/save/strategies/pcsx2_save_strategy.dart';
 import 'package:gargosy/core/storage/directory_service.dart';

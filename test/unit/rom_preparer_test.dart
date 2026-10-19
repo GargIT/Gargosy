@@ -34,7 +34,12 @@ void main() {
   setUp(() async {
     root = await tempAppRoot();
     files = RomFiles(root);
-    preparer = RomPreparer(files: files, guard: PathGuard(root), tempDir: p.join(root.appData, 'temp'), gamePartition: gp);
+    preparer = RomPreparer(
+      files: files,
+      guard: PathGuard(root),
+      tempDir: p.join(root.appData, 'temp'),
+      gamePartition: gp,
+    );
   });
   tearDown(() => deleteTempDir(root.root));
 
@@ -66,7 +71,10 @@ void main() {
   });
 
   test('xemu: the other files in the zip come along', () async {
-    final zip = zipWith({'Halo (USA).iso': xiso(), 'readme.txt': [1, 2]});
+    final zip = zipWith({
+      'Halo (USA).iso': xiso(),
+      'readme.txt': [1, 2],
+    });
     final folder = await preparer.ready(halo, zip, 'xemu');
     expect(io.File(p.join(folder!, 'Halo (USA).iso')).readAsBytesSync(), xiso());
     expect(io.File(p.join(folder, 'readme.txt')).readAsBytesSync(), [1, 2]);
@@ -94,27 +102,31 @@ void main() {
     final ps2 = game(4, 'Okami', platform: 'ps2', fsName: 'Okami.zip');
     final path = files.pathFor(ps2);
     io.Directory(p.dirname(path)).createSync(recursive: true);
-    io.File(path).writeAsBytesSync(ZipEncoder().encodeBytes(Archive()..addFile(ArchiveFile.bytes('Okami.iso', [7, 7, 7]))));
+    io.File(path)
+        .writeAsBytesSync(ZipEncoder().encodeBytes(Archive()..addFile(ArchiveFile.bytes('Okami.iso', [7, 7, 7]))));
     final folder = await preparer.ready(ps2, path, 'pcsx2');
     expect(io.File(p.join(folder!, 'Okami.iso')).readAsBytesSync(), [7, 7, 7]);
     expect(io.File(path).existsSync(), isFalse);
   });
 
-  test('a zip that was unpacked already, but stayed, plays from its folder without unpacking again, and goes', () async {
-    final ps3 = game(5, 'WipEout HD Fury', platform: 'ps3', fsName: 'WipEout HD Fury.zip');
-    final zip = files.pathFor(ps3);
-    io.Directory(p.dirname(zip)).createSync(recursive: true);
-    io.File(zip).writeAsBytesSync([1, 2, 3, 4]); // not even a zip: never opened
-    final dir = files.unpackedDirFor(ps3)!;
-    io.File(p.join(dir, 'WipEout HD Fury.iso'))
-      ..createSync(recursive: true)
-      ..writeAsBytesSync([9]);
+  test(
+    'a zip that was unpacked already, but stayed, plays from its folder without unpacking again, and goes',
+    () async {
+      final ps3 = game(5, 'WipEout HD Fury', platform: 'ps3', fsName: 'WipEout HD Fury.zip');
+      final zip = files.pathFor(ps3);
+      io.Directory(p.dirname(zip)).createSync(recursive: true);
+      io.File(zip).writeAsBytesSync([1, 2, 3, 4]); // not even a zip: never opened
+      final dir = files.unpackedDirFor(ps3)!;
+      io.File(p.join(dir, 'WipEout HD Fury.iso'))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync([9]);
 
-    expect(await preparer.ready(ps3, zip, 'rpcs3'), dir);
-    expect(io.File(p.join(dir, 'WipEout HD Fury.iso')).readAsBytesSync(), [9]);
-    expect(io.File(zip).existsSync(), isFalse, reason: 'the zip goes, as after an unpack');
-    expect(files.pathFor(ps3), dir);
-  });
+      expect(await preparer.ready(ps3, zip, 'rpcs3'), dir);
+      expect(io.File(p.join(dir, 'WipEout HD Fury.iso')).readAsBytesSync(), [9]);
+      expect(io.File(zip).existsSync(), isFalse, reason: 'the zip goes, as after an unpack');
+      expect(files.pathFor(ps3), dir);
+    },
+  );
 
   test('an empty folder where the zip unpacks goes; a file there refuses before unpacking', () async {
     final ps2 = game(4, 'Okami', platform: 'ps2', fsName: 'Okami.zip');
@@ -129,8 +141,10 @@ void main() {
     final zip = files.pathFor(other);
     io.File(zip).writeAsBytesSync([1, 2, 3, 4]); // a damaged zip: refused for the file, not for the zip
     io.File(files.unpackedDirFor(other)!).writeAsBytesSync([0]);
-    await expectLater(preparer.ready(other, zip, 'pcsx2'),
-        throwsA(isA<RomPrepareException>().having((e) => e.message, 'message', contains('in the way'))));
+    await expectLater(
+      preparer.ready(other, zip, 'pcsx2'),
+      throwsA(isA<RomPrepareException>().having((e) => e.message, 'message', contains('in the way'))),
+    );
   });
 
   test('xemu: a zip whose disc is no Xbox image is refused and left as it was', () async {

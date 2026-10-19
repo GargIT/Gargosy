@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:path/path.dart' as p;
@@ -33,24 +34,27 @@ void main() {
     registry = MockStrategyRegistry();
     service = FirmwareService(romm, dirs, registry);
     tmp = await Directory.systemTemp.createTemp('fw_installed');
-    when(dirs.getEmulatorBiosDirectory(any)).thenAnswer((i) async => p.join(tmp.path, i.positionalArguments.first as String));
-    when(romm.downloadFirmware(any, onProgress: anyNamed('onProgress'))).thenAnswer((_) async => Uint8List.fromList([9, 9]));
+    when(dirs.getEmulatorBiosDirectory(any))
+        .thenAnswer((i) async => p.join(tmp.path, i.positionalArguments.first as String));
+    when(romm.downloadFirmware(any, onProgress: anyNamed('onProgress')))
+        .thenAnswer((_) async => Uint8List.fromList([9, 9]));
   });
 
   tearDown(() => tmp.delete(recursive: true));
 
   Platform platform(String slug, List<String> files) => Platform(
-        id: slug.hashCode,
-        name: slug,
-        slug: slug,
-        firmware: [for (var i = 0; i < files.length; i++) Firmware(id: i, fileName: files[i], fileSizeBytes: 2)],
-      );
+    id: slug.hashCode,
+    name: slug,
+    slug: slug,
+    firmware: [for (var i = 0; i < files.length; i++) Firmware(id: i, fileName: files[i], fileSizeBytes: 2)],
+  );
 
   bool placed(String emulatorId, String file) => File(p.join(tmp.path, emulatorId, file)).existsSync();
 
   group('emulatorIdsForFirmwareSync', () {
     test('keeps registry order and drops duplicates', () {
-      when(registry.getAllStrategiesForSlug('psx')).thenReturn([_Strategy('duckstation'), _Strategy('retroarch'), _Strategy('duckstation')]);
+      when(registry.getAllStrategiesForSlug('psx'))
+          .thenReturn([_Strategy('duckstation'), _Strategy('retroarch'), _Strategy('duckstation')]);
       expect(service.emulatorIdsForFirmwareSync('psx', {'retroarch', 'duckstation'}), ['duckstation', 'retroarch']);
     });
 
@@ -73,8 +77,14 @@ void main() {
 
   group('syncAllFirmware(installedEmulatorIds:)', () {
     test('each platform goes only to its own installed emulators', () async {
-      when(romm.getPlatforms()).thenAnswer((_) async => [platform('test_psx', ['test_bios_a.bin']), platform('test_dc', ['test_bios_b.bin'])]);
-      when(registry.getAllStrategiesForSlug('test_psx')).thenReturn([_Strategy('emu_a'), _Strategy('emu_not_installed')]);
+      when(romm.getPlatforms()).thenAnswer(
+        (_) async => [
+          platform('test_psx', ['test_bios_a.bin']),
+          platform('test_dc', ['test_bios_b.bin']),
+        ],
+      );
+      when(registry.getAllStrategiesForSlug('test_psx'))
+          .thenReturn([_Strategy('emu_a'), _Strategy('emu_not_installed')]);
       when(registry.getAllStrategiesForSlug('test_dc')).thenReturn([_Strategy('emu_b')]);
 
       await service.syncAllFirmware(installedEmulatorIds: {'emu_a', 'emu_b'});
@@ -96,7 +106,11 @@ void main() {
     });
 
     test('a file already in an emulator folder is not downloaded again', () async {
-      when(romm.getPlatforms()).thenAnswer((_) async => [platform('test_psx', ['test_bios_a.bin'])]);
+      when(romm.getPlatforms()).thenAnswer(
+        (_) async => [
+          platform('test_psx', ['test_bios_a.bin']),
+        ],
+      );
       when(registry.getAllStrategiesForSlug('test_psx')).thenReturn([_Strategy('emu_a'), _Strategy('emu_c')]);
       final existing = File(p.join(tmp.path, 'emu_a', 'test_bios_a.bin'));
       await existing.create(recursive: true);
@@ -110,7 +124,11 @@ void main() {
     });
 
     test('reports progress for every emulator it downloads to', () async {
-      when(romm.getPlatforms()).thenAnswer((_) async => [platform('test_psx', ['test_bios_a.bin'])]);
+      when(romm.getPlatforms()).thenAnswer(
+        (_) async => [
+          platform('test_psx', ['test_bios_a.bin']),
+        ],
+      );
       when(registry.getAllStrategiesForSlug('test_psx')).thenReturn([_Strategy('emu_a'), _Strategy('emu_c')]);
       final started = <String>[];
 

@@ -17,6 +17,7 @@ import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
+
 import 'dart:io' as io;
 
 import '../helpers/game_fixtures.dart';
@@ -50,15 +51,17 @@ void main() {
       EmulatorLayout.of('mame').ensureFolders(dirs.dataDir('mame'));
       final exeDir = p.join(root.emulators, 'mame');
       io.Directory(exeDir).createSync(recursive: true);
-      final args = await ProfileLaunchConfig.of('mame')!.prepare(LaunchContext(
-        data: paths.emulatorDir('mame'),
-        exeDir: exeDir,
-        bios: root.bios,
-        profileId: 'aaa',
-        profilesDir: root.profiles,
-        guard: PathGuard(root, activeProfileId: 'aaa'),
-        roms: root.roms,
-      ));
+      final args = await ProfileLaunchConfig.of('mame')!.prepare(
+        LaunchContext(
+          data: paths.emulatorDir('mame'),
+          exeDir: exeDir,
+          bios: root.bios,
+          profileId: 'aaa',
+          profilesDir: root.profiles,
+          guard: PathGuard(root, activeProfileId: 'aaa'),
+          roms: root.roms,
+        ),
+      );
       final told = args[args.indexOf('-state_directory') + 1];
       expect(await MameSaveStrategy(dirs).stateDirectory(game, rom), p.join(told, 'sf2'));
     });
@@ -93,21 +96,29 @@ void main() {
     expect(s.looksLikeValidState(Uint8List(4)), isFalse);
   });
 
-  test("the save pipeline is unchanged (it falls back to the platform's other strategy); states go through MAME's", () async {
-    final prefs = MemoryPrefs();
-    final dirs = DirectoryService(prefs);
-    final sync = SaveSyncService(
-      RommService(RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', apiKey: 'k'),
-          skipConnectivityCheck: true),
-      dirs,
-      StrategyRegistry(dirs, prefs),
-      prefs,
-    );
-    expect(sync.strategyForGame(game, emulatorId: 'mame'), isNot(isA<MameSaveStrategy>()));
-    expect(sync.stateStrategyForGame(game, emulatorId: 'mame'), isA<MameSaveStrategy>());
-    expect(sync.stateStrategyForGame(game, emulatorId: 'pcsx2'), same(sync.strategyForGame(game, emulatorId: 'pcsx2')),
-        reason: 'an emulator with a save strategy keeps it for states');
-  });
+  test(
+    "the save pipeline is unchanged (it falls back to the platform's other strategy); states go through MAME's",
+    () async {
+      final prefs = MemoryPrefs();
+      final dirs = DirectoryService(prefs);
+      final sync = SaveSyncService(
+        RommService(
+          RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', apiKey: 'k'),
+          skipConnectivityCheck: true,
+        ),
+        dirs,
+        StrategyRegistry(dirs, prefs),
+        prefs,
+      );
+      expect(sync.strategyForGame(game, emulatorId: 'mame'), isNot(isA<MameSaveStrategy>()));
+      expect(sync.stateStrategyForGame(game, emulatorId: 'mame'), isA<MameSaveStrategy>());
+      expect(
+        sync.stateStrategyForGame(game, emulatorId: 'pcsx2'),
+        same(sync.strategyForGame(game, emulatorId: 'pcsx2')),
+        reason: 'an emulator with a save strategy keeps it for states',
+      );
+    },
+  );
 
   test('Resume: -state <file>, which MAME takes as a full path', () {
     final emu = MAMEStrategy(DirectoryService(MemoryPrefs()));

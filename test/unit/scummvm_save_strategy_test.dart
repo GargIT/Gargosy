@@ -31,7 +31,10 @@ void main() {
   test("a game's save folder is named after it in roms\\scummvm, whatever path inside it is given", () {
     expect(scummVmSaveFolderName(rom('bass-cd-1.2')), 'bass-cd-1.2');
     expect(scummVmSaveFolderName(p.join(rom('Monkey Island'), 'monkey.scummvm')), 'Monkey Island');
-    expect(scummVmSaveFolderName(p.join(rom('Monkey Island (1990)'), 'Monkey Island', 'MONKEY.000')), 'Monkey Island (1990)');
+    expect(
+      scummVmSaveFolderName(p.join(rom('Monkey Island (1990)'), 'Monkey Island', 'MONKEY.000')),
+      'Monkey Island (1990)',
+    );
     expect(scummVmSaveFolderName(rom('Loom.zip')), 'Loom');
     expect(scummVmSaveFolderName(rom('loom.scummvm')), 'loom.scummvm');
   });
@@ -56,8 +59,14 @@ void main() {
     io.File(p.join(saves, 'bass-cd-1.2', 'SKY-VM.001')).createSync(recursive: true);
     final later = DateTime.now().add(const Duration(minutes: 1));
     expect(await strategy.getSaveFiles(game, rom('bass-cd-1.2'), sessionStart: later), isEmpty);
-    expect(await strategy.getSaveFiles(game, rom('bass-cd-1.2'), sessionStart: DateTime.now().subtract(const Duration(minutes: 1))),
-        hasLength(1));
+    expect(
+      await strategy.getSaveFiles(
+        game,
+        rom('bass-cd-1.2'),
+        sessionStart: DateTime.now().subtract(const Duration(minutes: 1)),
+      ),
+      hasLength(1),
+    );
   });
 
   test("a pulled zip goes into the game's folder, plain names only, without the sync metadata", () async {

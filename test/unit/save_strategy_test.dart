@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
@@ -14,7 +15,12 @@ class TestSaveStrategy extends SaveStrategy {
   Future<String?> getSaveDir(Game game, String romPath) async => null;
 
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async => [];
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => [];
 
   @override
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => true;
@@ -42,7 +48,7 @@ void main() {
     test('backupSave() rotation logic works', () async {
       final tempDir = await Directory.systemTemp.createTemp('save_backup_test');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
-      
+
       try {
         // Initial file
         await saveFile.writeAsString('initial');

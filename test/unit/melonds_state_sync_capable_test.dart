@@ -29,7 +29,10 @@ Uint8List meln({String magic = 'MELN', int major = 14, int minor = 1}) {
 }
 
 void main() {
-  final game = Game.fromJson({...gameJson(1, 'Mario Kart DS', fsName: 'Mario Kart DS (USA).nds'), 'platform_slug': 'nds'});
+  final game = Game.fromJson({
+    ...gameJson(1, 'Mario Kart DS', fsName: 'Mario Kart DS (USA).nds'),
+    'platform_slug': 'nds',
+  });
   const rom = r'D:\roms\nds\Mario Kart DS (USA).nds';
   final s = MelonDsSaveStrategy(DirectoryService(MemoryPrefs()));
 
@@ -59,7 +62,13 @@ void main() {
     for (final yes in ['Mario Kart DS (USA).ml1', 'Mario Kart DS (USA).ml8', 'mario kart ds (usa).ml3']) {
       expect(match(yes), isTrue, reason: yes);
     }
-    for (final no in ['Mario Kart DS (USA).sav', 'Mario Kart DS (USA).ml10', 'Mario Kart DS (USA).ml1.bak', 'Mario Kart DS.ml1', r'..\Mario Kart DS (USA).ml1']) {
+    for (final no in [
+      'Mario Kart DS (USA).sav',
+      'Mario Kart DS (USA).ml10',
+      'Mario Kart DS (USA).ml1.bak',
+      'Mario Kart DS.ml1',
+      r'..\Mario Kart DS (USA).ml1',
+    ]) {
       expect(match(no), isFalse, reason: no);
     }
   });

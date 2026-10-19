@@ -66,16 +66,25 @@ void main() {
   });
 
   test("a reference link inside a section doesn't cut the section short", () {
-    const md = '## [0.2.0] - 2026-11-01\n\n- Fixed X ([#3]).\n\n[#3]: https://github.com/GargIT/Gargosy/issues/3\n\n- Fixed Y.\n';
+    const md =
+        '## [0.2.0] - 2026-11-01\n\n- Fixed X ([#3]).\n\n[#3]: https://github.com/GargIT/Gargosy/issues/3\n\n- Fixed Y.\n';
     final text = changelogSince(md, Version(0, 1, 0), Version(0, 2, 0))!;
     expect(text, contains('- Fixed Y.'));
   });
 
   group('whatsNewToShow', () {
-    Future<String?> show(MemoryPrefs prefs, String current,
-        {String? Function()? read, bool existingInstall = false}) async {
-      final news = await whatsNewToShow(prefs, current,
-          readChangelog: read ?? () => _changelog, existingInstall: existingInstall);
+    Future<String?> show(
+      MemoryPrefs prefs,
+      String current, {
+      String? Function()? read,
+      bool existingInstall = false,
+    }) async {
+      final news = await whatsNewToShow(
+        prefs,
+        current,
+        readChangelog: read ?? () => _changelog,
+        existingInstall: existingInstall,
+      );
       await news.recordRun();
       return news.text;
     }
@@ -125,8 +134,11 @@ void main() {
 
     test('a dev build is recorded as it is (build metadata dropped); the release after it shows its section', () async {
       final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.1.0';
-      expect(await show(prefs, '0.2.0-dev+5'), isNull,
-          reason: '0.2.0-dev sorts before 0.2.0-preview.2: nothing released in between');
+      expect(
+        await show(prefs, '0.2.0-dev+5'),
+        isNull,
+        reason: '0.2.0-dev sorts before 0.2.0-preview.2: nothing released in between',
+      );
       expect(prefs.getString(lastRunVersionKey), '0.2.0-dev');
       expect(await show(prefs, '0.2.0'), contains('- Two.'));
     });

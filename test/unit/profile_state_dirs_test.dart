@@ -52,8 +52,16 @@ void main() {
   /// What the engine does before the first pull (PlayEngine.prepare).
   void firstRun(String emu) => EmulatorLayout.of(emu).ensureFolders(dirs.dataDir(emu));
 
-  final psx = Game.fromJson({...gameJson(1, 'Ape Escape', fsName: 'Ape Escape (USA).chd'), 'platform_slug': 'psx', 'title_id': 'SCUS-94423'});
-  final ps2 = Game.fromJson({...gameJson(2, 'Ico', fsName: 'Ico (USA).chd'), 'platform_slug': 'ps2', 'title_id': 'SCUS-97113'});
+  final psx = Game.fromJson({
+    ...gameJson(1, 'Ape Escape', fsName: 'Ape Escape (USA).chd'),
+    'platform_slug': 'psx',
+    'title_id': 'SCUS-94423',
+  });
+  final ps2 = Game.fromJson({
+    ...gameJson(2, 'Ico', fsName: 'Ico (USA).chd'),
+    'platform_slug': 'ps2',
+    'title_id': 'SCUS-97113',
+  });
   final psxRom = r'D:\roms\psx\Ape Escape (USA).chd';
 
   group('DuckStation', () {
@@ -72,7 +80,11 @@ void main() {
       final told = IniFile(io.File(p.join(c.exeDir, 'settings.ini')).readAsStringSync()).get('Folders', 'SaveStates');
       expect(await strategy().stateDirectory(psx, psxRom), told, reason: 'during the session');
       await config.finish(c);
-      expect(await strategy().stateDirectory(psx, psxRom), told, reason: 'after it, with settings.ini back in the profile');
+      expect(
+        await strategy().stateDirectory(psx, psxRom),
+        told,
+        reason: 'after it, with settings.ini back in the profile',
+      );
     });
   });
 
@@ -88,15 +100,21 @@ void main() {
   });
 
   group('PPSSPP (#59)', () {
-    test(r"installed.txt makes <data> the memory stick: states in <data>\PSP\PPSSPP_STATE, where they're read", () async {
-      firstRun('ppsspp');
-      final c = ctx('ppsspp');
-      await ProfileLaunchConfig.of('ppsspp')!.prepare(c);
-      final stick = io.File(p.join(c.exeDir, 'installed.txt')).readAsStringSync().trim();
-      final strategy = PpssppSaveStrategy(dirs, platform: sandboxedPlatform(paths));
-      final psp = Game.fromJson({...gameJson(3, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp'});
-      expect(await strategy.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'), p.join(stick, 'PSP', 'PPSSPP_STATE'));
-    });
+    test(
+      r"installed.txt makes <data> the memory stick: states in <data>\PSP\PPSSPP_STATE, where they're read",
+      () async {
+        firstRun('ppsspp');
+        final c = ctx('ppsspp');
+        await ProfileLaunchConfig.of('ppsspp')!.prepare(c);
+        final stick = io.File(p.join(c.exeDir, 'installed.txt')).readAsStringSync().trim();
+        final strategy = PpssppSaveStrategy(dirs, platform: sandboxedPlatform(paths));
+        final psp = Game.fromJson({...gameJson(3, 'Daxter', fsName: 'Daxter (USA).iso'), 'platform_slug': 'psp'});
+        expect(
+          await strategy.stateDirectory(psp, r'D:\roms\psp\Daxter (USA).iso'),
+          p.join(stick, 'PSP', 'PPSSPP_STATE'),
+        );
+      },
+    );
   });
 
   group('Dolphin (#60)', () {
@@ -122,7 +140,8 @@ void main() {
   });
 
   group('RetroArch', () {
-    RetroArchSaveStrategy strategy() => RetroArchSaveStrategy(dirs, prefs: dirs.prefs, platform: sandboxedPlatform(paths));
+    RetroArchSaveStrategy strategy() =>
+        RetroArchSaveStrategy(dirs, prefs: dirs.prefs, platform: sandboxedPlatform(paths));
     String cfgPath() => p.join(paths.emulatorDir('retroarch'), 'retroarch.cfg');
     String? key(String name) =>
         RegExp('^$name\\s*=\\s*"([^"]*)"', multiLine: true).firstMatch(io.File(cfgPath()).readAsStringSync())?.group(1);
@@ -162,8 +181,10 @@ void main() {
         ..createSync(recursive: true)
         ..writeAsStringSync('');
       await launch.ensureDataFolders('pcsx2', 'pcsx2-qt.exe');
-      expect(await strategy.stateDirectory(ps2, r'D:\roms\ps2\Ico (USA).chd'),
-          p.join(dirs.dataDir('pcsx2'), 'PCSX2', 'sstates'));
+      expect(
+        await strategy.stateDirectory(ps2, r'D:\roms\ps2\Ico (USA).chd'),
+        p.join(dirs.dataDir('pcsx2'), 'PCSX2', 'sstates'),
+      );
     });
   });
 }

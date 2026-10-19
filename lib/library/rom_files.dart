@@ -48,7 +48,9 @@ class RomFiles {
   /// When the game landed on this PC: its file's or folder's time (a
   /// download is moved in whole, an unpack too). Null when it isn't here.
   DateTime? installedAt(Game g) {
-    final stat = io.FileSystemEntity.typeSync(pathFor(g)) == io.FileSystemEntityType.notFound ? null : io.FileStat.statSync(pathFor(g));
+    final stat = io.FileSystemEntity.typeSync(pathFor(g)) == io.FileSystemEntityType.notFound
+        ? null
+        : io.FileStat.statSync(pathFor(g));
     return stat?.modified;
   }
 

@@ -91,7 +91,7 @@ abstract final class GameIdResolver {
     if (!_discImages.contains(p.extension(name).toLowerCase())) return false;
     final discs = [
       for (final f in game.files)
-        if (_discImages.contains(p.extension('${f['file_name'] ?? ''}').toLowerCase())) '${f['file_name']}'
+        if (_discImages.contains(p.extension('${f['file_name'] ?? ''}').toLowerCase())) '${f['file_name']}',
     ]..sort();
     return discs.length > 1 && discs.contains(name) && discs.first != name;
   }

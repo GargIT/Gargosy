@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -108,8 +109,9 @@ void main() {
   test('stateScreenshot returns the state\'s screenshot as a PNG, through the given zstd', () async {
     final pixels = List.filled(2 * 2 * 4, 200);
     final screenshotEnv = await DuckstationTestEnv.create(
-        await base.createTemp('shot'),
-        zstd: (compressed) async => Uint8List.fromList(pixels));
+      await base.createTemp('shot'),
+      zstd: (compressed) async => Uint8List.fromList(pixels),
+    );
     await Directory(screenshotEnv.statesDir).create(recursive: true);
     final file = File(p.join(screenshotEnv.statesDir, stateName));
     await file.writeAsBytes(duckstationState(payload: [0x28, 0xB5, 0x2F, 0xFD, 1, 2, 3]));
@@ -145,8 +147,7 @@ void main() {
 
       // fsName makes the old ROM-stem match (`SLES-03508`) occur inside the
       // state's file name, so this fails if the states block comes back.
-      final stemGame = Game(
-          id: 'g1', name: 'Future Racer', fsName: 'SLES-03508.chd', platformSlug: 'psx', fileSize: 0);
+      final stemGame = Game(id: 'g1', name: 'Future Racer', fsName: 'SLES-03508.chd', platformSlug: 'psx', fileSize: 0);
       final files = await env.strategy.getSaveFiles(stemGame, romPath());
 
       expect(files.map((f) => p.basename(f.path)), ['SLES-03508_1.mcd']);
@@ -154,22 +155,21 @@ void main() {
 
     test('restoreSave ignores state entries inside a saves bundle', () async {
       await env.writeSettings('[MemoryCards]\nCard1Type = PerGame\n');
-      final bundle = zip({
-        'SLES-03508_1.mcd': List.filled(150, 5),
-        stateName: List.filled(150, 6),
-      });
+      final bundle = zip({'SLES-03508_1.mcd': List.filled(150, 5), stateName: List.filled(150, 6)});
 
       final ok = await env.strategy.restoreSave(game, romPath(), bundle, 'Future Racer.zip');
 
       expect(ok, isTrue);
       expect(await File(p.join(env.memcardsDir, 'SLES-03508_1.mcd')).exists(), isTrue);
-      expect(await File(p.join(env.statesDir, stateName)).exists(), isFalse,
-          reason: 'states are synced by StateSyncService, never restored from a saves bundle');
+      expect(
+        await File(p.join(env.statesDir, stateName)).exists(),
+        isFalse,
+        reason: 'states are synced by StateSyncService, never restored from a saves bundle',
+      );
     });
 
     test('restoreSave ignores a single-file state upload', () async {
-      final ok = await env.strategy
-          .restoreSave(game, romPath(), Uint8List.fromList(List.filled(150, 3)), stateName);
+      final ok = await env.strategy.restoreSave(game, romPath(), Uint8List.fromList(List.filled(150, 3)), stateName);
 
       expect(ok, isTrue);
       expect(await File(p.join(env.statesDir, stateName)).exists(), isFalse);

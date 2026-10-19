@@ -19,17 +19,31 @@ import '../helpers/fake_romm_auth.dart';
 void main() {
   late AppHarness h;
 
-  Future<Profile> addProfile(WidgetTester tester, String name, {String? pin, bool loggedIn = true, int userId = 7}) async {
+  Future<Profile> addProfile(
+    WidgetTester tester,
+    String name, {
+    String? pin,
+    bool loggedIn = true,
+    int userId = 7,
+  }) async {
     final store = h.container.read(profileStoreProvider);
-    final p = (await tester.runAsync(() => store.create(
+    final p = (await tester.runAsync(
+      () => store.create(
         name: name,
         colorIndex: 0,
         serverUrl: 'https://romm.example',
         rommUserId: userId,
         rommUsername: name.toLowerCase(),
-        pin: pin == null ? null : PinHash.create(pin, random: Random(3), iterations: 1000))))!;
+        pin: pin == null ? null : PinHash.create(pin, random: Random(3), iterations: 1000),
+      ),
+    ))!;
     if (loggedIn) {
-      await tester.runAsync(() => loginStoreForWidgetless(h, p).write(ProfilePaths(h.root, p.id).guard, const ProfileLogin(token: 't', kind: 'device')));
+      await tester.runAsync(
+        () => loginStoreForWidgetless(
+          h,
+          p,
+        ).write(ProfilePaths(h.root, p.id).guard, const ProfileLogin(token: 't', kind: 'device')),
+      );
     }
     return p;
   }
@@ -62,12 +76,22 @@ void main() {
     expect(find.byIcon(Icons.lock), findsOneWidget);
     await h.send(tester, GameAction.confirm);
     expect(find.text('PIN for Anna'), findsOneWidget);
-    for (final k in [LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit1]) {
+    for (final k in [
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit1,
+    ]) {
       await tester.sendKeyEvent(k);
     }
     await h.settle(tester);
     expect(find.text('Wrong PIN'), findsOneWidget);
-    for (final k in [LogicalKeyboardKey.digit4, LogicalKeyboardKey.digit7, LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit1]) {
+    for (final k in [
+      LogicalKeyboardKey.digit4,
+      LogicalKeyboardKey.digit7,
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit1,
+    ]) {
       await tester.sendKeyEvent(k);
     }
     await h.settle(tester, until: find.byType(AppShell));
@@ -90,7 +114,13 @@ void main() {
     await h.setUp(tester);
     final anna = await addProfile(tester, 'Anna', loggedIn: false, userId: 7);
     h.auth = FakeRommAuth(
-      start: const DeviceAuthStart(deviceCode: 'dc', userCode: 'CODE-1', verificationUrl: 'https://romm.example/pair/device?user_code=CODE-1', expiresIn: 600, interval: 1),
+      start: const DeviceAuthStart(
+        deviceCode: 'dc',
+        userCode: 'CODE-1',
+        verificationUrl: 'https://romm.example/pair/device?user_code=CODE-1',
+        expiresIn: 600,
+        interval: 1,
+      ),
       polls: [const DeviceApproved(token: 'bobs', deviceId: 'd')],
       me: const RommUser(id: 8, username: 'bob', avatarPath: '', oauthScopes: []),
     );
@@ -112,7 +142,12 @@ void main() {
     await tester.tap(find.text('Delete profile'));
     await tester.pumpAndSettle();
     expect(find.text('PIN for Anna'), findsOneWidget);
-    for (final k in [LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit2, LogicalKeyboardKey.digit3, LogicalKeyboardKey.digit4]) {
+    for (final k in [
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit2,
+      LogicalKeyboardKey.digit3,
+      LogicalKeyboardKey.digit4,
+    ]) {
       await tester.sendKeyEvent(k);
     }
     await h.settle(tester);
@@ -128,7 +163,10 @@ void main() {
     h = AppHarness();
     await h.setUp(tester);
     final anna = await addProfile(tester, 'Anna', loggedIn: false, userId: 7);
-    h.auth = FakeRommAuth(start: null, me: const RommUser(id: 8, username: 'bob', avatarPath: '', oauthScopes: []));
+    h.auth = FakeRommAuth(
+      start: null,
+      me: const RommUser(id: 8, username: 'bob', avatarPath: '', oauthScopes: []),
+    );
     await h.pumpApp(tester);
     await h.send(tester, GameAction.confirm);
     await tester.tap(find.text('Log in'));
@@ -138,7 +176,9 @@ void main() {
     expect(await tester.runAsync(() => loginStoreForWidgetless(h, anna).read()), isNull);
   });
 
-  testWidgets('if the login cannot be saved on re-login, the error shows and the profile does not open', (tester) async {
+  testWidgets('if the login cannot be saved on re-login, the error shows and the profile does not open', (
+    tester,
+  ) async {
     h = AppHarness();
     await h.setUp(tester);
     await addProfile(tester, 'Anna', loggedIn: false, userId: 7);

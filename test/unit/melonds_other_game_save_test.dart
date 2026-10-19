@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -128,9 +129,11 @@ void main() {
     });
 
     test('a zip with a .srm is extracted (was skipped before)', () async {
-      final zip = ZipEncoder().encode(Archive()
-        ..addFile(ArchiveFile('Test Monster - White Version.srm', 2, [4, 4]))
-        ..addFile(ArchiveFile('freegosy_sync.txt', 1, [0])));
+      final zip = ZipEncoder().encode(
+        Archive()
+          ..addFile(ArchiveFile('Test Monster - White Version.srm', 2, [4, 4]))
+          ..addFile(ArchiveFile('freegosy_sync.txt', 1, [0])),
+      );
       await Directory(romDir).create(recursive: true);
       await strategy.restoreSave(game, romPath, Uint8List.fromList(zip), 'save.zip');
       expect(File(p.join(romDir, 'Test Monster - White Version.sav')).readAsBytesSync(), [4, 4]);

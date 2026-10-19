@@ -6,7 +6,12 @@ import 'package:gargosy/library/upload_queue.dart';
 import '../helpers/game_fixtures.dart';
 
 BackupEntry _entry(int minute, {bool synced = false}) => BackupEntry(
-    timestamp: DateTime(2026, 10, 9, 20, minute), md5Hash: 'h$minute', localZipPath: 'z$minute.zip', isSynced: synced, emulatorId: 'pcsx2');
+  timestamp: DateTime(2026, 10, 9, 20, minute),
+  md5Hash: 'h$minute',
+  localZipPath: 'z$minute.zip',
+  isSynced: synced,
+  emulatorId: 'pcsx2',
+);
 
 void main() {
   late List<({String romId, BackupEntry entry})> waiting;

@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
@@ -47,8 +48,6 @@ void main() {
     }
 
     group('cross-platform ZIP extraction', () {
-
-
       test('.zip extracts on simulated Windows', () async {
         final zipPath = await createZip({'test.txt': 'Hello!'});
         final destDir = Directory(p.join(tempDir.path, 'ext_windows'));
@@ -83,7 +82,6 @@ void main() {
     });
 
     group('platform guards', () {
-
       test('.dmg throws on simulated Windows', () async {
         final dmgPath = p.join(tempDir.path, 'test.dmg');
         await File(dmgPath).writeAsBytes([0x00, 0x01]);
@@ -92,15 +90,16 @@ void main() {
         final service = createService('windows');
         expect(
           () => service.extract(dmgPath, destDir.path),
-          throwsA(isA<Exception>().having(
-            (e) => e.toString(), 'message', contains('DMG extraction is only supported on macOS'),
-          )),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('DMG extraction is only supported on macOS'),
+            ),
+          ),
         );
       });
-
-
     });
-
 
     group('magic byte detection', () {
       test('unknown extension with ZIP magic extracts on all platforms', () async {
@@ -112,8 +111,7 @@ void main() {
           await destDir.create();
           final service = createService(os);
           await service.extract(renamedPath, destDir.path);
-          expect(File(p.join(destDir.path, 'magic.txt')).existsSync(), isTrue,
-              reason: 'Failed on $os');
+          expect(File(p.join(destDir.path, 'magic.txt')).existsSync(), isTrue, reason: 'Failed on $os');
         }
       });
 
@@ -141,4 +139,3 @@ class _MinimalDirectoryService extends Fake implements DirectoryService {
   @override
   Future<String?> resolveSevenZipPath() async => null;
 }
-

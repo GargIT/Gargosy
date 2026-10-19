@@ -28,8 +28,12 @@ class FileLogSink {
   /// A new log file in [dir] (made when missing), the oldest beyond [keep]
   /// deleted. Null when the folder can't be written: Gargosy starts without
   /// a file log rather than not at all.
-  static FileLogSink? open(String dir,
-      {int keep = defaultKeep, int maxBytes = defaultMaxBytes, DateTime Function()? clock}) {
+  static FileLogSink? open(
+    String dir, {
+    int keep = defaultKeep,
+    int maxBytes = defaultMaxBytes,
+    DateTime Function()? clock,
+  }) {
     try {
       io.Directory(dir).createSync(recursive: true);
       final stamp = _stamp((clock ?? DateTime.now)());
@@ -53,12 +57,9 @@ class FileLogSink {
 
   /// Deletes the oldest logs so [keep] remain (names sort by time).
   static void _prune(String dir, int keep) {
-    final logs = io.Directory(dir)
-        .listSync()
-        .whereType<io.File>()
-        .where((f) => _name.hasMatch(p.basename(f.path)))
-        .toList()
-      ..sort((a, b) => _order(p.basename(a.path)).compareTo(_order(p.basename(b.path))));
+    final logs =
+        io.Directory(dir).listSync().whereType<io.File>().where((f) => _name.hasMatch(p.basename(f.path))).toList()
+          ..sort((a, b) => _order(p.basename(a.path)).compareTo(_order(p.basename(b.path))));
     for (final old in logs.take(math.max(0, logs.length - keep))) {
       try {
         old.deleteSync();
@@ -84,7 +85,9 @@ class FileLogSink {
     try {
       final text = line.length > maxLineChars ? '${line.substring(0, maxLineChars)} … (line cut)' : line;
       final bytes = utf8.encode('$text\r\n');
-      final last = utf8.encode('--- The log reached ${_size(maxBytes)}; the rest of this session is not written. ---\r\n');
+      final last = utf8.encode(
+        '--- The log reached ${_size(maxBytes)}; the rest of this session is not written. ---\r\n',
+      );
       // The last line always has room kept for it.
       if (_written + bytes.length > maxBytes - last.length) {
         file.writeFromSync(last);
@@ -101,8 +104,8 @@ class FileLogSink {
   static String _size(int bytes) => bytes >= 1024 * 1024
       ? '${bytes ~/ (1024 * 1024)} MB'
       : bytes >= 1024
-          ? '${bytes ~/ 1024} KB'
-          : '$bytes bytes';
+      ? '${bytes ~/ 1024} KB'
+      : '$bytes bytes';
 
   void close() {
     try {

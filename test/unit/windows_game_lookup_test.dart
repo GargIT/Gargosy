@@ -2,6 +2,7 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: curly_braces_in_flow_control_structures
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/rom_constants.dart';
@@ -46,12 +47,7 @@ void main() {
     });
 
     test('findMainRomInFolder returns folder path for Windows games', () async {
-      final game = Game(
-        id: '117',
-        name: 'Hacknet',
-        platformSlug: 'win',
-        fileSize: 0,
-      );
+      final game = Game(id: '117', name: 'Hacknet', platformSlug: 'win', fileSize: 0);
 
       final result = await RomLookupService.findMainRomInFolder(game, gameDir.path);
 
@@ -61,12 +57,7 @@ void main() {
     });
 
     test('findMainRomInFolder does NOT return random .dll/.xnb file for Windows', () async {
-      final game = Game(
-        id: '117',
-        name: 'Hacknet',
-        platformSlug: 'win',
-        fileSize: 0,
-      );
+      final game = Game(id: '117', name: 'Hacknet', platformSlug: 'win', fileSize: 0);
 
       final result = await RomLookupService.findMainRomInFolder(game, gameDir.path);
 
@@ -78,18 +69,9 @@ void main() {
     });
 
     test('findExistingRomPath finds Hacknet folder', () async {
-      final game = Game(
-        id: '117',
-        name: 'Hacknet',
-        platformSlug: 'win',
-        fsName: 'Hacknet',
-        fileSize: 0,
-      );
+      final game = Game(id: '117', name: 'Hacknet', platformSlug: 'win', fsName: 'Hacknet', fileSize: 0);
 
-      final result = await RomLookupService.findExistingRomPath(
-        game,
-        tempDir.path,
-      );
+      final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
 
       expect(result, isNotNull);
       // Should find the Hacknet folder
@@ -149,9 +131,12 @@ class _WindowsGameServiceForTest {
           final relPath = entity.path.substring(gameDir.length).toLowerCase();
           if (relPath.contains('__macosx') || relPath.contains('_commonredist')) continue;
           final name = basename.toLowerCase();
-          if (name.contains('uninstall') || name.contains('setup') ||
-              name.contains('redist') || name.contains('vcredist') ||
-              name.contains('dotnet')) continue;
+          if (name.contains('uninstall') ||
+              name.contains('setup') ||
+              name.contains('redist') ||
+              name.contains('vcredist') ||
+              name.contains('dotnet'))
+            continue;
           exeFiles.add(entity);
         }
       }

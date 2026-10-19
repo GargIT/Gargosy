@@ -45,9 +45,9 @@ Iterable<String> _coreFoldersFor(String name, int bytes) sync* {
 /// The files in `bios\`, listed once for several [find]s.
 class BiosFiles {
   BiosFiles(this.bios)
-      : _files = io.Directory(bios).existsSync()
-            ? io.Directory(bios).listSync(recursive: true, followLinks: false).whereType<io.File>().toList()
-            : const [];
+    : _files = io.Directory(bios).existsSync()
+          ? io.Directory(bios).listSync(recursive: true, followLinks: false).whereType<io.File>().toList()
+          : const [];
 
   final String bios;
   final List<io.File> _files;
@@ -92,9 +92,11 @@ void _place(io.File from, String to, PathGuard guard) {
   if (!_hardLink(from.path, dest.path)) from.copySync(dest.path);
 }
 
-final _createHardLink = DynamicLibrary.open('kernel32.dll').lookupFunction<
-    Int32 Function(Pointer<Utf16> newFile, Pointer<Utf16> existing, Pointer<Void> security),
-    int Function(Pointer<Utf16> newFile, Pointer<Utf16> existing, Pointer<Void> security)>('CreateHardLinkW');
+final _createHardLink = DynamicLibrary.open('kernel32.dll')
+    .lookupFunction<
+      Int32 Function(Pointer<Utf16> newFile, Pointer<Utf16> existing, Pointer<Void> security),
+      int Function(Pointer<Utf16> newFile, Pointer<Utf16> existing, Pointer<Void> security)
+    >('CreateHardLinkW');
 
 bool _hardLink(String existing, String newFile) {
   // Windows' CreateHardLinkW; elsewhere (tests on Linux) a copy instead.

@@ -9,9 +9,11 @@ void showToast(BuildContext context, String message) {
   if (messenger == null) return;
   messenger
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(message, style: const TextStyle(color: GColors.fg)),
-      backgroundColor: GColors.panel,
-      behavior: SnackBarBehavior.floating,
-    ));
+    ..showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: GColors.fg)),
+        backgroundColor: GColors.panel,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
 }

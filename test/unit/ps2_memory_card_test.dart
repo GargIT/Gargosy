@@ -42,8 +42,10 @@ void main() {
     }
   }
 
-  Ps2CardSave save(String name, Map<String, Uint8List> files) =>
-      Ps2CardSave(name: name, files: [for (final e in files.entries) Ps2CardFile(name: e.key, data: e.value)]);
+  Ps2CardSave save(String name, Map<String, Uint8List> files) => Ps2CardSave(
+    name: name,
+    files: [for (final e in files.entries) Ps2CardFile(name: e.key, data: e.value)],
+  );
 
   group('reading', () {
     test('a formatted card has no saves and all but the root cluster free', () {
@@ -58,9 +60,15 @@ void main() {
       for (final ecc in [true, false]) {
         final name = 'ecc: $ecc';
         final card = Ps2MemoryCard.parse(fixture('three_saves', ecc: ecc));
-        expect(card.saves.map((s) => s.name), ['BASLUS-20502', 'BESCES-52438GAMEDATA', 'BASLUS-21026-PROFILE'],
-            reason: name);
-        final files = {for (final s in card.saves) for (final f in s.files) '${s.name}/${f.name}': f.data};
+        expect(card.saves.map((s) => s.name), [
+          'BASLUS-20502',
+          'BESCES-52438GAMEDATA',
+          'BASLUS-21026-PROFILE',
+        ], reason: name);
+        final files = {
+          for (final s in card.saves)
+            for (final f in s.files) '${s.name}/${f.name}': f.data,
+        };
         expect(files, {
           'BASLUS-20502/BASLUS-20502': pattern(1, 3000),
           'BASLUS-20502/icon.sys': pattern(2, 964),
@@ -113,17 +121,21 @@ void main() {
 
     // A card written by this class: the root at cluster 0, then each save's
     // directory and files packed in order.
-    final one = Ps2MemoryCard.parse(Ps2MemoryCard.formatted(now: DateTime.utc(2026)))
-        .withSaves([save('BASLUS-20502', {'data': pattern(1, 5000)})], (_) => false);
+    final one = Ps2MemoryCard.parse(Ps2MemoryCard.formatted(now: DateTime.utc(2026))).withSaves([
+      save('BASLUS-20502', {'data': pattern(1, 5000)}),
+    ], (_) => false);
 
     test('the helper finds the FAT', () {
       // root (3 entries: 2 clusters), save dir (3 entries: 2 clusters), file (5).
-      expect([for (var n = 0; n < 10; n++) fatOf(one, n)], [
-        0x80000001, 0xFFFFFFFF, // root
-        0x80000003, 0xFFFFFFFF, // save directory
-        0x80000005, 0x80000006, 0x80000007, 0x80000008, 0xFFFFFFFF, // file
-        0x7FFFFFFF, // free
-      ]);
+      expect(
+        [for (var n = 0; n < 10; n++) fatOf(one, n)],
+        [
+          0x80000001, 0xFFFFFFFF, // root
+          0x80000003, 0xFFFFFFFF, // save directory
+          0x80000005, 0x80000006, 0x80000007, 0x80000008, 0xFFFFFFFF, // file
+          0x7FFFFFFF, // free
+        ],
+      );
       expect(Ps2MemoryCard.parse(one).saves.single.files.single.data, pattern(1, 5000));
     });
 
@@ -158,13 +170,15 @@ void main() {
         expect(now.created, kept.created);
         expect(now.modified, kept.modified);
         List<Object> described(Ps2CardSave s) => [
-              for (final f in s.files) [f.name, f.data.toList(), f.mode, f.attr, f.created.toList(), f.modified.toList()],
-            ];
+          for (final f in s.files) [f.name, f.data.toList(), f.mode, f.attr, f.created.toList(), f.modified.toList()],
+        ];
         expect(described(now), described(kept));
       }
       final replaced = after.saves.last;
-      expect({for (final f in replaced.files) f.name: f.data},
-          {'BASLUS-20502': pattern(9, 7000), 'icon.sys': pattern(8, 964)});
+      expect(
+        {for (final f in replaced.files) f.name: f.data},
+        {'BASLUS-20502': pattern(9, 7000), 'icon.sys': pattern(8, 964)},
+      );
       expectValidEcc(bytes);
     });
 
@@ -173,16 +187,21 @@ void main() {
       final bytes = Ps2MemoryCard.parse(source).withSaves(const [], (n) => n == 'BASLUS-21026-PROFILE');
       Uint8List clusters(Uint8List card, int from, int to) => card.sublist(from * 2 * pageRaw, to * 2 * pageRaw);
       expect(clusters(bytes, 0, 9), clusters(source, 0, 9), reason: 'superblock, pages 1-15, indirect FAT');
-      expect(bytes.sublist((41 + 8135) * 2 * pageRaw), source.sublist((41 + 8135) * 2 * pageRaw),
-          reason: 'the two backup blocks');
+      expect(
+        bytes.sublist((41 + 8135) * 2 * pageRaw),
+        source.sublist((41 + 8135) * 2 * pageRaw),
+        reason: 'the two backup blocks',
+      );
       expect(Ps2MemoryCard.parse(bytes).saves.map((s) => s.name), ['BASLUS-20502', 'BESCES-52438GAMEDATA']);
     });
 
     test('the same saves give the same card', () {
       final card = Ps2MemoryCard.parse(fixture('three_saves'));
       final incoming = save('BASLUS-20502', {'x': pattern(1, 10)});
-      expect(card.withSaves([incoming], (n) => n == 'BASLUS-20502'),
-          card.withSaves([incoming], (n) => n == 'BASLUS-20502'));
+      expect(
+        card.withSaves([incoming], (n) => n == 'BASLUS-20502'),
+        card.withSaves([incoming], (n) => n == 'BASLUS-20502'),
+      );
     });
 
     test('a card without ECC stays without ECC', () {
@@ -193,7 +212,9 @@ void main() {
 
     test('an incoming save with the name of a save that stays replaces it', () {
       final card = Ps2MemoryCard.parse(fixture('three_saves'));
-      final bytes = card.withSaves([save('BASLUS-21026-PROFILE', {'p': pattern(1, 1)})], (_) => false);
+      final bytes = card.withSaves([
+        save('BASLUS-21026-PROFILE', {'p': pattern(1, 1)}),
+      ], (_) => false);
       final after = Ps2MemoryCard.parse(bytes);
       expect(after.saves.where((s) => s.name == 'BASLUS-21026-PROFILE'), hasLength(1));
       expect(after.saves.last.files.single.name, 'p');
@@ -202,21 +223,29 @@ void main() {
     test('a save that does not fit is refused and the card is not changed', () {
       final source = fixture('three_saves');
       final card = Ps2MemoryCard.parse(source);
-      expect(() => card.withSaves([save('BIG', {'big': Uint8List(8135 * 1024)})], (_) => false),
-          throwsA(isA<Ps2CardFullException>()));
+      expect(
+        () => card.withSaves([
+          save('BIG', {'big': Uint8List(8135 * 1024)}),
+        ], (_) => false),
+        throwsA(isA<Ps2CardFullException>()),
+      );
       expect(Ps2MemoryCard.parse(source).saves, hasLength(3));
     });
 
     test('a save that exactly fills the card fits', () {
       final card = Ps2MemoryCard.parse(Ps2MemoryCard.formatted(now: DateTime.utc(2026)));
       // root (3 entries: 2 clusters) + save dir (3 entries: 2 clusters) + file.
-      final bytes = card.withSaves([save('FULL', {'f': Uint8List((8135 - 4) * 1024)})], (_) => false);
+      final bytes = card.withSaves([
+        save('FULL', {'f': Uint8List((8135 - 4) * 1024)}),
+      ], (_) => false);
       expect(Ps2MemoryCard.parse(bytes).freeClusters, 0);
     });
 
     test('many saves spill the root over several clusters', () {
       final card = Ps2MemoryCard.parse(Ps2MemoryCard.formatted(now: DateTime.utc(2026)));
-      final many = [for (var i = 0; i < 40; i++) save('BASLUS-2${i.toString().padLeft(4, '0')}', {'d': pattern(i, 100)})];
+      final many = [
+        for (var i = 0; i < 40; i++) save('BASLUS-2${i.toString().padLeft(4, '0')}', {'d': pattern(i, 100)}),
+      ];
       final after = Ps2MemoryCard.parse(card.withSaves(many, (_) => false));
       expect(after.saves.map((s) => s.name), many.map((s) => s.name));
       expect(after.saves[39].files.single.data, pattern(39, 100));
@@ -235,7 +264,12 @@ void main() {
 
     test('names longer than the card allows are refused', () {
       final card = Ps2MemoryCard.parse(Ps2MemoryCard.formatted(now: DateTime.utc(2026)));
-      expect(() => card.withSaves([save('X' * 33, {'f': Uint8List(1)})], (_) => false), throwsArgumentError);
+      expect(
+        () => card.withSaves([
+          save('X' * 33, {'f': Uint8List(1)}),
+        ], (_) => false),
+        throwsArgumentError,
+      );
     });
   });
 

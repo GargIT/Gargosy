@@ -14,7 +14,8 @@ import '../helpers/game_id_test_env.dart';
 
 void main() {
   const platform = PlatformInfo('windows', environment: {'APPDATA': ''});
-  Game game({String? titleId}) => Game(id: 's', name: 'Some Game', platformSlug: 'switch', fileSize: 0, titleId: titleId);
+  Game game({String? titleId}) =>
+      Game(id: 's', name: 'Some Game', platformSlug: 'switch', fileSize: 0, titleId: titleId);
 
   late Directory tmp;
   late String romPath; // an empty .nsp: no title id in its header or its name
@@ -33,8 +34,10 @@ void main() {
       test('RomM\'s title id, upper case, before the ROM and any cached mapping', () async {
         final strategy = await make();
         strategy.setManualMapping('0100000000000000');
-        expect(await strategy.resolveTitleId(r'C:\nope\Some Game.nsp', game(titleId: '0100abcd12345000')),
-            '0100ABCD12345000');
+        expect(
+          await strategy.resolveTitleId(r'C:\nope\Some Game.nsp', game(titleId: '0100abcd12345000')),
+          '0100ABCD12345000',
+        );
       });
 
       test('without it: the cached mapping, as before', () async {
@@ -71,7 +74,11 @@ void main() {
       final eden = EdenSaveStrategy(await StubDirectoryService.create(exePath: exe), platform: platform);
 
       final ok = await eden.restoreSave(
-          game(titleId: '0100ABCD12345000'), r'C:\nope\Some Game.nsp', Uint8List.fromList([7, 7, 7]), 'save.dat');
+        game(titleId: '0100ABCD12345000'),
+        r'C:\nope\Some Game.nsp',
+        Uint8List.fromList([7, 7, 7]),
+        'save.dat',
+      );
 
       expect(ok, isTrue);
       expect(File(p.join(profile, '0100ABCD12345000', 'save.dat')).readAsBytesSync(), [7, 7, 7]);

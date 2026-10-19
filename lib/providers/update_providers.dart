@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import 'dart:io' as io;
 
 import 'package:dio/dio.dart';
@@ -24,33 +25,44 @@ final updateAutoCheckEnabledProvider = Provider<bool>((ref) => true);
 
 /// Ends Gargosy the normal way (settings already written), so the updater
 /// can replace its files; tests replace it.
-final appQuitProvider = Provider<Future<void> Function()>((ref) => () async => io.exit(0));
+final appQuitProvider = Provider<Future<void> Function()>(
+  (ref) =>
+      () async => io.exit(0),
+);
 
-final installedVersionProvider =
-    Provider<Version>((ref) => UpdateVersion.parse(AppConstants.version) ?? Version.none);
+final installedVersionProvider = Provider<Version>((ref) => UpdateVersion.parse(AppConstants.version) ?? Version.none);
 
 /// A Dio for GitHub; tests replace it.
-final updateDioProvider = Provider<Dio>((ref) => Dio(BaseOptions(
+final updateDioProvider = Provider<Dio>(
+  (ref) => Dio(
+    BaseOptions(
       connectTimeout: const Duration(seconds: 15),
       headers: {'User-Agent': 'Gargosy/${AppConstants.version}'},
-    )));
+    ),
+  ),
+);
 
-final updateCheckerProvider = Provider<UpdateChecker>((ref) => UpdateChecker(
-      dio: ref.watch(updateDioProvider),
-      prefs: ref.watch(appPreferencesProvider),
-      installed: ref.watch(installedVersionProvider),
-    ));
+final updateCheckerProvider = Provider<UpdateChecker>(
+  (ref) => UpdateChecker(
+    dio: ref.watch(updateDioProvider),
+    prefs: ref.watch(appPreferencesProvider),
+    installed: ref.watch(installedVersionProvider),
+  ),
+);
 
 final updateDownloaderProvider = Provider<UpdateDownloader>(
-    (ref) => UpdateDownloader(dio: ref.watch(updateDioProvider), root: ref.watch(appRootProvider)));
+  (ref) => UpdateDownloader(dio: ref.watch(updateDioProvider), root: ref.watch(appRootProvider)),
+);
 
-final updateInstallerProvider = Provider<UpdateInstaller>((ref) => UpdateInstaller(
-      root: ref.watch(appRootProvider),
-      pid: io.pid,
-      args: ref.watch(launchArgsProvider),
-      currentVersion: AppConstants.version,
-      platform: PlatformInfo.current,
-    ));
+final updateInstallerProvider = Provider<UpdateInstaller>(
+  (ref) => UpdateInstaller(
+    root: ref.watch(appRootProvider),
+    pid: io.pid,
+    args: ref.watch(launchArgsProvider),
+    currentVersion: AppConstants.version,
+    platform: PlatformInfo.current,
+  ),
+);
 
 /// The update check as the UI shows it.
 class UpdateState {

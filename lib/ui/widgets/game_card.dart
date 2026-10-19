@@ -38,31 +38,46 @@ class GameCard extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        GFocusable(
-          autofocus: autofocus,
-          focusNode: focusNode,
-          onActivate: onOpen,
-          onFavorite: onFavorite,
-          semanticLabel: game.displayName,
-          child: Stack(children: [
-            CoverImage(url: coverUrl, title: game.displayName, width: width, height: coverHeight),
-            Positioned(
-              top: GSpace.s2,
-              right: GSpace.s2,
-              child: Row(children: [
-                if (favourite) const _Mark(Icons.favorite, GColors.fav),
-                if (downloaded) const _Mark(Icons.download_done, GColors.success),
-              ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GFocusable(
+            autofocus: autofocus,
+            focusNode: focusNode,
+            onActivate: onOpen,
+            onFavorite: onFavorite,
+            semanticLabel: game.displayName,
+            child: Stack(
+              children: [
+                CoverImage(url: coverUrl, title: game.displayName, width: width, height: coverHeight),
+                Positioned(
+                  top: GSpace.s2,
+                  right: GSpace.s2,
+                  child: Row(
+                    children: [
+                      if (favourite) const _Mark(Icons.favorite, GColors.fav),
+                      if (downloaded) const _Mark(Icons.download_done, GColors.success),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ]),
-        ),
-        const SizedBox(height: GSpace.s2),
-        Text(game.displayName,
-            maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600)),
-        Text(game.platformDisplayName ?? '',
-            maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
-      ]),
+          ),
+          const SizedBox(height: GSpace.s2),
+          Text(
+            game.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            game.platformDisplayName ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -74,9 +89,9 @@ class _Mark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(left: GSpace.s1),
-        padding: const EdgeInsets.all(3),
-        decoration: const BoxDecoration(color: GColors.panel, shape: BoxShape.circle),
-        child: Icon(icon, size: 14, color: color),
-      );
+    margin: const EdgeInsets.only(left: GSpace.s1),
+    padding: const EdgeInsets.all(3),
+    decoration: const BoxDecoration(color: GColors.panel, shape: BoxShape.circle),
+    child: Icon(icon, size: 14, color: color),
+  );
 }

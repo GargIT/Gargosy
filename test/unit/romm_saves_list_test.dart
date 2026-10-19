@@ -22,12 +22,16 @@ void main() {
   });
 
   test('a listed game gives its saves, newest first', () async {
-    adapter.onGet('/api/saves', (server) => server.reply(200, {
-          'items': [
-            {'id': 1, 'file_name': 'old.srm', 'updated_at': '2026-09-01T00:00:00Z'},
-            {'id': 2, 'file_name': 'new.srm', 'updated_at': '2026-10-01T00:00:00Z'},
-          ]
-        }), queryParameters: {'rom_id': '7'});
+    adapter.onGet(
+      '/api/saves',
+      (server) => server.reply(200, {
+        'items': [
+          {'id': 1, 'file_name': 'old.srm', 'updated_at': '2026-09-01T00:00:00Z'},
+          {'id': 2, 'file_name': 'new.srm', 'updated_at': '2026-10-01T00:00:00Z'},
+        ],
+      }),
+      queryParameters: {'rom_id': '7'},
+    );
 
     final saves = await service.getSavesListOrNull('7');
 

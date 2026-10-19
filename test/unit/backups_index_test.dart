@@ -25,11 +25,12 @@ void main() {
   });
 
   BackupEntry entry(ProfilePaths of, String name, {DateTime? at, String? emulator, String? core}) => BackupEntry(
-      timestamp: at ?? DateTime(2026, 10, 14, 9, 30, 15, 250),
-      md5Hash: 'md5-$name',
-      localZipPath: p.join(of.backups, '$name.zip'),
-      emulatorId: emulator,
-      coreId: core);
+    timestamp: at ?? DateTime(2026, 10, 14, 9, 30, 15, 250),
+    md5Hash: 'md5-$name',
+    localZipPath: p.join(of.backups, '$name.zip'),
+    emulatorId: emulator,
+    coreId: core,
+  );
 
   test("a profile's list is backups/index.json, and reads back as it was written", () async {
     final repo = BackupRepository(store: JsonBackupStore(anna));
@@ -82,9 +83,11 @@ void main() {
 
   test('an entry that makes no sense is skipped, the rest still read', () {
     io.Directory(anna.backups).createSync(recursive: true);
-    io.File(p.join(anna.backups, 'index.json')).writeAsStringSync('{"version": 1, "games": {"12": ['
-        '{"time": "nope", "md5": "x", "zip": "x.zip"},'
-        '{"time": "2026-10-14T09:00:00.000", "md5": "ok", "zip": "ok.zip", "synced": true}]}}');
+    io.File(p.join(anna.backups, 'index.json')).writeAsStringSync(
+      '{"version": 1, "games": {"12": ['
+      '{"time": "nope", "md5": "x", "zip": "x.zip"},'
+      '{"time": "2026-10-14T09:00:00.000", "md5": "ok", "zip": "ok.zip", "synced": true}]}}',
+    );
     final read = BackupRepository(store: JsonBackupStore(anna)).getEntries('12');
     expect(read.single.md5Hash, 'ok');
     expect(read.single.emulatorId, isNull);
@@ -125,8 +128,9 @@ void main() {
 
   test('an entry with no synced mark counts as synced, as the Hive list read it', () {
     io.Directory(anna.backups).createSync(recursive: true);
-    io.File(p.join(anna.backups, 'index.json'))
-        .writeAsStringSync('{"version": 1, "games": {"12": [{"time": "2026-10-14T09:00:00.000", "md5": "m", "zip": "m.zip"}]}}');
+    io.File(p.join(anna.backups, 'index.json')).writeAsStringSync(
+      '{"version": 1, "games": {"12": [{"time": "2026-10-14T09:00:00.000", "md5": "m", "zip": "m.zip"}]}}',
+    );
     expect(BackupRepository(store: JsonBackupStore(anna)).getEntries('12').single.isSynced, isTrue);
   });
 }

@@ -44,10 +44,10 @@ class SaveActions {
 
   /// The unclaimed save [name] is [game]'s (#56): claimed and uploaded.
   Future<String?> claim(Game game, SaveMaker who, String name) => _run(game, 'take the save', (e) async {
-        if (!await e.claimSave(game, who, name)) {
-          throw StateError("it's this game's now, but RomM didn't take it yet; it goes up with the next upload");
-        }
-      });
+    if (!await e.claimSave(game, who, name)) {
+      throw StateError("it's this game's now, but RomM didn't take it yet; it goes up with the next upload");
+    }
+  });
 
   Future<String?> restore(Game game, SaveEntry save, SaveMaker target) =>
       _run(game, 'put the save on this PC', (e) => e.restore(game, save, target));
@@ -55,8 +55,8 @@ class SaveActions {
   Future<String?> delete(Game game, SaveEntry save) => _run(game, 'delete the save', (e) => e.deleteSave(game, save));
 
   Future<String?> upload(Game game, SaveMaker who) => _run(game, 'upload the save', (e) async {
-        if (!await e.upload(game, who)) throw StateError("RomM didn't take it");
-      });
+    if (!await e.upload(game, who)) throw StateError("RomM didn't take it");
+  });
 
   Future<String?> backUpNow(Game game, SaveMaker who) => _run(game, 'back up the save', (e) => e.backUpNow(game, who));
 

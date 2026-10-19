@@ -20,7 +20,10 @@ Future<bool> waitForSyncIdle(BuildContext context, WidgetRef ref) async {
   final activity = ref.read(syncActivityProvider);
   final queue = ref.read(uploadQueueProvider).valueOrNull;
   if (syncBusyWith(activity, queue) == null) return true;
-  final done = await showDialog<bool>(context: context, builder: (_) => _SyncWait(activity: activity, queue: queue));
+  final done = await showDialog<bool>(
+    context: context,
+    builder: (_) => _SyncWait(activity: activity, queue: queue),
+  );
   return done == true;
 }
 
@@ -59,22 +62,27 @@ class _SyncWaitState extends State<_SyncWait> {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Material(
-          color: GColors.panel,
-          borderRadius: BorderRadius.circular(GRadius.lg),
-          child: Padding(
-            padding: const EdgeInsets.all(GSpace.s6),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.hourglass_top, size: 40, color: GColors.primary),
-              const SizedBox(height: GSpace.s4),
-              Text('Waiting for: ${syncBusyWith(widget.activity, widget.queue) ?? 'the sync'}',
-                  style: const TextStyle(fontSize: GFont.lg)),
-              const SizedBox(height: GSpace.s2),
-              const Text('It goes on by itself when it is done.', style: TextStyle(color: GColors.fgMuted)),
-              const SizedBox(height: GSpace.s4),
-              const HintBar(hints: [Hint(GameAction.back, 'Stay on this profile')]),
-            ]),
-          ),
+    child: Material(
+      color: GColors.panel,
+      borderRadius: BorderRadius.circular(GRadius.lg),
+      child: Padding(
+        padding: const EdgeInsets.all(GSpace.s6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.hourglass_top, size: 40, color: GColors.primary),
+            const SizedBox(height: GSpace.s4),
+            Text(
+              'Waiting for: ${syncBusyWith(widget.activity, widget.queue) ?? 'the sync'}',
+              style: const TextStyle(fontSize: GFont.lg),
+            ),
+            const SizedBox(height: GSpace.s2),
+            const Text('It goes on by itself when it is done.', style: TextStyle(color: GColors.fgMuted)),
+            const SizedBox(height: GSpace.s4),
+            const HintBar(hints: [Hint(GameAction.back, 'Stay on this profile')]),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }

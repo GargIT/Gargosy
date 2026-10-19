@@ -2,6 +2,7 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/romm_service.dart';
@@ -33,19 +34,14 @@ void main() {
     when(mockStrategyRegistry.getPreferredEmulatorId(any)).thenReturn(null);
     when(mockStrategyRegistry.getStrategyForSlug(any)).thenReturn(null);
     when(mockStrategyRegistry.getGameEmulatorPreference(any)).thenReturn(null);
-    when(mockDirectoryService.getEmulatorAppSupportDirectory(any,
-            platformSlug: anyNamed('platformSlug')))
+    when(mockDirectoryService.getEmulatorAppSupportDirectory(any, platformSlug: anyNamed('platformSlug')))
         .thenAnswer((_) async => '/nonexistent_directory_for_testing');
-    when(mockDirectoryService.getEmulatorDirectory('temp'))
-        .thenAnswer((_) async => Directory.systemTemp.path);
+    when(mockDirectoryService.getEmulatorDirectory('temp')).thenAnswer((_) async => Directory.systemTemp.path);
 
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-    when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId')))
-        .thenAnswer((_) async => null);
-    when(mockRommService.fetchCapabilities())
-        .thenAnswer((_) async => RommCapabilities.unknown());
-    service = SaveSyncService(
-        mockRommService, mockDirectoryService, mockStrategyRegistry, prefs);
+    when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
+    when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities.unknown());
+    service = SaveSyncService(mockRommService, mockDirectoryService, mockStrategyRegistry, prefs);
   });
 
   group('Filename normalization', () {
@@ -99,37 +95,41 @@ void main() {
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
 
-      final game =
-          Game(id: 'slot1', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final game = Game(id: 'slot1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
       await service.pushSaves(game, romPath);
 
       // Verify uploadSave was called — the slot defaults to 'gargosy'
       // inside romm_service.dart when null is passed
-      verify(mockRommService.uploadSave(
-        'slot1',
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(1);
+      verify(
+        mockRommService.uploadSave(
+          'slot1',
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(1);
 
       await tempDir.delete(recursive: true);
     });
@@ -140,31 +140,31 @@ void main() {
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
 
-      final game =
-          Game(id: 'slot2', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final game = Game(id: 'slot2', name: 'game', platformSlug: 'gba', fileSize: 0);
 
       String? capturedSlot;
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((invocation) async {
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((invocation) async {
         capturedSlot = invocation.namedArguments[#slot] as String?;
         return (ok: true, conflict: null, saved: null);
       });
 
       await service.pushSaves(game, romPath);
 
-      expect(capturedSlot, isNot(contains('freegosy-srm_')),
-          reason: 'Slot must NOT contain timestamp pattern');
-      expect(capturedSlot, isNot(contains('wingosy-srm_')),
-          reason: 'Slot must NOT use old wingosy pattern');
+      expect(capturedSlot, isNot(contains('freegosy-srm_')), reason: 'Slot must NOT contain timestamp pattern');
+      expect(capturedSlot, isNot(contains('wingosy-srm_')), reason: 'Slot must NOT use old wingosy pattern');
 
       await tempDir.delete(recursive: true);
     });
@@ -172,76 +172,72 @@ void main() {
 
   group('Autocleanup on legacy push', () {
     test('legacy push passes autocleanup=true', () async {
-      final tempDir =
-          await Directory.systemTemp.createTemp('autocleanup_test');
+      final tempDir = await Directory.systemTemp.createTemp('autocleanup_test');
       final romPath = p.join(tempDir.path, 'game.gba');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
 
-      final game = Game(
-          id: 'ac1', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final game = Game(id: 'ac1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
       bool? capturedAutocleanup;
       int? capturedLimit;
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((invocation) async {
-        capturedAutocleanup =
-            invocation.namedArguments[#autocleanup] as bool?;
-        capturedLimit =
-            invocation.namedArguments[#autocleanupLimit] as int?;
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedAutocleanup = invocation.namedArguments[#autocleanup] as bool?;
+        capturedLimit = invocation.namedArguments[#autocleanupLimit] as int?;
         return (ok: true, conflict: null, saved: null);
       });
 
       await service.pushSaves(game, romPath);
 
-      expect(capturedAutocleanup, isTrue,
-          reason: 'Legacy push must pass autocleanup=true');
-      expect(capturedLimit, 5,
-          reason: 'Legacy push must pass autocleanupLimit=5');
+      expect(capturedAutocleanup, isTrue, reason: 'Legacy push must pass autocleanup=true');
+      expect(capturedLimit, 5, reason: 'Legacy push must pass autocleanupLimit=5');
 
       await tempDir.delete(recursive: true);
     });
 
     test('force push passes overwrite=true', () async {
-      final tempDir =
-          await Directory.systemTemp.createTemp('overwrite_test');
+      final tempDir = await Directory.systemTemp.createTemp('overwrite_test');
       final romPath = p.join(tempDir.path, 'game.gba');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
 
-      final game = Game(
-          id: 'ow1', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final game = Game(id: 'ow1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
       bool? capturedOverwrite;
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((invocation) async {
-        capturedOverwrite =
-            invocation.namedArguments[#overwrite] as bool?;
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedOverwrite = invocation.namedArguments[#overwrite] as bool?;
         return (ok: true, conflict: null, saved: null);
       });
 
       await service.pushSaves(game, romPath, force: true);
 
-      expect(capturedOverwrite, isTrue,
-          reason: 'Force push must pass overwrite=true');
+      expect(capturedOverwrite, isTrue, reason: 'Force push must pass overwrite=true');
 
       await tempDir.delete(recursive: true);
     });
@@ -249,18 +245,15 @@ void main() {
 
   group('Pull cooldown', () {
     test('second pull within cooldown is skipped', () async {
-      final tempDir =
-          await Directory.systemTemp.createTemp('cooldown_test');
+      final tempDir = await Directory.systemTemp.createTemp('cooldown_test');
       final romPath = p.join(tempDir.path, 'game.gba');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
 
-      final game = Game(
-          id: 'cd1', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final game = Game(id: 'cd1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
       // First pull — should hit network
-      when(mockRommService.getLatestSave('cd1', deviceId: anyNamed('deviceId')))
-          .thenAnswer((_) async => null);
+      when(mockRommService.getLatestSave('cd1', deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
 
       await service.pullSave(game, romPath);
       // Second pull within cooldown — should skip
@@ -268,8 +261,7 @@ void main() {
 
       // getLatestSave should only be called once (first pull)
       // Second pull is skipped due to cooldown
-      verify(mockRommService.getLatestSave('cd1', deviceId: anyNamed('deviceId')))
-          .called(1);
+      verify(mockRommService.getLatestSave('cd1', deviceId: anyNamed('deviceId'))).called(1);
 
       await tempDir.delete(recursive: true);
     });
@@ -277,31 +269,31 @@ void main() {
 
   group('No pruneOldSaves in legacy push', () {
     test('legacy push does not call pruneOldSaves', () async {
-      final tempDir =
-          await Directory.systemTemp.createTemp('no_prune_test');
+      final tempDir = await Directory.systemTemp.createTemp('no_prune_test');
       final romPath = p.join(tempDir.path, 'game.gba');
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
 
-      final game = Game(
-          id: 'np1', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final game = Game(id: 'np1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
       await service.pushSaves(game, romPath);
 
-      verifyNever(
-          mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount')));
+      verifyNever(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount')));
 
       await tempDir.delete(recursive: true);
     });
@@ -312,63 +304,61 @@ void main() {
       // The emulator registry puts RetroArch first in the strategy list.
       // When no user preference is set, getStrategyForSlug should check
       // the emulator registry's default and return the matching save strategy.
-      when(mockStrategyRegistry.getStrategyForSlug('gba')).thenReturn(
-        _MockEmulatorStrategy(emulatorId: 'retroarch'),
-      );
+      when(mockStrategyRegistry.getStrategyForSlug('gba')).thenReturn(_MockEmulatorStrategy(emulatorId: 'retroarch'));
 
       final strategy = service.getStrategyForSlug('gba');
       expect(strategy, isNotNull);
-      expect(strategy!.strategyId, equals('retroarch'),
-          reason: 'GBA should default to RetroArch save strategy when emulator registry defaults to RetroArch');
+      expect(
+        strategy!.strategyId,
+        equals('retroarch'),
+        reason: 'GBA should default to RetroArch save strategy when emulator registry defaults to RetroArch',
+      );
     });
 
     test('NDS defaults to RetroArch when emulator registry has RetroArch first', () {
-      when(mockStrategyRegistry.getStrategyForSlug('nds')).thenReturn(
-        _MockEmulatorStrategy(emulatorId: 'retroarch'),
-      );
+      when(mockStrategyRegistry.getStrategyForSlug('nds')).thenReturn(_MockEmulatorStrategy(emulatorId: 'retroarch'));
 
       final strategy = service.getStrategyForSlug('nds');
       expect(strategy, isNotNull);
-      expect(strategy!.strategyId, equals('retroarch'),
-          reason: 'NDS should default to RetroArch save strategy when emulator registry defaults to RetroArch');
+      expect(
+        strategy!.strategyId,
+        equals('retroarch'),
+        reason: 'NDS should default to RetroArch save strategy when emulator registry defaults to RetroArch',
+      );
     });
 
     test('NDS uses melonds when emulator registry defaults to melonDS', () {
-      when(mockStrategyRegistry.getStrategyForSlug('nds')).thenReturn(
-        _MockEmulatorStrategy(emulatorId: 'melonDS'),
-      );
+      when(mockStrategyRegistry.getStrategyForSlug('nds')).thenReturn(_MockEmulatorStrategy(emulatorId: 'melonDS'));
 
       final strategy = service.getStrategyForSlug('nds');
       expect(strategy, isNotNull);
-      expect(strategy!.strategyId, equals('melonds'),
-          reason: 'NDS should use melonds save strategy when emulator registry defaults to melonDS');
+      expect(
+        strategy!.strategyId,
+        equals('melonds'),
+        reason: 'NDS should use melonds save strategy when emulator registry defaults to melonDS',
+      );
     });
 
     test('user preference overrides emulator registry default', () {
-      when(mockStrategyRegistry.getPreferredEmulatorId('gba'))
-          .thenReturn('retroarch');
+      when(mockStrategyRegistry.getPreferredEmulatorId('gba')).thenReturn('retroarch');
 
       final strategy = service.getStrategyForSlug('gba');
       expect(strategy, isNotNull);
-      expect(strategy!.strategyId, equals('retroarch'),
-          reason: 'User preference should override registry default');
+      expect(strategy!.strategyId, equals('retroarch'), reason: 'User preference should override registry default');
     });
 
     test('hardcoded fallback used when registry returns null', () {
-      when(mockStrategyRegistry.getStrategyForSlug(any))
-          .thenReturn(null);
+      when(mockStrategyRegistry.getStrategyForSlug(any)).thenReturn(null);
 
       // GBA fallback should be mgba
       final gbaStrategy = service.getStrategyForSlug('gba');
       expect(gbaStrategy, isNotNull);
-      expect(gbaStrategy!.strategyId, equals('mgba'),
-          reason: 'Hardcoded fallback for GBA should be mgba');
+      expect(gbaStrategy!.strategyId, equals('mgba'), reason: 'Hardcoded fallback for GBA should be mgba');
 
       // SNES fallback should be retroarch
       final snesStrategy = service.getStrategyForSlug('snes');
       expect(snesStrategy, isNotNull);
-      expect(snesStrategy!.strategyId, equals('retroarch'),
-          reason: 'Hardcoded fallback for SNES should be retroarch');
+      expect(snesStrategy!.strategyId, equals('retroarch'), reason: 'Hardcoded fallback for SNES should be retroarch');
     });
   });
 
@@ -382,35 +372,40 @@ void main() {
 
       final game = Game(id: 'blank1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
       final result = await service.pushSaves(game, romPath);
 
-      expect(result, isFalse,
-          reason: 'Blank save (< 100 bytes) should be rejected');
+      expect(result, isFalse, reason: 'Blank save (< 100 bytes) should be rejected');
 
       // uploadSave should NOT have been called
-      verifyNever(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      ));
+      verifyNever(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      );
 
       await tempDir.delete(recursive: true);
     });
@@ -424,34 +419,39 @@ void main() {
 
       final game = Game(id: 'valid1', name: 'game', platformSlug: 'gba', fileSize: 0);
 
-      when(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((_) async => (ok: true, conflict: null, saved: null));
 
       final result = await service.pushSaves(game, romPath);
 
-      expect(result, isTrue,
-          reason: 'Valid save (>= 100 bytes) should be accepted');
+      expect(result, isTrue, reason: 'Valid save (>= 100 bytes) should be accepted');
 
-      verify(mockRommService.uploadSave(
-        any, any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).called(1);
+      verify(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).called(1);
 
       await tempDir.delete(recursive: true);
     });
@@ -466,8 +466,7 @@ void main() {
 
       final result = await service.pushSaves(game, romPath);
 
-      expect(result, isFalse,
-          reason: 'Empty save (0 bytes) should be rejected');
+      expect(result, isFalse, reason: 'Empty save (0 bytes) should be rejected');
 
       await tempDir.delete(recursive: true);
     });
@@ -477,9 +476,7 @@ void main() {
 /// Minimal concrete mock for EmulatorStrategy to test save strategy selection.
 class _MockEmulatorStrategy extends EmulatorStrategy {
   final String _emulatorId;
-  _MockEmulatorStrategy({required String emulatorId})
-      : _emulatorId = emulatorId,
-        super();
+  _MockEmulatorStrategy({required String emulatorId}) : _emulatorId = emulatorId, super();
 
   @override
   String get name => _emulatorId;

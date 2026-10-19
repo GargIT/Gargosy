@@ -4,9 +4,11 @@
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:io' show File;
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -25,8 +27,8 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
   final IdentifyRom _identify;
 
   PpssppSaveStrategy(this._directoryService, {PlatformInfo? platform, IdentifyRom? identify})
-      : _platform = platform ?? PlatformInfo.current,
-        _identify = identify ?? SigilEngine.identify;
+    : _platform = platform ?? PlatformInfo.current,
+      _identify = identify ?? SigilEngine.identify;
 
   @override
   String get strategyId => 'ppsspp';
@@ -40,8 +42,7 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
   Future<String> _getPspDir({String? platformSlug}) async {
     // 1. Check portable mode first (Windows)
     if (_platform.isWindows) {
-      final exePath = await _directoryService.findEmulatorExecutable(
-          'ppsspp', _getEmuExe());
+      final exePath = await _directoryService.findEmulatorExecutable('ppsspp', _getEmuExe());
       if (exePath != null) {
         final emuDir = io.File(exePath).parent.path;
         final portableDir = p.join(emuDir, 'memstick', 'PSP');
@@ -62,7 +63,7 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
 
     // 2. Dynamic path resolution (favors EmuDeck if configured)
     final baseDir = await _directoryService.getEmulatorAppSupportDirectory('ppsspp', platformSlug: platformSlug);
-    
+
     // Check if baseDir is a symlink (typical for EmuDeck)
     String resolvedBase = baseDir;
     try {
@@ -74,13 +75,13 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
     // On Steam Deck, 'saves' symlink points to .../PSP/SAVEDATA.
     // If we resolved it, the PSP root is the parent.
     if (resolvedBase.toUpperCase().endsWith('SAVEDATA')) {
-       return p.dirname(resolvedBase);
+      return p.dirname(resolvedBase);
     }
-    
+
     // Standard folder logic
     if (!resolvedBase.endsWith('PSP')) {
-       final pspDir = p.join(resolvedBase, 'PSP');
-       if (await io.Directory(pspDir).exists()) return pspDir;
+      final pspDir = p.join(resolvedBase, 'PSP');
+      if (await io.Directory(pspDir).exists()) return pspDir;
     }
 
     return resolvedBase;
@@ -98,15 +99,15 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
 
       if (bytes[0] != 0x00 || bytes[1] != 0x50 || bytes[2] != 0x53 || bytes[3] != 0x46) return null;
 
-      final keyTableOffset  = byteData.getUint32(8,  Endian.little);
+      final keyTableOffset = byteData.getUint32(8, Endian.little);
       final dataTableOffset = byteData.getUint32(12, Endian.little);
-      final entriesCount    = byteData.getUint32(16, Endian.little);
+      final entriesCount = byteData.getUint32(16, Endian.little);
 
       for (int i = 0; i < entriesCount; i++) {
         final entryBase = 20 + i * 16;
         if (entryBase + 16 > bytes.length) break;
-        final keyRelOffset  = byteData.getUint16(entryBase + 0,  Endian.little);
-        final dataLen       = byteData.getUint32(entryBase + 4,  Endian.little);
+        final keyRelOffset = byteData.getUint16(entryBase + 0, Endian.little);
+        final dataLen = byteData.getUint32(entryBase + 4, Endian.little);
         final dataRelOffset = byteData.getUint32(entryBase + 12, Endian.little);
 
         final keyStart = keyTableOffset + keyRelOffset;
@@ -157,7 +158,12 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
       }
     }
 
-    final gameWords = game.name.toLowerCase().replaceAll(RegExp(r"[^a-z0-9\s]"), '').split(' ').where((w) => w.length >= 2).toList();
+    final gameWords = game.name
+        .toLowerCase()
+        .replaceAll(RegExp(r"[^a-z0-9\s]"), '')
+        .split(' ')
+        .where((w) => w.length >= 2)
+        .toList();
 
     // Score each folder by how many game name words appear in its PARAM.SFO title,
     // then pick only the single best-scoring folder to avoid uploading saves from
@@ -171,8 +177,7 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
         final title = (entry['title'] as String).toLowerCase();
         final score = gameWords.where((w) => title.contains(w)).length;
         if (score > bestScore ||
-            (score == bestScore && bestScore > 0 &&
-             (entry['modified'] as DateTime).isAfter(bestMtime!))) {
+            (score == bestScore && bestScore > 0 && (entry['modified'] as DateTime).isAfter(bestMtime!))) {
           bestScore = score;
           bestDir = entry['dir'] as io.Directory;
           bestMtime = entry['modified'] as DateTime;
@@ -210,21 +215,24 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   /// The game's disc id (`ULUS10041`): RomM's, else sigil's from the ROM.
   Future<String?> _discId(Game game, String romPath) => GameIdResolver.resolve(
-        label: 'PPSSPP ${game.name}',
-        server: GameIdResolver.discFolderId('PPSSPP ${game.name}', game),
-        local: () async {
-          final known = _discIds[romPath];
-          if (known != null) return known;
-          try {
-            final id = (await _identify(romPath, platform: 'psp'))?.titleId.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
-            if (id == null || !GameIdResolver.sonyDiscId.hasMatch(id)) return null;
-            return _discIds[romPath] = id;
-          } catch (e) {
-            debugPrint('[PPSSPP] reading the disc id of $romPath failed: $e');
-            return null;
-          }
-        },
-      );
+    label: 'PPSSPP ${game.name}',
+    server: GameIdResolver.discFolderId('PPSSPP ${game.name}', game),
+    local: () async {
+      final known = _discIds[romPath];
+      if (known != null) return known;
+      try {
+        final id = (await _identify(
+          romPath,
+          platform: 'psp',
+        ))?.titleId.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+        if (id == null || !GameIdResolver.sonyDiscId.hasMatch(id)) return null;
+        return _discIds[romPath] = id;
+      } catch (e) {
+        debugPrint('[PPSSPP] reading the disc id of $romPath failed: $e');
+        return null;
+      }
+    },
+  );
 
   @override
   Future<String> stateDirectory(Game game, String romPath) async =>
@@ -268,8 +276,7 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
     final pspDir = await _getPspDir(platformSlug: game.platformSlug);
     final result = <File>[];
 
@@ -280,7 +287,7 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
       final foldersToBundle = fromRomm != null
           ? [
               for (final d in allSubdirs)
-                if (p.basename(d.path).toUpperCase().startsWith(fromRomm) && !await _isGameDataInstall(d.path)) d
+                if (p.basename(d.path).toUpperCase().startsWith(fromRomm) && !await _isGameDataInstall(d.path)) d,
             ]
           : await _foldersByTitle(allSubdirs, game);
 
@@ -309,11 +316,11 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
 
         for (final entry in archive) {
           if (entry.name.contains('.bak') || entry.name == 'freegosy_sync.txt') continue;
-          
+
           // SMART FLATTENING: Strip redundant psp/PSP/SAVEDATA prefixes
           String cleanName = entry.name.replaceAll('\\', '/');
           final parts = cleanName.split('/');
-          
+
           // If the ZIP contains "psp/PSP/SAVEDATA/ULUS...", we want just "ULUS..."
           int skipCount = 0;
           for (int i = 0; i < parts.length; i++) {
@@ -323,19 +330,25 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
             }
           }
           if (skipCount > 0) {
-             cleanName = p.joinAll(parts.sublist(skipCount));
+            cleanName = p.joinAll(parts.sublist(skipCount));
           }
           if (cleanName.isEmpty) continue;
 
-          final targetPath = p.normalize(entry.name.toLowerCase().endsWith('.ppst') 
-              ? p.join(targetStateDir, cleanName)
-              : p.join(targetSaveDir, cleanName));
+          final targetPath = p.normalize(
+            entry.name.toLowerCase().endsWith('.ppst')
+                ? p.join(targetStateDir, cleanName)
+                : p.join(targetSaveDir, cleanName),
+          );
 
           if (entry.isFile && entry.name.toLowerCase().endsWith('.ppst')) {
             // Gargosy: a state in an older bundle (issue #30), only when this
             // PC has none of that name; never over one.
-            await restoreStateIfMissing(targetStateDir, entry.name, entry.content as List<int>,
-                modified: entry.lastModDateTime);
+            await restoreStateIfMissing(
+              targetStateDir,
+              entry.name,
+              entry.content as List<int>,
+              modified: entry.lastModDateTime,
+            );
           } else if (entry.isFile) {
             await backupSave(targetPath);
             final outFile = io.File(targetPath);

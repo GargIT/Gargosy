@@ -9,7 +9,10 @@ import '../../core/save/catalog/save_maker.dart';
 /// by default, and which one is remembered for it.
 class EmulatorChoices {
   EmulatorChoices.of(this.registry, Map<String, bool> installed, this.game)
-      : installedIds = {for (final e in installed.entries) if (e.value) e.key} {
+    : installedIds = {
+        for (final e in installed.entries)
+          if (e.value) e.key,
+      } {
     final slug = game.platformSlug ?? '';
     emulators = [
       for (final s in registry.getAllStrategiesForSlug(slug))

@@ -47,21 +47,29 @@ void main() {
 
   /// The wrapper, with sigil itself ([real]) or a collect that records the call.
   SigilSaveStrategy wrapper({bool real = false}) => SigilSaveStrategy.forEmulator(
-        'retroarch',
-        base: base,
-        emulatorDir: () => dataDir,
-        states: SigilStateStore(p.join(tmp.path, 'sigil')),
-        unitsDir: p.join(tmp.path, 'sigil', 'units'),
-        collect: real
-            ? null
-            : (call) async {
-                collected.add(call);
-                return const SigilCollected(
-                    artifact: '', data: null, contentHash: '', identityHash: '', changed: false, state: null,
-                    holding: null, unowned: [], restoreAgain: false);
-              },
-        identify: (path, {platform}) async => null,
-      )!;
+    'retroarch',
+    base: base,
+    emulatorDir: () => dataDir,
+    states: SigilStateStore(p.join(tmp.path, 'sigil')),
+    unitsDir: p.join(tmp.path, 'sigil', 'units'),
+    collect: real
+        ? null
+        : (call) async {
+            collected.add(call);
+            return const SigilCollected(
+              artifact: '',
+              data: null,
+              contentHash: '',
+              identityHash: '',
+              changed: false,
+              state: null,
+              holding: null,
+              unowned: [],
+              restoreAgain: false,
+            );
+          },
+    identify: (path, {platform}) async => null,
+  )!;
 
   group('the layout is the game\'s core', () {
     test('the platform\'s default core (Game Boy: gambatte), saves\\ as the root', () async {
@@ -179,20 +187,22 @@ void main() {
   test('a profile: RetroArch\'s save strategy is sigil\'s wrapper around RetroArchSaveStrategy', () async {
     final root = await tempAppRoot();
     addTearDown(() => deleteTempDir(root.root));
-    final c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root),
-      appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-    ]);
+    final c = ProviderContainer(
+      overrides: [appRootProvider.overrideWithValue(root), appPreferencesProvider.overrideWithValue(MemoryPrefs())],
+    );
     addTearDown(c.dispose);
-    final anna = await c.read(profileStoreProvider).create(
-        name: 'Anna', colorIndex: 0, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna');
+    final anna = await c
+        .read(profileStoreProvider)
+        .create(name: 'Anna', colorIndex: 0, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna');
     await c.read(activeProfileProvider.notifier).activate(anna, const ProfileLogin(token: 't', kind: 'device'));
     final sync = c.read(saveSyncServiceProvider)!;
     final s = sync.getStrategyForGame(gameFixture('gb'), emulatorId: 'retroarch');
     expect(s, isA<SigilSaveStrategy>());
     expect(s!.unwrapped, isA<RetroArchSaveStrategy>());
-    expect(await s.getSaveDir(gameFixture('gb'), p.join(root.roms, 'gb', 'G.gb')),
-        p.join(ProfilePaths(root, anna.id).emulatorDir('retroarch'), 'saves'));
+    expect(
+      await s.getSaveDir(gameFixture('gb'), p.join(root.roms, 'gb', 'G.gb')),
+      p.join(ProfilePaths(root, anna.id).emulatorDir('retroarch'), 'saves'),
+    );
     c.read(activeProfileProvider.notifier).signOut();
     await Future<void>.delayed(const Duration(milliseconds: 300)); // the backups box closes
   });

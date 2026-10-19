@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'app_preferences.dart';
 
 /// [AppPreferences] backed by the real `shared_preferences` plugin — used by

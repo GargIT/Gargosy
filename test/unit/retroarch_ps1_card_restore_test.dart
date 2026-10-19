@@ -23,7 +23,9 @@ void main() {
   late RetroArchSaveStrategy strategy;
 
   const romName = 'Colin McRae Rally 2.0 (Europe) (En,Fr,De,Es,It)';
-  final card = buildPs1Card([(name: 'BESLES-02605-SETTING', blocks: [1], fill: 0x11)]);
+  final card = buildPs1Card([
+    (name: 'BESLES-02605-SETTING', blocks: [1], fill: 0x11),
+  ]);
 
   Game game({String slug = 'psx'}) =>
       Game(id: '1', name: 'Colin McRae Rally 2.0', fsName: '$romName.cue', platformSlug: slug, fileSize: 0);
@@ -33,10 +35,8 @@ void main() {
     final configDir = p.join(tempDir.path, '.config', 'retroarch');
     await Directory(configDir).create(recursive: true);
     saveDir = p.join(tempDir.path, 'saves');
-    await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-      'savefile_directory = "$saveDir"',
-      'sort_savefiles_enable = "false"',
-    ].join('\n'));
+    await File(p.join(configDir, 'retroarch.cfg'))
+        .writeAsString(['savefile_directory = "$saveDir"', 'sort_savefiles_enable = "false"'].join('\n'));
     await Directory(saveDir).create(recursive: true);
 
     final dirService = MockDirectoryService();

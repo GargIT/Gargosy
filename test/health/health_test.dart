@@ -16,11 +16,7 @@ void main() {
 
   group('Health Checks', () {
     test('RommService initializes without throwing', () {
-      final config = RomMConfig(
-        baseUrl: 'https://test.com',
-        username: 'user',
-        password: 'pwd',
-      );
+      final config = RomMConfig(baseUrl: 'https://test.com', username: 'user', password: 'pwd');
       expect(() => RommService(config), returnsNormally);
     });
 
@@ -34,16 +30,29 @@ void main() {
       final platform = PlatformInfo.current;
       final ds = DirectoryService(prefs, platform: platform);
       final registry = StrategyRegistry(ds, prefs, platform: platform);
-      
+
       final allSlugs = <String, String>{}; // slug -> emulatorId
       final overlapErrors = <String>[];
-      
+
       final strategies = [
-        'retroarch', 'dolphin', 'eden', 'rpcs3', 'pcsx2', 'azahar', 
-        'cemu', 'duckstation', 'flycast', 'melonds', 'ppsspp', 'mgba', 
-        'mame', 'xemu', 'xenia_canary', 'windows_native'
+        'retroarch',
+        'dolphin',
+        'eden',
+        'rpcs3',
+        'pcsx2',
+        'azahar',
+        'cemu',
+        'duckstation',
+        'flycast',
+        'melonds',
+        'ppsspp',
+        'mgba',
+        'mame',
+        'xemu',
+        'xenia_canary',
+        'windows_native',
       ];
-      
+
       for (final id in strategies) {
         final def = registry.getDefinition(id);
         bool expectedSupported = false;
@@ -73,7 +82,7 @@ void main() {
           expect(strategy, isNull, reason: 'Strategy $id should NOT be registered on ${platform.os}');
         }
       }
-      
+
       expect(overlapErrors, isEmpty, reason: overlapErrors.join('\n'));
     });
 
@@ -91,7 +100,7 @@ void main() {
       final rs = RommService(RomMConfig(baseUrl: 'https://test.com', username: 'u', password: 'p'));
       final reg = StrategyRegistry(ds, prefs);
       final sss = SaveSyncService(rs, ds, reg, prefs);
-      
+
       expect(sss.getStrategyForSlug('gba'), isNotNull);
       expect(sss.getStrategyForSlug('gc'), isNotNull);
       expect(sss.getStrategyForSlug('switch'), isNotNull);

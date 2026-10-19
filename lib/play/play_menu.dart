@@ -20,10 +20,8 @@ class EmulatorOption {
   final bool? fullscreen;
 
   /// [core] (a bare core id) as the core picker shows it.
-  String coreName(String? core) =>
-      cores.where((c) => bareCoreId(c.id) == core).firstOrNull?.displayName ?? core ?? '';
+  String coreName(String? core) => cores.where((c) => bareCoreId(c.id) == core).firstOrNull?.displayName ?? core ?? '';
 }
-
 
 /// What the play screen offers for a game: the installed emulators for its
 /// platform, the one remembered for it, the platform's default, and every
@@ -41,7 +39,8 @@ class PlayMenu {
 
   Set<String> get installedIds => {for (final e in emulators) e.maker.emulatorId};
 
-  EmulatorOption? optionOf(SaveMaker maker) => emulators.where((e) => e.maker.emulatorId == maker.emulatorId).firstOrNull;
+  EmulatorOption? optionOf(SaveMaker maker) =>
+      emulators.where((e) => e.maker.emulatorId == maker.emulatorId).firstOrNull;
 
   /// "PCSX2", or "RetroArch · Beetle PSX HW" for RetroArch with a core.
   String nameOf(SaveMaker maker) {

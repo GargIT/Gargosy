@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:gargosy/core/storage/app_preferences.dart';
@@ -39,11 +40,7 @@ class RetroAchievementsEmulatorLogin {
     if (username.isEmpty) return null;
     final token = await SecureStorageService.read(kRaConnectTokenSecureKey, prefs) ?? '';
     if (token.isEmpty) return null;
-    return RetroAchievementsEmulatorLogin(
-      username: username,
-      token: token,
-      hardcore: prefs.getBool(kRaHardcoreKey),
-    );
+    return RetroAchievementsEmulatorLogin(username: username, token: token, hardcore: prefs.getBool(kRaHardcoreKey));
   }
 
   /// Deletes the on-disk `--appendconfig` files emulator strategies wrote

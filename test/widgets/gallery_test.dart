@@ -14,7 +14,12 @@ import '../helpers/widget_env.dart';
 void main() {
   final games = [
     for (var i = 1; i <= 120; i++)
-      Game.fromJson({...gameJson(i, 'Game ${i.toString().padLeft(3, '0')}'), 'metadatum': {'genres': [i.isEven ? 'Racing' : 'Action']}}),
+      Game.fromJson({
+        ...gameJson(i, 'Game ${i.toString().padLeft(3, '0')}'),
+        'metadatum': {
+          'genres': [i.isEven ? 'Racing' : 'Action'],
+        },
+      }),
   ];
 
   Future<FakeLibraryApi> pump(WidgetTester tester, {Object? failWith, int? failFromOffset}) async {
@@ -22,10 +27,12 @@ void main() {
     final api = FakeLibraryApi(games)
       ..failWith = failWith
       ..failFromOffset = failFromOffset;
-    await tester.pumpWidget(testApp(const GalleryScreen(title: 'PlayStation 2', query: GalleryQuery(platformId: 1)), overrides: [
-      libraryApiProvider.overrideWithValue(api),
-      favouriteIdsProvider.overrideWithValue(const {}),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const GalleryScreen(title: 'PlayStation 2', query: GalleryQuery(platformId: 1)),
+        overrides: [libraryApiProvider.overrideWithValue(api), favouriteIdsProvider.overrideWithValue(const {})],
+      ),
+    );
     await tester.pumpAndSettle();
     return api;
   }

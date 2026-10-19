@@ -2,6 +2,7 @@
 // Gargosy: StateSyncCapable (#64): `<program id>.<NN>.cst` in user\states;
 // Azahar can't load a state from its command line, so states sync only.
 import 'dart:io' as io;
+
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -20,7 +21,7 @@ import '../state_sync_capable.dart';
 
 /// Save strategy for Azahar (Nintendo 3DS) emulator.
 ///
-/// Follows the Eden pattern: requires manual folder mapping from the 'sdmc' 
+/// Follows the Eden pattern: requires manual folder mapping from the 'sdmc'
 /// directory if automatic resolution is not possible.
 class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
   final DirectoryService _directoryService;
@@ -31,8 +32,8 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   /// Gargosy: [identify] reads a ROM's title id when RomM has none (sigil).
   AzaharSaveStrategy(this._directoryService, {this.onMappingResolved, PlatformInfo? platform, IdentifyRom? identify})
-      : _platform = platform ?? PlatformInfo.current,
-        _identify = identify ?? SigilEngine.identify;
+    : _platform = platform ?? PlatformInfo.current,
+      _identify = identify ?? SigilEngine.identify;
 
   /// Title paths read from ROMs this session, by ROM path.
   final _fromRom = <String, String>{};
@@ -93,7 +94,9 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
     debugPrint('[Azahar] standard data base candidate: $resolvedPath');
     if (!await io.Directory(resolvedPath).exists()) {
-      throw Exception('Save directory not found for Azahar at $resolvedPath. Please launch Azahar at least once to generate save data.');
+      throw Exception(
+        'Save directory not found for Azahar at $resolvedPath. Please launch Azahar at least once to generate save data.',
+      );
     }
     return resolvedPath;
   }
@@ -187,8 +190,9 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
     if (manual == null && titlePath == null) {
       debugPrint('[Azahar] FAILED: No manual mapping resolved for ${game.name}');
       throw SaveMappingRequiredException(
-          'Could not determine save folder for "${game.name}". '
-          'Please select the save folder manually from the sdmc directory.');
+        'Could not determine save folder for "${game.name}". '
+        'Please select the save folder manually from the sdmc directory.',
+      );
     }
 
     final base = await _getAzaharSaveBase(platformSlug: game.platformSlug);
@@ -289,7 +293,9 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
     // If sessionStart filter is set, check if any file was modified after it
     if (sessionStart != null) {
       final files = dir.listSync(recursive: true).whereType<io.File>();
-      final hasChanges = files.any((f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))));
+      final hasChanges = files.any(
+        (f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))),
+      );
       if (!hasChanges) {
         debugPrint('[Azahar] No files modified since session start');
         return [];
@@ -302,12 +308,7 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<bool> restoreSave(
-    Game game,
-    String destPath,
-    Uint8List data,
-    String filename,
-  ) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       debugPrint('=== AZAHAR RESTORE: ${game.name} ===');
       final saveDir = await getSaveDir(game, destPath);
@@ -345,9 +346,7 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
 
         // Strip leading folder if present (e.g. "00000001/save.bin" -> "save.bin")
         final segments = entry.name.split(RegExp(r'[/\\]'));
-        final entryPath = (segments.length > 1)
-            ? p.joinAll(segments.sublist(1))
-            : entry.name;
+        final entryPath = (segments.length > 1) ? p.joinAll(segments.sublist(1)) : entry.name;
 
         if (entryPath.isEmpty) continue;
 
@@ -382,7 +381,7 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
 
     final folders = <Map<String, dynamic>>[];
     final hex16Regex = RegExp(r'^[0-9A-Fa-f]{16}$');
-    
+
     try {
       await for (final entity in sdmcDir.list(recursive: true, followLinks: false)) {
         if (entity is io.Directory) {
@@ -391,7 +390,7 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
             // It's a save data folder
             DateTime? newest;
             int fileCount = 0;
-            
+
             try {
               for (final f in entity.listSync(recursive: true)) {
                 if (f is! io.File) continue;
@@ -408,7 +407,7 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
 
             if (fileCount > 0) {
               final relativePath = p.relative(entity.path, from: sdmcDir.path);
-              
+
               // Try to find a Title ID in the path (typically 16-hex)
               String displayName = relativePath;
               final segments = p.split(relativePath);
@@ -433,8 +432,7 @@ class AzaharSaveStrategy extends SaveStrategy with StateSyncCapable {
       debugPrint('[Azahar] Error scanning folders: $e');
     }
 
-    folders.sort((a, b) => (b['lastModified'] as DateTime)
-        .compareTo(a['lastModified'] as DateTime));
+    folders.sort((a, b) => (b['lastModified'] as DateTime).compareTo(a['lastModified'] as DateTime));
     return folders;
   }
 }

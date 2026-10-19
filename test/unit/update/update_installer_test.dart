@@ -19,19 +19,20 @@ void main() {
   tearDown(() => deleteTempDir(root.root));
 
   UpdateInstaller installer({List<String> args = const [], Map<String, String> env = const {}}) => UpdateInstaller(
-        root: root,
-        pid: 4242,
-        args: args,
-        currentVersion: '0.2.0-preview.4',
-        platform: PlatformInfo('windows', environment: env),
-        start: (exe, a) async => started.add((exe, a)),
-      );
+    root: root,
+    pid: 4242,
+    args: args,
+    currentVersion: '0.2.0-preview.4',
+    platform: PlatformInfo('windows', environment: env),
+    start: (exe, a) async => started.add((exe, a)),
+  );
 
   void shipUpdater() => io.File(p.join(root.root, 'GargosyUpdate.exe')).writeAsStringSync('MZ updater');
 
   test('the command line: pid, root, the unpacked folder, versions, then Gargosy\'s own arguments', () {
-    final cmd = installer(args: ['--root=D:\\My Games\\Gargosy', '--fullscreen', '--updated-from=0.1.0', '--update-failed'])
-        .commandLine(r'D:\My Games\Gargosy\userdata\app\update\Gargosy', '0.2.0');
+    final cmd = installer(
+      args: ['--root=D:\\My Games\\Gargosy', '--fullscreen', '--updated-from=0.1.0', '--update-failed'],
+    ).commandLine(r'D:\My Games\Gargosy\userdata\app\update\Gargosy', '0.2.0');
     expect(cmd, [
       '--pid', '4242',
       '--root', root.root,
@@ -85,7 +86,9 @@ void main() {
   test('after --update-failed: the last line of update.log, and nothing is deleted', () async {
     final i = installer();
     io.Directory(i.paths.unpacked).createSync(recursive: true);
-    io.File(i.paths.log).writeAsStringSync('Waiting for Gargosy\nCopying data\\app.so\nFailed: data\\app.so is locked. The old version is back.\n\n');
+    io.File(i.paths.log).writeAsStringSync(
+      'Waiting for Gargosy\nCopying data\\app.so\nFailed: data\\app.so is locked. The old version is back.\n\n',
+    );
     final outcome = await i.afterStart(['--update-failed']);
     expect((outcome! as UpdateFailed).detail, r'Failed: data\app.so is locked. The old version is back.');
     expect(io.Directory(i.paths.unpacked).existsSync(), isTrue);
@@ -95,13 +98,17 @@ void main() {
     final i = installer();
     io.Directory(i.paths.dir).createSync(recursive: true);
     io.File(i.paths.log).writeAsStringSync(
-        '2026-10-14 12:03:07  Waiting for Gargosy\r\n2026-10-14 12:03:09  Failed: data\\app.so is locked. The old version is back.\r\n');
+      '2026-10-14 12:03:07  Waiting for Gargosy\r\n2026-10-14 12:03:09  Failed: data\\app.so is locked. The old version is back.\r\n',
+    );
     final outcome = await i.afterStart(['--update-failed']);
     expect((outcome! as UpdateFailed).detail, r'Failed: data\app.so is locked. The old version is back.');
   });
 
   test('a normal start reports nothing', () async {
     expect(await installer().afterStart(['--fullscreen']), isNull);
-    expect(await installer().afterStart(['--update-failed']), isA<UpdateFailed>().having((f) => f.detail, 'detail', isNull));
+    expect(
+      await installer().afterStart(['--update-failed']),
+      isA<UpdateFailed>().having((f) => f.detail, 'detail', isNull),
+    );
   });
 }

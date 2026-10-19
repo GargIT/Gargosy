@@ -2,9 +2,11 @@
 // Gargosy: StateSyncCapable (#65): `<ROM stem>.ml<N>` in portable\states;
 // melonDS can't load a state from its command line, so states sync only.
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:archive/archive_io.dart';
+
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
@@ -22,8 +24,7 @@ class MelonDsSaveStrategy extends SaveStrategy with StateSyncCapable {
   final PlatformInfo _platform;
   String? _cachedRetroarchDir;
 
-  MelonDsSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  MelonDsSaveStrategy(this._directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'melonds';
@@ -63,7 +64,8 @@ class MelonDsSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  bool looksLikeValidState(Uint8List bytes) => bytes.length >= 16 && String.fromCharCodes(bytes.sublist(0, 4)) == 'MELN';
+  bool looksLikeValidState(Uint8List bytes) =>
+      bytes.length >= 16 && String.fromCharCodes(bytes.sublist(0, 4)) == 'MELN';
 
   @override
   StateSlot slotOf(String fileName) {
@@ -146,8 +148,7 @@ class MelonDsSaveStrategy extends SaveStrategy with StateSyncCapable {
     return romDir;
   }
 
-  Set<String> _stems(Game game, String romPath) =>
-      {p.basenameWithoutExtension(romPath), getRomStem(game)};
+  Set<String> _stems(Game game, String romPath) => {p.basenameWithoutExtension(romPath), getRomStem(game)};
 
   /// This game's save in [dir], matched on the exact ROM name only (a title
   /// word shared with another game must never match).
@@ -167,8 +168,12 @@ class MelonDsSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final saveDir = await getSaveDir(game, romPath);
     if (saveDir == null) {
       debugPrint('[SaveSync] [melonDS] getSaveFiles: no save dir found');
@@ -185,8 +190,7 @@ class MelonDsSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<bool> restoreSave(
-      Game game, String destPath, Uint8List data, String filename) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       final saveDir = await getSaveDir(game, destPath);
       if (saveDir == null) {

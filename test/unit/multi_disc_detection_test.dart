@@ -6,9 +6,8 @@ void main() {
     // Replicate the _discLabel logic for testing
     String discLabel(String filename, int index) {
       final lower = filename.toLowerCase();
-      final discMatch = RegExp(
-        r'(?:[\(\[]?\s*)?(?:disc|disk|cd|part|track)\s*[_\s]?\s*(\d+)(?:\s*[\)\]]?)',
-      ).firstMatch(lower);
+      final discMatch = RegExp(r'(?:[\(\[]?\s*)?(?:disc|disk|cd|part|track)\s*[_\s]?\s*(\d+)(?:\s*[\)\]]?)')
+          .firstMatch(lower);
       if (discMatch != null) {
         final num = discMatch.group(1)!.padLeft(2, '0');
         return lower.contains('track') ? 'Track $num' : 'Disc ${discMatch.group(1)}';

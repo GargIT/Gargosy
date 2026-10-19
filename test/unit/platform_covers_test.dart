@@ -12,8 +12,14 @@ import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
-Platform _p(int count) =>
-    Platform.fromJson({'id': 3, 'name': 'PS2', 'slug': 'ps2', 'fs_slug': 'ps2', 'display_name': 'PS2', 'rom_count': count});
+Platform _p(int count) => Platform.fromJson({
+  'id': 3,
+  'name': 'PS2',
+  'slug': 'ps2',
+  'fs_slug': 'ps2',
+  'display_name': 'PS2',
+  'rom_count': count,
+});
 
 void main() {
   final games = [for (var i = 1; i <= 60; i++) Game.fromJson(gameJson(i, 'Game $i'))];
@@ -91,10 +97,12 @@ void main() {
 
     setUp(() {
       api = FakeLibraryApi(games);
-      c = ProviderContainer(overrides: [
-        libraryApiProvider.overrideWithValue(api),
-        rommOfflineProvider.overrideWith((ref) => ref.watch(offline)),
-      ]);
+      c = ProviderContainer(
+        overrides: [
+          libraryApiProvider.overrideWithValue(api),
+          rommOfflineProvider.overrideWith((ref) => ref.watch(offline)),
+        ],
+      );
       addTearDown(c.dispose);
     });
 
@@ -129,11 +137,14 @@ class _LastPlayedApi extends FakeLibraryApi {
   final List<Game> played;
 
   @override
-  Future<GalleryPage> page(GalleryQuery q,
-      {int offset = 0, int limit = RommLibraryApi.pageSize, bool withFilterValues = false}) {
+  Future<GalleryPage> page(
+    GalleryQuery q, {
+    int offset = 0,
+    int limit = RommLibraryApi.pageSize,
+    bool withFilterValues = false,
+  }) {
     if (!q.lastPlayedOnly) return super.page(q, offset: offset, limit: limit);
     queries.add((q, offset));
     return Future.value(GalleryPage(games: played.take(limit).toList(), total: played.length));
   }
-
 }

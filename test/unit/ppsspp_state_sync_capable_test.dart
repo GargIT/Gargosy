@@ -37,11 +37,14 @@ void main() {
   late PpssppSaveStrategy s;
   setUp(() {
     read = [];
-    s = PpssppSaveStrategy(DirectoryService(MemoryPrefs()), identify: (path, {platform}) async {
-      expect(platform, 'psp');
-      read.add(path);
-      return const SigilId(titleId: 'UCUS-98618', rawSerial: '', saveId: '', platform: 'psp', fromBinary: true);
-    });
+    s = PpssppSaveStrategy(
+      DirectoryService(MemoryPrefs()),
+      identify: (path, {platform}) async {
+        expect(platform, 'psp');
+        read.add(path);
+        return const SigilId(titleId: 'UCUS-98618', rawSerial: '', saveId: '', platform: 'psp', fromBinary: true);
+      },
+    );
   });
 
   group('the matcher', () {

@@ -21,17 +21,22 @@ class LinkedFolderConfig extends ProfileLaunchConfig {
   /// way is kept when the profile already has data
   /// (`userdata\templates\<emu>\<folder>`, else `userdata\app\set-aside\`).
   ({String link, String target, String template, String setAside}) pathsFor(LaunchContext c) => (
-        link: p.join(c.exeDir, folder),
-        target: p.join(c.data, folder),
-        template: p.join(c.guard.root.templates, p.basename(c.data), folder),
-        setAside: p.join(c.guard.root.appData, 'set-aside', p.basename(c.data), folder),
-      );
+    link: p.join(c.exeDir, folder),
+    target: p.join(c.data, folder),
+    template: p.join(c.guard.root.templates, p.basename(c.data), folder),
+    setAside: p.join(c.guard.root.appData, 'set-aside', p.basename(c.data), folder),
+  );
 
   /// Points the link at this profile; what it moved aside, if anything.
   FolderLinkResult point(LaunchContext c) {
     final at = pathsFor(c);
     return pointFolderLink(
-        link: at.link, target: at.target, guard: c.guard, templateDir: at.template, setAsideDir: at.setAside);
+      link: at.link,
+      target: at.target,
+      guard: c.guard,
+      templateDir: at.template,
+      setAsideDir: at.setAside,
+    );
   }
 
   @override

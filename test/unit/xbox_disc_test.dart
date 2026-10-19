@@ -75,10 +75,15 @@ void main() {
     final dst = p.join(dir.path, 'x.iso');
     final seen = <int>[];
     int? total;
-    await redumpToXiso(src, dst, gamePartition: gp, onProgress: (d, t) {
-      seen.add(d);
-      total = t;
-    });
+    await redumpToXiso(
+      src,
+      dst,
+      gamePartition: gp,
+      onProgress: (d, t) {
+        seen.add(d);
+        total = t;
+      },
+    );
     expect(io.File(dst).readAsBytesSync(), game);
     expect(seen.last, game.length);
     expect(total, game.length);

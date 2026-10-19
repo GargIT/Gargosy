@@ -28,10 +28,8 @@ void main() {
     final configDir = p.join(tempDir.path, '.config', 'retroarch');
     await Directory(configDir).create(recursive: true);
     saveDir = p.join(tempDir.path, 'saves');
-    await File(p.join(configDir, 'retroarch.cfg')).writeAsString([
-      'savefile_directory = "$saveDir"',
-      'sort_savefiles_enable = "false"',
-    ].join('\n'));
+    await File(p.join(configDir, 'retroarch.cfg'))
+        .writeAsString(['savefile_directory = "$saveDir"', 'sort_savefiles_enable = "false"'].join('\n'));
     await Directory(saveDir).create(recursive: true);
 
     final dirService = MockDirectoryService();
@@ -52,7 +50,15 @@ void main() {
   final bytes = Uint8List.fromList([1, 2, 3]);
 
   test('a web player timestamped .srm is restored as <rom>.srm', () async {
-    expect(await strategy.restoreSave(game(), romPath(), bytes, 'Test Monster - White Version [2026-10-01 14-38-41-643].srm'), isTrue);
+    expect(
+      await strategy.restoreSave(
+        game(),
+        romPath(),
+        bytes,
+        'Test Monster - White Version [2026-10-01 14-38-41-643].srm',
+      ),
+      isTrue,
+    );
     expect(savesOnDisk(), ['$romName.srm']);
   });
 

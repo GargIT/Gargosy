@@ -144,7 +144,9 @@ class Game {
       mergedScreenshots: (json['merged_screenshots'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
       screenshotUrl: json['ss_metadata']?['screenshot_url']?.toString(),
       fanartUrl: json['ss_metadata']?['fanart_url']?.toString(),
-      lastPlayed: json['rom_user']?['last_played'] != null ? DateTime.tryParse(json['rom_user']['last_played'].toString()) : null,
+      lastPlayed: json['rom_user']?['last_played'] != null
+          ? DateTime.tryParse(json['rom_user']['last_played'].toString())
+          : null,
       userRating: json['rom_user']?['rating'] as int? ?? 0,
       completion: json['rom_user']?['completion'] as int? ?? 0,
       status: json['rom_user']?['status']?.toString().toLowerCase(),
@@ -192,10 +194,7 @@ class Game {
       'languages': languages,
       'tags': tags,
       'merged_screenshots': mergedScreenshots,
-      'ss_metadata': {
-        'screenshot_url': screenshotUrl,
-        'fanart_url': fanartUrl,
-      },
+      'ss_metadata': {'screenshot_url': screenshotUrl, 'fanart_url': fanartUrl},
       'rom_user': {
         'last_played': lastPlayed?.toIso8601String(),
         'rating': userRating,
@@ -204,17 +203,19 @@ class Game {
         'backlogged': backlogged,
         'now_playing': nowPlaying,
       },
-      'all_user_notes': notes.map((n) => {
-        'id': n.id,
-        'title': n.title,
-        'content': n.content,
-        'created_at': n.createdAt?.toIso8601String(),
-        'updated_at': n.updatedAt?.toIso8601String(),
-      }).toList(),
+      'all_user_notes': notes
+          .map(
+            (n) => {
+              'id': n.id,
+              'title': n.title,
+              'content': n.content,
+              'created_at': n.createdAt?.toIso8601String(),
+              'updated_at': n.updatedAt?.toIso8601String(),
+            },
+          )
+          .toList(),
       'ra_id': raId,
-      'merged_ra_metadata': {
-        'achievements': raAchievements.map((a) => a.toRommJson()).toList(),
-      },
+      'merged_ra_metadata': {'achievements': raAchievements.map((a) => a.toRommJson()).toList()},
       'title_id': titleId,
       'save_target': saveTarget,
       'save_target_layout': saveTargetLayout?.toJson(),
@@ -324,9 +325,7 @@ class Platform {
       slug: json['slug']?.toString() ?? '',
       fsSlug: json['fs_slug']?.toString() ?? '',
       displayName: json['display_name']?.toString() ?? '',
-      gamesCount: (json['rom_count'] as int?) ?? 
-                  (json['roms_count'] as int?) ?? 
-                  (json['games_count'] as int?) ?? 0,
+      gamesCount: (json['rom_count'] as int?) ?? (json['roms_count'] as int?) ?? (json['games_count'] as int?) ?? 0,
       firmware: (json['firmware'] as List<dynamic>?)?.map((e) => Firmware.fromJson(e)).toList() ?? [],
       firmwareCount: json['firmware_count'] as int? ?? 0,
     );
@@ -353,13 +352,7 @@ class RomNote {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  RomNote({
-    required this.id,
-    required this.title,
-    required this.content,
-    this.createdAt,
-    this.updatedAt,
-  });
+  RomNote({required this.id, required this.title, required this.content, this.createdAt, this.updatedAt});
 
   factory RomNote.fromJson(Map<String, dynamic> json) {
     return RomNote(
@@ -379,18 +372,11 @@ class SaveFile {
   final String? slot;
   final List<DeviceSync> deviceSyncs;
 
-  SaveFile({
-    required this.id,
-    required this.romId,
-    required this.url,
-    this.slot,
-    this.deviceSyncs = const [],
-  });
+  SaveFile({required this.id, required this.romId, required this.url, this.slot, this.deviceSyncs = const []});
 
   factory SaveFile.fromJson(Map<String, dynamic> json) {
-    final syncs = (json['device_syncs'] as List<dynamic>?)
-            ?.map((e) => DeviceSync.fromJson(e as Map<String, dynamic>))
-            .toList() ??
+    final syncs =
+        (json['device_syncs'] as List<dynamic>?)?.map((e) => DeviceSync.fromJson(e as Map<String, dynamic>)).toList() ??
         [];
     return SaveFile(
       id: json['id']?.toString() ?? '',
@@ -425,9 +411,7 @@ class DeviceSync {
     return DeviceSync(
       deviceId: json['device_id']?.toString() ?? '',
       deviceName: json['device_name']?.toString(),
-      lastSyncedAt: json['last_synced_at'] != null
-          ? DateTime.tryParse(json['last_synced_at'].toString())
-          : null,
+      lastSyncedAt: json['last_synced_at'] != null ? DateTime.tryParse(json['last_synced_at'].toString()) : null,
       isUntracked: json['is_untracked'] as bool? ?? false,
       isCurrent: json['is_current'] as bool? ?? false,
     );
@@ -462,15 +446,11 @@ class RommCapabilities {
   final bool? retroAchievementsEnabled;
 
   RommCapabilities({required this.version, this.retroAchievementsEnabled})
-      : major = _parsePart(version, 0),
-        minor = _parsePart(version, 1);
+    : major = _parsePart(version, 0),
+      minor = _parsePart(version, 1);
 
   /// Unknown/offline — all flags false, falls back to legacy paths.
-  RommCapabilities.unknown()
-      : version = '0.0.0',
-        major = 0,
-        minor = 0,
-        retroAchievementsEnabled = null;
+  RommCapabilities.unknown() : version = '0.0.0', major = 0, minor = 0, retroAchievementsEnabled = null;
 
   static int _parsePart(String v, int index) {
     final parts = v.split(RegExp(r'[.\-]'));

@@ -9,20 +9,31 @@ import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
-final _ps2 = Platform.fromJson(
-    {'id': 3, 'name': 'PlayStation 2', 'slug': 'ps2', 'fs_slug': 'ps2', 'display_name': 'PlayStation 2', 'rom_count': 412});
+final _ps2 = Platform.fromJson({
+  'id': 3,
+  'name': 'PlayStation 2',
+  'slug': 'ps2',
+  'fs_slug': 'ps2',
+  'display_name': 'PlayStation 2',
+  'rom_count': 412,
+});
 
 Future<void> _pump(WidgetTester tester, List<Game> covers, {VoidCallback? onOpen}) async {
-  await tester.pumpWidget(testApp(
-    Center(
-      child: SizedBox(
-          width: 290, height: PlatformCard.height, child: PlatformCard(platform: _ps2, onOpen: onOpen ?? () {})),
+  await tester.pumpWidget(
+    testApp(
+      Center(
+        child: SizedBox(
+          width: 290,
+          height: PlatformCard.height,
+          child: PlatformCard(platform: _ps2, onOpen: onOpen ?? () {}),
+        ),
+      ),
+      overrides: [
+        platformCoversChoiceProvider.overrideWith((ref) => PlatformCoversChoice(MemoryPrefs())),
+        platformCoversProvider.overrideWith((ref, key) async => covers),
+      ],
     ),
-    overrides: [
-      platformCoversChoiceProvider.overrideWith((ref) => PlatformCoversChoice(MemoryPrefs())),
-      platformCoversProvider.overrideWith((ref, key) async => covers),
-    ],
-  ));
+  );
   await tester.pumpAndSettle();
 }
 

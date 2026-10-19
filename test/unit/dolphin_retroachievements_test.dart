@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/dolphin_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
@@ -27,9 +28,11 @@ void main() {
   Future<DolphinStrategy> build({String? exe, PlatformInfo? platform, RetroAchievementsEmulatorLogin? loaded}) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-    return DolphinStrategy(_FixedExeDirectoryService(prefs, exe),
-        platform: platform ?? PlatformInfo('linux', environment: {'HOME': home.path}),
-        raLoginLoader: () async => loaded);
+    return DolphinStrategy(
+      _FixedExeDirectoryService(prefs, exe),
+      platform: platform ?? PlatformInfo('linux', environment: {'HOME': home.path}),
+      raLoginLoader: () async => loaded,
+    );
   }
 
   String config() => p.join(home.path, '.config', 'dolphin-emu');
@@ -50,7 +53,6 @@ void main() {
   test('Dolphin signs in through its config files', () async {
     expect((await build()).supportsRetroAchievementsLogin, isTrue);
   });
-
 
   group('applyRetroAchievementsLogin', () {
     test('writes the account and token into RetroAchievements.ini, owner-readable', () async {
@@ -82,31 +84,37 @@ void main() {
     test('hardcore on in Settings turns HardcoreEnabled on', () async {
       await givenDolphinRan();
       await (await build()).applyRetroAchievementsLogin(
-          const RetroAchievementsEmulatorLogin(username: 'Player', token: 't', hardcore: true));
+        const RetroAchievementsEmulatorLogin(username: 'Player', token: 't', hardcore: true),
+      );
       expect(IniFile(await raIni().readAsString()).get('Achievements', 'HardcoreEnabled'), 'True');
     });
-
 
     test('signs in on the very first launch: with no Dolphin.ini yet it writes to the default folder', () async {
       await (await build()).applyRetroAchievementsLogin(login);
       expect(IniFile(await raIni().readAsString()).get('Achievements', 'Username'), 'Player');
     });
 
-
     test('before its first run, a portable Windows install (portable.txt) gets User/Config', () async {
       final exe = p.join(home.path, 'Dolphin', 'Dolphin.exe');
       await io.File(p.join(p.dirname(exe), 'portable.txt')).create(recursive: true);
-      final strategy = await build(exe: exe, platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path, 'APPDATA': '${home.path}/AppData'}));
+      final strategy = await build(
+        exe: exe,
+        platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path, 'APPDATA': '${home.path}/AppData'}),
+      );
       expect(await strategy.preferredConfigDirectory(), p.join(home.path, 'Dolphin', 'User', 'Config'));
     });
 
-    test('before its first run, Windows falls back to Documents (if Dolphin\'s folder is there) or APPDATA', skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only', () async {
-      final env = {'USERPROFILE': home.path, 'APPDATA': '${home.path}/AppData'};
-      final noDocs = await build(platform: PlatformInfo('windows', environment: env));
-      expect(await noDocs.preferredConfigDirectory(), p.join(home.path, 'AppData', 'Dolphin Emulator', 'Config'));
-      await io.Directory(p.join(home.path, 'Documents', 'Dolphin Emulator')).create(recursive: true);
-      expect(await noDocs.preferredConfigDirectory(), p.join(home.path, 'Documents', 'Dolphin Emulator', 'Config'));
-    });
+    test(
+      'before its first run, Windows falls back to Documents (if Dolphin\'s folder is there) or APPDATA',
+      skip: 'Gargosy: Linux-path test from Freegosy; fails on a Windows host and Gargosy is Windows-only',
+      () async {
+        final env = {'USERPROFILE': home.path, 'APPDATA': '${home.path}/AppData'};
+        final noDocs = await build(platform: PlatformInfo('windows', environment: env));
+        expect(await noDocs.preferredConfigDirectory(), p.join(home.path, 'AppData', 'Dolphin Emulator', 'Config'));
+        await io.Directory(p.join(home.path, 'Documents', 'Dolphin Emulator')).create(recursive: true);
+        expect(await noDocs.preferredConfigDirectory(), p.join(home.path, 'Documents', 'Dolphin Emulator', 'Config'));
+      },
+    );
   });
 
   group('preLaunch', () {

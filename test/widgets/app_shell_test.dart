@@ -32,44 +32,57 @@ import '../helpers/profile_test_env.dart';
 void main() {
   late ProviderContainer c;
 
-  Future<void> pump(WidgetTester tester,
-      {List<Override> extra = const [], MemoryPrefs? prefs, void Function(AppRoot root)? before}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    List<Override> extra = const [],
+    MemoryPrefs? prefs,
+    void Function(AppRoot root)? before,
+  }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final root = await tester.runAsync(tempAppRoot);
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
     before?.call(root!);
-    c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root!),
-      appPreferencesProvider.overrideWithValue(prefs ?? MemoryPrefs()),
-      // The real pages, with a library that never touches RomM.
-      coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
-      recentlyPlayedProvider.overrideWith((ref) async => [for (var i = 21; i <= 30; i++) game(i, 'G$i')]),
-      recentlyAddedProvider.overrideWith((ref) async => [for (var i = 1; i <= 20; i++) game(i, 'G$i')]),
-      favouriteGamesProvider.overrideWith((ref) async => [for (var i = 31; i <= 40; i++) game(i, 'G$i')]),
-      randomGameProvider.overrideWith((ref) async => game(41, 'Pick')),
-      platformsProvider.overrideWith((ref) async => const []),
-      collectionsProvider.overrideWith((ref) async => const []),
-      favouriteIdsProvider.overrideWithValue(const {}),
-      rommHeartbeatEnabledProvider.overrideWithValue(false),
-      uploadQueueProvider.overrideWith((ref) async => null),
-      ...extra,
-    ]);
+    c = ProviderContainer(
+      overrides: [
+        appRootProvider.overrideWithValue(root!),
+        appPreferencesProvider.overrideWithValue(prefs ?? MemoryPrefs()),
+        // The real pages, with a library that never touches RomM.
+        coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+        recentlyPlayedProvider.overrideWith((ref) async => [for (var i = 21; i <= 30; i++) game(i, 'G$i')]),
+        recentlyAddedProvider.overrideWith((ref) async => [for (var i = 1; i <= 20; i++) game(i, 'G$i')]),
+        favouriteGamesProvider.overrideWith((ref) async => [for (var i = 31; i <= 40; i++) game(i, 'G$i')]),
+        randomGameProvider.overrideWith((ref) async => game(41, 'Pick')),
+        platformsProvider.overrideWith((ref) async => const []),
+        collectionsProvider.overrideWith((ref) async => const []),
+        favouriteIdsProvider.overrideWithValue(const {}),
+        rommHeartbeatEnabledProvider.overrideWithValue(false),
+        uploadQueueProvider.overrideWith((ref) async => null),
+        ...extra,
+      ],
+    );
     addTearDown(c.dispose);
-    final anna = await tester.runAsync(() => c.read(profileStoreProvider).create(
-        name: 'Anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna'));
-    await tester.runAsync(() => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')));
+    final anna = await tester.runAsync(
+      () => c
+          .read(profileStoreProvider)
+          .create(name: 'Anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna'),
+    );
+    await tester.runAsync(
+      () => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')),
+    );
     final nav = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        navigatorKey: nav,
-        theme: gargosyTheme(),
-        builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: const AppShell(),
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: c,
+        child: MaterialApp(
+          navigatorKey: nav,
+          theme: gargosyTheme(),
+          builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
+          home: const AppShell(),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
@@ -192,10 +205,13 @@ void main() {
         return true;
       },
     );
-    await pump(tester, extra: [
-      rommOfflineProvider.overrideWith((ref) => ref.watch(offline)),
-      uploadQueueProvider.overrideWith((ref) async => queue),
-    ]);
+    await pump(
+      tester,
+      extra: [
+        rommOfflineProvider.overrideWith((ref) => ref.watch(offline)),
+        uploadQueueProvider.overrideWith((ref) async => queue),
+      ],
+    );
     waiting.add((romId: '5', entry: BackupEntry(timestamp: DateTime(2026), md5Hash: 'h', localZipPath: 'z.zip')));
     c.read(offline.notifier).state = false;
     await tester.pumpAndSettle();
@@ -218,7 +234,11 @@ void main() {
       await send(tester, GameAction.start);
       final item = find.byKey(ValueKey('user-menu-${page.name}'));
       expect(item, findsOneWidget, reason: page.name);
-      expect(find.descendant(of: item, matching: find.text(page.label)), findsOneWidget, reason: page.name);
+      expect(
+        find.descendant(of: item, matching: find.text(page.label)),
+        findsOneWidget,
+        reason: page.name,
+      );
       await tester.tap(item);
       await tester.pumpAndSettle();
       expect(tester.widget<SettingsScreen>(find.byType(SettingsScreen)).initial, page, reason: page.name);
@@ -327,7 +347,8 @@ void main() {
       appStartedAt = started;
     });
     void changelog(AppRoot root) => io.File(p.join(root.root, 'CHANGELOG.md')).writeAsStringSync(
-        '# Changelog\n\n## [Unreleased]\n\n- Soon.\n\n## [$now] - 2026-11-01\n\n- The new thing.\n\n## [0.0.1] - 2026-01-01\n\n- Old.\n');
+      '# Changelog\n\n## [Unreleased]\n\n- Soon.\n\n## [$now] - 2026-11-01\n\n- The new thing.\n\n## [0.0.1] - 2026-01-01\n\n- Old.\n',
+    );
 
     testWidgets('the first start of a newer version opens the changes once, under its own title', (tester) async {
       final prefs = MemoryPrefs()..values[lastRunVersionKey] = '0.0.1';
@@ -345,8 +366,9 @@ void main() {
       expect(find.byType(DocReaderScreen), findsNothing);
     });
 
-    testWidgets('Gargosy in use before this release (a profile from an earlier start, no version recorded): it opens',
-        (tester) async {
+    testWidgets('Gargosy in use before this release (a profile from an earlier start, no version recorded): it opens', (
+      tester,
+    ) async {
       appStartedAt = DateTime.now().add(const Duration(days: 1)); // the profile is from before this start
       await pump(tester, prefs: MemoryPrefs(), before: changelog);
       expect(find.text("What's new in $now"), findsOneWidget);

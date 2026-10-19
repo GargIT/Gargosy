@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/rom_constants.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
@@ -31,13 +32,13 @@ void main() {
     });
 
     test('every Neo Geo slug variant accepts .zip (issue #58)', () {
-      const variants = [
-        'neogeo', 'neo-geo', 'neogeoaes', 'neogeomvs',
-        'neo-geo-aes', 'neo-geo-mvs', 'mvs', 'aes',
-      ];
+      const variants = ['neogeo', 'neo-geo', 'neogeoaes', 'neogeomvs', 'neo-geo-aes', 'neo-geo-mvs', 'mvs', 'aes'];
       for (final slug in variants) {
-        expect(DirectoryService.isRomFile(slug, 'mslug.zip'), isTrue,
-            reason: 'Neo Geo slug "$slug" should accept .zip');
+        expect(
+          DirectoryService.isRomFile(slug, 'mslug.zip'),
+          isTrue,
+          reason: 'Neo Geo slug "$slug" should accept .zip',
+        );
       }
     });
 
@@ -62,10 +63,8 @@ void main() {
       // leading dot — an entry like "chd" or ".CHD" would silently never match.
       for (final entry in RomConstants.platformExtensions.entries) {
         for (final ext in entry.value) {
-          expect(ext.startsWith('.'), isTrue,
-              reason: '"${entry.key}" extension "$ext" is missing its leading dot');
-          expect(ext, ext.toLowerCase(),
-              reason: '"${entry.key}" extension "$ext" must be lowercase');
+          expect(ext.startsWith('.'), isTrue, reason: '"${entry.key}" extension "$ext" is missing its leading dot');
+          expect(ext, ext.toLowerCase(), reason: '"${entry.key}" extension "$ext" must be lowercase');
         }
       }
     });
@@ -96,8 +95,6 @@ void main() {
       expect(await folderFor('genesis'), 'megadrive');
       expect(await folderFor('megadrive'), 'megadrive');
     });
-
-
 
     test('every Neo Geo slug variant shares one folder (issue #58)', () async {
       for (final slug in ['neogeo', 'neo-geo', 'neogeoaes', 'neogeomvs', 'neo-geo-aes', 'neo-geo-mvs', 'mvs', 'aes']) {

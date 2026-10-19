@@ -33,11 +33,11 @@ class SaveChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withValues(alpha: 0.6)),
-        ),
-        child: Text(text, style: TextStyle(fontSize: 11, color: color)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(4),
+      border: Border.all(color: color.withValues(alpha: 0.6)),
+    ),
+    child: Text(text, style: TextStyle(fontSize: 11, color: color)),
+  );
 }

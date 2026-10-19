@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:io' as io;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gargosy/core/emulator/strategies/windows_strategy.dart';
@@ -46,13 +47,7 @@ void main() {
     final systemRoot = io.Platform.environment['SystemRoot'] ?? 'C:\\Windows';
     final powershellExe = '$systemRoot\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
     await strategy.setExeOverride(game.id, powershellExe);
-    await strategy.setLaunchArgs(game.id, [
-      '-NoProfile',
-      '-File',
-      dumpArgsPs1.path,
-      '--game',
-      'jak1',
-    ]);
+    await strategy.setLaunchArgs(game.id, ['-NoProfile', '-File', dumpArgsPs1.path, '--game', 'jak1']);
 
     final romPath = '${tempDir.path}\\Test Game'; // a folder path, as WindowsStrategy expects
 
@@ -61,8 +56,11 @@ void main() {
     final exitCode = await process!.exitCode;
     await Future.delayed(const Duration(milliseconds: 300));
 
-    expect(await outFile.exists(), isTrue,
-        reason: 'powershell.exe should have run dump_args.ps1 and produced output (exit code: $exitCode)');
+    expect(
+      await outFile.exists(),
+      isTrue,
+      reason: 'powershell.exe should have run dump_args.ps1 and produced output (exit code: $exitCode)',
+    );
     // Out-File -Encoding utf8 on Windows PowerShell 5.1 writes a UTF-8 BOM;
     // strip it before splitting into lines.
     final rawBytes = await outFile.readAsBytes();
@@ -74,8 +72,12 @@ void main() {
 
     // If romPath had been appended as an extra argv entry (the bug), it
     // would show up as a third line in $args here.
-    expect(seenArgs, ['--game', 'jak1'],
-        reason: 'launchWithHandle must pass exactly the configured launch args — '
-            'romPath must NOT be appended as an extra trailing argument. Got: $seenArgs');
+    expect(
+      seenArgs,
+      ['--game', 'jak1'],
+      reason:
+          'launchWithHandle must pass exactly the configured launch args — '
+          'romPath must NOT be appended as an extra trailing argument. Got: $seenArgs',
+    );
   }, testOn: 'windows');
 }

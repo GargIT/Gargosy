@@ -23,10 +23,12 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
   final ctx = ref.read(activeProfileProvider);
   if (ctx == null) return;
   final available = ref.read(updateStateProvider).available;
-  final choice = await showUserMenu(context,
-      profile: ctx.profile,
-      avatarPath: ctx.paths.avatarFile,
-      update: available == null ? null : 'Update available: ${available.release.version}');
+  final choice = await showUserMenu(
+    context,
+    profile: ctx.profile,
+    avatarPath: ctx.paths.avatarFile,
+    update: available == null ? null : 'Update available: ${available.release.version}',
+  );
   if (!context.mounted) return;
   if (choice == null) return;
   final page = choice.page;

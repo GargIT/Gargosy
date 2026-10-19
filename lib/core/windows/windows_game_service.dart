@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 class WindowsGameService {
@@ -89,10 +90,23 @@ class WindowsGameService {
   /// Checks if an exe name should be skipped (redistributables, uninstallers, etc.)
   static bool shouldSkipExe(String name) {
     const skipList = [
-      'uninstall', 'uninst', 'setup', 'install', 'redist',
-      'vc_redist', 'vcredist', 'directx', 'dxsetup',
-      'dotnet', 'crashreport', 'crashhandler', 'bugsplat',
-      'upc', 'easyanticheat', 'battleye', 'launcher_helper',
+      'uninstall',
+      'uninst',
+      'setup',
+      'install',
+      'redist',
+      'vc_redist',
+      'vcredist',
+      'directx',
+      'dxsetup',
+      'dotnet',
+      'crashreport',
+      'crashhandler',
+      'bugsplat',
+      'upc',
+      'easyanticheat',
+      'battleye',
+      'launcher_helper',
     ];
     return skipList.any((s) => name.contains(s));
   }
@@ -112,12 +126,7 @@ class WindowsGameService {
         mode: ProcessStartMode.detached,
       );
     } else {
-      await Process.start(
-        exePath,
-        arguments,
-        workingDirectory: dir,
-        mode: ProcessStartMode.detached,
-      );
+      await Process.start(exePath, arguments, workingDirectory: dir, mode: ProcessStartMode.detached);
     }
   }
 }

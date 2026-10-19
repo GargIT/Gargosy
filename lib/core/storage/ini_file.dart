@@ -6,9 +6,7 @@ import 'dart:io' as io;
 /// comments, order, unknown sections, the file's line endings — is written
 /// back as it was, so an emulator's own settings are never reformatted.
 class IniFile {
-  IniFile(String text)
-      : _eol = text.contains('\r\n') ? '\r\n' : '\n',
-        _lines = _split(text);
+  IniFile(String text) : _eol = text.contains('\r\n') ? '\r\n' : '\n', _lines = _split(text);
 
   final String _eol;
   final List<String> _lines;

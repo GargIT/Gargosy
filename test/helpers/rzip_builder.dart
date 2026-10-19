@@ -6,8 +6,12 @@ import 'dart:typed_data';
 /// 20-byte header `#RZIPv<version>#`, chunk size (u32 LE), total size (u64
 /// LE), then per chunk its compressed length (u32 LE) and data. Deflate
 /// chunks are zlib-wrapped; pass [compress] for version 2 (zstd).
-Uint8List buildRzip(Uint8List raw,
-    {int version = 1, int chunkSize = 131072, Uint8List Function(Uint8List chunk)? compress}) {
+Uint8List buildRzip(
+  Uint8List raw, {
+  int version = 1,
+  int chunkSize = 131072,
+  Uint8List Function(Uint8List chunk)? compress,
+}) {
   final pack = compress ?? (Uint8List chunk) => Uint8List.fromList(ZLibEncoder().convert(chunk));
   final out = BytesBuilder();
   out.add([0x23, 0x52, 0x5A, 0x49, 0x50, 0x76, version, 0x23]);

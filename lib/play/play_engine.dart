@@ -4,8 +4,10 @@ import '../profiles/profile_providers.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/json_file.dart';
 import '../core/emulator/strategies/retroarch_strategy.dart';
+
 import 'package:path/path.dart' as p;
 import 'package:dio/dio.dart';
+
 import 'dart:io' as io;
 import 'dart:async';
 
@@ -83,8 +85,14 @@ abstract class PlayEngine {
   /// Brings the profile's states down from RomM before launch (when state
   /// sync is on for the emulator and RomM is reachable); [priority] first.
   /// Never throws.
-  Future<StatePull> pullStates(Game game, String romPath, EmulatorStrategy strategy,
-      {String? priority, String? coreOverride, void Function(String)? onProblem});
+  Future<StatePull> pullStates(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    String? priority,
+    String? coreOverride,
+    void Function(String)? onProblem,
+  });
 
   /// Whether [entry] can be loaded now (after [pull]).
   Future<ResumeCheck> checkResume(ResumeEntry entry, Game game, String romPath, StatePull pull);
@@ -97,10 +105,21 @@ abstract class PlayEngine {
   /// failure stops the launch (SaveChoiceException). Without, this PC's
   /// save is backed up and the profile's RomM save pulled; that never
   /// throws for a save problem: [onProblem] is told instead.
-  Future<void> prepare(Game game, String romPath, EmulatorStrategy strategy,
-      {PlayRequest? request, String? coreOverride, void Function(String)? onProblem});
-  Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy strategy,
-      {String? coreOverride, String? loadStatePath});
+  Future<void> prepare(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    PlayRequest? request,
+    String? coreOverride,
+    void Function(String)? onProblem,
+  });
+  Future<PlaySession> launch(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    String? coreOverride,
+    String? loadStatePath,
+  });
 
   /// Opens the emulator at [exePath] on the profile's data with no game, for
   /// its own settings (controllers). Completes when it has started;
@@ -135,7 +154,14 @@ abstract class PlayEngine {
   Future<String> syncStatesNow(Game game);
 
   /// The player's own RomM fields for [game]; true when RomM took them.
-  Future<bool> setRommUser(Game game, {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying});
+  Future<bool> setRommUser(
+    Game game, {
+    String? status,
+    int? rating,
+    int? completion,
+    bool? backlogged,
+    bool? nowPlaying,
+  });
 
   /// Downloads the RetroArch core [missing] names into the RetroArch install
   /// (shared by every profile). Throws when it can't.
@@ -173,7 +199,12 @@ class GargosyPlayEngine implements PlayEngine {
       game,
       romPath,
       LiveSaveCatalogSources(
-          sync: sync, registry: registry, backupRepository: repo, rommService: _ref.read(rommServiceProvider), installed: installed),
+        sync: sync,
+        registry: registry,
+        backupRepository: repo,
+        rommService: _ref.read(rommServiceProvider),
+        installed: installed,
+      ),
     );
     return PlayMenu(
       emulators: [
@@ -182,7 +213,9 @@ class GargosyPlayEngine implements PlayEngine {
             choices.makerFor(s.emulatorId),
             s.emulatorId == 'retroarch' ? s.name : choices.nameOf(choices.makerFor(s.emulatorId)),
             cores: s.emulatorId == 'retroarch' ? getCoresForSlug(game.platformSlug ?? '') : const [],
-            fullscreen: prefs != null && Fullscreen.supports(s.emulatorId) ? Fullscreen.isOn(prefs, s.emulatorId) : null,
+            fullscreen: prefs != null && Fullscreen.supports(s.emulatorId)
+                ? Fullscreen.isOn(prefs, s.emulatorId)
+                : null,
           ),
       ],
       remembered: choices.remembered,
@@ -213,18 +246,31 @@ class GargosyPlayEngine implements PlayEngine {
   }
 
   @override
-  Future<StatePull> pullStates(Game game, String romPath, EmulatorStrategy strategy,
-      {String? priority, String? coreOverride, void Function(String)? onProblem}) async {
+  Future<StatePull> pullStates(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    String? priority,
+    String? coreOverride,
+    void Function(String)? onProblem,
+  }) async {
     final states = _ref.read(stateSyncServiceProvider);
     final romm = _ref.read(rommServiceProvider);
     if (states == null || !states.isAvailableFor(game, emulatorId: strategy.emulatorId)) return const StatePull();
     if (romm == null || romm.isOffline.value) return const StatePull();
     try {
-      final r = await states.pullStates(game, romPath,
-          emulatorId: strategy.emulatorId, priority: priority, coreOverride: coreOverride);
+      final r = await states.pullStates(
+        game,
+        romPath,
+        emulatorId: strategy.emulatorId,
+        priority: priority,
+        coreOverride: coreOverride,
+      );
       if (r.conflicts.isNotEmpty) {
-        onProblem?.call('${r.conflicts.length == 1 ? 'A state differs' : '${r.conflicts.length} states differ'} '
-            "on RomM and this PC. This PC's copy is used; RomM's stays on RomM.");
+        onProblem?.call(
+          '${r.conflicts.length == 1 ? 'A state differs' : '${r.conflicts.length} states differ'} '
+          "on RomM and this PC. This PC's copy is used; RomM's stays on RomM.",
+        );
       }
       return StatePull(current: r.currentFiles, conflicted: {for (final c in r.conflicts) c.fileName});
     } on Object {
@@ -275,9 +321,18 @@ class GargosyPlayEngine implements PlayEngine {
   }
 
   @override
-  Future<String> readyRom(Game game, String romPath, EmulatorStrategy strategy, {void Function(String)? onProgress}) async {
+  Future<String> readyRom(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    void Function(String)? onProgress,
+  }) async {
     final root = _ref.read(appRootProvider);
-    final preparer = RomPreparer(files: _ref.read(romFilesProvider), guard: PathGuard(root), tempDir: p.join(root.appData, 'temp'));
+    final preparer = RomPreparer(
+      files: _ref.read(romFilesProvider),
+      guard: PathGuard(root),
+      tempDir: p.join(root.appData, 'temp'),
+    );
     final unpacked = await preparer.ready(game, romPath, strategy.emulatorId, onProgress: onProgress);
     if (unpacked == null) return romPath;
     // The unpacked folder's main ROM, readied too (an Xbox disc unpacked
@@ -288,8 +343,14 @@ class GargosyPlayEngine implements PlayEngine {
   }
 
   @override
-  Future<void> prepare(Game game, String romPath, EmulatorStrategy strategy,
-      {PlayRequest? request, String? coreOverride, void Function(String)? onProblem}) async {
+  Future<void> prepare(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    PlayRequest? request,
+    String? coreOverride,
+    void Function(String)? onProblem,
+  }) async {
     final sync = _ref.read(saveSyncServiceProvider);
     final backups = _ref.read(backupServiceProvider);
     final repo = await _ref.read(backupRepositoryProvider.future);
@@ -305,16 +366,26 @@ class GargosyPlayEngine implements PlayEngine {
         request,
         putInPlace: (save) => preparer.prepare(game, romPath, save, target: request.emulator),
         confirmRommCopy: sync.confirmRommCopy,
-        markSynced: () =>
-            sync.markSaveSynced(game, romPath, emulatorId: strategy.emulatorId, syncMode: _syncMode, coreOverride: coreOverride),
+        markSynced: () => sync.markSaveSynced(
+          game,
+          romPath,
+          emulatorId: strategy.emulatorId,
+          syncMode: _syncMode,
+          coreOverride: coreOverride,
+        ),
       );
       return;
     }
     await pullBeforeLaunch(
       backUp: () => preparer.backUp(game, romPath, SaveMaker(strategy.emulatorId, coreId: _bareCore(coreOverride))),
       pull: () => sync.pullSave(game, romPath, emulatorId: strategy.emulatorId, coreOverride: coreOverride),
-      markSynced: () =>
-          sync.markSaveSynced(game, romPath, emulatorId: strategy.emulatorId, syncMode: _syncMode, coreOverride: coreOverride),
+      markSynced: () => sync.markSaveSynced(
+        game,
+        romPath,
+        emulatorId: strategy.emulatorId,
+        syncMode: _syncMode,
+        coreOverride: coreOverride,
+      ),
       // Only a resume gets here (the play screen always sends its choice):
       // the state boots with the save in memory, so the pull lands first or
       // not at all, never under a running emulator.
@@ -389,7 +460,9 @@ class GargosyPlayEngine implements PlayEngine {
 
   String? _emulatorIdOf(Game game) {
     final slug = game.platformSlug;
-    return slug == null ? null : _ref.read(strategyRegistryProvider)?.getStrategyForSlug(slug, gameId: game.id)?.emulatorId;
+    return slug == null
+        ? null
+        : _ref.read(strategyRegistryProvider)?.getStrategyForSlug(slug, gameId: game.id)?.emulatorId;
   }
 
   @override
@@ -413,11 +486,24 @@ class GargosyPlayEngine implements PlayEngine {
   }
 
   @override
-  Future<bool> setRommUser(Game game, {String? status, int? rating, int? completion, bool? backlogged, bool? nowPlaying}) async {
+  Future<bool> setRommUser(
+    Game game, {
+    String? status,
+    int? rating,
+    int? completion,
+    bool? backlogged,
+    bool? nowPlaying,
+  }) async {
     final romm = _ref.read(rommServiceProvider);
     if (romm == null) return false;
-    return romm.updateRomProps(game.id,
-        status: status, rating: rating, completion: completion, backlogged: backlogged, nowPlaying: nowPlaying);
+    return romm.updateRomProps(
+      game.id,
+      status: status,
+      rating: rating,
+      completion: completion,
+      backlogged: backlogged,
+      nowPlaying: nowPlaying,
+    );
   }
 
   @override
@@ -440,22 +526,33 @@ class GargosyPlayEngine implements PlayEngine {
   static String? _bareCore(String? core) => core?.replaceAll(RegExp(r'_libretro$'), '');
 
   @override
-  Future<PlaySession> launch(Game game, String romPath, EmulatorStrategy strategy,
-      {String? coreOverride, String? loadStatePath}) async {
+  Future<PlaySession> launch(
+    Game game,
+    String romPath,
+    EmulatorStrategy strategy, {
+    String? coreOverride,
+    String? loadStatePath,
+  }) async {
     final service = await _launch();
     final statePath = loadStatePath == null ? null : await _stateForThisPc(strategy, loadStatePath, romPath);
-    final session = await service.launch(game, romPath, strategy, overrideCoreId: coreOverride, loadStatePath: statePath);
+    final session = await service.launch(
+      game,
+      romPath,
+      strategy,
+      overrideCoreId: coreOverride,
+      loadStatePath: statePath,
+    );
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
         .whenComplete(() async {
-      if (statePath == loadStatePath) return;
-      try {
-        await io.File(statePath!).delete();
-      } on io.FileSystemException catch (_) {
-        // Left in temp; the next Resume of that state writes over it.
-      }
-    });
+          if (statePath == loadStatePath) return;
+          try {
+            await io.File(statePath!).delete();
+          } on io.FileSystemException catch (_) {
+            // Left in temp; the next Resume of that state writes over it.
+          }
+        });
     return PlaySession(finished);
   }
 
@@ -482,7 +579,9 @@ class GargosyPlayEngine implements PlayEngine {
   static PlayResult _describe(LaunchResult? r) {
     if (r == null) return const PlayResult('The game ended.');
     if (r.saveConflict != null) {
-      return const PlayResult("RomM has a newer save from another device. It stays on RomM; yours is backed up on this PC.");
+      return const PlayResult(
+        "RomM has a newer save from another device. It stays on RomM; yours is backed up on this PC.",
+      );
     }
     if (r.saveSyncBlocked != null) return PlayResult('Saves not synced: ${r.saveSyncBlocked}');
     if (r.saveUnchanged) return const PlayResult('Save unchanged.', synced: true);

@@ -131,8 +131,6 @@ void main() {
     });
   });
 
-
-
   // Regression tests for issue #75: "Dolphin games with spaces in the
   // filename fail to launch". The real cause wasn't argv/quoting — it was
   // the ROM path falling outside Flatpak's default sandbox access

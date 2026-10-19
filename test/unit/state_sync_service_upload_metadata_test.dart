@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:flutter_test/flutter_test.dart';
+
 import '../helpers/p2s_builder.dart';
 import '../helpers/state_sync_test_env.dart';
 
@@ -46,5 +47,4 @@ void main() {
     expect(await env.service.resolveConflict(push.conflicts.single, choice: 'local'), isTrue);
     expect(env.api.screenshotOf(seeded.id), [7]);
   });
-
 }

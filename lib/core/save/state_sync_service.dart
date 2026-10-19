@@ -2,9 +2,11 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import 'dart:io' as io;
+
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../romm/romm_models.dart';
 import '../romm/romm_state.dart';
 import '../storage/app_preferences.dart';
@@ -12,8 +14,7 @@ import 'save_strategy.dart';
 import 'state_sync_capable.dart';
 import 'state_sync_record.dart';
 
-typedef SaveStrategyResolver = SaveStrategy? Function(Game game,
-    {String? emulatorId, String? coreOverride});
+typedef SaveStrategyResolver = SaveStrategy? Function(Game game, {String? emulatorId, String? coreOverride});
 
 /// Runs a body with no other save operation in between (SaveSyncService's
 /// save lock): the strategies are shared by every game.
@@ -112,8 +113,7 @@ class _TransferFailed implements Exception {
 }
 
 class _Ctx {
-  const _Ctx(this.strategy, this.dir, this.matches, this.game, this.romPath,
-      this.emulatorId);
+  const _Ctx(this.strategy, this.dir, this.matches, this.game, this.romPath, this.emulatorId);
 
   final StateSyncCapable strategy;
   final io.Directory dir;
@@ -152,12 +152,17 @@ class StateSyncService {
   /// `RommService.stateDownloadInactivityTimeout`) and stops the pull.
   static const Duration defaultListTimeout = Duration(seconds: 20);
 
-  StateSyncService(this._api, this._prefs, this._resolveStrategy,
-      {Duration listTimeout = defaultListTimeout, StrategyExclusive? exclusive, bool Function(String emulatorId)? emulatorSyncs})
-      : _records = StateRecordStore(_prefs),
-        _listTimeout = listTimeout,
-        _exclusive = exclusive ?? _runDirectly,
-        _emulatorSyncs = emulatorSyncs;
+  StateSyncService(
+    this._api,
+    this._prefs,
+    this._resolveStrategy, {
+    Duration listTimeout = defaultListTimeout,
+    StrategyExclusive? exclusive,
+    bool Function(String emulatorId)? emulatorSyncs,
+  }) : _records = StateRecordStore(_prefs),
+       _listTimeout = listTimeout,
+       _exclusive = exclusive ?? _runDirectly,
+       _emulatorSyncs = emulatorSyncs;
 
   /// Gargosy: whether an emulator has state sync turned on in its strategy
   /// (`EmulatorStrategy.supportsStateSync`), the same rule Resume and Settings
@@ -241,13 +246,23 @@ class StateSyncService {
   /// [priority], when given, is downloaded before any other state (a Resume
   /// of that slot must not wait behind, or be stopped by, another slot's
   /// download).
-  Future<StateSyncResult> pullStates(Game game, String romPath,
-          {String? emulatorId, String? priority, String? coreOverride}) =>
-      _exclusive(() => _pullStatesUnlocked(game, romPath,
-          emulatorId: emulatorId, priority: priority, coreOverride: coreOverride));
+  Future<StateSyncResult> pullStates(
+    Game game,
+    String romPath, {
+    String? emulatorId,
+    String? priority,
+    String? coreOverride,
+  }) => _exclusive(
+    () => _pullStatesUnlocked(game, romPath, emulatorId: emulatorId, priority: priority, coreOverride: coreOverride),
+  );
 
-  Future<StateSyncResult> _pullStatesUnlocked(Game game, String romPath,
-      {String? emulatorId, String? priority, String? coreOverride}) async {
+  Future<StateSyncResult> _pullStatesUnlocked(
+    Game game,
+    String romPath, {
+    String? emulatorId,
+    String? priority,
+    String? coreOverride,
+  }) async {
     if (!_busyGames.add(game.id)) {
       debugPrint('[StateSync] ${game.id} is busy — skipping pull');
       return StateSyncResult.busyGame;
@@ -256,8 +271,10 @@ class StateSyncService {
       final ctx = await _context(game, romPath, emulatorId, coreOverride: coreOverride);
       if (ctx == null) return StateSyncResult.unavailable;
 
-      debugPrint('[StateSync] pull ${game.name} (rom ${game.id}, emulator '
-          '${emulatorId ?? ctx.strategy.strategyId}): states folder ${ctx.dir.path}');
+      debugPrint(
+        '[StateSync] pull ${game.name} (rom ${game.id}, emulator '
+        '${emulatorId ?? ctx.strategy.strategyId}): states folder ${ctx.dir.path}',
+      );
       var downloaded = 0;
       final downloadedFiles = <String>{};
       var stopNote = '';
@@ -268,21 +285,19 @@ class StateSyncService {
         final remote = await _list(game.id);
         final ordered = priority == null
             ? remote
-            : [...remote.where((s) => s.fileName == priority),
-               ...remote.where((s) => s.fileName != priority)];
-        final matching = remote
-            .where((s) => isSafeStateName(s.fileName) && ctx.matches(s.fileName))
-            .length;
-        debugPrint('[StateSync] pull: RomM lists ${remote.length} state(s), '
-            '$matching match this game${matching == 0 ? ' (nothing to download)' : ''}');
+            : [...remote.where((s) => s.fileName == priority), ...remote.where((s) => s.fileName != priority)];
+        final matching = remote.where((s) => isSafeStateName(s.fileName) && ctx.matches(s.fileName)).length;
+        debugPrint(
+          '[StateSync] pull: RomM lists ${remote.length} state(s), '
+          '$matching match this game${matching == 0 ? ' (nothing to download)' : ''}',
+        );
         final local = await _localStates(ctx);
         final records = _records.load(game.id);
         for (final state in ordered) {
           final name = state.fileName;
           if (!isSafeStateName(name) || !ctx.matches(name)) continue;
           try {
-            final outcome =
-                await _pullOne(ctx, state, local[name], records, restamped, upToDate);
+            final outcome = await _pullOne(ctx, state, local[name], records, restamped, upToDate);
             if (outcome.downloaded) {
               downloaded++;
               downloadedFiles.add(name);
@@ -305,13 +320,16 @@ class StateSyncService {
         debugPrint('[StateSync] pull failed: $e');
         stopNote = ' (stopped early: the pull failed)';
       }
-      debugPrint('[StateSync] pull done: downloaded=$downloaded '
-          'restamped=${restamped.length} conflicts=${conflicts.length}$stopNote');
+      debugPrint(
+        '[StateSync] pull done: downloaded=$downloaded '
+        'restamped=${restamped.length} conflicts=${conflicts.length}$stopNote',
+      );
       return StateSyncResult(
-          downloaded: downloaded,
-          conflicts: conflicts,
-          downloadedFiles: downloadedFiles,
-          upToDateFiles: upToDate);
+        downloaded: downloaded,
+        conflicts: conflicts,
+        downloadedFiles: downloadedFiles,
+        upToDateFiles: upToDate,
+      );
     } finally {
       _busyGames.remove(game.id);
     }
@@ -345,36 +363,29 @@ class StateSyncService {
 
     if (record != null && record.conflict) {
       debugPrint('[StateSync] conflict $name (still unresolved from an earlier sync)');
-      return (
-        downloaded: false,
-        conflict: _conflict(ctx, name, local, remote),
-      );
+      return (downloaded: false, conflict: _conflict(ctx, name, local, remote));
     }
 
     final localHash = await _hashFile(local);
     if (record == null || !record.hasSynced) {
-      final conflict =
-          await _linkOrFlag(ctx, name, local, localHash, remote, records,
-              upToDate: upToDate);
+      final conflict = await _linkOrFlag(ctx, name, local, localHash, remote, records, upToDate: upToDate);
       return (downloaded: false, conflict: conflict);
     }
 
-    final serverMoved =
-        remote.id != record.rommStateId || remote.updatedAt != record.serverUpdatedAt;
+    final serverMoved = remote.id != record.rommStateId || remote.updatedAt != record.serverUpdatedAt;
     if (!serverMoved) {
-      debugPrint(localHash != record.lastSyncedHash
-          ? '[StateSync] kept local $name (changed locally, will upload after exit)'
-          : '[StateSync] unchanged $name');
+      debugPrint(
+        localHash != record.lastSyncedHash
+            ? '[StateSync] kept local $name (changed locally, will upload after exit)'
+            : '[StateSync] unchanged $name',
+      );
       return none;
     }
 
     if (localHash != record.lastSyncedHash) {
       records[name] = record.copyWith(conflict: true);
       debugPrint('[StateSync] conflict $name (changed on both sides)');
-      return (
-        downloaded: false,
-        conflict: _conflict(ctx, name, local, remote),
-      );
+      return (downloaded: false, conflict: _conflict(ctx, name, local, remote));
     }
 
     final bytes = await _fetch(ctx, remote);
@@ -396,11 +407,9 @@ class StateSyncService {
   /// The log line for a state RomM re-stamped: says which of the state id and
   /// `updated_at` moved, since only what differs is worth reporting.
   @visibleForTesting
-  static String restampedLine(
-      String name, RommState remote, StateSyncRecord record) {
+  static String restampedLine(String name, RommState remote, StateSyncRecord record) {
     final changes = [
-      if (remote.id != record.rommStateId)
-        'state id changed (was ${record.rommStateId}, now ${remote.id})',
+      if (remote.id != record.rommStateId) 'state id changed (was ${record.rommStateId}, now ${remote.id})',
       if (remote.updatedAt != record.serverUpdatedAt)
         'updated_at changed (was ${record.serverUpdatedAt}, now ${remote.updatedAt})',
     ];
@@ -415,13 +424,29 @@ class StateSyncService {
   /// Never throws: failures are logged and reported as "nothing done". A push
   /// for a busy game (see [_busyGames]) does nothing and returns
   /// [StateSyncResult.busyGame].
-  Future<StateSyncResult> pushStates(Game game, String romPath,
-          {DateTime? sessionStart, String? emulatorId, String? coreOverride}) =>
-      _exclusive(() => _pushStatesUnlocked(game, romPath,
-          sessionStart: sessionStart, emulatorId: emulatorId, coreOverride: coreOverride));
+  Future<StateSyncResult> pushStates(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String? emulatorId,
+    String? coreOverride,
+  }) => _exclusive(
+    () => _pushStatesUnlocked(
+      game,
+      romPath,
+      sessionStart: sessionStart,
+      emulatorId: emulatorId,
+      coreOverride: coreOverride,
+    ),
+  );
 
-  Future<StateSyncResult> _pushStatesUnlocked(Game game, String romPath,
-      {DateTime? sessionStart, String? emulatorId, String? coreOverride}) async {
+  Future<StateSyncResult> _pushStatesUnlocked(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String? emulatorId,
+    String? coreOverride,
+  }) async {
     if (!_busyGames.add(game.id)) {
       debugPrint('[StateSync] ${game.id} is busy — skipping push');
       return StateSyncResult.busyGame;
@@ -435,20 +460,19 @@ class StateSyncService {
       try {
         final candidates = await _pushCandidates(ctx, sessionStart);
         if (candidates.isEmpty) {
-          debugPrint('[StateSync] push: nothing to upload (no matching state of '
-              'at least $minValidStateBytes bytes '
-              '${sessionStart == null ? 'found' : 'was modified this session'})');
+          debugPrint(
+            '[StateSync] push: nothing to upload (no matching state of '
+            'at least $minValidStateBytes bytes '
+            '${sessionStart == null ? 'found' : 'was modified this session'})',
+          );
           return StateSyncResult.none;
         }
 
-        final server = {
-          for (final state in await _list(game.id)) state.fileName: state,
-        };
+        final server = {for (final state in await _list(game.id)) state.fileName: state};
         final records = _records.load(game.id);
         for (final entry in candidates.entries) {
           try {
-            final outcome = await _pushOne(
-                ctx, entry.key, entry.value, server[entry.key], records);
+            final outcome = await _pushOne(ctx, entry.key, entry.value, server[entry.key], records);
             if (outcome.uploaded) uploaded++;
             if (outcome.conflict != null) conflicts.add(outcome.conflict!);
           } catch (e) {
@@ -467,8 +491,7 @@ class StateSyncService {
     }
   }
 
-  Future<Map<String, io.File>> _pushCandidates(
-      _Ctx ctx, DateTime? sessionStart) async {
+  Future<Map<String, io.File>> _pushCandidates(_Ctx ctx, DateTime? sessionStart) async {
     final cutoff = sessionStart?.subtract(const Duration(seconds: 2));
     final result = <String, io.File>{};
     final local = await _localStates(ctx);
@@ -477,10 +500,12 @@ class StateSyncService {
       if (entry.value.lengthSync() < minValidStateBytes) continue;
       result[entry.key] = entry.value;
     }
-    debugPrint('[StateSync] push ${ctx.game.name} (rom ${ctx.game.id}): '
-        '${result.length} of ${local.length} local state(s) eligible ('
-        '${sessionStart == null ? 'any modification time' : 'modified since ${sessionStart.toIso8601String()}'}'
-        ', at least $minValidStateBytes bytes)');
+    debugPrint(
+      '[StateSync] push ${ctx.game.name} (rom ${ctx.game.id}): '
+      '${result.length} of ${local.length} local state(s) eligible ('
+      '${sessionStart == null ? 'any modification time' : 'modified since ${sessionStart.toIso8601String()}'}'
+      ', at least $minValidStateBytes bytes)',
+    );
     return result;
   }
 
@@ -503,10 +528,7 @@ class StateSyncService {
     // resolve it.
     if (record != null && record.conflict && server != null) {
       debugPrint('[StateSync] conflict $name (still unresolved from an earlier sync)');
-      return (
-        uploaded: false,
-        conflict: _conflict(ctx, name, file, server),
-      );
+      return (uploaded: false, conflict: _conflict(ctx, name, file, server));
     }
 
     // Validated like a download: a state the emulator failed to write (cut
@@ -523,14 +545,15 @@ class StateSyncService {
     }
 
     if (record != null && record.conflict && server == null) {
-      debugPrint('[StateSync] $name was flagged as a conflict but its server '
-          'copy is gone — uploading the local state again');
+      debugPrint(
+        '[StateSync] $name was flagged as a conflict but its server '
+        'copy is gone — uploading the local state again',
+      );
     }
 
     if (server != null && (record == null || !record.hasSynced)) {
       // Same name on both sides with no shared history: never overwrite.
-      final conflict =
-          await _linkOrFlag(ctx, name, file, hash, server, records);
+      final conflict = await _linkOrFlag(ctx, name, file, hash, server, records);
       if (conflict != null) return (uploaded: false, conflict: conflict);
       record = records[name];
       if (record != null && record.hasSynced && record.lastSyncedHash == hash) {
@@ -543,20 +566,13 @@ class StateSyncService {
       // Local changed (hash differs) AND the server copy moved: conflict.
       records[name] = record.copyWith(conflict: true);
       debugPrint('[StateSync] conflict $name (changed on both sides)');
-      return (
-        uploaded: false,
-        conflict: _conflict(ctx, name, file, server),
-      );
+      return (uploaded: false, conflict: _conflict(ctx, name, file, server));
     }
 
     // No server copy means never uploaded, or the copy is gone (deleted /
     // other account): create it.
     final saved = await _upload(ctx, file, name, server: server);
-    records[name] = StateSyncRecord(
-      rommStateId: saved.id,
-      lastSyncedHash: hash,
-      serverUpdatedAt: saved.updatedAt,
-    );
+    records[name] = StateSyncRecord(rommStateId: saved.id, lastSyncedHash: hash, serverUpdatedAt: saved.updatedAt);
     return (uploaded: true, conflict: null);
   }
 
@@ -570,8 +586,7 @@ class StateSyncService {
   Future<bool> resolveConflict(StateConflict conflict, {required String choice}) =>
       _exclusive(() => _resolveConflictUnlocked(conflict, choice: choice));
 
-  Future<bool> _resolveConflictUnlocked(StateConflict conflict,
-      {required String choice}) async {
+  Future<bool> _resolveConflictUnlocked(StateConflict conflict, {required String choice}) async {
     final gameId = conflict.game.id;
     if (!_busyGames.add(gameId)) {
       debugPrint('[StateSync] $gameId is busy — not resolving ${conflict.fileName}');
@@ -585,8 +600,7 @@ class StateSyncService {
   }
 
   Future<bool> _resolve(StateConflict conflict, String choice) async {
-    final ctx =
-        await _context(conflict.game, conflict.romPath, conflict.emulatorId);
+    final ctx = await _context(conflict.game, conflict.romPath, conflict.emulatorId);
     if (ctx == null) return false;
     final records = _records.load(conflict.game.id);
     final file = io.File(conflict.localPath);
@@ -610,26 +624,30 @@ class StateSyncService {
         // again (the API takes a file), so if it changed in between, its hash
         // no longer matches the record and the next push uploads it again.
         final bytes = await file.readAsBytes();
-        if (bytes.length < minValidStateBytes ||
-            !ctx.strategy.looksLikeValidState(Uint8List.fromList(bytes))) {
-          debugPrint('[StateSync] local copy of ${conflict.fileName} is not a valid state (${bytes.length} bytes) — not uploading');
+        if (bytes.length < minValidStateBytes || !ctx.strategy.looksLikeValidState(Uint8List.fromList(bytes))) {
+          debugPrint(
+            '[StateSync] local copy of ${conflict.fileName} is not a valid state (${bytes.length} bytes) — not uploading',
+          );
           return false;
         }
-        final saved = await _upload(ctx, file, conflict.fileName,
-            server: _cloudState(conflict));
+        final saved = await _upload(ctx, file, conflict.fileName, server: _cloudState(conflict));
         records[conflict.fileName] = StateSyncRecord(
           rommStateId: saved.id,
           lastSyncedHash: _hashBytes(bytes),
           serverUpdatedAt: saved.updatedAt,
         );
       } else {
-        debugPrint('[StateSync] resolve ${conflict.fileName}: unknown choice '
-            "'$choice' — nothing done");
+        debugPrint(
+          '[StateSync] resolve ${conflict.fileName}: unknown choice '
+          "'$choice' — nothing done",
+        );
         return false;
       }
       await _records.save(conflict.game.id, records);
-      debugPrint('[StateSync] resolve ${conflict.fileName}: keep $choice -> '
-          "${choice == 'local' ? 'uploaded' : 'restored'}");
+      debugPrint(
+        '[StateSync] resolve ${conflict.fileName}: keep $choice -> '
+        "${choice == 'local' ? 'uploaded' : 'restored'}",
+      );
       return true;
     } on RommStateNotFoundException {
       debugPrint('[StateSync] ${conflict.fileName} no longer exists on RomM');
@@ -644,8 +662,7 @@ class StateSyncService {
 
   /// The one place the server list is fetched, bounded by the list timeout. A
   /// [TimeoutException] is handled like any other failed list call.
-  Future<List<RommState>> _list(String gameId) =>
-      _api.listStates(gameId).timeout(_listTimeout);
+  Future<List<RommState>> _list(String gameId) => _api.listStates(gameId).timeout(_listTimeout);
 
   /// A local file and a server state exist with no shared history. Identical
   /// bytes: record them as synced. Different bytes: flag a conflict and leave
@@ -668,15 +685,15 @@ class StateSyncService {
       debugPrint('[StateSync] linked $name (identical bytes)');
       return null;
     }
-    records[name] = StateSyncRecord(
-        rommStateId: remote.id, serverUpdatedAt: remote.updatedAt, conflict: true);
-    debugPrint('[StateSync] conflict $name (on both sides with no shared history, '
-        'contents differ)');
+    records[name] = StateSyncRecord(rommStateId: remote.id, serverUpdatedAt: remote.updatedAt, conflict: true);
+    debugPrint(
+      '[StateSync] conflict $name (on both sides with no shared history, '
+      'contents differ)',
+    );
     return _conflict(ctx, name, local, remote);
   }
 
-  StateConflict _conflict(
-      _Ctx ctx, String name, io.File local, RommState remote) {
+  StateConflict _conflict(_Ctx ctx, String name, io.File local, RommState remote) {
     return StateConflict(
       game: ctx.game,
       romPath: ctx.romPath,
@@ -686,23 +703,18 @@ class StateSyncService {
       cloudStateId: remote.id,
       cloudUpdatedAt: remote.updatedAt,
       localTime: local.lastModifiedSync(),
-      cloudTime: DateTime.tryParse(remote.updatedAt ?? '')?.toLocal() ??
-          DateTime.fromMillisecondsSinceEpoch(0),
+      cloudTime: DateTime.tryParse(remote.updatedAt ?? '')?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
-  StateSyncRecord _synced(RommState remote, List<int> bytes) => StateSyncRecord(
-        rommStateId: remote.id,
-        lastSyncedHash: _hashBytes(bytes),
-        serverUpdatedAt: remote.updatedAt,
-      );
+  StateSyncRecord _synced(RommState remote, List<int> bytes) =>
+      StateSyncRecord(rommStateId: remote.id, lastSyncedHash: _hashBytes(bytes), serverUpdatedAt: remote.updatedAt);
 
   /// Puts [file] on RomM as [name]: replaces [server] in place when given (a
   /// vanished server copy is re-created), creates a new state otherwise. New
   /// states are tagged with the emulator id; both paths send the state's
   /// screenshot when the emulator provides one.
-  Future<RommState> _upload(_Ctx ctx, io.File file, String name,
-      {RommState? server}) async {
+  Future<RommState> _upload(_Ctx ctx, io.File file, String name, {RommState? server}) async {
     final screenshot = await _screenshotFor(ctx, file);
     int? goneId;
     if (server != null) {
@@ -714,12 +726,17 @@ class StateSyncService {
         goneId = server.id;
       }
     }
-    final saved = await _api.uploadState(ctx.game.id, file,
-        fileName: name,
-        emulator: ctx.emulatorId ?? ctx.strategy.strategyId,
-        screenshot: screenshot);
-    debugPrint('[StateSync] uploaded $name (POST, id ${saved.id})'
-        "${goneId == null ? '' : ' - re-created: state $goneId is gone from RomM'}");
+    final saved = await _api.uploadState(
+      ctx.game.id,
+      file,
+      fileName: name,
+      emulator: ctx.emulatorId ?? ctx.strategy.strategyId,
+      screenshot: screenshot,
+    );
+    debugPrint(
+      '[StateSync] uploaded $name (POST, id ${saved.id})'
+      "${goneId == null ? '' : ' - re-created: state $goneId is gone from RomM'}",
+    );
     return _labelled(ctx, saved);
   }
 
@@ -757,11 +774,8 @@ class StateSyncService {
   }
 
   /// The server copy [conflict] was found against.
-  RommState _cloudState(StateConflict conflict) => RommState(
-        id: conflict.cloudStateId,
-        fileName: conflict.fileName,
-        updatedAt: conflict.cloudUpdatedAt,
-      );
+  RommState _cloudState(StateConflict conflict) =>
+      RommState(id: conflict.cloudStateId, fileName: conflict.fileName, updatedAt: conflict.cloudUpdatedAt);
 
   /// Downloads [state], or returns null if it is gone or fails validation. Any
   /// other download failure (stalled, timed out, connection lost) is thrown as
@@ -798,8 +812,7 @@ class StateSyncService {
       await temp.writeAsBytes(bytes, flush: true);
       await ctx.strategy.backupSave(path);
       if (existed && !await io.File('${p.normalize(path)}.bak').exists()) {
-        throw io.FileSystemException(
-            'Could not back up the existing state before replacing it', path);
+        throw io.FileSystemException('Could not back up the existing state before replacing it', path);
       }
       await temp.rename(path);
     } finally {
@@ -833,8 +846,7 @@ class StateSyncService {
       !name.contains('/') &&
       !name.contains(r'\');
 
-  Future<String> _hashFile(io.File file) async =>
-      _hashBytes(await file.readAsBytes());
+  Future<String> _hashFile(io.File file) async => _hashBytes(await file.readAsBytes());
 
   String _hashBytes(List<int> bytes) => md5.convert(bytes).toString();
 }

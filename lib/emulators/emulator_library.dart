@@ -1,5 +1,6 @@
 import '../core/emulator/pe_version_reader.dart';
 import '../profiles/json_file.dart';
+
 import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,15 +15,16 @@ import 'folder_link.dart';
 import 'profile_launch_config.dart';
 
 class EmulatorInfo {
-  const EmulatorInfo(
-      {required this.id,
-      required this.name,
-      required this.exe,
-      required this.supported,
-      this.installedExe,
-      this.installedFrom,
-      this.version,
-      this.downloadOff});
+  const EmulatorInfo({
+    required this.id,
+    required this.name,
+    required this.exe,
+    required this.supported,
+    this.installedExe,
+    this.installedFrom,
+    this.version,
+    this.downloadOff,
+  });
 
   final String id;
   final String name;
@@ -60,11 +62,56 @@ class EmulatorLibrary {
 
   /// What an install keeps besides the program: left out on import.
   static const dataNames = <String, Set<String>>{
-    'pcsx2': {'memcards', 'sstates', 'inis', 'logs', 'cache', 'snaps', 'covers', 'videos', 'textures', 'gamesettings', 'cheats', 'patches', 'bios', 'portable.txt', 'portable.ini'},
+    'pcsx2': {
+      'memcards',
+      'sstates',
+      'inis',
+      'logs',
+      'cache',
+      'snaps',
+      'covers',
+      'videos',
+      'textures',
+      'gamesettings',
+      'cheats',
+      'patches',
+      'bios',
+      'portable.txt',
+      'portable.ini',
+    },
     'dolphin': {'user', 'portable.txt'},
     'ppsspp': {'memstick', 'installed.txt'},
-    'duckstation': {'memcards', 'savestates', 'settings.ini', 'portable.txt', 'cache', 'covers', 'screenshots', 'gamesettings', 'inputprofiles', 'shaders', 'videos', 'textures', 'cheats', 'patches', 'subchannels', 'gameicons', 'bios'},
-    'retroarch': {'saves', 'states', 'retroarch.cfg', 'playlists', 'logs', 'screenshots', 'config', 'thumbnails', 'downloads', 'system'},
+    'duckstation': {
+      'memcards',
+      'savestates',
+      'settings.ini',
+      'portable.txt',
+      'cache',
+      'covers',
+      'screenshots',
+      'gamesettings',
+      'inputprofiles',
+      'shaders',
+      'videos',
+      'textures',
+      'cheats',
+      'patches',
+      'subchannels',
+      'gameicons',
+      'bios',
+    },
+    'retroarch': {
+      'saves',
+      'states',
+      'retroarch.cfg',
+      'playlists',
+      'logs',
+      'screenshots',
+      'config',
+      'thumbnails',
+      'downloads',
+      'system',
+    },
     'xenia_canary': {'content', 'cache', 'storage', 'xenia.log', 'xenia-canary.config.toml', 'portable.txt'},
     'ares': {'settings.bml'},
     'mgba': {'config.ini', 'qt.ini', 'portable.ini'},
@@ -72,9 +119,27 @@ class EmulatorLibrary {
     'mame': {'cfg', 'nvram', 'sta', 'inp', 'snap', 'diff', 'comments', 'ini', 'mame.ini', 'ui.ini'},
     'xemu': {'xemu.toml'},
     // RPCS3's own data beside its exe: games, saves, firmware and caches.
-    'rpcs3': {'config', 'dev_hdd0', 'dev_hdd1', 'dev_flash', 'dev_flash2', 'dev_flash3', 'dev_usb000', 'dev_bdvd',
-      'cache', 'captures', 'games', 'log', 'savestates', 'shaderlog', 'ppu_progs', 'spu_progs', 'patches', 'portable',
-      'rpcs3.buf'},
+    'rpcs3': {
+      'config',
+      'dev_hdd0',
+      'dev_hdd1',
+      'dev_flash',
+      'dev_flash2',
+      'dev_flash3',
+      'dev_usb000',
+      'dev_bdvd',
+      'cache',
+      'captures',
+      'games',
+      'log',
+      'savestates',
+      'shaderlog',
+      'ppu_progs',
+      'spu_progs',
+      'patches',
+      'portable',
+      'rpcs3.buf',
+    },
     // A portable ScummVM's own settings, saves and logs beside its exe.
     'scummvm': {'scummvm.ini', 'saves', 'screenshots', 'logs', 'scummvm.log', 'icons'},
     // A portable Ryujinx keeps its saves, keys and firmware in portable\;
@@ -92,7 +157,10 @@ class EmulatorLibrary {
   /// Notes where the install in `emulators\<id>\` came from (a download's
   /// URL, or [imported]), so an update can tell whether it's the newest.
   Future<void> recordInstall(String id, {required String from}) => writeJsonObject(
-      _guard, p.join(root.emulators, id, _installFile), {'from': from, 'at': DateTime.now().toUtc().toIso8601String()});
+    _guard,
+    p.join(root.emulators, id, _installFile),
+    {'from': from, 'at': DateTime.now().toUtc().toIso8601String()},
+  );
 
   String? _installedFrom(String id) {
     try {
@@ -107,7 +175,9 @@ class EmulatorLibrary {
     if (!d.existsSync()) return null;
     // Never through a folder link (issue #8): it leads into a profile's data.
     for (final e in d.listSync(recursive: true, followLinks: false)) {
-      if (e is io.File && p.basename(e.path).toLowerCase() == exe.toLowerCase() && p.split(p.relative(e.path, from: dir)).length <= 4) {
+      if (e is io.File &&
+          p.basename(e.path).toLowerCase() == exe.toLowerCase() &&
+          p.split(p.relative(e.path, from: dir)).length <= 4) {
         return e.path;
       }
     }
@@ -120,16 +190,18 @@ class EmulatorLibrary {
     for (final s in strategies) {
       if (s.emulatorId == 'windows_native' || s.windowsExecutable.isEmpty || !seen.add(s.emulatorId)) continue;
       final exe = _findExe(p.join(root.emulators, s.emulatorId), s.windowsExecutable);
-      out.add(EmulatorInfo(
-        id: s.emulatorId,
-        name: s.name,
-        exe: s.windowsExecutable,
-        supported: ProfileLaunchConfig.supported.contains(s.emulatorId),
-        installedExe: exe,
-        installedFrom: exe == null ? null : _installedFrom(s.emulatorId),
-        version: exe == null ? null : await PeVersionReader.fileVersion(exe),
-        downloadOff: downloadsOff[s.emulatorId],
-      ));
+      out.add(
+        EmulatorInfo(
+          id: s.emulatorId,
+          name: s.name,
+          exe: s.windowsExecutable,
+          supported: ProfileLaunchConfig.supported.contains(s.emulatorId),
+          installedExe: exe,
+          installedFrom: exe == null ? null : _installedFrom(s.emulatorId),
+          version: exe == null ? null : await PeVersionReader.fileVersion(exe),
+          downloadOff: downloadsOff[s.emulatorId],
+        ),
+      );
     }
     out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return out;

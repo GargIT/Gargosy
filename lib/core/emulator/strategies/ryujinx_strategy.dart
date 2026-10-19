@@ -1,9 +1,11 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
+
 import '../emulator_strategy.dart';
 
 class RyujinxStrategy extends EmulatorStrategy {
@@ -99,12 +101,7 @@ class RyujinxStrategy extends EmulatorStrategy {
       if (platform.isMacOS) {
         await _ensureEntitlements(exePath);
         final exeDir = io.File(exePath).parent.path;
-        await io.Process.start(
-          exePath,
-          [absRomPath],
-          mode: io.ProcessStartMode.detached,
-          workingDirectory: exeDir,
-        );
+        await io.Process.start(exePath, [absRomPath], mode: io.ProcessStartMode.detached, workingDirectory: exeDir);
         return;
       }
     }
@@ -154,11 +151,12 @@ class RyujinxStrategy extends EmulatorStrategy {
     final exePath = await findExecutable();
     if (exePath == null) throw Exception('$name not found. Please download it first.');
 
-    if (platform.isWindows) {      final exeDir = io.File(exePath).parent.path;
+    if (platform.isWindows) {
+      final exeDir = io.File(exePath).parent.path;
       debugPrint('[Ryujinx] Launching Windows Standalone (No ROM)');
       debugPrint('[Ryujinx] Executable: $exePath');
       debugPrint('[Ryujinx] Working Directory: $exeDir');
-      
+
       try {
         final process = await io.Process.start(
           exePath,
@@ -186,7 +184,7 @@ class RyujinxStrategy extends EmulatorStrategy {
     if (!platform.isMacOS) return;
     final appPath = exePath.split('/Contents/MacOS/').first;
     final checkResult = await io.Process.run('codesign', ['-dv', '--entitlements', '-', appPath]);
-    if (checkResult.stderr.toString().contains('com.apple.security.hypervisor') || 
+    if (checkResult.stderr.toString().contains('com.apple.security.hypervisor') ||
         checkResult.stdout.toString().contains('com.apple.security.hypervisor')) {
       return;
     }
@@ -212,9 +210,7 @@ class RyujinxStrategy extends EmulatorStrategy {
     final tempFile = io.File('${io.Directory.systemTemp.path}/ryujinx_entitlements.plist');
     await tempFile.writeAsString(entitlements);
     try {
-      await io.Process.run('codesign', [
-        '--sign', '-', '--force', '--deep', '--entitlements', tempFile.path, appPath,
-      ]);
+      await io.Process.run('codesign', ['--sign', '-', '--force', '--deep', '--entitlements', tempFile.path, appPath]);
     } finally {
       if (await tempFile.exists()) await tempFile.delete();
     }

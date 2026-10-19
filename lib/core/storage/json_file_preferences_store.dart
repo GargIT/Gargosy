@@ -15,8 +15,8 @@ import 'package:shared_preferences_platform_interface/types.dart';
 /// `<name>.corrupt-<stamp>.json` and the store starts empty.
 class JsonFilePreferencesStore extends SharedPreferencesStorePlatform {
   JsonFilePreferencesStore(this.file, {void Function(String message)? onProblem, DateTime Function()? now})
-      : _onProblem = onProblem ?? ((m) => debugPrint('[Settings] $m')),
-        _now = now ?? DateTime.now;
+    : _onProblem = onProblem ?? ((m) => debugPrint('[Settings] $m')),
+      _now = now ?? DateTime.now;
 
   final io.File file;
   final void Function(String message) _onProblem;
@@ -133,8 +133,9 @@ class JsonFilePreferencesStore extends SharedPreferencesStorePlatform {
   @override
   Future<bool> clearWithParameters(ClearParameters parameters) async {
     final filter = parameters.filter;
-    _load().removeWhere((key, _) =>
-        key.startsWith(filter.prefix) && (filter.allowList == null || filter.allowList!.contains(key)));
+    _load().removeWhere(
+      (key, _) => key.startsWith(filter.prefix) && (filter.allowList == null || filter.allowList!.contains(key)),
+    );
     return _persist();
   }
 

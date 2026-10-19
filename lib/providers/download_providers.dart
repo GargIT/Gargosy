@@ -60,9 +60,13 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     _cancels[game.id] = cancel;
     _set(game.id, const DownloadProgress(DownloadPhase.downloading));
     try {
-      await service.download(game, cancel: cancel, onProgress: (pr) {
-        if (mounted && pr.phase != DownloadPhase.done) _set(game.id, pr);
-      });
+      await service.download(
+        game,
+        cancel: cancel,
+        onProgress: (pr) {
+          if (mounted && pr.phase != DownloadPhase.done) _set(game.id, pr);
+        },
+      );
       if (!mounted) return;
       _set(game.id, null);
       await _ref.read(librarySnapshotProvider)?.remember(game);

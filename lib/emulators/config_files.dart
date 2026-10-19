@@ -49,11 +49,7 @@ String setTomlKeys(String text, String section, Map<String, String> values, {Set
 /// apostrophe or a line break, which a literal string can't.
 String tomlString(String value) {
   if (!value.contains("'") && !value.contains('\n') && !value.contains('\r')) return "'$value'";
-  final escaped = value
-      .replaceAll('\\', '\\\\')
-      .replaceAll('"', '\\"')
-      .replaceAll('\n', '\\n')
-      .replaceAll('\r', '\\r');
+  final escaped = value.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n').replaceAll('\r', '\\r');
   return '"$escaped"';
 }
 
@@ -68,7 +64,10 @@ String? getTomlKey(String text, String section, String key) {
       continue;
     }
     if (current != '[$section]') continue;
-    final m = RegExp('^${RegExp.escape(key)}' r'''\s*=\s*(['"])(.*)\1\s*$''').firstMatch(line);
+    final m = RegExp(
+      '^${RegExp.escape(key)}'
+      r'''\s*=\s*(['"])(.*)\1\s*$''',
+    ).firstMatch(line);
     if (m != null) return m.group(2);
   }
   return null;

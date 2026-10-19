@@ -42,16 +42,17 @@ List<({String label, String href})> markdownLinks(String text) {
 /// in the text), B goes back. A link to another file opens it here; a web
 /// link or a folder opens outside.
 class DocReaderScreen extends ConsumerStatefulWidget {
-  const DocReaderScreen({super.key, required String this.path})
-      : text = null,
-        title = null,
-        baseDir = null;
+  const DocReaderScreen({super.key, required String this.path}) : text = null, title = null, baseDir = null;
 
   /// Markdown [text] that isn't a file (What's new, issue #3), under
   /// [title]; its links and images resolve against [baseDir], the Gargosy
   /// folder.
-  const DocReaderScreen.text({super.key, required String this.title, required String this.text, required String this.baseDir})
-      : path = null;
+  const DocReaderScreen.text({
+    super.key,
+    required String this.title,
+    required String this.text,
+    required String this.baseDir,
+  }) : path = null;
 
   final String? path;
   final String? text;
@@ -68,6 +69,7 @@ class DocReaderScreen extends ConsumerStatefulWidget {
 class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
   static const _step = 120.0;
   final _scroll = ScrollController();
+
   /// Read once, in one go: these are documents of a few KB.
   late final String? _text = _read();
   StreamSubscription<GameAction>? _pad;
@@ -155,8 +157,10 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
 
   Widget _body(String text) {
     if (!_markdown) {
-      return SelectableText(text,
-          style: const TextStyle(fontFamily: 'Consolas', fontSize: GFont.md, height: 1.45, color: GColors.fgSecondary));
+      return SelectableText(
+        text,
+        style: const TextStyle(fontFamily: 'Consolas', fontSize: GFont.md, height: 1.45, color: GColors.fgSecondary),
+      );
     }
     return MarkdownBody(
       data: text,
@@ -186,39 +190,50 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
               child: Focus(
                 autofocus: true,
                 onKeyEvent: _onKey,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s8, GSpace.rowPad, GSpace.s4),
-                    child: Text(widget.title ?? p.basename(widget.path!),
-                        style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800)),
-                  ),
-                  Expanded(
-                    child: text == null
-                            ? Center(
-                                child: Text("${widget.title ?? p.basename(widget.path!)} isn't in the Gargosy folder.",
-                                    style: const TextStyle(color: GColors.fgSecondary)),
-                              )
-                            : Scrollbar(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s8, GSpace.rowPad, GSpace.s4),
+                      child: Text(
+                        widget.title ?? p.basename(widget.path!),
+                        style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    Expanded(
+                      child: text == null
+                          ? Center(
+                              child: Text(
+                                "${widget.title ?? p.basename(widget.path!)} isn't in the Gargosy folder.",
+                                style: const TextStyle(color: GColors.fgSecondary),
+                              ),
+                            )
+                          : Scrollbar(
+                              controller: _scroll,
+                              child: SingleChildScrollView(
                                 controller: _scroll,
-                                child: SingleChildScrollView(
-                                  controller: _scroll,
-                                  padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad, vertical: GSpace.s4),
-                                  child: Align(
-                                    alignment: Alignment.topLeft,
-                                    child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 900), child: _body(text)),
+                                padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad, vertical: GSpace.s4),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 900),
+                                    child: _body(text),
                                   ),
                                 ),
                               ),
-                  ),
-                  HintBar(hints: [
-                    const Hint(GameAction.verticalAxis, 'Scroll'),
-                    const Hint(GameAction.l1, 'Page up'),
-                    const Hint(GameAction.r1, 'Page down'),
-                    if (hasLinks) const Hint(GameAction.detail, 'Links'),
-                    const Hint(GameAction.back, 'Back'),
-                  ]),
-                ]),
+                            ),
+                    ),
+                    HintBar(
+                      hints: [
+                        const Hint(GameAction.verticalAxis, 'Scroll'),
+                        const Hint(GameAction.l1, 'Page up'),
+                        const Hint(GameAction.r1, 'Page down'),
+                        if (hasLinks) const Hint(GameAction.detail, 'Links'),
+                        const Hint(GameAction.back, 'Back'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -231,7 +246,12 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
 /// Markdown in Gargosy's colours and sizes.
 MarkdownStyleSheet docStyleSheet(ThemeData theme) {
   const body = TextStyle(fontSize: GFont.lg, height: 1.55, color: GColors.fgSecondary);
-  const code = TextStyle(fontFamily: 'Consolas', fontSize: GFont.md, color: GColors.fg, backgroundColor: GColors.surface);
+  const code = TextStyle(
+    fontFamily: 'Consolas',
+    fontSize: GFont.md,
+    color: GColors.fg,
+    backgroundColor: GColors.surface,
+  );
   return MarkdownStyleSheet.fromTheme(theme).copyWith(
     p: body,
     listBullet: body,
@@ -248,9 +268,13 @@ MarkdownStyleSheet docStyleSheet(ThemeData theme) {
     code: code,
     codeblockPadding: const EdgeInsets.all(GSpace.s3),
     codeblockDecoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.md)),
-    blockquoteDecoration: const BoxDecoration(border: Border(left: BorderSide(color: GColors.borderStrong, width: 3))),
+    blockquoteDecoration: const BoxDecoration(
+      border: Border(left: BorderSide(color: GColors.borderStrong, width: 3)),
+    ),
     blockquotePadding: const EdgeInsets.only(left: GSpace.s4),
-    horizontalRuleDecoration: const BoxDecoration(border: Border(top: BorderSide(color: GColors.borderStrong))),
+    horizontalRuleDecoration: const BoxDecoration(
+      border: Border(top: BorderSide(color: GColors.borderStrong)),
+    ),
     tableBorder: TableBorder.all(color: GColors.borderStrong),
     blockSpacing: GSpace.s3,
   );

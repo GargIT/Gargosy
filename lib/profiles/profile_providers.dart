@@ -19,10 +19,13 @@ final appPreferencesProvider = Provider<AppPreferences>((ref) => throw Unimpleme
 final dataProtectorProvider = Provider<DataProtector>((ref) => DpapiDataProtector());
 final pcIdentityProvider = Provider<PcIdentity>((ref) => PcIdentity.current());
 final rommAuthFactoryProvider = Provider<RommAuth Function(String baseUrl, bool trustSelfSigned)>(
-    (ref) => (url, trust) => RommAuthClient(url, trustSelfSigned: trust));
+  (ref) =>
+      (url, trust) => RommAuthClient(url, trustSelfSigned: trust),
+);
 
-final profileStoreProvider =
-    Provider<ProfileStore>((ref) => ProfileStore(ref.watch(appRootProvider), ref.watch(appPreferencesProvider)));
+final profileStoreProvider = Provider<ProfileStore>(
+  (ref) => ProfileStore(ref.watch(appRootProvider), ref.watch(appPreferencesProvider)),
+);
 final profilesProvider = FutureProvider<List<Profile>>((ref) => ref.watch(profileStoreProvider).list());
 
 /// PIN lockouts per profile, for as long as Gargosy runs.
@@ -99,5 +102,6 @@ class ActiveProfileNotifier extends StateNotifier<ProfileContext?> {
   }
 }
 
-final activeProfileProvider =
-    StateNotifierProvider<ActiveProfileNotifier, ProfileContext?>((ref) => ActiveProfileNotifier(ref));
+final activeProfileProvider = StateNotifierProvider<ActiveProfileNotifier, ProfileContext?>(
+  (ref) => ActiveProfileNotifier(ref),
+);

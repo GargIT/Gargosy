@@ -1,7 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
+
 import '../emulator_strategy.dart';
 
 class EdenStrategy extends EmulatorStrategy {
@@ -41,8 +43,8 @@ class EdenStrategy extends EmulatorStrategy {
       final dir = io.Directory(emuDir);
       if (await dir.exists()) {
         await for (final entity in dir.list()) {
-          if (entity is io.File && 
-              entity.path.toLowerCase().contains('eden') && 
+          if (entity is io.File &&
+              entity.path.toLowerCase().contains('eden') &&
               entity.path.toLowerCase().endsWith('.appimage')) {
             return entity.path;
           }

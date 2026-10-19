@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/windows/windows_game_service.dart';
 import 'package:path/path.dart' as p;
@@ -11,11 +12,20 @@ void main() {
   group('WindowsGameService.shouldSkipExe', () {
     test('skips redistributables, installers and helper executables', () {
       const helpers = [
-        'uninstall.exe', 'setup.exe', 'vc_redist.x64.exe',
-        'vcredist_x86.exe', 'dxsetup.exe', 'directx_jun2010_redist.exe',
-        'dotnetfx35.exe', 'crashreporter.exe', 'unitycrashhandler64.exe',
-        'bugsplat64.exe', 'upc.exe', 'easyanticheat_setup.exe',
-        'battleye_launcher.exe', 'launcher_helper.exe',
+        'uninstall.exe',
+        'setup.exe',
+        'vc_redist.x64.exe',
+        'vcredist_x86.exe',
+        'dxsetup.exe',
+        'directx_jun2010_redist.exe',
+        'dotnetfx35.exe',
+        'crashreporter.exe',
+        'unitycrashhandler64.exe',
+        'bugsplat64.exe',
+        'upc.exe',
+        'easyanticheat_setup.exe',
+        'battleye_launcher.exe',
+        'launcher_helper.exe',
       ];
       for (final name in helpers) {
         expect(WindowsGameService.shouldSkipExe(name), isTrue, reason: name);
@@ -29,23 +39,33 @@ void main() {
       }
     });
 
-    test('does not skip games whose names merely contain a blocked substring', () {
-      // "upc" (Ubisoft Connect's upc.exe) is matched as a raw substring, so
-      // any game with "upc" inside a word is hidden from exe detection.
-      const games = ['cupcake.exe', 'soupcraft.exe', 'upcoming.exe'];
-      for (final name in games) {
-        expect(WindowsGameService.shouldSkipExe(name), isFalse, reason: name);
-      }
-    }, skip: 'Known bug: shouldSkipExe() matches blocklist entries as raw substrings. '
-        'Remove skip once matching respects word boundaries.');
+    test(
+      'does not skip games whose names merely contain a blocked substring',
+      () {
+        // "upc" (Ubisoft Connect's upc.exe) is matched as a raw substring, so
+        // any game with "upc" inside a word is hidden from exe detection.
+        const games = ['cupcake.exe', 'soupcraft.exe', 'upcoming.exe'];
+        for (final name in games) {
+          expect(WindowsGameService.shouldSkipExe(name), isFalse, reason: name);
+        }
+      },
+      skip:
+          'Known bug: shouldSkipExe() matches blocklist entries as raw substrings. '
+          'Remove skip once matching respects word boundaries.',
+    );
 
-    test('skips Inno Setup uninstallers (unins000.exe)', () {
-      // Inno Setup names its uninstaller unins000.exe, which contains neither
-      // "uninstall" nor "uninst", so it slips through the blocklist.
-      expect(WindowsGameService.shouldSkipExe('unins000.exe'), isTrue);
-      expect(WindowsGameService.shouldSkipExe('unins001.exe'), isTrue);
-    }, skip: 'Known bug: shouldSkipExe() does not match Inno Setup\'s unins000.exe. '
-        'Remove skip once fixed.');
+    test(
+      'skips Inno Setup uninstallers (unins000.exe)',
+      () {
+        // Inno Setup names its uninstaller unins000.exe, which contains neither
+        // "uninstall" nor "uninst", so it slips through the blocklist.
+        expect(WindowsGameService.shouldSkipExe('unins000.exe'), isTrue);
+        expect(WindowsGameService.shouldSkipExe('unins001.exe'), isTrue);
+      },
+      skip:
+          'Known bug: shouldSkipExe() does not match Inno Setup\'s unins000.exe. '
+          'Remove skip once fixed.',
+    );
   });
 
   group('WindowsGameService.findExecutable skips helpers', () {
@@ -72,14 +92,19 @@ void main() {
       expect(p.basename(exe!), 'Game.exe');
     });
 
-    test('picks the game over a larger Inno Setup unins000.exe', () async {
-      await File(p.join(tempDir.path, 'Game.exe')).writeAsBytes(List.filled(10, 0));
-      await File(p.join(tempDir.path, 'unins000.exe')).writeAsBytes(List.filled(500, 0));
+    test(
+      'picks the game over a larger Inno Setup unins000.exe',
+      () async {
+        await File(p.join(tempDir.path, 'Game.exe')).writeAsBytes(List.filled(10, 0));
+        await File(p.join(tempDir.path, 'unins000.exe')).writeAsBytes(List.filled(500, 0));
 
-      final exe = await WindowsGameService().findExecutable(tempDir.path);
-      expect(p.basename(exe!), 'Game.exe');
-    }, skip: 'Known bug: unins000.exe is not filtered and wins the largest-exe '
-        'fallback. Remove skip once shouldSkipExe() handles it.');
+        final exe = await WindowsGameService().findExecutable(tempDir.path);
+        expect(p.basename(exe!), 'Game.exe');
+      },
+      skip:
+          'Known bug: unins000.exe is not filtered and wins the largest-exe '
+          'fallback. Remove skip once shouldSkipExe() handles it.',
+    );
 
     test('returns null when the folder only contains helpers', () async {
       await File(p.join(tempDir.path, 'setup.exe')).writeAsBytes(List.filled(10, 0));

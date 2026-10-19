@@ -17,10 +17,14 @@ void main() {
 
   testWidgets('the D-pad wraps from the end of a row to the start of the next and back', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(SizedBox(
-      width: 700, // room for 3 columns of 158 + gaps
-      child: CoverGrid(games: games, coverUrl: (_) => null, onOpen: (_) {}),
-    )));
+    await tester.pumpWidget(
+      testApp(
+        SizedBox(
+          width: 700, // room for 3 columns of 158 + gaps
+          child: CoverGrid(games: games, coverUrl: (_) => null, onOpen: (_) {}),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(focusedName(), 'Game 1');
     final perRow = CoverGrid.columnsFor(700);
@@ -39,7 +43,9 @@ void main() {
   testWidgets('asks for more when focus nears the end', (tester) async {
     await setDesktopSize(tester);
     var asked = 0;
-    await tester.pumpWidget(testApp(CoverGrid(games: games, total: 100, coverUrl: (_) => null, onOpen: (_) {}, onEndReached: () => asked++)));
+    await tester.pumpWidget(
+      testApp(CoverGrid(games: games, total: 100, coverUrl: (_) => null, onOpen: (_) {}, onEndReached: () => asked++)),
+    );
     await tester.pumpAndSettle();
     await tester.drag(find.byType(CoverGrid), const Offset(0, -6000));
     await tester.pumpAndSettle();
@@ -47,7 +53,9 @@ void main() {
   });
 
   testWidgets('an empty grid says so', (tester) async {
-    await tester.pumpWidget(testApp(CoverGrid(games: const [], coverUrl: (_) => null, onOpen: (_) {}, emptyText: 'No games here')));
+    await tester.pumpWidget(
+      testApp(CoverGrid(games: const [], coverUrl: (_) => null, onOpen: (_) {}, emptyText: 'No games here')),
+    );
     expect(find.text('No games here'), findsOneWidget);
   });
 }

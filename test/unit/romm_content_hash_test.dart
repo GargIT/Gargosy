@@ -45,7 +45,10 @@ void main() {
   });
 
   test('from file digests: same formula; two files of one name both count, in their zip order', () {
-    expect(rommHashOfDigests([('b.sav', md5Of(x)), ('a/c.dat', md5Of(y))]), rommHashOfZipEntries({'b.sav': x, 'a/c.dat': y}));
+    expect(
+      rommHashOfDigests([('b.sav', md5Of(x)), ('a/c.dat', md5Of(y))]),
+      rommHashOfZipEntries({'b.sav': x, 'a/c.dat': y}),
+    );
     expect(rommHashOfDigests([('save.dat', 'm1'), ('save.dat', 'm2')]), md5Of(utf8.encode('save.dat:m1\nsave.dat:m2')));
     expect(rommHashOfDigests([('save.dat', 'm2'), ('save.dat', 'm1')]), md5Of(utf8.encode('save.dat:m2\nsave.dat:m1')));
   });
@@ -71,13 +74,14 @@ void main() {
     test('the files it holds, as rommHashOfLocal lists them', () {
       String md5Bytes(List<int> b) => md5.convert(b).toString();
       expect(
-          rommHashOfDigests([
-            ('Spara/profiler/åäö/slot.sav', md5Bytes(List.generate(1000, (i) => i % 256))),
-            ('Spara/tom.dat', md5Bytes(const [])),
-            ('Spel – sparning.srm', md5Bytes(List.generate(2048, (i) => (i * 7) % 256))),
-            ('freegosy_sync.txt', md5Bytes(utf8.encode('{"contentHash":"0123"}'))),
-          ]),
-          expected);
+        rommHashOfDigests([
+          ('Spara/profiler/åäö/slot.sav', md5Bytes(List.generate(1000, (i) => i % 256))),
+          ('Spara/tom.dat', md5Bytes(const [])),
+          ('Spel – sparning.srm', md5Bytes(List.generate(2048, (i) => (i * 7) % 256))),
+          ('freegosy_sync.txt', md5Bytes(utf8.encode('{"contentHash":"0123"}'))),
+        ]),
+        expected,
+      );
     });
   });
 
@@ -111,16 +115,40 @@ void main() {
     // record of no entries is a real empty zip, for Python too.)
     final fake = Uint8List.fromList([
       ...List.filled(300, 3),
-      0x50, 0x4B, 5, 6, 0, 0, 0, 0, 1, 0, 1, 0, 46, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0x50,
+      0x4B,
+      5,
+      6,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      46,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
     ]);
 
-    test('can\'t be read as a zip: no hash, as RomM stores none (Python calls it a zip, then cannot open it)', () async {
-      expect(rommHashOfUpload(fake), isNull);
-      final dir = await Directory.systemTemp.createTemp('romm_fake_zip');
-      addTearDown(() => dir.delete(recursive: true));
-      final file = File('${dir.path}/save.sav')..writeAsBytesSync(fake);
-      expect(await rommHashOfSaveFile(file), isNull);
-    });
+    test(
+      'can\'t be read as a zip: no hash, as RomM stores none (Python calls it a zip, then cannot open it)',
+      () async {
+        expect(rommHashOfUpload(fake), isNull);
+        final dir = await Directory.systemTemp.createTemp('romm_fake_zip');
+        addTearDown(() => dir.delete(recursive: true));
+        final file = File('${dir.path}/save.sav')..writeAsBytesSync(fake);
+        expect(await rommHashOfSaveFile(file), isNull);
+      },
+    );
 
     test('the last end marker decides, as Python\'s rfind: one too near the end means no zip', () {
       final tail = Uint8List.fromList([

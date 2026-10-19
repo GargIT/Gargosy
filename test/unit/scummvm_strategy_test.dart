@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/scummvm_strategy.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
@@ -15,8 +16,10 @@ void main() {
   group('ScummVMStrategy', () {
     test('starts the game folder with --auto-detect --path, no bare path argument', () {
       // ScummVM rejects a bare folder argument as an unknown game target.
-      expect(ScummVMStrategy.gameArgs('/games/Drascula The Vampire'),
-          ['--auto-detect', '--path=/games/Drascula The Vampire']);
+      expect(ScummVMStrategy.gameArgs('/games/Drascula The Vampire'), [
+        '--auto-detect',
+        '--path=/games/Drascula The Vampire',
+      ]);
     });
 
     test('a game folder is used as is, a file inside it resolves to the folder', () async {
@@ -26,7 +29,6 @@ void main() {
       expect(ScummVMStrategy.gameFolderFor(dir.path), dir.path);
       expect(ScummVMStrategy.gameFolderFor(dataFile.path), dir.path);
     });
-
 
     test('scummvm is a folder-game platform', () {
       expect(RomConstants.isFolderGamePlatform('scummvm'), isTrue);

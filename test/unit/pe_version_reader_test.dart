@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/pe_version_reader.dart';
 import 'package:gargosy/core/emulator/strategies/pcsx2_strategy.dart';
@@ -50,11 +51,14 @@ void main() {
       ..setUint32(8, (2 << 16) | 8, Endian.little)
       ..setUint32(12, (2 << 16) | 0, Endian.little);
     final bytes = Uint8List.fromList([
-      0x4D, 0x5A, ...List.filled(50, 0),
+      0x4D,
+      0x5A,
+      ...List.filled(50, 0),
       ...stray.buffer.asUint8List(),
       ...List.filled(50, 0),
       ...real.buffer.asUint8List(),
-      0, 0,
+      0,
+      0,
     ]);
     expect(PeVersionReader.parse(bytes), '2.8.2.0');
   });
@@ -71,20 +75,23 @@ void main() {
 
     test('reads the exe on Windows', () async {
       final exe = File(p.join(tmp.path, 'pcsx2-qt.exe'))..writeAsBytesSync(fakePe(2, 8, 2, 0));
-      final strategy = Pcsx2Strategy(_ExeDirectoryService(prefs, exe.path),
-          platform: const PlatformInfo('windows', environment: {}));
+      final strategy = Pcsx2Strategy(
+        _ExeDirectoryService(prefs, exe.path),
+        platform: const PlatformInfo('windows', environment: {}),
+      );
       expect(await strategy.installedVersion(), '2.8.2.0');
     });
 
     test('re-reads after the exe changes (cache keyed on modified time)', () async {
       final exe = File(p.join(tmp.path, 'pcsx2-qt.exe'))..writeAsBytesSync(fakePe(2, 8, 2, 0));
-      final strategy = Pcsx2Strategy(_ExeDirectoryService(prefs, exe.path),
-          platform: const PlatformInfo('windows', environment: {}));
+      final strategy = Pcsx2Strategy(
+        _ExeDirectoryService(prefs, exe.path),
+        platform: const PlatformInfo('windows', environment: {}),
+      );
       expect(await strategy.installedVersion(), '2.8.2.0');
       exe.writeAsBytesSync(fakePe(2, 9, 0, 0));
       exe.setLastModifiedSync(DateTime.now().add(const Duration(minutes: 1)));
       expect(await strategy.installedVersion(), '2.9.0.0');
     });
-
   });
 }

@@ -16,7 +16,12 @@ class FakeLibraryApi implements LibraryApi {
   int? failFromOffset;
 
   @override
-  Future<GalleryPage> page(GalleryQuery q, {int offset = 0, int limit = RommLibraryApi.pageSize, bool withFilterValues = false}) async {
+  Future<GalleryPage> page(
+    GalleryQuery q, {
+    int offset = 0,
+    int limit = RommLibraryApi.pageSize,
+    bool withFilterValues = false,
+  }) async {
     queries.add((q, offset));
     if (failWith != null) throw failWith!;
     if (failFromOffset != null && offset >= failFromOffset!) throw Exception('SocketException: connection reset');
@@ -62,7 +67,13 @@ class FakeLibraryApi implements LibraryApi {
     favouriteCalls.add(gameId);
     if (failWith != null) throw failWith!;
     if (favouriteDelay != null) await favouriteDelay!.future;
-    return RommCollection(id: 1, name: 'Favorites', isFavorite: true, userId: userId, romIds: favourite ? {int.parse(gameId)} : const {});
+    return RommCollection(
+      id: 1,
+      name: 'Favorites',
+      isFavorite: true,
+      userId: userId,
+      romIds: favourite ? {int.parse(gameId)} : const {},
+    );
   }
 
   /// When set, setFavourite waits for it (a slow server).

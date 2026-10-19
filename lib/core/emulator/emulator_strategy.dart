@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
@@ -80,9 +81,7 @@ abstract class EmulatorStrategy {
   }
 
   Future<String?> findExecutable() async {
-    return await directoryService.findEmulatorExecutable(
-      emulatorId, getExecutableForPlatform(),
-    );
+    return await directoryService.findEmulatorExecutable(emulatorId, getExecutableForPlatform());
   }
 
   /// Gargosy (#60): [launchArgs] with this launch's [extraArgs] (e.g.
@@ -92,14 +91,12 @@ abstract class EmulatorStrategy {
 
   Future<void> launch(Game game, String romPath) => launchWithExtraArgs(game, romPath);
 
-  Future<Process?> launchWithHandle(Game game, String romPath) =>
-      launchWithHandleAndExtraArgs(game, romPath);
+  Future<Process?> launchWithHandle(Game game, String romPath) => launchWithHandleAndExtraArgs(game, romPath);
 
   /// [launch] with [extraArgs] (e.g. [stateLoadArgs]) appended to [launchArgs]
   /// for this launch only. Subclasses that support loading a state on launch
   /// override this rather than [launch] (see [supportsStateLoadOnLaunch]).
-  Future<void> launchWithExtraArgs(Game game, String romPath,
-      {List<String> extraArgs = const []}) async {
+  Future<void> launchWithExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
     final exePath = await findExecutable();
     if (exePath == null) throw Exception('$name not found. Please download it first.');
 
@@ -113,14 +110,19 @@ abstract class EmulatorStrategy {
   /// [launchArgs] for this launch only. Subclasses that support loading a
   /// state on launch override this rather than [launchWithHandle] (see
   /// [supportsStateLoadOnLaunch]).
-  Future<Process?> launchWithHandleAndExtraArgs(Game game, String romPath,
-      {List<String> extraArgs = const []}) async {
+  Future<Process?> launchWithHandleAndExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
     final exePath = await findExecutable();
     if (exePath == null) throw Exception('$name not found. Please download it first.');
 
     final normalizedRomPath = p.absolute(p.normalize(romPath));
     await preLaunch(game, romPath);
-    final process = await directoryService.launchGameWithHandle(game, normalizedRomPath, emulatorId, exePath, args: argsWith(extraArgs));
+    final process = await directoryService.launchGameWithHandle(
+      game,
+      normalizedRomPath,
+      emulatorId,
+      exePath,
+      args: argsWith(extraArgs),
+    );
     await process?.exitCode;
     await postLaunch(game, romPath);
     return process;

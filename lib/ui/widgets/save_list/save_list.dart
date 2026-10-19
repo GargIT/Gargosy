@@ -86,14 +86,27 @@ class _SaveListState extends State<SaveList> {
   }
 
   Widget _heading(String text, {String? note}) => Padding(
-        padding: const EdgeInsets.only(top: GSpace.s3, bottom: GSpace.s2),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(text,
-              style: const TextStyle(
-                  fontSize: GFont.sm, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: GColors.fgMuted)),
-          if (note != null) Text(note, style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
-        ]),
-      );
+    padding: const EdgeInsets.only(top: GSpace.s3, bottom: GSpace.s2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: GFont.sm,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: GColors.fgMuted,
+          ),
+        ),
+        if (note != null)
+          Text(
+            note,
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+          ),
+      ],
+    ),
+  );
 
   Widget _fold(String key, int count, String what) {
     final open = _open.contains(key);
@@ -127,15 +140,22 @@ class _SaveListState extends State<SaveList> {
   List<Widget> _romm() {
     final v = widget.view;
     return [
-      _heading('On RomM',
-          note: v.rommOffline
-              ? "RomM can't be reached, so its saves aren't listed."
-              : 'A live list: nothing is downloaded until you put a save on this PC or play it.'),
-      if (!v.rommOffline && v.romm.isEmpty) const Text('No saves on RomM yet.', style: TextStyle(color: GColors.fgMuted)),
+      _heading(
+        'On RomM',
+        note: v.rommOffline
+            ? "RomM can't be reached, so its saves aren't listed."
+            : 'A live list: nothing is downloaded until you put a save on this PC or play it.',
+      ),
+      if (!v.rommOffline && v.romm.isEmpty)
+        const Text('No saves on RomM yet.', style: TextStyle(color: GColors.fgMuted)),
       for (final g in v.romm) ...[
         _row(g.newest),
         if (g.older.isNotEmpty) ...[
-          _fold('romm:${g.group.slot}:${g.group.tag}', g.older.length, g.older.length == 1 ? 'older version' : 'older versions'),
+          _fold(
+            'romm:${g.group.slot}:${g.group.tag}',
+            g.older.length,
+            g.older.length == 1 ? 'older version' : 'older versions',
+          ),
           if (_open.contains('romm:${g.group.slot}:${g.group.tag}')) ...g.older.map(_row),
         ],
       ],
@@ -143,21 +163,32 @@ class _SaveListState extends State<SaveList> {
   }
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
-        final wide = c.maxWidth >= SaveList.twoColumnWidth;
-        final pc = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _thisPc());
-        final romm = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _romm());
-        return SingleChildScrollView(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) {
+      final wide = c.maxWidth >= SaveList.twoColumnWidth;
+      final pc = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _thisPc());
+      final romm = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: _romm());
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             if (wide)
-              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(child: pc),
-                const SizedBox(width: GSpace.s6),
-                Expanded(child: romm),
-              ])
-            else ...[pc, romm],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: pc),
+                  const SizedBox(width: GSpace.s6),
+                  Expanded(child: romm),
+                ],
+              )
+            else ...[
+              pc,
+              romm,
+            ],
             ?widget.footer,
-          ]),
-        );
-      });
+          ],
+        ),
+      );
+    },
+  );
 }

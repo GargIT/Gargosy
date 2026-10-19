@@ -19,13 +19,25 @@ class HintBar extends ConsumerWidget {
   final List<Hint> hints;
 
   static const _pad = {
-    GameAction.confirm: 'A', GameAction.back: 'B', GameAction.detail: 'X', GameAction.favorite: 'Y',
-    GameAction.l1: 'LB', GameAction.r1: 'RB', GameAction.start: 'Start', GameAction.confirmHold: 'Hold A',
+    GameAction.confirm: 'A',
+    GameAction.back: 'B',
+    GameAction.detail: 'X',
+    GameAction.favorite: 'Y',
+    GameAction.l1: 'LB',
+    GameAction.r1: 'RB',
+    GameAction.start: 'Start',
+    GameAction.confirmHold: 'Hold A',
     GameAction.verticalAxis: 'D-pad',
   };
   static const _keys = {
-    GameAction.confirm: 'Enter', GameAction.back: 'Esc', GameAction.detail: 'Right-click', GameAction.favorite: 'F',
-    GameAction.l1: 'PgUp', GameAction.r1: 'PgDn', GameAction.start: 'Menu', GameAction.confirmHold: 'Hold Enter',
+    GameAction.confirm: 'Enter',
+    GameAction.back: 'Esc',
+    GameAction.detail: 'Right-click',
+    GameAction.favorite: 'F',
+    GameAction.l1: 'PgUp',
+    GameAction.r1: 'PgDn',
+    GameAction.start: 'Menu',
+    GameAction.confirmHold: 'Hold Enter',
     GameAction.verticalAxis: '↑ ↓',
   };
 
@@ -40,15 +52,27 @@ class HintBar extends ConsumerWidget {
         spacing: GSpace.s6,
         children: [
           for (final h in hints)
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: GSpace.s2, vertical: 2),
-                decoration: BoxDecoration(color: GColors.surfaceHover, borderRadius: BorderRadius.circular(GRadius.chip)),
-                child: Text(names[h.action] ?? h.action.name, style: const TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(width: GSpace.s2),
-              Text(h.label, style: const TextStyle(fontSize: GFont.md, color: GColors.fgSecondary)),
-            ]),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: GSpace.s2, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: GColors.surfaceHover,
+                    borderRadius: BorderRadius.circular(GRadius.chip),
+                  ),
+                  child: Text(
+                    names[h.action] ?? h.action.name,
+                    style: const TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: GSpace.s2),
+                Text(
+                  h.label,
+                  style: const TextStyle(fontSize: GFont.md, color: GColors.fgSecondary),
+                ),
+              ],
+            ),
         ],
       ),
     );

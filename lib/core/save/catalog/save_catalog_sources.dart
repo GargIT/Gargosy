@@ -81,54 +81,65 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
       if (installed[emulator.emulatorId] != true) continue;
       // RetroArch: the game's own core, then every core's own save (sorted
       // by core, each has its folder).
-      final cores = <String?>[
-        null,
-        if (emulator.emulatorId == 'retroarch') ...getCoresForSlug(slug).map((c) => c.id),
-      ];
+      final cores = <String?>[null, if (emulator.emulatorId == 'retroarch') ...getCoresForSlug(slug).map((c) => c.id)];
       for (final core in cores) {
         // Under the save lock: another game's sync may be using the strategy.
-        final row = await sync.withStrategy<SaveEntry?>(game, (strategy) async {
-          if (strategy.unwrapped is! RetroArchSaveStrategy && !seen.add(strategy)) return null;
-          try {
-            final files = [
-              for (final f in await strategy.getSaveFiles(game, romPath, syncMode: 'saves'))
-                if (await f.exists()) f,
-            ];
-            if (files.isEmpty) return null;
-            // The same files as an earlier row (one RetroArch folder for all cores).
-            if (!seen.add((files.map((f) => p.normalize(f.path)).toList()..sort()).join('|'))) return null;
-            io.File newest = files.first;
-            var newestTime = await newest.lastModified();
-            var size = 0;
-            for (final f in files) {
-              final t = await f.lastModified();
-              if (t.isAfter(newestTime)) {
-                newest = f;
-                newestTime = t;
+        final row = await sync.withStrategy<SaveEntry?>(
+          game,
+          (strategy) async {
+            if (strategy.unwrapped is! RetroArchSaveStrategy && !seen.add(strategy)) return null;
+            try {
+              final files = [
+                for (final f in await strategy.getSaveFiles(game, romPath, syncMode: 'saves'))
+                  if (await f.exists()) f,
+              ];
+              if (files.isEmpty) return null;
+              // The same files as an earlier row (one RetroArch folder for all cores).
+              if (!seen.add((files.map((f) => p.normalize(f.path)).toList()..sort()).join('|'))) return null;
+              io.File newest = files.first;
+              var newestTime = await newest.lastModified();
+              var size = 0;
+              for (final f in files) {
+                final t = await f.lastModified();
+                if (t.isAfter(newestTime)) {
+                  newest = f;
+                  newestTime = t;
+                }
+                size += await f.length();
               }
-              size += await f.length();
+              final maker = strategy.unwrapped is RetroArchSaveStrategy
+                  ? SaveMaker('retroarch', coreId: (strategy.unwrapped as RetroArchSaveStrategy).coreIdFor(game))
+                  : SaveMaker(emulator.emulatorId);
+              return SaveEntry(
+                source: SaveSource.local,
+                fileName: p.basename(newest.path),
+                savedAt: newestTime,
+                maker: maker,
+                tag: maker.tag,
+                sizeBytes: size,
+                sameAsRommId: await sync.rommCopyOfLocal(
+                  game,
+                  romPath,
+                  emulatorId: emulator.emulatorId,
+                  coreOverride: core,
+                ),
+                // As each sync mode would upload it ('both' adds states).
+                contentHashes: await sync.rommHashesOfLocal(
+                  game,
+                  romPath,
+                  emulatorId: emulator.emulatorId,
+                  coreOverride: core,
+                ),
+                sharedFile: await strategy.pullMustFinishBeforeLaunch(game, romPath),
+              );
+            } catch (e) {
+              debugPrint('[SaveCatalog] ${emulator.emulatorId}: saves not listed ($e)');
+              return null;
             }
-            final maker = strategy.unwrapped is RetroArchSaveStrategy
-                ? SaveMaker('retroarch', coreId: (strategy.unwrapped as RetroArchSaveStrategy).coreIdFor(game))
-                : SaveMaker(emulator.emulatorId);
-            return SaveEntry(
-              source: SaveSource.local,
-              fileName: p.basename(newest.path),
-              savedAt: newestTime,
-              maker: maker,
-              tag: maker.tag,
-              sizeBytes: size,
-              sameAsRommId: await sync.rommCopyOfLocal(game, romPath, emulatorId: emulator.emulatorId, coreOverride: core),
-              // As each sync mode would upload it ('both' adds states).
-              contentHashes:
-                  await sync.rommHashesOfLocal(game, romPath, emulatorId: emulator.emulatorId, coreOverride: core),
-              sharedFile: await strategy.pullMustFinishBeforeLaunch(game, romPath),
-            );
-          } catch (e) {
-            debugPrint('[SaveCatalog] ${emulator.emulatorId}: saves not listed ($e)');
-            return null;
-          }
-        }, emulatorId: emulator.emulatorId, coreOverride: core);
+          },
+          emulatorId: emulator.emulatorId,
+          coreOverride: core,
+        );
         if (row != null) rows.add(row);
       }
     }

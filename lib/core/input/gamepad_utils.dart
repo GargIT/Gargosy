@@ -101,9 +101,7 @@ class GamepadUtils {
 
   /// Named DirectInput axis keys that report unsigned 0..65535 magnitudes
   /// (center ~32767) instead of the signed int16 range Linux joydev axes use.
-  static const Set<String> _directInputUnsignedAxisKeys = {
-    'dwxpos', 'dwypos', 'dwrpos', 'dwupos', 'dwvpos',
-  };
+  static const Set<String> _directInputUnsignedAxisKeys = {'dwxpos', 'dwypos', 'dwrpos', 'dwupos', 'dwvpos'};
 
   /// Rescales a raw axis value to -1.0..1.0, choosing the correct convention
   /// for the reporting backend based on the raw key name.
@@ -160,10 +158,7 @@ class GamepadUtils {
   /// Splits a controller name into meaningful lowercase tokens, stripping
   /// noise words so fuzzy matching isn't thrown off by common filler terms.
   static Set<String> tokenize(String name) {
-    const noise = {
-      'usb', 'hid', 'gamepad', 'controller', 'joystick',
-      'wireless', 'device', 'for', 'the', 'by',
-    };
+    const noise = {'usb', 'hid', 'gamepad', 'controller', 'joystick', 'wireless', 'device', 'for', 'the', 'by'};
     return name
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9\s]'), ' ')

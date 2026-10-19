@@ -1,5 +1,6 @@
 import '../core/emulator/strategies/retroarch_strategy.dart';
 import '../core/emulator/emulator_strategy.dart';
+
 import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,7 +73,10 @@ class PlayController extends StateNotifier<PlayState> {
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
       final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
-      session.finished.then((result) => _ended(game, result.message, synced: result.synced), onError: (Object e) => _ended(game, 'Saves not synced: $e'));
+      session.finished.then(
+        (result) => _ended(game, result.message, synced: result.synced),
+        onError: (Object e) => _ended(game, 'Saves not synced: $e'),
+      );
       return null;
     } on SaveChoiceException catch (e) {
       return refuse("Couldn't start with that save: ${e.message}");
@@ -99,9 +103,13 @@ class PlayController extends StateNotifier<PlayState> {
         state = const PlayState();
         return 'No profile is active.';
       }
-      await engine.openEmulator(emulatorId, exePath, onExit: () {
-        if (mounted) state = const PlayState();
-      });
+      await engine.openEmulator(
+        emulatorId,
+        exePath,
+        onExit: () {
+          if (mounted) state = const PlayState();
+        },
+      );
       return null;
     } on Object catch (e) {
       state = const PlayState();
@@ -113,9 +121,12 @@ class PlayController extends StateNotifier<PlayState> {
   /// it and from the ROM file it belongs to. [confirmVersion] is asked when
   /// the state comes from another build of the emulator; false starts
   /// nothing. Returns why it couldn't start, or null.
-  Future<String?> resume(Game game, ResumeEntry entry,
-      {Future<bool> Function(String stateVersion, String installed)? confirmVersion,
-      void Function(String)? onNotice}) async {
+  Future<String?> resume(
+    Game game,
+    ResumeEntry entry, {
+    Future<bool> Function(String stateVersion, String installed)? confirmVersion,
+    void Function(String)? onNotice,
+  }) async {
     if (state.runningGameId != null) return 'A game is already running. Close it first.';
     state = PlayState(runningGameId: game.id);
     String? refuse(String reason) {
@@ -137,8 +148,14 @@ class PlayController extends StateNotifier<PlayState> {
       final romPath = await _ready(engine, game, foundRom, emulator);
       // The core the state was made with (RetroArch), not the platform's default.
       final coreOverride = entry.core == null ? null : '${entry.core}_libretro';
-      final pull = await engine.pullStates(game, romPath, emulator,
-          priority: entry.fileName, coreOverride: coreOverride, onProblem: onNotice);
+      final pull = await engine.pullStates(
+        game,
+        romPath,
+        emulator,
+        priority: entry.fileName,
+        coreOverride: coreOverride,
+        onProblem: onNotice,
+      );
       final String loadPath;
       switch (await engine.checkResume(entry, game, romPath, pull)) {
         case ResumeMissing():
@@ -152,9 +169,19 @@ class PlayController extends StateNotifier<PlayState> {
           loadPath = path;
       }
       await engine.prepare(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
-      final session = await _launch(engine, game, romPath, emulator,
-          coreOverride: coreOverride, loadStatePath: loadPath, onNotice: onNotice);
-      session.finished.then((result) => _ended(game, result.message, synced: result.synced), onError: (Object e) => _ended(game, 'Saves not synced: $e'));
+      final session = await _launch(
+        engine,
+        game,
+        romPath,
+        emulator,
+        coreOverride: coreOverride,
+        loadStatePath: loadPath,
+        onNotice: onNotice,
+      );
+      session.finished.then(
+        (result) => _ended(game, result.message, synced: result.synced),
+        onError: (Object e) => _ended(game, 'Saves not synced: $e'),
+      );
       return null;
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
@@ -164,8 +191,12 @@ class PlayController extends StateNotifier<PlayState> {
   /// [engine.readyRom] with its progress in [PlayState.preparing], cleared after.
   Future<String> _ready(PlayEngine engine, Game game, String romPath, EmulatorStrategy emulator) async {
     try {
-      return await engine.readyRom(game, romPath, emulator,
-          onProgress: (s) => state = PlayState(runningGameId: game.id, preparing: s));
+      return await engine.readyRom(
+        game,
+        romPath,
+        emulator,
+        onProgress: (s) => state = PlayState(runningGameId: game.id, preparing: s),
+      );
     } finally {
       if (state.preparing != null) state = PlayState(runningGameId: game.id);
     }
@@ -173,8 +204,15 @@ class PlayController extends StateNotifier<PlayState> {
 
   /// Launches; a RetroArch core that isn't installed yet is downloaded first
   /// (RetroArch's download brings only a few), then the launch runs again.
-  Future<PlaySession> _launch(PlayEngine engine, Game game, String romPath, EmulatorStrategy emulator,
-      {String? coreOverride, String? loadStatePath, void Function(String)? onNotice}) async {
+  Future<PlaySession> _launch(
+    PlayEngine engine,
+    Game game,
+    String romPath,
+    EmulatorStrategy emulator, {
+    String? coreOverride,
+    String? loadStatePath,
+    void Function(String)? onNotice,
+  }) async {
     try {
       return await engine.launch(game, romPath, emulator, coreOverride: coreOverride, loadStatePath: loadStatePath);
     } on MissingRetroArchCoreException catch (missing) {
@@ -202,7 +240,8 @@ class PlayMenuKey {
   const PlayMenuKey(this.game);
   final Game game;
   @override
-  bool operator ==(Object other) => other is PlayMenuKey && other.game.id == game.id && other.game.fsName == game.fsName;
+  bool operator ==(Object other) =>
+      other is PlayMenuKey && other.game.id == game.id && other.game.fsName == game.fsName;
   @override
   int get hashCode => Object.hash(game.id, game.fsName);
 }

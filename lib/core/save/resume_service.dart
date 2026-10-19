@@ -3,8 +3,10 @@
 // ignore_for_file: prefer_initializing_formals
 import 'dart:async';
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../emulator/emulator_strategy.dart';
 import '../romm/romm_models.dart';
 import '../romm/romm_state.dart';
@@ -136,15 +138,15 @@ class ResumeService {
     Duration listTimeout = StateSyncService.defaultListTimeout,
     StrategyExclusive? exclusive,
     Future<void> Function(EmulatorStrategy emulator)? prepareFolders,
-  })  : _emulatorsFor = emulatorsFor,
-        _prepareFolders = prepareFolders,
-        _exclusive = exclusive,
-        _resolve = resolveSaveStrategy,
-        _prefs = prefs,
-        _records = StateRecordStore(prefs),
-        _api = api,
-        _isOffline = isOffline ?? (() => false),
-        _listTimeout = listTimeout;
+  }) : _emulatorsFor = emulatorsFor,
+       _prepareFolders = prepareFolders,
+       _exclusive = exclusive,
+       _resolve = resolveSaveStrategy,
+       _prefs = prefs,
+       _records = StateRecordStore(prefs),
+       _api = api,
+       _isOffline = isOffline ?? (() => false),
+       _listTimeout = listTimeout;
 
   final List<EmulatorStrategy> Function(String) _emulatorsFor;
   final SaveStrategy? Function(Game, {String? emulatorId}) _resolve;
@@ -206,8 +208,7 @@ class ResumeService {
       final owner = _ownerOf(state, sources, syncing);
       if (owner == null || !_listed(owner.emulator, state.fileName)) continue;
       final key = _key(owner.emulator.emulatorId, state.fileName);
-      final remoteTime =
-          DateTime.tryParse(state.updatedAt ?? '')?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final remoteTime = DateTime.tryParse(state.updatedAt ?? '')?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0);
       final existing = merged[key];
       final record = records[state.fileName];
       if (existing == null) {
@@ -231,8 +232,7 @@ class ResumeService {
         );
         continue;
       }
-      final newer = record != null &&
-          (record.rommStateId != state.id || record.serverUpdatedAt != state.updatedAt);
+      final newer = record != null && (record.rommStateId != state.id || record.serverUpdatedAt != state.updatedAt);
       merged[key] = ResumeEntry(
         emulatorId: existing.emulatorId,
         emulatorName: existing.emulatorName,
@@ -260,8 +260,13 @@ class ResumeService {
   /// Checks the chosen state right before launch (after the pre-launch pull).
   /// [pulled] and [conflicted] are the file names that pull downloaded and
   /// reported as conflicts; both null when no pull ran.
-  Future<ResumeCheck> checkBeforeLaunch(ResumeEntry entry, Game game, String romPath,
-      {Set<String>? pulled, Set<String>? conflicted}) async {
+  Future<ResumeCheck> checkBeforeLaunch(
+    ResumeEntry entry,
+    Game game,
+    String romPath, {
+    Set<String>? pulled,
+    Set<String>? conflicted,
+  }) async {
     final sources = await _sources(game, romPath, {});
     final source = _firstWhereOrNull(sources, (s) => s.emulator.emulatorId == entry.emulatorId);
     if (source == null) return const ResumeMissing();
@@ -289,7 +294,8 @@ class ResumeService {
     final compat = compatOf(stateVersion, installed);
     // "Seen" only when the list itself showed the mismatch (its warning) for
     // this very state version; an emulator updated since the list must ask.
-    final seen = entry.compat == StateCompat.mismatch &&
+    final seen =
+        entry.compat == StateCompat.mismatch &&
         entry.emulatorVersion != null &&
         stateVersion != null &&
         sameEmulatorVersion(entry.emulatorVersion!, stateVersion);
@@ -298,11 +304,14 @@ class ResumeService {
         : null;
     // Stale: a newer RomM copy was expected but the pull did not bring it
     // down. A conflict is not stale: the copy on disk is the user's choice.
-    final stale = entry.newerOnRomm &&
+    final stale =
+        entry.newerOnRomm &&
         !(pulled?.contains(entry.fileName) ?? false) &&
         !(conflicted?.contains(entry.fileName) ?? false);
-    debugPrint('[Resume] version ${stateVersion ?? 'unknown'} vs installed '
-        '${installed ?? 'unknown'}: ${prompt != null ? 'asking' : compat.name}');
+    debugPrint(
+      '[Resume] version ${stateVersion ?? 'unknown'} vs installed '
+      '${installed ?? 'unknown'}: ${prompt != null ? 'asking' : compat.name}',
+    );
     return ResumeReady(file.path, stale: stale, prompt: prompt);
   }
 
@@ -368,8 +377,7 @@ class ResumeService {
         final core = strategy.stateCoreFor(game);
         _strategyByEmulator[emulator.emulatorId] = strategy;
         final id = emulator.emulatorId;
-        final installed =
-            versions.containsKey(id) ? versions[id] : (versions[id] = await emulator.installedVersion());
+        final installed = versions.containsKey(id) ? versions[id] : (versions[id] = await emulator.installedVersion());
         result.add(_Source(emulator, strategy, dir, matches, installed, romPath, core));
       } catch (e) {
         debugPrint('[Resume] ${game.name}: ${emulator.emulatorId} skipped: $e');

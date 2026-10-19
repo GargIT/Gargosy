@@ -25,7 +25,8 @@ final platformLogoUrlProvider = Provider<String? Function(String slug)>((ref) {
 /// platforms (C64, DOS, …), as RomM's web UI does; [fallback] while it
 /// loads and when RomM has neither.
 final platformLogoBuilderProvider = Provider<Widget Function(String url, double size, Widget fallback)>(
-  (ref) => (url, size, fallback) => _CachedLogo(url: url, size: size, fallback: fallback),
+  (ref) =>
+      (url, size, fallback) => _CachedLogo(url: url, size: size, fallback: fallback),
 );
 
 /// Icon files RomM doesn't have (a 404): not asked for again this session.

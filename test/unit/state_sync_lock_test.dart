@@ -13,13 +13,18 @@ void main() {
     addTearDown(env.dispose);
     final locked = <String>[];
     final cores = <String?>[];
-    final service = StateSyncService(env.api, env.pcsx2.prefs, (game, {emulatorId, coreOverride}) {
-      cores.add(coreOverride);
-      return env.pcsx2.strategy;
-    }, exclusive: <T>(Future<T> Function() body) {
-      locked.add('run');
-      return body();
-    });
+    final service = StateSyncService(
+      env.api,
+      env.pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) {
+        cores.add(coreOverride);
+        return env.pcsx2.strategy;
+      },
+      exclusive: <T>(Future<T> Function() body) {
+        locked.add('run');
+        return body();
+      },
+    );
 
     await service.pushStates(env.game, env.romPath, emulatorId: 'pcsx2', coreOverride: 'x_libretro');
     await service.pullStates(env.game, env.romPath, emulatorId: 'pcsx2', coreOverride: 'x_libretro');

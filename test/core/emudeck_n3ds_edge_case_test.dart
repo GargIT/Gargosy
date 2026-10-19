@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as p;
@@ -32,8 +33,6 @@ void main() {
         return service;
       }
 
-
-
       test('uses slug directly as folder name on default preset', () async {
         final service = await createService('default');
 
@@ -43,7 +42,6 @@ void main() {
         expect(romDir, p.join(tempDir.path, '3ds'));
       });
     });
-
 
     group('Scanner folder alias map', () {
       test('exposes platformFolderCanonicalMap for scanner reverse lookup', () {

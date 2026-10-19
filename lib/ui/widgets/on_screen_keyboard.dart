@@ -79,22 +79,25 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
   }
 
   Widget _key(String label, VoidCallback onPress, {bool autofocus = false, int flex = 1}) => Expanded(
-        flex: flex,
-        child: Padding(
-          padding: const EdgeInsets.all(GSpace.s1),
-          child: GFocusable(
-            autofocus: autofocus,
-            borderRadius: GRadius.md,
-            onActivate: onPress,
-            child: Container(
-              height: 52,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.md)),
-              child: Text(label, style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600)),
-            ),
+    flex: flex,
+    child: Padding(
+      padding: const EdgeInsets.all(GSpace.s1),
+      child: GFocusable(
+        autofocus: autofocus,
+        borderRadius: GRadius.md,
+        onActivate: onPress,
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.md)),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600),
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -110,33 +113,50 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text(widget.title, style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700)),
-              const SizedBox(height: GSpace.s3),
-              Container(
-                padding: const EdgeInsets.all(GSpace.s4),
-                decoration: BoxDecoration(color: GColors.bgElevated, borderRadius: BorderRadius.circular(GRadius.lg), border: Border.all(color: GColors.borderStrong)),
-                child: Text(shown.isEmpty ? ' ' : shown, style: const TextStyle(fontSize: GFont.xxl)),
-              ),
-              const SizedBox(height: GSpace.s4),
-              for (var r = 0; r < _rows.length; r++)
-                Row(children: [
-                  for (var c = 0; c < _rows[r].length; c++)
-                    _key(_label(_rows[r][c]), () => _type(_label(_rows[r][c])), autofocus: r == 0 && c == 0),
-                ]),
-              Row(children: [
-                _key('⇧', () => setState(() => _shift = !_shift)),
-                _key('Space', () => _type(' '), flex: 4),
-                _key('⌫', _backspace, flex: 2),
-                _key('Done', _done, flex: 3),
-              ]),
-              const HintBar(hints: [
-                Hint(GameAction.confirm, 'Press'),
-                Hint(GameAction.back, 'Delete'),
-                Hint(GameAction.detail, 'Space'),
-                Hint(GameAction.start, 'Done'),
-              ]),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  widget.title,
+                  style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: GSpace.s3),
+                Container(
+                  padding: const EdgeInsets.all(GSpace.s4),
+                  decoration: BoxDecoration(
+                    color: GColors.bgElevated,
+                    borderRadius: BorderRadius.circular(GRadius.lg),
+                    border: Border.all(color: GColors.borderStrong),
+                  ),
+                  child: Text(shown.isEmpty ? ' ' : shown, style: const TextStyle(fontSize: GFont.xxl)),
+                ),
+                const SizedBox(height: GSpace.s4),
+                for (var r = 0; r < _rows.length; r++)
+                  Row(
+                    children: [
+                      for (var c = 0; c < _rows[r].length; c++)
+                        _key(_label(_rows[r][c]), () => _type(_label(_rows[r][c])), autofocus: r == 0 && c == 0),
+                    ],
+                  ),
+                Row(
+                  children: [
+                    _key('⇧', () => setState(() => _shift = !_shift)),
+                    _key('Space', () => _type(' '), flex: 4),
+                    _key('⌫', _backspace, flex: 2),
+                    _key('Done', _done, flex: 3),
+                  ],
+                ),
+                const HintBar(
+                  hints: [
+                    Hint(GameAction.confirm, 'Press'),
+                    Hint(GameAction.back, 'Delete'),
+                    Hint(GameAction.detail, 'Space'),
+                    Hint(GameAction.start, 'Done'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -145,7 +165,12 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
 }
 
 /// Shows [OnScreenKeyboard] as a full-screen dialog; null when cancelled.
-Future<String?> showOnScreenKeyboard(BuildContext context, {required String title, String initial = '', bool obscure = false}) {
+Future<String?> showOnScreenKeyboard(
+  BuildContext context, {
+  required String title,
+  String initial = '',
+  bool obscure = false,
+}) {
   return showDialog<String>(
     context: context,
     barrierColor: GColors.bg.withValues(alpha: 0.92),

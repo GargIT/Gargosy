@@ -11,12 +11,16 @@ import '../helpers/widget_env.dart';
 void main() {
   testWidgets('a card shows its title upper-case, with the badge on the right', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const SettingsCard(
-      title: 'RetroAchievements',
-      icon: Icons.emoji_events,
-      trailing: SettingsBadge('Connected as @anna'),
-      children: [Text('row')],
-    )));
+    await tester.pumpWidget(
+      testApp(
+        const SettingsCard(
+          title: 'RetroAchievements',
+          icon: Icons.emoji_events,
+          trailing: SettingsBadge('Connected as @anna'),
+          children: [Text('row')],
+        ),
+      ),
+    );
     expect(find.text('RETROACHIEVEMENTS'), findsOneWidget);
     final title = tester.getRect(find.text('RETROACHIEVEMENTS'));
     final badge = tester.getRect(find.text('Connected as @anna'));
@@ -27,10 +31,16 @@ void main() {
   testWidgets('a field with an action takes focus and A runs it; a read-only one is passed by', (tester) async {
     await setDesktopSize(tester);
     var renamed = 0;
-    await tester.pumpWidget(testApp(Column(children: [
-      SettingsField(label: 'Name', value: 'Anna', action: 'Rename', autofocus: true, onActivate: () => renamed++),
-      const SettingsField(label: 'RomM account', value: 'anna on r'),
-    ])));
+    await tester.pumpWidget(
+      testApp(
+        Column(
+          children: [
+            SettingsField(label: 'Name', value: 'Anna', action: 'Rename', autofocus: true, onActivate: () => renamed++),
+            const SettingsField(label: 'RomM account', value: 'anna on r'),
+          ],
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.ancestor(of: find.text('Anna'), matching: find.byType(GFocusable)), findsOneWidget);
     expect(find.ancestor(of: find.text('anna on r'), matching: find.byType(GFocusable)), findsNothing);
@@ -52,7 +62,14 @@ void main() {
   testWidgets('the avatar shows the initial when there is no picture', (tester) async {
     await setDesktopSize(tester);
     final p = Profile(
-        id: 'a', name: 'anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna', createdAt: DateTime(2026));
+      id: 'a',
+      name: 'anna',
+      colorIndex: 1,
+      serverUrl: 'https://r',
+      rommUserId: 7,
+      rommUsername: 'anna',
+      createdAt: DateTime(2026),
+    );
     await tester.pumpWidget(testApp(ProfileAvatar(profile: p, size: 48)));
     expect(find.text('A'), findsOneWidget);
     expect(find.byType(GFocusable), findsNothing);

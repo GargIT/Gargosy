@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
 import 'gamepad_service.dart';
 import 'gamepad_utils.dart';
 
@@ -86,22 +87,38 @@ class SDLMappingParser {
 
   static GameAction? _mapSDLKeyToAction(String sdlKey) {
     switch (sdlKey) {
-      case 'a': return GameAction.confirm;
-      case 'b': return GameAction.back;
-      case 'x': return GameAction.detail;
-      case 'y': return GameAction.favorite;
-      case 'dpup': return GameAction.up;
-      case 'dpdown': return GameAction.down;
-      case 'dpleft': return GameAction.left;
-      case 'dpright': return GameAction.right;
-      case 'leftx': return GameAction.horizontalAxis;
-      case 'lefty': return GameAction.verticalAxis;
-      case 'leftshoulder': return GameAction.l1;
-      case 'rightshoulder': return GameAction.r1;
-      case 'start': return GameAction.start;
-      case 'back': return GameAction.select;
-      case 'guide': return GameAction.start;
-      default: return null;
+      case 'a':
+        return GameAction.confirm;
+      case 'b':
+        return GameAction.back;
+      case 'x':
+        return GameAction.detail;
+      case 'y':
+        return GameAction.favorite;
+      case 'dpup':
+        return GameAction.up;
+      case 'dpdown':
+        return GameAction.down;
+      case 'dpleft':
+        return GameAction.left;
+      case 'dpright':
+        return GameAction.right;
+      case 'leftx':
+        return GameAction.horizontalAxis;
+      case 'lefty':
+        return GameAction.verticalAxis;
+      case 'leftshoulder':
+        return GameAction.l1;
+      case 'rightshoulder':
+        return GameAction.r1;
+      case 'start':
+        return GameAction.start;
+      case 'back':
+        return GameAction.select;
+      case 'guide':
+        return GameAction.start;
+      default:
+        return null;
     }
   }
 
@@ -127,16 +144,25 @@ class SDLMappingParser {
       final bitmask = int.tryParse(hatMatch.group(2)!) ?? 0;
       // Map SDL hat bitmask to named keys understood by the runtime
       switch (bitmask) {
-        case 1: return ['dpad_up'];
-        case 2: return ['dpad_right'];
-        case 4: return ['dpad_down'];
-        case 8: return ['dpad_left'];
+        case 1:
+          return ['dpad_up'];
+        case 2:
+          return ['dpad_right'];
+        case 4:
+          return ['dpad_down'];
+        case 8:
+          return ['dpad_left'];
         // Diagonals — return both directions
-        case 3: return ['dpad_up', 'dpad_right'];
-        case 6: return ['dpad_down', 'dpad_right'];
-        case 12: return ['dpad_down', 'dpad_left'];
-        case 9: return ['dpad_up', 'dpad_left'];
-        default: return [];
+        case 3:
+          return ['dpad_up', 'dpad_right'];
+        case 6:
+          return ['dpad_down', 'dpad_right'];
+        case 12:
+          return ['dpad_down', 'dpad_left'];
+        case 9:
+          return ['dpad_up', 'dpad_left'];
+        default:
+          return [];
       }
     }
 
@@ -179,13 +205,20 @@ class SDLMappingParser {
   /// Maps SDL axis index to the package key name used at runtime.
   static String? _axisIndexToKey(int idx) {
     switch (idx) {
-      case 0: return 'left_x';
-      case 1: return 'left_y';
-      case 2: return 'right_x';
-      case 3: return 'right_y';
-      case 4: return 'left_trigger';
-      case 5: return 'right_trigger';
-      default: return null;
+      case 0:
+        return 'left_x';
+      case 1:
+        return 'left_y';
+      case 2:
+        return 'right_x';
+      case 3:
+        return 'right_y';
+      case 4:
+        return 'left_trigger';
+      case 5:
+        return 'right_trigger';
+      default:
+        return null;
     }
   }
 }

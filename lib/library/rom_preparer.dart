@@ -36,7 +36,11 @@ class RomPreparer {
     required this.tempDir,
     this.gamePartition = xgd1GamePartition,
     PlatformInfo? platform,
-  }) : _tar = p.join((platform ?? PlatformInfo.current).environment['SystemRoot'] ?? r'C:\Windows', 'System32', 'tar.exe');
+  }) : _tar = p.join(
+         (platform ?? PlatformInfo.current).environment['SystemRoot'] ?? r'C:\Windows',
+         'System32',
+         'tar.exe',
+       );
 
   final RomFiles files;
   final PathGuard guard;
@@ -93,7 +97,10 @@ class RomPreparer {
     io.Directory(staging).createSync(recursive: true);
     try {
       final entries = await _list(zip, game);
-      final isos = [for (final e in entries) if (p.extension(e.name).toLowerCase() == '.iso') e];
+      final isos = [
+        for (final e in entries)
+          if (p.extension(e.name).toLowerCase() == '.iso') e,
+      ];
       final label = 'Unpacking ${game.displayName}';
       if (emulatorId == 'xemu' && isos.length == 1) {
         if (entries.length > 1) await _run(['-xf', zip, '-C', staging, '--exclude', '*.iso'], game);
@@ -101,7 +108,11 @@ class RomPreparer {
         await _streamXiso(zip, p.join(staging, name), isos.single.size, game, onProgress);
       } else {
         final total = entries.fold<int>(0, (n, e) => n + e.size);
-        await _run(['-xf', zip, '-C', staging], game, progress: () => _report(onProgress, label, _sizeOf(staging), total));
+        await _run(
+          ['-xf', zip, '-C', staging],
+          game,
+          progress: () => _report(onProgress, label, _sizeOf(staging), total),
+        );
       }
       _checkInside(staging);
       if (io.FileSystemEntity.typeSync(dest) != io.FileSystemEntityType.notFound) {
@@ -127,7 +138,12 @@ class RomPreparer {
       await for (final chunk in proc.stdout) {
         writer.add(chunk);
         read += chunk.length;
-        _report(onProgress, writer.kind == XboxDisc.redump ? 'Converting ${game.displayName} for xemu' : 'Unpacking ${game.displayName}', read, size);
+        _report(
+          onProgress,
+          writer.kind == XboxDisc.redump ? 'Converting ${game.displayName} for xemu' : 'Unpacking ${game.displayName}',
+          read,
+          size,
+        );
       }
       writer.close();
     } on Object {
@@ -138,7 +154,9 @@ class RomPreparer {
       await errDone;
       out.closeSync();
     }
-    if (await proc.exitCode != 0) throw RomPrepareException("Couldn't unpack ${game.displayName}: ${err.toString().trim()}");
+    if (await proc.exitCode != 0) {
+      throw RomPrepareException("Couldn't unpack ${game.displayName}: ${err.toString().trim()}");
+    }
   }
 
   /// A Redump `.iso` on disk becomes an XISO in place; an XISO stays.
@@ -152,9 +170,12 @@ class RomPreparer {
         final tmp = guard.check(p.join(tempDir, 'xiso-${game.id}.iso'));
         io.Directory(tempDir).createSync(recursive: true);
         try {
-          await redumpToXiso(iso, tmp,
-              gamePartition: gamePartition,
-              onProgress: (done, total) => _report(onProgress, 'Converting ${game.displayName} for xemu', done, total));
+          await redumpToXiso(
+            iso,
+            tmp,
+            gamePartition: gamePartition,
+            onProgress: (done, total) => _report(onProgress, 'Converting ${game.displayName} for xemu', done, total),
+          );
           // Renaming over the original replaces it in one step (same drive).
           _moveFile(tmp, guard.check(iso));
         } finally {
@@ -183,7 +204,8 @@ class RomPreparer {
     final line = RegExp(r'^(\S)\S*\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\S+\s+\d+\s+\S+\s(.*)$');
     return [
       for (final l in const LineSplitter().convert(r.stdout as String))
-        if (line.firstMatch(l.trimRight()) case final m? when m.group(1) == '-') (name: m.group(3)!, size: int.parse(m.group(2)!)),
+        if (line.firstMatch(l.trimRight()) case final m? when m.group(1) == '-')
+          (name: m.group(3)!, size: int.parse(m.group(2)!)),
     ];
   }
 

@@ -8,7 +8,15 @@ import 'pcsx2_folder_card.dart';
 /// Where an emulator's data sits inside a profile's `emulators\<id>\` folder,
 /// as Freegosy's save strategies look for it (docs/emulator-profiles.md).
 class EmulatorLayout {
-  const EmulatorLayout(this.id, {this.saveView = '', this.appSupport = '', this.seed = const [], this.markers = const [], this.ps2Cards = const [], this.pcsx2FolderCards = const []});
+  const EmulatorLayout(
+    this.id, {
+    this.saveView = '',
+    this.appSupport = '',
+    this.seed = const [],
+    this.markers = const [],
+    this.ps2Cards = const [],
+    this.pcsx2FolderCards = const [],
+  });
 
   final String id;
 
@@ -64,8 +72,13 @@ class EmulatorLayout {
 
   static const _table = {
     'dolphin': EmulatorLayout('dolphin', saveView: '_view', seed: ['GC', 'Wii', 'StateSaves']),
-    'pcsx2': EmulatorLayout('pcsx2',
-        saveView: 'PCSX2', appSupport: 'PCSX2', seed: ['PCSX2/memcards', 'PCSX2/sstates'], pcsx2FolderCards: ['PCSX2/memcards/Mcd001.ps2']),
+    'pcsx2': EmulatorLayout(
+      'pcsx2',
+      saveView: 'PCSX2',
+      appSupport: 'PCSX2',
+      seed: ['PCSX2/memcards', 'PCSX2/sstates'],
+      pcsx2FolderCards: ['PCSX2/memcards/Mcd001.ps2'],
+    ),
     'duckstation': EmulatorLayout('duckstation', seed: ['memcards', 'savestates'], markers: ['portable.txt']),
     'ppsspp': EmulatorLayout('ppsspp', saveView: '_view', seed: ['PSP/SAVEDATA', 'PSP/PPSSPP_STATE', 'PSP/SYSTEM']),
     'retroarch': EmulatorLayout('retroarch', seed: ['saves', 'states'], ps2Cards: ['system/pcsx2/memcards/Mcd001.ps2']),

@@ -95,11 +95,16 @@ class SaveSystem<N> {
       }
     }
     if (source == null) {
-      final candidates = [for (final format in formats) if (format.recognises(files)) format];
+      final candidates = [
+        for (final format in formats)
+          if (format.recognises(files)) format,
+      ];
       if (candidates.length != 1) {
-        return _notConvertible(candidates.isEmpty
-            ? 'no $name save format recognises $names'
-            : '$names could be ${candidates.map((f) => f.id).join(' or ')}');
+        return _notConvertible(
+          candidates.isEmpty
+              ? 'no $name save format recognises $names'
+              : '$names could be ${candidates.map((f) => f.id).join(' or ')}',
+        );
       }
       source = candidates.single;
     }

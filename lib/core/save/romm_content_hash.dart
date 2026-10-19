@@ -19,7 +19,10 @@ String rommHashOfFile(Uint8List bytes) => md5.convert(bytes).toString();
 /// one name both count, in their zip order. Folder entries (a trailing `/`)
 /// are skipped.
 String rommHashOfDigests(List<(String, String)> files) {
-  final kept = [for (final f in files) if (!f.$1.endsWith('/')) f];
+  final kept = [
+    for (final f in files)
+      if (!f.$1.endsWith('/')) f,
+  ];
   // List.sort isn't stable: order by name, then by position.
   final order = List.generate(kept.length, (i) => i)
     ..sort((a, b) {

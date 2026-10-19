@@ -38,11 +38,14 @@ Future<void> pullBeforeLaunch({
     waitForIt = false;
   }
   if (!waitForIt) return;
-  await pulled.timeout(wait, onTimeout: () {
-    guard.markTooLate();
-    onProblem?.call("The save from RomM didn't arrive in time, so the game starts with the save on this PC.");
-    return false;
-  });
+  await pulled.timeout(
+    wait,
+    onTimeout: () {
+      guard.markTooLate();
+      onProblem?.call("The save from RomM didn't arrive in time, so the game starts with the save on this PC.");
+      return false;
+    },
+  );
 }
 
 /// The play screen's choice put in place before launch: [putInPlace] the

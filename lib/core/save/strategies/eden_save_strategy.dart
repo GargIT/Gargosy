@@ -1,8 +1,10 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -24,7 +26,7 @@ class EdenSaveStrategy extends SaveStrategy {
   final Future<void> Function(String gameId, String titleId)? onMappingResolved;
 
   EdenSaveStrategy(this._directoryService, {this.onMappingResolved, PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+    : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'eden';
@@ -62,7 +64,9 @@ class EdenSaveStrategy extends SaveStrategy {
 
     if (_manualMapping != null && _manualMapping!.isNotEmpty) return _manualMapping!;
 
-    throw SaveMappingRequiredException('Could not determine Title ID for "${game.name}". Please select the save folder manually.');
+    throw SaveMappingRequiredException(
+      'Could not determine Title ID for "${game.name}". Please select the save folder manually.',
+    );
   }
 
   String? _extractTitleIdFromFilename(String romPath, Game game) {
@@ -92,8 +96,11 @@ class EdenSaveStrategy extends SaveStrategy {
 
   /// RomM's title id (RomM 5.3+) as the base game's, or null.
   static String? _rommTitleId(Game game) {
-    final id = GameIdResolver.server('Eden ${game.name}', game.titleId?.toUpperCase(),
-        shape: GameIdResolver.switchTitleId);
+    final id = GameIdResolver.server(
+      'Eden ${game.name}',
+      game.titleId?.toUpperCase(),
+      shape: GameIdResolver.switchTitleId,
+    );
     return id == null ? null : _normalizeToBaseId(id);
   }
 
@@ -129,7 +136,9 @@ class EdenSaveStrategy extends SaveStrategy {
         if (titleDir is! io.Directory) continue;
         try {
           for (final file in titleDir.listSync(recursive: true)) {
-            if (file is! io.File || p.basename(file.path).startsWith('.') || p.basename(file.path).endsWith('.bak')) continue;
+            if (file is! io.File || p.basename(file.path).startsWith('.') || p.basename(file.path).endsWith('.bak')) {
+              continue;
+            }
             saveFileCount++;
             final mtime = file.statSync().modified;
             if (newestFileTime == null || mtime.isAfter(newestFileTime)) newestFileTime = mtime;
@@ -176,7 +185,9 @@ class EdenSaveStrategy extends SaveStrategy {
     }
 
     if (candidates.isEmpty) {
-      throw Exception('No active Eden profiles found in $baseSavePath. Please launch Eden at least once and create a save.');
+      throw Exception(
+        'No active Eden profiles found in $baseSavePath. Please launch Eden at least once and create a save.',
+      );
     }
 
     if (titleId != null && candidates.length > 1) {
@@ -266,7 +277,12 @@ class EdenSaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final saveDir = await getSaveDir(game, romPath);
     if (saveDir == null) return [];
     final dir = io.Directory(saveDir);
@@ -279,7 +295,10 @@ class EdenSaveStrategy extends SaveStrategy {
       return !name.startsWith('.') && !name.endsWith('.bak');
     }).toList();
     if (files.isEmpty && syncMode == 'push') throw Exception('No save files found.');
-    if (sessionStart != null && !files.any((f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))))) return [];
+    if (sessionStart != null &&
+        !files.any((f) => f.statSync().modified.isAfter(sessionStart.subtract(const Duration(seconds: 2))))) {
+      return [];
+    }
     return [io.File(saveDir)];
   }
 
@@ -298,7 +317,10 @@ class EdenSaveStrategy extends SaveStrategy {
       archive = ZipDecoder().decodeBytes(data);
       for (final entry in archive) {
         final match = _titleIdExtractorRegex.firstMatch(entry.name);
-        if (match != null) { titleId = _normalizeToBaseId(match.group(0)!); break; }
+        if (match != null) {
+          titleId = _normalizeToBaseId(match.group(0)!);
+          break;
+        }
       }
     }
     titleId ??= _manualMapping;
@@ -348,8 +370,13 @@ class EdenSaveStrategy extends SaveStrategy {
         if (entry.name.isEmpty || entry.name == 'freegosy_sync.txt' || entry.name.contains('.bak')) continue;
         final segments = entry.name.split(RegExp(r'[/\\]'));
         final first = segments.first;
-        final entryPath = (segments.length > 1 && (tidRegex.hasMatch(first) || RegExp(r'^[0-9A-Fa-f]{16}$').hasMatch(first) || RegExp(r'^\d+$').hasMatch(first)))
-            ? p.joinAll(segments.sublist(1)) : entry.name;
+        final entryPath =
+            (segments.length > 1 &&
+                (tidRegex.hasMatch(first) ||
+                    RegExp(r'^[0-9A-Fa-f]{16}$').hasMatch(first) ||
+                    RegExp(r'^\d+$').hasMatch(first)))
+            ? p.joinAll(segments.sublist(1))
+            : entry.name;
         if (entryPath.isEmpty) continue;
         final outPath = p.normalize(p.join(destDir, entryPath));
         if (entry.isFile) {
@@ -357,9 +384,13 @@ class EdenSaveStrategy extends SaveStrategy {
           final outFile = io.File(outPath);
           await outFile.parent.create(recursive: true);
           await outFile.writeAsBytes(entry.content as List<int>);
-        } else { await io.Directory(outPath).create(recursive: true); }
+        } else {
+          await io.Directory(outPath).create(recursive: true);
+        }
       }
       return true;
-    } catch (_) { rethrow; }
+    } catch (_) {
+      rethrow;
+    }
   }
 }

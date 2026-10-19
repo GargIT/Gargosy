@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -44,18 +45,9 @@ void main() {
       final biosDir = p.join(tempDir.path, 'BIOS');
       await Directory(biosDir).create();
 
-      final firmware = Firmware(
-        id: 1,
-        fileName: 'test_bios.bin',
-        fileSizeBytes: 100,
-      );
+      final firmware = Firmware(id: 1, fileName: 'test_bios.bin', fileSizeBytes: 100);
 
-      final platform = Platform(
-        id: 1,
-        name: 'Test Platform',
-        slug: 'test_platform',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 1, name: 'Test Platform', slug: 'test_platform', firmware: [firmware]);
 
       final mockStrategy = MockEmulatorStrategy();
 
@@ -109,22 +101,13 @@ void main() {
     });
 
     test('syncFirmwareForPlatform() syncs specifically for one platform', () async {
-       final tempDir = await Directory.systemTemp.createTemp('firmware_test_single');
+      final tempDir = await Directory.systemTemp.createTemp('firmware_test_single');
       final biosDir = p.join(tempDir.path, 'BIOS');
       await Directory(biosDir).create();
 
-      final firmware = Firmware(
-        id: 2,
-        fileName: 'platform_bios.bin',
-        fileSizeBytes: 200,
-      );
+      final firmware = Firmware(id: 2, fileName: 'platform_bios.bin', fileSizeBytes: 200);
 
-      final platform = Platform(
-        id: 2,
-        name: 'Single Platform',
-        slug: 'single_slug',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 2, name: 'Single Platform', slug: 'single_slug', firmware: [firmware]);
 
       final mockStrategy = MockEmulatorStrategy();
 
@@ -152,19 +135,9 @@ void main() {
 
       // RomM returns filePath as "dc/bios" but the BIOS registry knows
       // Flycast expects files in system/dc/
-      final firmware = Firmware(
-        id: 3,
-        fileName: 'dc_boot.bin',
-        filePath: 'dc/bios',
-        fileSizeBytes: 100,
-      );
+      final firmware = Firmware(id: 3, fileName: 'dc_boot.bin', filePath: 'dc/bios', fileSizeBytes: 100);
 
-      final platform = Platform(
-        id: 3,
-        name: 'Dreamcast',
-        slug: 'dc',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 3, name: 'Dreamcast', slug: 'dc', firmware: [firmware]);
 
       // Use 'flycast' emulatorId so the BIOS registry lookup works
       final mockStrategy = MockEmulatorStrategy('retroarch');
@@ -181,10 +154,8 @@ void main() {
       final correctPath = File(p.join(biosDir, 'dc', 'dc_boot.bin'));
       final wrongRommPath = File(p.join(biosDir, 'dc', 'bios', 'dc_boot.bin'));
 
-      expect(await correctPath.exists(), isTrue,
-          reason: 'BIOS should be in dc/ subdirectory per registry');
-      expect(await wrongRommPath.exists(), isFalse,
-          reason: 'Should NOT use RomM filePath as subdirectory');
+      expect(await correctPath.exists(), isTrue, reason: 'BIOS should be in dc/ subdirectory per registry');
+      expect(await wrongRommPath.exists(), isFalse, reason: 'Should NOT use RomM filePath as subdirectory');
 
       await tempDir.delete(recursive: true);
     });
@@ -196,19 +167,9 @@ void main() {
 
       // RomM returns filePath as "psx/bios" but registry has no subdirectory
       // for PS1 BIOS → should go flat in system/
-      final firmware = Firmware(
-        id: 4,
-        fileName: 'scph5501.bin',
-        filePath: 'psx/bios',
-        fileSizeBytes: 100,
-      );
+      final firmware = Firmware(id: 4, fileName: 'scph5501.bin', filePath: 'psx/bios', fileSizeBytes: 100);
 
-      final platform = Platform(
-        id: 4,
-        name: 'PlayStation',
-        slug: 'psx',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 4, name: 'PlayStation', slug: 'psx', firmware: [firmware]);
 
       // mednafen_psx_hw has BIOS entries with no subdirectory
       final mockStrategy = MockEmulatorStrategy('mednafen_psx_hw');
@@ -225,10 +186,8 @@ void main() {
       final correctPath = File(p.join(biosDir, 'scph5501.bin'));
       final wrongNestedPath = File(p.join(biosDir, 'psx', 'bios', 'scph5501.bin'));
 
-      expect(await correctPath.exists(), isTrue,
-          reason: 'PS1 BIOS should be flat in system root');
-      expect(await wrongNestedPath.exists(), isFalse,
-          reason: 'Should NOT nest under RomM filePath psx/bios/');
+      expect(await correctPath.exists(), isTrue, reason: 'PS1 BIOS should be flat in system root');
+      expect(await wrongNestedPath.exists(), isFalse, reason: 'Should NOT nest under RomM filePath psx/bios/');
 
       await tempDir.delete(recursive: true);
     });
@@ -239,19 +198,9 @@ void main() {
       await Directory(biosDir).create();
 
       // Firmware not in any registry spec — should fall back to flat placement
-      final firmware = Firmware(
-        id: 5,
-        fileName: 'custom_bios.bin',
-        filePath: 'custom/bios',
-        fileSizeBytes: 100,
-      );
+      final firmware = Firmware(id: 5, fileName: 'custom_bios.bin', filePath: 'custom/bios', fileSizeBytes: 100);
 
-      final platform = Platform(
-        id: 5,
-        name: 'Custom',
-        slug: 'custom',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 5, name: 'Custom', slug: 'custom', firmware: [firmware]);
 
       final mockStrategy = MockEmulatorStrategy();
 
@@ -267,10 +216,8 @@ void main() {
       final correctPath = File(p.join(biosDir, 'custom_bios.bin'));
       final wrongPath = File(p.join(biosDir, 'custom', 'bios', 'custom_bios.bin'));
 
-      expect(await correctPath.exists(), isTrue,
-          reason: 'Unknown firmware should go flat in system root');
-      expect(await wrongPath.exists(), isFalse,
-          reason: 'Should NOT use RomM filePath for unknown firmware');
+      expect(await correctPath.exists(), isTrue, reason: 'Unknown firmware should go flat in system root');
+      expect(await wrongPath.exists(), isFalse, reason: 'Should NOT use RomM filePath for unknown firmware');
 
       await tempDir.delete(recursive: true);
     });
@@ -282,19 +229,9 @@ void main() {
 
       // This is the actual user scenario from issue #56:
       // RomM returns filePath: "dc/bios", emulator is RetroArch (not standalone Flycast)
-      final firmware = Firmware(
-        id: 7,
-        fileName: 'dc_boot.bin',
-        filePath: 'dc/bios',
-        fileSizeBytes: 100,
-      );
+      final firmware = Firmware(id: 7, fileName: 'dc_boot.bin', filePath: 'dc/bios', fileSizeBytes: 100);
 
-      final platform = Platform(
-        id: 7,
-        name: 'Dreamcast',
-        slug: 'dc',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 7, name: 'Dreamcast', slug: 'dc', firmware: [firmware]);
 
       // Strategy is 'retroarch', NOT 'flycast' — this is the key difference
       final mockStrategy = MockEmulatorStrategy('retroarch');
@@ -313,12 +250,13 @@ void main() {
       final wrongFlatPath = File(p.join(biosDir, 'dc_boot.bin'));
       final wrongRommPath = File(p.join(biosDir, 'dc', 'bios', 'dc_boot.bin'));
 
-      expect(await correctPath.exists(), isTrue,
-          reason: 'dc_boot.bin should be in dc/ subdirectory even when using RetroArch');
-      expect(await wrongFlatPath.exists(), isFalse,
-          reason: 'Should NOT be flat in system root');
-      expect(await wrongRommPath.exists(), isFalse,
-          reason: 'Should NOT use RomM filePath dc/bios/');
+      expect(
+        await correctPath.exists(),
+        isTrue,
+        reason: 'dc_boot.bin should be in dc/ subdirectory even when using RetroArch',
+      );
+      expect(await wrongFlatPath.exists(), isFalse, reason: 'Should NOT be flat in system root');
+      expect(await wrongRommPath.exists(), isFalse, reason: 'Should NOT use RomM filePath dc/bios/');
 
       await tempDir.delete(recursive: true);
     });
@@ -328,19 +266,9 @@ void main() {
       final biosDir = p.join(tempDir.path, 'system');
       await Directory(biosDir).create();
 
-      final firmware = Firmware(
-        id: 8,
-        fileName: 'scph5501.bin',
-        filePath: 'psx/bios',
-        fileSizeBytes: 100,
-      );
+      final firmware = Firmware(id: 8, fileName: 'scph5501.bin', filePath: 'psx/bios', fileSizeBytes: 100);
 
-      final platform = Platform(
-        id: 8,
-        name: 'PlayStation',
-        slug: 'psx',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 8, name: 'PlayStation', slug: 'psx', firmware: [firmware]);
 
       final mockStrategy = MockEmulatorStrategy('retroarch');
 
@@ -356,10 +284,8 @@ void main() {
       final correctPath = File(p.join(biosDir, 'scph5501.bin'));
       final wrongPath = File(p.join(biosDir, 'psx', 'bios', 'scph5501.bin'));
 
-      expect(await correctPath.exists(), isTrue,
-          reason: 'PS1 BIOS should be flat in system root');
-      expect(await wrongPath.exists(), isFalse,
-          reason: 'Should NOT nest under RomM filePath');
+      expect(await correctPath.exists(), isTrue, reason: 'PS1 BIOS should be flat in system root');
+      expect(await wrongPath.exists(), isFalse, reason: 'Should NOT nest under RomM filePath');
 
       await tempDir.delete(recursive: true);
     });
@@ -378,12 +304,7 @@ void main() {
         fileSizeBytes: 200,
       );
 
-      final platform = Platform(
-        id: 6,
-        name: 'PlayStation 2',
-        slug: 'ps2',
-        firmware: [firmware],
-      );
+      final platform = Platform(id: 6, name: 'PlayStation 2', slug: 'ps2', firmware: [firmware]);
 
       final mockStrategy = MockEmulatorStrategy('retroarch');
 
@@ -399,10 +320,8 @@ void main() {
       final correctPath = File(p.join(biosDir, 'pcsx2', 'bios', 'SCPH-70000_BIOS_V12_USA_200.BIN'));
       final wrongRommPath = File(p.join(biosDir, 'ps2', 'bios', 'SCPH-70000_BIOS_V12_USA_200.BIN'));
 
-      expect(await correctPath.exists(), isTrue,
-          reason: 'PS2 BIOS should be in pcsx2/bios/ per registry');
-      expect(await wrongRommPath.exists(), isFalse,
-          reason: 'Should NOT use RomM filePath ps2/bios/');
+      expect(await correctPath.exists(), isTrue, reason: 'PS2 BIOS should be in pcsx2/bios/ per registry');
+      expect(await wrongRommPath.exists(), isFalse, reason: 'Should NOT use RomM filePath ps2/bios/');
 
       await tempDir.delete(recursive: true);
     });

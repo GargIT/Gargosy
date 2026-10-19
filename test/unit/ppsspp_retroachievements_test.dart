@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/strategies/ppsspp_strategy.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
@@ -19,7 +20,8 @@ class _FixedExeDirectoryService extends DirectoryService {
   Future<String?> findEmulatorExecutable(String emulatorId, String executableName) async => exe;
 }
 
-const _iniBefore = '[General]\nCurrentDirectory = /roms\n\n[Achievements]\nAchievementsEnable = False\nAchievementsChallengeMode = True\nAchievementsSoundEffects = True\n';
+const _iniBefore =
+    '[General]\nCurrentDirectory = /roms\n\n[Achievements]\nAchievementsEnable = False\nAchievementsChallengeMode = True\nAchievementsSoundEffects = True\n';
 
 void main() {
   late io.Directory home;
@@ -29,9 +31,11 @@ void main() {
   Future<PPSSPPStrategy> build({String? exe, PlatformInfo? platform, RetroAchievementsEmulatorLogin? loaded}) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-    return PPSSPPStrategy(_FixedExeDirectoryService(prefs, exe),
-        platform: platform ?? PlatformInfo('linux', environment: {'HOME': home.path}),
-        raLoginLoader: () async => loaded);
+    return PPSSPPStrategy(
+      _FixedExeDirectoryService(prefs, exe),
+      platform: platform ?? PlatformInfo('linux', environment: {'HOME': home.path}),
+      raLoginLoader: () async => loaded,
+    );
   }
 
   String system() => p.join(home.path, '.config', 'ppsspp', 'PSP', 'SYSTEM');
@@ -54,11 +58,12 @@ void main() {
   });
 
   group('settings folder candidates', () {
-
-
     test('Windows: the portable memstick beside the executable, then Documents', () async {
       final exe = p.join(home.path, 'PPSSPP', 'PPSSPPWindows64.exe');
-      final strategy = await build(exe: exe, platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path}));
+      final strategy = await build(
+        exe: exe,
+        platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path}),
+      );
       expect(await strategy.candidateSystemDirectories(), [
         p.join(home.path, 'PPSSPP', 'memstick', 'PSP', 'SYSTEM'),
         p.join(home.path, 'Documents', 'PPSSPP', 'PSP', 'SYSTEM'),
@@ -74,7 +79,11 @@ void main() {
       final config = IniFile(await ini().readAsString());
       expect(config.get('Achievements', 'AchievementsEnable'), 'True');
       expect(config.get('Achievements', 'AchievementsUserName'), 'Player');
-      expect(config.get('Achievements', 'AchievementsChallengeMode'), 'False', reason: 'hardcore is off unless turned on');
+      expect(
+        config.get('Achievements', 'AchievementsChallengeMode'),
+        'False',
+        reason: 'hardcore is off unless turned on',
+      );
       expect(config.get('Achievements', 'AchievementsSoundEffects'), 'True');
       expect(config.get('General', 'CurrentDirectory'), '/roms');
       expect(await ini().readAsString(), isNot(contains('tok-123')), reason: 'the token never goes in ppsspp.ini');
@@ -86,7 +95,8 @@ void main() {
     test('hardcore on in Settings turns AchievementsChallengeMode on', () async {
       await givenPpssppIni(_iniBefore.replaceFirst('ChallengeMode = True', 'ChallengeMode = False'));
       await (await build()).applyRetroAchievementsLogin(
-          const RetroAchievementsEmulatorLogin(username: 'Player', token: 't', hardcore: true));
+        const RetroAchievementsEmulatorLogin(username: 'Player', token: 't', hardcore: true),
+      );
       expect(IniFile(await ini().readAsString()).get('Achievements', 'AchievementsChallengeMode'), 'True');
     });
 
@@ -102,7 +112,9 @@ void main() {
       await givenPpssppIni();
       final strategy = await build();
       await strategy.applyRetroAchievementsLogin(login);
-      await strategy.applyRetroAchievementsLogin(const RetroAchievementsEmulatorLogin(username: 'Player', token: 'new-token'));
+      await strategy.applyRetroAchievementsLogin(
+        const RetroAchievementsEmulatorLogin(username: 'Player', token: 'new-token'),
+      );
       expect(await token().readAsString(), 'new-token');
     });
 
@@ -117,14 +129,20 @@ void main() {
 
     test('an existing ppsspp.ini in a later candidate folder is used rather than making a new one', () async {
       final exe = p.join(home.path, 'PPSSPP', 'PPSSPPWindows64.exe');
-      final strategy = await build(exe: exe, platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path}));
+      final strategy = await build(
+        exe: exe,
+        platform: PlatformInfo('windows', environment: {'USERPROFILE': home.path}),
+      );
       final docs = p.join(home.path, 'Documents', 'PPSSPP', 'PSP', 'SYSTEM');
       await io.Directory(docs).create(recursive: true);
       await io.File(p.join(docs, 'ppsspp.ini')).writeAsString(_iniBefore);
 
       await strategy.applyRetroAchievementsLogin(login);
 
-      expect(IniFile(await io.File(p.join(docs, 'ppsspp.ini')).readAsString()).get('Achievements', 'AchievementsUserName'), 'Player');
+      expect(
+        IniFile(await io.File(p.join(docs, 'ppsspp.ini')).readAsString()).get('Achievements', 'AchievementsUserName'),
+        'Player',
+      );
       expect(await io.Directory(p.join(home.path, 'PPSSPP', 'memstick')).exists(), isFalse);
     });
   });

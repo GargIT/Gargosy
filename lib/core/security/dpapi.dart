@@ -62,7 +62,15 @@ String? readMachineGuid() {
     final value = 'MachineGuid'.toNativeUtf16(allocator: arena);
     final size = arena<Uint32>()..value = 256;
     final buffer = arena<Uint8>(256);
-    final result = RegGetValue(HKEY_LOCAL_MACHINE, subKey, value, _rrfRtRegSz | _rrfSubkeyWow6464Key, nullptr, buffer, size);
+    final result = RegGetValue(
+      HKEY_LOCAL_MACHINE,
+      subKey,
+      value,
+      _rrfRtRegSz | _rrfSubkeyWow6464Key,
+      nullptr,
+      buffer,
+      size,
+    );
     if (result != ERROR_SUCCESS) return null;
     return buffer.cast<Utf16>().toDartString();
   });

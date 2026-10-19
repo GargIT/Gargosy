@@ -2,9 +2,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:io' as io;
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
+
 import '../../platform/platform_info.dart';
 import '../../romm/game_id_resolver.dart';
 import '../../romm/romm_models.dart';
@@ -15,8 +17,7 @@ class SaveFolderConflictException implements Exception {
   final List<Map<String, dynamic>> folders;
   SaveFolderConflictException(this.folders);
   @override
-  String toString() =>
-      'SaveFolderConflictException: ${folders.length} matching save folders found.';
+  String toString() => 'SaveFolderConflictException: ${folders.length} matching save folders found.';
 }
 
 /// Save strategy for RPCS3 (PlayStation 3).
@@ -28,8 +29,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
   String? _activeFolderOverride;
   void setActiveFolderOverride(String? path) => _activeFolderOverride = path;
 
-  Rpcs3SaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  Rpcs3SaveStrategy(this._directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'rpcs3';
@@ -44,21 +44,20 @@ class Rpcs3SaveStrategy extends SaveStrategy {
 
       final byteData = ByteData.view(bytes.buffer);
 
-      if (bytes[0] != 0x00 || bytes[1] != 0x50 ||
-          bytes[2] != 0x53 || bytes[3] != 0x46) {
+      if (bytes[0] != 0x00 || bytes[1] != 0x50 || bytes[2] != 0x53 || bytes[3] != 0x46) {
         return null;
       }
 
-      final keyTableOffset  = byteData.getUint32(8,  Endian.little);
+      final keyTableOffset = byteData.getUint32(8, Endian.little);
       final dataTableOffset = byteData.getUint32(12, Endian.little);
-      final entriesCount    = byteData.getUint32(16, Endian.little);
+      final entriesCount = byteData.getUint32(16, Endian.little);
 
       for (int i = 0; i < entriesCount; i++) {
         final entryBase = 20 + i * 16;
         if (entryBase + 16 > bytes.length) break;
 
-        final keyRelOffset  = byteData.getUint16(entryBase + 0,  Endian.little);
-        final dataLen       = byteData.getUint32(entryBase + 4,  Endian.little);
+        final keyRelOffset = byteData.getUint16(entryBase + 0, Endian.little);
+        final dataLen = byteData.getUint32(entryBase + 4, Endian.little);
         final dataRelOffset = byteData.getUint32(entryBase + 12, Endian.little);
 
         final keyStart = keyTableOffset + keyRelOffset;
@@ -71,12 +70,12 @@ class Rpcs3SaveStrategy extends SaveStrategy {
 
         if (key == 'TITLE') {
           final valueStart = dataTableOffset + dataRelOffset;
-          final valueEnd   = valueStart + dataLen;
+          final valueEnd = valueStart + dataLen;
           if (valueEnd > bytes.length) return null;
 
           final titleBytes = bytes.sublist(valueStart, valueEnd);
           final nullIdx = titleBytes.indexOf(0);
-          final actual  = nullIdx != -1 ? titleBytes.sublist(0, nullIdx) : titleBytes;
+          final actual = nullIdx != -1 ? titleBytes.sublist(0, nullIdx) : titleBytes;
           return utf8.decode(actual);
         }
       }
@@ -96,8 +95,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
 
   Future<String> _getRpcs3SaveRoot({String? platformSlug}) async {
     // 1. Check portable mode first (Windows)
-    final exePath = await _directoryService.findEmulatorExecutable(
-        'rpcs3', _getEmuExe());
+    final exePath = await _directoryService.findEmulatorExecutable('rpcs3', _getEmuExe());
     if (exePath != null) {
       String exeDir = File(exePath).parent.path;
       if (_platform.isMacOS && exePath.contains('.app/Contents/MacOS/')) {
@@ -111,7 +109,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
 
     // 2. Dynamic path resolution
     final baseDir = await _directoryService.getEmulatorAppSupportDirectory('rpcs3', platformSlug: platformSlug);
-    
+
     String resolvedPath;
     if (_platform.isLinux && p.basename(baseDir) == 'saves') {
       // EmuDeck mapping already points to the saves (savedata) symlink
@@ -121,7 +119,9 @@ class Rpcs3SaveStrategy extends SaveStrategy {
     }
 
     if (!await io.Directory(resolvedPath).exists()) {
-      throw Exception('Save directory not found for RPCS3 at $resolvedPath. Please launch RPCS3 at least once to generate save data.');
+      throw Exception(
+        'Save directory not found for RPCS3 at $resolvedPath. Please launch RPCS3 at least once to generate save data.',
+      );
     }
     return resolvedPath;
   }
@@ -170,17 +170,17 @@ class Rpcs3SaveStrategy extends SaveStrategy {
     for (final dir in allDirs) {
       final title = await _readParamSfoTitle(dir.path);
       if (title == null) continue;
-      
+
       final titleLower = title.toLowerCase().replaceAll(RegExp(r"[^a-z0-9\s]"), ' ');
       final titleWords = titleLower.split(' ').where((w) => w.length >= 2).toSet();
-      
+
       int score = 0;
       for (final word in gameWords) {
         if (titleWords.contains(word)) {
           score++;
         }
       }
-      
+
       debugPrint('[RPCS3] PARAM.SFO title for ${dir.path.split(p.separator).last}: $title (Score: $score)');
       if (score > 0) {
         sfoMatches[dir] = score;
@@ -190,10 +190,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
     if (sfoMatches.isNotEmpty) {
       final maxScore = sfoMatches.values.reduce((a, b) => a > b ? a : b);
       // Only keep matches with the highest score
-      final bySfo = sfoMatches.entries
-          .where((e) => e.value == maxScore)
-          .map((e) => e.key)
-          .toList();
+      final bySfo = sfoMatches.entries.where((e) => e.value == maxScore).map((e) => e.key).toList();
 
       if (bySfo.length == 1) {
         debugPrint('[RPCS3] Method 2 PARAM.SFO single best match: ${bySfo.first.path}');
@@ -213,7 +210,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
         debugPrint('[RPCS3] Method 2 multiple matches for same Title ID ${titleIds.first}: returning all');
         return bySfo;
       }
-      
+
       // Multiple SFO matches with same score but different Title IDs — fall through to recency/conflict logic
       final withTimes = <Map<String, dynamic>>[];
       for (final dir in bySfo) {
@@ -235,25 +232,27 @@ class Rpcs3SaveStrategy extends SaveStrategy {
         }
       }
       if (withTimes.isNotEmpty) {
-        withTimes.sort((a, b) => (b['newestFile'] as DateTime)
-            .compareTo(a['newestFile'] as DateTime));
-        
+        withTimes.sort((a, b) => (b['newestFile'] as DateTime).compareTo(a['newestFile'] as DateTime));
+
         if (withTimes.length == 1) return [withTimes[0]['dir'] as Directory];
 
         final winner = withTimes[0];
         final runnerUp = withTimes[1];
-        final gap = (winner['newestFile'] as DateTime)
-            .difference(runnerUp['newestFile'] as DateTime);
+        final gap = (winner['newestFile'] as DateTime).difference(runnerUp['newestFile'] as DateTime);
         if (gap.inHours >= 1) {
           return [winner['dir'] as Directory];
         }
-        throw SaveFolderConflictException(withTimes
-            .map((e) => {
+        throw SaveFolderConflictException(
+          withTimes
+              .map(
+                (e) => {
                   'name': e['name'] as String,
                   'path': e['path'] as String,
                   'newestFile': e['newestFile'] as DateTime,
-                })
-            .toList());
+                },
+              )
+              .toList(),
+        );
       }
     }
 
@@ -272,7 +271,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
     }
 
     // Method 3: multiple fuzzy matches — auto-pick most recently modified
-    
+
     final withTimes = <Map<String, dynamic>>[];
     for (final dir in byName) {
       DateTime? latestFile;
@@ -296,13 +295,11 @@ class Rpcs3SaveStrategy extends SaveStrategy {
     if (withTimes.isEmpty) return [byName.first];
 
     // Sort by most recent
-    withTimes.sort((a, b) => (b['newestFile'] as DateTime)
-        .compareTo(a['newestFile'] as DateTime));
+    withTimes.sort((a, b) => (b['newestFile'] as DateTime).compareTo(a['newestFile'] as DateTime));
 
     final winner = withTimes[0];
     final runnerUp = withTimes[1];
-    final gap = (winner['newestFile'] as DateTime)
-        .difference(runnerUp['newestFile'] as DateTime);
+    final gap = (winner['newestFile'] as DateTime).difference(runnerUp['newestFile'] as DateTime);
 
     // Auto-pick if winner is clearly ahead (>1h gap)
     if (gap.inHours >= 1) {
@@ -310,13 +307,17 @@ class Rpcs3SaveStrategy extends SaveStrategy {
     }
 
     // Method 4: genuine conflict — throw for UI to handle
-    throw SaveFolderConflictException(withTimes
-        .map((e) => {
+    throw SaveFolderConflictException(
+      withTimes
+          .map(
+            (e) => {
               'name': e['name'] as String,
               'path': e['path'] as String,
               'newestFile': e['newestFile'] as DateTime,
-            })
-        .toList());
+            },
+          )
+          .toList(),
+    );
   }
 
   @override
@@ -331,8 +332,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<File>> getSaveFiles(Game game, String romPath, {DateTime? sessionStart, String syncMode = 'both'}) async {
     final saveRoot = await _getRpcs3SaveRoot(platformSlug: game.platformSlug);
 
     // Manual override — wrap single dir
@@ -367,11 +367,10 @@ class Rpcs3SaveStrategy extends SaveStrategy {
   }
 
   @override
-  Future<bool> restoreSave(
-      Game game, String destPath, Uint8List data, String filename) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       final saveRoot = await _getRpcs3SaveRoot(platformSlug: game.platformSlug);
-      
+
       // Follow symlink if needed
       String resolvedRoot = saveRoot;
       try {
@@ -382,16 +381,16 @@ class Rpcs3SaveStrategy extends SaveStrategy {
 
       if (filename.toLowerCase().endsWith('.zip')) {
         final archive = ZipDecoder().decodeBytes(data);
-        
+
         // Ensure the root directory exists
         await io.Directory(resolvedRoot).create(recursive: true);
 
         for (final entry in archive) {
           if (entry.name == 'freegosy_sync.txt' || entry.name.contains('.bak')) continue;
-          
+
           String cleanName = entry.name.replaceAll('\\', '/');
           final parts = cleanName.split('/');
-          
+
           // Strip redundant RPCS3 prefixes
           int skipCount = 0;
           for (int i = 0; i < parts.length; i++) {
@@ -404,7 +403,7 @@ class Rpcs3SaveStrategy extends SaveStrategy {
             cleanName = p.joinAll(parts.sublist(skipCount));
           }
           if (cleanName.isEmpty) continue;
-          
+
           final entryPath = p.normalize(p.join(resolvedRoot, cleanName));
           if (entry.isFile) {
             await backupSave(entryPath);
@@ -430,4 +429,4 @@ class Rpcs3SaveStrategy extends SaveStrategy {
       rethrow;
     }
   }
-    }
+}

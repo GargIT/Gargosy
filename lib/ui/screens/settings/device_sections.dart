@@ -24,39 +24,53 @@ class _ControllerSectionState extends State<ControllerSection> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(children: [
-        SettingsCard(
-          title: 'Controller',
-          icon: Icons.gamepad,
-          note: "How far a stick must move before it counts. Raise it if the focus drifts on its own. "
-              "This PC's setting, for every profile.",
-          children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Stick deadzone',
-                  style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w600, color: GColors.fgSecondary)),
-              const SizedBox(height: GSpace.s2),
-              Row(children: [
-                SettingsButton(icon: Icons.remove, semanticLabel: 'Lower the deadzone', onActivate: () => _step(-0.05)),
-                const SizedBox(width: GSpace.s3),
-                Expanded(child: _DeadzoneBar(globalDeadzone)),
-                const SizedBox(width: GSpace.s3),
-                SettingsButton(icon: Icons.add, semanticLabel: 'Raise the deadzone', onActivate: () => _step(0.05)),
-              ]),
-            ]),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SettingsButton(
-                label: 'Back to the default (15 %)',
-                icon: Icons.restart_alt,
-                onActivate: () async {
-                  await resetDeadzoneSettings();
-                  if (mounted) setState(() {});
-                },
+  Widget build(BuildContext context) => ListView(
+    children: [
+      SettingsCard(
+        title: 'Controller',
+        icon: Icons.gamepad,
+        note:
+            "How far a stick must move before it counts. Raise it if the focus drifts on its own. "
+            "This PC's setting, for every profile.",
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Stick deadzone',
+                style: TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w600, color: GColors.fgSecondary),
               ),
+              const SizedBox(height: GSpace.s2),
+              Row(
+                children: [
+                  SettingsButton(
+                    icon: Icons.remove,
+                    semanticLabel: 'Lower the deadzone',
+                    onActivate: () => _step(-0.05),
+                  ),
+                  const SizedBox(width: GSpace.s3),
+                  Expanded(child: _DeadzoneBar(globalDeadzone)),
+                  const SizedBox(width: GSpace.s3),
+                  SettingsButton(icon: Icons.add, semanticLabel: 'Raise the deadzone', onActivate: () => _step(0.05)),
+                ],
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SettingsButton(
+              label: 'Back to the default (15 %)',
+              icon: Icons.restart_alt,
+              onActivate: () async {
+                await resetDeadzoneSettings();
+                if (mounted) setState(() {});
+              },
             ),
-          ],
-        ),
-      ]);
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 /// The deadzone as a value and a bar from the least to the most.
@@ -75,26 +89,33 @@ class _DeadzoneBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(GRadius.chip),
         border: Border.all(color: GColors.border),
       ),
-      child: Row(children: [
-        SizedBox(
-          width: 48,
-          child: Text('${(value * 100).round()} %', style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700)),
-        ),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(GRadius.pill),
-            child: LinearProgressIndicator(
-              value: f,
-              minHeight: 4,
-              color: GColors.primary,
-              backgroundColor: GColors.borderStrong,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            child: Text(
+              '${(value * 100).round()} %',
+              style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w700),
             ),
           ),
-        ),
-        const SizedBox(width: GSpace.s3),
-        Text('${(kMinDeadzone * 100).round()} – ${(kMaxDeadzone * 100).round()} %',
-            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted)),
-      ]),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(GRadius.pill),
+              child: LinearProgressIndicator(
+                value: f,
+                minHeight: 4,
+                color: GColors.primary,
+                backgroundColor: GColors.borderStrong,
+              ),
+            ),
+          ),
+          const SizedBox(width: GSpace.s3),
+          Text(
+            '${(kMinDeadzone * 100).round()} – ${(kMaxDeadzone * 100).round()} %',
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -119,23 +140,25 @@ class _DisplaySectionState extends ConsumerState<DisplaySection> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(children: [
-        SettingsCard(
-          title: 'Display',
-          icon: Icons.desktop_windows,
-          note: 'Gargosy scales with the window, for the couch at 1080p and 4K.',
-          children: [
-            SettingsToggle(
-              label: 'Fullscreen (F11)',
-              note: 'Remembered for the next start.',
-              on: _full ?? false,
-              onChanged: (_) async {
-                await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
-                final v = await WindowService.isFullScreen();
-                if (mounted) setState(() => _full = v);
-              },
-            ),
-          ],
-        ),
-      ]);
+  Widget build(BuildContext context) => ListView(
+    children: [
+      SettingsCard(
+        title: 'Display',
+        icon: Icons.desktop_windows,
+        note: 'Gargosy scales with the window, for the couch at 1080p and 4K.',
+        children: [
+          SettingsToggle(
+            label: 'Fullscreen (F11)',
+            note: 'Remembered for the next start.',
+            on: _full ?? false,
+            onChanged: (_) async {
+              await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
+              final v = await WindowService.isFullScreen();
+              if (mounted) setState(() => _full = v);
+            },
+          ),
+        ],
+      ),
+    ],
+  );
 }

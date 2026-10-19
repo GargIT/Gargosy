@@ -38,12 +38,7 @@ void main() {
         // We test via a temporary instance since platformSupportsArchive is an instance method
         // but it only reads from RomConstants.platformExtensions (no I/O)
         // For simplicity, test the underlying logic directly
-        expect(
-          RomConstants.platformExtensions['arcade']?.any(
-            (ext) => ext == '.zip' || ext == '.7z',
-          ),
-          isTrue,
-        );
+        expect(RomConstants.platformExtensions['arcade']?.any((ext) => ext == '.zip' || ext == '.7z'), isTrue);
       });
 
       test('arcade supports .zip', () {

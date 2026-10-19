@@ -1,15 +1,16 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+
 import '../platform/platform_info.dart';
 
 class PcGamingWikiService {
   final Dio _dio;
   final PlatformInfo _platform;
 
-  PcGamingWikiService(this._dio, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  PcGamingWikiService(this._dio, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   static const String _apiUrl = 'https://www.pcgamingwiki.com/w/api.php';
 
@@ -18,11 +19,10 @@ class PcGamingWikiService {
     try {
       debugPrint('[PcGamingWiki] Searching for page: $gameTitle');
       // Try exact match first
-      final exactResponse = await _dio.get(_apiUrl, queryParameters: {
-        'action': 'query',
-        'titles': gameTitle,
-        'format': 'json',
-      });
+      final exactResponse = await _dio.get(
+        _apiUrl,
+        queryParameters: {'action': 'query', 'titles': gameTitle, 'format': 'json'},
+      );
 
       if (exactResponse.statusCode == 200) {
         final pages = exactResponse.data['query']['pages'] as Map;
@@ -39,7 +39,6 @@ class PcGamingWikiService {
       debugPrint('[PcGamingWiki] No exact match, trying search...');
       final searchResult = await searchGamePage(gameTitle);
       return searchResult?.first;
-     
     } catch (e) {
       debugPrint('[PcGamingWiki] Page lookup failed: $e');
     }
@@ -47,53 +46,47 @@ class PcGamingWikiService {
     return null;
   }
 
-    Future<List<String>?> searchGamePage(String gameTitle) async 
-    {
-         final searchResponse = await _dio.get(_apiUrl, queryParameters: {
-        'action': 'query',
-        'list': 'search',
-        'srsearch': gameTitle,
-        'format': 'json',
-        });
+  Future<List<String>?> searchGamePage(String gameTitle) async {
+    final searchResponse = await _dio.get(
+      _apiUrl,
+      queryParameters: {'action': 'query', 'list': 'search', 'srsearch': gameTitle, 'format': 'json'},
+    );
 
-        final List<String> titles = List.empty(growable: true);
+    final List<String> titles = List.empty(growable: true);
 
-        if (searchResponse.statusCode == 200) {
-          final results = searchResponse.data['query']['search'] as List;
+    if (searchResponse.statusCode == 200) {
+      final results = searchResponse.data['query']['search'] as List;
 
-        if (results.isNotEmpty) {
-          for (final element in results) {
-            // PCGW have empty redirects pages for some games, let's check if this is the case here
-            bool needRedirect = element['snippet'].toString().contains('#REDIRECT') ? true : false;
-            if (needRedirect) {
-              debugPrint('[PcGamingWiki] Found redirect page for "${element['title']}", resolving...');
-              final redirectReponse = await _dio.get(_apiUrl, queryParameters: {
-                'action': 'opensearch',
-                'search': gameTitle,
-                'format': 'json',
-                'redirects': 'resolve',
-              });
+      if (results.isNotEmpty) {
+        for (final element in results) {
+          // PCGW have empty redirects pages for some games, let's check if this is the case here
+          bool needRedirect = element['snippet'].toString().contains('#REDIRECT') ? true : false;
+          if (needRedirect) {
+            debugPrint('[PcGamingWiki] Found redirect page for "${element['title']}", resolving...');
+            final redirectReponse = await _dio.get(
+              _apiUrl,
+              queryParameters: {'action': 'opensearch', 'search': gameTitle, 'format': 'json', 'redirects': 'resolve'},
+            );
 
-              titles.add(redirectReponse.data[1][0]);
-
-            } else {titles.add(element['title']);}
+            titles.add(redirectReponse.data[1][0]);
+          } else {
+            titles.add(element['title']);
           }
-          debugPrint('[PcGamingWiki] Search found:');
         }
+        debugPrint('[PcGamingWiki] Search found:');
       }
-        return titles;
     }
+    return titles;
+  }
 
   /// Fetches the wikitext for [pageTitle].
   Future<String?> getWikitext(String pageTitle) async {
     try {
       debugPrint('[PcGamingWiki] Fetching wikitext for: $pageTitle');
-      final response = await _dio.get(_apiUrl, queryParameters: {
-        'action': 'parse',
-        'page': pageTitle,
-        'prop': 'wikitext',
-        'format': 'json',
-      });
+      final response = await _dio.get(
+        _apiUrl,
+        queryParameters: {'action': 'parse', 'page': pageTitle, 'prop': 'wikitext', 'format': 'json'},
+      );
 
       if (response.statusCode == 200) {
         debugPrint('[PcGamingWiki] Starting parse for url: ${response.realUri}');
@@ -150,7 +143,7 @@ class PcGamingWikiService {
 
           final lower = trimmed.toLowerCase();
           if (_shouldSkipPath(lower)) {
-            debugPrint ('[PcGamingWiki] Unhandled path type: $lower, skipping...');
+            debugPrint('[PcGamingWiki] Unhandled path type: $lower, skipping...');
             continue;
           }
           debugPrint("[PcGamingWiki] Raw path found: $lower");
@@ -161,10 +154,7 @@ class PcGamingWikiService {
           if (seen.contains(normalizedLower)) continue;
           seen.add(normalizedLower);
 
-          results.add({
-            'raw': trimmed,
-            'path': expanded,
-          });
+          results.add({'raw': trimmed, 'path': expanded});
         }
       } catch (e) {
         //
@@ -237,10 +227,7 @@ class PcGamingWikiService {
       if (entry.value.isEmpty && expanded.toLowerCase().contains(entry.key)) {
         return null;
       }
-      expanded = expanded.replaceAll(
-        RegExp(RegExp.escape(entry.key), caseSensitive: false),
-        entry.value,
-      );
+      expanded = expanded.replaceAll(RegExp(RegExp.escape(entry.key), caseSensitive: false), entry.value);
     }
 
     // In case of a "User ID" folder, we consider the entirety of the parent save folder

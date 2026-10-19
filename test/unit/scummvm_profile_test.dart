@@ -67,9 +67,16 @@ void main() {
     final folder = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island'))..createSync(recursive: true);
     final c = ctx();
     final saves = '--savepath=${p.join(c.data, 'saves', 'Monkey Island')}';
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, folder.path), [saves, '--auto-detect', '--path=${folder.path}']);
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, p.join(folder.path, 'MONKEY.000')),
-        [saves, '--auto-detect', '--path=${folder.path}'], reason: 'a file inside picked: its folder, the same saves');
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, folder.path), [
+      saves,
+      '--auto-detect',
+      '--path=${folder.path}',
+    ]);
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, p.join(folder.path, 'MONKEY.000')), [
+      saves,
+      '--auto-detect',
+      '--path=${folder.path}',
+    ], reason: 'a file inside picked: its folder, the same saves');
     expect(io.Directory(p.join(c.data, 'saves', 'Monkey Island')).existsSync(), isTrue);
     expect(Fullscreen.supports('scummvm'), isTrue);
   });
@@ -102,8 +109,11 @@ void main() {
     final dir = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island'))..createSync(recursive: true);
     final svm = io.File(p.join(dir.path, 'monkey.scummvm'))..writeAsStringSync('monkey1\n');
     final c = ctx();
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, svm.path),
-        ['--savepath=${p.join(c.data, 'saves', 'Monkey Island')}', '--path=${dir.path}', 'monkey1']);
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, svm.path), [
+      '--savepath=${p.join(c.data, 'saves', 'Monkey Island')}',
+      '--path=${dir.path}',
+      'monkey1',
+    ]);
   });
 
   test('a zip that unpacked into a folder of one folder: ScummVM looks in the inner one', () {
@@ -111,8 +121,11 @@ void main() {
     final inner = io.Directory(p.join(outer.path, 'Monkey Island'))..createSync(recursive: true);
     io.File(p.join(inner.path, 'MONKEY.000')).createSync();
     final c = ctx();
-    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, outer.path),
-        ['--savepath=${p.join(c.data, 'saves', 'Monkey Island (1990)')}', '--auto-detect', '--path=${inner.path}']);
+    expect(ProfileLaunchConfig.of('scummvm')!.gameArgs(c, outer.path), [
+      '--savepath=${p.join(c.data, 'saves', 'Monkey Island (1990)')}',
+      '--auto-detect',
+      '--path=${inner.path}',
+    ]);
   });
 
   test('in a profile the strategy launches through the launch view: full screen, profile, game, in order', () async {

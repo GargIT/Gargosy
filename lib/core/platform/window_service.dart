@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:flutter/foundation.dart';
 import 'package:window_manager/window_manager.dart';
+
 import 'platform_info.dart';
 
 /// Desktop window control: start in fullscreen and toggle it.

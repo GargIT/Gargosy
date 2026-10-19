@@ -25,8 +25,10 @@ const _randomPage = 40;
 
 /// The games [p]'s card shows for [choice], at most five.
 Future<List<Game>> coversFor(LibraryApi api, Platform p, PlatformCovers choice, Random rng) async {
-  Future<List<Game>> sorted(GallerySort sort) async =>
-      (await api.page(GalleryQuery(platformId: p.id, sort: sort, descending: true), limit: _count)).games;
+  Future<List<Game>> sorted(GallerySort sort) async => (await api.page(
+    GalleryQuery(platformId: p.id, sort: sort, descending: true),
+    limit: _count,
+  )).games;
   switch (choice) {
     case PlatformCovers.logoOnly:
       return const [];
@@ -37,15 +39,17 @@ Future<List<Game>> coversFor(LibraryApi api, Platform p, PlatformCovers choice, 
     case PlatformCovers.random:
       // A page somewhere in the platform, five picked from it: one request.
       final offset = p.gamesCount > _randomPage ? rng.nextInt(p.gamesCount - _randomPage + 1) : 0;
-      final page = (await api.page(GalleryQuery(platformId: p.id), offset: offset, limit: _randomPage)).games.toList()
-        ..shuffle(rng);
+      final page = (await api.page(
+        GalleryQuery(platformId: p.id),
+        offset: offset,
+        limit: _randomPage,
+      )).games.toList()..shuffle(rng);
       return page.take(_count).toList();
     case PlatformCovers.lastPlayed:
       final played = (await api.page(
         GalleryQuery(platformId: p.id, sort: GallerySort.lastPlayed, descending: true, lastPlayedOnly: true),
         limit: _count,
-      ))
-          .games;
+      )).games;
       if (played.length >= _count) return played;
       final ids = {for (final g in played) g.id};
       return [...played, ...(await sorted(GallerySort.rating)).where((g) => !ids.contains(g.id))].take(_count).toList();

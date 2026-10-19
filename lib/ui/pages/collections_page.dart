@@ -29,10 +29,13 @@ class CollectionsPage extends ConsumerWidget {
           bool ownFav(RommCollection c) => c.isFavorite && (userId == null || c.userId == userId);
           final list = [
             ...all.where(ownFav),
-            ...(all.where((c) => !c.isFavorite).toList()..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()))),
+            ...(all.where((c) => !c.isFavorite).toList()
+              ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()))),
           ];
           if (list.isEmpty) {
-            return const Center(child: Text('No collections yet.', style: TextStyle(color: GColors.fgMuted)));
+            return const Center(
+              child: Text('No collections yet.', style: TextStyle(color: GColors.fgMuted)),
+            );
           }
           return FocusTraversalGroup(
             policy: WrapGridTraversalPolicy(),
@@ -50,32 +53,45 @@ class CollectionsPage extends ConsumerWidget {
                 final name = c.isFavorite ? 'Favourites' : c.name;
                 return GFocusable(
                   autofocus: i == 0,
-                  onActivate: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => GalleryScreen(
-                      title: name,
-                      query: c.isFavorite ? const GalleryQuery(favourites: true) : GalleryQuery(collectionId: c.id),
+                  onActivate: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => GalleryScreen(
+                        title: name,
+                        query: c.isFavorite ? const GalleryQuery(favourites: true) : GalleryQuery(collectionId: c.id),
+                      ),
                     ),
-                  )),
+                  ),
                   child: Container(
-                    decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.card)),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Expanded(
-                        child: c.isFavorite
-                            ? const Center(child: Icon(Icons.favorite, size: 56, color: GColors.fav))
-                            : CoverImage(url: assetUrl(ref, c.coverPath), title: c.name),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(GSpace.s3),
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(name,
-                              key: const ValueKey('collection-name'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w700)),
-                          Text('${c.romCount} games', style: const TextStyle(color: GColors.fgMuted)),
-                        ]),
-                      ),
-                    ]),
+                    decoration: BoxDecoration(
+                      color: GColors.surface,
+                      borderRadius: BorderRadius.circular(GRadius.card),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: c.isFavorite
+                              ? const Center(child: Icon(Icons.favorite, size: 56, color: GColors.fav))
+                              : CoverImage(url: assetUrl(ref, c.coverPath), title: c.name),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(GSpace.s3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                key: const ValueKey('collection-name'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w700),
+                              ),
+                              Text('${c.romCount} games', style: const TextStyle(color: GColors.fgMuted)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },

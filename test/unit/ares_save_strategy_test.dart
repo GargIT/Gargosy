@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -224,8 +225,7 @@ void main() {
       final savesRoot = p.join(tempDir.path, 'Saves');
       await File(p.join(dataDir, 'settings.bml')).writeAsString('Paths\n  Saves: $savesRoot/\n');
       final savesGba = Directory(p.join(savesRoot, 'Game Boy Advance'));
-      expect(await savesGba.exists(), isFalse,
-          reason: 'Saves/Game Boy Advance/ should not exist before restoreSave');
+      expect(await savesGba.exists(), isFalse, reason: 'Saves/Game Boy Advance/ should not exist before restoreSave');
 
       final result = await strategy.restoreSave(
         game,
@@ -235,8 +235,7 @@ void main() {
       );
 
       expect(result, isTrue, reason: 'restoreSave should succeed when Ares is installed');
-      expect(await savesGba.exists(), isTrue,
-          reason: 'restoreSave should create the Saves/<Platform> subfolder');
+      expect(await savesGba.exists(), isTrue, reason: 'restoreSave should create the Saves/<Platform> subfolder');
 
       final saveFile = File(p.join(savesGba.path, 'Test Game.ram'));
       expect(await saveFile.exists(), isTrue);
@@ -354,8 +353,8 @@ void main() {
     Future<void> writeSettings(String paths) async {
       final dataDir = Directory(p.join(home.path, '.local', 'share', 'ares'));
       await dataDir.create(recursive: true);
-      await File(p.join(dataDir.path, 'settings.bml')).writeAsString(
-          'Boot\n  Fast: false\nPaths\n$paths  Screenshots\nNintendo64\n  ExpansionPak: true\n');
+      await File(p.join(dataDir.path, 'settings.bml'))
+          .writeAsString('Boot\n  Fast: false\nPaths\n$paths  Screenshots\nNintendo64\n  ExpansionPak: true\n');
     }
 
     setUp(() async {
@@ -365,26 +364,30 @@ void main() {
       await File(romPath()).writeAsBytes(List.filled(64, 1));
       SharedPreferences.setMockInitialValues({});
       final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-      strategy = AresSaveStrategy(DirectoryService(prefs),
-          platform: PlatformInfo('linux', environment: {'HOME': home.path}));
+      strategy = AresSaveStrategy(
+        DirectoryService(prefs),
+        platform: PlatformInfo('linux', environment: {'HOME': home.path}),
+      );
     });
 
     String aresDir() => p.join(home.path, '.local', 'share', 'ares');
     List<String> romFolder() => roms.listSync().map((f) => p.basename(f.path)).toList()..sort();
 
-    test('with no saves path, Gargosy sets <ares folder>/Saves/ and restores there, under the ROM\'s exact name',
-        () async {
-      await writeSettings('  Home\n  Firmware\n  Saves\n');
+    test(
+      'with no saves path, Gargosy sets <ares folder>/Saves/ and restores there, under the ROM\'s exact name',
+      () async {
+        await writeSettings('  Home\n  Firmware\n  Saves\n');
 
-      expect(await strategy.restoreSave(game, romPath(), Uint8List.fromList([1, 2, 3]), '$rom.eeprom'), isTrue);
+        expect(await strategy.restoreSave(game, romPath(), Uint8List.fromList([1, 2, 3]), '$rom.eeprom'), isTrue);
 
-      final saves = '${aresDir().replaceAll(r'\', '/')}/Saves/';
-      final settings = File(p.join(aresDir(), 'settings.bml')).readAsStringSync();
-      expect(AresSaveStrategy.parseSavesPath(settings), saves);
-      expect(settings, contains('  Screenshots\nNintendo64\n  ExpansionPak: true\n'), reason: 'the rest is kept');
-      expect(File(p.join(aresDir(), 'Saves', 'Nintendo 64', '$rom.eeprom')).readAsBytesSync(), [1, 2, 3]);
-      expect(romFolder(), ['$rom.zip'], reason: 'nothing but the ROM in the ROM folder');
-    });
+        final saves = '${aresDir().replaceAll(r'\', '/')}/Saves/';
+        final settings = File(p.join(aresDir(), 'settings.bml')).readAsStringSync();
+        expect(AresSaveStrategy.parseSavesPath(settings), saves);
+        expect(settings, contains('  Screenshots\nNintendo64\n  ExpansionPak: true\n'), reason: 'the rest is kept');
+        expect(File(p.join(aresDir(), 'Saves', 'Nintendo 64', '$rom.eeprom')).readAsBytesSync(), [1, 2, 3]);
+        expect(romFolder(), ['$rom.zip'], reason: 'nothing but the ROM in the ROM folder');
+      },
+    );
 
     test('with no settings.bml to set a saves path in, nothing is restored', () async {
       expect(await strategy.restoreSave(game, romPath(), Uint8List.fromList([4]), 'x.ram'), isFalse);
@@ -401,18 +404,20 @@ void main() {
       expect(File(p.join(roms.path, '$rom.eeprom')).existsSync(), isFalse);
     });
 
-    test('before a saves path is set, push finds ares\' saves next to the game, not the ROM or other games\' saves',
-        () async {
-      await writeSettings('  Saves\n');
-      await File(p.join(roms.path, '$rom.eeprom')).writeAsBytes([1]);
-      await File(p.join(roms.path, '$rom.pak')).writeAsBytes([2]);
-      await File(p.join(roms.path, 'Mario Kart 64 (U) [!] (Hack).eeprom')).writeAsBytes([3]);
-      await File(p.join(roms.path, 'Wave Race 64 (U).eeprom')).writeAsBytes([4]);
+    test(
+      'before a saves path is set, push finds ares\' saves next to the game, not the ROM or other games\' saves',
+      () async {
+        await writeSettings('  Saves\n');
+        await File(p.join(roms.path, '$rom.eeprom')).writeAsBytes([1]);
+        await File(p.join(roms.path, '$rom.pak')).writeAsBytes([2]);
+        await File(p.join(roms.path, 'Mario Kart 64 (U) [!] (Hack).eeprom')).writeAsBytes([3]);
+        await File(p.join(roms.path, 'Wave Race 64 (U).eeprom')).writeAsBytes([4]);
 
-      final files = await strategy.getSaveFiles(game, romPath());
+        final files = await strategy.getSaveFiles(game, romPath());
 
-      expect(files.map((f) => p.basename(f.path)), ['$rom.eeprom']);
-    });
+        expect(files.map((f) => p.basename(f.path)), ['$rom.eeprom']);
+      },
+    );
 
     test('a save zip for a zipped ROM never touches the ROM', () async {
       await writeSettings('  Saves\n');
@@ -440,10 +445,14 @@ void main() {
     });
 
     test('setSavesPath fills an empty Saves line, or adds one, keeping everything else', () {
-      expect(AresSaveStrategy.setSavesPath('Boot\n  Fast: false\nPaths\n  Home\n  Saves\n  Screenshots\n', 'C:/s/'),
-          'Boot\n  Fast: false\nPaths\n  Home\n  Saves: C:/s/\n  Screenshots\n');
-      expect(AresSaveStrategy.setSavesPath('Paths\r\n  Home\r\nVideo\r\n  Driver: x\r\n', '/s/'),
-          'Paths\r\n  Home\r\n  Saves: /s/\r\nVideo\r\n  Driver: x\r\n');
+      expect(
+        AresSaveStrategy.setSavesPath('Boot\n  Fast: false\nPaths\n  Home\n  Saves\n  Screenshots\n', 'C:/s/'),
+        'Boot\n  Fast: false\nPaths\n  Home\n  Saves: C:/s/\n  Screenshots\n',
+      );
+      expect(
+        AresSaveStrategy.setSavesPath('Paths\r\n  Home\r\nVideo\r\n  Driver: x\r\n', '/s/'),
+        'Paths\r\n  Home\r\n  Saves: /s/\r\nVideo\r\n  Driver: x\r\n',
+      );
       expect(AresSaveStrategy.setSavesPath('Video\n  Driver: x\n', '/s/'), 'Video\n  Driver: x\nPaths\n  Saves: /s/\n');
     });
 
@@ -470,8 +479,7 @@ void main() {
         'nes': 'Famicom',
       };
       for (final entry in slugs.entries) {
-        expect(_getFolderName(entry.key), entry.value,
-            reason: 'Slug "${entry.key}" should map to "${entry.value}"');
+        expect(_getFolderName(entry.key), entry.value, reason: 'Slug "${entry.key}" should map to "${entry.value}"');
       }
     });
   });
@@ -523,9 +531,19 @@ Set<String> _getExtensions(String platformName) {
 
 bool _isLogOnly(String platformName) {
   const confirmed = {
-    'Mega CD': {}, 'PlayStation': {}, 'Saturn': {}, 'PC Engine': {},
-    'Neo Geo': {}, 'ColecoVision': {}, 'ZX Spectrum': {}, 'Atari 2600': {},
-    'SG-1000': {}, 'SC-3000': {}, 'Master System': {}, 'Game Gear': {}, 'MSX2': {},
+    'Mega CD': {},
+    'PlayStation': {},
+    'Saturn': {},
+    'PC Engine': {},
+    'Neo Geo': {},
+    'ColecoVision': {},
+    'ZX Spectrum': {},
+    'Atari 2600': {},
+    'SG-1000': {},
+    'SC-3000': {},
+    'Master System': {},
+    'Game Gear': {},
+    'MSX2': {},
   };
   return confirmed.containsKey(platformName);
 }
@@ -538,16 +556,29 @@ bool _isState(String ext) {
 
 String? _getFolderName(String slug) {
   const names = {
-    'gba': 'Game Boy Advance', 'snes': 'Super Famicom', 'n64': 'Nintendo 64',
-    'genesis': 'Mega Drive', 'segacd': 'Mega CD', 'psx': 'PlayStation',
-    'neogeo': 'Neo Geo', 'gb': 'Game Boy', 'gbc': 'Game Boy Color',
+    'gba': 'Game Boy Advance',
+    'snes': 'Super Famicom',
+    'n64': 'Nintendo 64',
+    'genesis': 'Mega Drive',
+    'segacd': 'Mega CD',
+    'psx': 'PlayStation',
+    'neogeo': 'Neo Geo',
+    'gb': 'Game Boy',
+    'gbc': 'Game Boy Color',
     'nes': 'Famicom',
-    'gamegear': 'Game Gear', 'sms': 'Master System',
-    'megadrive': 'Mega Drive', 'md': 'Mega Drive',
-    'pce': 'PC Engine', 'msx': 'MSX', 'coleco': 'ColecoVision',
-    'zxspectrum': 'ZX Spectrum', 'wonderswan': 'WonderSwan',
-    'ngp': 'Neo Geo Pocket', 'ngpc': 'Neo Geo Pocket Color',
-    'atari2600': 'Atari 2600', 'sfc': 'Super Famicom',
+    'gamegear': 'Game Gear',
+    'sms': 'Master System',
+    'megadrive': 'Mega Drive',
+    'md': 'Mega Drive',
+    'pce': 'PC Engine',
+    'msx': 'MSX',
+    'coleco': 'ColecoVision',
+    'zxspectrum': 'ZX Spectrum',
+    'wonderswan': 'WonderSwan',
+    'ngp': 'Neo Geo Pocket',
+    'ngpc': 'Neo Geo Pocket Color',
+    'atari2600': 'Atari 2600',
+    'sfc': 'Super Famicom',
   };
   return names[slug];
 }

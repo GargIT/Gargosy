@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/retroarch_core_list.dart';
@@ -117,8 +118,9 @@ void main() {
   test('RetroArch loads numbered slots with --entryslot, the auto slot with Auto Load State (Gargosy)', () {
     expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state')), ['-e', '0']);
     expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state4')), ['-e', '4']);
-    expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state.auto')),
-        [EmulatorStrategy.resumeAutoStateArg]);
+    expect(emulator.stateLoadArgs(p.join('states', 'mGBA', 'Pokemon Emerald.state.auto')), [
+      EmulatorStrategy.resumeAutoStateArg,
+    ]);
     expect(emulator.canLoadState('Pokemon Emerald.state4'), isTrue);
     expect(emulator.canLoadState('Pokemon Emerald.state'), isTrue);
     expect(emulator.canLoadState('Pokemon Emerald.state.auto'), isTrue);
@@ -140,21 +142,18 @@ void main() {
       }
       SharedPreferences.setMockInitialValues({});
       final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
-      final configured = RetroArchSaveStrategy(_NoEmulatorsDirectoryService(prefs, configDir),
-          prefs: prefs, platform: PlatformInfo('linux', environment: {'HOME': home.path}));
+      final configured = RetroArchSaveStrategy(
+        _NoEmulatorsDirectoryService(prefs, configDir),
+        prefs: prefs,
+        platform: PlatformInfo('linux', environment: {'HOME': home.path}),
+      );
       return configured.stateDirectory(game, p.join(home.path, 'roms', 'gba', 'Pokemon Emerald.gba'));
     }
-
-
-
 
     test('with no retroarch.cfg the states folder is inside RetroArch\'s config folder', () async {
       final dir = await stateDirFor(null);
       expect(dir, p.join(home.path, '.config', 'retroarch', 'states', 'mGBA'));
     });
-
-
-
 
     test('savestates_in_content_dir puts states next to the ROM', () async {
       final dir = await stateDirFor('savestates_in_content_dir = "true"\n');

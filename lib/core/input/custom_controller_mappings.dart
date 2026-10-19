@@ -1,6 +1,8 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'gamepad_service.dart';
 
 const _kPrefsKey = 'custom_controller_mappings_v1';
@@ -16,10 +18,7 @@ Future<void> loadCustomMappings() async {
     final outer = jsonDecode(raw) as Map<String, dynamic>;
     customControllerMappings = outer.map((controllerName, buttons) {
       final btnMap = (buttons as Map<String, dynamic>).map((btnKey, actionName) {
-        final action = GameAction.values.firstWhere(
-          (a) => a.name == actionName,
-          orElse: () => GameAction.confirm,
-        );
+        final action = GameAction.values.firstWhere((a) => a.name == actionName, orElse: () => GameAction.confirm);
         return MapEntry(btnKey, action);
       });
       return MapEntry(controllerName, btnMap);

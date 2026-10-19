@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
@@ -29,8 +30,8 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
   final IdentifyRom _identify;
 
   DolphinSaveStrategy(this._directoryService, {PlatformInfo? platform, IdentifyRom? identify})
-      : _platform = platform ?? PlatformInfo.current,
-        _identify = identify ?? SigilEngine.identify;
+    : _platform = platform ?? PlatformInfo.current,
+      _identify = identify ?? SigilEngine.identify;
 
   @override
   String get strategyId => 'dolphin';
@@ -51,8 +52,7 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// Returns the base user directory for Dolphin.
   Future<String> _getUserDir({String? platformSlug}) async {
     // 1. Check portable mode first — User folder next to exe
-    final exePath = await _directoryService.findEmulatorExecutable(
-        'dolphin', _getEmuExe());
+    final exePath = await _directoryService.findEmulatorExecutable('dolphin', _getEmuExe());
     if (exePath != null) {
       String exeDir = io.File(exePath).parent.path;
       if (_platform.isMacOS && exePath.contains('.app/Contents/MacOS/')) {
@@ -67,19 +67,20 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
 
     // 2. On Linux, if running via Flatpak, which is the default installation method of Dolphin
-    if (_platform.isLinux){
+    if (_platform.isLinux) {
       final home = _platform.environment['HOME'] ?? '';
       final flatpakPath = "$home/.var/app/org.DolphinEmu.dolphin-emu/data/dolphin-emu";
       if (await io.Directory(flatpakPath).exists()) {
         return flatpakPath;
       }
     }
-    
 
     // 3. Fall back to app support directory
     final resolvedPath = await _directoryService.getEmulatorAppSupportDirectory('Dolphin', platformSlug: platformSlug);
     if (!await io.Directory(resolvedPath).exists()) {
-      throw Exception('Save directory not found for Dolphin at $resolvedPath. Please launch Dolphin at least once to generate save data.');
+      throw Exception(
+        'Save directory not found for Dolphin at $resolvedPath. Please launch Dolphin at least once to generate save data.',
+      );
     }
     return resolvedPath;
   }
@@ -97,17 +98,12 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
     return name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
-
   bool _isValidGameIdByte(int byte) {
     final c = String.fromCharCode(byte);
 
-    final isUpper =
-        c.codeUnitAt(0) >= 'A'.codeUnitAt(0) &&
-        c.codeUnitAt(0) <= 'Z'.codeUnitAt(0);
+    final isUpper = c.codeUnitAt(0) >= 'A'.codeUnitAt(0) && c.codeUnitAt(0) <= 'Z'.codeUnitAt(0);
 
-    final isDigit =
-        c.codeUnitAt(0) >= '0'.codeUnitAt(0) &&
-        c.codeUnitAt(0) <= '9'.codeUnitAt(0);
+    final isDigit = c.codeUnitAt(0) >= '0'.codeUnitAt(0) && c.codeUnitAt(0) <= '9'.codeUnitAt(0);
 
     return isUpper || isDigit;
   }
@@ -189,25 +185,22 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
       return RegExp(r'^[A-Z0-9]{4}').hasMatch(id) ? id.substring(0, 4) : null;
     }
     if (!RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(target)) return null;
-    return String.fromCharCodes(
-        [for (var i = 0; i < 8; i += 2) int.parse(target.substring(i, i + 2), radix: 16)]);
+    return String.fromCharCodes([for (var i = 0; i < 8; i += 2) int.parse(target.substring(i, i + 2), radix: 16)]);
   }
 
   /// Extracts Game ID/Code from file if possible.
   /// Often formatted as [GAMEID] Name.ext or Name [GAMEID].ext
   Future<String?> _extractGameId(String romPath) async {
-
     // Attempt to read the game ID from the file
     final allowedFileExtensions = [".rvz", ".iso"];
     final fileExtension = p.extension(romPath).toLowerCase();
     if (allowedFileExtensions.contains(fileExtension)) {
-      
       final file = await File(romPath).open(mode: FileMode.read);
       final bytes = Uint8List(4);
-      
+
       int offset = 0;
 
-      switch (fileExtension){
+      switch (fileExtension) {
         case ".rvz":
           offset = 0x58;
           break;
@@ -219,7 +212,7 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
       await file.setPosition(offset);
       await file.readInto(bytes);
       await file.close();
-    
+
       for (final b in bytes) {
         if (!_isValidGameIdByte(b)) {
           return null;
@@ -229,13 +222,12 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
       return ascii.decode(bytes);
     }
 
-
     final filename = p.basename(romPath);
     final base = p.basenameWithoutExtension(filename);
     // Look for 4 or 6 character uppercase alphanumeric codes
     final match = RegExp(r'\[([A-Z0-9]{4,6})\]').firstMatch(base);
     if (match != null) return match.group(1);
-    
+
     // Also try 6 char codes at the start of filename (common in some sets)
     final startMatch = RegExp(r'^([A-Z0-9]{6})').firstMatch(base);
     if (startMatch != null) return startMatch.group(1);
@@ -246,28 +238,26 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
   @override
   Future<String?> getSaveDir(Game game, String romPath) async {
     final userDir = await _getUserDir(platformSlug: game.platformSlug);
-    final bool isIntegratedEnv = _platform.isLinux && 
-                                (_directoryService.linuxSyncPreset == 'emudeck' || 
-                                 _directoryService.linuxSyncPreset == 'retrodeck');
+    final bool isIntegratedEnv =
+        _platform.isLinux &&
+        (_directoryService.linuxSyncPreset == 'emudeck' || _directoryService.linuxSyncPreset == 'retrodeck');
 
     final isWii = game.platformSlug?.toLowerCase() == 'wii';
 
     if (isWii) {
       // Wii saves are in Wii/title/00010000/[TITLE_ID_HEX]
       String? titleId = await gameIdFor(game, romPath);
-      
+
       final String wiiBase = (isIntegratedEnv && p.basename(userDir).toLowerCase() == 'wii')
           ? userDir
           : p.join(userDir, 'Wii');
 
       if (titleId != null && titleId.length >= 4) {
-        final hexId = titleId.substring(0, 4).codeUnits
-            .map((e) => e.toRadixString(16).padLeft(2, '0'))
-            .join();
+        final hexId = titleId.substring(0, 4).codeUnits.map((e) => e.toRadixString(16).padLeft(2, '0')).join();
         final wiiPath = p.join(wiiBase, 'title', '00010000', hexId);
         if (await io.Directory(wiiPath).exists()) return wiiPath;
       }
-      
+
       return p.join(wiiBase, 'title', '00010000');
     } else {
       // GameCube
@@ -275,7 +265,7 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
       final String gcBase = (isIntegratedEnv && p.basename(userDir).toLowerCase() == 'gc')
           ? userDir
           : p.join(userDir, 'GC');
-      
+
       // First, check for GCI folder (preferred for sync)
       final gciPath = p.join(gcBase, region, 'Card A');
       if (await io.Directory(gciPath).exists()) return gciPath;
@@ -287,10 +277,11 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
 
   @override
   Future<List<io.File>> getSaveFiles(
-      Game game,
-      String romPath,
-      {DateTime? sessionStart,
-      String syncMode = 'both'}) async {
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final rootSaveDir = await getSaveDir(game, romPath);
     if (rootSaveDir == null) return [];
 
@@ -333,17 +324,14 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
               } else if (gameId == null) {
                 // No ID available — fall back to name match
                 final normalizedGci = _normalizeGameName(filename);
-                if (normalizedGci.contains(normalizedTarget) ||
-                    normalizedTarget.contains(normalizedGci)) {
+                if (normalizedGci.contains(normalizedTarget) || normalizedTarget.contains(normalizedGci)) {
                   match = true;
                 }
               }
 
               if (match) {
                 final mtime = (await entity.stat()).modified;
-                if (sessionStart == null ||
-                    mtime.isAfter(
-                        sessionStart.subtract(const Duration(seconds: 2)))) {
+                if (sessionStart == null || mtime.isAfter(sessionStart.subtract(const Duration(seconds: 2)))) {
                   // Keep only the newest matching .gci
                   if (bestGci == null || mtime.isAfter(bestGciMtime!)) {
                     bestGci = entity;
@@ -352,15 +340,12 @@ class DolphinSaveStrategy extends SaveStrategy with StateSyncCapable {
                 }
               }
             }
-
             // 2. Match Memory Card files (.raw, .mcp) - only if they match region
-            else if (filename.startsWith('MEMORYCARDA') &&
-                (filename.endsWith('.RAW') || filename.endsWith('.MCP'))) {
+            else if (filename.startsWith('MEMORYCARDA') && (filename.endsWith('.RAW') || filename.endsWith('.MCP'))) {
               final region = _detectRegion(romPath);
               if (filename.contains(region)) {
                 if (sessionStart == null ||
-                    (await entity.stat()).modified.isAfter(
-                        sessionStart.subtract(const Duration(seconds: 2)))) {
+                    (await entity.stat()).modified.isAfter(sessionStart.subtract(const Duration(seconds: 2)))) {
                   result.add(entity);
                 }
               }

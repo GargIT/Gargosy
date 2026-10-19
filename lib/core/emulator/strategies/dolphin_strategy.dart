@@ -2,7 +2,9 @@
 // Gargosy: lints the newer SDK raises on copied code, kept as upstream.
 // ignore_for_file: prefer_initializing_formals
 import '../../storage/profile_rooted.dart';
+
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
@@ -131,7 +133,9 @@ class DolphinStrategy extends EmulatorStrategy {
         if (await io.File(p.join(exeDir, 'portable.txt')).exists()) return p.join(exeDir, 'User', 'Config');
       }
       final profile = platform.environment['USERPROFILE'];
-      if (profile != null && profile.isNotEmpty && await io.Directory(p.join(profile, 'Documents', 'Dolphin Emulator')).exists()) {
+      if (profile != null &&
+          profile.isNotEmpty &&
+          await io.Directory(p.join(profile, 'Documents', 'Dolphin Emulator')).exists()) {
         return p.join(profile, 'Documents', 'Dolphin Emulator', 'Config');
       }
       final appData = platform.environment['APPDATA'];
@@ -177,14 +181,21 @@ class DolphinStrategy extends EmulatorStrategy {
         debugPrint('[Dolphin] RetroAchievements login not applied: Dolphin\'s config folder is not known here');
         return;
       }
-      await updateIniFile(io.File(p.join(dir, _raFileName)), (config) {
-        var changed = false;
-        changed |= config.set(_raSection, 'Enabled', 'True');
-        changed |= config.set(_raSection, 'Username', login.username);
-        changed |= config.set(_raSection, 'ApiToken', login.token);
-        changed |= config.set(_raSection, 'HardcoreEnabled', (login.hardcore ?? false) ? 'True' : 'False');
-        return changed;
-      }, create: true, private: true, backup: true, windows: platform.isWindows);
+      await updateIniFile(
+        io.File(p.join(dir, _raFileName)),
+        (config) {
+          var changed = false;
+          changed |= config.set(_raSection, 'Enabled', 'True');
+          changed |= config.set(_raSection, 'Username', login.username);
+          changed |= config.set(_raSection, 'ApiToken', login.token);
+          changed |= config.set(_raSection, 'HardcoreEnabled', (login.hardcore ?? false) ? 'True' : 'False');
+          return changed;
+        },
+        create: true,
+        private: true,
+        backup: true,
+        windows: platform.isWindows,
+      );
     } catch (e) {
       debugPrint('[Dolphin] Could not apply the RetroAchievements login: $e');
     }
@@ -217,7 +228,7 @@ class DolphinStrategy extends EmulatorStrategy {
     // This ensures saves and settings are stored in the emulator directory.
     final exePath = await _directoryService.findEmulatorExecutable(emulatorId, windowsExecutable);
     final targetDir = exePath != null ? io.File(exePath).parent.path : installDir;
-    
+
     final portableTxt = io.File(p.join(targetDir, 'portable.txt'));
     if (!await portableTxt.exists()) {
       await portableTxt.create();

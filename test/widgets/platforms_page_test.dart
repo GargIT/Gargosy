@@ -13,8 +13,14 @@ import '../helpers/fake_library_api.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
-Platform plat(int id, String name, String slug, int count) =>
-    Platform.fromJson({'id': id, 'name': name, 'slug': slug, 'fs_slug': slug, 'display_name': name, 'rom_count': count});
+Platform plat(int id, String name, String slug, int count) => Platform.fromJson({
+  'id': id,
+  'name': name,
+  'slug': slug,
+  'fs_slug': slug,
+  'display_name': name,
+  'rom_count': count,
+});
 
 void main() {
   late MemoryPrefs prefs;
@@ -24,13 +30,19 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     prefs = MemoryPrefs();
-    await tester.pumpWidget(testApp(const PlatformsPage(), overrides: [
-      platformsProvider.overrideWith((ref) async =>
-          list ?? [plat(1, 'PlayStation 2', 'ps2', 1335), plat(2, 'Dreamcast', 'dc', 91)]),
-      libraryApiProvider.overrideWithValue(FakeLibraryApi(const [])),
-      favouriteIdsProvider.overrideWithValue(const {}),
-      platformCoversChoiceProvider.overrideWith((ref) => PlatformCoversChoice(prefs)),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const PlatformsPage(),
+        overrides: [
+          platformsProvider.overrideWith(
+            (ref) async => list ?? [plat(1, 'PlayStation 2', 'ps2', 1335), plat(2, 'Dreamcast', 'dc', 91)],
+          ),
+          libraryApiProvider.overrideWithValue(FakeLibraryApi(const [])),
+          favouriteIdsProvider.overrideWithValue(const {}),
+          platformCoversChoiceProvider.overrideWith((ref) => PlatformCoversChoice(prefs)),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -57,8 +69,11 @@ void main() {
   }
 
   testWidgets('a long name at 900 px: one line, no overflow', (tester) async {
-    await pumpPage(tester,
-        width: 900, list: [plat(1, 'Nintendo Entertainment System (Famicom Disk System edition)', 'nes', 3)]);
+    await pumpPage(
+      tester,
+      width: 900,
+      list: [plat(1, 'Nintendo Entertainment System (Famicom Disk System edition)', 'nes', 3)],
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -86,9 +101,14 @@ void main() {
 
   testWidgets('shows the error with retry', (tester) async {
     await setDesktopSize(tester);
-    await tester.pumpWidget(testApp(const PlatformsPage(), overrides: [
-      platformsProvider.overrideWith((ref) async => throw Exception('SocketException: connection refused')),
-    ]));
+    await tester.pumpWidget(
+      testApp(
+        const PlatformsPage(),
+        overrides: [
+          platformsProvider.overrideWith((ref) async => throw Exception('SocketException: connection refused')),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('Retry'), findsOneWidget);
   });

@@ -6,7 +6,13 @@ import 'package:gargosy/play/pre_launch_pull.dart';
 
 void main() {
   const pcsx2 = SaveMaker('pcsx2');
-  final romm = SaveEntry(source: SaveSource.romm, fileName: 'b.ps2', savedAt: DateTime(2026), maker: pcsx2, rommSave: const {'id': 4});
+  final romm = SaveEntry(
+    source: SaveSource.romm,
+    fileName: 'b.ps2',
+    savedAt: DateTime(2026),
+    maker: pcsx2,
+    rommSave: const {'id': 4},
+  );
   final backup = SaveEntry(source: SaveSource.backup, fileName: 'b.zip', savedAt: DateTime(2026), maker: pcsx2);
 
   Future<List<String>> run(PlayRequest r) async {

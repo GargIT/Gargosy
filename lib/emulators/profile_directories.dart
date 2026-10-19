@@ -4,6 +4,7 @@ import '../core/emulator/platform_slugs.dart';
 import '../core/emulator/emulator_registry_data.dart';
 import '../core/emulator/emulator_strategy.dart';
 import '../core/retroachievements/retroachievements_emulator_login.dart';
+
 import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
@@ -22,25 +23,35 @@ import 'profile_launch_config.dart';
 
 /// Starts a process; tests pass a recorder.
 /// [environment] is added to Gargosy's own (RPCS3's `RPCS3_CONFIG_DIR`).
-typedef ProcessStarter = Future<io.Process> Function(String exe, List<String> args,
-    {String? workingDirectory, Map<String, String>? environment});
+typedef ProcessStarter = Future<io.Process> Function(
+  String exe,
+  List<String> args, {
+  String? workingDirectory,
+  Map<String, String>? environment,
+});
 
-Future<io.Process> _defaultStart(String exe, List<String> args,
-        {String? workingDirectory, Map<String, String>? environment}) =>
-    io.Process.start(exe, args, workingDirectory: workingDirectory, environment: environment);
+Future<io.Process> _defaultStart(
+  String exe,
+  List<String> args, {
+  String? workingDirectory,
+  Map<String, String>? environment,
+}) => io.Process.start(exe, args, workingDirectory: workingDirectory, environment: environment);
 
 /// The environment Freegosy's save code sees for a profile: Windows' user
 /// folders point inside the profile, so a fallback like `%LOCALAPPDATA%\DuckStation`
 /// or `Documents\PPSSPP` can only ever find this profile's data (spec §6).
 PlatformInfo sandboxedPlatform(ProfilePaths paths) {
   final real = PlatformInfo.current.environment;
-  return PlatformInfo('windows', environment: {
-    'APPDATA': paths.emulatorsDir,
-    'LOCALAPPDATA': paths.emulatorsDir,
-    'USERPROFILE': p.join(paths.emulatorsDir, '_home'),
-    if (real['COMPUTERNAME'] != null) 'COMPUTERNAME': real['COMPUTERNAME']!,
-    if (real['USERNAME'] != null) 'USERNAME': real['USERNAME']!,
-  });
+  return PlatformInfo(
+    'windows',
+    environment: {
+      'APPDATA': paths.emulatorsDir,
+      'LOCALAPPDATA': paths.emulatorsDir,
+      'USERPROFILE': p.join(paths.emulatorsDir, '_home'),
+      if (real['COMPUTERNAME'] != null) 'COMPUTERNAME': real['COMPUTERNAME']!,
+      if (real['USERNAME'] != null) 'USERNAME': real['USERNAME']!,
+    },
+  );
 }
 
 /// Folders and ROMs as both Gargosy views share them.
@@ -87,7 +98,7 @@ mixin _GargosyFolders on DirectoryService {
 /// portable-install checks land on this profile's saves.
 class ProfileSaveDirectories extends DirectoryService with _GargosyFolders implements ProfileRootedDirectories {
   ProfileSaveDirectories({required this.root, required this.paths, required AppPreferences prefs})
-      : super(prefs, platform: sandboxedPlatform(paths));
+    : super(prefs, platform: sandboxedPlatform(paths));
 
   @override
   final AppRoot root;
@@ -103,22 +114,35 @@ class ProfileSaveDirectories extends DirectoryService with _GargosyFolders imple
       emulatorId == 'temp' ? p.join(root.appData, 'temp') : dataDir(emulatorId);
 
   @override
-  Future<io.Process?> launchGameWithHandle(Game game, String romPath, String emulatorId, String exePath,
-          {List<String> args = const []}) =>
-      throw StateError('The save view never launches');
+  Future<io.Process?> launchGameWithHandle(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) => throw StateError('The save view never launches');
 
   @override
-  Future<void> launchGame(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []}) =>
-      throw StateError('The save view never launches');
+  Future<void> launchGame(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) => throw StateError('The save view never launches');
 }
 
 /// What Freegosy's emulator strategies launch with: the real exe in
 /// `emulators\<id>\` (Gargosy owns the installs, spec §6), started with the
 /// profile's launch config so the emulator works on the profile's own data.
 class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders implements ProfileRootedDirectories {
-  ProfileLaunchDirectories({required this.root, required this.paths, required AppPreferences prefs, ProcessStarter? start})
-      : _start = start ?? _defaultStart,
-        super(prefs, platform: const PlatformInfo('windows'));
+  ProfileLaunchDirectories({
+    required this.root,
+    required this.paths,
+    required AppPreferences prefs,
+    ProcessStarter? start,
+  }) : _start = start ?? _defaultStart,
+       super(prefs, platform: const PlatformInfo('windows'));
 
   final ProcessStarter _start;
 
@@ -131,17 +155,35 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
   }
 
   @override
-  Future<io.Process?> launchGameWithHandle(Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+  Future<io.Process?> launchGameWithHandle(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     final config = ProfileLaunchConfig.of(emulatorId);
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
-    final c = _context(emulatorId, p.dirname(exePath),
-        raLogin: await RetroAchievementsEmulatorLogin.load(prefs),
-        resumeAutoState: args.contains(EmulatorStrategy.resumeAutoStateArg));
-    args = [for (final a in args) if (a != EmulatorStrategy.resumeAutoStateArg) a];
+    final c = _context(
+      emulatorId,
+      p.dirname(exePath),
+      raLogin: await RetroAchievementsEmulatorLogin.load(prefs),
+      resumeAutoState: args.contains(EmulatorStrategy.resumeAutoStateArg),
+    );
+    args = [
+      for (final a in args)
+        if (a != EmulatorStrategy.resumeAutoStateArg) a,
+    ];
     final pre = await config.prepare(c);
-    final process = await _start(exePath, [...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]), ...config.gameArgs(c, romPath)],
-        workingDirectory: c.exeDir, environment: config.environment(c));
+    final process = await _start(
+      exePath,
+      [
+        ...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]),
+        ...config.gameArgs(c, romPath),
+      ],
+      workingDirectory: c.exeDir,
+      environment: config.environment(c),
+    );
     // Drained, as Freegosy does: a full pipe would freeze the emulator.
     process.stdout.drain<void>();
     process.stderr.drain<void>();
@@ -177,7 +219,10 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
   /// profile's settings back; the caller runs it once the process is done,
   /// and it runs here when the start fails.
   Future<({io.Process process, Future<void> Function() finish})> startWithProfile(
-      String emulatorId, String exePath, List<String> args) async {
+    String emulatorId,
+    String exePath,
+    List<String> args,
+  ) async {
     final config = ProfileLaunchConfig.of(emulatorId);
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
     final c = _context(emulatorId, p.dirname(exePath));
@@ -207,29 +252,37 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     ];
   }
 
-  LaunchContext _context(String emulatorId, String exeDir,
-          {RetroAchievementsEmulatorLogin? raLogin, bool resumeAutoState = false}) =>
-      LaunchContext(
-        data: dataDir(emulatorId),
-        exeDir: exeDir,
-        bios: root.bios,
-        profileId: paths.id,
-        profilesDir: root.profiles,
-        guard: paths.guard,
-        raLogin: raLogin,
-        roms: root.roms,
-        gameFolders: gameFoldersFor(emulatorId),
-        fullscreen: Fullscreen.isOn(prefs, emulatorId),
-        resumeAutoState: resumeAutoState,
-      );
+  LaunchContext _context(
+    String emulatorId,
+    String exeDir, {
+    RetroAchievementsEmulatorLogin? raLogin,
+    bool resumeAutoState = false,
+  }) => LaunchContext(
+    data: dataDir(emulatorId),
+    exeDir: exeDir,
+    bios: root.bios,
+    profileId: paths.id,
+    profilesDir: root.profiles,
+    guard: paths.guard,
+    raLogin: raLogin,
+    roms: root.roms,
+    gameFolders: gameFoldersFor(emulatorId),
+    fullscreen: Fullscreen.isOn(prefs, emulatorId),
+    resumeAutoState: resumeAutoState,
+  );
 
   /// Takes the RetroAchievements login out of the profile's emulator
   /// settings (RetroArch's cfg; PCSX2's ini and secrets).
   void signOutRetroAchievements() {
     final cfg = io.File(paths.guard.check(p.join(dataDir('retroarch'), 'retroarch.cfg')));
     if (cfg.existsSync()) {
-      cfg.writeAsStringSync(setRetroArchKeys(cfg.readAsStringSync(),
-          {'cheevos_enable': 'false', 'cheevos_username': '', 'cheevos_token': ''}));
+      cfg.writeAsStringSync(
+        setRetroArchKeys(cfg.readAsStringSync(), {
+          'cheevos_enable': 'false',
+          'cheevos_username': '',
+          'cheevos_token': '',
+        }),
+      );
     }
     final inis = p.join(dataDir('pcsx2'), 'PCSX2', 'inis');
     final secrets = io.File(paths.guard.check(p.join(inis, 'secrets.ini')));
@@ -253,7 +306,13 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
       ProfileLaunchConfig.of(emulatorId)?.repoint(_context(emulatorId, p.join(root.emulators, emulatorId)));
 
   @override
-  Future<void> launchGame(Game game, String romPath, String emulatorId, String exePath, {List<String> args = const []}) async {
+  Future<void> launchGame(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     await launchGameWithHandle(game, romPath, emulatorId, exePath, args: args);
   }
 

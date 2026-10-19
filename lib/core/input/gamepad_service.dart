@@ -1,8 +1,10 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:gamepads/gamepads.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../providers/ui_provider.dart';
 import 'known_controllers.dart';
 import 'sdl_parser.dart';
@@ -12,10 +14,21 @@ import 'gamepad_utils.dart';
 import 'deadzone_config.dart';
 
 enum GameAction {
-  up, down, left, right,
-  confirm, confirmHold, back, detail, favorite,
-  verticalAxis, horizontalAxis,
-  l1, r1, start, select
+  up,
+  down,
+  left,
+  right,
+  confirm,
+  confirmHold,
+  back,
+  detail,
+  favorite,
+  verticalAxis,
+  horizontalAxis,
+  l1,
+  r1,
+  start,
+  select,
 }
 
 class NormalizedInput {
@@ -84,16 +97,13 @@ class GamepadService extends WidgetsBindingObserver {
     // on the GameInput event callbacks in the native plugin for connect/disconnect.
     _scan();
 
-    _subscription = Gamepads.events.listen(
-      (event) {
-        try {
-          _handleGamepadEvent(event);
-        } catch (e) {
-          debugPrint('[Controller] event handling error: $e');
-        }
-      },
-      onError: (err) => debugPrint('[Controller] stream error: $err'),
-    );
+    _subscription = Gamepads.events.listen((event) {
+      try {
+        _handleGamepadEvent(event);
+      } catch (e) {
+        debugPrint('[Controller] event handling error: $e');
+      }
+    }, onError: (err) => debugPrint('[Controller] stream error: $err'));
     _ready.complete();
   }
 
@@ -145,10 +155,7 @@ class GamepadService extends WidgetsBindingObserver {
 
   /// Returns a list of detected controllers with their names and IDs.
   List<Map<String, String>> getDetectedControllers() {
-    return _controllerNames.entries.map((entry) => {
-      'id': entry.key,
-      'name': entry.value,
-    }).toList();
+    return _controllerNames.entries.map((entry) => {'id': entry.key, 'name': entry.value}).toList();
   }
 
   /// Tries to automatically find a mapping for a controller.
@@ -179,8 +186,7 @@ class GamepadService extends WidgetsBindingObserver {
     // 3. Built-in known_controllers — exact/substring first, then fuzzy token match
     final nameLower = name.toLowerCase();
     for (final entry in kControllerMappings.entries) {
-      if (nameLower.contains(entry.key.toLowerCase()) ||
-          entry.key.toLowerCase().contains(nameLower)) {
+      if (nameLower.contains(entry.key.toLowerCase()) || entry.key.toLowerCase().contains(nameLower)) {
         debugPrint('[Controller] tryAutoMap: matched builtin "${entry.key}"');
         return (source: 'builtin', mapping: Map<String, GameAction>.from(entry.value));
       }
@@ -261,8 +267,7 @@ class GamepadService extends WidgetsBindingObserver {
 
     // Find and remove by substring match (same logic as lookup)
     final keysToRemove = customControllerMappings.keys
-        .where((k) => name.toLowerCase().contains(k.toLowerCase()) ||
-                      k.toLowerCase().contains(name.toLowerCase()))
+        .where((k) => name.toLowerCase().contains(k.toLowerCase()) || k.toLowerCase().contains(name.toLowerCase()))
         .toList();
     for (final k in keysToRemove) {
       customControllerMappings.remove(k);
@@ -310,10 +315,7 @@ class GamepadService extends WidgetsBindingObserver {
     // button 6 = Back, axis 6 = D-pad X). Tag them by event type before
     // lookup; named keys pass through unchanged, so this only affects the
     // Linux numeric case.
-    final disambiguatedKey = GamepadUtils.disambiguateKey(
-      event.key,
-      isButton: event.type == KeyType.button,
-    );
+    final disambiguatedKey = GamepadUtils.disambiguateKey(event.key, isButton: event.type == KeyType.button);
 
     // First try a plain key lookup (digital buttons, named keys like dpad_up).
     // Falls back to the bare raw key for mappings saved before disambiguation.
@@ -331,8 +333,7 @@ class GamepadService extends WidgetsBindingObserver {
     if (event.value != 0) {
       final polarity = event.value >= 0 ? 1 : -1;
       final polarityKey = GamepadUtils.encodeKey(disambiguatedKey, polarity);
-      final polarAction = mapping[polarityKey] ??
-          mapping[GamepadUtils.encodeKey(event.key, polarity)];
+      final polarAction = mapping[polarityKey] ?? mapping[GamepadUtils.encodeKey(event.key, polarity)];
       if (polarAction != null) {
         debugPrint('[Controller] normalize: polarity key "$polarityKey" → ${polarAction.name}');
         return NormalizedInput(action: polarAction, value: event.value);
@@ -342,19 +343,17 @@ class GamepadService extends WidgetsBindingObserver {
     // GameInput axis fallback: leftThumbstickX/Y, rightThumbstickX/Y → analog stick axes
     // (gamepads_windows 0.3.0+ via GameInput API, already normalized to -1.0..1.0)
     final key = event.key.toLowerCase();
-    if (key == 'leftthumbstickx' || key == 'leftthumbsticky' ||
-        key == 'rightthumbstickx' || key == 'rightthumbsticky') {
+    if (key == 'leftthumbstickx' ||
+        key == 'leftthumbsticky' ||
+        key == 'rightthumbstickx' ||
+        key == 'rightthumbsticky') {
       final isX = key == 'leftthumbstickx' || key == 'rightthumbstickx';
       debugPrint('[Controller] normalize: GameInput axis "$key" → ${isX ? "horizontal" : "vertical"}');
-      return NormalizedInput(
-        action: isX ? GameAction.horizontalAxis : GameAction.verticalAxis,
-        value: event.value,
-      );
+      return NormalizedInput(action: isX ? GameAction.horizontalAxis : GameAction.verticalAxis, value: event.value);
     }
 
     // DirectInput legacy axis fallback: dwXPos/dwYPos → analog stick axes
-    if (key == 'dwxpos' || key == 'dwypos' ||
-        key == 'dwrpos' || key == 'dwupos' || key == 'dwvpos') {
+    if (key == 'dwxpos' || key == 'dwypos' || key == 'dwrpos' || key == 'dwupos' || key == 'dwvpos') {
       // Normalize raw DirectInput axis (0–65535) to -1.0..1.0
       // Raw center is ~32767; treat as signed
       final normalized = (event.value - 32767.0) / 32767.0;
@@ -364,10 +363,7 @@ class GamepadService extends WidgetsBindingObserver {
       final withDeadzone = applyDeadzone(normalized, deadzone);
       final isX = key == 'dwxpos';
       debugPrint('[Controller] normalize: DirectInput axis "$key" → ${isX ? "horizontal" : "vertical"}');
-      return NormalizedInput(
-        action: isX ? GameAction.horizontalAxis : GameAction.verticalAxis,
-        value: withDeadzone,
-      );
+      return NormalizedInput(action: isX ? GameAction.horizontalAxis : GameAction.verticalAxis, value: withDeadzone);
     }
 
     debugPrint('[Controller] normalize: unmapped key "${event.key}" (value=${event.value})');
@@ -440,7 +436,8 @@ class GamepadService extends WidgetsBindingObserver {
       // but analog stick UP is negative. This unifies their behavior.
       // Also apply user Y-axis inversion for analog sticks with flipped axes.
       final bool isDpadInverted = event.key.contains('dpad') && normalized.action == GameAction.verticalAxis;
-      final bool isAnalogInverted = analogInvertY && !event.key.contains('dpad') && normalized.action == GameAction.verticalAxis;
+      final bool isAnalogInverted =
+          analogInvertY && !event.key.contains('dpad') && normalized.action == GameAction.verticalAxis;
       final bool isInverted = isDpadInverted != isAnalogInverted;
       final double rawAdjusted = isInverted ? -event.value : event.value;
 
@@ -451,11 +448,9 @@ class GamepadService extends WidgetsBindingObserver {
       // are already normalized to -1.0..1.0 with deadzone applied in _normalize().
       // Only apply deadzone here for standard axes that come in as -1.0..1.0 raw.
       final keyLc = event.key.toLowerCase();
-      final bool isPreNormalized = keyLc.startsWith('dw') ||
-          keyLc.startsWith('leftthumbstick') || keyLc.startsWith('rightthumbstick');
-      final double adjustedValue = isPreNormalized
-          ? normalized.value
-          : applyDeadzone(rawAdjusted, deadzone);
+      final bool isPreNormalized =
+          keyLc.startsWith('dw') || keyLc.startsWith('leftthumbstick') || keyLc.startsWith('rightthumbstick');
+      final double adjustedValue = isPreNormalized ? normalized.value : applyDeadzone(rawAdjusted, deadzone);
 
       // Deactivation must be checked independently of activation so that
       // crossing from one extreme to the other (e.g. -0.8 → 0.6) properly
@@ -467,9 +462,7 @@ class GamepadService extends WidgetsBindingObserver {
       if (adjustedValue < -0.5) {
         if (!state.isNegativeActive) {
           state.isNegativeActive = true;
-          final mappedAction = (normalized.action == GameAction.horizontalAxis)
-              ? GameAction.left
-              : GameAction.up;
+          final mappedAction = (normalized.action == GameAction.horizontalAxis) ? GameAction.left : GameAction.up;
           _triggerAction(mappedAction, adjustedValue);
           _activateDirection(mappedAction, axisKey);
         }
@@ -477,9 +470,7 @@ class GamepadService extends WidgetsBindingObserver {
       if (adjustedValue > -0.15) {
         if (state.isNegativeActive) {
           state.isNegativeActive = false;
-          final mappedAction = (normalized.action == GameAction.horizontalAxis)
-              ? GameAction.left
-              : GameAction.up;
+          final mappedAction = (normalized.action == GameAction.horizontalAxis) ? GameAction.left : GameAction.up;
           _deactivateDirection(mappedAction, axisKey);
         }
       }
@@ -488,9 +479,7 @@ class GamepadService extends WidgetsBindingObserver {
       if (adjustedValue > 0.5) {
         if (!state.isPositiveActive) {
           state.isPositiveActive = true;
-          final mappedAction = (normalized.action == GameAction.horizontalAxis)
-              ? GameAction.right
-              : GameAction.down;
+          final mappedAction = (normalized.action == GameAction.horizontalAxis) ? GameAction.right : GameAction.down;
           _triggerAction(mappedAction, adjustedValue);
           _activateDirection(mappedAction, axisKey);
         }
@@ -498,9 +487,7 @@ class GamepadService extends WidgetsBindingObserver {
       if (adjustedValue < 0.15) {
         if (state.isPositiveActive) {
           state.isPositiveActive = false;
-          final mappedAction = (normalized.action == GameAction.horizontalAxis)
-              ? GameAction.right
-              : GameAction.down;
+          final mappedAction = (normalized.action == GameAction.horizontalAxis) ? GameAction.right : GameAction.down;
           _deactivateDirection(mappedAction, axisKey);
         }
       }
@@ -551,9 +538,9 @@ class GamepadService extends WidgetsBindingObserver {
 
   bool _isDirectionAction(GameAction action) {
     return action == GameAction.up ||
-           action == GameAction.down ||
-           action == GameAction.left ||
-           action == GameAction.right;
+        action == GameAction.down ||
+        action == GameAction.left ||
+        action == GameAction.right;
   }
 
   void _activateDirection(GameAction action, String axisKey, {bool isDigital = false}) {

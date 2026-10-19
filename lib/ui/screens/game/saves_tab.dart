@@ -61,12 +61,15 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     final prompt = item == null ? null : view.promptFor(item);
     if (prompt != null) {
       final older = view.newestLocalFor(target);
-      final ok = await showConfirm(context,
-          title: prompt == PlayPrompt.notOnRomm ? "Your save on this PC isn't on RomM" : 'Put an older save on this PC?',
-          body: 'This replaces your ${menu.nameOf(target)} save${older == null ? '' : ' from ${formatSaveTime(older)}'} '
-              'with the one from ${formatSaveTime(save.savedAt)}. Your current save is backed up first.',
-          yes: 'Put it on this PC',
-          focusYes: false);
+      final ok = await showConfirm(
+        context,
+        title: prompt == PlayPrompt.notOnRomm ? "Your save on this PC isn't on RomM" : 'Put an older save on this PC?',
+        body:
+            'This replaces your ${menu.nameOf(target)} save${older == null ? '' : ' from ${formatSaveTime(older)}'} '
+            'with the one from ${formatSaveTime(save.savedAt)}. Your current save is backed up first.',
+        yes: 'Put it on this PC',
+        focusYes: false,
+      );
       if (!ok || !mounted) return;
     }
     final reason = await ref.read(saveActionsProvider).restore(_game, save, target);
@@ -75,15 +78,17 @@ class _SavesTabState extends ConsumerState<SavesTab> {
 
   Future<void> _delete(SaveEntry save) async {
     final romm = save.source == SaveSource.romm;
-    final ok = await showConfirm(context,
-        title: romm ? 'Delete this save from RomM?' : 'Delete this backup?',
-        body: romm
-            ? '${save.fileName} (${formatSaveTime(save.savedAt)}) is deleted on RomM, for every device.'
-            : 'The backup from ${formatSaveTime(save.savedAt)} is deleted from this PC.',
-        yes: 'Delete',
-        no: 'Keep',
-        focusYes: false,
-        danger: true);
+    final ok = await showConfirm(
+      context,
+      title: romm ? 'Delete this save from RomM?' : 'Delete this backup?',
+      body: romm
+          ? '${save.fileName} (${formatSaveTime(save.savedAt)}) is deleted on RomM, for every device.'
+          : 'The backup from ${formatSaveTime(save.savedAt)} is deleted from this PC.',
+      yes: 'Delete',
+      no: 'Keep',
+      focusYes: false,
+      danger: true,
+    );
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).delete(_game, save);
     _say(reason, 'Deleted.');
@@ -93,13 +98,16 @@ class _SavesTabState extends ConsumerState<SavesTab> {
   String get _volume => const {'dc', 'dreamcast'}.contains(_game.platformSlug?.toLowerCase()) ? 'VMU' : 'memory card';
 
   Future<void> _claim(SaveMaker who, String name) async {
-    final ok = await showConfirm(context,
-        title: "Is $name this game's save?",
-        body: 'It goes to RomM with ${_game.displayName} and comes back with it on other PCs. '
-            'It stays on the shared $_volume, and the other games keep their saves.',
-        yes: 'Take it',
-        no: 'Not this one',
-        focusYes: false);
+    final ok = await showConfirm(
+      context,
+      title: "Is $name this game's save?",
+      body:
+          'It goes to RomM with ${_game.displayName} and comes back with it on other PCs. '
+          'It stays on the shared $_volume, and the other games keep their saves.',
+      yes: 'Take it',
+      no: 'Not this one',
+      focusYes: false,
+    );
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).claim(_game, who, name);
     _say(reason, "$name is ${_game.displayName}'s save now, and it's on RomM.");
@@ -107,16 +115,23 @@ class _SavesTabState extends ConsumerState<SavesTab> {
 
   /// Saves on the shared card that no game owns (#56), to claim one.
   Widget _unclaimed(SaveMaker who, List<String> names) => Container(
-        margin: const EdgeInsets.only(bottom: GSpace.s3),
-        padding: const EdgeInsets.all(GSpace.s3),
-        decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.lg)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Unclaimed saves on the shared $_volume', style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: GSpace.s1),
-          Text("No game is known to own these. If one is this game's, take it: it then syncs with this game.",
-              style: const TextStyle(color: GColors.fgSecondary)),
-          const SizedBox(height: GSpace.s2),
-          Wrap(spacing: GSpace.s2, runSpacing: GSpace.s2, children: [
+    margin: const EdgeInsets.only(bottom: GSpace.s3),
+    padding: const EdgeInsets.all(GSpace.s3),
+    decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.lg)),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Unclaimed saves on the shared $_volume', style: const TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: GSpace.s1),
+        Text(
+          "No game is known to own these. If one is this game's, take it: it then syncs with this game.",
+          style: const TextStyle(color: GColors.fgSecondary),
+        ),
+        const SizedBox(height: GSpace.s2),
+        Wrap(
+          spacing: GSpace.s2,
+          runSpacing: GSpace.s2,
+          children: [
             for (final name in names)
               GFocusable(
                 borderRadius: GRadius.pill,
@@ -127,37 +142,47 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                   child: Text("$name  ·  This is this game's save"),
                 ),
               ),
-          ]),
-        ]),
-      );
+          ],
+        ),
+      ],
+    ),
+  );
 
   Widget _button(String label, IconData icon, VoidCallback? onPress) => Padding(
-        padding: const EdgeInsets.only(left: GSpace.s2),
-        child: GFocusable(
-          borderRadius: GRadius.pill,
-          onActivate: onPress,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
-            decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon, size: 16, color: GColors.fgSecondary),
-              const SizedBox(width: GSpace.s2),
-              Text(label, style: const TextStyle(color: GColors.fgSecondary, fontWeight: FontWeight.w600)),
-            ]),
-          ),
+    padding: const EdgeInsets.only(left: GSpace.s2),
+    child: GFocusable(
+      borderRadius: GRadius.pill,
+      onActivate: onPress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
+        decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: GColors.fgSecondary),
+            const SizedBox(width: GSpace.s2),
+            Text(
+              label,
+              style: const TextStyle(color: GColors.fgSecondary, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _segment(String label, bool on, VoidCallback onPress) => GFocusable(
-        borderRadius: GRadius.pill,
-        onActivate: onPress,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
-          decoration: BoxDecoration(
-              color: on ? GColors.primary : Colors.transparent, borderRadius: BorderRadius.circular(GRadius.pill)),
-          child: Text(label, style: TextStyle(fontWeight: on ? FontWeight.w700 : FontWeight.w500)),
-        ),
-      );
+    borderRadius: GRadius.pill,
+    onActivate: onPress,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
+      decoration: BoxDecoration(
+        color: on ? GColors.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(GRadius.pill),
+      ),
+      child: Text(label, style: TextStyle(fontWeight: on ? FontWeight.w700 : FontWeight.w500)),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -183,48 +208,65 @@ class _SavesTabState extends ConsumerState<SavesTab> {
         final who = menu.forThisGame;
         final actions = ref.read(saveActionsProvider);
         final count = distinctSaveCount([for (final r in view.saveRows) r.entry]);
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (waiting.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(bottom: GSpace.s3),
-              padding: const EdgeInsets.all(GSpace.s3),
-              decoration: BoxDecoration(
-                  color: GColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(GRadius.lg)),
-              child: Text(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (waiting.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: GSpace.s3),
+                padding: const EdgeInsets.all(GSpace.s3),
+                decoration: BoxDecoration(
+                  color: GColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(GRadius.lg),
+                ),
+                child: Text(
                   'Waiting to upload: your save from ${formatSaveTime(waiting.first.timestamp)} '
                   "isn't on RomM yet. It goes up when RomM can be reached.",
-                  style: const TextStyle(color: GColors.accent)),
-            ),
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                _segment('Saves $count', !_states, () => setState(() => _states = false)),
-                _segment('States ${states.length}', _states, () => setState(() => _states = true)),
-              ]),
-            ),
-            const Spacer(),
-            _button('Upload to RomM', Icons.upload,
-                who == null ? null : () async => _say(await actions.upload(_game, who), 'Uploaded to RomM.')),
-            _button('Back up now', Icons.add,
-                who == null ? null : () async => _say(await actions.backUpNow(_game, who), 'Backed up on this PC.')),
-          ]),
-          const SizedBox(height: GSpace.s2),
-          if (!_states && who != null && unclaimed.isNotEmpty) _unclaimed(who, unclaimed),
-          Expanded(
-            child: _states
-                ? StateList(states: states, chosen: null, onChoose: (_) {}, loading: statesAsync.isLoading)
-                : SaveList(
-                    view: view,
-                    mode: SaveListMode.manage,
-                    nameOf: menu.nameOf,
-                    onRestore: (s) => _restore(menu, view, s),
-                    onDelete: _delete,
-                    footer: const SizedBox(height: GSpace.s14),
+                  style: const TextStyle(color: GColors.accent),
+                ),
+              ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _segment('Saves $count', !_states, () => setState(() => _states = false)),
+                      _segment('States ${states.length}', _states, () => setState(() => _states = true)),
+                    ],
                   ),
-          ),
-        ]);
+                ),
+                const Spacer(),
+                _button(
+                  'Upload to RomM',
+                  Icons.upload,
+                  who == null ? null : () async => _say(await actions.upload(_game, who), 'Uploaded to RomM.'),
+                ),
+                _button(
+                  'Back up now',
+                  Icons.add,
+                  who == null ? null : () async => _say(await actions.backUpNow(_game, who), 'Backed up on this PC.'),
+                ),
+              ],
+            ),
+            const SizedBox(height: GSpace.s2),
+            if (!_states && who != null && unclaimed.isNotEmpty) _unclaimed(who, unclaimed),
+            Expanded(
+              child: _states
+                  ? StateList(states: states, chosen: null, onChoose: (_) {}, loading: statesAsync.isLoading)
+                  : SaveList(
+                      view: view,
+                      mode: SaveListMode.manage,
+                      nameOf: menu.nameOf,
+                      onRestore: (s) => _restore(menu, view, s),
+                      onDelete: _delete,
+                      footer: const SizedBox(height: GSpace.s14),
+                    ),
+            ),
+          ],
+        );
       },
     );
   }

@@ -2,8 +2,10 @@
 // Gargosy: StateSyncCapable (#61): `<ROM stem>.ss<N>` in the profile's states folder.
 import 'dart:io' as io;
 import 'dart:typed_data';
+
 import 'package:path/path.dart' as p;
 import 'package:archive/archive_io.dart';
+
 import '../../platform/platform_info.dart';
 import '../../romm/romm_models.dart';
 import '../../storage/directory_service.dart';
@@ -22,8 +24,7 @@ class MgbaSaveStrategy extends SaveStrategy with StateSyncCapable {
   final PlatformInfo _platform;
   String? _cachedRetroarchDir;
 
-  MgbaSaveStrategy(this._directoryService, {PlatformInfo? platform})
-      : _platform = platform ?? PlatformInfo.current;
+  MgbaSaveStrategy(this._directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
 
   @override
   String get strategyId => 'mgba';
@@ -118,18 +119,18 @@ class MgbaSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<List<io.File>> getSaveFiles(Game game, String romPath,
-      {DateTime? sessionStart, String syncMode = 'both'}) async {
+  Future<List<io.File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async {
     final saveDir = await getSaveDir(game, romPath);
     if (saveDir == null) return [];
 
     final romStem = p.basenameWithoutExtension(romPath).toLowerCase();
     final fallbackStem = getRomStem(game).toLowerCase();
-    final stemWords = romStem
-        .replaceAll(RegExp(r'[^a-z0-9]'), ' ')
-        .split(' ')
-        .where((w) => w.length >= 3)
-        .toList();
+    final stemWords = romStem.replaceAll(RegExp(r'[^a-z0-9]'), ' ').split(' ').where((w) => w.length >= 3).toList();
 
     final dir = io.Directory(saveDir);
     if (!await dir.exists()) return [];
@@ -138,7 +139,10 @@ class MgbaSaveStrategy extends SaveStrategy with StateSyncCapable {
     await for (final entity in dir.list()) {
       if (entity is! io.File) continue;
       final fname = p.basename(entity.path).toLowerCase();
-      if (fname == '$romStem.sav' || fname == '$fallbackStem.sav' || fname == '$romStem.srm' || fname == '$fallbackStem.srm') {
+      if (fname == '$romStem.sav' ||
+          fname == '$fallbackStem.sav' ||
+          fname == '$romStem.srm' ||
+          fname == '$fallbackStem.srm') {
         if (sessionStart != null) {
           final stat = await entity.stat();
           if (stat.modified.isBefore(sessionStart.subtract(const Duration(seconds: 2)))) continue;
@@ -169,8 +173,7 @@ class MgbaSaveStrategy extends SaveStrategy with StateSyncCapable {
   }
 
   @override
-  Future<bool> restoreSave(
-      Game game, String destPath, Uint8List data, String filename) async {
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async {
     try {
       final saveDir = await getSaveDir(game, destPath);
       if (saveDir == null) return false;
@@ -199,7 +202,10 @@ class MgbaSaveStrategy extends SaveStrategy with StateSyncCapable {
         await for (final entity in dir.list()) {
           if (entity is! io.File) continue;
           final fname = p.basename(entity.path).toLowerCase();
-          if (fname == '$romStem.sav' || fname == '$fallbackStem.sav' || fname == '$romStem.srm' || fname == '$fallbackStem.srm') {
+          if (fname == '$romStem.sav' ||
+              fname == '$fallbackStem.sav' ||
+              fname == '$romStem.srm' ||
+              fname == '$fallbackStem.srm') {
             targetPath = entity.path;
             break;
           }

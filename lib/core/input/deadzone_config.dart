@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _kPrefsKeyGlobal = 'deadzone_global_v1';
@@ -67,8 +68,7 @@ double getDeadzoneForController(String controllerName) {
   if (controllerName.isNotEmpty) {
     final lower = controllerName.toLowerCase();
     for (final entry in perControllerDeadzone.entries) {
-      if (lower.contains(entry.key.toLowerCase()) ||
-          entry.key.toLowerCase().contains(lower)) {
+      if (lower.contains(entry.key.toLowerCase()) || entry.key.toLowerCase().contains(lower)) {
         return entry.value;
       }
     }
@@ -80,8 +80,7 @@ double getDeadzoneForController(String controllerName) {
 Future<void> setPerControllerDeadzone(String controllerName, double value) async {
   final clamped = value.clamp(kMinDeadzone, kMaxDeadzone);
   if (clamped <= globalDeadzone) {
-    perControllerDeadzone.removeWhere((k, _) =>
-        k.toLowerCase() == controllerName.toLowerCase());
+    perControllerDeadzone.removeWhere((k, _) => k.toLowerCase() == controllerName.toLowerCase());
   } else {
     perControllerDeadzone[controllerName] = clamped;
   }

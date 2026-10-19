@@ -68,7 +68,10 @@ void main() {
     test("roms\\switch joins Eden's game list once it has one; other keys are kept", () async {
       final c = ctx('eden', gameFolders: [p.join(root.roms, 'switch')]);
       final ini = p.join(c.data, 'user', 'config', 'qt-config.ini');
-      write(ini, '[UI]\nPaths\\gamedirs\\1\\path=SDMC\nPaths\\gamedirs\\2\\path=UserNAND\nPaths\\gamedirs\\size=2\ntheme=dark\n');
+      write(
+        ini,
+        '[UI]\nPaths\\gamedirs\\1\\path=SDMC\nPaths\\gamedirs\\2\\path=UserNAND\nPaths\\gamedirs\\size=2\ntheme=dark\n',
+      );
       await ProfileLaunchConfig.of('eden')!.prepare(c);
       await ProfileLaunchConfig.of('eden')!.prepare(c); // twice: listed once
       final text = IniFile(read(ini));
@@ -131,7 +134,10 @@ void main() {
 
     test('roms\\wiiu joins GamePaths in the profile\'s settings.xml', () async {
       final c = ctx('cemu', gameFolders: [p.join(root.roms, 'wiiu')]);
-      write(p.join(c.data, 'portable', 'settings.xml'), '<?xml version="1.0"?><content><GamePaths/><fullscreen>true</fullscreen></content>');
+      write(
+        p.join(c.data, 'portable', 'settings.xml'),
+        '<?xml version="1.0"?><content><GamePaths/><fullscreen>true</fullscreen></content>',
+      );
       await ProfileLaunchConfig.of('cemu')!.prepare(c);
       final xml = read(p.join(c.data, 'portable', 'settings.xml'));
       expect(xml, contains('<GamePaths><Entry>${p.join(root.roms, 'wiiu')}</Entry></GamePaths>'));
@@ -139,12 +145,18 @@ void main() {
     });
 
     test('addCemuGamePaths: kept entries, a missing GamePaths, escaping', () {
-      expect(addCemuGamePaths('<content><GamePaths><Entry>D:\\roms\\wiiu</Entry></GamePaths></content>', [r'D:\roms\wiiu']),
-          '<content><GamePaths><Entry>D:\\roms\\wiiu</Entry></GamePaths></content>');
-      expect(addCemuGamePaths('<content><a/></content>', [r'D:\R&D']),
-          '<content><a/><GamePaths><Entry>D:\\R&amp;D</Entry></GamePaths></content>');
-      expect(addCemuGamePaths('<content><GamePaths><Entry>x</Entry></GamePaths></content>', ['y']),
-          '<content><GamePaths><Entry>y</Entry><Entry>x</Entry></GamePaths></content>');
+      expect(
+        addCemuGamePaths('<content><GamePaths><Entry>D:\\roms\\wiiu</Entry></GamePaths></content>', [r'D:\roms\wiiu']),
+        '<content><GamePaths><Entry>D:\\roms\\wiiu</Entry></GamePaths></content>',
+      );
+      expect(
+        addCemuGamePaths('<content><a/></content>', [r'D:\R&D']),
+        '<content><a/><GamePaths><Entry>D:\\R&amp;D</Entry></GamePaths></content>',
+      );
+      expect(
+        addCemuGamePaths('<content><GamePaths><Entry>x</Entry></GamePaths></content>', ['y']),
+        '<content><GamePaths><Entry>y</Entry><Entry>x</Entry></GamePaths></content>',
+      );
     });
 
     group("a disc's key beside it (Redump's .key) goes into keys.txt", () {
@@ -216,7 +228,10 @@ void main() {
       write(p.join(root.bios, 'nds', 'bios7.bin'), '7');
       write(p.join(root.bios, 'nds', 'bios9.bin'), '9');
       final c = ctx('melonds');
-      write(p.join(c.data, 'portable', 'melonDS.toml'), "[Instance0.Window0]\nWidth = 512\n\n[Emu]\nDirectBoot = true\n");
+      write(
+        p.join(c.data, 'portable', 'melonDS.toml'),
+        "[Instance0.Window0]\nWidth = 512\n\n[Emu]\nDirectBoot = true\n",
+      );
       await ProfileLaunchConfig.of('melonds')!.prepare(c);
       final toml = read(p.join(c.data, 'portable', 'melonDS.toml'));
       expect(toml, contains("BIOS7Path = '${p.join(root.bios, 'nds', 'bios7.bin')}'"));
@@ -233,8 +248,8 @@ void main() {
       final dir = await strategy.getSaveDir(game, p.join(root.roms, 'nds', 'Mario.nds'));
       expect(dir, p.join(paths.emulatorDir('melonds'), 'portable', 'saves'));
       final other = await MelonDsSaveStrategy(
-              ProfileSaveDirectories(root: root, paths: ProfilePaths(root, 'bbb'), prefs: MemoryPrefs()))
-          .getSaveDir(game, p.join(root.roms, 'nds', 'Mario.nds'));
+        ProfileSaveDirectories(root: root, paths: ProfilePaths(root, 'bbb'), prefs: MemoryPrefs()),
+      ).getSaveDir(game, p.join(root.roms, 'nds', 'Mario.nds'));
       expect(other, isNot(dir));
     });
   });
@@ -256,18 +271,21 @@ void main() {
   });
 
   group('review fixes', () {
-    test("a profile's own keys are never replaced, and they're copies: an emulator adding a key doesn't touch bios\\", () async {
-      write(p.join(root.bios, 'switch', 'prod.keys'), 'shared');
-      final c = ctx('eden');
-      write(p.join(c.data, 'user', 'keys', 'prod.keys'), 'newer, the profile\'s own');
-      await ProfileLaunchConfig.of('eden')!.prepare(c);
-      expect(read(p.join(c.data, 'user', 'keys', 'prod.keys')), 'newer, the profile\'s own');
+    test(
+      "a profile's own keys are never replaced, and they're copies: an emulator adding a key doesn't touch bios\\",
+      () async {
+        write(p.join(root.bios, 'switch', 'prod.keys'), 'shared');
+        final c = ctx('eden');
+        write(p.join(c.data, 'user', 'keys', 'prod.keys'), 'newer, the profile\'s own');
+        await ProfileLaunchConfig.of('eden')!.prepare(c);
+        expect(read(p.join(c.data, 'user', 'keys', 'prod.keys')), 'newer, the profile\'s own');
 
-      final d = ctx('eden', profile: 'bbb');
-      await ProfileLaunchConfig.of('eden')!.prepare(d);
-      io.File(p.join(d.data, 'user', 'keys', 'prod.keys')).writeAsStringSync('Eden added a key');
-      expect(read(p.join(root.bios, 'switch', 'prod.keys')), 'shared');
-    });
+        final d = ctx('eden', profile: 'bbb');
+        await ProfileLaunchConfig.of('eden')!.prepare(d);
+        io.File(p.join(d.data, 'user', 'keys', 'prod.keys')).writeAsStringSync('Eden added a key');
+        expect(read(p.join(root.bios, 'switch', 'prod.keys')), 'shared');
+      },
+    );
 
     test("a generic name is taken from the system's own folder first", () async {
       write(p.join(root.bios, 'firmware.bin'), 'another system');
@@ -301,38 +319,52 @@ void main() {
       expect(read(p.join(c.exeDir, 'settings.xml.gargosy-off (2)')), 'second');
     });
 
-    test('melonDS in a profile launches through the profile (link, melonDS.toml) and writes nothing next to the ROM', () async {
-      final paths = ProfilePaths(root, 'aaa');
-      final exe = io.File(p.join(root.emulators, 'melonds', 'melonDS.exe'))..createSync(recursive: true);
-      final rom = io.File(p.join(root.roms, 'nds', 'Game.nds'))..createSync(recursive: true);
-      io.File(p.join(root.roms, 'nds', 'Game.srm')).writeAsStringSync('a Freegosy save');
-      final started = <List<String>>[];
-      final dirs = ProfileLaunchDirectories(
-        root: root,
-        paths: paths,
-        prefs: MemoryPrefs(),
-        start: (exePath, args, {workingDirectory, environment}) async {
-          started.add([exePath, ...args]);
-          return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
-        },
-      );
-      final strategy = MelonDSStrategy(dirs, platform: const PlatformInfo('windows'));
-      final process = await strategy.launchWithHandle(
-          Game(id: '1', name: 'Game', platformSlug: 'nds', fileSize: 0), rom.path);
-      await process?.exitCode;
-      expect(started.single.first, exe.path);
-      expect(started.single.last, rom.path);
-      expect(linkTarget(p.join(exe.parent.path, 'portable')), p.join(paths.emulatorDir('melonds'), 'portable'));
-      expect(io.File(p.join(paths.emulatorDir('melonds'), 'portable', 'melonDS.toml')).existsSync(), isTrue);
-      expect(io.Directory(p.join(root.roms, 'nds')).listSync().map((e) => p.basename(e.path)).toSet(), {'Game.nds', 'Game.srm'},
-          reason: 'no .sav made from the .srm, nothing copied back');
-    });
+    test(
+      'melonDS in a profile launches through the profile (link, melonDS.toml) and writes nothing next to the ROM',
+      () async {
+        final paths = ProfilePaths(root, 'aaa');
+        final exe = io.File(p.join(root.emulators, 'melonds', 'melonDS.exe'))..createSync(recursive: true);
+        final rom = io.File(p.join(root.roms, 'nds', 'Game.nds'))..createSync(recursive: true);
+        io.File(p.join(root.roms, 'nds', 'Game.srm')).writeAsStringSync('a Freegosy save');
+        final started = <List<String>>[];
+        final dirs = ProfileLaunchDirectories(
+          root: root,
+          paths: paths,
+          prefs: MemoryPrefs(),
+          start: (exePath, args, {workingDirectory, environment}) async {
+            started.add([exePath, ...args]);
+            return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
+          },
+        );
+        final strategy = MelonDSStrategy(dirs, platform: const PlatformInfo('windows'));
+        final process = await strategy.launchWithHandle(
+          Game(id: '1', name: 'Game', platformSlug: 'nds', fileSize: 0),
+          rom.path,
+        );
+        await process?.exitCode;
+        expect(started.single.first, exe.path);
+        expect(started.single.last, rom.path);
+        expect(linkTarget(p.join(exe.parent.path, 'portable')), p.join(paths.emulatorDir('melonds'), 'portable'));
+        expect(io.File(p.join(paths.emulatorDir('melonds'), 'portable', 'melonDS.toml')).existsSync(), isTrue);
+        expect(io.Directory(p.join(root.roms, 'nds')).listSync().map((e) => p.basename(e.path)).toSet(), {
+          'Game.nds',
+          'Game.srm',
+        }, reason: 'no .sav made from the .srm, nothing copied back');
+      },
+    );
 
     test("tomlString: a literal string, or an escaped basic one when there's an apostrophe", () {
       expect(tomlString(r'C:\Games\roms'), r"'C:\Games\roms'");
-      expect(tomlString(r"C:\Users\O'Brien\saves"), r'"C:\\Users\\O' "'" r'Brien\\saves"');
-      expect(setTomlKeys('', 'Emu', {'ExternalBIOSEnable': 'true'}, bare: {'ExternalBIOSEnable'}),
-          '\n[Emu]\nExternalBIOSEnable = true\n');
+      expect(
+        tomlString(r"C:\Users\O'Brien\saves"),
+        r'"C:\\Users\\O'
+        "'"
+        r'Brien\\saves"',
+      );
+      expect(
+        setTomlKeys('', 'Emu', {'ExternalBIOSEnable': 'true'}, bare: {'ExternalBIOSEnable'}),
+        '\n[Emu]\nExternalBIOSEnable = true\n',
+      );
     });
 
     test('Qt paths with a comma or semicolon are quoted as QSettings does, and a quoted one is matched', () {

@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:async';
 import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
@@ -40,8 +41,7 @@ class _RecordingStrategy extends Pcsx2Strategy {
   }
 
   @override
-  Future<Process?> launchWithHandleAndExtraArgs(Game game, String romPath,
-      {List<String> extraArgs = const []}) async {
+  Future<Process?> launchWithHandleAndExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
     calls.add('launchWithHandleAndExtraArgs');
     extraArgsSeen.add(extraArgs);
     if (failWith != null) throw failWith!;
@@ -49,8 +49,7 @@ class _RecordingStrategy extends Pcsx2Strategy {
   }
 
   @override
-  Future<void> launchWithExtraArgs(Game game, String romPath,
-      {List<String> extraArgs = const []}) async {
+  Future<void> launchWithExtraArgs(Game game, String romPath, {List<String> extraArgs = const []}) async {
     calls.add('launchWithExtraArgs');
     extraArgsSeen.add(extraArgs);
   }
@@ -101,21 +100,30 @@ class _RecordingDirectoryService extends DirectoryService {
 
   /// The arguments of every launch call made for [romPath].
   List<List<String>> argsFor(String romPath) => [
-        for (final call in calls)
-          if (call.romPath == p.absolute(p.normalize(romPath))) call.args,
-      ];
+    for (final call in calls)
+      if (call.romPath == p.absolute(p.normalize(romPath))) call.args,
+  ];
 
   @override
   Future<Process?> launchGameWithHandle(
-      Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     calls.add(_LaunchCall('launchGameWithHandle', romPath, args));
     return null;
   }
 
   @override
-  Future<void> launchGame(Game game, String romPath, String emulatorId, String exePath,
-      {List<String> args = const []}) async {
+  Future<void> launchGame(
+    Game game,
+    String romPath,
+    String emulatorId,
+    String exePath, {
+    List<String> args = const [],
+  }) async {
     calls.add(_LaunchCall('launchGame', romPath, args));
   }
 }
@@ -126,8 +134,8 @@ class _RecordingDirectoryService extends DirectoryService {
 /// which a second launch of the same emulator can run.
 class _GatedFindStrategy extends Pcsx2Strategy {
   _GatedFindStrategy(super.directoryService, {required int gatedCalls})
-      : gates = List.generate(gatedCalls, (_) => Completer<void>()),
-        entered = List.generate(gatedCalls, (_) => Completer<void>());
+    : gates = List.generate(gatedCalls, (_) => Completer<void>()),
+      entered = List.generate(gatedCalls, (_) => Completer<void>());
 
   final List<Completer<void>> gates;
   final List<Completer<void>> entered;
@@ -151,8 +159,7 @@ void main() {
   late String romPath;
   final game = Game(id: '42', name: 'Ico (SCUS-97113)', platformSlug: 'ps2', fileSize: 0);
 
-  GameLaunchService buildService(
-      SaveSyncService Function(RommService, StrategyRegistry) saveSync) {
+  GameLaunchService buildService(SaveSyncService Function(RommService, StrategyRegistry) saveSync) {
     final registry = StrategyRegistry(env.directoryService, env.prefs);
     final rommService = RommService(
       RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', apiKey: 'k'),
@@ -168,10 +175,9 @@ void main() {
     );
   }
 
-  File writeResume(String serial, String crc) =>
-      File(p.join(env.statesDir, '$serial ($crc).resume.p2s'))
-        ..createSync(recursive: true)
-        ..writeAsBytesSync(List.filled(200, 7));
+  File writeResume(String serial, String crc) => File(p.join(env.statesDir, '$serial ($crc).resume.p2s'))
+    ..createSync(recursive: true)
+    ..writeAsBytesSync(List.filled(200, 7));
 
   File writeResumeState() => writeResume('SCUS-97113', 'A1B2C3D4');
 
@@ -179,8 +185,7 @@ void main() {
     base = await Directory.systemTemp.createTemp('state_load_launch');
     env = await Pcsx2TestEnv.create(base);
     romPath = p.join(base.path, 'Ico (SCUS-97113).iso');
-    service = buildService((romm, registry) =>
-        SaveSyncService(romm, env.directoryService, registry, env.prefs));
+    service = buildService((romm, registry) => SaveSyncService(romm, env.directoryService, registry, env.prefs));
   });
 
   tearDown(() => base.delete(recursive: true));
@@ -192,8 +197,10 @@ void main() {
 
       await service.launch(game, romPath, strategy, loadStatePath: resume.path);
 
-      expect(strategy.calls, ['launchWithHandleAndExtraArgs', 'launchWithExtraArgs'],
-          reason: 'the handle launch, then the fire-and-forget fallback');
+      expect(strategy.calls, [
+        'launchWithHandleAndExtraArgs',
+        'launchWithExtraArgs',
+      ], reason: 'the handle launch, then the fire-and-forget fallback');
       expect(strategy.extraArgsSeen, [
         ['-statefile', resume.path],
         ['-statefile', resume.path],
@@ -202,11 +209,12 @@ void main() {
 
     test('a throwing launch with a state still rethrows', () async {
       final resume = writeResumeState();
-      final strategy = _RecordingStrategy(env.directoryService,
-          failWith: Exception('PCSX2 not found. Please download it first.'));
+      final strategy = _RecordingStrategy(
+        env.directoryService,
+        failWith: Exception('PCSX2 not found. Please download it first.'),
+      );
 
-      await expectLater(
-          service.launch(game, romPath, strategy, loadStatePath: resume.path), throwsException);
+      await expectLater(service.launch(game, romPath, strategy, loadStatePath: resume.path), throwsException);
 
       expect(strategy.calls, ['launchWithHandleAndExtraArgs']);
     });
@@ -219,14 +227,23 @@ void main() {
       const baseUrl = 'https://romm.example.com';
       final dio = Dio(BaseOptions(baseUrl: baseUrl));
       final adapter = DioAdapter(dio: dio);
-      dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        if (options.path == '/api/activity/heartbeat') {
-          if (options.method == 'POST') heartbeatCount++;
-          if (options.method == 'DELETE') clearCount++;
-        }
-        handler.next(options);
-      }));
-      adapter.onGet('/api/heartbeat', (server) => server.reply(200, {'SYSTEM': {'VERSION': '4.9.0'}}));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            if (options.path == '/api/activity/heartbeat') {
+              if (options.method == 'POST') heartbeatCount++;
+              if (options.method == 'DELETE') clearCount++;
+            }
+            handler.next(options);
+          },
+        ),
+      );
+      adapter.onGet(
+        '/api/heartbeat',
+        (server) => server.reply(200, {
+          'SYSTEM': {'VERSION': '4.9.0'},
+        }),
+      );
       adapter.onPost('/api/activity/heartbeat', (server) => server.reply(200, {}), data: Matchers.any);
       adapter.onDelete('/api/activity/heartbeat', (server) => server.reply(204, null));
       final rommService = RommService(
@@ -244,11 +261,12 @@ void main() {
         prefs: env.prefs,
         rommService: rommService,
       );
-      final strategy = _RecordingStrategy(env.directoryService,
-          failWith: Exception('PCSX2 not found. Please download it first.'));
+      final strategy = _RecordingStrategy(
+        env.directoryService,
+        failWith: Exception('PCSX2 not found. Please download it first.'),
+      );
 
-      await expectLater(
-          tracked.launch(game, romPath, strategy, loadStatePath: resume.path), throwsException);
+      await expectLater(tracked.launch(game, romPath, strategy, loadStatePath: resume.path), throwsException);
 
       expect(heartbeatCount, 1, reason: 'the tracker started before the launch attempt');
       expect(clearCount, 1, reason: 'a failed launch must not leave the session showing as active');
@@ -281,8 +299,11 @@ void main() {
       final strategy = _GatedFindStrategy(recorder, gatedCalls: 0);
 
       await service.launch(game, romPath, strategy, loadStatePath: resume.path);
-      expect(recorder.argsFor(romPath), everyElement(contains(resume.path)),
-          reason: 'sanity: the first launch did load the state');
+      expect(
+        recorder.argsFor(romPath),
+        everyElement(contains(resume.path)),
+        reason: 'sanity: the first launch did load the state',
+      );
       recorder.calls.clear();
       await strategy.launchWithHandle(game, romPath);
       await strategy.launch(game, romPath);
@@ -322,8 +343,11 @@ void main() {
       strategy.gates[0].complete();
       await launchA;
 
-      expect(recorder.argsFor(romA), everyElement(withState(stateA)),
-          reason: "A must start with its own state, not B's and not none");
+      expect(
+        recorder.argsFor(romA),
+        everyElement(withState(stateA)),
+        reason: "A must start with its own state, not B's and not none",
+      );
       expect(recorder.argsFor(romA), isNotEmpty);
       expect(recorder.argsFor(romB), everyElement(withState(stateB)));
       expect(recorder.argsFor(romB), isNotEmpty);
@@ -339,8 +363,7 @@ void main() {
       strategy.gates[0].complete();
       await launchA;
 
-      expect(recorder.argsFor(romA), everyElement(withState(stateA)),
-          reason: "B's launch must not clear A's state");
+      expect(recorder.argsFor(romA), everyElement(withState(stateA)), reason: "B's launch must not clear A's state");
       expect(recorder.argsFor(romA), isNotEmpty);
       expect(recorder.argsFor(romB), everyElement(['-batch', '-fullscreen']));
       expect(recorder.argsFor(romB), isNotEmpty);
@@ -360,8 +383,7 @@ void main() {
       strategy.gates[1].complete();
       await launchB;
 
-      expect(recorder.argsFor(romA), everyElement(withState(stateA)),
-          reason: "A must not be started with B's state");
+      expect(recorder.argsFor(romA), everyElement(withState(stateA)), reason: "A must not be started with B's state");
       expect(recorder.argsFor(romA), isNotEmpty);
       expect(recorder.argsFor(romB), everyElement(withState(stateB)));
       expect(recorder.argsFor(romB), isNotEmpty);

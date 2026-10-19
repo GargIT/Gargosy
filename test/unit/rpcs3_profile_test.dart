@@ -87,7 +87,9 @@ void main() {
     final c = ctx();
     io.File(p.join(c.data, 'config', 'vfs.yml'))
       ..createSync(recursive: true)
-      ..writeAsStringSync('\$(EmulatorDir): ""\n/dev_hdd0/: \$(EmulatorDir)dev_hdd0/\n/dev_flash/: \$(EmulatorDir)dev_flash/\n');
+      ..writeAsStringSync(
+        '\$(EmulatorDir): ""\n/dev_hdd0/: \$(EmulatorDir)dev_hdd0/\n/dev_flash/: \$(EmulatorDir)dev_flash/\n',
+      );
     expect(await ProfileLaunchConfig.of('rpcs3')!.prepare(c), isEmpty);
     final vfs = io.File(p.join(c.data, 'config', 'vfs.yml')).readAsStringSync();
     expect(vfs, contains("/dev_flash/: '${sharedFlash()}'\n"));
@@ -133,10 +135,13 @@ void main() {
     late List<int> confirmed;
     _StaysOpen? open;
     String vsh() => p.join(root.emulators, 'rpcs3-firmware', 'dev_flash', 'vsh', 'module', 'vsh.self');
-    Ps3Firmware firmware() => Ps3Firmware(root, dirs,
-        confirm: (pid) async => (confirmed..add(pid)).isNotEmpty,
-        close: (process) async => process.kill(),
-        poll: const Duration(milliseconds: 1));
+    Ps3Firmware firmware() => Ps3Firmware(
+      root,
+      dirs,
+      confirm: (pid) async => (confirmed..add(pid)).isNotEmpty,
+      close: (process) async => process.kill(),
+      poll: const Duration(milliseconds: 1),
+    );
 
     setUp(() {
       started = [];
@@ -162,7 +167,9 @@ void main() {
 
     test('a game starts with the profile\'s RPCS3_CONFIG_DIR in its environment', () async {
       await dirs.launchGameWithHandle(game(1, 'G', platform: 'ps3'), r'D:\roms\ps3\G', 'rpcs3', exe);
-      expect(started.single.$2, {'RPCS3_CONFIG_DIR': '${ProfilePaths(root, 'aaa').emulatorDir('rpcs3')}${p.separator}'});
+      expect(started.single.$2, {
+        'RPCS3_CONFIG_DIR': '${ProfilePaths(root, 'aaa').emulatorDir('rpcs3')}${p.separator}',
+      });
       expect(started.single.$1.last, r'D:\roms\ps3\G');
     });
 
@@ -187,8 +194,10 @@ void main() {
     });
 
     test('no PS3UPDAT.PUP in bios\\: a clear message, nothing started', () async {
-      await expectLater(firmware().install(exe),
-          throwsA(isA<Ps3FirmwareException>().having((e) => e.message, 'message', contains('PS3UPDAT.PUP'))));
+      await expectLater(
+        firmware().install(exe),
+        throwsA(isA<Ps3FirmwareException>().having((e) => e.message, 'message', contains('PS3UPDAT.PUP'))),
+      );
       expect(started, isEmpty);
     });
 

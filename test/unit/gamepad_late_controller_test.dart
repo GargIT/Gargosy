@@ -17,8 +17,9 @@ class _FakeGamepads extends GamepadsPlatformInterface {
   List<(String, String)> pads = [];
 
   @override
-  Future<List<GamepadController>> listGamepads() async =>
-      [for (final (id, name) in pads) GamepadController(id: id, name: name, plugin: this)];
+  Future<List<GamepadController>> listGamepads() async => [
+    for (final (id, name) in pads) GamepadController(id: id, name: name, plugin: this),
+  ];
 
   @override
   Stream<GamepadEvent> get gamepadEventsStream => events.stream;

@@ -25,28 +25,28 @@ class _PermissiveStrategy extends SaveStrategy with StateSyncCapable {
   Future<String?> getSaveDir(Game game, String romPath) async => null;
 
   @override
-  Future<List<File>> getSaveFiles(Game game, String romPath,
-          {DateTime? sessionStart, String syncMode = 'both'}) async =>
-      [];
+  Future<List<File>> getSaveFiles(
+    Game game,
+    String romPath, {
+    DateTime? sessionStart,
+    String syncMode = 'both',
+  }) async => [];
 
   @override
-  Future<bool> restoreSave(
-          Game game, String destPath, Uint8List data, String filename) async =>
-      false;
+  Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => false;
 
   @override
   Future<String> stateDirectory(Game game, String romPath) async => statesDir;
 
   @override
-  Future<bool Function(String fileName)?> stateFileMatcher(
-          Game game, String romPath) async =>
+  Future<bool Function(String fileName)?> stateFileMatcher(Game game, String romPath) async =>
       (_) => true;
 }
 
 Set<String> _allFiles(Directory dir) => {
-      for (final e in dir.listSync(recursive: true))
-        if (e is File) e.path,
-    };
+  for (final e in dir.listSync(recursive: true))
+    if (e is File) e.path,
+};
 
 void main() {
   late StateSyncTestEnv env;
@@ -54,8 +54,11 @@ void main() {
 
   setUp(() async {
     env = await StateSyncTestEnv.create();
-    service = StateSyncService(env.api, env.pcsx2.prefs,
-        (game, {emulatorId, coreOverride}) => _PermissiveStrategy(env.statesDir));
+    service = StateSyncService(
+      env.api,
+      env.pcsx2.prefs,
+      (game, {emulatorId, coreOverride}) => _PermissiveStrategy(env.statesDir),
+    );
   });
   tearDown(() => env.dispose());
 

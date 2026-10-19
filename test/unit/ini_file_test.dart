@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/storage/ini_file.dart';
 
 void main() {
-  const sample = '[UI]\nTheme = dark\n; a comment\n\n[Achievements]\nEnabled = false\nUsername = \nChallengeMode = false\n\n[Folders]\nBios = bios\n';
+  const sample =
+      '[UI]\nTheme = dark\n; a comment\n\n[Achievements]\nEnabled = false\nUsername = \nChallengeMode = false\n\n[Folders]\nBios = bios\n';
 
   test('reads values, including an empty one', () {
     final ini = IniFile(sample);
@@ -35,8 +36,10 @@ void main() {
   test('a new key goes after the section\'s last line, before the blank separator', () {
     final ini = IniFile(sample);
     expect(ini.set('Achievements', 'LoginTimestamp', '123'), isTrue);
-    expect(ini.toText(),
-        sample.replaceFirst('ChallengeMode = false\n', 'ChallengeMode = false\nLoginTimestamp = 123\n'));
+    expect(
+      ini.toText(),
+      sample.replaceFirst('ChallengeMode = false\n', 'ChallengeMode = false\nLoginTimestamp = 123\n'),
+    );
   });
 
   test('a missing section is added at the end, after a blank line', () {

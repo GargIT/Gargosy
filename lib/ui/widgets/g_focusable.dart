@@ -65,7 +65,8 @@ class _GFocusableState extends ConsumerState<GFocusable> {
           if (widget.onLongActivate != null)
             LongActivateIntent: CallbackAction<LongActivateIntent>(onInvoke: (_) => widget.onLongActivate!()),
           if (widget.onDetail != null) DetailIntent: CallbackAction<DetailIntent>(onInvoke: (_) => widget.onDetail!()),
-          if (widget.onFavorite != null) FavoriteIntent: CallbackAction<FavoriteIntent>(onInvoke: (_) => widget.onFavorite!()),
+          if (widget.onFavorite != null)
+            FavoriteIntent: CallbackAction<FavoriteIntent>(onInvoke: (_) => widget.onFavorite!()),
         },
         child: GestureDetector(
           onTap: widget.onActivate,

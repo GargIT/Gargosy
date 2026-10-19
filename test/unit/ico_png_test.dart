@@ -34,7 +34,16 @@ void main() {
   test('several sizes: the largest PNG', () {
     final small = [..._png, 16];
     final big = [..._png, 99];
-    expect(pngFromIco(ico([(16, small), (256, big), (48, [..._png, 48])])), big);
+    expect(
+      pngFromIco(
+        ico([
+          (16, small),
+          (256, big),
+          (48, [..._png, 48]),
+        ]),
+      ),
+      big,
+    );
   });
 
   test('only old-style bitmaps, or not an .ico at all: none', () {
@@ -44,7 +53,9 @@ void main() {
   });
 
   test('an entry pointing past the end is skipped', () {
-    final bad = ico([(256, [..._png, 1])]);
+    final bad = ico([
+      (256, [..._png, 1]),
+    ]);
     ByteData.view(bad.buffer).setUint32(6 + 8, 9999, Endian.little);
     expect(pngFromIco(bad), isNull);
   });

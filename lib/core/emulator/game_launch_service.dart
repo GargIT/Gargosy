@@ -2,8 +2,10 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart';
+
 import '../storage/app_preferences.dart';
 import '../romm/activity_session_tracker.dart';
 import '../romm/romm_models.dart';
@@ -117,7 +119,16 @@ class GameLaunchService {
 
   /// Disc-image extensions [scanForDiscFiles] recognises (playlists aside).
   static const List<String> discImageExtensions = [
-    '.rvz', '.gcm', '.iso', '.cso', '.wbfs', '.bin', '.img', '.chd', '.pbp', '.ccd',
+    '.rvz',
+    '.gcm',
+    '.iso',
+    '.cso',
+    '.wbfs',
+    '.bin',
+    '.img',
+    '.chd',
+    '.pbp',
+    '.ccd',
   ];
 
   /// True when [fileName] is a disc image (see [discImageExtensions]).
@@ -149,7 +160,9 @@ class GameLaunchService {
   /// Returns the game's full file list (fetching from RomM if [game.files]
   /// is empty, since paginated API responses omit it) alongside the subset
   /// filtered to launchable files via [RomConstants.filterLaunchableFiles].
-  Future<({List<Map<String, dynamic>> files, List<Map<String, dynamic>> launchableFiles})> launchableFilesFor(Game game) async {
+  Future<({List<Map<String, dynamic>> files, List<Map<String, dynamic>> launchableFiles})> launchableFilesFor(
+    Game game,
+  ) async {
     List<Map<String, dynamic>> files = game.files;
     if (files.isEmpty && rommService != null) {
       try {
@@ -196,7 +209,8 @@ class GameLaunchService {
     const slugs = ['3ds', 'n3ds', 'nintendo-3ds', 'nintendo3ds', 'new-nintendo-3ds', 'new-nintendo-3ds-xl'];
     if (!slugs.contains(game.platformSlug?.toLowerCase())) return false;
     final systemDir = await directoryService.getEmulatorSystemDirectory(strategy.emulatorId);
-    final keysPath = '$systemDir/${strategy.emulatorId == 'retroarch' ? 'citra/sysdata/aes_keys.txt' : 'sysdata/aes_keys.txt'}';
+    final keysPath =
+        '$systemDir/${strategy.emulatorId == 'retroarch' ? 'citra/sysdata/aes_keys.txt' : 'sysdata/aes_keys.txt'}';
     return !await io.File(keysPath).exists();
   }
 
@@ -297,13 +311,14 @@ class GameLaunchService {
   /// here must not break the backup or play-session report that follow, so it
   /// is logged and counted as no conflicts.
   @visibleForTesting
-  Future<int> pushStatesAfterExit(
-      GameSession session, Game game, String romPath, {String? coreOverride}) async {
+  Future<int> pushStatesAfterExit(GameSession session, Game game, String romPath, {String? coreOverride}) async {
     if (stateSyncService == null) {
       debugPrint('[StateSync] post-exit push skipped: state sync service not available');
     } else {
-      debugPrint('[StateSync] post-exit push for ${game.name} '
-          '(emulator ${session.emulatorId})');
+      debugPrint(
+        '[StateSync] post-exit push for ${game.name} '
+        '(emulator ${session.emulatorId})',
+      );
     }
     try {
       final result = await stateSyncService?.pushStates(
@@ -362,8 +377,13 @@ class GameLaunchService {
         // A save RomM already has (pulled or chosen before the game started,
         // and not changed since) is not uploaded again: an older RomM save
         // played without saving must not become the newest.
-        if (await saveSyncService.saveIsSynced(game, romPath,
-            emulatorId: session.emulatorId, syncMode: syncMode, coreOverride: overrideCoreId)) {
+        if (await saveSyncService.saveIsSynced(
+          game,
+          romPath,
+          emulatorId: session.emulatorId,
+          syncMode: syncMode,
+          coreOverride: overrideCoreId,
+        )) {
           dev.log('${game.displayName}: the save is the one RomM has — not uploading');
           saveUnchanged = true;
           syncOk = true;
@@ -377,8 +397,13 @@ class GameLaunchService {
             emulatorId: session.emulatorId,
           );
           if (syncOk) {
-            await saveSyncService.markSaveSynced(game, romPath,
-                emulatorId: session.emulatorId, syncMode: syncMode, coreOverride: overrideCoreId);
+            await saveSyncService.markSaveSynced(
+              game,
+              romPath,
+              emulatorId: session.emulatorId,
+              syncMode: syncMode,
+              coreOverride: overrideCoreId,
+            );
           }
         }
       }, doing: "Syncing ${game.displayName}'s save");
@@ -394,23 +419,29 @@ class GameLaunchService {
 
     String? backupZipPath;
     try {
-      final postBackup = await backupService.createImmediate(game, romPath, saveSyncService,
-          emulatorId: session.emulatorId, coreOverride: overrideCoreId);
+      final postBackup = await backupService.createImmediate(
+        game,
+        romPath,
+        saveSyncService,
+        emulatorId: session.emulatorId,
+        coreOverride: overrideCoreId,
+      );
       // A session that left the save as it was adds no backup.
       if (postBackup != null &&
           await backupRepository.addUnlessSameAsNewest(
             game.id,
             BackupEntry(
-                timestamp: DateTime.now(),
-                md5Hash: postBackup.md5,
-                localZipPath: postBackup.zipPath,
-                emulatorId: session.emulatorId,
-                coreId: postBackup.coreId,
-                // RomM answered the push (took it, has it, refused it as
-                // older, or it can't be synced): not for the offline queue,
-                // which uploads without asking and would put a save RomM
-                // refused over the newer one.
-                isSynced: syncOk || saveConflict != null || saveSyncBlocked != null),
+              timestamp: DateTime.now(),
+              md5Hash: postBackup.md5,
+              localZipPath: postBackup.zipPath,
+              emulatorId: session.emulatorId,
+              coreId: postBackup.coreId,
+              // RomM answered the push (took it, has it, refused it as
+              // older, or it can't be synced): not for the offline queue,
+              // which uploads without asking and would put a save RomM
+              // refused over the newer one.
+              isSynced: syncOk || saveConflict != null || saveSyncBlocked != null,
+            ),
           )) {
         backupZipPath = postBackup.zipPath;
       }

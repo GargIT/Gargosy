@@ -17,14 +17,15 @@ void main() {
   test('every engine part belongs to the active profile', () async {
     final root = await tempAppRoot();
     addTearDown(() => deleteTempDir(root.root));
-    final c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root),
-      appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-    ]);
+    final c = ProviderContainer(
+      overrides: [appRootProvider.overrideWithValue(root), appPreferencesProvider.overrideWithValue(MemoryPrefs())],
+    );
     addTearDown(c.dispose);
     expect(c.read(saveSyncServiceProvider), isNull);
 
-    final anna = await c.read(profileStoreProvider).create(name: 'Anna', colorIndex: 0, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna');
+    final anna = await c
+        .read(profileStoreProvider)
+        .create(name: 'Anna', colorIndex: 0, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna');
     await c.read(activeProfileProvider.notifier).activate(anna, const ProfileLogin(token: 't', kind: 'device'));
     final paths = ProfilePaths(root, anna.id);
 
@@ -39,7 +40,10 @@ void main() {
     final repo = await c.read(backupRepositoryProvider.future);
     expect(repo, isNotNull);
     // The list is backups\index.json, written beside the zips it lists.
-    await repo!.addEntry('1', BackupEntry(timestamp: DateTime(2026), md5Hash: 'a', localZipPath: p.join(paths.backups, 'a.zip')));
+    await repo!.addEntry(
+      '1',
+      BackupEntry(timestamp: DateTime(2026), md5Hash: 'a', localZipPath: p.join(paths.backups, 'a.zip')),
+    );
     expect(io.File(p.join(paths.backups, 'index.json')).existsSync(), isTrue);
 
     final launch = await c.read(gameLaunchServiceProvider.future);

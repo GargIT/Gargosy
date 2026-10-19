@@ -47,9 +47,9 @@ class FlycastStrategy extends EmulatorStrategy {
   /// slot is set for this launch only (`-config` values aren't saved).
   @override
   List<String> stateLoadArgs(String statePath) => [
-        '-config',
-        'config:Dreamcast.AutoLoadState=yes,config:Dreamcast.SavestateSlot=${FlycastSaveStrategy.slotNumber(p.basename(statePath)) ?? 0}',
-      ];
+    '-config',
+    'config:Dreamcast.AutoLoadState=yes,config:Dreamcast.SavestateSlot=${FlycastSaveStrategy.slotNumber(p.basename(statePath)) ?? 0}',
+  ];
 
   @override
   bool canLoadState(String fileName) => FlycastSaveStrategy.slotNumber(fileName) != null;

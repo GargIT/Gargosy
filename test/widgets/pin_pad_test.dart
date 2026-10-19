@@ -12,20 +12,22 @@ void main() {
   Future<void> pump(WidgetTester tester, {String? Function(String)? answer}) async {
     entered.clear();
     cancelled = false;
-    await tester.pumpWidget(ProviderScope(
-      child: MaterialApp(
-        home: Scaffold(
-          body: PinPad(
-            title: 'PIN for Anna',
-            onComplete: (pin) async {
-              entered.add(pin);
-              return answer?.call(pin);
-            },
-            onCancel: () => cancelled = true,
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: PinPad(
+              title: 'PIN for Anna',
+              onComplete: (pin) async {
+                entered.add(pin);
+                return answer?.call(pin);
+              },
+              onCancel: () => cancelled = true,
+            ),
           ),
         ),
       ),
-    ));
+    );
     await tester.pump();
   }
 
@@ -42,7 +44,12 @@ void main() {
 
   testWidgets('typing digits works and a wrong PIN clears and shows the error', (tester) async {
     await pump(tester, answer: (pin) => pin == '4711' ? null : 'Wrong PIN');
-    for (final k in [LogicalKeyboardKey.digit1, LogicalKeyboardKey.digit2, LogicalKeyboardKey.digit3, LogicalKeyboardKey.digit4]) {
+    for (final k in [
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit2,
+      LogicalKeyboardKey.digit3,
+      LogicalKeyboardKey.digit4,
+    ]) {
       await tester.sendKeyEvent(k);
     }
     await tester.pumpAndSettle();

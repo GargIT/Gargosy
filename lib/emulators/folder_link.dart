@@ -13,7 +13,8 @@ class FolderLinkUnsupported implements Exception {
   final Object cause;
 
   @override
-  String toString() => "A folder link can't be made at $link: $cause. "
+  String toString() =>
+      "A folder link can't be made at $link: $cause. "
       'The drive may be FAT32 or exFAT, which have no links, or the folder may be in use.';
 }
 
@@ -97,10 +98,11 @@ FolderLinkResult pointFolderLink({
       } else {
         final template = guard.check(templateDir);
         moved = _moveAside(
-            linkPath,
-            io.FileSystemEntity.typeSync(template, followLinks: false) == io.FileSystemEntityType.notFound
-                ? template
-                : guard.check(setAsideDir));
+          linkPath,
+          io.FileSystemEntity.typeSync(template, followLinks: false) == io.FileSystemEntityType.notFound
+              ? template
+              : guard.check(setAsideDir),
+        );
       }
       debugPrint('[FolderLink] $linkPath was a real folder: moved to $moved');
     case io.FileSystemEntityType.notFound:

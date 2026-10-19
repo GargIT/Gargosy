@@ -53,8 +53,8 @@ class ProfileLoginStore {
     }
   }
 
-  Future<void> write(PathGuard guard, ProfileLogin login) => writeBytesAtomic(
-      guard, filePath, protector.protect(Uint8List.fromList(utf8.encode(jsonEncode(login.toJson())))));
+  Future<void> write(PathGuard guard, ProfileLogin login) =>
+      writeBytesAtomic(guard, filePath, protector.protect(Uint8List.fromList(utf8.encode(jsonEncode(login.toJson())))));
 
   Future<void> clear(PathGuard guard) async {
     final file = io.File(guard.check(filePath));

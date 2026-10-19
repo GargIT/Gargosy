@@ -9,11 +9,18 @@ void main() {
     final dio = Dio(BaseOptions(baseUrl: 'https://romm.example.com'));
     final adapter = DioAdapter(dio: dio);
     final romm = RommService(
-        RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', token: 't'),
-        dio: dio, skipConnectivityCheck: true);
+      RomMConfig(baseUrl: 'https://romm.example.com', username: '', password: '', token: 't'),
+      dio: dio,
+      skipConnectivityCheck: true,
+    );
     adapter.onGet('/api/heartbeat', (server) => server.reply(503, {'detail': 'down'}));
     await romm.fetchCapabilities();
-    adapter.onGet('/api/heartbeat', (server) => server.reply(200, {'SYSTEM': {'VERSION': '4.9.0'}}));
+    adapter.onGet(
+      '/api/heartbeat',
+      (server) => server.reply(200, {
+        'SYSTEM': {'VERSION': '4.9.0'},
+      }),
+    );
     expect((await romm.fetchCapabilities()).version, '4.9.0');
   });
 }

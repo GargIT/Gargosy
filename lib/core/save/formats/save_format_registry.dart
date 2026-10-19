@@ -26,8 +26,10 @@ SaveConversion convertSave({
   List<SaveBlob> existing = const [],
   List<SaveSystem<Object>>? systems,
 }) =>
-    saveSystemFor(platformSlug, systems: systems)
-        ?.convert(files: files, sourceTag: sourceTag, targetTag: targetTag, stem: stem, existing: existing) ??
+    saveSystemFor(
+      platformSlug,
+      systems: systems,
+    )?.convert(files: files, sourceTag: sourceTag, targetTag: targetTag, stem: stem, existing: existing) ??
     const SaveAsIs();
 
 /// The save system of games on [platformSlug], if Gargosy converts them.

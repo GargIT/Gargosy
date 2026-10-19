@@ -23,9 +23,11 @@ import '../../widgets/toast.dart';
 import '../play/play_screen.dart';
 
 /// Opens a folder in Windows' Explorer; tests replace it.
-final folderOpenerProvider = Provider<void Function(String path)>((ref) => (path) {
-      io.Process.start('explorer.exe', [path]);
-    });
+final folderOpenerProvider = Provider<void Function(String path)>(
+  (ref) => (path) {
+    io.Process.start('explorer.exe', [path]);
+  },
+);
 
 /// The game page's left column (spec Part 1): the cover; ▶ Play (Download,
 /// the progress, Playing… as they apply); under it ♥ and ⋯. The cover is the
@@ -39,48 +41,61 @@ class GameCoverColumn extends ConsumerWidget {
   static const coverHeight = 324.0;
 
   Widget _wide(String label, IconData icon, VoidCallback? onPress, {bool primary = false, Key? key}) => GFocusable(
-        key: key,
-        autofocus: true,
-        borderRadius: GRadius.pill,
-        onActivate: onPress,
-        child: Container(
-          width: coverWidth,
-          padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
-          decoration: BoxDecoration(
-            color: primary ? GColors.primary : GColors.surface,
-            borderRadius: BorderRadius.circular(GRadius.pill),
-          ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: 20, color: onPress == null ? GColors.fgFaint : GColors.fg),
-            const SizedBox(width: GSpace.s2),
-            Flexible(
-              child: Text(label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: GFont.lg, fontWeight: FontWeight.w700, color: onPress == null ? GColors.fgFaint : GColors.fg)),
+    key: key,
+    autofocus: true,
+    borderRadius: GRadius.pill,
+    onActivate: onPress,
+    child: Container(
+      width: coverWidth,
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
+      decoration: BoxDecoration(
+        color: primary ? GColors.primary : GColors.surface,
+        borderRadius: BorderRadius.circular(GRadius.pill),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 20, color: onPress == null ? GColors.fgFaint : GColors.fg),
+          const SizedBox(width: GSpace.s2),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: GFont.lg,
+                fontWeight: FontWeight.w700,
+                color: onPress == null ? GColors.fgFaint : GColors.fg,
+              ),
             ),
-          ]),
-        ),
-      );
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _small(Key key, Widget child, VoidCallback onPress) => Expanded(
-        child: GFocusable(
-          key: key,
-          borderRadius: GRadius.pill,
-          onActivate: onPress,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: GSpace.s3),
-            decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-            child: Center(child: child),
-          ),
-        ),
-      );
+    child: GFocusable(
+      key: key,
+      borderRadius: GRadius.pill,
+      onActivate: onPress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: GSpace.s3),
+        decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
+        child: Center(child: child),
+      ),
+    ),
+  );
 
-  Future<void> _play(BuildContext context) => Navigator.of(context).push(fadeRoute<void>(
-        PlayScreen(game: game, onNotice: (m) {
+  Future<void> _play(BuildContext context) => Navigator.of(context).push(
+    fadeRoute<void>(
+      PlayScreen(
+        game: game,
+        onNotice: (m) {
           if (context.mounted) showToast(context, m);
-        }),
-      ));
+        },
+      ),
+    ),
+  );
 
   Future<void> _more(BuildContext context, WidgetRef ref, bool downloaded) async {
     final engine = ref.read(playEngineProvider);
@@ -93,8 +108,10 @@ class GameCoverColumn extends ConsumerWidget {
           danger: false,
           run: () async {
             final path = ref.read(romFilesProvider).pathFor(game);
-            ref.read(folderOpenerProvider)(io.FileSystemEntity.isDirectorySync(path) ? path : io.File(path).parent.path);
-          }
+            ref.read(folderOpenerProvider)(
+              io.FileSystemEntity.isDirectorySync(path) ? path : io.File(path).parent.path,
+            );
+          },
         ),
       if (downloaded && (engine?.stateSyncAvailable(game) ?? false))
         (
@@ -103,7 +120,7 @@ class GameCoverColumn extends ConsumerWidget {
           run: () async {
             final said = await ref.read(saveActionsProvider).syncStates(game);
             if (context.mounted && said.isNotEmpty) showToast(context, said);
-          }
+          },
         ),
       if (remembered != null)
         (
@@ -112,22 +129,24 @@ class GameCoverColumn extends ConsumerWidget {
           run: () async {
             await engine?.remember(game, PlayRequest(emulator: remembered, forget: true));
             ref.invalidate(playMenuProvider(PlayMenuKey(game)));
-          }
+          },
         ),
       if (downloaded)
         (
           label: 'Delete from this PC…',
           danger: true,
           run: () async {
-            final ok = await showConfirm(context,
-                title: 'Delete ${game.displayName} from this PC?',
-                body: 'The ROM is removed from this PC only. It stays on RomM, and your saves are not touched.',
-                yes: 'Delete',
-                no: 'Keep',
-                focusYes: false,
-                danger: true);
+            final ok = await showConfirm(
+              context,
+              title: 'Delete ${game.displayName} from this PC?',
+              body: 'The ROM is removed from this PC only. It stays on RomM, and your saves are not touched.',
+              yes: 'Delete',
+              no: 'Keep',
+              focusYes: false,
+              danger: true,
+            );
             if (ok) await ref.read(downloadsProvider.notifier).delete(game);
-          }
+          },
         ),
     ];
     if (items.isEmpty) return;
@@ -141,21 +160,27 @@ class GameCoverColumn extends ConsumerWidget {
             width: 320,
             child: Padding(
               padding: const EdgeInsets.all(GSpace.s2),
-              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                for (var k = 0; k < items.length; k++) ...[
-                  if (items[k].danger && k > 0) const Divider(color: GColors.borderStrong, height: GSpace.s4),
-                  GFocusable(
-                    autofocus: k == 0,
-                    borderRadius: GRadius.md,
-                    onActivate: () => Navigator.of(c).pop(k),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
-                      child: Text(items[k].label,
-                          style: TextStyle(fontSize: GFont.lg, color: items[k].danger ? GColors.danger : GColors.fg)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var k = 0; k < items.length; k++) ...[
+                    if (items[k].danger && k > 0) const Divider(color: GColors.borderStrong, height: GSpace.s4),
+                    GFocusable(
+                      autofocus: k == 0,
+                      borderRadius: GRadius.md,
+                      onActivate: () => Navigator.of(c).pop(k),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
+                        child: Text(
+                          items[k].label,
+                          style: TextStyle(fontSize: GFont.lg, color: items[k].danger ? GColors.danger : GColors.fg),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ]),
+              ),
             ),
           ),
         ),
@@ -179,61 +204,86 @@ class GameCoverColumn extends ConsumerWidget {
     final Widget main;
     if (progress != null && progress.phase != DownloadPhase.failed) {
       final pct = progress.fraction == null ? '' : ' ${(progress.fraction! * 100).round()} %';
-      main = Column(children: [
-        SizedBox(width: coverWidth, child: LinearProgressIndicator(value: progress.fraction, color: GColors.primary)),
-        const SizedBox(height: GSpace.s2),
-        Text(progress.phase == DownloadPhase.extracting ? 'Unpacking…' : 'Downloading$pct',
-            style: const TextStyle(color: GColors.fgSecondary)),
-        // Unpacking can't be stopped halfway, so Cancel goes away once it starts.
-        if (progress.phase == DownloadPhase.downloading) ...[
-          const SizedBox(height: GSpace.s3),
-          _wide('Cancel', Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
-        ],
-      ]);
-    } else if (downloaded) {
-      main = _wide(playing ? 'Playing…' : 'Play', Icons.play_arrow, playing ? null : () => _play(context), primary: true);
-    } else {
-      final size = game.fileSize > 0 ? ' (${formatBytes(game.fileSize)})' : '';
-      main = Column(children: [
-        _wide('Download$size', Icons.download, () => ref.read(downloadsProvider.notifier).start(game), primary: true),
-        if (progress?.phase == DownloadPhase.failed) ...[
-          const SizedBox(height: GSpace.s2),
+      main = Column(
+        children: [
           SizedBox(
             width: coverWidth,
-            child: Text('The download failed: ${progress!.error}',
-                style: const TextStyle(color: GColors.danger, fontSize: GFont.sm)),
+            child: LinearProgressIndicator(value: progress.fraction, color: GColors.primary),
           ),
+          const SizedBox(height: GSpace.s2),
+          Text(
+            progress.phase == DownloadPhase.extracting ? 'Unpacking…' : 'Downloading$pct',
+            style: const TextStyle(color: GColors.fgSecondary),
+          ),
+          // Unpacking can't be stopped halfway, so Cancel goes away once it starts.
+          if (progress.phase == DownloadPhase.downloading) ...[
+            const SizedBox(height: GSpace.s3),
+            _wide('Cancel', Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
+          ],
         ],
-      ]);
+      );
+    } else if (downloaded) {
+      main = _wide(
+        playing ? 'Playing…' : 'Play',
+        Icons.play_arrow,
+        playing ? null : () => _play(context),
+        primary: true,
+      );
+    } else {
+      final size = game.fileSize > 0 ? ' (${formatBytes(game.fileSize)})' : '';
+      main = Column(
+        children: [
+          _wide('Download$size', Icons.download, () => ref.read(downloadsProvider.notifier).start(game), primary: true),
+          if (progress?.phase == DownloadPhase.failed) ...[
+            const SizedBox(height: GSpace.s2),
+            SizedBox(
+              width: coverWidth,
+              child: Text(
+                'The download failed: ${progress!.error}',
+                style: const TextStyle(color: GColors.danger, fontSize: GFont.sm),
+              ),
+            ),
+          ],
+        ],
+      );
     }
     return SizedBox(
       width: coverWidth,
-      child: Column(children: [
-        coverHero(
-          game,
-          SizedBox(
-            key: const ValueKey('game-cover'),
-            width: coverWidth,
-            height: coverHeight,
-            child: CoverImage(url: coverUrlFor(ref, game), title: game.displayName, width: coverWidth, height: coverHeight),
+      child: Column(
+        children: [
+          coverHero(
+            game,
+            SizedBox(
+              key: const ValueKey('game-cover'),
+              width: coverWidth,
+              height: coverHeight,
+              child: CoverImage(
+                url: coverUrlFor(ref, game),
+                title: game.displayName,
+                width: coverWidth,
+                height: coverHeight,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: GSpace.s5),
-        main,
-        const SizedBox(height: GSpace.s3),
-        Row(children: [
-          _small(
-            const ValueKey('game-fav'),
-            Icon(isFavourite ? Icons.favorite : Icons.favorite_border, color: GColors.fav),
-            () => favourite(context, ref, game),
+          const SizedBox(height: GSpace.s5),
+          main,
+          const SizedBox(height: GSpace.s3),
+          Row(
+            children: [
+              _small(
+                const ValueKey('game-fav'),
+                Icon(isFavourite ? Icons.favorite : Icons.favorite_border, color: GColors.fav),
+                () => favourite(context, ref, game),
+              ),
+              const SizedBox(width: GSpace.s2),
+              _small(const ValueKey('game-more'), const Icon(Icons.more_horiz), () => _more(context, ref, downloaded)),
+            ],
           ),
-          const SizedBox(width: GSpace.s2),
-          _small(const ValueKey('game-more'), const Icon(Icons.more_horiz), () => _more(context, ref, downloaded)),
-        ]),
-        const Spacer(),
-        const OutlinedBackButton(key: ValueKey('game-back'), label: 'Back'),
-        const SizedBox(height: GSpace.s4),
-      ]),
+          const Spacer(),
+          const OutlinedBackButton(key: ValueKey('game-back'), label: 'Back'),
+          const SizedBox(height: GSpace.s4),
+        ],
+      ),
     );
   }
 }

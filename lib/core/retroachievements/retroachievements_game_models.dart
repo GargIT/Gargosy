@@ -51,18 +51,18 @@ class RetroAchievement {
   });
 
   RetroAchievement withUnlock({DateTime? earned, DateTime? earnedHardcore}) => RetroAchievement(
-        id: id,
-        title: title,
-        description: description,
-        points: points,
-        badgeName: badgeName,
-        displayOrder: displayOrder,
-        type: type,
-        numAwarded: numAwarded,
-        numAwardedHardcore: numAwardedHardcore,
-        dateEarned: earned,
-        dateEarnedHardcore: earnedHardcore,
-      );
+    id: id,
+    title: title,
+    description: description,
+    points: points,
+    badgeName: badgeName,
+    displayOrder: displayOrder,
+    type: type,
+    numAwarded: numAwarded,
+    numAwardedHardcore: numAwardedHardcore,
+    dateEarned: earned,
+    dateEarnedHardcore: earnedHardcore,
+  );
 
   bool get isUnlocked => dateEarned != null || dateEarnedHardcore != null;
   bool get isUnlockedHardcore => dateEarnedHardcore != null;
@@ -110,24 +110,24 @@ class RetroAchievement {
   /// Serializes back to RomM's shape so it round-trips through the offline
   /// metadata cache alongside the rest of [Game.toJson].
   Map<String, dynamic> toRommJson() => {
-        'ra_id': id,
-        'title': title,
-        'description': description,
-        'points': points,
-        'badge_id': badgeName,
-        'display_order': displayOrder,
-        'type': type,
-        'num_awarded': numAwarded,
-        'num_awarded_hardcore': numAwardedHardcore,
-      };
+    'ra_id': id,
+    'title': title,
+    'description': description,
+    'points': points,
+    'badge_id': badgeName,
+    'display_order': displayOrder,
+    'type': type,
+    'num_awarded': numAwarded,
+    'num_awarded_hardcore': numAwardedHardcore,
+  };
 }
 
 /// Sorts the way RA's own game page does: by display order, then by id.
-List<RetroAchievement> sortAchievements(Iterable<RetroAchievement> list) =>
-    list.toList()..sort((a, b) {
-      final byOrder = a.displayOrder.compareTo(b.displayOrder);
-      return byOrder != 0 ? byOrder : a.id.compareTo(b.id);
-    });
+List<RetroAchievement> sortAchievements(Iterable<RetroAchievement> list) => list.toList()
+  ..sort((a, b) {
+    final byOrder = a.displayOrder.compareTo(b.displayOrder);
+    return byOrder != 0 ? byOrder : a.id.compareTo(b.id);
+  });
 
 /// The highest award a user holds for a game, from `HighestAwardKind`.
 enum RetroAchievementsAward {
@@ -140,12 +140,12 @@ enum RetroAchievementsAward {
   const RetroAchievementsAward(this.label);
 
   static RetroAchievementsAward? parse(String? kind) => switch (kind) {
-        'mastered' => mastered,
-        'completed' => completed,
-        'beaten-hardcore' => beatenHardcore,
-        'beaten-softcore' => beatenSoftcore,
-        _ => null,
-      };
+    'mastered' => mastered,
+    'completed' => completed,
+    'beaten-hardcore' => beatenHardcore,
+    'beaten-softcore' => beatenSoftcore,
+    _ => null,
+  };
 }
 
 class RetroAchievementsGameProgress {
@@ -203,8 +203,8 @@ class RetroAchievementsGameProgress {
     required Map<String, dynamic> progression,
   }) {
     final earned = <String, Map<String, dynamic>>{
-      for (final e in (progression['earned_achievements'] as List<dynamic>? ?? const [])
-          .whereType<Map<String, dynamic>>())
+      for (final e
+          in (progression['earned_achievements'] as List<dynamic>? ?? const []).whereType<Map<String, dynamic>>())
         if (e['id'] != null) e['id'].toString(): e,
     };
     return RetroAchievementsGameProgress(

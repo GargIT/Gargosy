@@ -25,8 +25,14 @@ class RommState {
   /// RetroArch core that made it.
   final List<String> labels;
 
-  const RommState({required this.id, required this.fileName, this.updatedAt,
-      this.emulator, this.screenshotUrl, this.labels = const []});
+  const RommState({
+    required this.id,
+    required this.fileName,
+    this.updatedAt,
+    this.emulator,
+    this.screenshotUrl,
+    this.labels = const [],
+  });
 
   factory RommState.fromJson(Map<String, dynamic> json) {
     final screenshot = json['screenshot'];
@@ -59,12 +65,16 @@ abstract class RommStatesApi {
   /// [emulator] is recorded as the state's `emulator` (RomM keeps the value it
   /// was created with; updates cannot change it). [screenshot] is stored as
   /// the state's screenshot.
-  Future<RommState> uploadState(String romId, io.File file,
-      {required String fileName, String? emulator, Uint8List? screenshot});
+  Future<RommState> uploadState(
+    String romId,
+    io.File file, {
+    required String fileName,
+    String? emulator,
+    Uint8List? screenshot,
+  });
 
   /// Throws [RommStateNotFoundException] if [stateId] no longer exists.
-  Future<RommState> updateState(int stateId, io.File file,
-      {required String fileName, Uint8List? screenshot});
+  Future<RommState> updateState(int stateId, io.File file, {required String fileName, Uint8List? screenshot});
 
   /// Throws [RommStateNotFoundException] if [stateId] no longer exists.
   Future<Uint8List> downloadState(int stateId);

@@ -1,6 +1,7 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/save_sync_service.dart';
@@ -24,19 +25,18 @@ void main() {
     mockRommService = MockRommService();
     mockDirectoryService = MockDirectoryService();
     mockStrategyRegistry = MockStrategyRegistry();
-    
+
     when(mockStrategyRegistry.getPreferredEmulatorId(any)).thenReturn(null);
     when(mockStrategyRegistry.getStrategyForSlug(any)).thenReturn(null);
     when(mockStrategyRegistry.getGameEmulatorPreference(any)).thenReturn(null);
-    
+
     when(mockDirectoryService.getEmulatorAppSupportDirectory(any, platformSlug: anyNamed('platformSlug')))
         .thenAnswer((_) async => '/nonexistent_directory_for_testing');
     when(mockDirectoryService.linuxSyncPreset).thenReturn('default');
 
     final sysTemp = Directory.systemTemp.path;
-    when(mockDirectoryService.getEmulatorDirectory('temp'))
-        .thenAnswer((_) async => sysTemp);
-    
+    when(mockDirectoryService.getEmulatorDirectory('temp')).thenAnswer((_) async => sysTemp);
+
     final prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
     when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => null);
     when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities.unknown());
@@ -106,7 +106,7 @@ void main() {
     test('pushSaves() uploads raw unzipped save file directly for unzipped platforms (e.g. mGBA)', () async {
       final tempDir = await Directory.systemTemp.createTemp('save_sync_unzipped_test');
       final romPath = p.join(tempDir.path, 'game.gba');
-      
+
       // Create a save file and a state file to simulate multiple files
       final saveFile = File(p.join(tempDir.path, 'game.sav'));
       await saveFile.writeAsString('x' * 150);
@@ -118,18 +118,20 @@ void main() {
       File? uploadedFile;
       String? uploadedFilename;
 
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((inv) async {
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((inv) async {
         uploadedFile = inv.positionalArguments[1] as File;
         uploadedFilename = inv.namedArguments[#overrideFilename] as String?;
         return (ok: true, conflict: null, saved: null);
@@ -141,11 +143,11 @@ void main() {
       expect(ok, isTrue);
       expect(uploadedFile, isNotNull);
       expect(uploadedFilename, 'game.sav');
-      
+
       // Verify that the uploaded file is unzipped and contains the raw save content
       final content = await uploadedFile!.readAsString();
       expect(content, 'x' * 150);
-      
+
       await tempDir.delete(recursive: true);
     });
 
@@ -160,7 +162,7 @@ void main() {
       // Let's verify that a platform with shouldZip = true gets zipped when there are multiple files.
       final tempDir = await Directory.systemTemp.createTemp('save_sync_zipped_test');
       final romPath = p.join(tempDir.path, 'game.exe');
-      
+
       final game = Game(id: 'game_win', name: 'PC Game', platformSlug: 'windows', fileSize: 0);
 
       // Windows strategy reads overrides from prefs
@@ -178,18 +180,20 @@ void main() {
       String? uploadedFilename;
       List<int>? uploadedBytes;
 
-      when(mockRommService.uploadSave(
-        any,
-        any,
-        emulator: anyNamed('emulator'),
-        slot: anyNamed('slot'),
-        deviceId: anyNamed('deviceId'),
-        autocleanup: anyNamed('autocleanup'),
-        autocleanupLimit: anyNamed('autocleanupLimit'),
-        overwrite: anyNamed('overwrite'),
-        screenshotFile: anyNamed('screenshotFile'),
-        overrideFilename: anyNamed('overrideFilename'),
-      )).thenAnswer((inv) async {
+      when(
+        mockRommService.uploadSave(
+          any,
+          any,
+          emulator: anyNamed('emulator'),
+          slot: anyNamed('slot'),
+          deviceId: anyNamed('deviceId'),
+          autocleanup: anyNamed('autocleanup'),
+          autocleanupLimit: anyNamed('autocleanupLimit'),
+          overwrite: anyNamed('overwrite'),
+          screenshotFile: anyNamed('screenshotFile'),
+          overrideFilename: anyNamed('overrideFilename'),
+        ),
+      ).thenAnswer((inv) async {
         uploadedFile = inv.positionalArguments[1] as File;
         uploadedFilename = inv.namedArguments[#overrideFilename] as String?;
         if (uploadedFile != null && uploadedFile!.existsSync()) {
@@ -200,22 +204,22 @@ void main() {
       when(mockRommService.pruneOldSaves(any, keepCount: anyNamed('keepCount'))).thenAnswer((_) async {});
 
       final ok = await service.pushSaves(game, romPath);
-      
+
       expect(ok, isTrue);
       expect(uploadedFile, isNotNull);
       expect(uploadedFilename, 'PC Game.zip');
       expect(uploadedBytes, isNotNull);
-      
+
       // Verify that the uploaded file is indeed a ZIP archive and contains the files
       final archive = ZipDecoder().decodeBytes(uploadedBytes!);
       final filenames = archive.map((e) => e.name).toList();
-      
+
       expect(filenames.any((name) => name.endsWith('save1.dat')), isTrue);
       expect(filenames.any((name) => name.endsWith('save2.dat')), isTrue);
       expect(filenames.any((name) => name.endsWith('freegosy_sync.txt')), isTrue);
       final meta = archive.firstWhere((e) => e.name.endsWith('freegosy_sync.txt'));
       expect(String.fromCharCodes(meta.content as List<int>), isNot(contains('contentHash')));
-      
+
       await tempDir.delete(recursive: true);
     });
   });
@@ -236,8 +240,7 @@ void main() {
       final zipBytes = encoder.encode(archive) as Uint8List;
 
       // Mock search or exec paths to direct to tempDir
-      when(mockDirectoryService.findEmulatorExecutable(any, any))
-          .thenAnswer((_) async => tempDir.path);
+      when(mockDirectoryService.findEmulatorExecutable(any, any)).thenAnswer((_) async => tempDir.path);
       // Ensure Linux code path also writes to tempDir
       when(mockDirectoryService.getEmulatorAppSupportDirectory(any, platformSlug: anyNamed('platformSlug')))
           .thenAnswer((_) async => tempDir.path);
@@ -277,19 +280,16 @@ void main() {
 
       // Provide a save entry whose file_name is NOT .zip
       final saveEntry = <String, dynamic>{
-        'file_name': 'game.srm',                          // <-- no .zip extension
+        'file_name': 'game.srm', // <-- no .zip extension
         'download_path': 'http://fake/download/game.srm',
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      when(mockRommService.getLatestSave('game1'))
-          .thenAnswer((_) async => saveEntry);
-      when(mockRommService.downloadSave(any))
-          .thenAnswer((_) async => zipBytes);
+      when(mockRommService.getLatestSave('game1')).thenAnswer((_) async => saveEntry);
+      when(mockRommService.downloadSave(any)).thenAnswer((_) async => zipBytes);
 
       // Route RetroArch to our tempDir for the save target path
-      when(mockDirectoryService.findEmulatorExecutable(any, any))
-          .thenAnswer((_) async => tempDir.path);
+      when(mockDirectoryService.findEmulatorExecutable(any, any)).thenAnswer((_) async => tempDir.path);
       // Ensure Linux code path also resolves to tempDir
       when(mockDirectoryService.getEmulatorAppSupportDirectory(any, platformSlug: anyNamed('platformSlug')))
           .thenAnswer((_) async => tempDir.path);
@@ -326,12 +326,9 @@ void main() {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      when(mockRommService.getLatestSave('game2'))
-          .thenAnswer((_) async => saveEntry);
-      when(mockRommService.downloadSave(any))
-          .thenAnswer((_) async => rawBytes);
-      when(mockDirectoryService.findEmulatorExecutable(any, any))
-          .thenAnswer((_) async => tempDir.path);
+      when(mockRommService.getLatestSave('game2')).thenAnswer((_) async => saveEntry);
+      when(mockRommService.downloadSave(any)).thenAnswer((_) async => rawBytes);
+      when(mockDirectoryService.findEmulatorExecutable(any, any)).thenAnswer((_) async => tempDir.path);
       // Ensure Linux code path also resolves to tempDir
       when(mockDirectoryService.getEmulatorAppSupportDirectory(any, platformSlug: anyNamed('platformSlug')))
           .thenAnswer((_) async => tempDir.path);

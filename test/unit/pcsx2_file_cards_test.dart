@@ -19,8 +19,10 @@ void main() {
   Uint8List pattern(int seed, int length) =>
       Uint8List.fromList([for (var i = 0; i < length; i++) (seed + i * 7) & 0xFF]);
 
-  Ps2CardSave save(String name, Map<String, Uint8List> files) =>
-      Ps2CardSave(name: name, files: [for (final e in files.entries) Ps2CardFile(name: e.key, data: e.value)]);
+  Ps2CardSave save(String name, Map<String, Uint8List> files) => Ps2CardSave(
+    name: name,
+    files: [for (final e in files.entries) Ps2CardFile(name: e.key, data: e.value)],
+  );
 
   final ac5 = save('BASLUS-20851AC5', {'BASLUS-20851AC5': pattern(1, 40000), 'icon.sys': pattern(2, 964)});
   final gt4 = save('BESCES-52438GAMEDATA', {'BESCES-52438GAMEDATA': pattern(3, 124880)});
@@ -30,10 +32,12 @@ void main() {
       Ps2MemoryCard.parse(Ps2MemoryCard.formatted(now: DateTime.utc(2026))).withSaves(saves, (_) => false);
 
   Map<String, List<int>> filesOf(Ps2CardSave s) => {for (final f in s.files) f.name: f.data.toList()};
-  Map<String, Map<String, List<int>>> cardContents(File f) =>
-      {for (final s in Ps2MemoryCard.parse(f.readAsBytesSync()).saves) s.name: filesOf(s)};
-  Map<String, List<int>> folderContents(Directory d) =>
-      {for (final f in d.listSync().whereType<File>()) p.basename(f.path): f.readAsBytesSync().toList()};
+  Map<String, Map<String, List<int>>> cardContents(File f) => {
+    for (final s in Ps2MemoryCard.parse(f.readAsBytesSync()).saves) s.name: filesOf(s),
+  };
+  Map<String, List<int>> folderContents(Directory d) => {
+    for (final f in d.listSync().whereType<File>()) p.basename(f.path): f.readAsBytesSync().toList(),
+  };
 
   Uint8List zipOf(Map<String, List<int>> entries) {
     final a = Archive()..addFile(ArchiveFile('freegosy_sync.txt', 2, [123, 125]));
@@ -109,7 +113,9 @@ void main() {
     test('a local backup of the shared card puts back only this game\'s saves', () async {
       final olderAc5 = save('BASLUS-20851AC5', {'BASLUS-20851AC5': pattern(11, 40000), 'icon.sys': pattern(2, 964)});
       final backedUp = card([olderAc5, gt4]);
-      final backup = Uint8List.fromList(ZipEncoder().encode(Archive()..addFile(ArchiveFile('Mcd001.ps2', backedUp.length, backedUp))));
+      final backup = Uint8List.fromList(
+        ZipEncoder().encode(Archive()..addFile(ArchiveFile('Mcd001.ps2', backedUp.length, backedUp))),
+      );
       final newerGt4 = save('BESCES-52438GAMEDATA', {'BESCES-52438GAMEDATA': pattern(12, 124880)});
       mcd(1).writeAsBytesSync(card([ac5, newerGt4]));
 
@@ -130,15 +136,16 @@ void main() {
     test('a folder card upload from another PC, PCSX2\'s bookkeeping left out', () async {
       mcd(1).writeAsBytesSync(card([gt4]));
       await env.strategy.restoreSave(
-          game,
-          romPath(),
-          zipOf({
-            'Mcd001.ps2/_pcsx2_superblock': Uint8List(8192),
-            'Mcd001.ps2/BASLUS-20851AC5/_pcsx2_index': [1],
-            'Mcd001.ps2/BASLUS-20851AC5/BASLUS-20851AC5': pattern(9, 50000),
-            'Mcd001.ps2/BASLUS-20502/data': [1],
-          }),
-          'x.zip');
+        game,
+        romPath(),
+        zipOf({
+          'Mcd001.ps2/_pcsx2_superblock': Uint8List(8192),
+          'Mcd001.ps2/BASLUS-20851AC5/_pcsx2_index': [1],
+          'Mcd001.ps2/BASLUS-20851AC5/BASLUS-20851AC5': pattern(9, 50000),
+          'Mcd001.ps2/BASLUS-20502/data': [1],
+        }),
+        'x.zip',
+      );
       final after = cardContents(mcd(1));
       expect(after.keys.toSet(), {'BESCES-52438GAMEDATA', 'BASLUS-20851AC5'});
       expect(after['BASLUS-20851AC5']!.keys, ['BASLUS-20851AC5']);
@@ -146,10 +153,16 @@ void main() {
 
     test('a save that does not fit is refused and the card is not changed', () async {
       // 8,104 of the card's 8,135 KB used; the new save needs 52 more.
-      mcd(1).writeAsBytesSync(card([save('BASLUS-99999BIG', {'big': Uint8List(8100 * 1024)})]));
+      mcd(1).writeAsBytesSync(
+        card([
+          save('BASLUS-99999BIG', {'big': Uint8List(8100 * 1024)}),
+        ]),
+      );
       final before = mcd(1).readAsBytesSync();
-      await expectLater(env.strategy.restoreSave(game, romPath(), zipOf(newAc5), 'x.zip'),
-          throwsA(isA<SaveSyncNotPossibleException>()));
+      await expectLater(
+        env.strategy.restoreSave(game, romPath(), zipOf(newAc5), 'x.zip'),
+        throwsA(isA<SaveSyncNotPossibleException>()),
+      );
       expect(mcd(1).readAsBytesSync(), before);
     });
 
@@ -164,8 +177,10 @@ void main() {
     test('serial unknown: refused, the card is not changed', () async {
       mcd(1).writeAsBytesSync(card([gt4]));
       final before = mcd(1).readAsBytesSync();
-      await expectLater(env.strategy.restoreSave(game, romPath('Ace Combat 5.iso'), zipOf(newAc5), 'x.zip'),
-          throwsA(isA<SaveSyncNotPossibleException>()));
+      await expectLater(
+        env.strategy.restoreSave(game, romPath('Ace Combat 5.iso'), zipOf(newAc5), 'x.zip'),
+        throwsA(isA<SaveSyncNotPossibleException>()),
+      );
       expect(mcd(1).readAsBytesSync(), before);
     });
 
@@ -188,13 +203,17 @@ void main() {
       await env.strategy.restoreSave(game, romPath(), card([gt4, ac5]), 'Mcd001.ps2');
       expect(folderCard.existsSync(), isTrue, reason: 'still a folder card');
       expect(folderContents(Directory(p.join(folderCard.path, 'BASLUS-20851AC5'))), filesOf(ac5));
-      expect(folderContents(Directory(p.join(folderCard.path, 'BESCES-52438GAMEDATA'))), {'x': [7]});
+      expect(folderContents(Directory(p.join(folderCard.path, 'BESCES-52438GAMEDATA'))), {
+        'x': [7],
+      });
     });
 
     test('save folders go in as before', () async {
       await env.strategy.restoreSave(game, romPath(), zipOf(newAc5), 'x.zip');
-      expect(folderContents(Directory(p.join(folderCard.path, 'BASLUS-20851AC5')))['BASLUS-20851AC5'],
-          pattern(9, 50000).toList());
+      expect(
+        folderContents(Directory(p.join(folderCard.path, 'BASLUS-20851AC5')))['BASLUS-20851AC5'],
+        pattern(9, 50000).toList(),
+      );
     });
 
     test('no wait before launch for a folder card', () async {

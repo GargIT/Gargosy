@@ -9,7 +9,9 @@ void main() {
   Dio dio(List<int> statuses) {
     var i = 0;
     final d = Dio(BaseOptions(baseUrl: 'https://romm'));
-    d.httpClientAdapter = FakeDioAdapter((r) => (status: statuses[i < statuses.length ? i++ : statuses.length - 1], body: {'ok': true}));
+    d.httpClientAdapter = FakeDioAdapter(
+      (r) => (status: statuses[i < statuses.length ? i++ : statuses.length - 1], body: {'ok': true}),
+    );
     d.interceptors.add(ServerErrorRetry(d, delays: const [Duration.zero, Duration.zero]));
     return d;
   }

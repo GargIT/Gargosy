@@ -1,7 +1,9 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'package:dio/dio.dart';
+
 import 'dart:async';
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
@@ -84,11 +86,7 @@ class DownloadService {
   final DirectoryService directoryService;
   final ExtractionService extractionService;
 
-  DownloadService({
-    required this.dio,
-    required this.directoryService,
-    required this.extractionService,
-  });
+  DownloadService({required this.dio, required this.directoryService, required this.extractionService});
 
   /// Parses a filename out of a `Content-Disposition` header value,
   /// preferring the RFC 5987 `filename*=UTF-8''...` form (percent-encoded)
@@ -117,12 +115,16 @@ class DownloadService {
     return null;
   }
 
-  Stream<DownloadProgress> download(Game game, String downloadUrl, {Map<String, String>? headers, CancelToken? cancelToken}) async* {
+  Stream<DownloadProgress> download(
+    Game game,
+    String downloadUrl, {
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+  }) async* {
     if (await directoryService.isRomDownloaded(game)) {
       yield DownloadProgress(id: game.id, gameName: game.name, percent: 1.0, isComplete: true);
       return;
     }
-
 
     // `fsExtension` is empty/null for "single-file-foldered" games — RomM
     // stores these as a per-game folder containing one file, rather than a
@@ -168,10 +170,8 @@ class DownloadService {
       existingBytes = await partFile.length();
     }
 
-
-
     debugPrint("[DownloadService] Starting download for: ${game.name}");
-    
+
     yield DownloadProgress(
       id: game.id,
       gameName: game.name,
@@ -186,15 +186,12 @@ class DownloadService {
 
     try {
       final options = Options(
-        headers: {
-          ...?headers,
-          if (existingBytes > 0) 'Range': 'bytes=$existingBytes-',
-        },
+        headers: {...?headers, if (existingBytes > 0) 'Range': 'bytes=$existingBytes-'},
         responseType: ResponseType.stream,
       );
 
       final response = await dio.get(downloadUrl, options: options, cancelToken: cancelToken);
-      
+
       final bool isResuming = response.statusCode == 206;
       int receivedBytes = 0;
       int actualTotalBytes = 0;
@@ -232,7 +229,6 @@ class DownloadService {
       }
 
       final sink = await partFile.open(mode: isResuming ? FileMode.append : FileMode.write);
-
 
       try {
         final stream = response.data.stream as Stream<List<int>>;
@@ -287,18 +283,15 @@ class DownloadService {
       try {
         debugPrint("=== DOWNLOAD COMPLETION DEBUG ===");
         debugPrint("Game: ${game.name}, hasMultipleFiles: ${game.isMultiFile}");
-        
+
         bool isZipSignature = false;
         if (await file.exists()) {
           final raf = await file.open();
           final bytes = await raf.read(4);
           await raf.close();
 
-          isZipSignature = bytes.length == 4 &&
-              bytes[0] == 0x50 &&
-              bytes[1] == 0x4B &&
-              bytes[2] == 0x03 &&
-              bytes[3] == 0x04;
+          isZipSignature =
+              bytes.length == 4 && bytes[0] == 0x50 && bytes[1] == 0x4B && bytes[2] == 0x03 && bytes[3] == 0x04;
 
           if (isZipSignature && !currentPath.toLowerCase().endsWith('.zip')) {
             final newPath = '$currentPath.zip';
@@ -309,41 +302,27 @@ class DownloadService {
 
         final isWindowsGame = ['windows', 'pc', 'win'].contains(game.platformSlug?.toLowerCase() ?? '');
         final isArchive = isExtractableArchive(currentPath);
-        
+
         final platformSupportsArchive = directoryService.platformSupportsArchive(game.platformSlug);
 
         // We only want to extract if:
         // 1. It's a multi-file game (RomM says it has multiple files)
         // 2. It's a Windows game in an archive (usually needs extraction to run an EXE)
         // 3. It's a ZIP/archive but the platform emulator DOES NOT support archives natively
-        final shouldExtract = game.isMultiFile || 
-                             (isWindowsGame && isArchive) || 
-                             ((isZipSignature || isArchive) && !platformSupportsArchive);
+        final shouldExtract =
+            game.isMultiFile ||
+            (isWindowsGame && isArchive) ||
+            ((isZipSignature || isArchive) && !platformSupportsArchive);
 
         if (shouldExtract) {
           final extension = currentPath.split('.').last.toLowerCase();
-          yield DownloadProgress(
-            id: game.id,
-            gameName: game.name,
-            percent: 1.0,
-            status: 'Extracting ($extension)...',
-          );
+          yield DownloadProgress(id: game.id, gameName: game.name, percent: 1.0, status: 'Extracting ($extension)...');
           await _extractMultiFile(game, currentPath);
         }
-        
-        yield DownloadProgress(
-          id: game.id,
-          gameName: game.name,
-          percent: 1.0,
-          isComplete: true,
-          status: 'Done!',
-        );
+
+        yield DownloadProgress(id: game.id, gameName: game.name, percent: 1.0, isComplete: true, status: 'Done!');
       } catch (e) {
-        yield DownloadProgress(
-          id: game.id,
-          gameName: game.name,
-          error: 'Extraction failed: $e',
-        );
+        yield DownloadProgress(id: game.id, gameName: game.name, error: 'Extraction failed: $e');
       }
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) {
@@ -375,7 +354,7 @@ class DownloadService {
     debugPrint('[DownloadService] Zip Path: $zipPath');
     debugPrint('[DownloadService] Extract Dir: $extractDir');
 
-    // If the extract directory path is already a file (e.g. game.name is "Game.zip" 
+    // If the extract directory path is already a file (e.g. game.name is "Game.zip"
     // and we're extracting "Game.zip"), we must use an alternative folder name
     // to avoid "Not a directory" (Errno 20) error.
     if (extractDir == zipPath) {

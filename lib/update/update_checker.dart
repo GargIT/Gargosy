@@ -45,15 +45,15 @@ class ReleaseInfo {
   final bool prerelease;
 
   Map<String, Object?> toJson() => {
-        'version': version.toString(),
-        'assetName': assetName,
-        'assetUrl': assetUrl,
-        'size': size,
-        'sha256': sha256,
-        'notes': notes,
-        'htmlUrl': htmlUrl,
-        'prerelease': prerelease,
-      };
+    'version': version.toString(),
+    'assetName': assetName,
+    'assetUrl': assetUrl,
+    'size': size,
+    'sha256': sha256,
+    'notes': notes,
+    'htmlUrl': htmlUrl,
+    'prerelease': prerelease,
+  };
 
   static ReleaseInfo? fromJson(Object? json) {
     if (json is! Map) return null;
@@ -279,11 +279,10 @@ class UpdateChecker {
   }
 
   static String _networkReason(DioException e) => switch (e.type) {
-        DioExceptionType.connectionError ||
-        DioExceptionType.connectionTimeout ||
-        DioExceptionType.receiveTimeout ||
-        DioExceptionType.sendTimeout =>
-          "Couldn't reach GitHub. Check the connection.",
-        _ => "Couldn't check: ${e.message ?? e.type.name}",
-      };
+    DioExceptionType.connectionError ||
+    DioExceptionType.connectionTimeout ||
+    DioExceptionType.receiveTimeout ||
+    DioExceptionType.sendTimeout => "Couldn't reach GitHub. Check the connection.",
+    _ => "Couldn't check: ${e.message ?? e.type.name}",
+  };
 }

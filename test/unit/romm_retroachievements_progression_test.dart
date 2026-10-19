@@ -15,22 +15,28 @@ void main() {
   setUp(() {
     final dio = Dio(BaseOptions(baseUrl: baseUrl));
     adapter = DioAdapter(dio: dio);
-    romm = RommService(RomMConfig(baseUrl: baseUrl, username: '', password: '', apiKey: 'k'), dio: dio);
+    romm = RommService(
+      RomMConfig(baseUrl: baseUrl, username: '', password: '', apiKey: 'k'),
+      dio: dio,
+    );
   });
 
   test('keys results by rom_ra_id', () async {
-    adapter.onGet('/api/users/me', (s) => s.reply(200, {
-          'username': 'me',
-          'ra_username': 'Player',
-          'ra_progression': {
-            'total': 2,
-            'results': [
-              {'rom_ra_id': 1, 'num_awarded': 3, 'earned_achievements': []},
-              {'rom_ra_id': 2, 'num_awarded': 0, 'earned_achievements': []},
-              {'rom_ra_id': null, 'num_awarded': 0}, // unmatched: skipped
-            ],
-          },
-        }));
+    adapter.onGet(
+      '/api/users/me',
+      (s) => s.reply(200, {
+        'username': 'me',
+        'ra_username': 'Player',
+        'ra_progression': {
+          'total': 2,
+          'results': [
+            {'rom_ra_id': 1, 'num_awarded': 3, 'earned_achievements': []},
+            {'rom_ra_id': 2, 'num_awarded': 0, 'earned_achievements': []},
+            {'rom_ra_id': null, 'num_awarded': 0}, // unmatched: skipped
+          ],
+        },
+      }),
+    );
 
     final progression = await romm.getRetroAchievementsProgression();
 
@@ -39,7 +45,10 @@ void main() {
   });
 
   test('is empty when the user has no RA progression', () async {
-    adapter.onGet('/api/users/me', (s) => s.reply(200, {'username': 'me', 'ra_username': null, 'ra_progression': null}));
+    adapter.onGet(
+      '/api/users/me',
+      (s) => s.reply(200, {'username': 'me', 'ra_username': null, 'ra_progression': null}),
+    );
     expect(await romm.getRetroAchievementsProgression(), isEmpty);
   });
 

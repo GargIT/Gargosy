@@ -36,41 +36,50 @@ void main() {
     final root = await tester.runAsync(tempAppRoot);
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
     final g1 = game(1, 'G1');
-    c = ProviderContainer(overrides: [
-      appRootProvider.overrideWithValue(root!),
-      appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-      coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
-      recentlyPlayedProvider.overrideWith((ref) async => [g1]),
-      recentlyAddedProvider.overrideWith((ref) async => const []),
-      favouriteGamesProvider.overrideWith((ref) async => const []),
-      randomGameProvider.overrideWith((ref) async => null),
-      platformsProvider.overrideWith((ref) async => const []),
-      collectionsProvider.overrideWith((ref) async => const []),
-      favouriteIdsProvider.overrideWithValue(const {}),
-      libraryApiProvider.overrideWithValue(FakeLibraryApi([g1])),
-      gameProvider.overrideWith((ref, id) async => g1),
-      romSavesProvider.overrideWith((ref, id) async => const []),
-      romStatesProvider.overrideWith((ref, id) async => const []),
-      romNotesProvider.overrideWith((ref, id) async => const []),
-      raProgressionProvider.overrideWith((ref) async => const {}),
-      playEngineProvider.overrideWithValue(FakeEngine()),
-      rommHeartbeatEnabledProvider.overrideWithValue(false),
-      uploadQueueProvider.overrideWith((ref) async => null),
-    ]);
+    c = ProviderContainer(
+      overrides: [
+        appRootProvider.overrideWithValue(root!),
+        appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+        coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+        recentlyPlayedProvider.overrideWith((ref) async => [g1]),
+        recentlyAddedProvider.overrideWith((ref) async => const []),
+        favouriteGamesProvider.overrideWith((ref) async => const []),
+        randomGameProvider.overrideWith((ref) async => null),
+        platformsProvider.overrideWith((ref) async => const []),
+        collectionsProvider.overrideWith((ref) async => const []),
+        favouriteIdsProvider.overrideWithValue(const {}),
+        libraryApiProvider.overrideWithValue(FakeLibraryApi([g1])),
+        gameProvider.overrideWith((ref, id) async => g1),
+        romSavesProvider.overrideWith((ref, id) async => const []),
+        romStatesProvider.overrideWith((ref, id) async => const []),
+        romNotesProvider.overrideWith((ref, id) async => const []),
+        raProgressionProvider.overrideWith((ref) async => const {}),
+        playEngineProvider.overrideWithValue(FakeEngine()),
+        rommHeartbeatEnabledProvider.overrideWithValue(false),
+        uploadQueueProvider.overrideWith((ref) async => null),
+      ],
+    );
     addTearDown(c.dispose);
-    final anna = await tester.runAsync(() => c.read(profileStoreProvider).create(
-        name: 'Anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna'));
-    await tester.runAsync(() => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')));
+    final anna = await tester.runAsync(
+      () => c
+          .read(profileStoreProvider)
+          .create(name: 'Anna', colorIndex: 1, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna'),
+    );
+    await tester.runAsync(
+      () => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')),
+    );
     nav = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        navigatorKey: nav,
-        theme: gargosyTheme(),
-        builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-        home: const AppShell(),
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: c,
+        child: MaterialApp(
+          navigatorKey: nav,
+          theme: gargosyTheme(),
+          builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
+          home: const AppShell(),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
   }
 
@@ -85,13 +94,19 @@ void main() {
     expect(find.byType(GameScreen), findsOneWidget);
     expect(find.byKey(const Key('top-bar-logo')), findsWidgets);
     expect(find.descendant(of: find.byType(GameScreen), matching: find.text('Platforms')), findsOneWidget);
-    expect(find.descendant(of: find.byType(GameScreen), matching: find.byKey(const Key('top-bar-tab-lit'))), findsNothing);
+    expect(
+      find.descendant(of: find.byType(GameScreen), matching: find.byKey(const Key('top-bar-tab-lit'))),
+      findsNothing,
+    );
   });
 
   testWidgets('the gallery has the top bar too', (tester) async {
     await pump(tester);
     await open(tester, const GalleryScreen(title: 'PS2', query: GalleryQuery()));
-    expect(find.descendant(of: find.byType(GalleryScreen), matching: find.byKey(const Key('top-bar-logo'))), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(GalleryScreen), matching: find.byKey(const Key('top-bar-logo'))),
+      findsOneWidget,
+    );
   });
 
   testWidgets('a tab from a page two deep returns to the shell on that tab', (tester) async {

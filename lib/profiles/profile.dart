@@ -27,41 +27,41 @@ class Profile {
   final bool trustSelfSigned;
 
   Profile copyWith({String? name, int? colorIndex, bool? hasAvatar, PinHash? pin, bool clearPin = false}) => Profile(
-        id: id,
-        name: name ?? this.name,
-        colorIndex: colorIndex ?? this.colorIndex,
-        serverUrl: serverUrl,
-        rommUserId: rommUserId,
-        rommUsername: rommUsername,
-        createdAt: createdAt,
-        hasAvatar: hasAvatar ?? this.hasAvatar,
-        pin: clearPin ? null : (pin ?? this.pin),
-        trustSelfSigned: trustSelfSigned,
-      );
+    id: id,
+    name: name ?? this.name,
+    colorIndex: colorIndex ?? this.colorIndex,
+    serverUrl: serverUrl,
+    rommUserId: rommUserId,
+    rommUsername: rommUsername,
+    createdAt: createdAt,
+    hasAvatar: hasAvatar ?? this.hasAvatar,
+    pin: clearPin ? null : (pin ?? this.pin),
+    trustSelfSigned: trustSelfSigned,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'colorIndex': colorIndex,
-        'serverUrl': serverUrl,
-        'rommUserId': rommUserId,
-        'rommUsername': rommUsername,
-        'createdAt': createdAt.toIso8601String(),
-        'hasAvatar': hasAvatar,
-        if (pin != null) 'pin': pin!.toJson(),
-        'trustSelfSigned': trustSelfSigned,
-      };
+    'id': id,
+    'name': name,
+    'colorIndex': colorIndex,
+    'serverUrl': serverUrl,
+    'rommUserId': rommUserId,
+    'rommUsername': rommUsername,
+    'createdAt': createdAt.toIso8601String(),
+    'hasAvatar': hasAvatar,
+    if (pin != null) 'pin': pin!.toJson(),
+    'trustSelfSigned': trustSelfSigned,
+  };
 
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        colorIndex: json['colorIndex'] as int? ?? 0,
-        serverUrl: json['serverUrl'] as String,
-        rommUserId: json['rommUserId'] as int,
-        rommUsername: json['rommUsername'] as String,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        hasAvatar: json['hasAvatar'] == true,
-        pin: json['pin'] is Map<String, dynamic> ? PinHash.fromJson(json['pin'] as Map<String, dynamic>) : null,
-        trustSelfSigned: json['trustSelfSigned'] == true,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    colorIndex: json['colorIndex'] as int? ?? 0,
+    serverUrl: json['serverUrl'] as String,
+    rommUserId: json['rommUserId'] as int,
+    rommUsername: json['rommUsername'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    hasAvatar: json['hasAvatar'] == true,
+    pin: json['pin'] is Map<String, dynamic> ? PinHash.fromJson(json['pin'] as Map<String, dynamic>) : null,
+    trustSelfSigned: json['trustSelfSigned'] == true,
+  );
 }

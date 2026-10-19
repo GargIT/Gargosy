@@ -158,7 +158,7 @@ void main() {
     group('Persistence across instances', () {
       test('core overrides survive registry recreation', () async {
         await registry.setCoreOverride('gba', 'gambatte_libretro');
-        
+
         // Create new registry instance
         final newRegistry = StrategyRegistry(dirService, prefs);
         expect(newRegistry.getCoreOverride('gba'), 'gambatte_libretro');
@@ -167,7 +167,7 @@ void main() {
       test('game preferences survive registry recreation', () async {
         await registry.setGameEmulatorPreference('game123', 'mgba');
         await registry.setGameCorePreference('game123', 'gambatte_libretro');
-        
+
         final newRegistry = StrategyRegistry(dirService, prefs);
         expect(newRegistry.getGameEmulatorPreference('game123'), 'mgba');
         expect(newRegistry.getGameCorePreference('game123'), 'gambatte_libretro');

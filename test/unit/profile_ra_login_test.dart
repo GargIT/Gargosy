@@ -31,28 +31,31 @@ void main() {
 
   const login = RetroAchievementsEmulatorLogin(username: 'anna', token: 'tok', hardcore: false);
 
-  test("in a profile, the copied emulator code never writes the RA login into the PC's own emulator settings", () async {
-    final env = {'USERPROFILE': pc.path, 'APPDATA': p.join(pc.path, 'AppData')};
-    final files = [
-      io.File(p.join(pc.path, 'Documents', 'PCSX2', 'inis', 'PCSX2.ini')),
-      io.File(p.join(pc.path, 'Documents', 'Dolphin Emulator', 'Config', 'Dolphin.ini')),
-      io.File(p.join(pc.path, 'Documents', 'PPSSPP', 'PSP', 'SYSTEM', 'ppsspp.ini')),
-    ];
-    for (final f in files) {
-      f
-        ..createSync(recursive: true)
-        ..writeAsStringSync('[General]\n');
-    }
-    final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
-    final platform = PlatformInfo('windows', environment: env);
-    final g = game(1, 'G');
-    await Pcsx2Strategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.chd');
-    await DolphinStrategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.iso');
-    await PPSSPPStrategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.iso');
-    for (final f in files) {
-      expect(f.readAsStringSync(), '[General]\n', reason: f.path);
-    }
-  });
+  test(
+    "in a profile, the copied emulator code never writes the RA login into the PC's own emulator settings",
+    () async {
+      final env = {'USERPROFILE': pc.path, 'APPDATA': p.join(pc.path, 'AppData')};
+      final files = [
+        io.File(p.join(pc.path, 'Documents', 'PCSX2', 'inis', 'PCSX2.ini')),
+        io.File(p.join(pc.path, 'Documents', 'Dolphin Emulator', 'Config', 'Dolphin.ini')),
+        io.File(p.join(pc.path, 'Documents', 'PPSSPP', 'PSP', 'SYSTEM', 'ppsspp.ini')),
+      ];
+      for (final f in files) {
+        f
+          ..createSync(recursive: true)
+          ..writeAsStringSync('[General]\n');
+      }
+      final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+      final platform = PlatformInfo('windows', environment: env);
+      final g = game(1, 'G');
+      await Pcsx2Strategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.chd');
+      await DolphinStrategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.iso');
+      await PPSSPPStrategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.iso');
+      for (final f in files) {
+        expect(f.readAsStringSync(), '[General]\n', reason: f.path);
+      }
+    },
+  );
 
   LaunchContext ctx({RetroAchievementsEmulatorLogin? ra}) {
     final paths = ProfilePaths(root, 'aaa');

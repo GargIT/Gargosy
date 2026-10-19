@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/save/strategies/duckstation_state_file.dart';
 import 'package:path/path.dart' as p;
@@ -73,15 +74,13 @@ void main() {
     }
 
     /// Width, height and pixels of [png], decoded by the engine.
-    Future<(int, int, Uint8List)> decode(WidgetTester tester, Uint8List png) async =>
-        (await tester.runAsync(() async {
-          final image = (await (await ui.instantiateImageCodec(png)).getNextFrame()).image;
-          final data = await image.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
-          return (image.width, image.height, data!.buffer.asUint8List());
-        }))!;
+    Future<(int, int, Uint8List)> decode(WidgetTester tester, Uint8List png) async => (await tester.runAsync(() async {
+      final image = (await (await ui.instantiateImageCodec(png)).getNextFrame()).image;
+      final data = await image.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
+      return (image.width, image.height, data!.buffer.asUint8List());
+    }))!;
 
-    testWidgets('a zstd screenshot is decompressed and returned as a PNG of the same pixels',
-        (tester) async {
+    testWidgets('a zstd screenshot is decompressed and returned as a PNG of the same pixels', (tester) async {
       final file = await tester.runAsync(() => write(duckstationState(payload: compressed)));
 
       final png = await tester.runAsync(() => DuckstationStateFile.readScreenshot(file!, zstd: fakeZstd));
@@ -110,8 +109,7 @@ void main() {
     test('null when the decompressor fails or returns nothing', () async {
       final file = await write(duckstationState(payload: compressed));
 
-      expect(await DuckstationStateFile.readScreenshot(file, zstd: (_) async => throw Exception('boom')),
-          isNull);
+      expect(await DuckstationStateFile.readScreenshot(file, zstd: (_) async => throw Exception('boom')), isNull);
       expect(await DuckstationStateFile.readScreenshot(file, zstd: (_) async => null), isNull);
     });
 
@@ -144,9 +142,7 @@ void main() {
       final short = await write(duckstationHead().sublist(0, 100));
       expect(await DuckstationStateFile.readScreenshot(short, zstd: fakeZstd), isNull);
 
-      expect(
-          await DuckstationStateFile.readScreenshot(File(p.join(dir.path, 'missing.sav')), zstd: fakeZstd),
-          isNull);
+      expect(await DuckstationStateFile.readScreenshot(File(p.join(dir.path, 'missing.sav')), zstd: fakeZstd), isNull);
     });
   });
 

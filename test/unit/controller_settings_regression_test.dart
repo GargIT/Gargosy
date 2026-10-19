@@ -40,8 +40,7 @@ void main() {
 
     test('every built-in mapping is non-empty', () {
       for (final entry in kControllerMappings.entries) {
-        expect(entry.value, isNotEmpty,
-            reason: '${entry.key} has empty mapping');
+        expect(entry.value, isNotEmpty, reason: '${entry.key} has empty mapping');
       }
     });
   });
@@ -63,8 +62,7 @@ void main() {
     });
 
     test('4500 (45°) → up + right', () {
-      expect(GamepadUtils.decodePOV(4500),
-          containsAll([GameAction.up, GameAction.right]));
+      expect(GamepadUtils.decodePOV(4500), containsAll([GameAction.up, GameAction.right]));
     });
 
     test('9000 (90°) → right', () {
@@ -72,8 +70,7 @@ void main() {
     });
 
     test('13500 (135°) → down + right', () {
-      expect(GamepadUtils.decodePOV(13500),
-          containsAll([GameAction.down, GameAction.right]));
+      expect(GamepadUtils.decodePOV(13500), containsAll([GameAction.down, GameAction.right]));
     });
 
     test('18000 (180°) → down', () {
@@ -81,8 +78,7 @@ void main() {
     });
 
     test('22500 (225°) → down + left', () {
-      expect(GamepadUtils.decodePOV(22500),
-          containsAll([GameAction.down, GameAction.left]));
+      expect(GamepadUtils.decodePOV(22500), containsAll([GameAction.down, GameAction.left]));
     });
 
     test('27000 (270°) → left', () {
@@ -90,8 +86,7 @@ void main() {
     });
 
     test('31500 (315°) → up + left', () {
-      expect(GamepadUtils.decodePOV(31500),
-          containsAll([GameAction.up, GameAction.left]));
+      expect(GamepadUtils.decodePOV(31500), containsAll([GameAction.up, GameAction.left]));
     });
 
     test('35999 (just before 360°) → up', () {
@@ -109,14 +104,11 @@ void main() {
 
     test('dwpov → all d-pad directions', () {
       final h = GamepadUtils.backendHandledActions({'dwpov'});
-      expect(h, containsAll([
-        GameAction.up, GameAction.down, GameAction.left, GameAction.right,
-      ]));
+      expect(h, containsAll([GameAction.up, GameAction.down, GameAction.left, GameAction.right]));
     });
 
     test('pov0 → d-pad directions', () {
-      expect(GamepadUtils.backendHandledActions({'pov0'}),
-          contains(GameAction.up));
+      expect(GamepadUtils.backendHandledActions({'pov0'}), contains(GameAction.up));
     });
 
     test('hat0x → d-pad directions', () {
@@ -126,9 +118,7 @@ void main() {
 
     test('dwxpos + dwypos → axis actions', () {
       final h = GamepadUtils.backendHandledActions({'dwxpos', 'dwypos'});
-      expect(h, containsAll([
-        GameAction.horizontalAxis, GameAction.verticalAxis,
-      ]));
+      expect(h, containsAll([GameAction.horizontalAxis, GameAction.verticalAxis]));
     });
 
     test('only dwypos → both axes (backend treats dwxpos/dwypos as pair)', () {
@@ -139,8 +129,7 @@ void main() {
     });
 
     test('regular buttons → nothing handled', () {
-      expect(GamepadUtils.backendHandledActions({'button_0', 'button_1'}),
-          isEmpty);
+      expect(GamepadUtils.backendHandledActions({'button_0', 'button_1'}), isEmpty);
     });
 
     test('numeric-only keys (bare hat indices) → not auto-handled', () {
@@ -271,11 +260,7 @@ void main() {
 
     test('save → load round-trips single controller', () async {
       customControllerMappings = {
-        'My Controller': {
-          'button_0': GameAction.confirm,
-          'button_1': GameAction.back,
-          'dpad_up': GameAction.up,
-        },
+        'My Controller': {'button_0': GameAction.confirm, 'button_1': GameAction.back, 'dpad_up': GameAction.up},
       };
 
       await saveCustomMappings();
@@ -295,9 +280,7 @@ void main() {
     });
 
     test('corrupt JSON resets without throwing', () async {
-      SharedPreferences.setMockInitialValues({
-        'custom_controller_mappings_v1': 'not {{ valid json',
-      });
+      SharedPreferences.setMockInitialValues({'custom_controller_mappings_v1': 'not {{ valid json'});
       await expectLater(loadCustomMappings(), completes);
       expect(customControllerMappings, isEmpty);
     });
@@ -349,10 +332,14 @@ void main() {
     });
 
     test('overwriting existing save works', () async {
-      customControllerMappings = {'Old': {'button_0': GameAction.confirm}};
+      customControllerMappings = {
+        'Old': {'button_0': GameAction.confirm},
+      };
       await saveCustomMappings();
 
-      customControllerMappings = {'New': {'button_1': GameAction.back}};
+      customControllerMappings = {
+        'New': {'button_1': GameAction.back},
+      };
       await saveCustomMappings();
       customControllerMappings = {};
       await loadCustomMappings();
@@ -362,9 +349,7 @@ void main() {
     });
 
     test('all GameAction values survive round-trip', () async {
-      final allActions = {
-        for (final a in GameAction.values) 'key_${a.name}': a,
-      };
+      final allActions = {for (final a in GameAction.values) 'key_${a.name}': a};
       customControllerMappings = {'AllActions': allActions};
       await saveCustomMappings();
       customControllerMappings = {};
@@ -513,12 +498,25 @@ void main() {
   group('GameAction enum', () {
     test('contains all expected actions', () {
       final names = GameAction.values.map((a) => a.name).toSet();
-      expect(names, containsAll([
-        'up', 'down', 'left', 'right',
-        'confirm', 'back', 'detail', 'favorite',
-        'verticalAxis', 'horizontalAxis',
-        'l1', 'r1', 'start', 'select',
-      ]));
+      expect(
+        names,
+        containsAll([
+          'up',
+          'down',
+          'left',
+          'right',
+          'confirm',
+          'back',
+          'detail',
+          'favorite',
+          'verticalAxis',
+          'horizontalAxis',
+          'l1',
+          'r1',
+          'start',
+          'select',
+        ]),
+      );
     });
 
     test('has exactly 15 actions', () {
@@ -552,8 +550,7 @@ void main() {
     test('preserves sign for negative values', () {
       final result = applyDeadzone(-0.8, 0.15);
       expect(result, lessThan(0));
-      expect(result.abs(), closeTo(
-          (0.8 - 0.15) / (1.0 - 0.15), 0.001));
+      expect(result.abs(), closeTo((0.8 - 0.15) / (1.0 - 0.15), 0.001));
     });
 
     test('deadzone 0 passes through unchanged', () {
@@ -638,24 +635,18 @@ void main() {
     });
 
     test('corrupt JSON resets to defaults without throwing', () async {
-      SharedPreferences.setMockInitialValues({
-        'deadzone_per_controller_v1': 'not valid json',
-      });
+      SharedPreferences.setMockInitialValues({'deadzone_per_controller_v1': 'not valid json'});
       await expectLater(loadDeadzoneSettings(), completes);
       expect(globalDeadzone, kDefaultDeadzone);
       expect(perControllerDeadzone, isEmpty);
     });
 
     test('values are clamped to valid range on load', () async {
-      SharedPreferences.setMockInitialValues({
-        'deadzone_global_v1': 999.0,
-      });
+      SharedPreferences.setMockInitialValues({'deadzone_global_v1': 999.0});
       await loadDeadzoneSettings();
       expect(globalDeadzone, kMaxDeadzone);
 
-      SharedPreferences.setMockInitialValues({
-        'deadzone_global_v1': -5.0,
-      });
+      SharedPreferences.setMockInitialValues({'deadzone_global_v1': -5.0});
       await loadDeadzoneSettings();
       expect(globalDeadzone, kMinDeadzone);
     });
@@ -725,8 +716,7 @@ void main() {
       final m = kControllerMappings['PS4 Controller'];
       expect(m, isNotNull, reason: 'PS4 Controller entry missing from kControllerMappings');
       for (final entry in psFaceButtonPattern.entries) {
-        expect(m![entry.key], entry.value,
-            reason: 'PS4 Controller ${entry.key} should map to ${entry.value}');
+        expect(m![entry.key], entry.value, reason: 'PS4 Controller ${entry.key} should map to ${entry.value}');
       }
     });
 
@@ -734,8 +724,7 @@ void main() {
       final m = kControllerMappings['PS5 Controller'];
       expect(m, isNotNull, reason: 'PS5 Controller entry missing');
       for (final entry in psFaceButtonPattern.entries) {
-        expect(m![entry.key], entry.value,
-            reason: 'PS5 Controller ${entry.key} should map to ${entry.value}');
+        expect(m![entry.key], entry.value, reason: 'PS5 Controller ${entry.key} should map to ${entry.value}');
       }
     });
 
@@ -743,11 +732,9 @@ void main() {
       final m = kControllerMappings['PS5 Access Controller'];
       expect(m, isNotNull, reason: 'PS5 Access Controller entry missing');
       for (final entry in psFaceButtonPattern.entries) {
-        expect(m![entry.key], entry.value,
-            reason: 'PS5 Access Controller ${entry.key} should map to ${entry.value}');
+        expect(m![entry.key], entry.value, reason: 'PS5 Access Controller ${entry.key} should map to ${entry.value}');
       }
     });
-
 
     test('all PlayStation entries have d-pad and shoulder buttons', () {
       const psNames = [
@@ -809,14 +796,10 @@ void main() {
       expect(GamepadUtils.disambiguateKey('button_0', isButton: false), 'button_0');
     });
 
-
-
     test('composes with encodeKey: button key and both axis polarity keys stay distinct', () {
       final backKey = GamepadUtils.disambiguateKey('6', isButton: true);
-      final rightKey = GamepadUtils.encodeKey(
-          GamepadUtils.disambiguateKey('6', isButton: false), 1);
-      final leftKey = GamepadUtils.encodeKey(
-          GamepadUtils.disambiguateKey('6', isButton: false), -1);
+      final rightKey = GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('6', isButton: false), 1);
+      final leftKey = GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('6', isButton: false), -1);
       expect({backKey, rightKey, leftKey}, hasLength(3));
     });
   });
@@ -831,14 +814,10 @@ void main() {
     final mapping = {
       GamepadUtils.disambiguateKey('6', isButton: true): GameAction.select,
       GamepadUtils.disambiguateKey('7', isButton: true): GameAction.start,
-      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('6', isButton: false), 1):
-          GameAction.right,
-      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('6', isButton: false), -1):
-          GameAction.left,
-      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('7', isButton: false), 1):
-          GameAction.down,
-      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('7', isButton: false), -1):
-          GameAction.up,
+      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('6', isButton: false), 1): GameAction.right,
+      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('6', isButton: false), -1): GameAction.left,
+      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('7', isButton: false), 1): GameAction.down,
+      GamepadUtils.encodeKey(GamepadUtils.disambiguateKey('7', isButton: false), -1): GameAction.up,
     };
 
     test('button 6 (Back) resolves to select, not a D-pad direction', () {
@@ -956,7 +935,6 @@ void main() {
       expect(v.abs(), lessThan(0.01));
     });
 
-
     test('out-of-range DirectInput value still clamps to -1.0..1.0', () {
       expect(GamepadUtils.normalizeAxisValueForKey('dwxpos', 999999.0), 1.0);
       expect(GamepadUtils.normalizeAxisValueForKey('dwxpos', -999999.0), -1.0);
@@ -969,8 +947,7 @@ void main() {
       // press/release thresholds to make sense against the same raw stream.
       for (final raw in [0.0, 16000.0, 32767.0, 50000.0, 65535.0]) {
         final expected = ((raw - 32767.0) / 32767.0).clamp(-1.0, 1.0);
-        expect(GamepadUtils.normalizeAxisValueForKey('dwypos', raw),
-            closeTo(expected, 0.0001));
+        expect(GamepadUtils.normalizeAxisValueForKey('dwypos', raw), closeTo(expected, 0.0001));
       }
     });
   });

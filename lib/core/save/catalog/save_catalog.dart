@@ -31,10 +31,10 @@ class SaveCatalog {
   final bool rommOffline;
 
   List<SaveEntry> get all => [
-        ...thisPc,
-        ...backups,
-        for (final g in romm) ...[g.newest, ...g.older],
-      ];
+    ...thisPc,
+    ...backups,
+    for (final g in romm) ...[g.newest, ...g.older],
+  ];
 }
 
 int _newestFirst(SaveEntry a, SaveEntry b) => b.savedAt.compareTo(a.savedAt);

@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Platform abstraction for testability.
@@ -34,10 +35,9 @@ class PlatformInfo {
 
   /// Returns the current platform from dart:io, or [web] in a browser, where
   /// `dart:io`'s Platform throws.
-  static PlatformInfo get current => kIsWeb ? web : PlatformInfo(
-    io.Platform.operatingSystem,
-    environment: Map<String, String>.from(io.Platform.environment),
-  );
+  static PlatformInfo get current => kIsWeb
+      ? web
+      : PlatformInfo(io.Platform.operatingSystem, environment: Map<String, String>.from(io.Platform.environment));
 
   static const web = PlatformInfo('web');
 

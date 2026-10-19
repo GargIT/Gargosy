@@ -43,8 +43,10 @@ void main() {
   });
 
   test('reads a file written by shared_preferences_windows as is', () async {
-    await file.writeAsString('{"flutter.rommBaseUrl":"https://romm.example","flutter.launch_fullscreen":false,'
-        '"flutter.columns":5,"flutter.recent":["a","b"]}');
+    await file.writeAsString(
+      '{"flutter.rommBaseUrl":"https://romm.example","flutter.launch_fullscreen":false,'
+      '"flutter.columns":5,"flutter.recent":["a","b"]}',
+    );
     expect(await store().getAll(), {
       'flutter.rommBaseUrl': 'https://romm.example',
       'flutter.launch_fullscreen': false,
@@ -58,11 +60,18 @@ void main() {
     final s = store();
     expect((await s.getAll()).keys, ['flutter.a', 'flutter.b']);
     expect(
-        (await s.getAllWithParameters(
-                GetAllParameters(filter: PreferencesFilter(prefix: 'flutter.', allowList: {'flutter.b'}))))
-            .keys,
-        ['flutter.b']);
-    await s.clearWithParameters(ClearParameters(filter: PreferencesFilter(prefix: 'flutter.', allowList: {'flutter.a'})));
+      (await s.getAllWithParameters(
+        GetAllParameters(
+          filter: PreferencesFilter(prefix: 'flutter.', allowList: {'flutter.b'}),
+        ),
+      )).keys,
+      ['flutter.b'],
+    );
+    await s.clearWithParameters(
+      ClearParameters(
+        filter: PreferencesFilter(prefix: 'flutter.', allowList: {'flutter.a'}),
+      ),
+    );
     await s.flush();
     expect(jsonDecode(await file.readAsString()), {'flutter.b': 2, 'other.c': 3});
   });
@@ -130,8 +139,10 @@ void main() {
 
   test('a problem handler that throws never wedges the write queue', () async {
     await io.File(p.join(dir.path, 'blocked')).writeAsString('');
-    final s = JsonFilePreferencesStore(io.File(p.join(dir.path, 'blocked', 'prefs.json')),
-        onProblem: (_) => throw StateError('no messenger'));
+    final s = JsonFilePreferencesStore(
+      io.File(p.join(dir.path, 'blocked', 'prefs.json')),
+      onProblem: (_) => throw StateError('no messenger'),
+    );
     const limit = Duration(seconds: 5);
     expect(await s.setValue('Int', 'flutter.a', 1).timeout(limit), isFalse);
     expect(await s.setValue('Int', 'flutter.b', 2).timeout(limit), isFalse);

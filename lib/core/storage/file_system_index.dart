@@ -1,5 +1,6 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
 import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 
 enum StorageError { none, pathNotFound, permissionDenied, unknown }
@@ -17,15 +18,10 @@ class StorageStatus {
 class FileSystemIndex {
   final String rootPath;
   final Map<String, String> files; // lowercase name -> absolute path
-  final Map<String, String> dirs;  // lowercase name -> absolute path
+  final Map<String, String> dirs; // lowercase name -> absolute path
   final Map<String, int> fileSizes; // absolute path -> size
 
-  FileSystemIndex({
-    required this.rootPath,
-    required this.files,
-    required this.dirs,
-    required this.fileSizes,
-  });
+  FileSystemIndex({required this.rootPath, required this.files, required this.dirs, required this.fileSizes});
 
   static Future<FileSystemIndex> build(String path) async {
     final Map<String, String> files = {};
@@ -49,11 +45,6 @@ class FileSystemIndex {
       } catch (_) {}
     }
 
-    return FileSystemIndex(
-      rootPath: path,
-      files: files,
-      dirs: dirs,
-      fileSizes: fileSizes,
-    );
+    return FileSystemIndex(rootPath: path, files: files, dirs: dirs, fileSizes: fileSizes);
   }
 }

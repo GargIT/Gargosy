@@ -28,13 +28,13 @@ class BackupEntry {
   // [zip] is how the list stores [localZipPath] (the name alone for a zip
   // in the backups folder, so the list survives a moved Gargosy folder).
   Map<String, dynamic> toJson({String? zip}) => {
-        'time': timestamp.toIso8601String(),
-        'md5': md5Hash,
-        'zip': zip ?? localZipPath,
-        'synced': isSynced,
-        'emulator': ?emulatorId,
-        'core': ?coreId,
-      };
+    'time': timestamp.toIso8601String(),
+    'md5': md5Hash,
+    'zip': zip ?? localZipPath,
+    'synced': isSynced,
+    'emulator': ?emulatorId,
+    'core': ?coreId,
+  };
 
   /// Null when [json] isn't a backup entry. [zipPath] turns the stored
   /// `zip` back into a full path, or refuses it (null).

@@ -9,13 +9,11 @@ import '../helpers/state_sync_test_env.dart';
 
 /// Waits until the fake API has recorded at least [count] calls matching
 /// [test]. Setup does real file I/O first, so the call can take a moment.
-Future<void> _waitForCalls(StateSyncTestEnv env, bool Function(String call) test,
-    {int count = 1}) async {
+Future<void> _waitForCalls(StateSyncTestEnv env, bool Function(String call) test, {int count = 1}) async {
   for (var i = 0; i < 400 && env.api.calls.where(test).length < count; i++) {
     await Future<void>.delayed(const Duration(milliseconds: 5));
   }
-  expect(env.api.calls.where(test), hasLength(count),
-      reason: 'the operation never reached the expected server call');
+  expect(env.api.calls.where(test), hasLength(count), reason: 'the operation never reached the expected server call');
 }
 
 bool _isList(String call) => call == 'list';
@@ -36,9 +34,7 @@ void main() {
 
     // Without the guard this call would queue behind the held list call, so
     // bound it: the guarded call returns at once.
-    final pull = await env.service
-        .pullStates(env.game, env.romPath)
-        .timeout(const Duration(seconds: 2));
+    final pull = await env.service.pullStates(env.game, env.romPath).timeout(const Duration(seconds: 2));
 
     expect(pull.downloaded, 0);
     expect(pull.conflicts, isEmpty);
@@ -58,9 +54,7 @@ void main() {
     final pull = env.service.pullStates(env.game, env.romPath);
     await _waitForCalls(env, _isList);
 
-    final push = await env.service
-        .pushStates(env.game, env.romPath)
-        .timeout(const Duration(seconds: 2));
+    final push = await env.service.pushStates(env.game, env.romPath).timeout(const Duration(seconds: 2));
 
     expect(push.uploaded, 0);
     expect(push.conflicts, isEmpty);
@@ -120,9 +114,7 @@ void main() {
       final pull = env.service.pullStates(env.game, env.romPath);
       await _waitForCalls(env, _isList);
 
-      final ok = await env.service
-          .resolveConflict(conflict, choice: 'cloud')
-          .timeout(const Duration(seconds: 2));
+      final ok = await env.service.resolveConflict(conflict, choice: 'cloud').timeout(const Duration(seconds: 2));
 
       expect(ok, isFalse);
       expect(env.stateFile(stateFileA).readAsBytesSync(), stateBytes(3));
@@ -177,10 +169,7 @@ void main() {
     await env.writeState(stateFileA, stateBytes(1));
     await env.writeState(stateFileB, stateBytes(2));
     bool isPost(String call) => call.startsWith('POST ');
-    final gates = {
-      stateFileA: Completer<void>(),
-      stateFileB: Completer<void>(),
-    };
+    final gates = {stateFileA: Completer<void>(), stateFileB: Completer<void>()};
     env.api.uploadGates.addAll(gates);
 
     final push = env.service.pushStates(env.game, env.romPath);
@@ -192,8 +181,11 @@ void main() {
       await _waitForCalls(env, isPost, count: 2);
 
       final persisted = StateRecordStore(env.pcsx2.prefs).load('42');
-      expect(persisted[first]?.hasSynced, isTrue,
-          reason: 'the finished upload must be on disk while the next one is still running');
+      expect(
+        persisted[first]?.hasSynced,
+        isTrue,
+        reason: 'the finished upload must be on disk while the next one is still running',
+      );
     } finally {
       for (final gate in gates.values) {
         if (!gate.isCompleted) gate.complete();
@@ -206,10 +198,7 @@ void main() {
     final stateA = env.api.seed('42', stateFileA, stateBytes(1));
     final stateB = env.api.seed('42', stateFileB, stateBytes(2));
     bool isGet(String call) => call.startsWith('GET ');
-    final gates = {
-      stateA.id: Completer<void>(),
-      stateB.id: Completer<void>(),
-    };
+    final gates = {stateA.id: Completer<void>(), stateB.id: Completer<void>()};
     env.api.downloadGates.addAll(gates);
     final nameOf = {stateA.id: stateFileA, stateB.id: stateFileB};
 
@@ -222,8 +211,11 @@ void main() {
       await _waitForCalls(env, isGet, count: 2);
 
       final persisted = StateRecordStore(env.pcsx2.prefs).load('42');
-      expect(persisted[nameOf[first]]?.hasSynced, isTrue,
-          reason: 'the finished download must be on disk while the next one is still running');
+      expect(
+        persisted[nameOf[first]]?.hasSynced,
+        isTrue,
+        reason: 'the finished download must be on disk while the next one is still running',
+      );
     } finally {
       for (final gate in gates.values) {
         if (!gate.isCompleted) gate.complete();

@@ -67,20 +67,28 @@ void main() {
     ..writeAsBytesSync(bytes);
   Uint8List read(io.Directory dir, String rel) => io.File(p.join(dir.path, rel)).readAsBytesSync();
   List<String> files(io.Directory dir) =>
-      dir.listSync(recursive: true).whereType<io.File>().map((f) => p.relative(f.path, from: dir.path)).toList()..sort();
+      dir.listSync(recursive: true).whereType<io.File>().map((f) => p.relative(f.path, from: dir.path)).toList()
+        ..sort();
 
-  SigilSyncCall call(String layout, String platform, String content, io.Directory r,
-          {Map<String, String> options = const {}, List<String> ids = const [], String? titleId, Uint8List? state}) =>
-      SigilSyncCall(
-        layout: layout,
-        platform: platform,
-        contentPath: content,
-        saveRoot: r.path,
-        gameIds: ids,
-        titleId: titleId,
-        options: options,
-        state: state,
-      );
+  SigilSyncCall call(
+    String layout,
+    String platform,
+    String content,
+    io.Directory r, {
+    Map<String, String> options = const {},
+    List<String> ids = const [],
+    String? titleId,
+    Uint8List? state,
+  }) => SigilSyncCall(
+    layout: layout,
+    platform: platform,
+    contentPath: content,
+    saveRoot: r.path,
+    gameIds: ids,
+    titleId: titleId,
+    options: options,
+    state: state,
+  );
 
   // sigil's sync covers the systems in docs/sync.md's "What syncs"; other
   // platforms are refused, and RetroArch keeps its own strategy for them.
@@ -95,8 +103,10 @@ void main() {
     test('$layout ($platform): refused by sigil (unsupported format)', () async {
       final a = root('a');
       put(a, '${p.basenameWithoutExtension(rom.split(r'\').last)}.srm', pattern(3, 8192));
-      await expectLater(SigilEngine.collect(call(layout, platform, rom, a)),
-          throwsA(isA<SigilSyncError>().having((e) => e.code, 'code', -4)));
+      await expectLater(
+        SigilEngine.collect(call(layout, platform, rom, a)),
+        throwsA(isA<SigilSyncError>().having((e) => e.code, 'code', -4)),
+      );
     });
   }
 
@@ -130,7 +140,10 @@ void main() {
     expect(got.data, raw);
     final plain = root('plain');
     put(plain, 'Tetris.srm', raw);
-    expect((await SigilEngine.collect(call('gambatte', 'gb', r'D:\roms\gb\Tetris.gb', plain))).contentHash, got.contentHash);
+    expect(
+      (await SigilEngine.collect(call('gambatte', 'gb', r'D:\roms\gb\Tetris.gb', plain))).contentHash,
+      got.contentHash,
+    );
     final b = root('b');
     await SigilEngine.restore(call('gambatte', 'gb', r'D:\roms\gb\Tetris.gb', b), got.data!);
     expect(read(b, 'Tetris.srm'), raw);
@@ -144,19 +157,22 @@ void main() {
     expect(got.data, pattern(4, 8192));
   });
 
-  test('a Game Boy Color cart with a clock: the unit holds the RAM and the clock; restore writes .srm and .rtc', () async {
-    final rom = io.File(p.join(tmp.path, 'Pokemon Crystal.gbc'))..writeAsBytesSync(gbcRomWithClock());
-    final a = root('a');
-    put(a, 'Pokemon Crystal.srm', pattern(6, 32768));
-    put(a, 'Pokemon Crystal.rtc', pattern(7, 8));
-    final got = await SigilEngine.collect(call('gambatte', 'gbc', rom.path, a));
-    expect(got.artifact, 'Pokemon Crystal.zip');
-    expect(ZipDecoder().decodeBytes(got.data!).files.map((f) => f.name).toSet(), {'save.sram', 'clock.rtc'});
-    final b = root('b');
-    await SigilEngine.restore(call('gambatte', 'gbc', rom.path, b), got.data!);
-    expect(files(b), ['Pokemon Crystal.rtc', 'Pokemon Crystal.srm']);
-    expect(read(b, 'Pokemon Crystal.srm'), pattern(6, 32768));
-  });
+  test(
+    'a Game Boy Color cart with a clock: the unit holds the RAM and the clock; restore writes .srm and .rtc',
+    () async {
+      final rom = io.File(p.join(tmp.path, 'Pokemon Crystal.gbc'))..writeAsBytesSync(gbcRomWithClock());
+      final a = root('a');
+      put(a, 'Pokemon Crystal.srm', pattern(6, 32768));
+      put(a, 'Pokemon Crystal.rtc', pattern(7, 8));
+      final got = await SigilEngine.collect(call('gambatte', 'gbc', rom.path, a));
+      expect(got.artifact, 'Pokemon Crystal.zip');
+      expect(ZipDecoder().decodeBytes(got.data!).files.map((f) => f.name).toSet(), {'save.sram', 'clock.rtc'});
+      final b = root('b');
+      await SigilEngine.restore(call('gambatte', 'gbc', rom.path, b), got.data!);
+      expect(files(b), ['Pokemon Crystal.rtc', 'Pokemon Crystal.srm']);
+      expect(read(b, 'Pokemon Crystal.srm'), pattern(6, 32768));
+    },
+  );
 
   test("N64 (mupen64plus_next): the unit is sigil's zip of save types; restore writes <stem>.srm back", () async {
     final a = root('a');
@@ -164,8 +180,15 @@ void main() {
     put(a, 'Paper Mario (USA).srm', srm);
     final got = await SigilEngine.collect(call('mupen64plus_next', 'n64', r'D:\roms\n64\Paper Mario (USA).z64', a));
     expect(got.artifact, 'Paper Mario (USA).zip');
-    expect(ZipDecoder().decodeBytes(got.data!).files.map((f) => f.name).toSet(),
-        {'eeprom', 'pak1', 'pak2', 'pak3', 'pak4', 'sram', 'flash'});
+    expect(ZipDecoder().decodeBytes(got.data!).files.map((f) => f.name).toSet(), {
+      'eeprom',
+      'pak1',
+      'pak2',
+      'pak3',
+      'pak4',
+      'sram',
+      'flash',
+    });
     final b = root('b');
     await SigilEngine.restore(call('mupen64plus_next', 'n64', r'D:\roms\n64\Paper Mario (USA).z64', b), got.data!);
     expect(files(b), ['Paper Mario (USA).srm']);
@@ -174,39 +197,61 @@ void main() {
 
   test("pcsx_rearmed (PS1): the game's card <stem>.srm", () async {
     final a = root('a');
-    final card = buildPs1Card([(name: 'BASLUS-00594FF7', blocks: [1], fill: 0x33)]);
+    final card = buildPs1Card([
+      (name: 'BASLUS-00594FF7', blocks: [1], fill: 0x33),
+    ]);
     put(a, 'Final Fantasy VII (USA) (Disc 1).srm', card);
-    final c = call('pcsx_rearmed', 'psx', r'D:\roms\psx\Final Fantasy VII (USA) (Disc 1).chd', a,
-        ids: const ['SLUS-00594'], titleId: 'SLUS-00594');
+    final c = call(
+      'pcsx_rearmed',
+      'psx',
+      r'D:\roms\psx\Final Fantasy VII (USA) (Disc 1).chd',
+      a,
+      ids: const ['SLUS-00594'],
+      titleId: 'SLUS-00594',
+    );
     final got = await SigilEngine.collect(c);
     expect(got.data, isNotNull);
     final b = root('b');
     await SigilEngine.restore(
-        call('pcsx_rearmed', 'psx', r'D:\roms\psx\Final Fantasy VII (USA) (Disc 1).chd', b,
-            ids: const ['SLUS-00594'], titleId: 'SLUS-00594'),
-        got.data!);
+      call(
+        'pcsx_rearmed',
+        'psx',
+        r'D:\roms\psx\Final Fantasy VII (USA) (Disc 1).chd',
+        b,
+        ids: const ['SLUS-00594'],
+        titleId: 'SLUS-00594',
+      ),
+      got.data!,
+    );
     expect(files(b), ['Final Fantasy VII (USA) (Disc 1).srm']);
   });
 
   group('LRPS2 (layout pcsx2): cards in system\\pcsx2\\memcards', () {
     Uint8List cardWith(List<(String, int)> saves) => Ps2MemoryCard.parse(Ps2MemoryCard.formatted()).withSaves([
-          for (final (name, seed) in saves)
-            Ps2CardSave(name: name, files: [Ps2CardFile(name: 'SAVE.DAT', data: pattern(seed, 3000))]),
-        ], (_) => false);
-    SigilSyncCall lrps2(io.Directory r, {Map<String, String> options = const {}, Uint8List? state, bool overwrite = false}) =>
-        SigilSyncCall(
-          layout: 'pcsx2',
-          platform: 'ps2',
-          contentPath: r'D:\roms\ps2\Game A (USA).chd',
-          saveRoot: r.path,
-          gameIds: const ['SLUS-20328'],
-          titleId: 'SLUS-20328',
-          saveId: 'BASLUS-20328',
-          usage: 1,
-          options: options,
-          state: state,
-          overwriteLocal: overwrite,
-        );
+      for (final (name, seed) in saves)
+        Ps2CardSave(
+          name: name,
+          files: [Ps2CardFile(name: 'SAVE.DAT', data: pattern(seed, 3000))],
+        ),
+    ], (_) => false);
+    SigilSyncCall lrps2(
+      io.Directory r, {
+      Map<String, String> options = const {},
+      Uint8List? state,
+      bool overwrite = false,
+    }) => SigilSyncCall(
+      layout: 'pcsx2',
+      platform: 'ps2',
+      contentPath: r'D:\roms\ps2\Game A (USA).chd',
+      saveRoot: r.path,
+      gameIds: const ['SLUS-20328'],
+      titleId: 'SLUS-20328',
+      saveId: 'BASLUS-20328',
+      usage: 1,
+      options: options,
+      state: state,
+      overwriteLocal: overwrite,
+    );
 
     test('shared card (the default): only this game travels; restore leaves the other game alone', () async {
       final a = root('a');

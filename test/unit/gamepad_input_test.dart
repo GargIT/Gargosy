@@ -69,15 +69,12 @@ void main() {
 
     test('dwpov → all d-pad directions handled', () {
       final handled = GamepadUtils.backendHandledActions({'dwpov'});
-      expect(handled, containsAll([
-        GameAction.up, GameAction.down, GameAction.left, GameAction.right,
-      ]));
+      expect(handled, containsAll([GameAction.up, GameAction.down, GameAction.left, GameAction.right]));
     });
 
     test('pov0 (alternate name) → d-pad directions handled', () {
       expect(GamepadUtils.backendHandledActions({'pov0'}), contains(GameAction.up));
     });
-
 
     test('dwxpos + dwypos → axis actions handled', () {
       final handled = GamepadUtils.backendHandledActions({'dwxpos', 'dwypos'});
@@ -226,11 +223,7 @@ void main() {
 
     test('save then load round-trips single controller', () async {
       customControllerMappings = {
-        'My Controller': {
-          'button_0': GameAction.confirm,
-          'button_1': GameAction.back,
-          'dpad_up': GameAction.up,
-        },
+        'My Controller': {'button_0': GameAction.confirm, 'button_1': GameAction.back, 'dpad_up': GameAction.up},
       };
 
       await saveCustomMappings();
@@ -250,9 +243,7 @@ void main() {
     });
 
     test('corrupt JSON resets to empty without throwing', () async {
-      SharedPreferences.setMockInitialValues({
-        'custom_controller_mappings_v1': 'not {{ valid json',
-      });
+      SharedPreferences.setMockInitialValues({'custom_controller_mappings_v1': 'not {{ valid json'});
       await expectLater(loadCustomMappings(), completes);
       expect(customControllerMappings, isEmpty);
     });
@@ -304,10 +295,14 @@ void main() {
     });
 
     test('overwriting existing save with new data works', () async {
-      customControllerMappings = {'Old': {'button_0': GameAction.confirm}};
+      customControllerMappings = {
+        'Old': {'button_0': GameAction.confirm},
+      };
       await saveCustomMappings();
 
-      customControllerMappings = {'New': {'button_1': GameAction.back}};
+      customControllerMappings = {
+        'New': {'button_1': GameAction.back},
+      };
       await saveCustomMappings();
       customControllerMappings = {};
       await loadCustomMappings();
@@ -317,9 +312,7 @@ void main() {
     });
 
     test('all GameAction values survive round-trip', () async {
-      final allActions = {
-        for (final a in GameAction.values) 'key_${a.name}': a,
-      };
+      final allActions = {for (final a in GameAction.values) 'key_${a.name}': a};
       customControllerMappings = {'AllActions': allActions};
       await saveCustomMappings();
       customControllerMappings = {};
