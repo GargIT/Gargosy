@@ -69,11 +69,7 @@ class PlayController extends StateNotifier<PlayState> {
       }
       final core = request?.emulator.coreId;
       final coreOverride = core == null ? null : '${core}_libretro';
-      if (request != null) {
-        await engine.remember(game, request);
-        // The game page's menu (its "Forget Always in …") shows the new choice.
-        _ref.invalidate(playMenuProvider(PlayMenuKey(game)));
-      }
+      if (request != null) await _remember(engine, game, request);
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
       final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
@@ -89,6 +85,13 @@ class PlayController extends StateNotifier<PlayState> {
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
     }
+  }
+
+  /// Saves or forgets "Always for this game" as [request] says; the game
+  /// page's menu (its "Forget Always in …") is read again to show it.
+  Future<void> _remember(PlayEngine engine, Game game, PlayRequest request) async {
+    await engine.remember(game, request);
+    _ref.invalidate(playMenuProvider(PlayMenuKey(game)));
   }
 
   /// Gargosy: what [PlayState.runningGameId] holds while an emulator is open
@@ -130,6 +133,7 @@ class PlayController extends StateNotifier<PlayState> {
     ResumeEntry entry, {
     Future<bool> Function(String stateVersion, String installed)? confirmVersion,
     void Function(String)? onNotice,
+    PlayRequest? remember,
   }) async {
     if (state.runningGameId != null) return 'A game is already running. Close it first.';
     state = PlayState(runningGameId: game.id);
@@ -150,6 +154,7 @@ class PlayController extends StateNotifier<PlayState> {
         return refuse('${entry.emulatorName} is needed. Install it under Emulators (Start → Emulators).');
       }
       final romPath = await _ready(engine, game, foundRom, emulator);
+      if (remember != null) await _remember(engine, game, remember);
       // The core the state was made with (RetroArch), not the platform's default.
       final coreOverride = entry.core == null ? null : '${entry.core}_libretro';
       final pull = await engine.pullStates(

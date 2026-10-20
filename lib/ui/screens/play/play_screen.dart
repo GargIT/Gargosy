@@ -119,10 +119,11 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     // with its remembered core; another gets the platform's core.
     if (option.emulatorId == _picked?.emulatorId) return;
     final remembered = menu.remembered;
+    // "Always for this game" stays as the player set it: ticked, it is for
+    // the emulator picked now.
     setState(() {
       _pickRead = true;
       _picked = remembered != null && remembered.emulatorId == option.emulatorId ? remembered : option;
-      _remember = _picked?.emulatorId == remembered?.emulatorId;
       _chosen = null;
     });
   }
@@ -246,6 +247,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       if (prompt != null && !await _confirm(prompt, item, view, menu)) return;
       if (!mounted) return;
     }
+    // "Always for this game": ticked, the picked emulator is remembered;
+    // unticked, whatever was remembered is forgotten. A resume keeps it too.
+    final picked = _picked;
+    final always = picked == null
+        ? null
+        : PlayRequest(emulator: picked, remember: _remember, forget: !_remember && menu.remembered != null);
     if (item is StatePlay) {
       final entry = item.entry;
       return _finish(
@@ -256,19 +263,19 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
               entry,
               confirmVersion: (v, i) => _confirmVersion(entry, v, i),
               onNotice: widget.onNotice,
+              remember: always,
             ),
       );
     }
     final save = item is SavePlay ? item : null;
-    final emulator = save?.fit.playsIn ?? _picked;
+    final emulator = save?.fit.playsIn ?? picked;
     if (emulator == null || !mounted) return;
-    final forget = !_remember && _picked != null && _picked?.emulatorId == menu.remembered?.emulatorId;
     final own = save != null && save.entry.source == SaveSource.local && save.entry.maker == emulator;
     final request = PlayRequest(
       emulator: emulator,
       save: save == null || own ? null : save.entry,
-      remember: _remember && _picked?.emulatorId == emulator.emulatorId,
-      forget: forget,
+      remember: _remember && picked?.emulatorId == emulator.emulatorId,
+      forget: always?.forget ?? false,
       rommCopy: save != null && save.entry.source == SaveSource.local ? _rommCopyOf(save.entry, view) : null,
     );
     return _finish(
