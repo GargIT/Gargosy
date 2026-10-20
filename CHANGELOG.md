@@ -90,6 +90,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- "Save states on RomM" (Settings → Emulator settings) is on by default. A
+  profile where it was turned off keeps it off.
 - Gargosy doesn't start without `sigil.dll`, which syncs the saves: it says
   so and to unpack the Gargosy zip again. Before, saves quietly went through
   older code that could store them differently on RomM (#57).

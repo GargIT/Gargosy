@@ -261,9 +261,11 @@ void main() {
     expect(chip('RetroArch').top, chip('DuckStation').top);
     // melonDS syncs but can't start in a state: the list says where to load one.
     expect(find.text("melonDS: start the game, then load the state from the emulator's own menu."), findsOneWidget);
+    // On by default (0.2.0); A turns it off for this profile.
+    expect(StateSyncService.isOn(c.read(profilePrefsProvider)!), isTrue);
     await tester.tap(find.byKey(const ValueKey('state-sync')));
     await tester.pumpAndSettle();
-    expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey), isTrue);
+    expect(c.read(profilePrefsProvider)!.getBool(StateSyncService.enabledKey), isFalse);
   });
 
   testWidgets('deleting the profile names the saves still waiting to upload', (tester) async {

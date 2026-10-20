@@ -84,6 +84,8 @@ void main() {
     statesDir = p.join(tmp.path, 'states');
     SharedPreferences.setMockInitialValues({});
     prefs = SharedPreferencesAppPreferences(await SharedPreferences.getInstance());
+    // Off unless a test calls syncOn (unset is on, the default since 0.2.0).
+    await prefs.setBool(StateSyncService.enabledKey, false);
     api = FakeRommStatesApi();
     ds = DirectoryService(prefs);
     emu = FakeStateEmulator(ds);

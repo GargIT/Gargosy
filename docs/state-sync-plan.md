@@ -4,7 +4,7 @@ Status: **proposal**, written 2026-10-10. Nothing here is built yet. Revised the
 
 ## 1. Where we are
 
-State sync sends an emulator's save states to RomM's `/api/states` and brings them back before a launch. It runs separately from game saves. It is one switch per profile, **off by default**, in Settings → Emulator settings → "Save states on RomM" (§2.1, done in S0.4); it was one switch per emulator before.
+State sync sends an emulator's save states to RomM's `/api/states` and brings them back before a launch. It runs separately from game saves. It is one switch per profile, **on by default** (since 0.2.0; off before), in Settings → Emulator settings → "Save states on RomM" (§2.1, done in S0.4); it was one switch per emulator before.
 
 The machinery is generic. `StateSyncService` handles hashing, records, transfers, backups and conflicts. `ResumeService` builds the Resume list. An emulator only has to supply the parts listed below.
 
@@ -30,7 +30,7 @@ Following the code for a Gargosy profile:
 6. **Tests.** The pieces have unit tests (`duckstation_state_sync_capable_test`, `duckstation_strategy_state_load_test`, `state_sync_service_*`). **No test runs them through the profile layer.** Nothing checks that `ProfileSaveDirectories` + the `_Swap` config + `DuckstationSaveStrategy` agree on `<data>\savestates`.
 
 The tests can't cover the following, which is why a manual check (S0.1) is the first step:
-- the switch is on for the profile (it's off by default);
+- the switch is on for the profile (it's on by default);
 - states actually appear on RomM after a session and come down on another PC or profile;
 - `-statefile` boots into the state with the DuckStation build Gargosy installs.
 

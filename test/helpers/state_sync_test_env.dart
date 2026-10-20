@@ -45,9 +45,8 @@ class StateSyncTestEnv {
   }) async {
     final base = await Directory.systemTemp.createTemp('state_sync');
     final pcsx2 = await Pcsx2TestEnv.create(base);
-    if (enabled) {
-      await pcsx2.prefs.setBool(StateSyncService.enabledKey, true);
-    }
+    // Set either way: unset is on (the default since 0.2.0).
+    await pcsx2.prefs.setBool(StateSyncService.enabledKey, enabled);
     final api = FakeRommStatesApi();
     final service = StateSyncService(
       api,
