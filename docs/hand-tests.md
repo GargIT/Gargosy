@@ -115,6 +115,6 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 
 For 38–40, profile B is a second profile signed in to the **same RomM user** as A: it stands for another PC of the same player. (Another RomM user doesn't see A's saves or states, public or not: #92.)
 
-38. [ ] On PCSX2 (PS2), DuckStation (PS1), Dolphin (GameCube), PPSSPP (PSP) and mGBA (Game Boy): in profile A, save in-game and quit; the save is on RomM. In profile B, start the game: it comes down before launch and the game finds it.
-39. [ ] With "Save states on RomM" on in both profiles, the same with a state on each of them: in profile A, save a state and quit; the state is on RomM. In profile B, Resume starts the game in it.
-40. [ ] A Wii game in Dolphin and a PS2 game in RetroArch (LRPS2): the save round trip of row 38.
+38. [x] On PCSX2 (PS2), DuckStation (PS1), Dolphin (GameCube), PPSSPP (PSP) and mGBA (Game Boy): in profile A, save in-game and quit; the save is on RomM. In profile B, start the game: it comes down before launch and the game finds it.
+39. [x] With "Save states on RomM" on in both profiles, the same with a state on each of them: in profile A, save a state and quit; the state is on RomM. In profile B, Resume starts the game in it.
+40. [x] A Wii game in Dolphin and a PS2 game in RetroArch (LRPS2): the save round trip of row 38.
