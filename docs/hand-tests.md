@@ -112,6 +112,7 @@ With "Save states on RomM" on (Settings → Emulator settings) in both profiles.
 ## sigil required, old save code removed (#57)
 
 37. [x] Rename `sigil.dll` beside `Gargosy.exe` and start Gargosy: it shows "Gargosy can't load sigil.dll" with the path, and doesn't start. Rename it back: Gargosy starts as before.
+
 For 38–40, profile B is a second profile signed in to the **same RomM user** as A: it stands for another PC of the same player. (Another RomM user doesn't see A's saves or states, public or not: #92.)
 
 38. [ ] On PCSX2 (PS2), DuckStation (PS1), Dolphin (GameCube), PPSSPP (PSP) and mGBA (Game Boy): in profile A, save in-game and quit; the save is on RomM. In profile B, start the game: it comes down before launch and the game finds it.
