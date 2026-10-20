@@ -299,6 +299,58 @@ void main() {
     expect(engine.loadStatePath, isNotNull);
   });
 
+  testWidgets('Always ticked before switching emulator stays ticked and remembers the new one', (tester) async {
+    await open(tester, remembered: _ra);
+    await tester.tap(find.byKey(const ValueKey('play-emulator')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PCSX2').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byKey(const ValueKey('play-always')), matching: find.byIcon(Icons.check_box)),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('play-start')));
+    await tester.pumpAndSettle();
+    expect(engine.remembered[burnout.id], 'pcsx2');
+  });
+
+  testWidgets('unticking Always forgets the remembered emulator, whichever is picked', (tester) async {
+    await open(tester, remembered: _ra);
+    await tester.tap(find.byKey(const ValueKey('play-emulator')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('PCSX2').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('play-always')));
+    await tester.pumpAndSettle();
+    engine.remembered[burnout.id] = 'retroarch';
+    await tester.tap(find.byKey(const ValueKey('play-start')));
+    await tester.pumpAndSettle();
+    expect(engine.remembered[burnout.id], isNull);
+  });
+
+  testWidgets('Resume keeps Always too', (tester) async {
+    await open(
+      tester,
+      states: [
+        ResumeEntry(
+          emulatorId: 'pcsx2',
+          emulatorName: 'PCSX2',
+          fileName: 'slot1.p2s',
+          slot: const NumberedStateSlot(1),
+          savedAt: _day(0, 21),
+          where: ResumeWhere.thisPc,
+        ),
+      ],
+    );
+    expect(find.text('Resume'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('play-always')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('play-start')));
+    await tester.pumpAndSettle();
+    expect(engine.loadStatePath, isNotNull);
+    expect(engine.remembered[burnout.id], 'pcsx2');
+  });
+
   testWidgets('LB/RB switch Saves and States', (tester) async {
     await open(
       tester,

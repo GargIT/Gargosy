@@ -123,6 +123,10 @@ What changed in each release of Gargosy. The format follows
   the game page showed it unticked, with the platform's emulator: it read
   the menu the game page held from before. It now opens on the remembered
   emulator and core.
+- "Always for this game" on the play screen is kept when another emulator
+  is picked after ticking it (it unticked itself), and when the game
+  starts with Resume (only Play saved it). Unticked, it forgets the
+  game's remembered emulator.
 - Gargosy no longer crashes when it closes (an error in the controller
   plugin, `gamepads_windows_plugin.dll`).
 - Resume starts a RetroArch state in the core it was made with (PCSX ReARMed,
