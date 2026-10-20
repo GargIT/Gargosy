@@ -55,6 +55,12 @@ class PlayScreen extends ConsumerStatefulWidget {
 
 class _PlayScreenState extends ConsumerState<PlayScreen> {
   bool _pickRead = false;
+
+  /// The menu was asked for again on opening. Until it comes, the menu held
+  /// may be the game page's, read before the last play's "Always" was saved:
+  /// its pick shows, but the fresh one replaces it unless the player changed
+  /// something first.
+  bool _menuAsked = false;
   SaveMaker? _picked;
   bool _remember = false;
   bool _showAll = false;
@@ -82,12 +88,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       if (!mounted) return;
       ref.invalidate(playMenuProvider(_key));
       ref.invalidate(playStatesProvider(_key));
+      setState(() => _menuAsked = true);
     });
   }
 
-  void _readPick(PlayMenu menu) {
+  void _readPick(PlayMenu menu, {required bool fresh}) {
     if (_pickRead) return;
-    _pickRead = true;
+    _pickRead = fresh;
     _picked = menu.forThisGame;
     _remember = menu.remembered != null;
   }
@@ -113,6 +120,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     if (option.emulatorId == _picked?.emulatorId) return;
     final remembered = menu.remembered;
     setState(() {
+      _pickRead = true;
       _picked = remembered != null && remembered.emulatorId == option.emulatorId ? remembered : option;
       _remember = _picked?.emulatorId == remembered?.emulatorId;
       _chosen = null;
@@ -126,6 +134,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     final i = await _dropdown('core', _coreField, [for (final c in option.cores) c.displayName], current);
     if (i == null || !mounted) return;
     setState(() {
+      _pickRead = true;
       _picked = SaveMaker(option.maker.emulatorId, coreId: bareCoreId(option.cores[i].id));
       _chosen = null;
     });
@@ -346,8 +355,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
-  Widget _body(PlayMenu menu, bool wide) {
-    _readPick(menu);
+  Widget _body(PlayMenu menu, bool wide, {required bool fresh}) {
+    _readPick(menu, fresh: fresh);
     final statesAsync = ref.watch(playStatesProvider(_key));
     final states = statesAsync.valueOrNull ?? const <ResumeEntry>[];
     final view = _view(menu, states);
@@ -369,7 +378,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             compact: !wide,
             onPickEmulator: () => _pickEmulator(menu),
             onPickCore: () => _pickCore(menu),
-            onRemember: (on) => setState(() => _remember = on),
+            onRemember: (on) => setState(() {
+              _pickRead = true;
+              _remember = on;
+            }),
             onShowAll: () => setState(() => _showAll = !_showAll),
             emulatorField: _emulatorField,
             coreField: _coreField,
@@ -466,7 +478,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                   builder: (context, c) => menu.when(
                     loading: () => const Center(child: CircularProgressIndicator()),
                     error: (e, _) => ErrorRetry(message: '$e', onRetry: () => ref.invalidate(playMenuProvider(_key))),
-                    data: (m) => m == null ? const SizedBox.shrink() : _body(m, c.maxWidth >= PlayScreen.wideWidth),
+                    data: (m) => m == null
+                        ? const SizedBox.shrink()
+                        : _body(m, c.maxWidth >= PlayScreen.wideWidth, fresh: _menuAsked && !menu.isLoading),
                   ),
                 ),
               ),

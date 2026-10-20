@@ -69,7 +69,11 @@ class PlayController extends StateNotifier<PlayState> {
       }
       final core = request?.emulator.coreId;
       final coreOverride = core == null ? null : '${core}_libretro';
-      if (request != null) await engine.remember(game, request);
+      if (request != null) {
+        await engine.remember(game, request);
+        // The game page's menu (its "Forget Always in …") shows the new choice.
+        _ref.invalidate(playMenuProvider(PlayMenuKey(game)));
+      }
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
       final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
