@@ -172,7 +172,10 @@ class StateSyncService {
   /// Pull, push and conflict resolution run through it (see StrategyExclusive).
   final StrategyExclusive _exclusive;
 
-  bool get isEnabled => _prefs.getBool(enabledKey) ?? false;
+  bool get isEnabled => isOn(_prefs);
+
+  /// Gargosy: the profile's switch; on until the player turns it off.
+  static bool isOn(AppPreferences prefs) => prefs.getBool(enabledKey) ?? true;
 
   /// True when [game]'s emulator implements state sync and the profile's
   /// switch is on.

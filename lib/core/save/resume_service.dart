@@ -190,7 +190,7 @@ class ResumeService {
     yield _sorted(local.values);
 
     // Gargosy: one switch for every emulator whose strategy syncs states (S0.4).
-    final syncing = _prefs.getBool(StateSyncService.enabledKey) == true
+    final syncing = StateSyncService.isOn(_prefs)
         ? sources.where((s) => s.emulator.supportsStateSync).toList()
         : const <_Source>[];
     final api = _api;
@@ -363,7 +363,7 @@ class ResumeService {
       // is listed too, its states not resumable.
       if (!emulator.supportsStateLoadOnLaunch && !emulator.supportsStateSync) continue;
       try {
-        if (emulator.supportsStateSync && _prefs.getBool(StateSyncService.enabledKey) == true) {
+        if (emulator.supportsStateSync && StateSyncService.isOn(_prefs)) {
           await _prepareFolders?.call(emulator);
         }
         final strategy = _resolve(game, emulatorId: emulator.emulatorId);

@@ -109,7 +109,7 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
           title: 'Save states on RomM',
           icon: Icons.cloud_upload,
           note:
-              'Upload save states after playing and bring them down before, like saves. Off by default. '
+              'Upload save states after playing and bring them down before, like saves. On by default. '
               'States on this PC always work, sync or not.',
           children: [
             if (prefs == null)
@@ -118,7 +118,7 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
               SettingsToggle(
                 key: const ValueKey('state-sync'),
                 label: 'Sync save states with RomM',
-                on: prefs.getBool(StateSyncService.enabledKey) ?? false,
+                on: StateSyncService.isOn(prefs),
                 onChanged: (on) async {
                   await prefs.setBool(StateSyncService.enabledKey, on);
                   if (mounted) setState(() {});
