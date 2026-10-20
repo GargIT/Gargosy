@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-20
+
+Logging, What's new, Settings and the user menu in RomM's style, updates from
+inside the app, save states on RomM for most emulators, saves through
+argosy-sigil (RetroArch too), and profiles for the remaining emulators.
+
 ### Added
 
 - Settings → Emulators has Open for each installed emulator: it starts on its
@@ -250,5 +256,6 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.1.0
