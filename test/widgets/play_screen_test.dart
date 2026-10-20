@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/retroarch_core_list.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
@@ -11,6 +12,7 @@ import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/core/save/resume_service.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
+import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/play/play_menu.dart';
 import 'package:gargosy/profiles/app_root.dart';
@@ -69,6 +71,7 @@ void main() {
     List<ResumeEntry> states = const [],
     double width = 1920,
     SaveMaker? remembered,
+    void Function()? beforeOpen,
   }) async {
     tester.view.physicalSize = Size(width, 1080);
     tester.view.devicePixelRatio = 1;
@@ -87,14 +90,18 @@ void main() {
       ..states = states;
     await tester.pumpWidget(
       testApp(
-        Builder(
-          builder: (context) => Center(
-            child: TextButton(
-              onPressed: () =>
-                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PlayScreen(game: burnout))),
-              child: const Text('open'),
-            ),
-          ),
+        // Like the game page, the page behind keeps the play menu it read.
+        Consumer(
+          builder: (context, ref, _) {
+            ref.watch(playMenuProvider(PlayMenuKey(burnout)));
+            return Center(
+              child: TextButton(
+                onPressed: () =>
+                    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PlayScreen(game: burnout))),
+                child: const Text('open'),
+              ),
+            );
+          },
         ),
         root: root,
         overrides: [
@@ -104,6 +111,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    beforeOpen?.call();
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
@@ -236,6 +244,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(engine.request!.emulator, const SaveMaker('retroarch', coreId: 'play'));
     expect(engine.request!.remember, isTrue);
+  });
+
+  testWidgets('opens on what was remembered since the page behind read the menu', (tester) async {
+    // Always ticked on the last play: the page behind still holds the menu
+    // from before it.
+    await open(
+      tester,
+      beforeOpen: () => engine.menu = PlayMenu(
+        emulators: engine.menu!.emulators,
+        platformDefault: engine.menu!.platformDefault,
+        remembered: const SaveMaker('retroarch', coreId: 'play'),
+        catalog: engine.menu!.catalog,
+      ),
+    );
+    expect(inPanel('RetroArch'), findsOneWidget);
+    expect(inPanel('Core: Play!'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byKey(const ValueKey('play-always')), matching: find.byIcon(Icons.check_box)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('with no emulator installed it says so', (tester) async {
