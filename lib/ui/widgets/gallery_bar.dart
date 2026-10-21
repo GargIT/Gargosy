@@ -47,43 +47,56 @@ class GalleryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filters = query.genres.length + query.regions.length;
+    Widget group(List<Widget> children) => Wrap(
+      spacing: GSpace.s3,
+      runSpacing: GSpace.s3,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: children,
+    );
+    // The filters on the left, the order on the right (RomM's bar); a little
+    // room under it so the covers scrolling up don't touch it.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s4, GSpace.rowPad, 0),
-      child: Wrap(
-        spacing: GSpace.s3,
-        runSpacing: GSpace.s3,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s4, GSpace.rowPad, GSpace.s3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (filterHint != null)
-            SizedBox(
-              width: 320,
-              child: FilterField(
-                hint: filterHint!,
-                text: query.search ?? '',
-                onChanged: (t) => onQuery(query.copyWith(search: t.trim().isEmpty ? null : t.trim())),
+          Expanded(
+            child: group([
+              if (filterHint != null)
+                SizedBox(
+                  width: 320,
+                  child: FilterField(
+                    hint: filterHint!,
+                    text: query.search ?? '',
+                    onChanged: (t) => onQuery(query.copyWith(search: t.trim().isEmpty ? null : t.trim())),
+                  ),
+                ),
+              _BarButton(
+                key: const ValueKey('bar-filters'),
+                icon: Icons.tune,
+                label: filters == 0 ? 'Filters' : 'Filters · $filters',
+                on: filters > 0,
+                onPress: onFilters,
               ),
+              _BarButton(
+                key: const ValueKey('bar-this-pc'),
+                icon: thisPc ? Icons.toggle_on : Icons.toggle_off_outlined,
+                label: thisPc && thisPcCount != null ? 'On this PC · $thisPcCount' : 'On this PC',
+                on: thisPc,
+                onPress: () => onThisPc(!thisPc),
+              ),
+            ]),
+          ),
+          const SizedBox(width: GSpace.s3),
+          group([
+            _SortField(query: query, thisPc: thisPc, onQuery: onQuery),
+            _BarButton(
+              key: const ValueKey('bar-direction'),
+              icon: query.descending ? Icons.arrow_downward : Icons.arrow_upward,
+              label: query.descending ? 'Descending' : 'Ascending',
+              onPress: () => onQuery(query.copyWith(descending: !query.descending)),
             ),
-          _BarButton(
-            key: const ValueKey('bar-filters'),
-            icon: Icons.tune,
-            label: filters == 0 ? 'Filters' : 'Filters · $filters',
-            on: filters > 0,
-            onPress: onFilters,
-          ),
-          _BarButton(
-            key: const ValueKey('bar-this-pc'),
-            icon: thisPc ? Icons.toggle_on : Icons.toggle_off_outlined,
-            label: thisPc && thisPcCount != null ? 'On this PC · $thisPcCount' : 'On this PC',
-            on: thisPc,
-            onPress: () => onThisPc(!thisPc),
-          ),
-          _SortField(query: query, thisPc: thisPc, onQuery: onQuery),
-          _BarButton(
-            key: const ValueKey('bar-direction'),
-            icon: query.descending ? Icons.arrow_downward : Icons.arrow_upward,
-            label: query.descending ? 'Descending' : 'Ascending',
-            onPress: () => onQuery(query.copyWith(descending: !query.descending)),
-          ),
+          ]),
         ],
       ),
     );
