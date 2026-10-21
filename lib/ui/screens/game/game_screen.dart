@@ -24,6 +24,7 @@ import 'details_tab.dart';
 import 'game_cover_column.dart';
 import 'game_personal_pills.dart';
 import 'game_tabs.dart';
+import 'version_field.dart';
 import 'notes_tab.dart';
 import 'overview_tab.dart';
 import 'saves_tab.dart';
@@ -223,6 +224,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   GameScreen.titleBlock(game),
+                                  if (game.siblings.isNotEmpty) ...[
+                                    const SizedBox(height: GSpace.s3),
+                                    VersionField(game: game),
+                                  ],
                                   const SizedBox(height: GSpace.s4),
                                   GamePersonalPills(
                                     // New values from RomM (the game's details arriving) start the pills afresh.

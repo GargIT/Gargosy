@@ -51,6 +51,15 @@ class LibrarySnapshot {
 
   Future<void> remember(Game game) => writeJsonObject(guard, file, {..._all(), game.id: game.toJson()});
 
+  /// [games] added (or brought up to date) in one write.
+  Future<void> rememberAll(Iterable<Game> games) async {
+    final all = _all();
+    for (final g in games) {
+      all[g.id] = g.toJson();
+    }
+    await writeJsonObject(guard, file, all);
+  }
+
   Future<void> forget(String id) async {
     final all = _all();
     if (all.remove(id) != null) await writeJsonObject(guard, file, all);

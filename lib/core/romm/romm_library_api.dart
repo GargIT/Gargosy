@@ -97,6 +97,7 @@ class GalleryQuery {
     required int limit,
     bool withFilterValues = false,
     bool withCharIndex = false,
+    bool foldVersions = false,
   }) {
     final term = search?.trim() ?? '';
     return {
@@ -110,6 +111,8 @@ class GalleryQuery {
       // not to; Gargosy never uses it.
       'with_rom_id_index': false,
       'with_filter_values': withFilterValues,
+      // A game's versions (regions, revisions) as one entry, with the rest in its `sibling_roms`.
+      if (foldVersions) 'group_by_meta_id': true,
       if (lastPlayedOnly) 'last_played': true,
       if (platformId != null) 'platform_ids': [platformId],
       if (collectionId != null) 'collection_id': collectionId,
@@ -226,6 +229,7 @@ abstract class LibraryApi {
     int limit = RommLibraryApi.pageSize,
     bool withFilterValues = false,
     bool withCharIndex = false,
+    bool foldVersions = false,
   });
   Future<List<RommCollection>> collections();
 
@@ -261,6 +265,7 @@ class RommLibraryApi implements LibraryApi {
     int limit = pageSize,
     bool withFilterValues = false,
     bool withCharIndex = false,
+    bool foldVersions = false,
   }) async {
     final r = await dio.get(
       '/api/roms',
@@ -269,6 +274,7 @@ class RommLibraryApi implements LibraryApi {
         limit: limit,
         withFilterValues: withFilterValues,
         withCharIndex: withCharIndex,
+        foldVersions: foldVersions,
       ),
       options: auth(),
     );

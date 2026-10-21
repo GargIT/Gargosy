@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
+import '../../library/game_versions.dart';
 import '../../library/letter_index.dart';
+import '../../library/on_pc_scan.dart';
 import '../../library/library_snapshot.dart';
 import '../../library/local_gallery.dart';
 import '../../providers/download_providers.dart';
@@ -18,6 +20,7 @@ import '../widgets/cover_grid.dart';
 import '../widgets/error_retry.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/gallery_bar.dart';
+import '../widgets/toast.dart';
 import 'filter_sheet.dart';
 import 'game/open_game.dart';
 import '../widgets/favourite.dart';
@@ -68,6 +71,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   Object? _error;
   int _generation = 0;
   bool _thisPc = false;
+  bool _scanning = false;
 
   /// The first cover takes focus once, when the page opens: a reload (a
   /// filter typed, a sort picked) never pulls focus into the grid.
@@ -115,6 +119,8 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         limit: limit,
         withFilterValues: first,
         withCharIndex: first && _query.sort == GallerySort.name,
+        // One card per game, its versions folded into it (#95).
+        foldVersions: true,
       );
       if (!mounted || gen != _generation) return;
       setState(() {
@@ -139,7 +145,9 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   /// shown game's (the letter whose first game is the last at or before it).
   void _toRail(Map<String, int> rail) {
     if (rail.isEmpty) return;
-    final first = _gridKey.currentState?.currentIndex() ?? 0;
+    final shownAt = _gridKey.currentState?.currentIndex() ?? 0;
+    // RomM's letter offsets count its own list, folded versions too.
+    final first = _thisPc ? shownAt : _rawIndexOfShown(shownAt);
     String? letter;
     var best = -1;
     for (final e in rail.entries) {
@@ -162,8 +170,30 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       await _loadMore(upTo: at);
       if (!mounted || at >= _games.length) return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _gridKey.currentState?.jumpTo(at));
+    final target = _thisPc ? at : _shownIndexOfRaw(at);
+    if (target < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _gridKey.currentState?.jumpTo(target));
     WidgetsBinding.instance.scheduleFrame(); // a click that changes nothing draws none
+  }
+
+  /// RomM's games ([_games], in its order) with each game's versions folded
+  /// into the first of them: RomM's `group_by_meta_id` groups by one
+  /// metadata id, so versions matched by different ids (a patched copy
+  /// without IGDB's) still come apart, though `sibling_roms` links them.
+  List<Game> get _shown => foldVersions(_games);
+
+  /// The shown game at or after RomM's position [raw] (-1 when none).
+  int _shownIndexOfRaw(int raw) {
+    final pos = {for (var i = 0; i < _games.length; i++) _games[i].id: i};
+    return _shown.indexWhere((g) => pos[g.id]! >= raw);
+  }
+
+  /// RomM's position of the shown game at [shown].
+  int _rawIndexOfShown(int shown) {
+    final list = _shown;
+    if (list.isEmpty) return 0;
+    final id = list[shown.clamp(0, list.length - 1)].id;
+    return _games.indexWhere((g) => g.id == id).clamp(0, _games.length);
   }
 
   void _setQuery(GalleryQuery next) {
@@ -181,6 +211,27 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       }
     });
     _reload();
+  }
+
+  /// Scan: this platform's games RomM has that are in `roms\` but not yet on
+  /// the profile's list, added to it (another profile's downloads, files put
+  /// there by hand).
+  Future<void> _scan() async {
+    final scan = ref.read(platformScanProvider);
+    final platformId = _query.platformId;
+    if (scan == null || platformId == null || _scanning) {
+      if (scan == null) showToast(context, "Can't reach RomM.");
+      return;
+    }
+    setState(() => _scanning = true);
+    try {
+      final n = await scan(platformId);
+      if (mounted) showToast(context, n == 0 ? 'Nothing new found.' : 'Found $n more on this PC.');
+    } on Object catch (e) {
+      if (mounted) showToast(context, describeLoadError(e));
+    } finally {
+      if (mounted) setState(() => _scanning = false);
+    }
   }
 
   Future<void> _filters(FilterValues values) async {
@@ -207,14 +258,14 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   @override
   Widget build(BuildContext context) {
     final favIds = ref.watch(favouriteIdsProvider);
-    List<Game> games = _games;
+    List<Game> games = _shown;
     int? total = _total;
     var values = _values;
     if (_thisPc) {
       final local = _onThisPc();
       values = filterValuesOf(local);
       final files = ref.watch(romFilesProvider);
-      games = localGallery(local, _query, inScope: (_) => true, installedAt: files.installedAt);
+      games = foldVersions(localGallery(local, _query, inScope: (_) => true, installedAt: files.installedAt));
       total = games.length;
     }
     final bar = GalleryBar(
@@ -225,6 +276,8 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       thisPcCount: _thisPc ? total : null,
       onThisPc: _setThisPc,
       filterHint: widget.filterHint,
+      onScan: _query.platformId == null ? null : _scan,
+      scanning: _scanning,
     );
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,7 +327,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
       autofocus: widget.autofocus && !_autofocusDone,
       coverUrl: (g) => coverUrlFor(ref, g),
-      onOpen: (g) => openGame(context, g),
+      onOpen: (g) => openGameVersion(context, ref, g),
       onFavorite: (g) => favourite(context, ref, g),
       isFavourite: (g) => favIds.contains(g.id),
       isDownloaded: (g) => watchDownloaded(ref, g),

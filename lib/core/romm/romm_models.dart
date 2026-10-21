@@ -49,6 +49,7 @@ class Game {
   final SaveTargetLayout? saveTargetLayout; // how saveTarget is used on disk
   final DateTime? createdAt; // when RomM added the game
   final int? hltbMainStory; // HowLongToBeat's main story, in seconds
+  final List<GameVersion> siblings; // RomM's other versions of this game (regions, revisions)
 
   bool get isMultiFile => hasMultipleFiles;
 
@@ -116,6 +117,7 @@ class Game {
     this.saveTargetLayout,
     this.createdAt,
     this.hltbMainStory,
+    this.siblings = const [],
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -173,6 +175,10 @@ class Game {
       hltbMainStory: json['hltb_metadata'] is Map && json['hltb_metadata']['main_story'] is int
           ? json['hltb_metadata']['main_story'] as int
           : null,
+      siblings: [
+        for (final s in (json['sibling_roms'] is List ? json['sibling_roms'] as List : const []))
+          if (s is Map<String, dynamic> && s['id'] != null) GameVersion.fromJson(s),
+      ],
     );
   }
 
@@ -232,6 +238,7 @@ class Game {
       'save_target_layout': saveTargetLayout?.toJson(),
       'created_at': createdAt?.toIso8601String(),
       'hltb_metadata': {'main_story': hltbMainStory},
+      'sibling_roms': [for (final v in siblings) v.toJson()],
     };
   }
 }
@@ -306,6 +313,32 @@ class Firmware {
       'updated_at': updatedAt?.toIso8601String(),
     };
   }
+}
+
+/// One of a game's other versions, as RomM lists it (`sibling_roms`).
+class GameVersion {
+  const GameVersion({required this.id, required this.name, this.fsNameNoExt = '', this.isMain = false});
+
+  final String id;
+  final String name;
+
+  /// The file name without its extension, with the tags: "(USA) (Rev 1)".
+  final String fsNameNoExt;
+  final bool isMain;
+
+  factory GameVersion.fromJson(Map<String, dynamic> json) => GameVersion(
+    id: json['id'].toString(),
+    name: json['name']?.toString() ?? '',
+    fsNameNoExt: json['fs_name_no_ext']?.toString() ?? '',
+    isMain: json['is_main_sibling'] == true,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': int.tryParse(id) ?? id,
+    'name': name,
+    'fs_name_no_ext': fsNameNoExt,
+    'is_main_sibling': isMain,
+  };
 }
 
 class Platform {

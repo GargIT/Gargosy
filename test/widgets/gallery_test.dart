@@ -6,6 +6,7 @@ import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/romm/romm_library_api.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/library_snapshot.dart';
+import 'package:gargosy/library/on_pc_scan.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/ui_provider.dart';
 import 'package:gargosy/providers/romm_providers.dart';
@@ -277,6 +278,40 @@ void main() {
       expect(tester.getRect(find.byKey(const ValueKey('filter-field'))).left, closeTo(36, 1));
     });
   }
+
+  testWidgets("Scan shows beside On this PC only while it's on, on a platform's page, and says what it found", (
+    tester,
+  ) async {
+    await setDesktopSize(tester);
+    final scanned = <int>[];
+    Widget page(GalleryQuery q) => testApp(
+      GalleryScreen(title: 'X', query: q),
+      overrides: [
+        libraryApiProvider.overrideWithValue(FakeLibraryApi(games)),
+        favouriteIdsProvider.overrideWithValue(const {}),
+        gamesOnThisPcProvider.overrideWithValue(const []),
+        platformScanProvider.overrideWithValue((id) async {
+          scanned.add(id);
+          return 3;
+        }),
+      ],
+    );
+    await tester.pumpWidget(page(const GalleryQuery(platformId: 1)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bar-scan')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('bar-this-pc')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bar-scan')));
+    await tester.pumpAndSettle();
+    expect(scanned, [1]);
+    expect(find.text('Found 3 more on this PC.'), findsOneWidget);
+    // A collection has no Scan.
+    await tester.pumpWidget(page(const GalleryQuery(collectionId: 4)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bar-this-pc')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bar-scan')), findsNothing);
+  });
 
   testWidgets('shows the error with retry', (tester) async {
     await pump(tester, failWith: Exception('SocketException: connection refused'));

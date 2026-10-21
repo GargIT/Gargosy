@@ -30,6 +30,8 @@ class GalleryBar extends StatelessWidget {
     required this.onThisPc,
     this.thisPcCount,
     this.filterHint,
+    this.onScan,
+    this.scanning = false,
   });
 
   final GalleryQuery query;
@@ -43,6 +45,10 @@ class GalleryBar extends StatelessWidget {
 
   /// The filter field's hint; null leaves the field out (Search has its own).
   final String? filterHint;
+
+  /// Scan, beside On this PC while it's on (a platform's page only).
+  final VoidCallback? onScan;
+  final bool scanning;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +91,13 @@ class GalleryBar extends StatelessWidget {
                 on: thisPc,
                 onPress: () => onThisPc(!thisPc),
               ),
+              if (thisPc && onScan != null)
+                _BarButton(
+                  key: const ValueKey('bar-scan'),
+                  icon: scanning ? Icons.hourglass_top : Icons.manage_search,
+                  label: scanning ? 'Scanning…' : 'Scan',
+                  onPress: scanning ? () {} : onScan!,
+                ),
             ]),
           ),
           const SizedBox(width: GSpace.s3),

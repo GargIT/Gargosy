@@ -143,6 +143,7 @@ class _LastPlayedApi extends FakeLibraryApi {
     int limit = RommLibraryApi.pageSize,
     bool withFilterValues = false,
     bool withCharIndex = false,
+    bool foldVersions = false,
   }) {
     if (!q.lastPlayedOnly) return super.page(q, offset: offset, limit: limit);
     queries.add((q, offset));
