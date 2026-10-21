@@ -53,6 +53,10 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   int _generation = 0;
   bool _thisPc = false;
 
+  /// The first cover takes focus once, when the page opens: a reload (a
+  /// filter typed, a sort picked) never pulls focus into the grid.
+  bool _autofocusDone = false;
+
   @override
   void initState() {
     super.initState();
@@ -187,47 +191,40 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         ),
       ],
     );
-    Widget body;
-    if (!_thisPc && _error != null && _games.isEmpty) {
-      body = Column(
-        children: [
-          header,
-          Expanded(
-            child: ErrorRetry(message: describeLoadError(_error!), onRetry: _reload),
-          ),
-        ],
-      );
-    } else if (total == null) {
-      body = Column(
-        children: [
-          header,
-          const Expanded(child: Center(child: CircularProgressIndicator())),
-        ],
-      );
-    } else {
-      body = CoverGrid(
-        header: header,
-        games: games,
-        total: total,
-        emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
-        autofocus: widget.autofocus,
-        coverUrl: (g) => coverUrlFor(ref, g),
-        onOpen: (g) => openGame(context, g),
-        onFavorite: (g) => favourite(context, ref, g),
-        isFavourite: (g) => favIds.contains(g.id),
-        isDownloaded: (g) => watchDownloaded(ref, g),
-        // After a failed page, nothing more is asked for until Retry.
-        onEndReached: _thisPc || _error != null ? null : _loadMore,
-        footer: _thisPc || _error == null
-            ? null
-            : _LoadMoreFailed(
-                error: _error!,
-                onRetry: () {
-                  setState(() => _error = null);
-                  _loadMore();
-                },
-              ),
-      );
+    // One grid in every state: the header (and a filter being typed in) stays put.
+    final failed = !_thisPc && _error != null && _games.isEmpty;
+    final body = CoverGrid(
+      header: header,
+      games: games,
+      total: total,
+      placeholder: failed
+          ? ErrorRetry(message: describeLoadError(_error!), onRetry: _reload)
+          : total == null
+          ? const Center(child: CircularProgressIndicator())
+          : null,
+      emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
+      autofocus: widget.autofocus && !_autofocusDone,
+      coverUrl: (g) => coverUrlFor(ref, g),
+      onOpen: (g) => openGame(context, g),
+      onFavorite: (g) => favourite(context, ref, g),
+      isFavourite: (g) => favIds.contains(g.id),
+      isDownloaded: (g) => watchDownloaded(ref, g),
+      // After a failed page, nothing more is asked for until Retry.
+      onEndReached: _thisPc || _error != null ? null : _loadMore,
+      footer: _thisPc || _error == null
+          ? null
+          : _LoadMoreFailed(
+              error: _error!,
+              onRetry: () {
+                setState(() => _error = null);
+                _loadMore();
+              },
+            ),
+    );
+    if (!_autofocusDone && games.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _autofocusDone = true;
+      });
     }
     return Focus(skipTraversal: true, child: body);
   }

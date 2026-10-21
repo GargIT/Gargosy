@@ -36,6 +36,34 @@ void main() {
 
   BuildContext focused() => FocusManager.instance.primaryFocus!.context!;
 
+  testWidgets('the D-pad reaches every row, down to Done', (tester) async {
+    await pump(tester);
+    String label() {
+      String? t;
+      void visit(Element e) {
+        if (t != null) return;
+        if (e.widget is Text) t = (e.widget as Text).data;
+        e.visitChildren(visit);
+      }
+
+      (focused() as Element).visitChildren(visit);
+      return t ?? '';
+    }
+
+    final seen = [label()];
+    for (var i = 0; i < 5; i++) {
+      FocusManager.instance.primaryFocus!.focusInDirection(TraversalDirection.down);
+      await tester.pump();
+      seen.add(label());
+    }
+    expect(seen, ['1', 'q', 'a', 'z', '/', '⇧']);
+    for (var i = 0; i < 3; i++) {
+      FocusManager.instance.primaryFocus!.focusInDirection(TraversalDirection.right);
+      await tester.pump();
+    }
+    expect(label(), 'Done');
+  });
+
   testWidgets('pressing keys builds the text; Done returns it', (tester) async {
     await pump(tester);
     await tester.tap(find.text('r'));

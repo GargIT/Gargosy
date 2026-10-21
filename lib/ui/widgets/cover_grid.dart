@@ -22,6 +22,7 @@ class CoverGrid extends StatelessWidget {
     this.footer,
     this.emptyText = 'Nothing here yet',
     this.autofocus = true,
+    this.placeholder,
   });
 
   static const gap = GSpace.s5;
@@ -41,6 +42,10 @@ class CoverGrid extends StatelessWidget {
   final String emptyText;
   final bool autofocus;
 
+  /// Shown under the header instead of the games (loading, an error). The
+  /// header stays where it is, so a field in it keeps its focus.
+  final Widget? placeholder;
+
   /// Columns that fit in [width] (after the row padding on both sides).
   static int columnsFor(double width) {
     final inner = width - 2 * GSpace.rowPad;
@@ -57,7 +62,9 @@ class CoverGrid extends StatelessWidget {
           child: CustomScrollView(
             slivers: [
               if (header != null) SliverToBoxAdapter(child: header),
-              if (games.isEmpty)
+              if (placeholder != null)
+                SliverFillRemaining(hasScrollBody: false, child: placeholder)
+              else if (games.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
