@@ -17,6 +17,9 @@ What changed in each release of Gargosy. The format follows
   From other players. Resuming one starts from a copy; in RetroArch, ares and
   Flycast, which load a state by slot, the copy goes into a free slot of
   yours, so none of your states is replaced.
+- Share your own saves and states from Gargosy: on the game's Saves tab, Y
+  on one of yours on RomM shares it with the other players there (it gets a
+  teal "shared" tag), and Y again stops. Uploads stay private until you do.
 
 - A platform has its own page, as in RomM: its logo and name with its type,
   maker and generation, how many games it has in the library and on this PC,

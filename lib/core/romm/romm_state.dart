@@ -3,8 +3,8 @@ import 'dart:io' as io;
 import 'dart:typed_data';
 
 /// A save state stored on RomM (`/api/states`). States belong to one RomM
-/// user and are private unless the owner flips `is_public` — Gargosy never
-/// does.
+/// user and are private unless the owner flips `is_public` (Gargosy's Share,
+/// #92).
 class RommState {
   final int id;
   final String fileName;
@@ -25,6 +25,9 @@ class RommState {
   /// RetroArch core that made it.
   final List<String> labels;
 
+  /// Gargosy (#92): the owner shares it with every other user (`is_public`).
+  final bool isPublic;
+
   const RommState({
     required this.id,
     required this.fileName,
@@ -32,6 +35,7 @@ class RommState {
     this.emulator,
     this.screenshotUrl,
     this.labels = const [],
+    this.isPublic = false,
   });
 
   factory RommState.fromJson(Map<String, dynamic> json) {
@@ -43,6 +47,7 @@ class RommState {
       emulator: json['emulator']?.toString(),
       screenshotUrl: screenshot is Map ? screenshot['download_path']?.toString() : null,
       labels: [for (final l in json['labels'] is List ? json['labels'] as List : const []) l.toString()],
+      isPublic: json['is_public'] == true,
     );
   }
 }

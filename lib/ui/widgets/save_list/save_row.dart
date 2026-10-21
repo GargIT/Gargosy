@@ -22,6 +22,7 @@ class SaveRow extends StatelessWidget {
     this.onActivate,
     this.onDetail,
     this.onLongActivate,
+    this.onFavorite,
   });
 
   final PlayRow row;
@@ -34,6 +35,9 @@ class SaveRow extends StatelessWidget {
   final VoidCallback? onActivate;
   final VoidCallback? onDetail;
   final VoidCallback? onLongActivate;
+
+  /// Y (#92): share the player's own RomM save, or stop.
+  final VoidCallback? onFavorite;
 
   static Widget tag(String text, Color color) => Container(
     margin: const EdgeInsets.only(left: GSpace.s2),
@@ -72,6 +76,7 @@ class SaveRow extends StatelessWidget {
         onActivate: onActivate,
         onDetail: onDetail,
         onLongActivate: onLongActivate,
+        onFavorite: onFavorite,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
           decoration: BoxDecoration(
@@ -109,6 +114,7 @@ class SaveRow extends StatelessWidget {
                 if (maker != null && maker.isNotEmpty) tag(maker, GColors.accent),
                 if (row.fit.kind == SaveFitKind.converted) tag('converted', GColors.primary),
                 if (onRomm) tag('on RomM', GColors.success),
+                if (e.shared) tag('shared', GColors.gargosyTeal),
               ],
             ),
           ),

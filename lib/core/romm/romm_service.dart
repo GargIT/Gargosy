@@ -817,6 +817,24 @@ class RommService implements RommStatesApi {
   Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String gameId, {required int exceptUserId}) =>
       _sharedOf(gameId, 'all_user_states', exceptUserId);
 
+  /// Gargosy (#92): shares the player's own save with every other user of
+  /// RomM, or stops ([shared] false): `PUT /api/saves/{id}/visibility`,
+  /// owner only. Whether RomM took it.
+  Future<bool> setSaveShared(int saveId, bool shared) => _setShared('saves', saveId, shared);
+
+  /// Gargosy (#92): the same for the player's own state.
+  Future<bool> setStateShared(int stateId, bool shared) => _setShared('states', stateId, shared);
+
+  Future<bool> _setShared(String kind, int id, bool shared) async {
+    try {
+      final response = await _dio.put('/api/$kind/$id/visibility', data: {'is_public': shared}, options: _authOptions);
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('[RomM] $kind/$id not ${shared ? 'shared' : 'made private'}: $e');
+      return false;
+    }
+  }
+
   Future<List<Map<String, dynamic>>?> _sharedOf(String gameId, String key, int exceptUserId) async {
     try {
       final response = await _dio.get('/api/roms/$gameId', options: _authOptions);

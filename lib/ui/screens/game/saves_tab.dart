@@ -80,6 +80,17 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     _say(reason, 'The save from ${formatSaveTime(save.savedAt)} is on this PC now.');
   }
 
+  /// Y on the player's own RomM save or state (#92).
+  Future<void> _share({int? saveId, int? stateId, required bool shared}) async {
+    final reason = await ref.read(saveActionsProvider).share(_game, saveId: saveId, stateId: stateId, shared: shared);
+    _say(
+      reason == null ? null : "Couldn't change sharing: $reason",
+      shared
+          ? 'Shared on RomM: the other players there can see it and play from it.'
+          : "Not shared any more: it's yours alone again.",
+    );
+  }
+
   Future<void> _delete(SaveEntry save) async {
     final romm = save.source == SaveSource.romm;
     final ok = await showConfirm(
@@ -263,13 +274,20 @@ class _SavesTabState extends ConsumerState<SavesTab> {
             if (!_states && who != null && unclaimed.isNotEmpty) _unclaimed(who, unclaimed),
             Expanded(
               child: _states
-                  ? StateList(states: states, chosen: null, onChoose: (_) {}, loading: statesAsync.isLoading)
+                  ? StateList(
+                      states: states,
+                      chosen: null,
+                      onChoose: (_) {},
+                      loading: statesAsync.isLoading,
+                      onShare: (s) => _share(stateId: s.remoteId, shared: !s.shared),
+                    )
                   : SaveList(
                       view: view,
                       mode: SaveListMode.manage,
                       nameOf: menu.nameOf,
                       onRestore: (s) => _restore(menu, view, s),
                       onDelete: _delete,
+                      onShare: (s) => _share(saveId: s.rommSave?['id'] as int?, shared: !s.shared),
                       footer: const SizedBox(height: GSpace.s14),
                     ),
             ),

@@ -29,6 +29,7 @@ class SaveList extends StatefulWidget {
     this.onChoose,
     this.onRestore,
     this.onDelete,
+    this.onShare,
     this.footer,
   });
 
@@ -39,6 +40,10 @@ class SaveList extends StatefulWidget {
   final void Function(SavePlay save)? onChoose;
   final void Function(SaveEntry save)? onRestore;
   final void Function(SaveEntry save)? onDelete;
+
+  /// Manage mode, Y on the player's own RomM save (#92): share it with the
+  /// other players there, or stop ([SaveEntry.shared] tells which).
+  final void Function(SaveEntry save)? onShare;
 
   /// Under the list (the narrow play screen's "N hidden · Show all").
   final Widget? footer;
@@ -63,6 +68,7 @@ class _SaveListState extends State<SaveList> {
     final romm = r.entry.source == SaveSource.romm;
     // Another player's save is theirs: it can be copied, never deleted.
     final theirs = r.entry.owner != null;
+    final shareable = manage && romm && !theirs && !widget.view.rommOffline && widget.onShare != null;
     final movable = r.entry.source != SaveSource.local && !(romm && widget.view.rommOffline);
     // A save the emulator can't use is never put on this PC (it would go
     // into the wrong emulator); it can still be deleted.
@@ -78,16 +84,21 @@ class _SaveListState extends State<SaveList> {
           : (r.fit.usable ? () => widget.onChoose?.call(r.item) : null),
       onDetail: manage && restorable && widget.onRestore != null ? () => widget.onRestore!(r.entry) : null,
       onLongActivate: manage && movable && !theirs && widget.onDelete != null ? () => widget.onDelete!(r.entry) : null,
+      onFavorite: shareable ? () => widget.onShare!(r.entry) : null,
     );
   }
 
   /// A click in manage mode (the mouse's way to what X and hold A do).
   Future<void> _menu(SaveEntry e, {required bool restorable}) async {
-    final labels = [if (restorable) 'Put on this PC', if (e.owner == null) 'Delete'];
+    final share = e.source == SaveSource.romm && e.owner == null && !widget.view.rommOffline && widget.onShare != null
+        ? (e.shared ? 'Stop sharing' : 'Share on RomM')
+        : null;
+    final labels = [if (restorable) 'Put on this PC', ?share, if (e.owner == null) 'Delete'];
     if (labels.isEmpty) return;
     final i = await showChoice(context, title: e.fileName, labels: labels);
     if (i == null) return;
     if (labels[i] == 'Put on this PC') widget.onRestore?.call(e);
+    if (labels[i] == share) widget.onShare?.call(e);
     if (labels[i] == 'Delete') widget.onDelete?.call(e);
   }
 
@@ -150,6 +161,8 @@ class _SaveListState extends State<SaveList> {
         'On RomM',
         note: v.rommOffline
             ? "RomM can't be reached, so its saves aren't listed."
+            : widget.mode == SaveListMode.manage && widget.onShare != null
+            ? 'Y shares a save with the other players on this RomM, or stops sharing it.'
             : 'A live list: nothing is downloaded until you put a save on this PC or play it.',
       ),
       if (!v.rommOffline && v.romm.isEmpty)

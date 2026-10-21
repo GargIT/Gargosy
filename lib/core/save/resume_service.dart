@@ -44,6 +44,7 @@ class ResumeEntry {
     this.resumable = true,
     this.core,
     this.owner,
+    this.shared = false,
   });
 
   final String emulatorId;
@@ -87,6 +88,10 @@ class ResumeEntry {
   /// theirs); null for the player's own. Resuming it starts from a copy:
   /// theirs never changes.
   final SaveOwner? owner;
+
+  /// Gargosy (#92): the player's own state on RomM, shared with the other
+  /// players there.
+  final bool shared;
 }
 
 /// The outcome of [ResumeService.checkBeforeLaunch].
@@ -303,6 +308,7 @@ class ResumeService {
           romPath: owner.romPath,
           resumable: _resumable(owner.emulator, state.fileName),
           core: owner.core,
+          shared: state.isPublic,
         );
         continue;
       }
@@ -326,6 +332,7 @@ class ResumeService {
         romPath: existing.romPath,
         resumable: existing.resumable,
         core: existing.core,
+        shared: state.isPublic,
       );
     }
     return merged;
