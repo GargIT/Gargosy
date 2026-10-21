@@ -190,8 +190,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       ),
       PlayPrompt.notOnRomm => (
         "Your save on this PC isn't on RomM",
-        'Your $name save on this PC changed since its last upload (played offline?). Playing the '
-            '${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)} replaces it.\n\n'
+        'Your $name save on this PC changed since its last upload (played offline?). Playing '
+            '${item.entry.owner == null ? 'the ' : ''}${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)} replaces it.\n\n'
             'A backup of it is kept on this PC.',
       ),
       PlayPrompt.olderState => ('Resume an older state?', 'Resuming may roll your save back.'),
