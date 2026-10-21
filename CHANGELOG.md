@@ -35,7 +35,9 @@ What changed in each release of Gargosy. The format follows
 - Sort by Size, Players, Length (HowLongToBeat's main story), and your own
   rating, completion and status.
 - On this PC shows only the games downloaded here, and works with RomM away.
-  It can sort by Downloaded, newest first.
+  It can sort by Downloaded, newest first. On a platform's page, Scan finds
+  the platform's games already in `roms\` that the profile hadn't listed
+  (another profile's downloads, files put there by hand).
 
 ### Changed
 

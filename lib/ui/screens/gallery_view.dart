@@ -7,6 +7,7 @@ import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
 import '../../library/game_versions.dart';
 import '../../library/letter_index.dart';
+import '../../library/on_pc_scan.dart';
 import '../../library/library_snapshot.dart';
 import '../../library/local_gallery.dart';
 import '../../providers/download_providers.dart';
@@ -19,6 +20,7 @@ import '../widgets/cover_grid.dart';
 import '../widgets/error_retry.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/gallery_bar.dart';
+import '../widgets/toast.dart';
 import 'filter_sheet.dart';
 import 'game/open_game.dart';
 import '../widgets/favourite.dart';
@@ -69,6 +71,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   Object? _error;
   int _generation = 0;
   bool _thisPc = false;
+  bool _scanning = false;
 
   /// The first cover takes focus once, when the page opens: a reload (a
   /// filter typed, a sort picked) never pulls focus into the grid.
@@ -210,6 +213,27 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     _reload();
   }
 
+  /// Scan: this platform's games RomM has that are in `roms\` but not yet on
+  /// the profile's list, added to it (another profile's downloads, files put
+  /// there by hand).
+  Future<void> _scan() async {
+    final scan = ref.read(platformScanProvider);
+    final platformId = _query.platformId;
+    if (scan == null || platformId == null || _scanning) {
+      if (scan == null) showToast(context, "Can't reach RomM.");
+      return;
+    }
+    setState(() => _scanning = true);
+    try {
+      final n = await scan(platformId);
+      if (mounted) showToast(context, n == 0 ? 'Nothing new found.' : 'Found $n more on this PC.');
+    } on Object catch (e) {
+      if (mounted) showToast(context, describeLoadError(e));
+    } finally {
+      if (mounted) setState(() => _scanning = false);
+    }
+  }
+
   Future<void> _filters(FilterValues values) async {
     final next = await showFilterSheet(context, query: _query, values: values);
     if (next != null) _setQuery(next);
@@ -252,6 +276,8 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       thisPcCount: _thisPc ? total : null,
       onThisPc: _setThisPc,
       filterHint: widget.filterHint,
+      onScan: _query.platformId == null ? null : _scan,
+      scanning: _scanning,
     );
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

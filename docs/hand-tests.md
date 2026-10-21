@@ -143,3 +143,4 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 51. [ ] A game with two or more versions on RomM (e.g. USA and Europe) shows as one card with the count top left and its region (`USA`) bottom left; a favourite has the heart and a downloaded one the on-this-PC mark.
 52. [ ] Open a folded game with none of its versions downloaded: RomM's version opens, and Version on its page lists the others; pick one to go to its page and download it. With one version downloaded, the card opens that one. With two downloaded, it asks "Which version?".
 53. [ ] Collections and Favourites have the bar, the A–Z rail (by name) and the marks.
+54. [ ] Put a game's file in `roms\ps2\` by hand, or download one in another profile: it has the ✓ but isn't counted On this PC. On PlayStation 2 with On this PC on, Scan says "Found 1 more on this PC." and the game is listed. Scan isn't there on a collection or with On this PC off.
