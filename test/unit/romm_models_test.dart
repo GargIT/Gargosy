@@ -10,6 +10,21 @@ void main() {
       expect(platform.gamesCount, 10);
     });
 
+    test("Platform.fromJson reads RomM's type, maker, generation and size", () {
+      final p = Platform.fromJson({
+        'id': 1,
+        'name': 'PlayStation 2',
+        'slug': 'ps2',
+        'category': 'Console',
+        'family_name': 'Sony',
+        'generation': 6,
+        'fs_size_bytes': 2199023255552,
+      });
+      expect([p.category, p.familyName, p.generation, p.fsSizeBytes], ['Console', 'Sony', 6, 2199023255552]);
+      final bare = Platform.fromJson({'id': 2, 'name': 'X', 'slug': 'x'});
+      expect([bare.category, bare.familyName, bare.generation, bare.fsSizeBytes], [null, null, null, 0]);
+    });
+
     test('Platform.fromJson parses roms_count', () {
       final json = {'id': 1, 'name': 'GBA', 'slug': 'gba', 'roms_count': 20};
       final platform = Platform.fromJson(json);

@@ -124,3 +124,11 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 41. [ ] On PlayStation 2, type "hack" in the filter box with the keyboard: shortly after typing stops, the .hack games show, also ones beyond the first page. With a controller, A on the box opens the on-screen keyboard and the filter applies when it closes.
 42. [ ] Turn On this PC on: only this platform's downloaded games show, with their count on the switch. Sort by Downloaded puts the newest download first. With RomM stopped (or the PC offline), the switch still works.
 43. [ ] Sort by Size, Players, Length and My rating: the order is the expected one, and the direction button turns it round. Games without the value (no HowLongToBeat time, no rating) come last either way.
+
+## Platform page: header and tabs (#95)
+
+44. [ ] Open PlayStation 2: the header shows its logo, Console · Sony · Generation 6, In library, On this PC (your downloaded PS2 games), On disk and Firmware. Random opens a PS2 game.
+45. [ ] Scroll the games: the header goes, the name sits in the tab row, and the filter and sort bar stays. Back at the top, the header returns. With a controller, D-pad up from the first row reaches the bar, then the tabs, then Random.
+46. [ ] Firmware / BIOS marks what's in `bios\`. Get missing from RomM brings the rest, and they show as On this PC.
+47. [ ] Emulator: change the emulator (with two installed) or RetroArch's core; Settings → Emulator settings shows the same, and a game without "Always for this game" plays in it. An uninstalled emulator's Install under Emulators opens Settings → Emulators.
+48. [ ] LB/RB switch tabs. Move to a cover, RB, move in the firmware list, LB: focus is back on that cover; RB: back in the list.

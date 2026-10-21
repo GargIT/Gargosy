@@ -17,6 +17,10 @@ class BiosSync {
   Future<int> forEmulator(String emulatorId) =>
       _counting((onProgress) => _firmware.syncFirmwareForEmulator(emulatorId, onProgress: onProgress));
 
+  /// For one platform ([slug]), into its emulator's folder.
+  Future<int> forPlatform(String slug) =>
+      _counting((onProgress) => _firmware.syncFirmwareForPlatform(slug, onProgress: onProgress));
+
   /// For every installed emulator (ids in [installed]).
   Future<int> forAll(Set<String> installed) =>
       _counting((onProgress) => _firmware.syncAllFirmware(onProgress: onProgress, installedEmulatorIds: installed));

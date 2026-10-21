@@ -8,6 +8,16 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- A platform has its own page, as in RomM: its logo and name with its type,
+  maker and generation, how many games it has in the library and on this PC,
+  its size on RomM and its firmware count, and Random. The games are under
+  three tabs (LB/RB):
+  - Library: the games. The header goes as you scroll, and the name stays in
+    the tab row with the filter and sort bar.
+  - Firmware / BIOS: RomM's files for the platform, each On this PC or
+    Missing, and Get missing from RomM.
+  - Emulator: which installed emulator plays the platform and RetroArch's
+    core for it, and the platform's emulators with a way to install the rest.
 - A platform's, a collection's and the favourites' games have RomM's filter
   and sort bar: a filter box (it asks RomM, so it finds games not loaded
   yet), Filters (genre, region), On this PC, Sort by and the direction. With

@@ -327,6 +327,12 @@ class _FakeBios implements BiosSync {
   }
 
   @override
+  Future<int> forPlatform(String slug) async {
+    calls.add('platform $slug');
+    return found;
+  }
+
+  @override
   Future<int> forAll(Set<String> installed) async {
     calls.add('all ${(installed.toList()..sort()).join(',')}');
     return found;

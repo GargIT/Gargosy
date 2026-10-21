@@ -228,5 +228,8 @@ class _Bios implements BiosSync {
   }
 
   @override
+  Future<int> forPlatform(String slug) async => 0;
+
+  @override
   Future<int> forAll(Set<String> installed) async => 0;
 }

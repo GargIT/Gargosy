@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
 import '../../library/platform_covers.dart';
 import '../../providers/library_providers.dart';
 import '../input/wrap_grid_policy.dart';
-import '../screens/gallery_screen.dart';
+import '../screens/platform/platform_screen.dart';
 import '../theme/tokens.dart';
 import '../widgets/error_retry.dart';
 import '../widgets/g_dropdown.dart';
@@ -75,14 +74,8 @@ class _PlatformsPageState extends ConsumerState<PlatformsPage> {
     );
   }
 
-  void _openGallery(BuildContext context, Platform p) => Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => GalleryScreen(
-        title: p.nameForDisplay,
-        query: GalleryQuery(platformId: p.id),
-      ),
-    ),
-  );
+  void _openGallery(BuildContext context, Platform p) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => PlatformScreen(platform: p)));
 
   @override
   Widget build(BuildContext context) {
