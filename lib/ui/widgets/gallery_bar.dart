@@ -247,8 +247,9 @@ class _FilterFieldState extends ConsumerState<FilterField> {
   }
 
   void _stop({bool refocus = true}) {
-    _apply();
+    // Focus leaves the box as the page closes too: nothing to apply then.
     if (!mounted) return;
+    _apply();
     setState(() => _editing = false);
     if (refocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
