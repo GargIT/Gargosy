@@ -23,6 +23,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- The on-screen keyboard: the D-pad reaches every row with a controller (it
+  stopped at the second).
 - A game's size shows on its Details tab (RomM sends it as `fs_size_bytes`).
 
 ## [0.2.0] - 2026-10-20

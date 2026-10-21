@@ -108,7 +108,11 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
         DetailIntent: CallbackAction<DetailIntent>(onInvoke: (_) => _type(' ')),
         MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => _done()),
       },
+      // Catches a physical keyboard's keys as they bubble up from the focused
+      // key; never a D-pad target itself (it covers every row, so down would
+      // land on it and stay there).
       child: Focus(
+        skipTraversal: true,
         onKeyEvent: _onKey,
         child: Center(
           child: ConstrainedBox(
