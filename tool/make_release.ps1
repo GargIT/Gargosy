@@ -14,6 +14,11 @@ Set-Location $repo
 
 $version = if ($Version) { $Version } else { (Select-String -Path pubspec.yaml -Pattern '^version:\s*([^\s+]+)').Matches[0].Groups[1].Value }
 if (-not $NoBuild) {
+    # Flutter's incremental build can keep an old icon font subset, so icons
+    # first used since then show as nothing: its assets are made fresh.
+    foreach ($assets in @('build\flutter_assets', 'build\windows\x64\runner\Release\data\flutter_assets')) {
+        if (Test-Path $assets) { Remove-Item -Recurse -Force $assets }
+    }
     # --build-name puts the version in Gargosy.exe, where About reads it.
     flutter build windows --release --build-name $version
     if ($LASTEXITCODE -ne 0) { throw 'flutter build failed' }
