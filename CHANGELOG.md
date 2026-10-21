@@ -25,7 +25,8 @@ What changed in each release of Gargosy. The format follows
 - Sorted by name, a games page has an A–Z rail on its right: click a letter,
   or with a controller go right from the last column, pick a letter with up
   and down, and press A or left to jump to its first game (`#` for digits and
-  symbols). Letters without games are greyed.
+  symbols). X goes straight to the rail, at the focused game's letter. Letters
+  without games are greyed.
 - Sort by Size, Players, Length (HowLongToBeat's main story), and your own
   rating, completion and status.
 - On this PC shows only the games downloaded here, and works with RomM away.

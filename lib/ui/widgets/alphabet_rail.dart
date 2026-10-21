@@ -17,10 +17,10 @@ class AlphabetRail extends StatefulWidget {
   final ValueChanged<String> onJump;
 
   @override
-  State<AlphabetRail> createState() => _AlphabetRailState();
+  State<AlphabetRail> createState() => AlphabetRailState();
 }
 
-class _AlphabetRailState extends State<AlphabetRail> {
+class AlphabetRailState extends State<AlphabetRail> {
   final _nodes = {for (final l in railLetters) l: FocusNode(debugLabel: 'rail $l')};
 
   @override
@@ -29,6 +29,17 @@ class _AlphabetRailState extends State<AlphabetRail> {
       n.dispose();
     }
     super.dispose();
+  }
+
+  /// Puts focus on [letter] (X on a games page), or on the nearest letter
+  /// after it with games.
+  void focusLetter(String letter) {
+    final from = railLetters.indexOf(letter).clamp(0, railLetters.length - 1);
+    final target = [
+      ...railLetters.skip(from),
+      ...railLetters.take(from).toList().reversed,
+    ].where(widget.letters.contains).firstOrNull;
+    if (target != null) _nodes[target]!.requestFocus();
   }
 
   String? _letterOf(FocusNode node) => _nodes.entries.where((e) => e.value == node).firstOrNull?.key;

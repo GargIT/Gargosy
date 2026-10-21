@@ -66,6 +66,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                     hints: [
                       Hint(GameAction.confirm, 'Open'),
                       Hint(GameAction.favorite, 'Favourite'),
+                      Hint(GameAction.detail, 'A–Z'),
                       Hint(GameAction.back, 'Back'),
                     ],
                   ),

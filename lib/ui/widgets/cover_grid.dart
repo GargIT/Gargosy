@@ -75,6 +75,27 @@ class CoverGridState extends State<CoverGrid> {
     super.dispose();
   }
 
+  /// The focused game's position, else the first game whose row shows at
+  /// the top of the grid (0 when none).
+  int currentIndex() {
+    final focused = FocusManager.instance.primaryFocus;
+    for (final e in _nodes.entries) {
+      if (e.value == focused && e.value.context != null && e.key < widget.games.length) return e.key;
+    }
+    return firstVisibleIndex();
+  }
+
+  /// The first game whose row shows at the top of the grid (0 when none).
+  int firstVisibleIndex() {
+    if (!_scroll.hasClients || widget.games.isEmpty) return 0;
+    final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
+    final into = _scroll.position.pixels - header - GSpace.s4;
+    if (into <= 0) return 0;
+    // A row more than half scrolled away doesn't count as shown.
+    final row = ((into + (GameCard.height + CoverGrid.gap) / 2) / (GameCard.height + CoverGrid.gap)).floor();
+    return (row * _columns).clamp(0, widget.games.length - 1);
+  }
+
   /// Scrolls to the game at [index] (already loaded) and focuses it: the
   /// A–Z rail's jump. Every row is as tall, so the offset is known without
   /// building the rows in between. Games just loaded may not be laid out

@@ -136,4 +136,4 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 ## A–Z rail (#95)
 
 49. [ ] On a big platform sorted by Name, click a letter far down (T): the page jumps to the first T game, also when it wasn't loaded yet. `#` jumps to games starting with a digit or symbol; letters without games are greyed.
-50. [ ] With a controller: D-pad right from the last column reaches the rail, up/down picks a letter (skipping greyed ones), A or left jumps into the grid at it. Sorted by anything else, there's no rail. On this PC, the rail jumps within the downloaded games.
+50. [ ] With a controller: D-pad right from the last column reaches the rail, up/down picks a letter (skipping greyed ones), A or left jumps into the grid at it. X from a cover goes to the rail at that game's letter. Sorted by anything else, there's no rail. On this PC, the rail jumps within the downloaded games.

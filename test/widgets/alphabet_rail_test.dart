@@ -105,6 +105,35 @@ void main() {
     expect(focusedGame(), 'B game 00');
   });
 
+  testWidgets("X puts focus on the rail at the focused game's letter", (tester) async {
+    await pump(tester);
+    // From the bar, no cover focused: the first game shown, under #.
+    final direction = find.byKey(const ValueKey('bar-direction'));
+    Focus.of(tester.element(find.descendant(of: direction, matching: find.byType(Container)).first)).requestFocus();
+    await tester.pump();
+    await press(tester, GameAction.detail);
+    expect(focusedLetter(), 'rail-#');
+    await tester.tap(find.byKey(const ValueKey('rail-T')));
+    await tester.pumpAndSettle();
+    expect(focusedGame(), 'T game 00');
+    await press(tester, GameAction.detail);
+    expect(focusedLetter(), 'rail-T');
+    await press(tester, GameAction.down);
+    await press(tester, GameAction.left);
+    expect(focusedGame(), 'U game 00');
+  });
+
+  testWidgets('X does nothing without the rail', (tester) async {
+    await pump(tester);
+    await tester.tap(find.text('Sort by Name'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Size'));
+    await tester.pumpAndSettle();
+    final before = FocusManager.instance.primaryFocus;
+    await press(tester, GameAction.detail);
+    expect(FocusManager.instance.primaryFocus, before);
+  });
+
   testWidgets('only by name: another sort has no rail', (tester) async {
     await pump(tester);
     await tester.tap(find.text('Sort by Name'));

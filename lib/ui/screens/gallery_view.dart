@@ -11,6 +11,7 @@ import '../../library/local_gallery.dart';
 import '../../providers/download_providers.dart';
 import '../../providers/library_providers.dart';
 import '../../providers/romm_providers.dart';
+import '../input/gargosy_intents.dart';
 import '../theme/tokens.dart';
 import '../widgets/alphabet_rail.dart';
 import '../widgets/cover_grid.dart';
@@ -63,6 +64,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   /// RomM's first-letter offsets for this order (by name only), as rail letters.
   Map<String, int> _rail = const {};
   final _gridKey = GlobalKey<CoverGridState>();
+  final _railKey = GlobalKey<AlphabetRailState>();
   Object? _error;
   int _generation = 0;
   bool _thisPc = false;
@@ -131,6 +133,22 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     } finally {
       done.complete();
     }
+  }
+
+  /// X: focus on the rail, at the focused game's letter, else the first
+  /// shown game's (the letter whose first game is the last at or before it).
+  void _toRail(Map<String, int> rail) {
+    if (rail.isEmpty) return;
+    final first = _gridKey.currentState?.currentIndex() ?? 0;
+    String? letter;
+    var best = -1;
+    for (final e in rail.entries) {
+      if (e.value <= first && e.value > best) {
+        best = e.value;
+        letter = e.key;
+      }
+    }
+    _railKey.currentState?.focusLetter(letter ?? rail.entries.reduce((a, b) => a.value <= b.value ? a : b).key);
   }
 
   /// The A–Z rail: the first game under [letter] in [rail], loaded first when
@@ -282,7 +300,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
                 top: GSpace.s4,
                 bottom: GSpace.s4,
                 right: (GSpace.rowPad - AlphabetRail.width) / 2,
-                child: AlphabetRail(letters: rail.keys.toSet(), onJump: (l) => _jump(l, rail)),
+                child: AlphabetRail(key: _railKey, letters: rail.keys.toSet(), onJump: (l) => _jump(l, rail)),
               ),
             ],
           );
@@ -291,7 +309,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         if (mounted) _autofocusDone = true;
       });
     }
-    return Focus(
+    final view = Focus(
       skipTraversal: true,
       child: widget.pinnedBar
           ? Column(
@@ -302,6 +320,11 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
               ],
             )
           : body,
+    );
+    // X: to the rail (when sorted by name).
+    return Actions(
+      actions: {DetailIntent: CallbackAction<DetailIntent>(onInvoke: (_) => _toRail(rail))},
+      child: view,
     );
   }
 }

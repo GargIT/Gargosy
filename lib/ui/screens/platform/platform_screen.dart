@@ -106,7 +106,11 @@ class _PlatformScreenState extends ConsumerState<PlatformScreen> {
   }
 
   List<Hint> get _hints => [
-    if (_tab == 0) ...[const Hint(GameAction.confirm, 'Open'), const Hint(GameAction.favorite, 'Favourite')],
+    if (_tab == 0) ...[
+      const Hint(GameAction.confirm, 'Open'),
+      const Hint(GameAction.favorite, 'Favourite'),
+      const Hint(GameAction.detail, 'A–Z'),
+    ],
     if (_tab == 1) const Hint(GameAction.confirm, 'Get missing'),
     if (_tab == 2) const Hint(GameAction.confirm, 'Change'),
     const Hint(GameAction.l1, 'Previous tab'),
