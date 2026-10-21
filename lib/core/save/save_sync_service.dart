@@ -997,17 +997,28 @@ class SaveSyncService {
   /// Downloads the RomM save [save] (an item of RommService.getSavesList)
   /// and puts it in place for [emulatorId], converted when it is in another
   /// emulator's format. Unlike pullSave it never skips: the user chose it.
+  /// Gargosy (#92): [own] false for another player's shared save: it isn't
+  /// recorded as RomM's copy of this PC's save (nor RomM's device sync
+  /// touched), so the next sync uploads it as the player's own.
   Future<void> restoreChosenSave(
     Game game,
     String romPath,
     Map<String, dynamic> save, {
     required String emulatorId,
     String? coreOverride,
+    bool own = true,
   }) => _lock.run(
     () => _doing(
       "Downloading ${game.displayName}'s save",
       () => SaveStrategy.chosenRestore(
-        () => _restoreChosenSaveUnlocked(game, romPath, save, emulatorId: emulatorId, coreOverride: coreOverride),
+        () => _restoreChosenSaveUnlocked(
+          game,
+          romPath,
+          save,
+          emulatorId: emulatorId,
+          coreOverride: coreOverride,
+          own: own,
+        ),
       ),
     ),
   );
@@ -1018,13 +1029,14 @@ class SaveSyncService {
     Map<String, dynamic> save, {
     required String emulatorId,
     String? coreOverride,
+    required bool own,
   }) async {
     final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
     if (strategy == null) throw SaveChoiceException("$emulatorId saves can't be set up by Gargosy.");
     final url = save['download_path'] as String? ?? save['url'] as String?;
     final filename = save['file_name']?.toString() ?? url?.split('/').last ?? 'save';
     if (url == null) throw SaveChoiceException("RomM didn't say where to download $filename.");
-    final downloaded = await _rommService.downloadSave(url, deviceId: _getDeviceId());
+    final downloaded = await _rommService.downloadSave(url, deviceId: own ? _getDeviceId() : null);
     if (downloaded == null) throw SaveChoiceException("$filename couldn't be downloaded from RomM.");
     final bytes = await _unrzipDownload(downloaded, filename);
     final name = _adjustFilenameForFormat(bytes, normalizeSaveFilename(filename));
@@ -1039,7 +1051,7 @@ class SaveSyncService {
     );
     if (!ok) throw SaveChoiceException("$filename couldn't be put in place for $emulatorId.");
     await _setLastPullTime(game.id);
-    await _recordSyncedRommId(game, strategy, save['id']);
+    if (own) await _recordSyncedRommId(game, strategy, save['id']);
   }
 
   /// Converts the save [fromEmulatorId] keeps for [game] on this machine

@@ -52,4 +52,24 @@ void main() {
     adapter.onGet('/api/saves', (server) => server.reply(401, {'detail': 'no'}), queryParameters: {'rom_id': '7'});
     expect(await service.getSavesListOrNull('7'), isNull);
   });
+
+  test("other players' public saves come with the game, the profile's own left out (#92)", () async {
+    adapter.onGet(
+      '/api/roms/7',
+      (server) => server.reply(200, {
+        'id': 7,
+        'all_user_saves': [
+          {'id': 1, 'file_name': 'mine.ps2', 'user_id': 3, 'username': 'me'},
+          {'id': 2, 'file_name': 'maja.ps2', 'user_id': 7, 'username': 'maja', 'is_public': true},
+        ],
+      }),
+    );
+    final shared = await service.getSharedSavesOrNull('7', exceptUserId: 3);
+    expect(shared!.map((s) => s['file_name']), ['maja.ps2']);
+  });
+
+  test("a game that can't be read gives null shared saves", () async {
+    adapter.onGet('/api/roms/7', (server) => server.reply(500, {'detail': 'boom'}));
+    expect(await service.getSharedSavesOrNull('7', exceptUserId: 3), isNull);
+  });
 }

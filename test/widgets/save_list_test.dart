@@ -43,14 +43,26 @@ SaveEntry _romm(String name, int day, {SaveMaker maker = _pcsx2, String tag = 'p
   rommSave: {'id': id},
 );
 
+SaveEntry _theirs(String name, int day, {required int user, required String username}) => SaveEntry(
+  source: SaveSource.romm,
+  fileName: name,
+  savedAt: _t(day),
+  maker: _pcsx2,
+  tag: 'pcsx2',
+  slot: 'autosave',
+  rommSave: {'id': 100 + day},
+  owner: SaveOwner(userId: user, username: username),
+);
+
 PlayView _view({
   List<SaveEntry> local = const [],
   List<SaveEntry> backups = const [],
   List<RommSaveGroup> romm = const [],
+  List<PlayerSaves> others = const [],
   bool showAll = false,
   bool offline = false,
 }) => buildPlayView(
-  catalog: SaveCatalog(thisPc: local, backups: backups, romm: romm, rommOffline: offline),
+  catalog: SaveCatalog(thisPc: local, backups: backups, romm: romm, rommOffline: offline, others: others),
   states: const [],
   platformSlug: 'ps2',
   picked: _pcsx2,
@@ -188,6 +200,70 @@ void main() {
     expect(restored, ['a.zip']);
     await press(tester, GameAction.confirmHold);
     expect(deleted, ['a.zip']);
+  });
+
+  testWidgets("other players' saves: under This PC and On RomM, two players a row when wide (#92)", (tester) async {
+    final view = _view(
+      local: [_local(9)],
+      others: [
+        PlayerSaves(
+          owner: const SaveOwner(userId: 7, username: 'maja'),
+          groups: [
+            _group([
+              _theirs('m.ps2', 8, user: 7, username: 'maja'),
+              _theirs('m-old.ps2', 6, user: 7, username: 'maja'),
+            ]),
+          ],
+        ),
+        PlayerSaves(
+          owner: const SaveOwner(userId: 8, username: 'olle'),
+          groups: [
+            _group([_theirs('o.ps2', 7, user: 8, username: 'olle')]),
+          ],
+        ),
+      ],
+    );
+    await pump(tester, SaveList(view: view, mode: SaveListMode.choose, nameOf: name), width: 1400);
+    expect(find.text('From other players'), findsOneWidget);
+    expect(find.text('▸ 1 older version'), findsOneWidget);
+    final pc = tester.getTopLeft(find.text('This PC')), romm = tester.getTopLeft(find.text('On RomM'));
+    final maja = tester.getTopLeft(find.text('maja')), olle = tester.getTopLeft(find.text('olle'));
+    expect(maja.dy, greaterThan(pc.dy));
+    expect(maja.dy, olle.dy);
+    expect(olle.dx, greaterThan(maja.dx));
+    expect(maja.dx, closeTo(pc.dx, 40));
+    expect(olle.dx, closeTo(romm.dx, 40));
+    await pump(tester, SaveList(view: view, mode: SaveListMode.choose, nameOf: name), width: 800);
+    expect(tester.getTopLeft(find.text('olle')).dy, greaterThan(tester.getTopLeft(find.text('maja')).dy));
+  });
+
+  testWidgets("manage mode: X puts another player's save on this PC; hold A never deletes it", (tester) async {
+    final restored = <String>[], deleted = <String>[];
+    await pump(
+      tester,
+      SaveList(
+        view: _view(
+          others: [
+            PlayerSaves(
+              owner: const SaveOwner(userId: 7, username: 'maja'),
+              groups: [
+                _group([_theirs('m.ps2', 8, user: 7, username: 'maja')]),
+              ],
+            ),
+          ],
+        ),
+        mode: SaveListMode.manage,
+        nameOf: name,
+        onRestore: (e) => restored.add(e.fileName),
+        onDelete: (e) => deleted.add(e.fileName),
+      ),
+    );
+    Focus.of(tester.element(find.text('m.ps2'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.detail);
+    expect(restored, ['m.ps2']);
+    await press(tester, GameAction.confirmHold);
+    expect(deleted, isEmpty);
   });
 
   testWidgets("offline: On RomM says RomM can't be reached, and its rows do nothing", (tester) async {

@@ -69,6 +69,7 @@ class PlayPreparer {
           save.rommSave!,
           emulatorId: target.emulatorId,
           coreOverride: target.coreId,
+          own: save.owner == null,
         );
       case SaveSource.backup:
         final ok = await backups.restore(

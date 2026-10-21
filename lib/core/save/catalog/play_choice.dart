@@ -53,6 +53,10 @@ enum PlayPrompt {
   /// The save would replace a save on this PC that isn't on RomM (changed
   /// since its last upload, e.g. played offline): whatever its time, ask.
   notOnRomm,
+
+  /// Gargosy (#92): another player's save would replace the player's own on
+  /// this PC, whatever its time.
+  othersSave,
 }
 
 /// The question to ask before playing [chosen], or null to play straight

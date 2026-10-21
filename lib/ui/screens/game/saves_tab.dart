@@ -63,7 +63,11 @@ class _SavesTabState extends ConsumerState<SavesTab> {
       final older = view.newestLocalFor(target);
       final ok = await showConfirm(
         context,
-        title: prompt == PlayPrompt.notOnRomm ? "Your save on this PC isn't on RomM" : 'Put an older save on this PC?',
+        title: switch (prompt) {
+          PlayPrompt.notOnRomm => "Your save on this PC isn't on RomM",
+          PlayPrompt.othersSave => "Put ${save.owner?.username ?? 'their'}'s save on this PC?",
+          _ => 'Put an older save on this PC?',
+        },
         body:
             'This replaces your ${menu.nameOf(target)} save${older == null ? '' : ' from ${formatSaveTime(older)}'} '
             'with the one from ${formatSaveTime(save.savedAt)}. Your current save is backed up first.',

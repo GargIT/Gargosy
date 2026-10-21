@@ -204,6 +204,7 @@ class GargosyPlayEngine implements PlayEngine {
         backupRepository: repo,
         rommService: _ref.read(rommServiceProvider),
         installed: installed,
+        rommUserId: _ref.read(activeProfileProvider)?.profile.rommUserId,
       ),
     );
     return PlayMenu(
