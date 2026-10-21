@@ -203,7 +203,17 @@ class _FilterFieldState extends ConsumerState<FilterField> {
   void initState() {
     super.initState();
     _input.addListener(() {
-      if (!_input.hasFocus && _editing) _stop(refocus: false);
+      if (_input.hasFocus || !_editing) return;
+      // Typing ends when focus went somewhere else (a click, the D-pad). A
+      // loss to nothing (the window inactive for a moment) keeps it: Flutter
+      // gives the focus back.
+      final now = FocusManager.instance.primaryFocus;
+      if (now == null || now is FocusScopeNode) {
+        debugPrint('[Filter] lost focus to ${now ?? 'nothing'}; still typing');
+        return;
+      }
+      debugPrint('[Filter] focus went to ${_describe(now)}; typing ends');
+      _stop(refocus: false);
     });
   }
 
@@ -220,6 +230,17 @@ class _FilterFieldState extends ConsumerState<FilterField> {
     _input.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// A focus node and the widgets above it, for the log.
+  static String _describe(FocusNode node) {
+    final chain = <String>[];
+    node.context?.visitAncestorElements((e) {
+      final name = e.widget.runtimeType.toString();
+      if (!name.startsWith('_')) chain.add(name);
+      return chain.length < 8;
+    });
+    return '$node in ${chain.join(' < ')}';
   }
 
   Future<void> _activate() async {

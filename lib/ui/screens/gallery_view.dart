@@ -53,6 +53,10 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   int _generation = 0;
   bool _thisPc = false;
 
+  /// The first cover takes focus once, when the page opens: a reload (a
+  /// filter typed, a sort picked) never pulls focus into the grid.
+  bool _autofocusDone = false;
+
   @override
   void initState() {
     super.initState();
@@ -199,7 +203,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
           ? const Center(child: CircularProgressIndicator())
           : null,
       emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
-      autofocus: widget.autofocus,
+      autofocus: widget.autofocus && !_autofocusDone,
       coverUrl: (g) => coverUrlFor(ref, g),
       onOpen: (g) => openGame(context, g),
       onFavorite: (g) => favourite(context, ref, g),
@@ -217,6 +221,11 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
               },
             ),
     );
+    if (!_autofocusDone && games.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _autofocusDone = true;
+      });
+    }
     return Focus(skipTraversal: true, child: body);
   }
 }

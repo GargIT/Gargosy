@@ -11,6 +11,8 @@ import 'package:gargosy/providers/ui_provider.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/screens/gallery_screen.dart';
 import 'package:gargosy/ui/widgets/gallery_bar.dart';
+import 'package:gargosy/ui/widgets/g_dropdown.dart';
+import 'package:gargosy/ui/widgets/game_card.dart';
 import 'package:gargosy/ui/widgets/on_screen_keyboard.dart';
 
 import '../helpers/fake_library_api.dart';
@@ -131,6 +133,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.queries.last.$1.search, 'Game 11');
     expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('focus lost for a moment while results load: no cover takes it, typing goes on', (tester) async {
+    final api = await pump(tester);
+    api.delay = const Duration(milliseconds: 300);
+    await tester.tap(find.byKey(const ValueKey('filter-field')));
+    await tester.pumpAndSettle();
+    final input = find.byKey(const ValueKey('filter-input'));
+    await tester.enterText(input, 'Game 1');
+    // The window goes inactive (Flutter takes the focus away) while RomM answers.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.search, 'Game 1');
+    expect(find.text('Game 100'), findsWidgets); // the grid is back
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(input, findsOneWidget);
+    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('picking a sort with the controller reloads without pulling focus into the grid', (tester) async {
+    final api = await pump(tester);
+    api.delay = const Duration(milliseconds: 300);
+    final sort = find.byKey(const ValueKey('bar-sort'));
+    Focus.of(tester.element(find.descendant(of: sort, matching: find.byType(Container)).first)).requestFocus();
+    await tester.pump();
+    await press(tester, GameAction.confirm);
+    await press(tester, GameAction.down);
+    await press(tester, GameAction.confirm);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.sort, GallerySort.recentlyAdded);
+    final c = FocusManager.instance.primaryFocus!.context!;
+    expect(c.findAncestorWidgetOfExactType<GameCard>(), isNull);
+    expect(c.findAncestorWidgetOfExactType<GDropdownField>(), isNotNull);
   });
 
   testWidgets('editing again puts the cursor after the text', (tester) async {
