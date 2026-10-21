@@ -184,6 +184,20 @@ void main() {
     expect(offset, inInclusiveRange(0, 49));
   });
 
+  test("a platform's random game is asked within that platform", () async {
+    final a = FakeDioAdapter(
+      (r) => (
+        status: 200,
+        body: {
+          'items': [gameJson(1, 'Ico')],
+          'total': 5,
+        },
+      ),
+    );
+    await api(a).randomGame(platformId: 3);
+    expect(a.requests.map((r) => r.queryParameters['platform_ids']), everyElement([3]));
+  });
+
   test('notes are read, added private, and deleted; failures throw', () async {
     final a = FakeDioAdapter(
       (r) => switch (r.method) {

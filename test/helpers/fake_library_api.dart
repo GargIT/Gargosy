@@ -39,7 +39,8 @@ class FakeLibraryApi implements LibraryApi {
   Future<List<RommCollection>> collections() async => const [];
 
   @override
-  Future<Game?> randomGame() async => all.isEmpty ? null : all.first;
+  Future<Game?> randomGame({int? platformId}) async =>
+      all.where((g) => platformId == null || g.platformId == platformId).firstOrNull;
 
   final notesById = <String, List<RomNote>>{};
 

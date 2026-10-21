@@ -7,7 +7,7 @@ import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/pages/platform_card.dart';
 import 'package:gargosy/ui/pages/platforms_page.dart';
-import 'package:gargosy/ui/screens/gallery_screen.dart';
+import 'package:gargosy/ui/screens/platform/platform_screen.dart';
 
 import '../helpers/fake_library_api.dart';
 import '../helpers/profile_test_env.dart';
@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('heading with the counts; a card per platform; A opens its gallery', (tester) async {
+  testWidgets('heading with the counts; a card per platform; A opens its page', (tester) async {
     await pumpPage(tester);
     expect(find.text('Platforms'), findsOneWidget);
     expect(find.byKey(const ValueKey('platforms-heading')), findsOneWidget);
@@ -54,7 +54,7 @@ void main() {
     expect(find.text('Sony · 2000 · 1335 games'), findsOneWidget);
     expect(find.byType(PlatformCard), findsNWidgets(2));
     await press(tester, GameAction.confirm);
-    expect(find.byType(GalleryScreen), findsOneWidget);
+    expect(tester.widget<PlatformScreen>(find.byType(PlatformScreen)).platform.slug, 'ps2');
   });
 
   for (final (width, perRow) in [(1920.0, 6), (1280.0, 4), (900.0, 3)]) {

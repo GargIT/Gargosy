@@ -222,8 +222,9 @@ abstract class LibraryApi {
   /// that collection first when the user has none.
   Future<RommCollection> setFavourite(String gameId, bool favourite, {required int userId});
 
-  /// A random game of the library, or null when it is empty.
-  Future<Game?> randomGame();
+  /// A random game of the library (of one platform with [platformId]), or
+  /// null when there is none.
+  Future<Game?> randomGame({int? platformId});
 
   /// The user's notes on a game. Unlike the copied RommService calls, these
   /// throw when RomM can't be reached, so pages can show the error.
@@ -292,10 +293,11 @@ class RommLibraryApi implements LibraryApi {
   }
 
   @override
-  Future<Game?> randomGame() async {
-    final first = await page(const GalleryQuery(), limit: 1);
+  Future<Game?> randomGame({int? platformId}) async {
+    final q = GalleryQuery(platformId: platformId);
+    final first = await page(q, limit: 1);
     if (first.total == 0) return null;
-    final pick = await page(const GalleryQuery(), offset: Random().nextInt(first.total), limit: 1);
+    final pick = await page(q, offset: Random().nextInt(first.total), limit: 1);
     return pick.games.isEmpty ? null : pick.games.first;
   }
 

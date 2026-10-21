@@ -29,6 +29,7 @@ class GalleryView extends ConsumerStatefulWidget {
     this.filterHint,
     this.emptyText = 'No games here',
     this.autofocus = true,
+    this.pinnedBar = false,
   });
 
   final GalleryQuery query;
@@ -38,6 +39,10 @@ class GalleryView extends ConsumerStatefulWidget {
   final String? filterHint;
   final String emptyText;
   final bool autofocus;
+
+  /// The bar stays above the grid instead of scrolling with it (the
+  /// platform page, where it sits under the pinned tabs).
+  final bool pinnedBar;
 
   @override
   ConsumerState<GalleryView> createState() => _GalleryViewState();
@@ -155,6 +160,15 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       games = localGallery(local, _query, inScope: (_) => true, installedAt: files.installedAt);
       total = games.length;
     }
+    final bar = GalleryBar(
+      query: _query,
+      onQuery: _setQuery,
+      onFilters: () => _filters(values),
+      thisPc: _thisPc,
+      thisPcCount: _thisPc ? total : null,
+      onThisPc: _setThisPc,
+      filterHint: widget.filterHint,
+    );
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -180,15 +194,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
               ],
             ),
           ),
-        GalleryBar(
-          query: _query,
-          onQuery: _setQuery,
-          onFilters: () => _filters(values),
-          thisPc: _thisPc,
-          thisPcCount: _thisPc ? total : null,
-          onThisPc: _setThisPc,
-          filterHint: widget.filterHint,
-        ),
+        if (!widget.pinnedBar) bar,
       ],
     );
     // One grid in every state: the header (and a filter being typed in) stays put.
@@ -226,7 +232,18 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         if (mounted) _autofocusDone = true;
       });
     }
-    return Focus(skipTraversal: true, child: body);
+    return Focus(
+      skipTraversal: true,
+      child: widget.pinnedBar
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                bar,
+                Expanded(child: body),
+              ],
+            )
+          : body,
+    );
   }
 }
 

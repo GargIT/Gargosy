@@ -317,6 +317,10 @@ class Platform {
   final int gamesCount;
   final List<Firmware> firmware;
   final int firmwareCount;
+  final String? category; // RomM's type, e.g. Console
+  final String? familyName; // the maker, e.g. Sony
+  final int? generation;
+  final int fsSizeBytes; // the platform's games on RomM's disk
 
   String get nameForDisplay => displayName.isNotEmpty ? displayName : name;
 
@@ -329,6 +333,10 @@ class Platform {
     this.gamesCount = 0,
     this.firmware = const [],
     this.firmwareCount = 0,
+    this.category,
+    this.familyName,
+    this.generation,
+    this.fsSizeBytes = 0,
   });
 
   factory Platform.fromJson(Map<String, dynamic> json) {
@@ -341,6 +349,10 @@ class Platform {
       gamesCount: (json['rom_count'] as int?) ?? (json['roms_count'] as int?) ?? (json['games_count'] as int?) ?? 0,
       firmware: (json['firmware'] as List<dynamic>?)?.map((e) => Firmware.fromJson(e)).toList() ?? [],
       firmwareCount: json['firmware_count'] as int? ?? 0,
+      category: json['category'] is String ? json['category'] as String : null,
+      familyName: json['family_name'] is String ? json['family_name'] as String : null,
+      generation: json['generation'] is int ? json['generation'] as int : null,
+      fsSizeBytes: json['fs_size_bytes'] is int ? json['fs_size_bytes'] as int : 0,
     );
   }
 

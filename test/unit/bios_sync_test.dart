@@ -6,8 +6,10 @@ import 'package:gargosy/core/emulator/firmware_service.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/romm_service.dart';
+import 'package:gargosy/emulators/bios_links.dart';
 import 'package:gargosy/emulators/bios_sync.dart';
 import 'package:gargosy/emulators/profile_directories.dart';
+import 'package:gargosy/library/platform_firmware.dart';
 import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
@@ -49,6 +51,14 @@ void main() {
     await service([_fw(2, r'..\..\evil.bin')]).syncFirmwareForEmulator('pcsx2');
     expect(io.File(p.join(root.root, 'evil.bin')).existsSync(), isFalse);
     expect(io.File(p.join(p.dirname(root.root), 'evil.bin')).existsSync(), isFalse);
+  });
+
+  test("one platform's firmware: every file comes down into the bios folder, and then shows as on this PC", () async {
+    final fw = [_fw(1, 'ps2-0230a-20080220.bin'), _fw(2, 'SCPH-70012.MEC')];
+    final sync = BiosSync(service(fw));
+    expect(await sync.forPlatform('ps2'), 2);
+    expect(firmwareOnThisPc(fw, BiosFiles(root.bios)).map((f) => f.onThisPc), [true, true]);
+    expect(await sync.forPlatform('ps2'), 0);
   });
 
   test('says how many files it brought down; a file already there is not fetched again', () async {
