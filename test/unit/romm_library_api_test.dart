@@ -184,6 +184,25 @@ void main() {
     expect(offset, inInclusiveRange(0, 49));
   });
 
+  test("RomM's letter index is asked only when wanted, and read back", () async {
+    final a = FakeDioAdapter(
+      (r) => (
+        status: 200,
+        body: {
+          'items': [gameJson(1, 'Ico')],
+          'total': 1,
+          'char_index': {'i': 0, 'r': 7},
+        },
+      ),
+    );
+    final plain = await api(a).page(const GalleryQuery());
+    expect(a.requests.last.queryParameters['with_char_index'], false);
+    expect(plain.charIndex, isNull);
+    final indexed = await api(a).page(const GalleryQuery(), withCharIndex: true);
+    expect(a.requests.last.queryParameters['with_char_index'], true);
+    expect(indexed.charIndex, {'i': 0, 'r': 7});
+  });
+
   test("a platform's random game is asked within that platform", () async {
     final a = FakeDioAdapter(
       (r) => (

@@ -10,6 +10,9 @@ class FakeLibraryApi implements LibraryApi {
   final List<Game> all;
   final FilterValues values;
   final queries = <(GalleryQuery, int)>[];
+
+  /// Each page's limit, in order.
+  final limits = <int>[];
   Object? failWith;
 
   /// How long each page takes (a real server isn't instant).
@@ -24,6 +27,7 @@ class FakeLibraryApi implements LibraryApi {
     int offset = 0,
     int limit = RommLibraryApi.pageSize,
     bool withFilterValues = false,
+    bool withCharIndex = false,
   }) async {
     queries.add((q, offset));
     if (delay > Duration.zero) await Future<void>.delayed(delay);
@@ -32,7 +36,17 @@ class FakeLibraryApi implements LibraryApi {
     var list = all.where((g) => q.search == null || g.name.toLowerCase().contains(q.search!.toLowerCase())).toList();
     if (q.genres.isNotEmpty) list = list.where((g) => g.genres.any(q.genres.contains)).toList();
     final slice = list.skip(offset).take(limit).toList();
-    return GalleryPage(games: slice, total: list.length, filters: withFilterValues ? values : null);
+    limits.add(limit);
+    // As RomM: by name only, each first letter's offset in the whole list.
+    Map<String, int>? index;
+    if (withCharIndex && q.sort == GallerySort.name) {
+      index = {};
+      for (var i = 0; i < list.length; i++) {
+        final c = list[i].name.toLowerCase();
+        if (c.isNotEmpty) index.putIfAbsent(c[0], () => i);
+      }
+    }
+    return GalleryPage(games: slice, total: list.length, filters: withFilterValues ? values : null, charIndex: index);
   }
 
   @override

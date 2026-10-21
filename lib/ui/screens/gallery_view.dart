@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
+import '../../library/letter_index.dart';
 import '../../library/library_snapshot.dart';
 import '../../library/local_gallery.dart';
 import '../../providers/download_providers.dart';
 import '../../providers/library_providers.dart';
 import '../../providers/romm_providers.dart';
 import '../theme/tokens.dart';
+import '../widgets/alphabet_rail.dart';
 import '../widgets/cover_grid.dart';
 import '../widgets/error_retry.dart';
 import '../widgets/g_focusable.dart';
@@ -54,6 +58,11 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   int? _total;
   FilterValues _values = const FilterValues();
   bool _loading = false;
+  Future<void>? _inFlight;
+
+  /// RomM's first-letter offsets for this order (by name only), as rail letters.
+  Map<String, int> _rail = const {};
+  final _gridKey = GlobalKey<CoverGridState>();
   Object? _error;
   int _generation = 0;
   bool _thisPc = false;
@@ -81,23 +90,36 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     _generation++;
     _games.clear();
     _total = null;
+    _rail = const {};
     _error = null;
     _loading = false;
     if (!_thisPc) _loadMore(first: true);
   }
 
-  Future<void> _loadMore({bool first = false}) async {
+  /// The next page, or with [upTo] every game up to that position in one
+  /// request (a jump on the A–Z rail).
+  Future<void> _loadMore({bool first = false, int? upTo}) async {
     final api = ref.read(libraryApiProvider);
     if (_thisPc || api == null || _loading || (_total != null && _games.length >= _total!)) return;
     final gen = _generation;
     setState(() => _loading = true);
+    final done = Completer<void>();
+    _inFlight = done.future;
     try {
-      final page = await api.page(_query, offset: _games.length, withFilterValues: first);
+      final limit = upTo == null ? RommLibraryApi.pageSize : upTo - _games.length + RommLibraryApi.pageSize;
+      final page = await api.page(
+        _query,
+        offset: _games.length,
+        limit: limit,
+        withFilterValues: first,
+        withCharIndex: first && _query.sort == GallerySort.name,
+      );
       if (!mounted || gen != _generation) return;
       setState(() {
         _games.addAll(page.games);
         _total = page.total;
         if (page.filters != null) _values = page.filters!;
+        if (page.charIndex != null) _rail = railIndexOf(page.charIndex!);
         _loading = false;
       });
     } on Object catch (e) {
@@ -106,7 +128,24 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         _error = e;
         _loading = false;
       });
+    } finally {
+      done.complete();
     }
+  }
+
+  /// The A–Z rail: the first game under [letter] in [rail], loaded first when
+  /// it's beyond the pages so far, then scrolled to and focused.
+  Future<void> _jump(String letter, Map<String, int> rail) async {
+    final at = rail[letter];
+    if (at == null) return;
+    if (!_thisPc && at >= _games.length) {
+      if (_loading) await _inFlight;
+      if (!mounted) return;
+      await _loadMore(upTo: at);
+      if (!mounted || at >= _games.length) return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _gridKey.currentState?.jumpTo(at));
+    WidgetsBinding.instance.scheduleFrame(); // a click that changes nothing draws none
   }
 
   void _setQuery(GalleryQuery next) {
@@ -199,7 +238,13 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     );
     // One grid in every state: the header (and a filter being typed in) stays put.
     final failed = !_thisPc && _error != null && _games.isEmpty;
-    final body = CoverGrid(
+    final rail = _query.sort != GallerySort.name
+        ? const <String, int>{}
+        : _thisPc
+        ? railIndexOfGames(games)
+        : _rail;
+    final grid = CoverGrid(
+      key: _gridKey,
       header: header,
       games: games,
       total: total,
@@ -227,6 +272,20 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
               },
             ),
     );
+    // The rail sits in the grid's right margin, so the covers don't move for it.
+    final body = rail.isEmpty
+        ? grid
+        : Stack(
+            children: [
+              grid,
+              Positioned(
+                top: GSpace.s4,
+                bottom: GSpace.s4,
+                right: (GSpace.rowPad - AlphabetRail.width) / 2,
+                child: AlphabetRail(letters: rail.keys.toSet(), onJump: (l) => _jump(l, rail)),
+              ),
+            ],
+          );
     if (!_autofocusDone && games.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _autofocusDone = true;

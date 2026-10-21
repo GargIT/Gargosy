@@ -132,3 +132,8 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 46. [ ] Firmware / BIOS marks what's in `bios\`. Get missing from RomM brings the rest, and they show as On this PC.
 47. [ ] Emulator: change the emulator (with two installed) or RetroArch's core; Settings → Emulator settings shows the same, and a game without "Always for this game" plays in it. An uninstalled emulator's Install under Emulators opens Settings → Emulators.
 48. [ ] LB/RB switch tabs. Move to a cover, RB, move in the firmware list, LB: focus is back on that cover; RB: back in the list.
+
+## A–Z rail (#95)
+
+49. [ ] On a big platform sorted by Name, click a letter far down (T): the page jumps to the first T game, also when it wasn't loaded yet. `#` jumps to games starting with a digit or symbol; letters without games are greyed.
+50. [ ] With a controller: D-pad right from the last column reaches the rail, up/down picks a letter (skipping greyed ones), A or left jumps into the grid at it. Sorted by anything else, there's no rail. On this PC, the rail jumps within the downloaded games.
