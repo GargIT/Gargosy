@@ -12,6 +12,9 @@ class FakeLibraryApi implements LibraryApi {
   final queries = <(GalleryQuery, int)>[];
   Object? failWith;
 
+  /// How long each page takes (a real server isn't instant).
+  Duration delay = Duration.zero;
+
   /// Pages from this offset on fail (the server went away mid-scroll).
   int? failFromOffset;
 
@@ -23,6 +26,7 @@ class FakeLibraryApi implements LibraryApi {
     bool withFilterValues = false,
   }) async {
     queries.add((q, offset));
+    if (delay > Duration.zero) await Future<void>.delayed(delay);
     if (failWith != null) throw failWith!;
     if (failFromOffset != null && offset >= failFromOffset!) throw Exception('SocketException: connection reset');
     var list = all.where((g) => q.search == null || g.name.toLowerCase().contains(q.search!.toLowerCase())).toList();

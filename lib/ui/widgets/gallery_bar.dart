@@ -232,7 +232,10 @@ class _FilterFieldState extends ConsumerState<FilterField> {
     }
     setState(() => _editing = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _editing) _input.requestFocus();
+      if (!mounted || !_editing) return;
+      _input.requestFocus();
+      // The cursor goes after the text, to type on.
+      _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
     });
   }
 
