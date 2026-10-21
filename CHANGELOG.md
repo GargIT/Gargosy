@@ -22,6 +22,11 @@ What changed in each release of Gargosy. The format follows
   and sort bar: a filter box (it asks RomM, so it finds games not loaded
   yet), Filters (genre, region), On this PC, Sort by and the direction. With
   a controller, A on the filter box opens the on-screen keyboard.
+- Sorted by name, a games page has an A–Z rail on its right: click a letter,
+  or with a controller go right from the last column, pick a letter with up
+  and down, and press A or left to jump to its first game (`#` for digits and
+  symbols). X goes straight to the rail, at the focused game's letter. Letters
+  without games are greyed.
 - Sort by Size, Players, Length (HowLongToBeat's main story), and your own
   rating, completion and status.
 - On this PC shows only the games downloaded here, and works with RomM away.

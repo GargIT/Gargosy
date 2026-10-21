@@ -92,14 +92,20 @@ class GalleryQuery {
 
   bool get hasFilters => genres.isNotEmpty || regions.isNotEmpty;
 
-  Map<String, dynamic> toParams({required int offset, required int limit, bool withFilterValues = false}) {
+  Map<String, dynamic> toParams({
+    required int offset,
+    required int limit,
+    bool withFilterValues = false,
+    bool withCharIndex = false,
+  }) {
     final term = search?.trim() ?? '';
     return {
       'offset': offset,
       'limit': limit,
       'order_by': sort.field,
       'order_dir': descending ? 'desc' : 'asc',
-      'with_char_index': false,
+      // Each first letter's offset in this order, for the A–Z rail (by name only).
+      'with_char_index': withCharIndex,
       // RomM builds the ordered id list of the whole result set unless told
       // not to; Gargosy never uses it.
       'with_rom_id_index': false,
@@ -157,10 +163,14 @@ class FilterValues {
 }
 
 class GalleryPage {
-  const GalleryPage({required this.games, required this.total, this.filters});
+  const GalleryPage({required this.games, required this.total, this.filters, this.charIndex});
   final List<Game> games;
   final int total;
   final FilterValues? filters;
+
+  /// RomM's `char_index`: a first character (lowercase, leading articles
+  /// dropped) → the offset of its first game in this order. Asked for only.
+  final Map<String, int>? charIndex;
 }
 
 class RommCollection {
@@ -215,6 +225,7 @@ abstract class LibraryApi {
     int offset = 0,
     int limit = RommLibraryApi.pageSize,
     bool withFilterValues = false,
+    bool withCharIndex = false,
   });
   Future<List<RommCollection>> collections();
 
@@ -249,10 +260,16 @@ class RommLibraryApi implements LibraryApi {
     int offset = 0,
     int limit = pageSize,
     bool withFilterValues = false,
+    bool withCharIndex = false,
   }) async {
     final r = await dio.get(
       '/api/roms',
-      queryParameters: q.toParams(offset: offset, limit: limit, withFilterValues: withFilterValues),
+      queryParameters: q.toParams(
+        offset: offset,
+        limit: limit,
+        withFilterValues: withFilterValues,
+        withCharIndex: withCharIndex,
+      ),
       options: auth(),
     );
     final data = r.data as Map<String, dynamic>;
@@ -262,10 +279,17 @@ class RommLibraryApi implements LibraryApi {
     ];
     final total = data['total'] is int ? data['total'] as int : offset + games.length;
     final fv = data['filter_values'];
+    final ci = data['char_index'];
     return GalleryPage(
       games: games,
       total: total,
       filters: withFilterValues && fv is Map<String, dynamic> ? FilterValues.fromJson(fv) : null,
+      charIndex: withCharIndex && ci is Map
+          ? {
+              for (final e in ci.entries)
+                if (e.key is String && e.value is int) e.key as String: e.value as int,
+            }
+          : null,
     );
   }
 

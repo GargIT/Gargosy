@@ -7,7 +7,7 @@ import 'game_card.dart';
 
 /// A gallery's grid of game cards. Focus wraps between rows (spec §7), and
 /// [onEndReached] asks for the next page when the end comes into view.
-class CoverGrid extends StatelessWidget {
+class CoverGrid extends StatefulWidget {
   const CoverGrid({
     super.key,
     required this.games,
@@ -53,23 +53,97 @@ class CoverGrid extends StatelessWidget {
   }
 
   @override
+  State<CoverGrid> createState() => CoverGridState();
+}
+
+class CoverGridState extends State<CoverGrid> {
+  final _scroll = ScrollController();
+  final _headerKey = GlobalKey();
+  int _columns = 1;
+
+  /// A focus node per position, so a jump can focus the game it lands on.
+  final _nodes = <int, FocusNode>{};
+
+  FocusNode _nodeFor(int i) => _nodes.putIfAbsent(i, () => FocusNode(debugLabel: 'cover $i'));
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    for (final n in _nodes.values) {
+      n.dispose();
+    }
+    super.dispose();
+  }
+
+  /// The focused game's position, else the first game whose row shows at
+  /// the top of the grid (0 when none).
+  int currentIndex() {
+    final focused = FocusManager.instance.primaryFocus;
+    for (final e in _nodes.entries) {
+      if (e.value == focused && e.value.context != null && e.key < widget.games.length) return e.key;
+    }
+    return firstVisibleIndex();
+  }
+
+  /// The first game whose row shows at the top of the grid (0 when none).
+  int firstVisibleIndex() {
+    if (!_scroll.hasClients || widget.games.isEmpty) return 0;
+    final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
+    final into = _scroll.position.pixels - header - GSpace.s4;
+    if (into <= 0) return 0;
+    // A row more than half scrolled away doesn't count as shown.
+    final row = ((into + (GameCard.height + CoverGrid.gap) / 2) / (GameCard.height + CoverGrid.gap)).floor();
+    return (row * _columns).clamp(0, widget.games.length - 1);
+  }
+
+  /// Scrolls to the game at [index] (already loaded) and focuses it: the
+  /// A–Z rail's jump. Every row is as tall, so the offset is known without
+  /// building the rows in between. Games just loaded may not be laid out
+  /// yet: it tries again over the next frames until the cover is there.
+  void jumpTo(int index, {int frames = 6}) {
+    if (!mounted || index < 0 || index >= widget.games.length || !_scroll.hasClients) return;
+    final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
+    final row = index ~/ _columns;
+    final target = header + GSpace.s4 + row * (GameCard.height + CoverGrid.gap);
+    _scroll.jumpTo(target.clamp(0.0, _scroll.position.maxScrollExtent));
+    final node = _nodes[index];
+    if (node != null && node.context != null && _scroll.position.pixels >= target - 1) {
+      node.requestFocus();
+      return;
+    }
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 1 && node?.context != null) {
+      node!.requestFocus(); // near the end: the row can't come to the top
+      return;
+    }
+    if (frames == 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => jumpTo(index, frames: frames - 1));
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final w = widget;
+    final games = w.games;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = columnsFor(constraints.maxWidth);
+        final columns = _columns = CoverGrid.columnsFor(constraints.maxWidth);
         return FocusTraversalGroup(
           policy: WrapGridTraversalPolicy(),
           child: CustomScrollView(
+            controller: _scroll,
             slivers: [
-              if (header != null) SliverToBoxAdapter(child: header),
-              if (placeholder != null)
-                SliverFillRemaining(hasScrollBody: false, child: placeholder)
+              if (w.header != null)
+                SliverToBoxAdapter(
+                  child: KeyedSubtree(key: _headerKey, child: w.header!),
+                ),
+              if (w.placeholder != null)
+                SliverFillRemaining(hasScrollBody: false, child: w.placeholder)
               else if (games.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
                     child: Text(
-                      emptyText,
+                      w.emptyText,
                       style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
                     ),
                   ),
@@ -80,33 +154,34 @@ class CoverGrid extends StatelessWidget {
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columns,
-                      mainAxisSpacing: gap,
-                      crossAxisSpacing: gap,
+                      mainAxisSpacing: CoverGrid.gap,
+                      crossAxisSpacing: CoverGrid.gap,
                       mainAxisExtent: GameCard.height,
                     ),
                     delegate: SliverChildBuilderDelegate((context, i) {
-                      if (onEndReached != null &&
+                      if (w.onEndReached != null &&
                           i >= games.length - columns * 2 &&
-                          (total == null || games.length < total!)) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) => onEndReached!());
+                          (w.total == null || games.length < w.total!)) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) => w.onEndReached!());
                       }
                       final g = games[i];
                       return Align(
                         alignment: Alignment.topLeft,
                         child: GameCard(
                           game: g,
-                          coverUrl: coverUrl(g),
-                          autofocus: autofocus && i == 0,
-                          favourite: isFavourite?.call(g) ?? false,
-                          downloaded: isDownloaded?.call(g) ?? false,
-                          onOpen: () => onOpen(g),
-                          onFavorite: onFavorite == null ? null : () => onFavorite!(g),
+                          coverUrl: w.coverUrl(g),
+                          focusNode: _nodeFor(i),
+                          autofocus: w.autofocus && i == 0,
+                          favourite: w.isFavourite?.call(g) ?? false,
+                          downloaded: w.isDownloaded?.call(g) ?? false,
+                          onOpen: () => w.onOpen(g),
+                          onFavorite: w.onFavorite == null ? null : () => w.onFavorite!(g),
                         ),
                       );
                     }, childCount: games.length),
                   ),
                 ),
-              if (footer != null && games.isNotEmpty) SliverToBoxAdapter(child: footer),
+              if (w.footer != null && games.isNotEmpty) SliverToBoxAdapter(child: w.footer),
             ],
           ),
         );
