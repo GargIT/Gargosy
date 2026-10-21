@@ -262,6 +262,22 @@ void main() {
     expect(api.queries.last.$1.sort, GallerySort.name);
   });
 
+  for (final width in [900.0, 1280.0, 1920.0]) {
+    testWidgets('${width.toInt()} px: the filters on the left, Sort by and the direction at the right edge', (
+      tester,
+    ) async {
+      await pump(tester);
+      tester.view.physicalSize = Size(width, 1080);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final direction = tester.getRect(find.byKey(const ValueKey('bar-direction')));
+      expect(direction.right, closeTo(width - 36, 1)); // the row padding
+      final sort = tester.getRect(find.byKey(const ValueKey('bar-sort')));
+      expect(sort.right, lessThan(direction.left));
+      expect(tester.getRect(find.byKey(const ValueKey('filter-field'))).left, closeTo(36, 1));
+    });
+  }
+
   testWidgets('shows the error with retry', (tester) async {
     await pump(tester, failWith: Exception('SocketException: connection refused'));
     expect(find.textContaining("Can't reach RomM"), findsOneWidget);
