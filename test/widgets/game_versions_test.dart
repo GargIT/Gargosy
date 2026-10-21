@@ -7,6 +7,7 @@ import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/screens/gallery_screen.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
+import 'package:gargosy/ui/widgets/game_card.dart';
 
 import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
@@ -79,6 +80,43 @@ void main() {
     await tester.tap(find.text('(Europe)'));
     await tester.pumpAndSettle();
     expect(shownGame(tester).id, '2');
+  });
+
+  testWidgets("versions RomM didn't group (matched by different ids) still fold into one card", (tester) async {
+    await setDesktopSize(tester);
+    // As RomM sends a patched copy without IGDB's id: both listed, each the other's sibling.
+    final original = Game.fromJson({
+      ...gameJson(10, '007 Agent Under Fire', fsName: '007 Agent Under Fire (USA).chd'),
+      'sibling_roms': [
+        {'id': 11, 'name': '007 Agent Under Fire', 'fs_name_no_ext': '007 Agent Under Fire (USA) (Widescreen)'},
+      ],
+    });
+    final hack = Game.fromJson({
+      ...gameJson(11, '007 Agent Under Fire', fsName: '007 Agent Under Fire (USA) (Widescreen).chd'),
+      'sibling_roms': [
+        {'id': 10, 'name': '007 Agent Under Fire', 'fs_name_no_ext': '007 Agent Under Fire (USA)'},
+      ],
+    });
+    await tester.pumpWidget(
+      testApp(
+        const GalleryScreen(title: 'PlayStation 2', query: GalleryQuery(platformId: 1)),
+        overrides: [
+          libraryApiProvider.overrideWithValue(FakeLibraryApi([original, hack, game(12, 'Burnout 3')])),
+          favouriteIdsProvider.overrideWithValue(const {}),
+          gamesOnThisPcProvider.overrideWithValue(const []),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('card-versions')), findsOneWidget);
+    expect(find.byType(GameCard), findsNWidgets(2));
+    // The A–Z rail's offsets are RomM's: B is at 2 there, the second card here.
+    await tester.tap(find.byKey(const ValueKey('rail-B')));
+    await tester.pumpAndSettle();
+    expect(
+      FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<GameCard>()?.game.name,
+      'Burnout 3',
+    );
   });
 
   testWidgets("the game page's Version switches to another version's page", (tester) async {

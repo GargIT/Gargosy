@@ -142,7 +142,9 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   /// shown game's (the letter whose first game is the last at or before it).
   void _toRail(Map<String, int> rail) {
     if (rail.isEmpty) return;
-    final first = _gridKey.currentState?.currentIndex() ?? 0;
+    final shownAt = _gridKey.currentState?.currentIndex() ?? 0;
+    // RomM's letter offsets count its own list, folded versions too.
+    final first = _thisPc ? shownAt : _rawIndexOfShown(shownAt);
     String? letter;
     var best = -1;
     for (final e in rail.entries) {
@@ -165,8 +167,30 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       await _loadMore(upTo: at);
       if (!mounted || at >= _games.length) return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _gridKey.currentState?.jumpTo(at));
+    final target = _thisPc ? at : _shownIndexOfRaw(at);
+    if (target < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _gridKey.currentState?.jumpTo(target));
     WidgetsBinding.instance.scheduleFrame(); // a click that changes nothing draws none
+  }
+
+  /// RomM's games ([_games], in its order) with each game's versions folded
+  /// into the first of them: RomM's `group_by_meta_id` groups by one
+  /// metadata id, so versions matched by different ids (a patched copy
+  /// without IGDB's) still come apart, though `sibling_roms` links them.
+  List<Game> get _shown => foldVersions(_games);
+
+  /// The shown game at or after RomM's position [raw] (-1 when none).
+  int _shownIndexOfRaw(int raw) {
+    final pos = {for (var i = 0; i < _games.length; i++) _games[i].id: i};
+    return _shown.indexWhere((g) => pos[g.id]! >= raw);
+  }
+
+  /// RomM's position of the shown game at [shown].
+  int _rawIndexOfShown(int shown) {
+    final list = _shown;
+    if (list.isEmpty) return 0;
+    final id = list[shown.clamp(0, list.length - 1)].id;
+    return _games.indexWhere((g) => g.id == id).clamp(0, _games.length);
   }
 
   void _setQuery(GalleryQuery next) {
@@ -210,7 +234,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   @override
   Widget build(BuildContext context) {
     final favIds = ref.watch(favouriteIdsProvider);
-    List<Game> games = _games;
+    List<Game> games = _shown;
     int? total = _total;
     var values = _values;
     if (_thisPc) {
