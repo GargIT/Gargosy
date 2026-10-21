@@ -69,29 +69,33 @@ class GDropdownField extends StatelessWidget {
 
 /// Opens the list for the field built under [field]: right below it, as
 /// wide (at least 220), above it when there's no room below. A picks, B or a
-/// click outside closes it. The index picked, or null.
+/// click outside closes it. [headings] go above the item at their index, and
+/// are never focused. The index picked, or null.
 Future<int?> showDropdown(
   BuildContext context, {
   required GlobalKey field,
   required List<String> labels,
   int? current,
+  Map<int, String> headings = const {},
 }) {
   final box = field.currentContext?.findRenderObject() as RenderBox?;
   final overlay = Navigator.of(context).overlay?.context.findRenderObject() as RenderBox?;
   if (box == null || overlay == null || !box.attached) return Future.value();
   final rect = box.localToGlobal(Offset.zero, ancestor: overlay) & box.size;
-  return Navigator.of(context).push(_DropdownRoute(rect: rect, labels: labels, current: current));
+  return Navigator.of(context).push(_DropdownRoute(rect: rect, labels: labels, current: current, headings: headings));
 }
 
 class _DropdownRoute extends PopupRoute<int> {
-  _DropdownRoute({required this.rect, required this.labels, required this.current});
+  _DropdownRoute({required this.rect, required this.labels, required this.current, required this.headings});
 
   final Rect rect;
   final List<String> labels;
   final int? current;
+  final Map<int, String> headings;
 
   static const _gap = 6.0;
   static const _rowHeight = 46.0;
+  static const _headingHeight = 30.0;
 
   @override
   Color? get barrierColor => Colors.transparent;
@@ -118,7 +122,7 @@ class _DropdownRoute extends PopupRoute<int> {
       builder: (context, c) {
         final width = math.max(rect.width, 220.0);
         final left = math.min(rect.left, c.maxWidth - width - GSpace.s4).clamp(0.0, double.infinity);
-        final wanted = labels.length * _rowHeight + GSpace.s2 * 2;
+        final wanted = labels.length * _rowHeight + headings.length * _headingHeight + GSpace.s2 * 2;
         final below = c.maxHeight - rect.bottom - _gap - GSpace.s4;
         final above = rect.top - _gap - GSpace.s4;
         final down = below >= math.min(wanted, 200) || below >= above;
@@ -138,7 +142,12 @@ class _DropdownRoute extends PopupRoute<int> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
-                children: [for (var i = 0; i < labels.length; i++) _item(context, i)],
+                children: [
+                  for (var i = 0; i < labels.length; i++) ...[
+                    if (headings[i] != null) _heading(headings[i]!),
+                    _item(context, i),
+                  ],
+                ],
               ),
             ),
           ),
@@ -157,6 +166,16 @@ class _DropdownRoute extends PopupRoute<int> {
       },
     );
   }
+
+  Widget _heading(String text) => Container(
+    height: _headingHeight,
+    alignment: Alignment.bottomLeft,
+    padding: const EdgeInsets.fromLTRB(GSpace.s3, 0, GSpace.s3, GSpace.s1),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: GFont.xs, fontWeight: FontWeight.w700, letterSpacing: 1, color: GColors.fgMuted),
+    ),
+  );
 
   Widget _item(BuildContext context, int i) {
     final chosen = i == current;

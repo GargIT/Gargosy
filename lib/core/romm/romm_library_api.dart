@@ -5,19 +5,44 @@ import 'package:flutter/foundation.dart';
 
 import 'romm_models.dart';
 
-/// Gallery sort orders, as RomM's `/api/roms` `order_by` names them.
+/// Where a sort's order comes from: RomM's fields, the player's own, or
+/// Gargosy's (only with On this PC on).
+enum SortGroup {
+  romm('ROMM'),
+  yours('YOURS'),
+  thisPc('THIS PC');
+
+  const SortGroup(this.label);
+  final String label;
+}
+
+/// Gallery sort orders, as RomM's `/api/roms` `order_by` names them (a
+/// `Rom`, `RomUser` or metadata column, checked against RomM 5.4.0's
+/// `_resolve_gallery_sort_key`; an older RomM sorts an unknown name by name).
 enum GallerySort {
   name('name', 'Name', false),
   recentlyAdded('created_at', 'Recently added', true),
   lastPlayed('last_played', 'Last played', true),
   releaseDate('first_release_date', 'Release date', true),
-  rating('average_rating', 'Rating', true);
+  rating('average_rating', 'Rating', true),
+  size('fs_size_bytes', 'Size', true),
+  players('player_count', 'Players', true),
+  length('hltb_main_story', 'Length', false),
+  myRating('rating', 'My rating', true, SortGroup.yours),
+  completion('completion', 'Completion', true, SortGroup.yours),
+  status('status', 'Status', false, SortGroup.yours),
 
-  const GallerySort(this.field, this.label, this.descByDefault);
+  /// Newest download first; Gargosy sorts it itself.
+  downloaded('name', 'Downloaded', true, SortGroup.thisPc);
+
+  const GallerySort(this.field, this.label, this.descByDefault, [this.group = SortGroup.romm]);
   final String field;
   final String label;
   final bool descByDefault;
+  final SortGroup group;
 }
+
+const _keep = Object();
 
 /// What a gallery shows: its scope (a platform, a collection, favourites or a
 /// search), its sort and its filters.
@@ -48,7 +73,7 @@ class GalleryQuery {
   final bool lastPlayedOnly;
 
   GalleryQuery copyWith({
-    String? search,
+    Object? search = _keep,
     GallerySort? sort,
     bool? descending,
     Set<String>? genres,
@@ -57,7 +82,7 @@ class GalleryQuery {
     platformId: platformId,
     collectionId: collectionId,
     favourites: favourites,
-    search: search ?? this.search,
+    search: identical(search, _keep) ? this.search : search as String?,
     sort: sort ?? this.sort,
     descending: descending ?? this.descending,
     genres: genres ?? this.genres,

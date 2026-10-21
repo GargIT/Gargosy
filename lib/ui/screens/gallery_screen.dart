@@ -12,6 +12,15 @@ import '../theme/tokens.dart';
 import '../widgets/hint_bar.dart';
 import 'gallery_view.dart';
 
+/// The filter field's hint for a gallery of [q].
+String filterHintFor(GalleryQuery q) => q.platformId != null
+    ? 'Filter this platform…'
+    : q.collectionId != null
+    ? 'Filter this collection…'
+    : q.favourites
+    ? 'Filter favourites…'
+    : 'Filter…';
+
 /// A platform's, a collection's or the favourites' games (spec §2).
 class GalleryScreen extends ConsumerStatefulWidget {
   const GalleryScreen({super.key, required this.title, required this.query});
@@ -46,14 +55,17 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         if (s != _scrolled) setState(() => _scrolled = s);
                         return false;
                       },
-                      child: GalleryView(title: widget.title, query: widget.query),
+                      child: GalleryView(
+                        title: widget.title,
+                        query: widget.query,
+                        filterHint: filterHintFor(widget.query),
+                      ),
                     ),
                   ),
                   const HintBar(
                     hints: [
                       Hint(GameAction.confirm, 'Open'),
                       Hint(GameAction.favorite, 'Favourite'),
-                      Hint(GameAction.detail, 'Sort & filter'),
                       Hint(GameAction.back, 'Back'),
                     ],
                   ),

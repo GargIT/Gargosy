@@ -47,6 +47,8 @@ class Game {
   final String? titleId; // RomM 5.3+: the game's own id read from the ROM, e.g. SLUS-20675
   final String? saveTarget; // RomM 5.3+: the folder/file name the emulator saves under
   final SaveTargetLayout? saveTargetLayout; // how saveTarget is used on disk
+  final DateTime? createdAt; // when RomM added the game
+  final int? hltbMainStory; // HowLongToBeat's main story, in seconds
 
   bool get isMultiFile => hasMultipleFiles;
 
@@ -112,6 +114,8 @@ class Game {
     this.titleId,
     this.saveTarget,
     this.saveTargetLayout,
+    this.createdAt,
+    this.hltbMainStory,
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -128,7 +132,10 @@ class Game {
       fileName: json['file_name']?.toString(), // Mapped from JSON
       fsName: json['fs_name']?.toString(), // Mapped from JSON
       fsExtension: json['fs_extension']?.toString(),
-      fileSize: json['file_size_bytes'] is int ? json['file_size_bytes'] : 0,
+      // RomM's games carry `fs_size_bytes`; `file_size_bytes` is Gargosy's own snapshot.
+      fileSize: json['file_size_bytes'] is int
+          ? json['file_size_bytes']
+          : (json['fs_size_bytes'] is int ? json['fs_size_bytes'] : 0),
       multiFilePath: json['multi_file_path']?.toString(),
       hasMultipleFiles: json['has_multiple_files'] as bool? ?? false,
       files: (json['files'] as List<dynamic>?)?.map((e) => e as Map<String, dynamic>).toList() ?? [],
@@ -162,6 +169,10 @@ class Game {
       titleId: json['title_id'] is String ? json['title_id'] as String : null,
       saveTarget: json['save_target'] is String ? json['save_target'] as String : null,
       saveTargetLayout: SaveTargetLayout.fromJson(json['save_target_layout']),
+      createdAt: json['created_at'] is String ? DateTime.tryParse(json['created_at'] as String) : null,
+      hltbMainStory: json['hltb_metadata'] is Map && json['hltb_metadata']['main_story'] is int
+          ? json['hltb_metadata']['main_story'] as int
+          : null,
     );
   }
 
@@ -219,6 +230,8 @@ class Game {
       'title_id': titleId,
       'save_target': saveTarget,
       'save_target_layout': saveTargetLayout?.toJson(),
+      'created_at': createdAt?.toIso8601String(),
+      'hltb_metadata': {'main_story': hltbMainStory},
     };
   }
 }

@@ -4,8 +4,8 @@ import '../../core/romm/romm_library_api.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 
-/// Sort and filters for a gallery (X). Returns the new query, or null when
-/// closed with B.
+/// A gallery's filters (genres, regions), from the bar's Filters button.
+/// Returns the new query, or null when closed with B.
 Future<GalleryQuery?> showFilterSheet(
   BuildContext context, {
   required GalleryQuery query,
@@ -80,20 +80,6 @@ class _FilterSheetState extends State<_FilterSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _section('Sort by', [
-                        for (final s in GallerySort.values)
-                          _chip(
-                            s.label,
-                            _q.sort == s,
-                            () => setState(() => _q = _q.copyWith(sort: s, descending: s.descByDefault)),
-                            autofocus: s == _q.sort,
-                          ),
-                        _chip(
-                          _q.descending ? 'Descending' : 'Ascending',
-                          true,
-                          () => setState(() => _q = _q.copyWith(descending: !_q.descending)),
-                        ),
-                      ]),
                       if (widget.values.genres.isNotEmpty)
                         _section('Genres', [
                           for (final g in widget.values.genres)
@@ -101,6 +87,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                               g,
                               _q.genres.contains(g),
                               () => setState(() => _q = _q.copyWith(genres: _toggle(_q.genres, g))),
+                              autofocus: g == widget.values.genres.first,
                             ),
                         ]),
                       if (widget.values.regions.isNotEmpty)
@@ -110,6 +97,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                               r,
                               _q.regions.contains(r),
                               () => setState(() => _q = _q.copyWith(regions: _toggle(_q.regions, r))),
+                              autofocus: widget.values.genres.isEmpty && r == widget.values.regions.first,
                             ),
                         ]),
                     ],
@@ -125,7 +113,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                     () => setState(() => _q = _q.copyWith(genres: const {}, regions: const {})),
                   ),
                   const Spacer(),
-                  _chip('Apply', true, () => Navigator.of(context).pop(_q)),
+                  _chip(
+                    'Apply',
+                    true,
+                    () => Navigator.of(context).pop(_q),
+                    autofocus: widget.values.genres.isEmpty && widget.values.regions.isEmpty,
+                  ),
                 ],
               ),
             ],
