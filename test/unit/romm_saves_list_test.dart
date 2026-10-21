@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/romm_service.dart';
+import 'package:gargosy/core/romm/romm_state.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 
 /// A save list that couldn't be read must not look like "no saves".
@@ -71,5 +72,23 @@ void main() {
   test("a game that can't be read gives null shared saves", () async {
     adapter.onGet('/api/roms/7', (server) => server.reply(500, {'detail': 'boom'}));
     expect(await service.getSharedSavesOrNull('7', exceptUserId: 3), isNull);
+  });
+
+  test("Share (#92): a save's or state's visibility is set with is_public; a refusal is false", () async {
+    adapter.onPut('/api/saves/5/visibility', (server) => server.reply(200, {'id': 5}), data: {'is_public': true});
+    adapter.onPut('/api/states/6/visibility', (server) => server.reply(200, {'id': 6}), data: {'is_public': false});
+    adapter.onPut(
+      '/api/saves/7/visibility',
+      (server) => server.reply(404, {'detail': 'no'}),
+      data: {'is_public': true},
+    );
+    expect(await service.setSaveShared(5, true), isTrue);
+    expect(await service.setStateShared(6, false), isTrue);
+    expect(await service.setSaveShared(7, true), isFalse);
+  });
+
+  test('a state on RomM says whether it is shared', () {
+    expect(RommState.fromJson({'id': 1, 'file_name': 'a', 'is_public': true}).isPublic, isTrue);
+    expect(RommState.fromJson({'id': 1, 'file_name': 'a'}).isPublic, isFalse);
   });
 }

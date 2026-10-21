@@ -111,6 +111,10 @@ class SaveEntry {
   /// Never synced with: playing it makes a copy that is the player's own.
   final SaveOwner? owner;
 
+  /// Gargosy (#92): the player's own RomM save, shared with the other
+  /// players there (`is_public`).
+  bool get shared => owner == null && rommSave?['is_public'] == true;
+
   /// RomM rows with the same key are versions of one save.
   String get groupKey => '${slot ?? ''}|${tag ?? ''}';
 }

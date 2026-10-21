@@ -33,14 +33,21 @@ SaveEntry _backup(int day) => SaveEntry(
   maker: _pcsx2,
   backup: BackupEntry(timestamp: _t(day), md5Hash: 'h$day', localZipPath: 'b$day.zip', emulatorId: 'pcsx2'),
 );
-SaveEntry _romm(String name, int day, {SaveMaker maker = _pcsx2, String tag = 'pcsx2', int id = 1}) => SaveEntry(
+SaveEntry _romm(
+  String name,
+  int day, {
+  SaveMaker maker = _pcsx2,
+  String tag = 'pcsx2',
+  int id = 1,
+  bool public = false,
+}) => SaveEntry(
   source: SaveSource.romm,
   fileName: name,
   savedAt: _t(day),
   maker: maker,
   tag: tag,
   slot: 'gargosy',
-  rommSave: {'id': id},
+  rommSave: {'id': id, 'is_public': public},
 );
 
 SaveEntry _theirs(String name, int day, {required int user, required String username}) => SaveEntry(
@@ -301,6 +308,73 @@ void main() {
     expect(m.dy, greaterThan(yours.dy));
     expect(m.dy, o.dy, reason: 'two players a row');
     expect(find.textContaining('· on RomM'), findsNWidgets(2));
+  });
+
+  testWidgets("Share (#92): Y on your own RomM save shares it, or stops; another player's has no Y", (tester) async {
+    final shared = <String>[];
+    await pump(
+      tester,
+      SaveList(
+        view: _view(
+          romm: [
+            _group([_romm('a.zip', 9, public: true)]),
+          ],
+          others: [
+            PlayerSaves(
+              owner: const SaveOwner(userId: 7, username: 'maja'),
+              groups: [
+                _group([_theirs('m.ps2', 8, user: 7, username: 'maja')]),
+              ],
+            ),
+          ],
+        ),
+        mode: SaveListMode.manage,
+        nameOf: name,
+        onShare: (e) => shared.add('${e.fileName} ${e.shared}'),
+      ),
+      width: 1400,
+    );
+    expect(find.text('shared'), findsOneWidget, reason: 'only your own shared save is marked');
+    Focus.of(tester.element(find.text('a.zip'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.favorite);
+    expect(shared, ['a.zip true']);
+    Focus.of(tester.element(find.text('m.ps2'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.favorite);
+    expect(shared, hasLength(1));
+  });
+
+  testWidgets("Share (#92): Y on your own state on RomM; it shows when shared", (tester) async {
+    final shared = <String>[];
+    ResumeEntry st(String name, {int? remoteId, bool public = false}) => ResumeEntry(
+      emulatorId: 'pcsx2',
+      emulatorName: 'PCSX2',
+      fileName: name,
+      slot: const NumberedStateSlot(1),
+      savedAt: _t(9),
+      where: remoteId == null ? ResumeWhere.thisPc : ResumeWhere.both,
+      remoteId: remoteId,
+      shared: public,
+    );
+    await pump(
+      tester,
+      SizedBox(
+        height: 600,
+        child: StateList(
+          states: [st('a', remoteId: 4, public: true)],
+          chosen: null,
+          onChoose: (_) {},
+          loading: false,
+          onShare: (e) => shared.add('${e.fileName} ${e.shared}'),
+        ),
+      ),
+    );
+    expect(find.text('shared'), findsOneWidget);
+    Focus.of(tester.element(find.text('Slot 1'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.favorite);
+    expect(shared, ['a true']);
   });
 
   testWidgets("offline: On RomM says RomM can't be reached, and its rows do nothing", (tester) async {

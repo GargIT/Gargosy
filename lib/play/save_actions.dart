@@ -5,6 +5,7 @@ import '../core/save/catalog/save_entry.dart';
 import '../core/save/catalog/save_maker.dart';
 import '../core/save/save_sync_service.dart';
 import '../providers/library_providers.dart';
+import '../providers/romm_providers.dart';
 import 'play_controller.dart';
 import 'play_engine.dart';
 
@@ -59,6 +60,26 @@ class SaveActions {
   });
 
   Future<String?> backUpNow(Game game, SaveMaker who) => _run(game, 'back up the save', (e) => e.backUpNow(game, who));
+
+  /// Gargosy (#92): shares the player's own RomM save ([saveId]) or state
+  /// ([stateId]) with the other players there, or stops. Only RomM changes,
+  /// so a running game doesn't matter. Why it couldn't, or null.
+  Future<String?> share(Game game, {int? saveId, int? stateId, required bool shared}) async {
+    final romm = _ref.read(rommServiceProvider);
+    if (romm == null || romm.isOffline.value) return "RomM can't be reached.";
+    try {
+      final ok = saveId != null
+          ? await romm.setSaveShared(saveId, shared)
+          : stateId != null && await romm.setStateShared(stateId, shared);
+      return ok ? null : "RomM didn't take it.";
+    } finally {
+      final key = PlayMenuKey(game);
+      _ref.invalidate(playMenuProvider(key));
+      _ref.invalidate(playStatesProvider(key));
+      _ref.invalidate(romSavesProvider(game.id));
+      _ref.invalidate(romStatesProvider(game.id));
+    }
+  }
 
   /// What moved, or why nothing could.
   Future<String> syncStates(Game game) async {

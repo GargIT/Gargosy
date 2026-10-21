@@ -8,6 +8,7 @@ import '../../../core/save/catalog/save_entry.dart' show SaveOwner;
 import '../g_focusable.dart';
 import 'player_avatar.dart';
 import 'save_list.dart';
+import 'save_row.dart';
 import 'save_labels.dart';
 
 /// The play screen's save states: newest first, with where each one is.
@@ -21,6 +22,7 @@ class StateList extends StatelessWidget {
     required this.chosen,
     required this.onChoose,
     required this.loading,
+    this.onShare,
   });
 
   final List<ResumeEntry> states;
@@ -29,6 +31,10 @@ class StateList extends StatelessWidget {
 
   /// RomM's states are still being read.
   final bool loading;
+
+  /// Y on the player's own state on RomM (#92): share it, or stop
+  /// ([ResumeEntry.shared] tells which).
+  final void Function(ResumeEntry entry)? onShare;
 
   static String _where(ResumeEntry e) => switch (e.where) {
     _ when e.owner != null => 'on RomM',
@@ -45,6 +51,7 @@ class StateList extends StatelessWidget {
         borderRadius: GRadius.lg,
         // A state the emulator can't start in is shown, not chosen.
         onActivate: e.resumable ? () => onChoose(e) : null,
+        onFavorite: onShare != null && e.owner == null && e.remoteId != null ? () => onShare!(e) : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
           decoration: BoxDecoration(
@@ -62,7 +69,14 @@ class StateList extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(e.slot.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(e.slot.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                        if (e.shared) SaveRow.tag('shared', GColors.gargosyTeal),
+                      ],
+                    ),
                     Text(
                       '${e.emulatorName} · ${formatSaveTime(e.savedAt)} · ${_where(e)}',
                       style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
