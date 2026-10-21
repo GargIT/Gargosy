@@ -377,6 +377,63 @@ void main() {
     expect(shared, ['a true']);
   });
 
+  testWidgets("#94: hold A on this PC's save deletes it; a click offers Delete", (tester) async {
+    final deleted = <String>[];
+    await pump(
+      tester,
+      SaveList(
+        view: _view(local: [_local(9)]),
+        mode: SaveListMode.manage,
+        nameOf: name,
+        onDelete: (e) => deleted.add(e.fileName),
+      ),
+    );
+    Focus.of(tester.element(find.text('Mcd001.ps2'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.confirmHold);
+    expect(deleted, ['Mcd001.ps2']);
+    await tester.tap(find.text('Mcd001.ps2'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete'), findsOneWidget);
+    expect(find.text('Put on this PC'), findsNothing);
+  });
+
+  testWidgets("#94: hold A on your own state deletes it; never another player's", (tester) async {
+    final deleted = <String>[];
+    ResumeEntry st(String name, {SaveOwner? owner}) => ResumeEntry(
+      emulatorId: 'pcsx2',
+      emulatorName: 'PCSX2',
+      fileName: name,
+      slot: NumberedStateSlot(owner == null ? 1 : 2),
+      savedAt: _t(9),
+      where: ResumeWhere.thisPc,
+      owner: owner,
+    );
+    await pump(
+      tester,
+      SizedBox(
+        height: 600,
+        child: StateList(
+          states: [
+            st('a'),
+            st('m', owner: const SaveOwner(userId: 7, username: 'maja')),
+          ],
+          chosen: null,
+          onChoose: (_) {},
+          loading: false,
+          onDelete: (e) => deleted.add(e.fileName),
+        ),
+      ),
+    );
+    Focus.of(tester.element(find.text('Slot 1'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.confirmHold);
+    Focus.of(tester.element(find.text('Slot 2'))).requestFocus();
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.confirmHold);
+    expect(deleted, ['a']);
+  });
+
   testWidgets("offline: On RomM says RomM can't be reached, and its rows do nothing", (tester) async {
     final restored = <String>[];
     await pump(

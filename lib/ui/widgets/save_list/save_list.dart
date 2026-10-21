@@ -11,7 +11,8 @@ import 'player_avatar.dart';
 import 'save_row.dart';
 
 /// Choose (the play screen: A picks the save to play) or manage (the Saves
-/// tab: X puts a save on this PC, hold A deletes it; nothing launches).
+/// tab: X puts a save on this PC, hold A deletes it, this PC's own too
+/// (#94); nothing launches).
 enum SaveListMode { choose, manage }
 
 /// A game's saves as RomM groups them (spec Part 2): This PC (backups folded
@@ -70,6 +71,8 @@ class _SaveListState extends State<SaveList> {
     final theirs = r.entry.owner != null;
     final shareable = manage && romm && !theirs && !widget.view.rommOffline && widget.onShare != null;
     final movable = r.entry.source != SaveSource.local && !(romm && widget.view.rommOffline);
+    // This PC's own save can be deleted too (#94); the engine says when not.
+    final deletable = (movable || r.entry.source == SaveSource.local) && !theirs;
     // A save the emulator can't use is never put on this PC (it would go
     // into the wrong emulator); it can still be deleted.
     final restorable = movable && r.fit.usable;
@@ -80,10 +83,10 @@ class _SaveListState extends State<SaveList> {
       onRomm: r.entry.source == SaveSource.local && widget.view.isOnRomm(r.entry),
       showChoice: !manage,
       onActivate: manage
-          ? (movable ? () => _menu(r.entry, restorable: restorable) : null)
+          ? (movable || deletable ? () => _menu(r.entry, restorable: restorable) : null)
           : (r.fit.usable ? () => widget.onChoose?.call(r.item) : null),
       onDetail: manage && restorable && widget.onRestore != null ? () => widget.onRestore!(r.entry) : null,
-      onLongActivate: manage && movable && !theirs && widget.onDelete != null ? () => widget.onDelete!(r.entry) : null,
+      onLongActivate: manage && deletable && widget.onDelete != null ? () => widget.onDelete!(r.entry) : null,
       onFavorite: shareable ? () => widget.onShare!(r.entry) : null,
     );
   }

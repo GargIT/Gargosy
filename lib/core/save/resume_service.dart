@@ -338,6 +338,26 @@ class ResumeService {
     return merged;
   }
 
+  /// Gargosy (#94): the files of the player's own state [entry] on this PC
+  /// (the state and what belongs to it, e.g. its screenshot), to delete.
+  List<io.File> localFilesOf(ResumeEntry entry) {
+    final file = entry.localFile;
+    if (file == null) return const [];
+    final strategy = _strategyByEmulator[entry.emulatorId];
+    return [
+      file,
+      for (final name in strategy?.stateSidecars(p.basename(file.path)) ?? const <String>[])
+        io.File(p.join(file.parent.path, name)),
+    ];
+  }
+
+  /// Gargosy (#94): forgets the sync record of [game]'s state [fileName],
+  /// deleted by the player: nothing of it is left to sync.
+  Future<void> forgetState(Game game, String fileName) async {
+    final records = _records.load(game.id);
+    if (records.remove(fileName) != null) await _records.save(game.id, records);
+  }
+
   /// Gargosy (#92): another player's state [entry], downloaded and checked
   /// as the emulator's. Throws with the reason when it can't be.
   Future<Uint8List> downloadShared(ResumeEntry entry, Game game) async {

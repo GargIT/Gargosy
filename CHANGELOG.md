@@ -20,6 +20,13 @@ What changed in each release of Gargosy. The format follows
 - Share your own saves and states from Gargosy: on the game's Saves tab, Y
   on one of yours on RomM shares it with the other players there (it gets a
   teal "shared" tag), and Y again stops. Uploads stay private until you do.
+- Delete this PC's save from the game's Saves tab (hold A, or click it): it's
+  backed up first, and RomM's copy stays and comes back the next time you
+  play. A save on a memory card other games share, or one Gargosy reads
+  through sigil (PlayStation, GameCube, PSP, Dreamcast, Game Boy, N64), is
+  refused with why, for now.
+- Delete a save state (hold A on the States list, or click it): on this PC
+  and on RomM.
 
 - A platform has its own page, as in RomM: its logo and name with its type,
   maker and generation, how many games it has in the library and on this PC,

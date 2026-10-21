@@ -865,6 +865,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return null;
   }
 
+  /// Gargosy (#94): the thumbnail RetroArch writes beside a state.
+  @override
+  List<String> stateSidecars(String fileName) => ['$fileName.png'];
+
   /// Gargosy (#92): `<stem>.state<N>`, slot 0 `<stem>.state`.
   @override
   String? stateFileForSlot(String fileName, int slot) {

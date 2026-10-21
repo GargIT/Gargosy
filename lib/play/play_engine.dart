@@ -31,6 +31,7 @@ import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
 import 'play_menu.dart';
 import 'pre_launch_pull.dart';
+import 'save_deletion.dart';
 import 'state_copies.dart';
 
 /// What a finished session says ("Save synced", …).
@@ -95,6 +96,11 @@ abstract class PlayEngine {
 
   /// Whether [entry] can be loaded now (after [pull]).
   Future<ResumeCheck> checkResume(ResumeEntry entry, Game game, String romPath, StatePull pull);
+
+  /// Gargosy (#94): deletes the player's own state [entry]: its file on
+  /// this PC (with its screenshot) and its copy on RomM. Null when done,
+  /// else what couldn't be (RomM unreachable).
+  Future<String?> deleteState(Game game, ResumeEntry entry);
 
   /// Gargosy (#92): another player's state [entry] put where [strategy]
   /// resumes it from (`copySharedState`). Returns that path; throws with why.
@@ -432,23 +438,25 @@ class GargosyPlayEngine implements PlayEngine {
       (await _preparer()).prepare(game, await _romPath(game), save, target: target);
 
   @override
-  Future<void> deleteSave(Game game, SaveEntry save) async {
-    switch (save.source) {
-      case SaveSource.romm:
-        final id = save.rommSave?['id'];
-        final romm = _ref.read(rommServiceProvider);
-        if (id is! int || romm == null) throw StateError('RomM has no id for this save');
-        if (!await romm.deleteSaves([id])) throw StateError('RomM refused');
-      case SaveSource.backup:
-        final entry = save.backup;
-        final repo = await _ref.read(backupRepositoryProvider.future);
-        if (entry == null || repo == null) throw StateError('the backup is gone');
-        await repo.removeEntry(game.id, entry);
-        final zip = io.File(entry.localZipPath);
-        if (zip.existsSync()) zip.deleteSync();
-      case SaveSource.local:
-        throw StateError("this PC's own save isn't deleted from here");
-    }
+  Future<void> deleteSave(Game game, SaveEntry save) async => deleteSaveEntry(
+    game,
+    save,
+    romm: _ref.read(rommServiceProvider),
+    backups: await _ref.read(backupRepositoryProvider.future),
+    deleteLocal: () async {
+      final sync = _ref.read(saveSyncServiceProvider);
+      final guard = _ref.read(activeProfileProvider)?.guard;
+      if (sync == null || guard == null) throw StateError('no profile is active');
+      await deleteLocalSave(game, await _romPath(game), save, sync: sync, preparer: await _preparer(), guard: guard);
+    },
+  );
+
+  @override
+  Future<String?> deleteState(Game game, ResumeEntry entry) async {
+    final resume = _ref.read(resumeServiceProvider);
+    final guard = _ref.read(activeProfileProvider)?.guard;
+    if (resume == null || guard == null) throw StateError('no profile is active');
+    return deleteOwnState(game, entry, resume: resume, guard: guard, romm: _ref.read(rommServiceProvider));
   }
 
   @override
