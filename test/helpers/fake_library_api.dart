@@ -13,6 +13,9 @@ class FakeLibraryApi implements LibraryApi {
 
   /// Each page's limit, in order.
   final limits = <int>[];
+
+  /// Whether each page asked for versions folded.
+  final folded = <bool>[];
   Object? failWith;
 
   /// How long each page takes (a real server isn't instant).
@@ -28,8 +31,10 @@ class FakeLibraryApi implements LibraryApi {
     int limit = RommLibraryApi.pageSize,
     bool withFilterValues = false,
     bool withCharIndex = false,
+    bool foldVersions = false,
   }) async {
     queries.add((q, offset));
+    folded.add(foldVersions);
     if (delay > Duration.zero) await Future<void>.delayed(delay);
     if (failWith != null) throw failWith!;
     if (failFromOffset != null && offset >= failFromOffset!) throw Exception('SocketException: connection reset');

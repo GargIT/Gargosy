@@ -137,3 +137,9 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 
 49. [ ] On a big platform sorted by Name, click a letter far down (T): the page jumps to the first T game, also when it wasn't loaded yet. `#` jumps to games starting with a digit or symbol; letters without games are greyed.
 50. [ ] With a controller: D-pad right from the last column reaches the rail, up/down picks a letter (skipping greyed ones), A or left jumps into the grid at it. X from a cover goes to the rail at that game's letter. Sorted by anything else, there's no rail. On this PC, the rail jumps within the downloaded games.
+
+## Cover marks and folded versions (#95)
+
+51. [ ] A game with two or more versions on RomM (e.g. USA and Europe) shows as one card with the count top left and its region (`USA`) bottom left; a favourite has the heart and a downloaded one the on-this-PC mark.
+52. [ ] Open a folded game with none of its versions downloaded: RomM's version opens, and Version on its page lists the others; pick one to go to its page and download it. With one version downloaded, the card opens that one. With two downloaded, it asks "Which version?".
+53. [ ] Collections and Favourites have the bar, the A–Z rail (by name) and the marks.

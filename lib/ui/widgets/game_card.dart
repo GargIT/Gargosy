@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../core/romm/romm_models.dart';
+import '../../library/game_versions.dart';
 import '../theme/tokens.dart';
 import 'cover_image.dart';
 import 'g_focusable.dart';
 
 /// v2's game card: the cover (158×213), the name and the platform under it,
-/// and small marks for downloaded and favourite games.
+/// and marks on the cover: how many versions it folds (top left), on this PC
+/// and favourite (top right), its regions (bottom left).
 class GameCard extends StatelessWidget {
   const GameCard({
     super.key,
@@ -33,8 +35,12 @@ class GameCard extends StatelessWidget {
   final bool autofocus;
   final FocusNode? focusNode;
 
+  static const _maxRegions = 3;
+
   @override
   Widget build(BuildContext context) {
+    final versions = versionCount(game);
+    final regions = regionBadges(game.regions);
     return SizedBox(
       width: width,
       height: height,
@@ -60,6 +66,26 @@ class GameCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (versions > 1)
+                  Positioned(
+                    top: GSpace.s2,
+                    left: GSpace.s2,
+                    child: _Badge(key: const ValueKey('card-versions'), icon: Icons.layers_outlined, text: '$versions'),
+                  ),
+                if (regions.isNotEmpty)
+                  Positioned(
+                    left: GSpace.s2,
+                    bottom: GSpace.s2,
+                    right: GSpace.s2,
+                    child: Wrap(
+                      spacing: GSpace.s1,
+                      runSpacing: GSpace.s1,
+                      children: [
+                        for (final r in regions.take(_maxRegions)) _Badge(text: r),
+                        if (regions.length > _maxRegions) _Badge(text: '+${regions.length - _maxRegions}'),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -80,6 +106,29 @@ class GameCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A small dark pill on the cover: a region (`USA`) or the version count.
+class _Badge extends StatelessWidget {
+  const _Badge({super.key, required this.text, this.icon});
+  final String text;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+    decoration: BoxDecoration(color: GColors.panel, borderRadius: BorderRadius.circular(GRadius.sm)),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[Icon(icon, size: 12, color: GColors.fgSecondary), const SizedBox(width: 2)],
+        Text(
+          text,
+          style: const TextStyle(fontSize: GFont.xs, fontWeight: FontWeight.w700, color: GColors.fg),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Mark extends StatelessWidget {

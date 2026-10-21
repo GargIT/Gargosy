@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
+import '../../library/game_versions.dart';
 import '../../library/letter_index.dart';
 import '../../library/library_snapshot.dart';
 import '../../library/local_gallery.dart';
@@ -115,6 +116,8 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         limit: limit,
         withFilterValues: first,
         withCharIndex: first && _query.sort == GallerySort.name,
+        // One card per game, its versions folded into it (#95).
+        foldVersions: true,
       );
       if (!mounted || gen != _generation) return;
       setState(() {
@@ -214,7 +217,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       final local = _onThisPc();
       values = filterValuesOf(local);
       final files = ref.watch(romFilesProvider);
-      games = localGallery(local, _query, inScope: (_) => true, installedAt: files.installedAt);
+      games = foldVersions(localGallery(local, _query, inScope: (_) => true, installedAt: files.installedAt));
       total = games.length;
     }
     final bar = GalleryBar(
@@ -274,7 +277,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
       autofocus: widget.autofocus && !_autofocusDone,
       coverUrl: (g) => coverUrlFor(ref, g),
-      onOpen: (g) => openGame(context, g),
+      onOpen: (g) => openGameVersion(context, ref, g),
       onFavorite: (g) => favourite(context, ref, g),
       isFavourite: (g) => favIds.contains(g.id),
       isDownloaded: (g) => watchDownloaded(ref, g),

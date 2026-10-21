@@ -27,6 +27,11 @@ What changed in each release of Gargosy. The format follows
   and down, and press A or left to jump to its first game (`#` for digits and
   symbols). X goes straight to the rail, at the focused game's letter. Letters
   without games are greyed.
+- A game's versions (regions, revisions) are one card, with how many on its
+  cover. Opening it opens the version on this PC, asks which when more than
+  one is, and a game's page has Version to switch to another.
+- Covers show the game's regions (`USA`, `EUR`, `JPN` …), and still whether
+  it's on this PC and a favourite.
 - Sort by Size, Players, Length (HowLongToBeat's main story), and your own
   rating, completion and status.
 - On this PC shows only the games downloaded here, and works with RomM away.
