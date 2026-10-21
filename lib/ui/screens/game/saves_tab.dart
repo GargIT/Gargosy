@@ -91,7 +91,40 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     );
   }
 
+  /// A click (or A) on a state (#94): what can be done with it.
+  Future<void> _stateMenu(ResumeEntry s) async {
+    if (s.owner != null) return;
+    final share = s.remoteId == null ? null : (s.shared ? 'Stop sharing' : 'Share on RomM');
+    final labels = [?share, 'Delete'];
+    final i = await showChoice(context, title: s.slot.label, labels: labels);
+    if (i == null || !mounted) return;
+    if (labels[i] == share) await _share(stateId: s.remoteId, shared: !s.shared);
+    if (labels[i] == 'Delete') await _deleteState(s);
+  }
+
+  /// Hold A on the player's own state (#94).
+  Future<void> _deleteState(ResumeEntry s) async {
+    final where = switch (s.where) {
+      ResumeWhere.thisPc => 'on this PC',
+      ResumeWhere.romm => 'on RomM, for every device',
+      ResumeWhere.both => 'on this PC and on RomM, for every device',
+    };
+    final ok = await showConfirm(
+      context,
+      title: 'Delete this state?',
+      body: '${s.slot.label} in ${s.emulatorName} (${formatSaveTime(s.savedAt)}) is deleted $where.',
+      yes: 'Delete',
+      no: 'Keep',
+      focusYes: false,
+      danger: true,
+    );
+    if (!ok || !mounted) return;
+    final reason = await ref.read(saveActionsProvider).deleteState(_game, s);
+    _say(reason, 'Deleted.');
+  }
+
   Future<void> _delete(SaveEntry save) async {
+    if (save.source == SaveSource.local) return _deleteLocal(save);
     final romm = save.source == SaveSource.romm;
     final ok = await showConfirm(
       context,
@@ -107,6 +140,24 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).delete(_game, save);
     _say(reason, 'Deleted.');
+  }
+
+  /// This PC's own save (#94): backed up, then deleted; RomM's copy stays.
+  Future<void> _deleteLocal(SaveEntry save) async {
+    final ok = await showConfirm(
+      context,
+      title: "Delete this PC's save?",
+      body:
+          'The ${save.tag ?? save.maker?.emulatorId ?? ''} save on this PC (${formatSaveTime(save.savedAt)}) is deleted. '
+          "A backup is kept here first. RomM's copy stays, and comes back the next time you play.",
+      yes: 'Delete',
+      no: 'Keep',
+      focusYes: false,
+      danger: true,
+    );
+    if (!ok || !mounted) return;
+    final reason = await ref.read(saveActionsProvider).delete(_game, save);
+    _say(reason, "Deleted on this PC. It's in the backups.");
   }
 
   /// The shared card's name for the game's system.
@@ -277,9 +328,10 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                   ? StateList(
                       states: states,
                       chosen: null,
-                      onChoose: (_) {},
+                      onChoose: _stateMenu,
                       loading: statesAsync.isLoading,
                       onShare: (s) => _share(stateId: s.remoteId, shared: !s.shared),
+                      onDelete: _deleteState,
                     )
                   : SaveList(
                       view: view,

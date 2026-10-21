@@ -165,6 +165,10 @@ class PpssppSaveStrategy extends SaveStrategy with StateSyncCapable {
     return StateFileInfo(savedAt: base.savedAt, emulatorVersion: await PpssppStateFile.readVersion(file));
   }
 
+  /// Gargosy (#94): its `.jpg`.
+  @override
+  List<String> stateSidecars(String fileName) => [p.setExtension(fileName, '.jpg')];
+
   /// The `.jpg` PPSSPP writes beside the state.
   @override
   Future<Uint8List?> stateScreenshot(File file) async {

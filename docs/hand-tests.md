@@ -155,3 +155,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 58. [ ] A makes a state public (PCSX2, DuckStation, Dolphin, PPSSPP, mGBA or MAME). In B's profile, the play screen's States list shows it under From other players with A's name; the States count is B's own. Resume it: the game starts in A's state, and B's own states are unchanged.
 59. [ ] The same with a RetroArch (or ares, Flycast) state: it goes into the first free slot of B's (Slot 1 when B has none), the game starts in it, and after quitting it's B's state in that slot (on RomM under B with state sync on). B's state in A's slot number, if any, is unchanged.
 60. [ ] In B's profile, on the game's Saves tab, Y on one of B's saves on RomM: it says it's shared and gets the teal "shared" tag. In A's profile (or RomM's web UI as A), B's save shows under From other players / is public. Y again: it stops being shared, and A no longer sees it. The same on the States list for a state of B's on RomM. With the mouse, a click on B's RomM save offers Share on RomM / Stop sharing.
+
+## Delete this PC's saves and states (#94)
+
+61. [ ] A GBA game in mGBA (or a SNES game in RetroArch) with a save: on the Saves tab, hold A on its This PC row and confirm. The row goes, a new backup row appears, and the save file is gone from the emulator's save folder. Play again: RomM's save comes back.
+62. [ ] A PS2 game in PCSX2 (shared memory card) or a Game Boy game: hold A on its This PC row: it says why it can't be deleted, and nothing changes (no new backup).
+63. [ ] On the States list: hold A on one of your states (on this PC and RomM) and confirm: it's gone from the list, from the emulator's state folder and from RomM. One only on RomM goes the same way. Another player's state has no delete.

@@ -23,6 +23,7 @@ class StateList extends StatelessWidget {
     required this.onChoose,
     required this.loading,
     this.onShare,
+    this.onDelete,
   });
 
   final List<ResumeEntry> states;
@@ -35,6 +36,10 @@ class StateList extends StatelessWidget {
   /// Y on the player's own state on RomM (#92): share it, or stop
   /// ([ResumeEntry.shared] tells which).
   final void Function(ResumeEntry entry)? onShare;
+
+  /// Hold A on the player's own state (#94): delete it, on this PC and on
+  /// RomM.
+  final void Function(ResumeEntry entry)? onDelete;
 
   static String _where(ResumeEntry e) => switch (e.where) {
     _ when e.owner != null => 'on RomM',
@@ -52,6 +57,7 @@ class StateList extends StatelessWidget {
         // A state the emulator can't start in is shown, not chosen.
         onActivate: e.resumable ? () => onChoose(e) : null,
         onFavorite: onShare != null && e.owner == null && e.remoteId != null ? () => onShare!(e) : null,
+        onLongActivate: onDelete != null && e.owner == null ? () => onDelete!(e) : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
           decoration: BoxDecoration(

@@ -224,6 +224,17 @@ void main() {
     expect(s.uploadSlotFor(_game('gba')), 'gargosy');
   });
 
+  test("#94: a save sigil reads isn't deleted from this PC (refused with why); another platform's goes to the old strategy", () async {
+    putSave(List.filled(32768, 5));
+    final s = mgba();
+    await expectLater(
+      s.deletableSaveFiles(_game('gb'), rom),
+      throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('sigil'))),
+    );
+    await s.deletableSaveFiles(_game('gba'), 'D:/roms/gba/Game.gba').catchError((Object _) => <io.File>[]);
+    expect(base.calls, contains('getSaveFiles gba'));
+  });
+
   test("PPSSPP (#59): sigil syncs its saves, its states go through PPSSPP's own strategy", () async {
     final dir = p.join(tmp.path, 'emulators', 'ppsspp');
     io.Directory(p.join(dir, 'PSP')).createSync(recursive: true);

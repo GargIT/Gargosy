@@ -130,6 +130,32 @@ abstract class SaveStrategy {
   /// pull otherwise runs alongside the launch.
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async => false;
 
+  /// Gargosy (#94): the files of [game]'s own save on this PC, to delete:
+  /// its save files, every one inside [getSaveDir]. Throws
+  /// [SaveSyncNotPossibleException] with why when they can't be deleted on
+  /// their own: a file other games share (a memory card), a file outside
+  /// the save folder, or no save at all.
+  Future<List<io.File>> deletableSaveFiles(Game game, String romPath) async {
+    if (await pullMustFinishBeforeLaunch(game, romPath)) {
+      throw SaveSyncNotPossibleException(
+        "it's on a memory card other games share, and Gargosy can't take one game's save off it yet",
+      );
+    }
+    final dir = await getSaveDir(game, romPath);
+    if (dir == null) throw SaveSyncNotPossibleException("the emulator's save folder isn't known");
+    final files = [
+      for (final f in await getSaveFiles(game, romPath, syncMode: 'saves'))
+        if (await f.exists()) f,
+    ];
+    if (files.isEmpty) throw SaveSyncNotPossibleException('there is no save on this PC');
+    for (final f in files) {
+      if (!p.isWithin(p.normalize(dir), p.normalize(f.path))) {
+        throw SaveSyncNotPossibleException("${p.basename(f.path)} isn't in the emulator's save folder");
+      }
+    }
+    return files;
+  }
+
   /// Puts a local backup back: [zipBytes] is a zip of getSaveFiles, as
   /// BackupService makes it. Save files other games share (memory cards,
   /// see pullMustFinishBeforeLaunch) go back one by one through restoreSave,

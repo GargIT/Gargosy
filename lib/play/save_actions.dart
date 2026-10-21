@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/romm/romm_models.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../core/save/catalog/save_maker.dart';
+import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
 import '../providers/library_providers.dart';
 import '../providers/romm_providers.dart';
@@ -54,6 +55,12 @@ class SaveActions {
       _run(game, 'put the save on this PC', (e) => e.restore(game, save, target));
 
   Future<String?> delete(Game game, SaveEntry save) => _run(game, 'delete the save', (e) => e.deleteSave(game, save));
+
+  /// Gargosy (#94): the player's own state, on this PC and on RomM.
+  Future<String?> deleteState(Game game, ResumeEntry entry) => _run(game, 'delete the state', (e) async {
+    final partly = await e.deleteState(game, entry);
+    if (partly != null) throw StateError(partly);
+  });
 
   Future<String?> upload(Game game, SaveMaker who) => _run(game, 'upload the save', (e) async {
     if (!await e.upload(game, who)) throw StateError("RomM didn't take it");

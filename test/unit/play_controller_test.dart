@@ -204,6 +204,12 @@ class FakeEngine implements PlayEngine {
     return check;
   }
 
+  @override
+  Future<String?> deleteState(Game game, ResumeEntry entry) async {
+    steps.add('delete state ${entry.fileName}');
+    return null;
+  }
+
   /// Another player's state: where it was put, or null to fail.
   String? sharedPath = '/temp/shared-state';
 

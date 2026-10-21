@@ -38,6 +38,10 @@ mixin StateSyncCapable on SaveStrategy {
   /// the emulator has no such slot or names states otherwise.
   String? stateFileForSlot(String fileName, int slot) => null;
 
+  /// Gargosy (#94): files beside the state [fileName] that belong to it (a
+  /// screenshot), deleted with it.
+  List<String> stateSidecars(String fileName) => const [];
+
   /// What [file] records about itself. Must never throw: an unreadable file
   /// yields its modified time (or the epoch) and no version.
   Future<StateFileInfo> describeState(io.File file) async {

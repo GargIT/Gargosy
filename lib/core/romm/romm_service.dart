@@ -769,6 +769,23 @@ class RommService implements RommStatesApi {
     }
   }
 
+  /// Gargosy (#94): deletes the player's own states on RomM
+  /// (`POST /api/states/delete`). Whether RomM took it.
+  Future<bool> deleteStates(List<int> stateIds) async {
+    if (stateIds.isEmpty) return true;
+    try {
+      final response = await _dio.post(
+        '/api/states/delete',
+        data: {'states': stateIds},
+        options: _authOptions.copyWith(contentType: 'application/json'),
+      );
+      return response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300;
+    } catch (e) {
+      debugPrint('[RomM] deleteStates error: $e');
+      return false;
+    }
+  }
+
   Future<bool> deleteSaves(List<int> saveIds) async {
     if (saveIds.isEmpty) return true;
     try {

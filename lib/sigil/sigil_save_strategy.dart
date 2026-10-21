@@ -385,6 +385,20 @@ class SigilSaveStrategy extends SaveStrategy {
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async =>
       await base?.pullMustFinishBeforeLaunch(game, romPath) ?? false;
 
+  /// Gargosy (#94): sigil packs the game's saves out of files it reads
+  /// (cards, folders); it has no way yet to take one game's off them.
+  @override
+  Future<List<io.File>> deletableSaveFiles(Game game, String romPath) async {
+    if (!_covers(game)) {
+      final old = base;
+      if (old == null) throw SaveSyncNotPossibleException("this emulator's saves can't be deleted from here");
+      return old.deletableSaveFiles(game, romPath);
+    }
+    throw SaveSyncNotPossibleException(
+      "Gargosy reads this game's save through sigil, which can't delete one game's save yet",
+    );
+  }
+
   @override
   Future<String?> getSaveDir(Game game, String romPath) async =>
       _covers(game) ? _root(game, romPath) : base?.getSaveDir(game, romPath);
