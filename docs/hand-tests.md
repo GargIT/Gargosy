@@ -121,26 +121,26 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 
 ## Platform page: filter and sort bar (#95)
 
-41. [ ] On PlayStation 2, type "hack" in the filter box with the keyboard: shortly after typing stops, the .hack games show, also ones beyond the first page. With a controller, A on the box opens the on-screen keyboard and the filter applies when it closes.
-42. [ ] Turn On this PC on: only this platform's downloaded games show, with their count on the switch. Sort by Downloaded puts the newest download first. With RomM stopped (or the PC offline), the switch still works.
-43. [ ] Sort by Size, Players, Length and My rating: the order is the expected one, and the direction button turns it round. Games without the value (no HowLongToBeat time, no rating) come last either way.
+41. [x] On PlayStation 2, type "hack" in the filter box with the keyboard: shortly after typing stops, the .hack games show, also ones beyond the first page. With a controller, A on the box opens the on-screen keyboard and the filter applies when it closes.
+42. [x] Turn On this PC on: only this platform's downloaded games show, with their count on the switch. Sort by Downloaded puts the newest download first. With RomM stopped (or the PC offline), the switch still works.
+43. [x] Sort by Size, Players, Length and My rating: the order is the expected one, and the direction button turns it round. Games without the value (no HowLongToBeat time, no rating) come last either way.
 
 ## Platform page: header and tabs (#95)
 
-44. [ ] Open PlayStation 2: the header shows its logo, Console · Sony · Generation 6, In library, On this PC (your downloaded PS2 games), On disk and Firmware. Random opens a PS2 game.
-45. [ ] Scroll the games: the header goes, the name sits in the tab row, and the filter and sort bar stays. Back at the top, the header returns. With a controller, D-pad up from the first row reaches the bar, then the tabs, then Random.
-46. [ ] Firmware / BIOS marks what's in `bios\`. Get missing from RomM brings the rest, and they show as On this PC.
-47. [ ] Emulator: change the emulator (with two installed) or RetroArch's core; Settings → Emulator settings shows the same, and a game without "Always for this game" plays in it. An uninstalled emulator's Install under Emulators opens Settings → Emulators.
-48. [ ] LB/RB switch tabs. Move to a cover, RB, move in the firmware list, LB: focus is back on that cover; RB: back in the list.
+44. [x] Open PlayStation 2: the header shows its logo, Console · Sony · Generation 6, In library, On this PC (your downloaded PS2 games), On disk and Firmware. Random opens a PS2 game.
+45. [x] Scroll the games: the header goes, the name sits in the tab row, and the filter and sort bar stays. Back at the top, the header returns. With a controller, D-pad up from the first row reaches the bar, then the tabs, then Random.
+46. [x] Firmware / BIOS marks what's in `bios\`. Get missing from RomM brings the rest, and they show as On this PC.
+47. [x] Emulator: change the emulator (with two installed) or RetroArch's core; Settings → Emulator settings shows the same, and a game without "Always for this game" plays in it. An uninstalled emulator's Install under Emulators opens Settings → Emulators.
+48. [x] LB/RB switch tabs. Move to a cover, RB, move in the firmware list, LB: focus is back on that cover; RB: back in the list.
 
 ## A–Z rail (#95)
 
-49. [ ] On a big platform sorted by Name, click a letter far down (T): the page jumps to the first T game, also when it wasn't loaded yet. `#` jumps to games starting with a digit or symbol; letters without games are greyed.
-50. [ ] With a controller: D-pad right from the last column reaches the rail, up/down picks a letter (skipping greyed ones), A or left jumps into the grid at it. X from a cover goes to the rail at that game's letter. Sorted by anything else, there's no rail. On this PC, the rail jumps within the downloaded games.
+49. [x] On a big platform sorted by Name, click a letter far down (T): the page jumps to the first T game, also when it wasn't loaded yet. `#` jumps to games starting with a digit or symbol; letters without games are greyed.
+50. [x] With a controller: D-pad right from the last column reaches the rail, up/down picks a letter (skipping greyed ones), A or left jumps into the grid at it. X from a cover goes to the rail at that game's letter. Sorted by anything else, there's no rail. On this PC, the rail jumps within the downloaded games.
 
 ## Cover marks and folded versions (#95)
 
-51. [ ] A game with two or more versions on RomM (e.g. USA and Europe) shows as one card with the count top left and its region (`USA`) bottom left; a favourite has the heart and a downloaded one the on-this-PC mark.
-52. [ ] Open a folded game with none of its versions downloaded: RomM's version opens, and Version on its page lists the others; pick one to go to its page and download it. With one version downloaded, the card opens that one. With two downloaded, it asks "Which version?".
-53. [ ] Collections and Favourites have the bar, the A–Z rail (by name) and the marks.
-54. [ ] Put a game's file in `roms\ps2\` by hand, or download one in another profile: it has the ✓ but isn't counted On this PC. On PlayStation 2 with On this PC on, Scan says "Found 1 more on this PC." and the game is listed. Scan isn't there on a collection or with On this PC off.
+51. [x] A game with two or more versions on RomM (e.g. USA and Europe) shows as one card with the count top left and its region (`USA`) bottom left; a favourite has the heart and a downloaded one the on-this-PC mark.
+52. [x] Open a folded game with none of its versions downloaded: RomM's version opens, and Version on its page lists the others; pick one to go to its page and download it. With one version downloaded, the card opens that one. With two downloaded, it asks "Which version?".
+53. [x] Collections and Favourites have the bar, the A–Z rail (by name) and the marks.
+54. [x] Put a game's file in `roms\ps2\` by hand, or download one in another profile: it has the ✓ but isn't counted On this PC. On PlayStation 2 with On this PC on, Scan says "Found 1 more on this PC." and the game is listed. Scan isn't there on a collection or with On this PC off.
