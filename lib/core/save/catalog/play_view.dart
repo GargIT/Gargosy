@@ -56,7 +56,12 @@ class PlayView {
   final List<PlayRow> thisPc;
   final List<PlayRow> backups;
   final List<PlayRommGroup> romm;
+
+  /// The player's own states, then other players' (#92, with an owner).
   final List<ResumeEntry> states;
+
+  /// How many of [states] are the player's own.
+  int get ownStateCount => states.where((s) => s.owner == null).length;
 
   /// Saves left out because the picked emulator can't use them.
   final int hidden;
@@ -243,10 +248,11 @@ PlayView buildPlayView({
     for (final r in rommRows)
       if (!r.sameAsLocal) r.item,
   ]);
-  // A state the emulator can't start in is listed, never chosen.
+  // A state the emulator can't start in is listed, never chosen; nor is
+  // another player's (#92).
   final pre = choice.preselect(saves, [
     for (final s in shownStates)
-      if (s.resumable) StatePlay(s),
+      if (s.resumable && s.owner == null) StatePlay(s),
   ]);
   return PlayView(
     thisPc: thisPc,

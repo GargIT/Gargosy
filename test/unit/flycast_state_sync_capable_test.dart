@@ -67,6 +67,12 @@ void main() {
     expect(s.slotOf('x.vmu'), isA<UnknownStateSlot>());
   });
 
+  test("another slot's state name (#92): _N.state, slot 0 .state", () {
+    expect(s.stateFileForSlot('Crazy Taxi (USA).state', 2), 'Crazy Taxi (USA)_2.state');
+    expect(s.stateFileForSlot('Crazy Taxi (USA)_3.state', 0), 'Crazy Taxi (USA).state');
+    expect(s.stateFileForSlot('x.vmu', 1), isNull);
+  });
+
   test('a state has the FLYSAVE1 header, or is an older one without it', () {
     expect(s.looksLikeValidState(flycastState()), isTrue);
     expect(s.looksLikeValidState(Uint8List(2048)), isTrue, reason: 'a state from before the header');

@@ -44,6 +44,11 @@ abstract class EmulatorStrategy {
   /// [statePath]. Only used when [supportsStateLoadOnLaunch] is true.
   List<String> stateLoadArgs(String statePath) => const [];
 
+  /// Gargosy (#92): [stateLoadArgs] loads the very file given, wherever it
+  /// is (another player's state is then started from a copy in temp). False
+  /// for an emulator that loads a slot of its own folder by number.
+  bool get loadsStateFromPath => true;
+
   /// Whether the state file named [fileName] can be loaded with
   /// [stateLoadArgs]. A state this says no to is not offered by Resume Game
   /// (RetroArch's command line can load numbered slots but not its auto slot).

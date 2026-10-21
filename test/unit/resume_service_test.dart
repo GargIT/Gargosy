@@ -57,6 +57,14 @@ class _ThrowingDescribeStrategy extends FakeStateSaveStrategy {
   Future<StateFileInfo> describeState(File file) async => throw Exception('describeState boom');
 }
 
+/// A strategy that names a slot's state (`GAME.<N>.st`), as RetroArch's
+/// does, so another player's state can go into a free slot (#92).
+class _SlottedStrategy extends FakeStateSaveStrategy {
+  _SlottedStrategy(super.dir);
+  @override
+  String? stateFileForSlot(String fileName, int slot) => 'GAME.$slot.st';
+}
+
 /// A strategy like PCSX2's in a profile that never ran it: no state folder
 /// until the emulator's folders are made.
 class _FolderlessStrategy extends FakeStateSaveStrategy {
@@ -105,7 +113,9 @@ void main() {
     SaveStrategy? Function(Game game, {String? emulatorId})? resolveSaveStrategy,
     StrategyExclusive? exclusive,
     Future<void> Function(EmulatorStrategy emulator)? prepareFolders,
+    List<Map<String, dynamic>>? shared,
   }) => ResumeService(
+    sharedStates: shared == null ? null : (id) async => id == '42' ? shared : const [],
     emulatorsFor: (slug) => slug == 'fakeplatform' ? (emulators ?? [emu]) : [],
     resolveSaveStrategy: resolveSaveStrategy ?? (g, {emulatorId}) => emulatorId == emu.emulatorId ? save : null,
     prefs: prefs,
@@ -132,6 +142,59 @@ void main() {
     (e) => e.fileName == fileName,
     orElse: () => throw StateError('no entry for $fileName in $entries'),
   );
+
+  // ─── Other players' states (#92) ──────────────────────────────────────────
+  Map<String, dynamic> theirs(int id, String name, {int user = 7, String username = 'maja'}) => {
+    'id': id,
+    'file_name': name,
+    'updated_at': '2026-10-01T10:00:00Z',
+    'emulator': 'fakeemu',
+    'user_id': user,
+    'username': username,
+    'user_avatar_path': '',
+  };
+
+  test("other players' states come after the player's own, each with its owner, with sync off too", () async {
+    writeLocal('GAME.auto.st', '1.2.0');
+    final service = build(shared: [theirs(9, 'GAME.2.st'), theirs(10, '..\\evil.st')]);
+    final emissions = await service.entriesFor(game, [romPath]).toList();
+    expect(emissions.first.single.owner, isNull);
+    final last = emissions.last;
+    expect(last.map((e) => e.fileName), ['GAME.auto.st', 'GAME.2.st']);
+    final maja = last.last;
+    expect(maja.owner?.username, 'maja');
+    expect(maja.where, ResumeWhere.romm);
+    expect(maja.remoteId, 9);
+    expect(maja.resumable, isTrue);
+    expect(maja.slot, const NumberedStateSlot(2));
+  });
+
+  test("offline: other players' states aren't asked for", () async {
+    offline = true;
+    final service = build(shared: [theirs(9, 'GAME.2.st')]);
+    expect((await lastOf(service.entriesFor(game, [romPath]))).where((e) => e.owner != null), isEmpty);
+  });
+
+  test("another player's state is downloaded and checked; a slot-loading emulator gets a free slot of yours", () async {
+    final seeded = api.seed('42', 'GAME.2.st', fakeState('1.2.0'), emulator: 'fakeemu');
+    final slotted = _SlottedStrategy(statesDir);
+    final service = build(shared: [theirs(seeded.id, 'GAME.2.st')], resolveSaveStrategy: (g, {emulatorId}) => slotted);
+    final entry = (await lastOf(service.entriesFor(game, [romPath]))).single;
+    expect(await service.downloadShared(entry, game), fakeState('1.2.0'));
+    writeLocal('GAME.1.st', '1.2.0');
+    writeLocal('GAME.2.st', '1.2.0');
+    expect(await service.freeSlotFor(entry, game, romPath), p.join(statesDir, 'GAME.3.st'));
+  });
+
+  test('every slot in use: no free slot, and it says so', () async {
+    final slotted = _SlottedStrategy(statesDir);
+    final service = build(shared: [theirs(9, 'GAME.2.st')], resolveSaveStrategy: (g, {emulatorId}) => slotted);
+    final entry = (await lastOf(service.entriesFor(game, [romPath]))).single;
+    for (var i = 1; i <= 9; i++) {
+      writeLocal('GAME.$i.st', '1.2.0');
+    }
+    expect(service.freeSlotFor(entry, game, romPath), throwsA(isA<StateError>()));
+  });
 
   // ─── 1 ────────────────────────────────────────────────────────────────────
   test('local states, newest first, with slot, version and compat', () async {

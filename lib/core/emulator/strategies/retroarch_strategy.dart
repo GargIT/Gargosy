@@ -90,6 +90,10 @@ class RetroArchStrategy extends EmulatorStrategy {
   /// only numbers, so the auto slot (`Game.state.auto`) is loaded by
   /// RetroArch's "Auto Load State", turned on for that launch
   /// ([EmulatorStrategy.resumeAutoStateArg]).
+  /// Gargosy (#92): it loads a slot by number, not a file.
+  @override
+  bool get loadsStateFromPath => false;
+
   @override
   List<String> stateLoadArgs(String statePath) {
     final name = p.basename(statePath);

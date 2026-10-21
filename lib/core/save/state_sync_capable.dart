@@ -32,6 +32,12 @@ mixin StateSyncCapable on SaveStrategy {
   /// Which slot [fileName] is. Works on names only (RomM-only states too).
   StateSlot slotOf(String fileName) => UnknownStateSlot(fileName);
 
+  /// Gargosy (#92): [fileName] (a state of this game) as the state in slot
+  /// [slot] instead, for an emulator that resumes by slot number, so another
+  /// player's state can go into a free slot of the player's own. Null when
+  /// the emulator has no such slot or names states otherwise.
+  String? stateFileForSlot(String fileName, int slot) => null;
+
   /// What [file] records about itself. Must never throw: an unreadable file
   /// yields its modified time (or the epoch) and no version.
   Future<StateFileInfo> describeState(io.File file) async {

@@ -812,6 +812,11 @@ class RommService implements RommStatesApi {
   Future<List<Map<String, dynamic>>?> getSharedSavesOrNull(String gameId, {required int exceptUserId}) =>
       _sharedOf(gameId, 'all_user_saves', exceptUserId);
 
+  /// Gargosy (#92): other players' public states of a game, as
+  /// [getSharedSavesOrNull] (`all_user_states`).
+  Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String gameId, {required int exceptUserId}) =>
+      _sharedOf(gameId, 'all_user_states', exceptUserId);
+
   Future<List<Map<String, dynamic>>?> _sharedOf(String gameId, String key, int exceptUserId) async {
     try {
       final response = await _dio.get('/api/roms/$gameId', options: _authOptions);
