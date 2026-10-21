@@ -166,16 +166,28 @@ class PlayController extends StateNotifier<PlayState> {
         onProblem: onNotice,
       );
       final String loadPath;
-      switch (await engine.checkResume(entry, game, romPath, pull)) {
-        case ResumeMissing():
-          return refuse(resumeMissingMessage(entry, serviceAvailable: true));
-        case ResumeReady(:final path, :final stale, :final prompt):
-          if (prompt != null &&
-              (confirmVersion == null || !await confirmVersion(prompt.stateVersion, prompt.installed))) {
-            return refuse('Nothing was started.');
-          }
-          if (stale) onNotice?.call("Couldn't update ${entry.slot.label} from RomM. Loading the copy on this PC.");
-          loadPath = path;
+      if (entry.owner case final owner?) {
+        // Another player's state (#92): a copy, after the player's own came
+        // down (a free slot is one they don't use).
+        try {
+          loadPath = await engine.takeSharedState(entry, game, romPath, emulator);
+        } on Object catch (e) {
+          return refuse(
+            "Couldn't get ${owner.username}'s ${entry.slot.label} from RomM (${_reason(e)}). Nothing was started.",
+          );
+        }
+      } else {
+        switch (await engine.checkResume(entry, game, romPath, pull)) {
+          case ResumeMissing():
+            return refuse(resumeMissingMessage(entry, serviceAvailable: true));
+          case ResumeReady(:final path, :final stale, :final prompt):
+            if (prompt != null &&
+                (confirmVersion == null || !await confirmVersion(prompt.stateVersion, prompt.installed))) {
+              return refuse('Nothing was started.');
+            }
+            if (stale) onNotice?.call("Couldn't update ${entry.slot.label} from RomM. Loading the copy on this PC.");
+            loadPath = path;
+        }
       }
       await engine.prepare(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       final session = await _launch(
@@ -196,6 +208,8 @@ class PlayController extends StateNotifier<PlayState> {
       return refuse("Couldn't start ${game.displayName}: $e");
     }
   }
+
+  static String _reason(Object e) => e is StateError ? e.message : '$e';
 
   /// [engine.readyRom] with its progress in [PlayState.preparing], cleared after.
   Future<String> _ready(PlayEngine engine, Game game, String romPath, EmulatorStrategy emulator) async {

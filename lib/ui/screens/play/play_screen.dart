@@ -423,7 +423,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                 tab == 0,
                 () => setState(() => _tab = 0),
               ),
-              _segment('States ${view.states.length}', tab == 1, () => setState(() => _tab = 1)),
+              _segment('States ${view.ownStateCount}', tab == 1, () => setState(() => _tab = 1)),
             ],
           ),
         ),

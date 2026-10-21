@@ -11,6 +11,7 @@ import '../emulator/emulator_strategy.dart';
 import '../romm/romm_models.dart';
 import '../romm/romm_state.dart';
 import '../storage/app_preferences.dart';
+import 'catalog/save_entry.dart' show SaveOwner;
 import 'save_state_info.dart';
 import 'save_strategy.dart';
 import 'state_sync_capable.dart';
@@ -42,6 +43,7 @@ class ResumeEntry {
     this.romPath,
     this.resumable = true,
     this.core,
+    this.owner,
   });
 
   final String emulatorId;
@@ -80,6 +82,11 @@ class ResumeEntry {
   /// whose folder it was found in); a resume starts that core. Null for an
   /// emulator without cores.
   final String? core;
+
+  /// Gargosy (#92): another player's state, shared on RomM ([remoteId] is
+  /// theirs); null for the player's own. Resuming it starts from a copy:
+  /// theirs never changes.
+  final SaveOwner? owner;
 }
 
 /// The outcome of [ResumeService.checkBeforeLaunch].
@@ -138,7 +145,9 @@ class ResumeService {
     Duration listTimeout = StateSyncService.defaultListTimeout,
     StrategyExclusive? exclusive,
     Future<void> Function(EmulatorStrategy emulator)? prepareFolders,
+    Future<List<Map<String, dynamic>>?> Function(String romId)? sharedStates,
   }) : _emulatorsFor = emulatorsFor,
+       _sharedStates = sharedStates,
        _prepareFolders = prepareFolders,
        _exclusive = exclusive,
        _resolve = resolveSaveStrategy,
@@ -163,6 +172,10 @@ class ResumeService {
   /// first launch would. A profile that never ran it has none, and its
   /// strategy can't name a state folder, so RomM's states would have no owner.
   final Future<void> Function(EmulatorStrategy emulator)? _prepareFolders;
+
+  /// Gargosy (#92): other players' public states of a game (RomM's
+  /// `all_user_states`, the profile's own left out); null when unread.
+  final Future<List<Map<String, dynamic>>?> Function(String romId)? _sharedStates;
   final Map<String, Uint8List?> _thumbnails = {};
 
   /// Save strategy per emulator id, as last resolved by [_sources]; used for
@@ -189,18 +202,79 @@ class ResumeService {
     }
     yield _sorted(local.values);
 
+    final own = await _withRomm(game, sources, local);
+    if (own != null) yield _sorted(own.values);
+    final shared = await _sharedEntries(game, sources);
+    if (shared.isNotEmpty) yield [..._sorted((own ?? local).values), ..._sorted(shared)];
+  }
+
+  /// Gargosy (#92): other players' public states the game's emulators can
+  /// tell as theirs, each with its [ResumeEntry.owner]. Listed with state
+  /// sync off too: resuming one only downloads it. Never throws.
+  Future<List<ResumeEntry>> _sharedEntries(Game game, List<_Source> sources) async {
+    final read = _sharedStates;
+    if (read == null || sources.isEmpty || _isOffline()) return const [];
+    final List<Map<String, dynamic>>? items;
+    try {
+      items = await read(game.id).timeout(_listTimeout);
+    } catch (e) {
+      debugPrint("[Resume] ${game.name}: other players' states not listed: $e");
+      return const [];
+    }
+    final result = <ResumeEntry>[];
+    for (final item in items ?? const <Map<String, dynamic>>[]) {
+      final RommState state;
+      try {
+        state = RommState.fromJson(item);
+      } catch (_) {
+        continue;
+      }
+      final source = _ownerOf(state, sources, sources);
+      if (source == null || !_listed(source.emulator, state.fileName)) continue;
+      final avatar = item['user_avatar_path']?.toString() ?? '';
+      result.add(
+        ResumeEntry(
+          emulatorId: source.emulator.emulatorId,
+          emulatorName: source.emulator.name,
+          fileName: state.fileName,
+          slot: source.strategy.slotOf(state.fileName),
+          savedAt: DateTime.tryParse(state.updatedAt ?? '')?.toLocal() ?? DateTime.fromMillisecondsSinceEpoch(0),
+          where: ResumeWhere.romm,
+          installedVersion: source.installed,
+          remoteId: state.id,
+          remoteUpdatedAt: state.updatedAt,
+          remoteScreenshotUrl: state.screenshotUrl,
+          romPath: source.romPath,
+          resumable:
+              _resumable(source.emulator, state.fileName) &&
+              (source.emulator.loadsStateFromPath || source.strategy.stateFileForSlot(state.fileName, 1) != null),
+          core: source.core,
+          owner: SaveOwner(
+            userId: (item['user_id'] as num?)?.toInt() ?? -1,
+            username: item['username']?.toString() ?? '?',
+            avatarPath: avatar.isEmpty ? null : avatar,
+          ),
+        ),
+      );
+    }
+    return result;
+  }
+
+  /// [local] merged with the profile's own states on RomM; null when state
+  /// sync is off for every source, RomM can't be asked, or its list failed.
+  Future<Map<String, ResumeEntry>?> _withRomm(Game game, List<_Source> sources, Map<String, ResumeEntry> local) async {
     // Gargosy: one switch for every emulator whose strategy syncs states (S0.4).
     final syncing = StateSyncService.isOn(_prefs)
         ? sources.where((s) => s.emulator.supportsStateSync).toList()
         : const <_Source>[];
     final api = _api;
-    if (api == null || syncing.isEmpty || _isOffline()) return;
+    if (api == null || syncing.isEmpty || _isOffline()) return null;
     final List<RommState> remote;
     try {
       remote = await api.listStates(game.id).timeout(_listTimeout);
     } catch (e) {
       debugPrint('[Resume] ${game.name}: RomM list failed, local states only: $e');
-      return;
+      return null;
     }
     final records = _records.load(game.id);
     final merged = Map<String, ResumeEntry>.of(local);
@@ -254,7 +328,39 @@ class ResumeService {
         core: existing.core,
       );
     }
-    yield _sorted(merged.values);
+    return merged;
+  }
+
+  /// Gargosy (#92): another player's state [entry], downloaded and checked
+  /// as the emulator's. Throws with the reason when it can't be.
+  Future<Uint8List> downloadShared(ResumeEntry entry, Game game) async {
+    final api = _api;
+    final id = entry.remoteId;
+    if (api == null || id == null) throw StateError("RomM can't be reached");
+    final bytes = await api.downloadState(id);
+    final strategy = _resolve(game, emulatorId: entry.emulatorId);
+    if (strategy is StateSyncCapable && !strategy.looksLikeValidState(bytes)) {
+      throw StateError("it isn't a ${entry.emulatorName} state");
+    }
+    return bytes;
+  }
+
+  /// Gargosy (#92): where another player's state [entry] goes for an
+  /// emulator that resumes by slot: the first slot from 1 the player has
+  /// nothing in, on this PC or synced before (a slot deleted on this PC
+  /// stays the player's). Throws when every slot is taken.
+  Future<String> freeSlotFor(ResumeEntry entry, Game game, String romPath) async {
+    final sources = await _sources(game, romPath, {});
+    final source = _firstWhereOrNull(sources, (s) => s.emulator.emulatorId == entry.emulatorId);
+    if (source == null) throw StateError("${entry.emulatorName} can't find the game's states");
+    final records = _records.load(game.id);
+    for (var slot = 1; slot <= 9; slot++) {
+      final name = source.strategy.stateFileForSlot(entry.fileName, slot);
+      if (name == null) continue;
+      if (records.containsKey(name) || await io.File(p.join(source.dir.path, name)).exists()) continue;
+      return p.join(source.dir.path, name);
+    }
+    throw StateError('every ${entry.emulatorName} state slot of yours is in use');
   }
 
   /// Checks the chosen state right before launch (after the pre-launch pull).

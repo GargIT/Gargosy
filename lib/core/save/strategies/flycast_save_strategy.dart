@@ -87,6 +87,15 @@ class FlycastSaveStrategy extends SaveStrategy with StateSyncCapable {
   @override
   bool looksLikeValidState(Uint8List bytes) => _hasHeader(bytes) || bytes.length >= _legacyMinSize;
 
+  /// Gargosy (#92): `<stem>_<N>.state`, slot 0 `<stem>.state`.
+  @override
+  String? stateFileForSlot(String fileName, int slot) {
+    final m = _slotSuffix.firstMatch(fileName);
+    if (m == null || slot < 0 || slot > 99) return null;
+    final stem = fileName.substring(0, m.start);
+    return slot == 0 ? '$stem.state' : '${stem}_$slot.state';
+  }
+
   @override
   StateSlot slotOf(String fileName) {
     final n = slotNumber(fileName);

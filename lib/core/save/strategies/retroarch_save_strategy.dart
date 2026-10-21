@@ -865,6 +865,15 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     return null;
   }
 
+  /// Gargosy (#92): `<stem>.state<N>`, slot 0 `<stem>.state`.
+  @override
+  String? stateFileForSlot(String fileName, int slot) {
+    final match = _stateSuffixPattern.firstMatch(fileName);
+    if (match == null || slot < 0 || slot > 999) return null;
+    final stem = fileName.substring(0, match.start);
+    return slot == 0 ? '$stem.state' : '$stem.state$slot';
+  }
+
   @override
   StateSlot slotOf(String fileName) {
     final match = _stateSuffixPattern.firstMatch(fileName);

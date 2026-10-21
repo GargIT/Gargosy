@@ -149,6 +149,8 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 
 For these, a second RomM user (player A) on the same server, with a save of a game made public in RomM's web UI. Player B is a Gargosy profile of another RomM user.
 
-55. [ ] In B's profile, the game's play screen and Saves tab list A's save under From other players, with A's name. B's own saves come first, and the Saves count doesn't include A's.
-56. [ ] With a save of B's own on this PC, pick A's save and Play: it asks "Play A's save?" first. The game starts in A's save. After quitting, the save is on RomM under B, and A's save on RomM is unchanged.
-57. [ ] On the Saves tab, X on A's save puts it on this PC (B's save is backed up first); hold A does nothing on it. A makes the save private again: B no longer sees it.
+55. [x] In B's profile, the game's play screen and Saves tab list A's save under From other players, with A's name. B's own saves come first, and the Saves count doesn't include A's.
+56. [x] With a save of B's own on this PC, pick A's save and Play: it asks "Play A's save?" first. The game starts in A's save. After quitting, the save is on RomM under B, and A's save on RomM is unchanged.
+57. [x] On the Saves tab, X on A's save puts it on this PC (B's save is backed up first); hold A does nothing on it. A makes the save private again: B no longer sees it.
+58. [ ] A makes a state public (PCSX2, DuckStation, Dolphin, PPSSPP, mGBA or MAME). In B's profile, the play screen's States list shows it under From other players with A's name; the States count is B's own. Resume it: the game starts in A's state, and B's own states are unchanged.
+59. [ ] The same with a RetroArch (or ares, Flycast) state: it goes into the first free slot of B's (Slot 1 when B has none), the game starts in it, and after quitting it's B's state in that slot (on RomM under B with state sync on). B's state in A's slot number, if any, is unchanged.

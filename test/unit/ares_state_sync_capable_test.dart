@@ -67,6 +67,12 @@ void main() {
     expect(s.slotOf('Super Mario 64 (USA).bsu'), isA<UnknownStateSlot>());
   });
 
+  test("another slot's state name (#92): .bsN, slots 1 to 9", () {
+    expect(s.stateFileForSlot('Super Mario 64 (USA).bs4', 2), 'Super Mario 64 (USA).bs2');
+    expect(s.stateFileForSlot('Super Mario 64 (USA).bs4', 0), isNull);
+    expect(s.stateFileForSlot('Super Mario 64 (USA).srm', 2), isNull);
+  });
+
   test('Resume: --save-state <slot>', () {
     final emu = AresStrategy(DirectoryService(MemoryPrefs()));
     expect(emu.supportsStateSync, isTrue);

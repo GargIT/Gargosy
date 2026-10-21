@@ -80,6 +80,12 @@ void main() {
     expect(strategy.slotOf('notes.txt'), isA<UnknownStateSlot>());
   });
 
+  test("another slot's state name (#92): .stateN, slot 0 .state", () {
+    expect(strategy.stateFileForSlot('Pokemon Emerald.state.auto', 3), 'Pokemon Emerald.state3');
+    expect(strategy.stateFileForSlot('Pokemon Emerald.state7', 0), 'Pokemon Emerald.state');
+    expect(strategy.stateFileForSlot('notes.txt', 1), isNull);
+  });
+
   test("a state's core is the core whose folder it's in (Gargosy: Resume starts it)", () {
     expect(strategy.stateCoreFor(game), isNotNull);
     expect(strategy.stateCoreFor(game), strategy.coreIdFor(game));

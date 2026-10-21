@@ -93,6 +93,10 @@ class AresStrategy extends EmulatorStrategy {
 
   /// ares: `--save-state <slot>` (1-9) loads that slot once the game starts
   /// (desktop-ui/desktop-ui.cpp); the state is in place under its slot's name.
+  /// Gargosy (#92): it loads a slot by number, not a file.
+  @override
+  bool get loadsStateFromPath => false;
+
   @override
   List<String> stateLoadArgs(String statePath) => [
     '--save-state',

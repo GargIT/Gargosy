@@ -266,6 +266,43 @@ void main() {
     expect(deleted, isEmpty);
   });
 
+  testWidgets("the state list: yours, then other players' by player (#92)", (tester) async {
+    ResumeEntry s(String name, int day, {SaveOwner? owner}) => ResumeEntry(
+      emulatorId: 'pcsx2',
+      emulatorName: 'PCSX2',
+      fileName: name,
+      slot: NumberedStateSlot(day),
+      savedAt: _t(day),
+      where: owner == null ? ResumeWhere.thisPc : ResumeWhere.romm,
+      owner: owner,
+    );
+    const maja = SaveOwner(userId: 7, username: 'maja'), olle = SaveOwner(userId: 8, username: 'olle');
+    await pump(
+      tester,
+      SizedBox(
+        height: 800,
+        child: StateList(
+          states: [
+            s('a', 3),
+            s('m', 2, owner: maja),
+            s('o', 1, owner: olle),
+          ],
+          chosen: null,
+          onChoose: (_) {},
+          loading: false,
+        ),
+      ),
+      width: 1400,
+    );
+    expect(find.text('Yours'), findsOneWidget);
+    expect(find.text('From other players'), findsOneWidget);
+    final yours = tester.getTopLeft(find.text('Slot 3'));
+    final m = tester.getTopLeft(find.text('maja')), o = tester.getTopLeft(find.text('olle'));
+    expect(m.dy, greaterThan(yours.dy));
+    expect(m.dy, o.dy, reason: 'two players a row');
+    expect(find.textContaining('· on RomM'), findsNWidgets(2));
+  });
+
   testWidgets("offline: On RomM says RomM can't be reached, and its rows do nothing", (tester) async {
     final restored = <String>[];
     await pump(

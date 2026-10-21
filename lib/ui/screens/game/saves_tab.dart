@@ -238,7 +238,11 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _segment('Saves $count', !_states, () => setState(() => _states = false)),
-                      _segment('States ${states.length}', _states, () => setState(() => _states = true)),
+                      _segment(
+                        'States ${states.where((s) => s.owner == null).length}',
+                        _states,
+                        () => setState(() => _states = true),
+                      ),
                     ],
                   ),
                 ),

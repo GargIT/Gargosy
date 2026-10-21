@@ -13,6 +13,10 @@ What changed in each release of Gargosy. The format follows
   on this PC (X on the Saves tab): it becomes your save, and your next one
   goes to RomM under you. Their save on RomM stays as it is. They are never
   picked for you, and asked about before they replace your own save.
+- The same for save states others shared: the States list shows them under
+  From other players. Resuming one starts from a copy; in RetroArch, ares and
+  Flycast, which load a state by slot, the copy goes into a free slot of
+  yours, so none of your states is replaced.
 
 - A platform has its own page, as in RomM: its logo and name with its type,
   maker and generation, how many games it has in the library and on this PC,

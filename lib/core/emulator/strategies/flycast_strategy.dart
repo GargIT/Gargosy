@@ -45,6 +45,10 @@ class FlycastStrategy extends EmulatorStrategy {
   /// boot when `Dreamcast.AutoLoadState` is on (core/emulator.cpp). The
   /// state is in the profile's state folder under its slot's name, so the
   /// slot is set for this launch only (`-config` values aren't saved).
+  /// Gargosy (#92): it loads a slot by number, not a file.
+  @override
+  bool get loadsStateFromPath => false;
+
   @override
   List<String> stateLoadArgs(String statePath) => [
     '-config',

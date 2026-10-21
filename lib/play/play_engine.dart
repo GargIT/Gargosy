@@ -2,7 +2,6 @@ import '../emulators/fullscreen.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../profiles/profile_providers.dart';
 import '../profiles/path_guard.dart';
-import '../profiles/json_file.dart';
 import '../core/emulator/strategies/retroarch_strategy.dart';
 
 import 'package:path/path.dart' as p;
@@ -11,7 +10,6 @@ import 'package:dio/dio.dart';
 import 'dart:io' as io;
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/emulator/emulator_strategy.dart';
@@ -33,6 +31,7 @@ import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
 import 'play_menu.dart';
 import 'pre_launch_pull.dart';
+import 'state_copies.dart';
 
 /// What a finished session says ("Save synced", …).
 class PlayResult {
@@ -96,6 +95,10 @@ abstract class PlayEngine {
 
   /// Whether [entry] can be loaded now (after [pull]).
   Future<ResumeCheck> checkResume(ResumeEntry entry, Game game, String romPath, StatePull pull);
+
+  /// Gargosy (#92): another player's state [entry] put where [strategy]
+  /// resumes it from (`copySharedState`). Returns that path; throws with why.
+  Future<String> takeSharedState(ResumeEntry entry, Game game, String romPath, EmulatorStrategy strategy);
 
   /// Stores or forgets [game]'s emulator as [request] says.
   Future<void> remember(Game game, PlayRequest request);
@@ -284,6 +287,22 @@ class GargosyPlayEngine implements PlayEngine {
     final resume = _ref.read(resumeServiceProvider);
     if (resume == null) return const ResumeMissing();
     return resume.checkBeforeLaunch(entry, game, romPath, pulled: pull.current, conflicted: pull.conflicted);
+  }
+
+  @override
+  Future<String> takeSharedState(ResumeEntry entry, Game game, String romPath, EmulatorStrategy strategy) async {
+    final resume = _ref.read(resumeServiceProvider);
+    final profile = _ref.read(activeProfileProvider);
+    if (resume == null || profile == null) throw StateError('no profile is active');
+    return copySharedState(
+      resume,
+      entry,
+      game,
+      romPath,
+      strategy,
+      root: _ref.read(appRootProvider),
+      profileGuard: profile.guard,
+    );
   }
 
   @override
@@ -535,7 +554,9 @@ class GargosyPlayEngine implements PlayEngine {
     String? loadStatePath,
   }) async {
     final service = await _launch();
-    final statePath = loadStatePath == null ? null : await _stateForThisPc(strategy, loadStatePath, romPath);
+    final statePath = loadStatePath == null
+        ? null
+        : await stateForThisPc(strategy, loadStatePath, romPath, _ref.read(appRootProvider));
     final session = await service.launch(
       game,
       romPath,
@@ -547,34 +568,21 @@ class GargosyPlayEngine implements PlayEngine {
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
         .whenComplete(() async {
-          if (statePath == loadStatePath) return;
-          try {
-            await io.File(statePath!).delete();
-          } on io.FileSystemException catch (_) {
-            // Left in temp; the next Resume of that state writes over it.
+          final temp = resumeTempDir(_ref.read(appRootProvider));
+          // The copies made for this session: this PC's ROM path, another
+          // player's state (#92).
+          for (final copy in {
+            if (statePath != loadStatePath) statePath,
+            if (loadStatePath != null && p.isWithin(temp, loadStatePath)) loadStatePath,
+          }) {
+            try {
+              await io.File(copy!).delete();
+            } on io.FileSystemException catch (_) {
+              // Left in temp; the next Resume of that state writes over it.
+            }
           }
         });
     return PlaySession(finished);
-  }
-
-  /// The state Resume starts: a copy in `userdata\app\temp\resume\` when
-  /// the emulator needs it changed for this PC's [romPath]
-  /// ([EmulatorStrategy.stateForRom]: DuckStation's disc path), else
-  /// [statePath] itself. The synced file is never changed, so it isn't
-  /// uploaded again. Any failure starts the state as it is.
-  Future<String> _stateForThisPc(EmulatorStrategy strategy, String statePath, String romPath) async {
-    try {
-      final changed = strategy.stateForRom(await io.File(statePath).readAsBytes(), romPath);
-      if (changed == null) return statePath;
-      final root = _ref.read(appRootProvider);
-      final copy = p.join(root.appData, 'temp', 'resume', p.basename(statePath));
-      await writeBytesAtomic(PathGuard(root), copy, changed);
-      debugPrint("[Resume] ${p.basename(statePath)}: started from a copy naming this PC's ROM");
-      return copy;
-    } catch (e) {
-      debugPrint('[Resume] ${p.basename(statePath)}: kept as it is: $e');
-      return statePath;
-    }
   }
 
   static PlayResult _describe(LaunchResult? r) {

@@ -340,6 +340,14 @@ class AresSaveStrategy extends SaveStrategy with StateSyncCapable {
     };
   }
 
+  /// Gargosy (#92): `<stem>.bs<N>`, slots 1 to 9.
+  @override
+  String? stateFileForSlot(String fileName, int slot) {
+    final m = _stateSuffix.firstMatch(fileName);
+    if (m == null || slot < 1 || slot > 9) return null;
+    return '${fileName.substring(0, m.start)}.bs$slot';
+  }
+
   @override
   StateSlot slotOf(String fileName) {
     final n = stateSlot(fileName);

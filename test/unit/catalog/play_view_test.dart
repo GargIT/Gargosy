@@ -130,6 +130,25 @@ void main() {
       expect(none.promptFor(none.others.single.groups.single.newest.item), isNull);
     });
 
+    test("another player's state is never preselected or counted, even when newest", () {
+      final theirs = ResumeEntry(
+        emulatorId: 'retroarch',
+        emulatorName: 'RetroArch',
+        fileName: 's',
+        slot: const NumberedStateSlot(1),
+        savedAt: wed,
+        where: ResumeWhere.romm,
+        owner: maja,
+      );
+      final v = view(
+        SaveCatalog(thisPc: [local(rearmed, mon)], backups: const [], romm: const [], rommOffline: false),
+        states: [theirs],
+      );
+      expect((v.preselected as SavePlay).entry.fileName, 'l-pcsx_rearmed');
+      expect(v.ownStateCount, 0);
+      expect(v.states, [theirs]);
+    });
+
     test("over a save of yours that isn't on RomM it says so", () {
       final v = view(withTheirs(wed, thisPc: [local(rearmed, mon)]), picked: rearmed);
       expect(v.promptFor(v.others.single.groups.single.newest.item), PlayPrompt.notOnRomm);

@@ -204,6 +204,16 @@ class FakeEngine implements PlayEngine {
     return check;
   }
 
+  /// Another player's state: where it was put, or null to fail.
+  String? sharedPath = '/temp/shared-state';
+
+  @override
+  Future<String> takeSharedState(ResumeEntry entry, Game game, String romPath, EmulatorStrategy strategy) async {
+    steps.add('take ${entry.fileName}');
+    resumed = entry;
+    return sharedPath ?? (throw StateError('every slot is in use'));
+  }
+
   /// The core the next launch says is missing (once).
   String? missingCore;
   bool coreDownloadFails = false;
@@ -374,6 +384,42 @@ void main() {
     expect(engine.launchedIn, 'pcsx2');
     expect(engine.loadStatePath, r'D:\G\states\auto.p2s');
     expect(c.read(playControllerProvider).runningGameId, '1');
+  });
+
+  test(
+    "another player's state (#92): pulled, then taken as a copy and booted into, never checked as one's own",
+    () async {
+      final theirs = ResumeEntry(
+        emulatorId: 'pcsx2',
+        emulatorName: 'PCSX2',
+        fileName: 'm.p2s',
+        slot: const NumberedStateSlot(2),
+        savedAt: DateTime(2026, 10, 9),
+        where: ResumeWhere.romm,
+        remoteId: 9,
+        owner: const SaveOwner(userId: 7, username: 'maja'),
+      );
+      expect(await c.read(playControllerProvider.notifier).resume(game(1, 'G'), theirs), isNull);
+      expect(engine.steps, ['states', 'take m.p2s', 'prepare', 'launch']);
+      expect(engine.loadStatePath, '/temp/shared-state');
+    },
+  );
+
+  test("another player's state that can't be taken starts nothing, and says why", () async {
+    engine.sharedPath = null;
+    final theirs = ResumeEntry(
+      emulatorId: 'pcsx2',
+      emulatorName: 'PCSX2',
+      fileName: 'm.p2s',
+      slot: const NumberedStateSlot(2),
+      savedAt: DateTime(2026, 10, 9),
+      where: ResumeWhere.romm,
+      owner: const SaveOwner(userId: 7, username: 'maja'),
+    );
+    final reason = await c.read(playControllerProvider.notifier).resume(game(1, 'G'), theirs);
+    expect(reason, "Couldn't get maja's Slot 2 from RomM (every slot is in use). Nothing was started.");
+    expect(engine.steps, isNot(contains('launch')));
+    expect(c.read(playControllerProvider).runningGameId, isNull);
   });
 
   test("a RetroArch state resumes in the core it belongs to, not the platform's default", () async {

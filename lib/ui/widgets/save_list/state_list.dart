@@ -4,11 +4,16 @@ import '../../../core/save/catalog/play_choice.dart';
 import '../../../core/save/resume_service.dart';
 import '../../../core/save/save_state_info.dart';
 import '../../theme/tokens.dart';
+import '../../../core/save/catalog/save_entry.dart' show SaveOwner;
 import '../g_focusable.dart';
+import 'player_avatar.dart';
+import 'save_list.dart';
 import 'save_labels.dart';
 
 /// The play screen's save states: newest first, with where each one is.
-/// A chooses one; Start resumes it in the emulator that made it.
+/// A chooses one; Start resumes it in the emulator that made it. Other
+/// players' shared states (#92) follow under From other players, by player,
+/// two players a row when there's room.
 class StateList extends StatelessWidget {
   const StateList({
     super.key,
@@ -26,6 +31,7 @@ class StateList extends StatelessWidget {
   final bool loading;
 
   static String _where(ResumeEntry e) => switch (e.where) {
+    _ when e.owner != null => 'on RomM',
     ResumeWhere.thisPc => 'on this PC',
     ResumeWhere.romm => 'on RomM',
     ResumeWhere.both => e.newerOnRomm ? 'newer on RomM' : 'on this PC and RomM',
@@ -63,7 +69,12 @@ class StateList extends StatelessWidget {
                     ),
                     // Shown here, the resume loads it without asking again
                     // (ResumeService.checkBeforeLaunch: "seen").
-                    if (!e.resumable)
+                    if (!e.resumable && e.owner != null)
+                      Text(
+                        "${e.emulatorName} can't start in this state, so another player's can't be used here.",
+                        style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                      )
+                    else if (!e.resumable)
                       Text(
                         "Start the game, then load it from ${e.emulatorName}'s menu: ${e.emulatorName} can't start in a state.",
                         style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
@@ -84,23 +95,110 @@ class StateList extends StatelessWidget {
     );
   }
 
+  static Widget _heading(String text, {String? note}) => Padding(
+    padding: const EdgeInsets.only(top: GSpace.s3, bottom: GSpace.s2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: GFont.sm,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: GColors.fgMuted,
+          ),
+        ),
+        if (note != null)
+          Text(
+            note,
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+          ),
+      ],
+    ),
+  );
+
+  Widget _player(SaveOwner owner, List<ResumeEntry> entries) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(bottom: GSpace.s2),
+        child: Row(
+          children: [
+            PlayerAvatar(owner),
+            const SizedBox(width: GSpace.s2),
+            Text(owner.username, style: const TextStyle(fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+      ...entries.map(_row),
+    ],
+  );
+
+  /// From other players: their states by player, two a row when [wide].
+  List<Widget> _others(List<ResumeEntry> others, bool wide) {
+    final byOwner = <SaveOwner, List<ResumeEntry>>{};
+    for (final e in others) {
+      byOwner.putIfAbsent(e.owner!, () => []).add(e);
+    }
+    final players = [for (final e in byOwner.entries) _player(e.key, e.value)];
+    return [
+      Container(
+        key: const ValueKey('state-list-others'),
+        margin: const EdgeInsets.only(top: GSpace.s3),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: GColors.border)),
+        ),
+        child: _heading(
+          'From other players',
+          note: 'States others shared on RomM. Resuming one downloads a copy; theirs never changes.',
+        ),
+      ),
+      if (!wide)
+        ...players
+      else
+        for (var i = 0; i < players.length; i += 2)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: players[i]),
+              const SizedBox(width: GSpace.s6),
+              Expanded(child: i + 1 < players.length ? players[i + 1] : const SizedBox.shrink()),
+            ],
+          ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final own = [
+      for (final s in states)
+        if (s.owner == null) s,
+    ];
+    final others = [
+      for (final s in states)
+        if (s.owner != null) s,
+    ];
     if (states.isEmpty) {
       return Text(
         loading ? 'Looking for save states…' : 'No save states yet.',
         style: const TextStyle(color: GColors.fgMuted),
       );
     }
-    return ListView(
-      children: [
-        ...states.map(_row),
-        if (loading)
-          const Padding(
-            padding: EdgeInsets.only(top: GSpace.s2),
-            child: Text("Checking RomM's states…", style: TextStyle(color: GColors.fgMuted)),
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, c) => ListView(
+        children: [
+          if (others.isNotEmpty) _heading('Yours'),
+          if (own.isEmpty) const Text('No save states of yours yet.', style: TextStyle(color: GColors.fgMuted)),
+          ...own.map(_row),
+          if (others.isNotEmpty) ..._others(others, c.maxWidth >= SaveList.twoColumnWidth),
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.only(top: GSpace.s2),
+              child: Text("Checking RomM's states…", style: TextStyle(color: GColors.fgMuted)),
+            ),
+        ],
+      ),
     );
   }
 }
