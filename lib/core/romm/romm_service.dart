@@ -804,6 +804,28 @@ class RommService implements RommStatesApi {
     }
   }
 
+  /// Gargosy (#92): other players' public saves of a game. RomM's save list
+  /// holds only the caller's own; the game itself (`all_user_saves`) adds
+  /// every other user's public ones, with `username` and `user_avatar_path`.
+  /// Those of [exceptUserId] (the profile's own) are left out. Null when the
+  /// game couldn't be read.
+  Future<List<Map<String, dynamic>>?> getSharedSavesOrNull(String gameId, {required int exceptUserId}) =>
+      _sharedOf(gameId, 'all_user_saves', exceptUserId);
+
+  Future<List<Map<String, dynamic>>?> _sharedOf(String gameId, String key, int exceptUserId) async {
+    try {
+      final response = await _dio.get('/api/roms/$gameId', options: _authOptions);
+      if (response.statusCode != 200 || response.data is! Map) return null;
+      final items = (response.data as Map)[key];
+      return [
+        for (final item in items is List ? items : const [])
+          if (item is Map<String, dynamic> && (item['user_id'] as num?)?.toInt() != exceptUserId) item,
+      ];
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Lists saves for a game, sorted newest-first.
   ///
   /// Pass [deviceId] (RomM 4.9+) to receive `device_syncs[]` with `is_current`

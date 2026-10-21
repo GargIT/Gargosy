@@ -7,6 +7,22 @@ import 'save_maker.dart';
 /// Where a save row comes from.
 enum SaveSource { local, backup, romm }
 
+/// The RomM user another player's shared save belongs to (#92).
+@immutable
+class SaveOwner {
+  const SaveOwner({required this.userId, required this.username, this.avatarPath});
+  final int userId;
+  final String username;
+
+  /// RomM's `user_avatar_path`; null when they have none.
+  final String? avatarPath;
+
+  @override
+  bool operator ==(Object other) => other is SaveOwner && other.userId == userId;
+  @override
+  int get hashCode => userId.hashCode;
+}
+
 /// One save the user can look at, restore or play.
 @immutable
 class SaveEntry {
@@ -23,10 +39,13 @@ class SaveEntry {
     this.sameAsRommId,
     this.contentHashes = const {},
     this.sharedFile = false,
+    this.owner,
   });
 
   /// A save from RomM's save list ([save] is the list item as RomM sent it).
-  factory SaveEntry.fromRomm(Map<String, dynamic> save, {required Set<String> emulatorIds}) {
+  /// [shared]: another player's public save (the game's `all_user_saves`),
+  /// its owner read from the item.
+  factory SaveEntry.fromRomm(Map<String, dynamic> save, {required Set<String> emulatorIds, bool shared = false}) {
     final tag = save['emulator']?.toString();
     final time =
         DateTime.tryParse(save['updated_at']?.toString() ?? '') ??
@@ -42,6 +61,15 @@ class SaveEntry {
       sizeBytes: size is int ? size : int.tryParse(size?.toString() ?? ''),
       slot: save['slot']?.toString(),
       rommSave: save,
+      owner: shared
+          ? SaveOwner(
+              userId: (save['user_id'] as num?)?.toInt() ?? -1,
+              username: save['username']?.toString() ?? '?',
+              avatarPath: (save['user_avatar_path']?.toString() ?? '').isEmpty
+                  ? null
+                  : save['user_avatar_path'].toString(),
+            )
+          : null,
     );
   }
 
@@ -78,6 +106,10 @@ class SaveEntry {
   /// The save is in a file other games share (a memory card): its time is
   /// the file's, which any game on it changes (local rows only).
   final bool sharedFile;
+
+  /// Another player's save, shared on RomM (#92); null for the player's own.
+  /// Never synced with: playing it makes a copy that is the player's own.
+  final SaveOwner? owner;
 
   /// RomM rows with the same key are versions of one save.
   String get groupKey => '${slot ?? ''}|${tag ?? ''}';

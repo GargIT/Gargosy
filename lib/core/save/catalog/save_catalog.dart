@@ -13,10 +13,24 @@ class RommSaveGroup {
   final List<SaveEntry> older;
 }
 
+/// One other player's shared saves of the game (#92), grouped as RomM's.
+@immutable
+class PlayerSaves {
+  const PlayerSaves({required this.owner, required this.groups});
+  final SaveOwner owner;
+  final List<RommSaveGroup> groups;
+}
+
 /// Every save of one game, as the play screen and the Saves tab list them.
 @immutable
 class SaveCatalog {
-  const SaveCatalog({required this.thisPc, required this.backups, required this.romm, required this.rommOffline});
+  const SaveCatalog({
+    required this.thisPc,
+    required this.backups,
+    required this.romm,
+    required this.rommOffline,
+    this.others = const [],
+  });
 
   /// One row per installed emulator that has a save for the game, newest first.
   final List<SaveEntry> thisPc;
@@ -30,6 +44,10 @@ class SaveCatalog {
   /// RomM couldn't be listed (offline or failing).
   final bool rommOffline;
 
+  /// Other players' shared saves, the player with the newest first. Never
+  /// in [all]: not the player's own saves, so never counted or synced.
+  final List<PlayerSaves> others;
+
   List<SaveEntry> get all => [
     ...thisPc,
     ...backups,
@@ -39,17 +57,12 @@ class SaveCatalog {
 
 int _newestFirst(SaveEntry a, SaveEntry b) => b.savedAt.compareTo(a.savedAt);
 
-/// [romm] null: RomM couldn't be listed.
-SaveCatalog buildSaveCatalog({
-  required List<SaveEntry> local,
-  required List<SaveEntry> backups,
-  required List<SaveEntry>? romm,
-}) {
+List<RommSaveGroup> _groups(Iterable<SaveEntry> saves) {
   final groups = <String, List<SaveEntry>>{};
-  for (final e in romm ?? const <SaveEntry>[]) {
+  for (final e in saves) {
     groups.putIfAbsent(e.groupKey, () => []).add(e);
   }
-  final rommGroups = [
+  return [
     for (final versions in groups.values)
       () {
         final sorted = [...versions]..sort(_newestFirst);
@@ -61,10 +74,26 @@ SaveCatalog buildSaveCatalog({
         );
       }(),
   ]..sort((a, b) => _newestFirst(a.newest, b.newest));
+}
+
+/// [romm] null: RomM couldn't be listed. [others]: other players' shared
+/// saves (each with its [SaveEntry.owner]).
+SaveCatalog buildSaveCatalog({
+  required List<SaveEntry> local,
+  required List<SaveEntry> backups,
+  required List<SaveEntry>? romm,
+  List<SaveEntry> others = const [],
+}) {
+  final byOwner = <SaveOwner, List<SaveEntry>>{};
+  for (final e in others) {
+    if (e.owner case final owner?) byOwner.putIfAbsent(owner, () => []).add(e);
+  }
   return SaveCatalog(
     thisPc: [...local]..sort(_newestFirst),
     backups: [...backups]..sort(_newestFirst),
-    romm: rommGroups,
+    romm: _groups(romm ?? const []),
     rommOffline: romm == null,
+    others: [for (final e in byOwner.entries) PlayerSaves(owner: e.key, groups: _groups(e.value))]
+      ..sort((a, b) => _newestFirst(a.groups.first.newest, b.groups.first.newest)),
   );
 }

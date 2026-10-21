@@ -16,10 +16,11 @@ import 'package:gargosy/core/save/catalog/save_maker.dart';
 import '../../helpers/without_sigil.dart';
 
 class _Sources implements SaveCatalogSources {
-  _Sources({this.local = const [], this.backupRows = const [], this.romm});
+  _Sources({this.local = const [], this.backupRows = const [], this.romm, this.shared = const []});
   final List<SaveEntry> local;
   final List<SaveEntry> backupRows;
   final List<Map<String, dynamic>>? romm;
+  final List<Map<String, dynamic>> shared;
   @override
   Set<String> get emulatorIds => const {'retroarch', 'ares'};
   @override
@@ -28,6 +29,8 @@ class _Sources implements SaveCatalogSources {
   List<SaveEntry> backups(Game game) => backupRows;
   @override
   Future<List<Map<String, dynamic>>?> rommSaves(Game game) async => romm;
+  @override
+  Future<List<Map<String, dynamic>>> sharedSaves(Game game) async => shared;
 }
 
 class _Repo extends BackupRepository {
@@ -143,6 +146,35 @@ void main() {
     expect(c.rommOffline, isTrue);
     expect(c.romm, isEmpty);
     expect(c.thisPc, hasLength(1));
+  });
+
+  test("other players' shared saves: by player, newest player first, never among the player's own (#92)", () async {
+    Map<String, dynamic> shared(int user, String name, String time) => {
+      ...romm(name, 'pcsx2', time, slot: 'autosave'),
+      'user_id': user,
+      'username': user == 7 ? 'maja' : 'olle',
+      'user_avatar_path': '',
+    };
+    final c = await loadSaveCatalog(
+      game,
+      '/roms/mk.z64',
+      _Sources(
+        romm: [romm('a.zip', 'freegosy', '2026-10-01T07:56:29Z')],
+        shared: [
+          shared(7, 'm1.ps2', '2026-09-20T10:00:00Z'),
+          shared(8, 'o1.ps2', '2026-09-25T10:00:00Z'),
+          shared(7, 'm2.ps2', '2026-09-22T10:00:00Z'),
+          shared(7, 'm.state1', '2026-09-23T10:00:00Z'),
+        ],
+      ),
+    );
+    expect(c.others.map((p) => p.owner.username), ['olle', 'maja']);
+    final maja = c.others.last;
+    expect(maja.groups.single.newest.fileName, 'm2.ps2');
+    expect(maja.groups.single.older.map((e) => e.fileName), ['m1.ps2']);
+    expect(maja.groups.single.newest.owner?.userId, 7);
+    expect(maja.groups.single.newest.owner?.avatarPath, isNull);
+    expect(c.all.map((e) => e.fileName), ['a.zip']);
   });
 
   test('an empty RomM list is not offline', () async {

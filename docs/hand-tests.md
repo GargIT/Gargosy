@@ -144,3 +144,11 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 52. [x] Open a folded game with none of its versions downloaded: RomM's version opens, and Version on its page lists the others; pick one to go to its page and download it. With one version downloaded, the card opens that one. With two downloaded, it asks "Which version?".
 53. [x] Collections and Favourites have the bar, the A–Z rail (by name) and the marks.
 54. [x] Put a game's file in `roms\ps2\` by hand, or download one in another profile: it has the ✓ but isn't counted On this PC. On PlayStation 2 with On this PC on, Scan says "Found 1 more on this PC." and the game is listed. Scan isn't there on a collection or with On this PC off.
+
+## Other players' saves (#92)
+
+For these, a second RomM user (player A) on the same server, with a save of a game made public in RomM's web UI. Player B is a Gargosy profile of another RomM user.
+
+55. [ ] In B's profile, the game's play screen and Saves tab list A's save under From other players, with A's name. B's own saves come first, and the Saves count doesn't include A's.
+56. [ ] With a save of B's own on this PC, pick A's save and Play: it asks "Play A's save?" first. The game starts in A's save. After quitting, the save is on RomM under B, and A's save on RomM is unchanged.
+57. [ ] On the Saves tab, X on A's save puts it on this PC (B's save is backed up first); hold A does nothing on it. A makes the save private again: B no longer sees it.

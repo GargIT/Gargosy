@@ -67,6 +67,75 @@ void main() {
     expect(v.saveRows.firstWhere((r) => r.entry.fileName == 'd.zip').fit.usable, isFalse);
   });
 
+  // Other players' saves (#92).
+  {
+    const maja = SaveOwner(userId: 7, username: 'maja');
+    SaveEntry theirs(DateTime t) => SaveEntry(
+      source: SaveSource.romm,
+      fileName: 'm.mcd',
+      savedAt: t,
+      maker: rearmed,
+      tag: rearmed.tag,
+      slot: 'autosave',
+      rommSave: const {'id': 50, 'content_hash': 'h-maja'},
+      owner: maja,
+    );
+    SaveCatalog withTheirs(DateTime t, {List<SaveEntry> thisPc = const []}) => SaveCatalog(
+      thisPc: thisPc,
+      backups: const [],
+      romm: const [],
+      rommOffline: false,
+      others: [
+        PlayerSaves(
+          owner: maja,
+          groups: [
+            group([theirs(t)]),
+          ],
+        ),
+      ],
+    );
+
+    test('listed by player, never among the saves, counted or preselected, even when newest', () {
+      final v = view(withTheirs(wed, thisPc: [local(rearmed, mon)]), picked: rearmed);
+      expect(v.others.single.owner.username, 'maja');
+      expect(v.others.single.groups.single.newest.entry.fileName, 'm.mcd');
+      expect(v.saveRows.map((r) => r.entry.fileName), ['l-pcsx_rearmed']);
+      expect((v.preselected as SavePlay).entry.fileName, 'l-pcsx_rearmed');
+    });
+
+    test("it never makes a save on this PC count as on RomM", () {
+      final mine = SaveEntry(
+        source: SaveSource.local,
+        fileName: 'l',
+        savedAt: mon,
+        maker: rearmed,
+        tag: rearmed.tag,
+        contentHashes: const {'h-maja'},
+      );
+      expect(view(withTheirs(wed, thisPc: [mine]), picked: rearmed).isOnRomm(mine), isFalse);
+    });
+
+    test('playing one over your own save asks, even when theirs is newer; with none of yours it does not', () {
+      final mine = SaveEntry(
+        source: SaveSource.local,
+        fileName: 'l',
+        savedAt: mon,
+        maker: rearmed,
+        tag: rearmed.tag,
+        sameAsRommId: '9',
+      );
+      final v = view(withTheirs(wed, thisPc: [mine]), picked: rearmed);
+      expect(v.promptFor(v.others.single.groups.single.newest.item), PlayPrompt.othersSave);
+      final none = view(withTheirs(wed), picked: rearmed);
+      expect(none.promptFor(none.others.single.groups.single.newest.item), isNull);
+    });
+
+    test("over a save of yours that isn't on RomM it says so", () {
+      final v = view(withTheirs(wed, thisPc: [local(rearmed, mon)]), picked: rearmed);
+      expect(v.promptFor(v.others.single.groups.single.newest.item), PlayPrompt.notOnRomm);
+    });
+  }
+
   test('with Any nothing is hidden', () {
     expect(view(catalog).hidden, 0);
   });

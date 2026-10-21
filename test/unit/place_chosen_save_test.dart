@@ -30,6 +30,18 @@ void main() {
     expect(await run(PlayRequest(emulator: pcsx2, save: romm)), ['put b.ps2', 'synced']);
   });
 
+  test("another player's save is put in place but not marked synced: the session uploads it as yours (#92)", () async {
+    final theirs = SaveEntry(
+      source: SaveSource.romm,
+      fileName: 'm.ps2',
+      savedAt: DateTime(2026),
+      maker: pcsx2,
+      rommSave: const {'id': 5},
+      owner: const SaveOwner(userId: 7, username: 'maja'),
+    );
+    expect(await run(PlayRequest(emulator: pcsx2, save: theirs)), ['put m.ps2']);
+  });
+
   test('a backup is put in place but not marked synced (RomM does not have it)', () async {
     expect(await run(PlayRequest(emulator: pcsx2, save: backup)), ['put b.zip']);
   });

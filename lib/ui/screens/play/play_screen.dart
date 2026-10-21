@@ -159,6 +159,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   }
 
   static String _sourceLabel(SaveEntry e) => switch (e.source) {
+    _ when e.owner != null => "${e.owner!.username}'s save",
     SaveSource.local => 'save on this PC',
     SaveSource.backup => 'backup',
     SaveSource.romm => 'RomM save',
@@ -189,11 +190,19 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       ),
       PlayPrompt.notOnRomm => (
         "Your save on this PC isn't on RomM",
-        'Your $name save on this PC changed since its last upload (played offline?). Playing the '
-            '${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)} replaces it.\n\n'
+        'Your $name save on this PC changed since its last upload (played offline?). Playing '
+            '${item.entry.owner == null ? 'the ' : ''}${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)} replaces it.\n\n'
             'A backup of it is kept on this PC.',
       ),
       PlayPrompt.olderState => ('Resume an older state?', 'Resuming may roll your save back.'),
+      PlayPrompt.othersSave => (
+        "Play ${item.entry.owner?.username ?? 'their'}'s save?",
+        'This replaces your $name save${view.newestLocalFor(target) == null ? '' : ' from ${formatSaveTime(view.newestLocalFor(target)!)}'} '
+            'with ${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)}'
+            '${item.fit.kind == SaveFitKind.converted ? ', converted for $name' : ''}.\n\n'
+            'Your current save is backed up first, so you can get it back. When you stop playing, the save goes to '
+            "RomM as yours. ${item.entry.owner?.username ?? 'Their'}'s save stays as it is.",
+      ),
     };
     return showConfirm(context, title: title, body: body, yes: 'Replace and play', focusYes: false);
   }
@@ -285,6 +294,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   /// What A does, in one line under the main button.
   String _whatA(PlayMenu menu, PlayItem? chosen) => switch (chosen) {
+    SavePlay(:final entry, :final fit) when entry.owner != null =>
+      'in ${menu.nameOf(fit.playsIn ?? _picked!)} · ${_sourceLabel(entry)}, ${formatSaveTime(entry.savedAt)}. '
+          "It becomes your save: your next one goes to RomM under you. ${entry.owner!.username}'s stays as it is.",
     SavePlay(:final entry, :final fit) =>
       'in ${menu.nameOf(fit.playsIn ?? _picked!)} · ${_sourceLabel(entry)}, ${formatSaveTime(entry.savedAt)}',
     StatePlay(:final entry) => '${entry.slot.label} in ${entry.emulatorName} · ${formatSaveTime(entry.savedAt)}',

@@ -37,8 +37,9 @@ class _Sync extends SaveSyncService {
     Map<String, dynamic> save, {
     required String emulatorId,
     String? coreOverride,
+    bool own = true,
   }) async {
-    log.add('romm ${save['file_name']} -> $emulatorId/$coreOverride');
+    log.add('romm ${save['file_name']} -> $emulatorId/$coreOverride${own ? '' : ' (not own)'}');
     if (fail) throw SaveChoiceException('download failed');
   }
 
@@ -153,6 +154,24 @@ void main() {
     );
     expect(log, ['backup ares', 'romm mk.srm -> ares/null']);
     expect(added.single.emulatorId, 'ares');
+  });
+
+  test("another player's save is downloaded as theirs: not recorded as the player's RomM copy (#92)", () async {
+    final p = await preparer();
+    await p.prepare(
+      game,
+      '/r/mk.z64',
+      SaveEntry(
+        source: SaveSource.romm,
+        fileName: 'mk.srm',
+        savedAt: DateTime(2026),
+        maker: mupen,
+        rommSave: {'file_name': 'mk.srm'},
+        owner: const SaveOwner(userId: 7, username: 'maja'),
+      ),
+      target: ares,
+    );
+    expect(log, ['backup ares', 'romm mk.srm -> ares/null (not own)']);
   });
 
   test('a pre-play backup is a local safety copy, never queued for upload to RomM', () async {

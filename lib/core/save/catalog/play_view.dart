@@ -31,6 +31,14 @@ class PlayRommGroup {
   final List<PlayRow> older;
 }
 
+/// One other player's shared saves as shown (#92).
+@immutable
+class PlayPlayer {
+  const PlayPlayer(this.owner, this.groups);
+  final SaveOwner owner;
+  final List<PlayRommGroup> groups;
+}
+
 /// What the play screen and the Saves tab show for one emulator choice.
 @immutable
 class PlayView {
@@ -42,6 +50,7 @@ class PlayView {
     required this.hidden,
     required this.rommOffline,
     required this.preselected,
+    this.others = const [],
   });
 
   final List<PlayRow> thisPc;
@@ -53,6 +62,10 @@ class PlayView {
   final int hidden;
   final bool rommOffline;
   final PlayItem? preselected;
+
+  /// Other players' shared saves (#92): never in [saveRows], so never
+  /// counted, preselected or taken for the player's own RomM copy.
+  final List<PlayPlayer> others;
 
   List<PlayRow> get saveRows => [
     ...thisPc,
@@ -110,6 +123,12 @@ class PlayView {
         // Replacing the target's own save on this PC that RomM doesn't have:
         // its progress would only survive in a backup.
         final replaces = !(entry.source == SaveSource.local && entry.maker == target);
+        // Another player's save replaces the player's own, whatever its time.
+        if (entry.owner != null && thisPc.any((r) => r.entry.maker == target && !_emptyCard(r.entry))) {
+          return isOnRomm(thisPc.firstWhere((r) => r.entry.maker == target && !_emptyCard(r.entry)).entry)
+              ? PlayPrompt.othersSave
+              : PlayPrompt.notOnRomm;
+        }
         if (replaces && thisPc.any((r) => r.entry.maker == target && !_emptyCard(r.entry) && !isOnRomm(r.entry))) {
           return PlayPrompt.notOnRomm;
         }
@@ -177,6 +196,15 @@ PlayView buildPlayView({
     final rows = keep([g.newest, ...g.older]).map(marked).toList();
     if (rows.isNotEmpty) romm.add(PlayRommGroup(g, rows.first, rows.sublist(1)));
   }
+  final others = <PlayPlayer>[];
+  for (final player in catalog.others) {
+    final groups = <PlayRommGroup>[];
+    for (final g in player.groups) {
+      final rows = keep([g.newest, ...g.older]);
+      if (rows.isNotEmpty) groups.add(PlayRommGroup(g, rows.first, rows.sublist(1)));
+    }
+    if (groups.isNotEmpty) others.add(PlayPlayer(player.owner, groups));
+  }
   final shownStates = picked == null
       ? states
       : [
@@ -228,6 +256,7 @@ PlayView buildPlayView({
     hidden: hidden,
     rommOffline: catalog.rommOffline,
     preselected: standIns[pre] ?? pre,
+    others: others,
   );
 }
 

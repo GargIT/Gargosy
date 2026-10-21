@@ -8,6 +8,12 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Saves other players shared on RomM: the play screen and the game's Saves
+  tab list them under From other players, by player. Play with one, or put it
+  on this PC (X on the Saves tab): it becomes your save, and your next one
+  goes to RomM under you. Their save on RomM stays as it is. They are never
+  picked for you, and asked about before they replace your own save.
+
 - A platform has its own page, as in RomM: its logo and name with its type,
   maker and generation, how many games it has in the library and on this PC,
   its size on RomM and its firmware count, and Random. The games are under

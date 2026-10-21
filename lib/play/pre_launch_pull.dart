@@ -53,7 +53,8 @@ Future<void> pullBeforeLaunch({
 /// launch). With no save, the emulator's own save on this PC stays as it
 /// is. RomM is told when it has a copy of that save ([confirmRommCopy]); a
 /// save from RomM is what RomM has, so it's [markSynced] and an unchanged
-/// save isn't uploaded again at exit.
+/// save isn't uploaded again at exit. Another player's save (#92) isn't:
+/// the session uploads it as the player's own.
 Future<void> placeChosenSave(
   PlayRequest request, {
   required Future<void> Function(SaveEntry save) putInPlace,
@@ -63,5 +64,5 @@ Future<void> placeChosenSave(
   final save = request.save;
   if (save != null) await putInPlace(save);
   if (request.rommCopy != null) await confirmRommCopy(request.rommCopy!);
-  if (save?.source == SaveSource.romm) await markSynced();
+  if (save?.source == SaveSource.romm && save?.owner == null) await markSynced();
 }

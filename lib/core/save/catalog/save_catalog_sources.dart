@@ -25,6 +25,10 @@ abstract class SaveCatalogSources {
   /// RomM's save list; null when RomM can't be listed.
   Future<List<Map<String, dynamic>>?> rommSaves(Game game);
 
+  /// Other players' public saves on RomM (#92); empty when RomM can't be
+  /// asked.
+  Future<List<Map<String, dynamic>>> sharedSaves(Game game);
+
   /// Emulator ids for telling a RomM save's maker.
   Set<String> get emulatorIds;
 }
@@ -35,9 +39,14 @@ bool _isStateFile(String name) {
 }
 
 Future<SaveCatalog> loadSaveCatalog(Game game, String romPath, SaveCatalogSources sources) async {
-  final results = await Future.wait([sources.localSaves(game, romPath), sources.rommSaves(game)]);
+  final results = await Future.wait([
+    sources.localSaves(game, romPath),
+    sources.rommSaves(game),
+    sources.sharedSaves(game),
+  ]);
   final local = results[0] as List<SaveEntry>;
   final romm = results[1] as List<Map<String, dynamic>>?;
+  final shared = results[2] as List<Map<String, dynamic>>;
   return buildSaveCatalog(
     local: local,
     backups: sources.backups(game),
@@ -48,6 +57,11 @@ Future<SaveCatalog> loadSaveCatalog(Game game, String romPath, SaveCatalogSource
               if (!_isStateFile(s['file_name']?.toString() ?? ''))
                 SaveEntry.fromRomm(s, emulatorIds: sources.emulatorIds),
           ],
+    others: [
+      for (final s in shared)
+        if (!_isStateFile(s['file_name']?.toString() ?? ''))
+          SaveEntry.fromRomm(s, emulatorIds: sources.emulatorIds, shared: true),
+    ],
   );
 }
 
@@ -59,6 +73,7 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
     required this.backupRepository,
     required this.rommService,
     required this.installed,
+    this.rommUserId,
   });
 
   final SaveSyncService sync;
@@ -68,6 +83,10 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
 
   /// Emulator id → installed.
   final Map<String, bool> installed;
+
+  /// The profile's RomM user: its own saves aren't another player's. Null:
+  /// other players' saves aren't asked for.
+  final int? rommUserId;
 
   @override
   Set<String> get emulatorIds => kKnownEmulatorIds;
@@ -184,6 +203,20 @@ class LiveSaveCatalogSources implements SaveCatalogSources {
     } catch (e) {
       debugPrint('[SaveCatalog] RomM saves not listed ($e)');
       return null;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> sharedSaves(Game game) async {
+    final romm = rommService;
+    final me = rommUserId;
+    if (romm == null || me == null || romm.isOffline.value) return const [];
+    try {
+      return await romm.getSharedSavesOrNull(game.id, exceptUserId: me).timeout(const Duration(seconds: 10)) ??
+          const [];
+    } catch (e) {
+      debugPrint('[SaveCatalog] shared saves not listed ($e)');
+      return const [];
     }
   }
 }
