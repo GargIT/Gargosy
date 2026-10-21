@@ -118,3 +118,9 @@ For 38–40, profile B is a second profile signed in to the **same RomM user** a
 38. [x] On PCSX2 (PS2), DuckStation (PS1), Dolphin (GameCube), PPSSPP (PSP) and mGBA (Game Boy): in profile A, save in-game and quit; the save is on RomM. In profile B, start the game: it comes down before launch and the game finds it.
 39. [x] With "Save states on RomM" on in both profiles, the same with a state on each of them: in profile A, save a state and quit; the state is on RomM. In profile B, Resume starts the game in it.
 40. [x] A Wii game in Dolphin and a PS2 game in RetroArch (LRPS2): the save round trip of row 38.
+
+## Platform page: filter and sort bar (#95)
+
+41. [ ] On PlayStation 2, type "hack" in the filter box with the keyboard: shortly after typing stops, the .hack games show, also ones beyond the first page. With a controller, A on the box opens the on-screen keyboard and the filter applies when it closes.
+42. [ ] Turn On this PC on: only this platform's downloaded games show, with their count on the switch. Sort by Downloaded puts the newest download first. With RomM stopped (or the PC offline), the switch still works.
+43. [ ] Sort by Size, Players, Length and My rating: the order is the expected one, and the direction button turns it round. Games without the value (no HowLongToBeat time, no rating) come last either way.

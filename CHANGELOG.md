@@ -6,6 +6,25 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A platform's, a collection's and the favourites' games have RomM's filter
+  and sort bar: a filter box (it asks RomM, so it finds games not loaded
+  yet), Filters (genre, region), On this PC, Sort by and the direction. With
+  a controller, A on the filter box opens the on-screen keyboard.
+- Sort by Size, Players, Length (HowLongToBeat's main story), and your own
+  rating, completion and status.
+- On this PC shows only the games downloaded here, and works with RomM away.
+  It can sort by Downloaded, newest first.
+
+### Changed
+
+- X no longer opens sort and filters on a games page; they're on the bar.
+
+### Fixed
+
+- A game's size shows on its Details tab (RomM sends it as `fs_size_bytes`).
+
 ## [0.2.0] - 2026-10-20
 
 Logging, What's new, Settings and the user menu in RomM's style, updates from
