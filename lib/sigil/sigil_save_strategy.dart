@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/romm/game_id_resolver.dart';
 import '../core/romm/romm_models.dart';
+import '../core/save/local_save_deletion.dart';
 import '../core/save/save_state_info.dart';
 import '../core/save/save_strategy.dart';
 import '../core/save/state_sync_capable.dart';
@@ -13,6 +14,7 @@ import '../core/save/strategies/retroarch_save_strategy.dart';
 import '../core/storage/ini_file.dart';
 import '../emulators/pcsx2_folder_card.dart';
 import 'rom_game_ids.dart';
+import 'sigil_save_deletion.dart';
 import 'sigil_engine.dart';
 import 'sigil_state_store.dart';
 import 'sigil_sync.dart';
@@ -390,37 +392,41 @@ class SigilSaveStrategy extends SaveStrategy {
   /// that game's alone.
   static const _ownFilePlatforms = {'gb', 'gbc', 'n64'};
 
-  /// Gargosy (#94): a Game Boy or N64 save is the files sigil reads for the
-  /// game (its own, inside the save root). Everywhere else sigil packs the
-  /// game's saves out of cards or folders other games share, and it has no
-  /// way yet to take one game's off them.
+  /// Gargosy (#94): the files sigil's collect reads for the game, inside
+  /// the save root. A Game Boy or N64 save is those files; on a PS1 or PS2
+  /// card, in a PCSX2 folder card or PSP's `SAVEDATA`, the game's saves are
+  /// the ones on sigil's unit ([planSigilSaveDeletion]). A GameCube card or
+  /// a VMU is refused: Gargosy has nothing to take one game's save off them.
   @override
-  Future<List<io.File>> deletableSaveFiles(Game game, String romPath) async {
+  Future<LocalSaveDeletion> saveDeletionFor(Game game, String romPath) async {
     if (!_covers(game)) {
       final old = base;
       if (old == null) throw SaveSyncNotPossibleException("this emulator's saves can't be deleted from here");
-      return old.deletableSaveFiles(game, romPath);
+      return old.saveDeletionFor(game, romPath);
     }
-    if (!_ownFilePlatforms.contains(_sigilPlatform(game))) {
+    final platform = _sigilPlatform(game);
+    if (platform == 'gamecube' || platform == 'dreamcast') {
       throw SaveSyncNotPossibleException(
-        "Gargosy reads this game's save through sigil, which can't take one game's save off a shared card yet",
+        "it's on a ${platform == 'gamecube' ? 'memory card' : 'VMU'} other games share, "
+        "and Gargosy can't take one game's save off it yet",
       );
     }
     final SigilSyncCall call;
     final SigilCollected collected;
     try {
-      call = await _call(game, romPath, state: states.read(emulator.id, game.id));
+      call = await _call(game, romPath, state: states.read(emulator.id, game.id), claimed: true);
       collected = await _collect(call);
     } on SigilSyncError catch (e) {
       throw SaveSyncNotPossibleException(_explain(e, p.basename(romPath)));
     }
     final root = p.normalize(call.saveRoot);
-    final files = [
+    final read = [
       for (final rel in collected.reads.keys)
-        if (sigilRootPath(root, rel) case final full? when io.File(full).existsSync()) io.File(full),
+        if (sigilRootPath(root, rel) case final full? when io.File(full).existsSync()) full,
     ];
-    if (files.isEmpty) throw SaveSyncNotPossibleException('there is no save on this PC');
-    return files;
+    if (read.isEmpty) throw SaveSyncNotPossibleException('there is no save on this PC');
+    if (_ownFilePlatforms.contains(platform)) return LocalSaveDeletion(files: [for (final f in read) io.File(f)]);
+    return planSigilSaveDeletion(read, collected.data);
   }
 
   /// The save is gone from this PC: sigil's record of the last sync goes

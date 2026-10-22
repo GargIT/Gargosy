@@ -22,8 +22,10 @@ What changed in each release of Gargosy. The format follows
   teal "shared" tag), and Y again stops. Uploads stay private until you do.
 - Delete this PC's save from the game's Saves tab (hold A, or click it): it's
   backed up first, and RomM's copy stays and comes back the next time you
-  play. Game Boy and N64 saves too. A save on a memory card other games
-  share (PlayStation, GameCube, PSP, Dreamcast) is refused with why, for now.
+  play. On a PlayStation memory card or in PSP's save folder, only that
+  game's save comes off; the other games' stay, and the card as it was is
+  kept in the profile's `backups\deleted\` first. A GameCube card or a
+  Dreamcast VMU is refused with why, for now.
 - Delete a save state (hold A on the States list, or click it): on this PC
   and on RomM.
 

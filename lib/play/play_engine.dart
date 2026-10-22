@@ -445,9 +445,17 @@ class GargosyPlayEngine implements PlayEngine {
     backups: await _ref.read(backupRepositoryProvider.future),
     deleteLocal: () async {
       final sync = _ref.read(saveSyncServiceProvider);
-      final guard = _ref.read(activeProfileProvider)?.guard;
-      if (sync == null || guard == null) throw StateError('no profile is active');
-      await deleteLocalSave(game, await _romPath(game), save, sync: sync, preparer: await _preparer(), guard: guard);
+      final profile = _ref.read(activeProfileProvider);
+      if (sync == null || profile == null) throw StateError('no profile is active');
+      await deleteLocalSave(
+        game,
+        await _romPath(game),
+        save,
+        sync: sync,
+        preparer: await _preparer(),
+        guard: profile.guard,
+        profileDir: profile.paths.dir,
+      );
     },
   );
 

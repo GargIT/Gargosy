@@ -4,7 +4,9 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/core/save/formats/ps1_memory_card.dart';
 import 'package:gargosy/core/save/formats/ps2_memory_card.dart';
+import 'package:gargosy/core/save/local_save_deletion.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/state_sync_capable.dart';
@@ -227,15 +229,17 @@ void main() {
   group("#94: deleting this PC's save", () {
     test("a Game Boy save is the game's own file: that file, and no other game's", () async {
       putSave(List.filled(32768, 5));
-      final other = io.File(p.join(emulatorDir, 'saves', 'Zelda.sav'))..writeAsBytesSync(List.filled(32768, 1));
-      final files = await mgba().deletableSaveFiles(_game('gb'), rom);
-      expect(files.map((f) => p.normalize(f.path)), [p.normalize(p.join(emulatorDir, 'saves', 'Tetris (World).sav'))]);
-      expect(other.existsSync(), isTrue);
+      io.File(p.join(emulatorDir, 'saves', 'Zelda.sav')).writeAsBytesSync(List.filled(32768, 1));
+      final plan = await mgba().saveDeletionFor(_game('gb'), rom);
+      expect(plan.files.map((f) => p.normalize(f.path)), [
+        p.normalize(p.join(emulatorDir, 'saves', 'Tetris (World).sav')),
+      ]);
+      expect(plan.shared, isEmpty);
     });
 
     test('no save on this PC: refused with why', () async {
       await expectLater(
-        mgba().deletableSaveFiles(_game('gb'), rom),
+        mgba().saveDeletionFor(_game('gb'), rom),
         throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('no save'))),
       );
     });
@@ -251,19 +255,130 @@ void main() {
       expect(states.read('mgba', game.id), isNull);
     });
 
-    test("a save on a card other games share is refused; another platform's goes to the old strategy", () async {
+    final aceCombat = Game.fromJson({
+      ...gameJson(8, 'Game A', fsName: 'Game A (USA).chd'),
+      'platform_slug': 'ps2',
+      'title_id': 'SLUS-20328',
+      'save_target': 'BASLUS-20328',
+      'save_target_layout': 'folder-prefix',
+    });
+    SigilSaveStrategy pcsx2(String dir) => SigilSaveStrategy.forEmulator(
+      'pcsx2',
+      base: null,
+      emulatorDir: () => dir,
+      states: states,
+      unitsDir: p.join(tmp.path, 'u'),
+    )!;
+
+    test("PCSX2's folder card: the game's save folders go, another game's stays", () async {
+      final dir = p.join(tmp.path, 'pcsx2');
+      final card = p.join(dir, 'PCSX2', 'memcards', 'Mcd001.ps2');
+      ensurePcsx2FolderCard(card);
+      for (final n in ['BASLUS-20328SAVE', 'BASLUS-20328OPT', 'BASLUS-20851DATA']) {
+        io.File(p.join(card, n, 'SAVE.DAT'))
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(List.filled(4000, 6));
+      }
+      final plan = await pcsx2(dir).saveDeletionFor(aceCombat, 'D:/roms/ps2/Game A (USA).chd');
+      expect(plan.folders.map((d) => p.basename(d.path)), unorderedEquals(['BASLUS-20328SAVE', 'BASLUS-20328OPT']));
+      expect(plan.files, isEmpty);
+      expect(plan.cards, isEmpty);
+    });
+
+    test("PCSX2's file card: the card without the game's save, another game's kept", () async {
+      final dir = p.join(tmp.path, 'pcsx2');
+      final path = p.join(dir, 'PCSX2', 'memcards', 'Mcd001.ps2');
+      Ps2CardSave save(String n) => Ps2CardSave(
+        name: n,
+        files: [Ps2CardFile(name: 'd', data: Uint8List(3000))],
+      );
+      io.File(path)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(
+          Ps2MemoryCard.parse(Ps2MemoryCard.formatted())
+              .withSaves([save('BASLUS-20328SAVE'), save('BASLUS-20851DATA')], (_) => false),
+        );
+      final plan = await pcsx2(dir).saveDeletionFor(aceCombat, 'D:/roms/ps2/Game A (USA).chd');
+      expect(plan.cards.keys.map(p.normalize), [p.normalize(path)]);
+      expect(Ps2MemoryCard.parse(plan.cards.values.single).saves.map((s) => s.name), ['BASLUS-20851DATA']);
+    });
+
+    test("DuckStation's shared card: the game's save is marked deleted, another game's kept", () async {
+      final dir = p.join(tmp.path, 'duckstation');
+      final path = p.join(dir, 'memcards', 'shared_card_1.mcd');
+      io.File(path)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(
+          buildPs1Card([
+            (name: 'BASCUS-94163FF7', blocks: [1], fill: 0x33),
+            (name: 'BASLUS-00594GAME', blocks: [2], fill: 0x44),
+          ]),
+        );
+      final ff7 = Game.fromJson({
+        ...gameJson(11, 'Final Fantasy VII', fsName: 'FF7.chd'),
+        'platform_slug': 'psx',
+        'title_id': 'SCUS-94163',
+      });
       final s = SigilSaveStrategy.forEmulator(
-        'pcsx2',
+        'duckstation',
         base: null,
-        emulatorDir: () => p.join(tmp.path, 'pcsx2'),
+        emulatorDir: () => dir,
+        states: states,
+        unitsDir: p.join(tmp.path, 'u'),
+        content: (game, romPath) async => (root: dir, stem: 'FF7', options: const {'Card1Type': 'Shared'}),
+      )!;
+      final plan = await s.saveDeletionFor(ff7, 'D:/roms/psx/FF7.chd');
+      final after = plan.cards.values.single;
+      expect(Ps1MemoryCard.parse(after).saves.map((s) => s.name), ['BASLUS-00594GAME']);
+      expect(entryState(after, 1), 0xA1, reason: 'deleted, as the PS1 deletes a save');
+      expect(entryState(after, 2), 0x51);
+      expect(
+        blockData(after, 2).sublist(1),
+        List.filled(8191, 0x44),
+        reason: "the other game's bytes stay where they were",
+      );
+    });
+
+    test("PSP: the game's SAVEDATA folders go, another game's stays", () async {
+      final dir = p.join(tmp.path, 'ppsspp');
+      for (final n in ['ULUS10064DATA', 'ULUS10064SYS', 'ULUS99999']) {
+        for (final f in ['DATA.BIN', 'PARAM.SFO']) {
+          io.File(p.join(dir, 'PSP', 'SAVEDATA', n, f))
+            ..createSync(recursive: true)
+            ..writeAsBytesSync(List.filled(100, 1));
+        }
+      }
+      final s = SigilSaveStrategy.forEmulator(
+        'ppsspp',
+        base: null,
+        emulatorDir: () => dir,
+        states: states,
+        unitsDir: p.join(tmp.path, 'u'),
+      )!;
+      final psp = Game.fromJson({
+        ...gameJson(5, 'X', fsName: 'X.iso'),
+        'platform_slug': 'psp',
+        'title_id': 'ULUS10064',
+      });
+      final plan = await s.saveDeletionFor(psp, 'D:/roms/psp/X.iso');
+      expect(plan.folders.map((d) => p.basename(d.path)), unorderedEquals(['ULUS10064DATA', 'ULUS10064SYS']));
+    });
+
+    test("a GameCube card is refused; another platform's save goes to the old strategy", () async {
+      final s = SigilSaveStrategy.forEmulator(
+        'dolphin',
+        base: null,
+        emulatorDir: () => p.join(tmp.path, 'dolphin'),
         states: states,
         unitsDir: p.join(tmp.path, 'u'),
       )!;
       await expectLater(
-        s.deletableSaveFiles(_game('ps2'), 'D:/roms/ps2/Game.chd'),
-        throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('shared card'))),
+        s.saveDeletionFor(_game('ngc'), 'D:/roms/ngc/Game.rvz'),
+        throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('memory card'))),
       );
-      await mgba().deletableSaveFiles(_game('gba'), 'D:/roms/gba/Game.gba').catchError((Object _) => <io.File>[]);
+      await mgba()
+          .saveDeletionFor(_game('gba'), 'D:/roms/gba/Game.gba')
+          .catchError((Object _) => const LocalSaveDeletion());
       expect(base.calls, contains('getSaveFiles gba'));
     });
   });

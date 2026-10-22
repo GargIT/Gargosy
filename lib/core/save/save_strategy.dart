@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import '../platform/platform_info.dart';
 import '../storage/directory_service.dart';
 import '../romm/romm_models.dart';
+import 'local_save_deletion.dart';
 
 // ─── Exceptions ──────────────────────────────────────────────────────────────
 
@@ -130,12 +131,12 @@ abstract class SaveStrategy {
   /// pull otherwise runs alongside the launch.
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async => false;
 
-  /// Gargosy (#94): the files of [game]'s own save on this PC, to delete:
+  /// Gargosy (#94): what deleting [game]'s own save on this PC changes: here
   /// its save files, every one inside [getSaveDir]. Throws
   /// [SaveSyncNotPossibleException] with why when they can't be deleted on
   /// their own: a file other games share (a memory card), a file outside
   /// the save folder, or no save at all.
-  Future<List<io.File>> deletableSaveFiles(Game game, String romPath) async {
+  Future<LocalSaveDeletion> saveDeletionFor(Game game, String romPath) async {
     if (await pullMustFinishBeforeLaunch(game, romPath)) {
       throw SaveSyncNotPossibleException(
         "it's on a memory card other games share, and Gargosy can't take one game's save off it yet",
@@ -153,10 +154,10 @@ abstract class SaveStrategy {
         throw SaveSyncNotPossibleException("${p.basename(f.path)} isn't in the emulator's save folder");
       }
     }
-    return files;
+    return LocalSaveDeletion(files: files);
   }
 
-  /// Gargosy (#94): after [deletableSaveFiles]' files were deleted, what
+  /// Gargosy (#94): after [saveDeletionFor]'s deletion was done, what
   /// the strategy keeps about the save goes too (sigil: its sync state).
   Future<void> afterSaveDeleted(Game game, String romPath) async {}
 
