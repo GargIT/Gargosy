@@ -224,15 +224,48 @@ void main() {
     expect(s.uploadSlotFor(_game('gba')), 'gargosy');
   });
 
-  test("#94: a save sigil reads isn't deleted from this PC (refused with why); another platform's goes to the old strategy", () async {
-    putSave(List.filled(32768, 5));
-    final s = mgba();
-    await expectLater(
-      s.deletableSaveFiles(_game('gb'), rom),
-      throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('sigil'))),
-    );
-    await s.deletableSaveFiles(_game('gba'), 'D:/roms/gba/Game.gba').catchError((Object _) => <io.File>[]);
-    expect(base.calls, contains('getSaveFiles gba'));
+  group("#94: deleting this PC's save", () {
+    test("a Game Boy save is the game's own file: that file, and no other game's", () async {
+      putSave(List.filled(32768, 5));
+      final other = io.File(p.join(emulatorDir, 'saves', 'Zelda.sav'))..writeAsBytesSync(List.filled(32768, 1));
+      final files = await mgba().deletableSaveFiles(_game('gb'), rom);
+      expect(files.map((f) => p.normalize(f.path)), [p.normalize(p.join(emulatorDir, 'saves', 'Tetris (World).sav'))]);
+      expect(other.existsSync(), isTrue);
+    });
+
+    test('no save on this PC: refused with why', () async {
+      await expectLater(
+        mgba().deletableSaveFiles(_game('gb'), rom),
+        throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('no save'))),
+      );
+    });
+
+    test("after the delete sigil's last sync goes, so RomM's save comes back as new", () async {
+      putSave(List.filled(32768, 5));
+      final s = mgba();
+      final game = _game('gb');
+      await s.getSaveFiles(game, rom);
+      await s.afterUpload(game, rom);
+      expect(states.read('mgba', game.id), isNotNull);
+      await s.afterSaveDeleted(game, rom);
+      expect(states.read('mgba', game.id), isNull);
+    });
+
+    test("a save on a card other games share is refused; another platform's goes to the old strategy", () async {
+      final s = SigilSaveStrategy.forEmulator(
+        'pcsx2',
+        base: null,
+        emulatorDir: () => p.join(tmp.path, 'pcsx2'),
+        states: states,
+        unitsDir: p.join(tmp.path, 'u'),
+      )!;
+      await expectLater(
+        s.deletableSaveFiles(_game('ps2'), 'D:/roms/ps2/Game.chd'),
+        throwsA(isA<SaveSyncNotPossibleException>().having((e) => e.message, 'message', contains('shared card'))),
+      );
+      await mgba().deletableSaveFiles(_game('gba'), 'D:/roms/gba/Game.gba').catchError((Object _) => <io.File>[]);
+      expect(base.calls, contains('getSaveFiles gba'));
+    });
   });
 
   test("PPSSPP (#59): sigil syncs its saves, its states go through PPSSPP's own strategy", () async {

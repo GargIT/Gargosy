@@ -40,7 +40,7 @@ Future<void> deleteSaveEntry(
 /// Gargosy (#94): this PC's save of the emulator that made [save], backed
 /// up first (listed among the backups), then its files deleted through the
 /// profile's [guard], under the save lock. A save other games share (a
-/// memory card) or one sigil reads is refused with why
+/// memory card, sigil's cards) is refused with why
 /// (`SaveStrategy.deletableSaveFiles`), before anything is backed up.
 Future<void> deleteLocalSave(
   Game game,
@@ -69,6 +69,7 @@ Future<void> deleteLocalSave(
       for (final f in await s.deletableSaveFiles(game, romPath)) {
         await io.File(guard.check(f.path)).delete();
       }
+      await s.afterSaveDeleted(game, romPath);
     },
     emulatorId: who.emulatorId,
     coreOverride: core,

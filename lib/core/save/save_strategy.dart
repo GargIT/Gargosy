@@ -156,6 +156,10 @@ abstract class SaveStrategy {
     return files;
   }
 
+  /// Gargosy (#94): after [deletableSaveFiles]' files were deleted, what
+  /// the strategy keeps about the save goes too (sigil: its sync state).
+  Future<void> afterSaveDeleted(Game game, String romPath) async {}
+
   /// Puts a local backup back: [zipBytes] is a zip of getSaveFiles, as
   /// BackupService makes it. Save files other games share (memory cards,
   /// see pullMustFinishBeforeLaunch) go back one by one through restoreSave,
