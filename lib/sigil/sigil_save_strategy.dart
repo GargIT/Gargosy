@@ -385,8 +385,15 @@ class SigilSaveStrategy extends SaveStrategy {
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async =>
       await base?.pullMustFinishBeforeLaunch(game, romPath) ?? false;
 
-  /// Gargosy (#94): sigil packs the game's saves out of files it reads
-  /// (cards, folders); it has no way yet to take one game's off them.
+  /// Platforms whose save is the game's own file, named after the ROM
+  /// (Game Boy's `.sav`, RetroArch's `.srm`): what sigil reads for one is
+  /// that game's alone.
+  static const _ownFilePlatforms = {'gb', 'gbc', 'n64'};
+
+  /// Gargosy (#94): a Game Boy or N64 save is the files sigil reads for the
+  /// game (its own, inside the save root). Everywhere else sigil packs the
+  /// game's saves out of cards or folders other games share, and it has no
+  /// way yet to take one game's off them.
   @override
   Future<List<io.File>> deletableSaveFiles(Game game, String romPath) async {
     if (!_covers(game)) {
@@ -394,9 +401,34 @@ class SigilSaveStrategy extends SaveStrategy {
       if (old == null) throw SaveSyncNotPossibleException("this emulator's saves can't be deleted from here");
       return old.deletableSaveFiles(game, romPath);
     }
-    throw SaveSyncNotPossibleException(
-      "Gargosy reads this game's save through sigil, which can't delete one game's save yet",
-    );
+    if (!_ownFilePlatforms.contains(_sigilPlatform(game))) {
+      throw SaveSyncNotPossibleException(
+        "Gargosy reads this game's save through sigil, which can't take one game's save off a shared card yet",
+      );
+    }
+    final SigilSyncCall call;
+    final SigilCollected collected;
+    try {
+      call = await _call(game, romPath, state: states.read(emulator.id, game.id));
+      collected = await _collect(call);
+    } on SigilSyncError catch (e) {
+      throw SaveSyncNotPossibleException(_explain(e, p.basename(romPath)));
+    }
+    final root = p.normalize(call.saveRoot);
+    final files = [
+      for (final rel in collected.reads.keys)
+        if (sigilRootPath(root, rel) case final full? when io.File(full).existsSync()) io.File(full),
+    ];
+    if (files.isEmpty) throw SaveSyncNotPossibleException('there is no save on this PC');
+    return files;
+  }
+
+  /// The save is gone from this PC: sigil's record of the last sync goes
+  /// too, so RomM's save comes back as new, not as a conflict.
+  @override
+  Future<void> afterSaveDeleted(Game game, String romPath) async {
+    if (!_covers(game)) return base?.afterSaveDeleted(game, romPath);
+    states.forget(emulator.id, game.id);
   }
 
   @override

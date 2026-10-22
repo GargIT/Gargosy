@@ -26,6 +26,12 @@ class SigilStateStore {
   /// Written to a temporary file and renamed, so a crash never leaves half a state.
   void write(String emulatorId, String gameId, Uint8List state) => _write(_file(emulatorId, gameId), state);
 
+  /// The game's save was deleted on this PC (#94): no last sync to compare with.
+  void forget(String emulatorId, String gameId) {
+    final f = io.File(_file(emulatorId, gameId));
+    if (f.existsSync()) f.deleteSync();
+  }
+
   void _write(String path, List<int> bytes) {
     final f = io.File(path);
     f.parent.createSync(recursive: true);
