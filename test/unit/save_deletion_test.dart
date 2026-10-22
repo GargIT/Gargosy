@@ -13,6 +13,7 @@ import 'package:gargosy/core/romm/romm_service.dart';
 import 'package:gargosy/core/save/catalog/play_preparer.dart';
 import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
+import 'package:gargosy/core/save/local_save_deletion.dart';
 import 'package:gargosy/core/save/save_strategy.dart';
 import 'package:gargosy/core/save/save_sync_service.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
@@ -45,6 +46,14 @@ class _Files extends SaveStrategy {
   Future<bool> restoreSave(Game game, String destPath, Uint8List data, String filename) async => false;
   @override
   Future<bool> pullMustFinishBeforeLaunch(Game game, String romPath) async => shared;
+}
+
+/// A strategy whose deletion is [plan] (made when asked, as the real ones).
+class _Planned extends _Files {
+  _Planned(String dir, this.plan) : super(dir, const []);
+  final LocalSaveDeletion Function() plan;
+  @override
+  Future<LocalSaveDeletion> saveDeletionFor(Game game, String romPath) async => plan();
 }
 
 class _Sync extends SaveSyncService {
@@ -110,7 +119,16 @@ void main() {
       strategy,
       log,
     );
-    await deleteLocalSave(game, '/roms/gba/mf.gba', save, sync: sync, preparer: _Preparer(log), guard: guard);
+    await deleteLocalSave(
+      game,
+      '/roms/gba/mf.gba',
+      save,
+      sync: sync,
+      preparer: _Preparer(log),
+      guard: guard,
+      profileDir: p.join(root.profiles, 'p1'),
+      now: () => DateTime(2026, 10, 22, 18, 5, 9),
+    );
   }
 
   File file(String dir, String name) => File(p.join(dir, name))..writeAsStringSync('save');
@@ -122,6 +140,47 @@ void main() {
     expect(sav.existsSync(), isFalse);
     expect(other.existsSync(), isTrue, reason: "another game's save stays");
     expect(log, ['lock mgba/null', 'backup mgba', 'lock mgba/null']);
+  });
+
+  test("a card other games share: copied whole first, then written without the game's save", () async {
+    final card = file(saves, 'shared_card_1.mcd');
+    await delete(
+      _Planned(
+        saves,
+        () => LocalSaveDeletion(
+          cards: {
+            card.path: Uint8List.fromList([1, 2, 3]),
+          },
+        ),
+      ),
+    );
+    expect(card.readAsBytesSync(), [1, 2, 3]);
+    final copy = File(
+      p.join(
+        root.profiles,
+        'p1',
+        'backups',
+        'deleted',
+        '20261022T180509',
+        'emulators',
+        'mgba',
+        'saves',
+        'shared_card_1.mcd',
+      ),
+    );
+    expect(copy.readAsStringSync(), 'save', reason: 'the card as it was');
+    expect(log, contains('backup mgba'));
+  });
+
+  test("the game's save folder: copied first, then deleted with what's in it; the others stay", () async {
+    final folder = Directory(p.join(saves, 'Mcd001.ps2', 'BASLUS-20328SAVE'))..createSync(recursive: true);
+    file(folder.path, 'SAVE.DAT');
+    final other = file(p.join(saves, 'Mcd001.ps2'), '_pcsx2_superblock');
+    await delete(_Planned(saves, () => LocalSaveDeletion(folders: [folder])));
+    expect(folder.existsSync(), isFalse);
+    expect(other.existsSync(), isTrue);
+    final copied = p.join(root.profiles, 'p1', 'backups', 'deleted', '20261022T180509', 'emulators', 'mgba', 'saves');
+    expect(File(p.join(copied, 'Mcd001.ps2', 'BASLUS-20328SAVE', 'SAVE.DAT')).existsSync(), isTrue);
   });
 
   test('a save on a card other games share is refused, and nothing is backed up or deleted', () async {

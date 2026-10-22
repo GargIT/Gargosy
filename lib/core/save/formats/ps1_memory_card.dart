@@ -119,13 +119,7 @@ class Ps1MemoryCard {
     final wanted = incoming.saves.where((s) => belongs(s.name)).toList();
     if (wanted.isEmpty) return null;
     final out = Uint8List.fromList(_bytes);
-    for (final save in saves.where((s) => belongs(s.name))) {
-      for (final block in save.blocks) {
-        final entry = _entry(out, block);
-        entry[0] = (_state(out, block) & 0x0F) | 0xA0; // 0x51/52/53 → deleted 0xA1/A2/A3
-        _checksum(entry);
-      }
-    }
+    _markDeleted(out, belongs);
     final free = _freeBlockList(out);
     final needed = wanted.fold<int>(0, (n, s) => n + s.blocks.length);
     if (needed > free.length) throw Ps1CardFullException(needed, free.length);
@@ -163,6 +157,26 @@ class Ps1MemoryCard {
     }
     _frame(card, 63).setAll(0, header);
     return card;
+  }
+
+  /// Gargosy (#94): this card with the saves [belongs] accepts marked
+  /// deleted, as the PS1 deletes a save; every other save keeps its blocks
+  /// and bytes. Null when none of them is on it.
+  Uint8List? withoutSaves(bool Function(String name) belongs) {
+    if (!saves.any((s) => belongs(s.name))) return null;
+    final out = Uint8List.fromList(_bytes);
+    _markDeleted(out, belongs);
+    return out;
+  }
+
+  void _markDeleted(Uint8List out, bool Function(String name) belongs) {
+    for (final save in saves.where((s) => belongs(s.name))) {
+      for (final block in save.blocks) {
+        final entry = _entry(out, block);
+        entry[0] = (_state(out, block) & 0x0F) | 0xA0; // 0x51/52/53 → deleted 0xA1/A2/A3
+        _checksum(entry);
+      }
+    }
   }
 
   void _writeSave(Uint8List out, Ps1CardSave save, List<int> placed) {

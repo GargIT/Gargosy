@@ -159,6 +159,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Delete this PC's saves and states (#94)
 
 61. [ ] A GBA game in mGBA (or a SNES game in RetroArch) with a save: on the Saves tab, hold A on its This PC row and confirm. The row goes, a new backup row appears, and the save file is gone from the emulator's save folder. Play again: RomM's save comes back.
-62. [ ] A PS2 game in PCSX2 (shared memory card): hold A on its This PC row: it says why it can't be deleted, and nothing changes (no new backup).
+62. [ ] Two PS2 games in PCSX2 with saves on the same memory card: hold A on one game's This PC row and confirm. Its save folders (`BASLUS-…`) are gone from `memcards\Mcd001.ps2`, the other game's stay and still load in PCSX2, and a copy of the folders is in the profile's `backups\deleted\<time>\`.
 63. [ ] On the States list: hold A on one of your states (on this PC and RomM) and confirm: it's gone from the list, from the emulator's state folder and from RomM. One only on RomM goes the same way. Another player's state has no delete.
 64. [ ] A Game Boy game in mGBA (or in RetroArch) with a save: hold A on its This PC row and confirm. The row goes, a backup row appears, the game's `.sav` (RetroArch: `.srm`) is gone and other games' saves stay. Play again: RomM's save comes back without asking about a changed save.
+65. [ ] Two PS1 games in DuckStation (or RetroArch) on one shared card: hold A on one game's This PC row and confirm. Its save is gone from the card, the other game's still loads, and the whole card as it was is in `backups\deleted\<time>\`.
+66. [ ] A GameCube game in Dolphin (or a Dreamcast game in Flycast): hold A on its This PC row: it says why it can't be deleted, and nothing changes.
