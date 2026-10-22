@@ -1085,6 +1085,7 @@ const List<RetroArchCore> kRetroArchCores = [
 /// core, else the first core listing it. Without a core, RetroArch was
 /// started with no `-L` and tried whichever core it had loaded last.
 String? getDefaultCoreForSlug(String slug) {
+  if (_isDsi(slug)) return _dsiCore;
   slug = canonicalPlatformSlug(slug);
   RetroArchCore? first;
   for (final core in kRetroArchCores) {
@@ -1097,8 +1098,27 @@ String? getDefaultCoreForSlug(String slug) {
 
 /// Returns all cores that support a given platform slug.
 List<RetroArchCore> getCoresForSlug(String slug) {
+  if (_isDsi(slug)) return kRetroArchCores.where((c) => c.id == _dsiCore).toList();
   slug = canonicalPlatformSlug(slug);
   return kRetroArchCores.where((c) => c.platforms.contains(slug)).toList();
+}
+
+/// Gargosy: RomM's DSi platforms hold DSiWare and DSi-only cards, which
+/// only melonDS DS runs: the older melonDS core and DeSmuME have no DSi
+/// mode. melonDS DS also runs DS games there in DS mode.
+bool _isDsi(String slug) => slug.toLowerCase().startsWith('nintendo-dsi');
+const _dsiCore = 'melondsds_libretro';
+
+/// Gargosy: the core chosen for [slug] in [overrides] (by RomM's slug, as
+/// a platform's page saves it, else by the system's own slug), when it
+/// runs [slug]'s games; null when none is chosen or the chosen one can't
+/// (the DS platform's melonDS for a DSi game).
+String? chosenCoreFor(Map<String, String> overrides, String slug) {
+  final raw = slug.toLowerCase();
+  final chosen = overrides[raw] ?? overrides[canonicalPlatformSlug(raw)];
+  if (chosen == null) return null;
+  final bare = coreBaseName(chosen);
+  return getCoresForSlug(raw).any((c) => coreBaseName(c.id) == bare) ? chosen : null;
 }
 
 /// Returns all recommended cores grouped by category.

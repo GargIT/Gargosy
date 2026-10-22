@@ -16,7 +16,6 @@ import 'package:gargosy/core/emulator/retroarch_core_list.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
-import 'package:gargosy/core/emulator/platform_slugs.dart';
 
 /// A core file's name as people say it: `mupen64plus_next_libretro.dll` is
 /// `mupen64plus_next`. Gargosy.
@@ -153,18 +152,18 @@ class RetroArchStrategy extends EmulatorStrategy {
   /// Priority: per-platform override -> recommended default.
   String? _getCoreForSlug(String? slug, {String? overrideCoreId}) {
     if (slug == null) return null;
-    slug = canonicalPlatformSlug(slug.toLowerCase());
+    final chosen = chosenCoreFor(_coreOverrides, slug);
 
     String baseName = '';
 
     // 1. Explicit override (per-game or per-platform)
     if (overrideCoreId != null) {
       baseName = coreBaseName(overrideCoreId);
-    } else if (_coreOverrides.containsKey(slug.toLowerCase())) {
-      baseName = coreBaseName(_coreOverrides[slug.toLowerCase()]!);
+    } else if (chosen != null) {
+      baseName = coreBaseName(chosen);
     } else {
       // 2. Default from core list
-      final defaultCoreId = getDefaultCoreForSlug(slug.toLowerCase());
+      final defaultCoreId = getDefaultCoreForSlug(slug);
       if (defaultCoreId != null) {
         baseName = coreBaseName(defaultCoreId);
       }

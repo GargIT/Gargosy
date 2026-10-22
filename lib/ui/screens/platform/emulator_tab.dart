@@ -70,7 +70,9 @@ class _EmulatorTabState extends ConsumerState<EmulatorTab> {
     // As the play screen: the platform's emulator when installed, else the first installed.
     final current = installed.contains(preferred) ? preferred : installed.firstOrNull;
     final cores = current == 'retroarch' ? getCoresForSlug(p.slug) : const <RetroArchCore>[];
-    final coreId = bareCoreId(registry?.getCoreOverride(p.slug) ?? getDefaultCoreForSlug(p.slug));
+    final coreId = bareCoreId(
+      (registry == null ? null : chosenCoreFor(registry.coreOverrides, p.slug)) ?? getDefaultCoreForSlug(p.slug),
+    );
     final coreIndex = cores.indexWhere((c) => bareCoreId(c.id) == coreId);
     final name = p.nameForDisplay;
     const label = TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w700, letterSpacing: 1, color: GColors.fgMuted);

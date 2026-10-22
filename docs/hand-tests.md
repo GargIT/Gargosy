@@ -164,3 +164,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 64. [x] A Game Boy game in mGBA (or in RetroArch) with a save: hold A on its This PC row and confirm. The row goes, a backup row appears, the game's `.sav` (RetroArch: `.srm`) is gone and other games' saves stay. Play again: RomM's save comes back without asking about a changed save.
 65. [x] Two PS1 games in DuckStation (or RetroArch) on one shared card: hold A on one game's This PC row and confirm. Its save is gone from the card, the other game's still loads, and the whole card as it was is in `backups\deleted\<time>\`.
 66. [x] A GameCube game in Dolphin (or a Dreamcast game in Flycast): hold A on its This PC row: it says why it can't be deleted, and nothing changes.
+
+## DSi games in melonDS DS (#114)
+
+67. [ ] A DSi platform game (Zuma's Revenge! (USA)): its play screen offers RetroArch with melonDS DS only, chosen already; Play downloads the core the first time, and the game starts.
+68. [ ] Save in it and quit: `<game>.public.sav` is in the profile's RetroArch `saves\` and on RomM (the Saves tab). Delete it on this PC, play again: RomM's save comes back as `.public.sav` (no new `.public.srm`) and the game has it.
+69. [ ] On the DSi platform's page, Emulator tab: RetroArch's core is melonDS DS; a DS game still starts in the DS platform's core.

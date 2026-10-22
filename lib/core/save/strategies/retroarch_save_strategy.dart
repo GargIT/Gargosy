@@ -183,35 +183,39 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// it. Without a launch or chosen core, RetroArch's last-used core
   /// (retroarch.cfg's libretro_path) counts when it runs this platform.
   _CoreInfo? _getCoreInfo(String slug) {
+    // RomM's slug picks the cores (a DSi game's aren't the DS's); the
+    // system's own slug the rest.
+    final raw = slug.toLowerCase();
     slug = canonicalPlatformSlug(slug);
     debugPrint('[SaveSync] [retroarch] _getCoreInfo: slug="$slug"  ndsCore=$_ndsCore');
 
-    // 1. NDS dynamic override (backward compat)
-    if (slug == 'nds' || slug == 'nintendo-ds') {
-      final info = _infoForCore(_ndsCore == 'desmume' ? 'desmume2015_libretro' : 'melonds_libretro');
-      debugPrint('[SaveSync] [retroarch]   → NDS override: core=${info?.coreName}');
-      return info;
-    }
-
-    // 2. Launch-time core override (from core picker dialog)
+    // 1. Launch-time core override (from core picker dialog)
     if (_launchCoreOverride != null) {
       final info = _infoForCore(_launchCoreOverride!, fallback: true);
       debugPrint('[SaveSync] [retroarch] _getCoreInfo launch override → core=${info?.coreName}');
       return info;
     }
 
-    // 3. The platform's chosen core (Settings), from the registry
-    final overrideCoreId = _coreOverrides[slug];
+    // 2. The platform's chosen core (Settings), from the registry
+    final overrideCoreId = chosenCoreFor(_coreOverrides, raw);
     if (overrideCoreId != null) {
       final info = _infoForCore(overrideCoreId, fallback: true);
       debugPrint('[SaveSync] [retroarch] _getCoreInfo registry override → core=${info?.coreName}');
       return info;
     }
 
+    // 3. NDS dynamic override (backward compat); never for a DSi game,
+    // which only melonDS DS runs.
+    if ((slug == 'nds' || slug == 'nintendo-ds') && !raw.startsWith('nintendo-dsi')) {
+      final info = _infoForCore(_ndsCore == 'desmume' ? 'desmume2015_libretro' : 'melonds_libretro');
+      debugPrint('[SaveSync] [retroarch]   → NDS override: core=${info?.coreName}');
+      return info;
+    }
+
     // 4. RetroArch's last-used core, when it runs this platform. A core for
     // another system (mGBA before a PS1 pull) says nothing about this one.
     final active = _cachedActiveCore;
-    if (active != null && getCoresForSlug(slug).any((c) => _bare(c.id) == active)) {
+    if (active != null && getCoresForSlug(raw).any((c) => _bare(c.id) == active)) {
       final info = _infoForCore(active);
       if (info != null) {
         debugPrint('[SaveSync] [retroarch] _getCoreInfo active core → core=${info.coreName}');
@@ -220,7 +224,7 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
     }
 
     // 5. The platform's default core, the one RetroArchStrategy launches
-    final defaultCore = getDefaultCoreForSlug(slug);
+    final defaultCore = getDefaultCoreForSlug(raw);
     final info = defaultCore == null ? null : _infoForCore(defaultCore);
     debugPrint('[SaveSync] [retroarch] _getCoreInfo default core → ${info?.coreName ?? "null"}');
     return info;
@@ -714,6 +718,22 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
   /// not enough: "Crash Bandicoot" must not claim `Crash Bandicoot 2.srm`.
   /// Case-insensitive.
   @visibleForTesting
+  /// Gargosy: a DSiWare game's save in melonDS DS is its title data, kept
+  /// beside the other saves as `<rom>.public.sav`, `<rom>.private.sav` and
+  /// `<rom>.banner.sav` (imported into the DSi's NAND at start, exported at
+  /// exit). Each keeps its name; none is a `.srm`.
+  static const dsiTitleData = ['.public.sav', '.private.sav', '.banner.sav'];
+
+  /// [fileName]'s DSiWare title-data part (`.public.sav` …), or null.
+  @visibleForTesting
+  static String? dsiTitleDataOf(String fileName) {
+    final lower = fileName.toLowerCase();
+    for (final suffix in dsiTitleData) {
+      if (lower.endsWith(suffix)) return suffix;
+    }
+    return null;
+  }
+
   static bool isSaveNamedFor(String fileName, String stem) =>
       fileName.toLowerCase().startsWith('${stem.toLowerCase()}.');
 
@@ -957,14 +977,27 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
         if (await savesDirObj.exists()) {
           final stemLower = stem.toLowerCase();
           bool found = false;
+          // A DSiWare game's title data: every part of it, as one save.
+          final titleData = {for (final suffix in dsiTitleData) '$stemLower$suffix'};
           await for (final entity in savesDirObj.list()) {
-            if (entity is! io.File) continue;
-            final fname = p.basename(entity.path).toLowerCase();
-            if (isSaveNamedFor(fname, stemLower) && _isSaveFile(fname)) {
+            if (entity is io.File && titleData.contains(p.basename(entity.path).toLowerCase())) {
               filesToCheck.add(entity);
               found = true;
-              debugPrint('[SaveSync] [retroarch] getSaveFilesWithScreenshots exact match: $fname');
-              break;
+              debugPrint(
+                '[SaveSync] [retroarch] getSaveFilesWithScreenshots DSiWare title data: ${p.basename(entity.path)}',
+              );
+            }
+          }
+          if (!found) {
+            await for (final entity in savesDirObj.list()) {
+              if (entity is! io.File) continue;
+              final fname = p.basename(entity.path).toLowerCase();
+              if (isSaveNamedFor(fname, stemLower) && _isSaveFile(fname)) {
+                filesToCheck.add(entity);
+                found = true;
+                debugPrint('[SaveSync] [retroarch] getSaveFilesWithScreenshots exact match: $fname');
+                break;
+              }
             }
           }
           if (!found) {
@@ -1070,7 +1103,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
 
           final content = Uint8List.fromList(file.content as List<int>);
           var outputs = [SaveBlob(file.name, content)];
-          if (!isFileState && file.name.toLowerCase().endsWith('.sav')) {
+          final titleData = dsiTitleDataOf(file.name);
+          if (titleData != null) {
+            outputs = [SaveBlob('${getRomStem(game)}$titleData', content)];
+          } else if (!isFileState && file.name.toLowerCase().endsWith('.sav')) {
             outputs = [SaveBlob('${p.basenameWithoutExtension(file.name)}.srm', content)];
           } else if (!isFileState) {
             // A save from another emulator in the bundle, e.g. a DuckStation
@@ -1115,7 +1151,10 @@ class RetroArchSaveStrategy extends SaveStrategy with StateSyncCapable {
       String targetFilename = filename;
       // RomM's web player names saves "<game> [timestamp].srm"; RetroArch only
       // opens "<rom>.srm", so a save it can't match by name is renamed to it.
-      if (!isState && RegExp(r'\]\.(sav|srm)$', caseSensitive: false).hasMatch(filename)) {
+      final titleData = dsiTitleDataOf(filename);
+      if (titleData != null) {
+        targetFilename = '${getRomStem(game)}$titleData';
+      } else if (!isState && RegExp(r'\]\.(sav|srm)$', caseSensitive: false).hasMatch(filename)) {
         targetFilename = '${p.basenameWithoutExtension(destPath)}.srm';
       } else if (!isState && filename.toLowerCase().endsWith('.sav')) {
         targetFilename = '${p.basenameWithoutExtension(filename)}.srm';
