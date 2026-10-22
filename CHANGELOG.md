@@ -63,12 +63,20 @@ What changed in each release of Gargosy. The format follows
 ### Changed
 
 - X no longer opens sort and filters on a games page; they're on the bar.
+- DSi games play in RetroArch's melonDS DS core, the only one that runs
+  them (DSiWare included); the DS cores aren't offered for them. Its DSi
+  BIOS, firmware and a NAND of the game's region are needed.
 
 ### Fixed
 
 - The on-screen keyboard: the D-pad reaches every row with a controller (it
   stopped at the second).
 - A game's size shows on its Details tab (RomM sends it as `fs_size_bytes`).
+- A DSiWare game's save in RetroArch (`<game>.public.sav`, and its
+  `.private.sav` and `.banner.sav`) syncs whole and comes back under its own
+  name; it was put back as `.srm`, which the game never reads.
+- A RetroArch core chosen on a platform's page is used for that platform's
+  games when RomM names the platform differently (the DSi's, the DS Lite's).
 
 ## [0.2.0] - 2026-10-20
 

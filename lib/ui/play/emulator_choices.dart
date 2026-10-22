@@ -49,7 +49,10 @@ class EmulatorChoices {
   SaveMaker makerFor(String emulatorId, {String? core}) {
     if (emulatorId != 'retroarch') return SaveMaker(emulatorId);
     final slug = game.platformSlug ?? '';
-    return SaveMaker('retroarch', coreId: _bare(core ?? registry.getCoreOverride(slug) ?? getDefaultCoreForSlug(slug)));
+    return SaveMaker(
+      'retroarch',
+      coreId: _bare(core ?? chosenCoreFor(registry.coreOverrides, slug) ?? getDefaultCoreForSlug(slug)),
+    );
   }
 
   /// "ares", or "RetroArch · mupen64Plus-Next".

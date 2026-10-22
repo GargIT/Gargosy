@@ -16,6 +16,11 @@ void main() {
 
   test('RomM\'s slug gets the same core as Gargosy\'s', () {
     for (final MapEntry(key: romm, value: own) in kPlatformSlugAliases.entries) {
+      // The one exception (#114): a DSi game runs only in melonDS DS.
+      if (romm.startsWith('nintendo-dsi')) {
+        expect(getDefaultCoreForSlug(romm), 'melondsds_libretro', reason: romm);
+        continue;
+      }
       expect(getDefaultCoreForSlug(romm), getDefaultCoreForSlug(own), reason: romm);
       expect(getCoresForSlug(romm).map((c) => c.id), getCoresForSlug(own).map((c) => c.id), reason: romm);
     }
