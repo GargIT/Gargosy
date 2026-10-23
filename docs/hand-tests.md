@@ -180,15 +180,18 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## DSiWare not in standalone melonDS (#119)
 
-74. [ ] Zuma's Revenge! (USA): its play screen offers RetroArch (melonDS DS) only, not melonDS, though melonDS is installed. A DSi or DS cartridge game still offers melonDS.
-75. [ ] A DSiWare game you played in standalone melonDS before (Zuma's Revenge! (Europe, Australia)): its play screen picks RetroArch now, not melonDS, and Play starts it there.
+74. [x] Zuma's Revenge! (USA): its play screen offers RetroArch (melonDS DS) only, not melonDS, though melonDS is installed. A DSi or DS cartridge game still offers melonDS.
+75. [x] A DSiWare game you played in standalone melonDS before (Zuma's Revenge! (Europe, Australia)): its play screen picks RetroArch now, not melonDS, and Play starts it there.
 
 ## Collections page (#121)
 
-76. [ ] The Collections tab: your collections and the shared ones in the panel, Favourites first; RomM's virtual ones below it by type (Franchise, Genre …). The covers, the smart / shared / player marks and "N on PC" look right.
-77. [ ] Filter by name, Kind (Smart, Virtual) and Whose (Mine, Others'); Whose is greyed with Virtual; Sort by Games and Recently updated. All of it with the controller.
-78. [ ] A on a smart and on a virtual collection opens its games; Y on one opens a random game of it.
-79. [ ] A collection's page: its mosaic, name, kind, Shared / By you (or the owner), description (a smart one's filters), games and on this PC; Random opens one of its games. Scroll: the header goes and the name stays above the bar; up again, it comes back. B goes back to the tab.
-80. [ ] Covers in the gallery, Home shelves and platform cards look sharp enough with RomM's small covers (else revert to the large ones); a game's page still shows the large cover.
-81. [ ] Settings → Image cache: Keep up to changes (2 000–50 000), On this PC now shows the count and size, Clear the cache empties it and covers load again. `userdata\app\temp\gargosy-images` is gone after the first start; `userdata\app\cache\images` fills instead.
-82. [ ] The mouse's back button works like Escape: on a game's page it goes back, with a dropdown, the on-screen keyboard or a dialog open it closes that first.
+76. [x] The Collections tab: your collections and the shared ones in the panel, Favourites first; RomM's virtual ones below it by type (Franchise, Genre …). The covers, the smart / shared / player marks and "N on PC" look right.
+77. [x] Filter by name, Kind (Smart, Virtual) and Whose (Mine, Others'); Whose is greyed with Virtual; Sort by Games and Recently updated. All of it with the controller.
+78. [x] A on a smart and on a virtual collection opens its games; Y on one opens a random game of it.
+79. [x] A collection's page: its mosaic, name, kind, Shared / By you (or the owner), description (a smart one's filters), games and on this PC; Random opens one of its games. Scroll: the header goes and the name stays above the bar; up again, it comes back. B goes back to the tab.
+
+## Covers and the image cache (PR #125), the mouse's back button (PR #126)
+
+80. [x] Covers in the gallery, Home shelves and platform cards look sharp enough with RomM's small covers (else revert to the large ones); a game's page still shows the large cover.
+81. [x] Settings → Image cache: Keep up to changes (2 000–50 000), On this PC now shows the count and size, Clear the cache empties it and covers load again. `userdata\app\temp\gargosy-images` is gone after the first start; `userdata\app\cache\images` fills instead.
+82. [x] The mouse's back button works like Escape: on a game's page it goes back, with a dropdown, the on-screen keyboard or a dialog open it closes that first.
