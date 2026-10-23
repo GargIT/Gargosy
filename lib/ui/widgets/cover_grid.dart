@@ -23,6 +23,7 @@ class CoverGrid extends StatefulWidget {
     this.emptyText = 'Nothing here yet',
     this.autofocus = true,
     this.placeholder,
+    this.onTopChanged,
   });
 
   static const gap = GSpace.s5;
@@ -46,6 +47,9 @@ class CoverGrid extends StatefulWidget {
   /// header stays where it is, so a field in it keeps its focus.
   final Widget? placeholder;
 
+  /// The first game shown at the top changed while scrolling (its position).
+  final ValueChanged<int>? onTopChanged;
+
   /// Columns that fit in [width] (after the row padding on both sides).
   static int columnsFor(double width) {
     final inner = width - 2 * GSpace.rowPad;
@@ -58,13 +62,45 @@ class CoverGrid extends StatefulWidget {
 
 class CoverGridState extends State<CoverGrid> {
   final _scroll = ScrollController();
+  int _top = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_reportTop);
+  }
+
+  /// [CoverGrid.onTopChanged] when the game the view is at changes: the
+  /// focused one while it's on screen, else the first shown.
+  void _reportTop() {
+    if (!mounted) return;
+    final top = _focusedOnScreen() ?? firstVisibleIndex();
+    if (top == _top) return;
+    _top = top;
+    widget.onTopChanged?.call(top);
+  }
+
   final _headerKey = GlobalKey();
   int _columns = 1;
 
   /// A focus node per position, so a jump can focus the game it lands on.
   final _nodes = <int, FocusNode>{};
 
-  FocusNode _nodeFor(int i) => _nodes.putIfAbsent(i, () => FocusNode(debugLabel: 'cover $i'));
+  FocusNode _nodeFor(int i) => _nodes.putIfAbsent(i, () => FocusNode(debugLabel: 'cover $i')..addListener(_reportTop));
+
+  /// The focused game's position when its row is on screen, else null.
+  int? _focusedOnScreen() {
+    if (!_scroll.hasClients) return null;
+    for (final e in _nodes.entries) {
+      if (!e.value.hasPrimaryFocus || e.value.context == null || e.key >= widget.games.length) continue;
+      final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
+      final top = header + GSpace.s4 + (e.key ~/ _columns) * (GameCard.height + CoverGrid.gap);
+      final pos = _scroll.position;
+      final shown = top + GameCard.height > pos.pixels && top < pos.pixels + pos.viewportDimension;
+      return shown ? e.key : null;
+    }
+    return null;
+  }
 
   @override
   void dispose() {

@@ -27,9 +27,13 @@ class EmulatorOption {
 /// platform, the one remembered for it, the platform's default, and every
 /// save of it (this PC, backups, RomM).
 class PlayMenu {
-  const PlayMenu({required this.emulators, required this.catalog, this.remembered, this.platformDefault});
+  const PlayMenu({required this.emulators, required this.catalog, this.remembered, this.platformDefault, this.note});
 
   final List<EmulatorOption> emulators;
+
+  /// Why an installed emulator isn't offered for this game (DSiWare in
+  /// melonDS), shown when none is left.
+  final String? note;
   final SaveMaker? remembered;
   final SaveMaker? platformDefault;
   final SaveCatalog catalog;

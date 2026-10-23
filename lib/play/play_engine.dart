@@ -29,6 +29,7 @@ import '../providers/engine_providers.dart';
 import '../providers/romm_providers.dart';
 import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
+import 'dsiware_limits.dart';
 import 'play_menu.dart';
 import 'pre_launch_pull.dart';
 import 'save_deletion.dart';
@@ -71,6 +72,10 @@ abstract class PlayEngine {
 
   /// The ROM to start, or null when the game isn't downloaded.
   Future<String?> romPathFor(Game game);
+
+  /// Why [game] at [romPath] isn't started in [strategy] (DSiWare in
+  /// melonDS, #114), or null when it can be.
+  Future<String?> whyNotIn(Game game, String romPath, EmulatorStrategy strategy);
 
   /// [romPath] made ready for [strategy], once (`RomPreparer`): a zip it
   /// can't open is unpacked, an Xbox disc made an XISO for xemu. Returns
@@ -202,8 +207,13 @@ class GargosyPlayEngine implements PlayEngine {
     final installed = {
       for (final e in await _ref.read(emulatorsProvider.future)) e.id: e.supported && e.installedExe != null,
     };
-    final choices = EmulatorChoices.of(registry, installed, game);
     final romPath = await romPathFor(game) ?? _ref.read(romFilesProvider).pathFor(game);
+    // An emulator that can't keep the game's save isn't offered (#114).
+    final unfit = {
+      for (final id in await emulatorsUnfitFor(game, romPath))
+        if (installed[id] ?? false) id,
+    };
+    final choices = EmulatorChoices.of(registry, {...installed, for (final id in unfit) id: false}, game);
     final catalog = await loadSaveCatalog(
       game,
       romPath,
@@ -231,8 +241,13 @@ class GargosyPlayEngine implements PlayEngine {
       remembered: choices.remembered,
       platformDefault: choices.platformDefault,
       catalog: catalog,
+      note: unfit.isEmpty ? null : dsiWareCantSaveNote,
     );
   }
+
+  @override
+  Future<String?> whyNotIn(Game game, String romPath, EmulatorStrategy strategy) async =>
+      (await emulatorsUnfitFor(game, romPath)).contains(strategy.emulatorId) ? dsiWareCantSaveNote : null;
 
   @override
   Future<EmulatorStrategy?> emulatorFor(Game game, {String? emulatorId}) async {
