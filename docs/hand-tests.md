@@ -173,3 +173,12 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 70. [x] Zuma's Revenge! (Europe, Australia) on this PC: its Details tab has a DSiWare row asking for a NAND from Europe or Australia; Zuma's Revenge! (USA) asks for USA.
 71. [x] Play a DSi game in RetroArch: the profile's `system\dsi_nand.bin` is its own copy now (`bios\dsi_nand.bin` keeps its date after playing), and the game still starts.
 72. [x] With a European NAND in `bios\` under its own name beside `dsi_nand.bin`: Zuma's Revenge! (Europe, Australia) starts, and the USA copy still does.
+
+## A–Z rail: the current letter (#118)
+
+73. [ ] A platform's games sorted by name: scroll with the mouse wheel, then with the D-pad. The rail lights the letter you're at and follows; after a jump to T it lights T.
+
+## DSiWare not in standalone melonDS (#119)
+
+74. [ ] Zuma's Revenge! (USA): its play screen offers RetroArch (melonDS DS) only, not melonDS, though melonDS is installed. A DSi or DS cartridge game still offers melonDS.
+75. [ ] A DSiWare game you played in standalone melonDS before (Zuma's Revenge! (Europe, Australia)): its play screen picks RetroArch now, not melonDS, and Play starts it there.

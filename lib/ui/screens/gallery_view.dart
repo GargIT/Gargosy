@@ -68,6 +68,9 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   Map<String, int> _rail = const {};
   final _gridKey = GlobalKey<CoverGridState>();
   final _railKey = GlobalKey<AlphabetRailState>();
+
+  /// The first game shown at the top of the grid, for the rail's lit letter.
+  final _top = ValueNotifier<int>(0);
   Object? _error;
   int _generation = 0;
   bool _thisPc = false;
@@ -84,6 +87,12 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   }
 
   @override
+  void dispose() {
+    _top.dispose();
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(GalleryView old) {
     super.didUpdateWidget(old);
     if (old.query != widget.query) {
@@ -97,6 +106,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     _games.clear();
     _total = null;
     _rail = const {};
+    _top.value = 0;
     _error = null;
     _loading = false;
     if (!_thisPc) _loadMore(first: true);
@@ -145,7 +155,13 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   /// shown game's (the letter whose first game is the last at or before it).
   void _toRail(Map<String, int> rail) {
     if (rail.isEmpty) return;
-    final shownAt = _gridKey.currentState?.currentIndex() ?? 0;
+    final letter = _letterAt(rail, _gridKey.currentState?.currentIndex() ?? 0);
+    _railKey.currentState?.focusLetter(letter ?? rail.entries.reduce((a, b) => a.value <= b.value ? a : b).key);
+  }
+
+  /// The rail letter the shown game at [shownAt] is under: the letter whose
+  /// first game is the last at or before it.
+  String? _letterAt(Map<String, int> rail, int shownAt) {
     // RomM's letter offsets count its own list, folded versions too.
     final first = _thisPc ? shownAt : _rawIndexOfShown(shownAt);
     String? letter;
@@ -156,7 +172,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         letter = e.key;
       }
     }
-    _railKey.currentState?.focusLetter(letter ?? rail.entries.reduce((a, b) => a.value <= b.value ? a : b).key);
+    return letter;
   }
 
   /// The A–Z rail: the first game under [letter] in [rail], loaded first when
@@ -333,6 +349,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       isDownloaded: (g) => watchDownloaded(ref, g),
       // After a failed page, nothing more is asked for until Retry.
       onEndReached: _thisPc || _error != null ? null : _loadMore,
+      onTopChanged: (i) => _top.value = i,
       footer: _thisPc || _error == null
           ? null
           : _LoadMoreFailed(
@@ -353,7 +370,15 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
                 top: GSpace.s4,
                 bottom: GSpace.s4,
                 right: (GSpace.rowPad - AlphabetRail.width) / 2,
-                child: AlphabetRail(key: _railKey, letters: rail.keys.toSet(), onJump: (l) => _jump(l, rail)),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _top,
+                  builder: (context, top, _) => AlphabetRail(
+                    key: _railKey,
+                    letters: rail.keys.toSet(),
+                    current: _letterAt(rail, top),
+                    onJump: (l) => _jump(l, rail),
+                  ),
+                ),
               ),
             ],
           );

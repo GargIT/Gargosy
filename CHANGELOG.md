@@ -66,6 +66,11 @@ What changed in each release of Gargosy. The format follows
 ### Changed
 
 - X no longer opens sort and filters on a games page; they're on the bar.
+- The A–Z rail lights the letter you're at as you scroll: the focused game's,
+  else that of the first game shown.
+- A DSiWare game isn't offered in standalone melonDS any more, which starts
+  it but can't save it; it plays in RetroArch's melonDS DS. With only
+  melonDS installed, the play screen says why.
 - DSi games play in RetroArch's melonDS DS core, the only one that runs
   them (DSiWare included); the DS cores aren't offered for them. Its DSi
   BIOS, firmware and a NAND of the game's region are needed.

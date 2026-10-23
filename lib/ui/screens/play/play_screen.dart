@@ -384,8 +384,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     final picked = _picked;
     final panel = picked == null
         ? Text(
-            'No emulator for ${widget.game.platformDisplayName ?? 'this platform'} is installed. '
-            'Install one under Emulators (Start → Emulators).',
+            menu.note ??
+                'No emulator for ${widget.game.platformDisplayName ?? 'this platform'} is installed. '
+                    'Install one under Emulators (Start → Emulators).',
             style: const TextStyle(color: GColors.fgSecondary),
           )
         : PlaySettingsPanel(

@@ -61,6 +61,8 @@ class PlayController extends StateNotifier<PlayState> {
       if (!await engine.isInstalled(emulator)) {
         return refuse('${emulator.name} is needed. Install it under Emulators (Start → Emulators).');
       }
+      final whyNot = await engine.whyNotIn(game, foundRom, emulator);
+      if (whyNot != null) return refuse(whyNot);
       final String romPath;
       try {
         romPath = await _ready(engine, game, foundRom, emulator);

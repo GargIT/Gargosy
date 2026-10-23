@@ -8,6 +8,7 @@ import 'package:gargosy/library/library_snapshot.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/screens/gallery_screen.dart';
+import 'package:gargosy/ui/widgets/alphabet_rail.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
 import 'package:gargosy/ui/widgets/game_card.dart';
 
@@ -82,6 +83,25 @@ void main() {
     final card = tester.getRect(find.ancestor(of: find.text('T game 00').last, matching: find.byType(GameCard)));
     expect(card.top, greaterThanOrEqualTo(0));
     expect(card.bottom, lessThanOrEqualTo(1080));
+  });
+
+  testWidgets('the letter of the games at the top is lit, and follows the scrolling', (tester) async {
+    await pump(tester);
+    String? lit() => tester.widget<AlphabetRail>(find.byType(AlphabetRail)).current;
+    expect(lit(), '#');
+    expect(find.byKey(const ValueKey('rail-current')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('rail-T')));
+    await tester.pumpAndSettle();
+    expect(lit(), 'T');
+    // Scrolled back up with the mouse wheel: the letters go back with it.
+    final grid = find.byType(CustomScrollView);
+    await tester.drag(grid, const Offset(0, 1400));
+    await tester.pumpAndSettle();
+    expect(lit(), isNot('T'));
+    expect(railLetters.indexOf(lit()!), lessThan(railLetters.indexOf('T')));
+    await tester.drag(grid, const Offset(0, 100000));
+    await tester.pumpAndSettle();
+    expect(lit(), '#');
   });
 
   testWidgets('with the D-pad: right from the last column reaches the rail, down picks, left jumps', (tester) async {

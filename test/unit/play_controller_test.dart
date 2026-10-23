@@ -149,6 +149,12 @@ class FakeEngine implements PlayEngine {
     return readyPath ?? romPath;
   }
 
+  /// What [whyNotIn] says (null: it can be played).
+  String? whyNot;
+
+  @override
+  Future<String?> whyNotIn(Game game, String romPath, EmulatorStrategy strategy) async => whyNot;
+
   @override
   Future<String?> romPathFor(Game game) async {
     await Future<void>.delayed(Duration.zero); // lists a folder
@@ -303,6 +309,13 @@ void main() {
       ..installed = false;
     expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), contains('PCSX2'));
     expect(engine.steps, isEmpty);
+  });
+
+  test("an emulator that can't keep the game's save (DSiWare in melonDS) is refused with why", () async {
+    engine.whyNot = "melonDS can't save DSiWare games";
+    expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), contains('DSiWare'));
+    expect(engine.steps, isEmpty);
+    expect(c.read(playControllerProvider).runningGameId, isNull);
   });
 
   test("the ROM is readied for the emulator first (a zip unpacked), and the readied one launches", () async {
