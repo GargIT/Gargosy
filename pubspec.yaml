@@ -28,6 +28,7 @@ dependencies:
   pub_semver: ^2.1.4
   qr_flutter: ^4.1.0
   cached_network_image: 3.3.1
+  file: ^7.0.1
   archive: 4.0.9
   zstandard: ^1.5.0
   http: ^1.6.0
@@ -47,7 +48,6 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.0
   gamepads_platform_interface: ^0.1.3
   http_mock_adapter: 0.6.1
-  file: ^7.0.1
 
 # gamepads_windows 0.3.2, patched: its stop() read through a null callback
 # token on every exit (third_party/gamepads_windows/GARGOSY.md).

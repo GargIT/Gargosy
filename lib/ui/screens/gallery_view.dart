@@ -336,7 +336,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
           : null,
       emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
       autofocus: widget.autofocus && !_autofocusDone,
-      coverUrl: (g) => coverUrlFor(ref, g),
+      coverUrl: (g) => coverUrlFor(ref, g, small: true),
       onOpen: (g) => openGameVersion(context, ref, g),
       onFavorite: (g) => favourite(context, ref, g),
       isFavourite: (g) => favIds.contains(g.id),

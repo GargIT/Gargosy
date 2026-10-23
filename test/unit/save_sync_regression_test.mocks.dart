@@ -192,8 +192,8 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<List<Map<String, dynamic>>>);
 
   @override
-  String? resolveCoverUrl(_i3.Game? game) =>
-      (super.noSuchMethod(Invocation.method(#resolveCoverUrl, [game])) as String?);
+  String? resolveCoverUrl(_i3.Game? game, {bool? small = false}) =>
+      (super.noSuchMethod(Invocation.method(#resolveCoverUrl, [game], {#small: small})) as String?);
 
   @override
   _i11.Future<List<_i3.Game>> getGames(String? platformId) => (super.noSuchMethod(
@@ -316,6 +316,11 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<bool>);
 
   @override
+  _i11.Future<bool> deleteStates(List<int>? stateIds) =>
+      (super.noSuchMethod(Invocation.method(#deleteStates, [stateIds]), returnValue: _i11.Future<bool>.value(false))
+          as _i11.Future<bool>);
+
+  @override
   _i11.Future<bool> deleteSaves(List<int>? saveIds) =>
       (super.noSuchMethod(Invocation.method(#deleteSaves, [saveIds]), returnValue: _i11.Future<bool>.value(false))
           as _i11.Future<bool>);
@@ -326,6 +331,32 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<List<Map<String, dynamic>>?> getSharedSavesOrNull(String? gameId, {required int? exceptUserId}) =>
+      (super.noSuchMethod(
+        Invocation.method(#getSharedSavesOrNull, [gameId], {#exceptUserId: exceptUserId}),
+        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
+      ) as _i11.Future<List<Map<String, dynamic>>?>);
+
+  @override
+  _i11.Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String? gameId, {required int? exceptUserId}) =>
+      (super.noSuchMethod(
+        Invocation.method(#getSharedStatesOrNull, [gameId], {#exceptUserId: exceptUserId}),
+        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
+      ) as _i11.Future<List<Map<String, dynamic>>?>);
+
+  @override
+  _i11.Future<bool> setSaveShared(int? saveId, bool? shared) => (super.noSuchMethod(
+    Invocation.method(#setSaveShared, [saveId, shared]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<bool> setStateShared(int? stateId, bool? shared) => (super.noSuchMethod(
+    Invocation.method(#setStateShared, [stateId, shared]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
 
   @override
   _i11.Future<List<Map<String, dynamic>>> getSavesList(String? gameId, {String? deviceId, String? slot}) =>
@@ -393,6 +424,14 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
         this,
         Invocation.method(#updateState, [stateId, file], {#fileName: fileName, #screenshot: screenshot}),
       ),
+    ),
+  ) as _i11.Future<_i5.RommState>);
+
+  @override
+  _i11.Future<_i5.RommState> setStateLabels(int? stateId, List<String>? labels) => (super.noSuchMethod(
+    Invocation.method(#setStateLabels, [stateId, labels]),
+    returnValue: _i11.Future<_i5.RommState>.value(
+      _FakeRommState_5(this, Invocation.method(#setStateLabels, [stateId, labels])),
     ),
   ) as _i11.Future<_i5.RommState>);
 

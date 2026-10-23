@@ -180,9 +180,22 @@ void main() {
     await press(tester, GameAction.r1);
     expect(find.text('Fullscreen (F11)'), findsOneWidget, reason: 'Display');
     await press(tester, GameAction.r1);
+    expect(find.text('Keep up to'), findsOneWidget, reason: 'Image cache');
+    await press(tester, GameAction.r1);
     expect(find.text('ABOUT'), findsOneWidget, reason: 'About');
     await press(tester, GameAction.r1);
     expect(find.text('ABOUT'), findsOneWidget, reason: 'the last one');
+  });
+
+  testWidgets('Image cache: how many images are kept, picked from a list', (tester) async {
+    await pump(tester, initial: SettingsPage.imageCache);
+    expect(find.text('10 000 images (about 1.1 GB)'), findsOneWidget);
+    await tester.tap(find.text('Change'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('25 000 images (about 2.9 GB)'));
+    await tester.pumpAndSettle();
+    expect(find.text('25 000 images (about 2.9 GB)'), findsOneWidget);
+    expect(find.text('Clear the cache'), findsOneWidget);
   });
 
   testWidgets('Rename goes through the Name field', (tester) async {

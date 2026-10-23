@@ -58,7 +58,11 @@ class PlatformCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(GRadius.sm),
                   boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 12, offset: Offset(0, 5))],
                 ),
-                child: CoverImage(url: coverUrlFor(ref, covers[i]), title: covers[i].displayName, radius: GRadius.sm),
+                child: CoverImage(
+                  url: coverUrlFor(ref, covers[i], small: true),
+                  title: covers[i].displayName,
+                  radius: GRadius.sm,
+                ),
               ),
             ),
           ),

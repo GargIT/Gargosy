@@ -35,7 +35,7 @@ class HomePage extends ConsumerWidget {
     Widget shelf(String title, List<Game> games, {bool first = false}) => Shelf(
       title: title,
       games: games,
-      coverUrl: (g) => coverUrlFor(ref, g),
+      coverUrl: (g) => coverUrlFor(ref, g, small: true),
       onOpen: (g) => openGame(context, g),
       onFavorite: (g) => favourite(context, ref, g),
       isFavourite: (g) => favIds.contains(g.id),
@@ -118,7 +118,7 @@ class _RandomPick extends ConsumerWidget {
           decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.card)),
           child: Row(
             children: [
-              CoverImage(url: coverUrlFor(ref, game), title: game.displayName, width: 126, height: 169),
+              CoverImage(url: coverUrlFor(ref, game, small: true), title: game.displayName, width: 126, height: 169),
               const SizedBox(width: GSpace.s5),
               Expanded(
                 child: Column(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' as io;
 import 'dart:ui' show PlatformDispatcher;
 
@@ -17,6 +18,7 @@ import 'core/storage/gargosy_path_provider.dart';
 import 'core/storage/logger_service.dart';
 import 'core/storage/json_file_preferences_store.dart';
 import 'core/storage/shared_preferences_app_preferences.dart';
+import 'library/image_cache.dart';
 import 'profiles/app_root.dart';
 import 'profiles/path_guard.dart';
 import 'profiles/portable_temp.dart';
@@ -40,6 +42,7 @@ Future<void> main(List<String> args) async {
     return;
   }
   startFileLog(root);
+  unawaited(removeOldImageCache(root));
   // Saves go through sigil only (#57): without it, Gargosy doesn't start.
   final sigil = SigilLibrary.problem();
   if (sigil != null) {

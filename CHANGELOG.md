@@ -77,6 +77,13 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- Covers load faster and more of them stay on this PC: grids and shelves
+  use RomM's small covers (a game's page keeps the large one), and the
+  image cache keeps 10 000 by default instead of 1 000. Settings → Image
+  cache sets how many (2 000 to 50 000), shows what it takes, and clears
+  it. The cache moved to `userdata\app\cache\images\`; the old one in
+  `userdata\app\temp\` is removed at the first start.
+
 - X no longer opens sort and filters on a games page; they're on the bar.
 - The A–Z rail lights the letter you're at as you scroll: the focused game's,
   else that of the first game shown.

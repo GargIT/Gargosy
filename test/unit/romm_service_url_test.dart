@@ -120,6 +120,14 @@ void main() {
         expect(url, 'https://romm.example.com/assets/cover.jpg');
       });
 
+      test('small takes the small cover, else the large one; the default the large one', () {
+        final both = Game(id: '1', name: 'T', pathCoverLarge: '/big.png', pathCoverSmall: '/small.png', fileSize: 0);
+        expect(service.resolveCoverUrl(both, small: true), 'https://romm.example.com/small.png');
+        expect(service.resolveCoverUrl(both), 'https://romm.example.com/big.png');
+        final large = Game(id: '1', name: 'T', pathCoverLarge: '/big.png', fileSize: 0);
+        expect(service.resolveCoverUrl(large, small: true), 'https://romm.example.com/big.png');
+      });
+
       test('all null paths returns null', () {
         final game = Game(id: '1', name: 'Test', fileSize: 0);
         final url = service.resolveCoverUrl(game);

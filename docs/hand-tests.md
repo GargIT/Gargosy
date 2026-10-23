@@ -189,3 +189,5 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 77. [ ] Filter by name, Kind (Smart, Virtual) and Whose (Mine, Others'); Whose is greyed with Virtual; Sort by Games and Recently updated. All of it with the controller.
 78. [ ] A on a smart and on a virtual collection opens its games; Y on one opens a random game of it.
 79. [ ] A collection's page: its mosaic, name, kind, Shared / By you (or the owner), description (a smart one's filters), games and on this PC; Random opens one of its games. Scroll: the header goes and the name stays above the bar; up again, it comes back. B goes back to the tab.
+80. [ ] Covers in the gallery, Home shelves and platform cards look sharp enough with RomM's small covers (else revert to the large ones); a game's page still shows the large cover.
+81. [ ] Settings → Image cache: Keep up to changes (2 000–50 000), On this PC now shows the count and size, Clear the cache empties it and covers load again. `userdata\app\temp\gargosy-images` is gone after the first start; `userdata\app\cache\images` fills instead.
