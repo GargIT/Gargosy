@@ -248,35 +248,44 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
 
   Widget _bar() => Padding(
     padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s4),
-    child: Wrap(
-      spacing: GSpace.s3,
-      runSpacing: GSpace.s3,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    // Sort by stays at the right; the rest wraps when the window is narrow.
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 280,
-          child: FilterField(
-            key: const ValueKey('collections-filter'),
-            hint: 'Filter collections…',
-            text: _filter,
-            onChanged: (t) => setState(() => _filter = t),
+        Expanded(
+          child: Wrap(
+            spacing: GSpace.s3,
+            runSpacing: GSpace.s3,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 280,
+                child: FilterField(
+                  key: const ValueKey('collections-filter'),
+                  hint: 'Filter collections…',
+                  text: _filter,
+                  onChanged: (t) => setState(() => _filter = t),
+                ),
+              ),
+              _Segments<CollectionKindFilter>(
+                keyPrefix: 'kind',
+                values: CollectionKindFilter.values,
+                current: _kind,
+                label: (k) => k.label,
+                onPick: (k) => setState(() => _kind = k),
+              ),
+              _Segments<CollectionWhose>(
+                keyPrefix: 'whose',
+                values: CollectionWhose.values,
+                current: _kind == CollectionKindFilter.virtual ? CollectionWhose.everyone : _whose,
+                label: (w) => w.label,
+                // Virtual collections are no one's.
+                onPick: _kind == CollectionKindFilter.virtual ? null : (w) => setState(() => _whose = w),
+              ),
+            ],
           ),
         ),
-        _Segments<CollectionKindFilter>(
-          keyPrefix: 'kind',
-          values: CollectionKindFilter.values,
-          current: _kind,
-          label: (k) => k.label,
-          onPick: (k) => setState(() => _kind = k),
-        ),
-        _Segments<CollectionWhose>(
-          keyPrefix: 'whose',
-          values: CollectionWhose.values,
-          current: _kind == CollectionKindFilter.virtual ? CollectionWhose.everyone : _whose,
-          label: (w) => w.label,
-          // Virtual collections are no one's.
-          onPick: _kind == CollectionKindFilter.virtual ? null : (w) => setState(() => _whose = w),
-        ),
+        const SizedBox(width: GSpace.s3),
         KeyedSubtree(
           key: _sortField,
           child: GDropdownField(

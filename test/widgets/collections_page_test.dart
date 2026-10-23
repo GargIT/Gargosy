@@ -7,6 +7,7 @@ import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/pages/collections_page.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
+import 'package:gargosy/ui/theme/tokens.dart';
 import 'package:gargosy/ui/screens/collection/collection_screen.dart';
 
 import '../helpers/fake_library_api.dart';
@@ -65,6 +66,10 @@ void main() {
     expect(find.byKey(const ValueKey('mark-shared')), findsNWidgets(2));
     expect(find.text('64 games · anna'), findsOneWidget);
     expect(find.text('1 on PC'), findsOneWidget);
+    // Sort by sits at the right end of the bar.
+    final sort = tester.getRect(find.byKey(const ValueKey('collections-sort')));
+    final page = tester.getRect(find.byKey(const Key('page-Collections')));
+    expect(page.right - sort.right, lessThan(GSpace.rowPad + 1));
   });
 
   testWidgets('Kind and Whose narrow it; Whose is off for Virtual', (tester) async {
