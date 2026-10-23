@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart' show kBackMouseButton;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +10,9 @@ import '../../core/input/input_action_bus.dart';
 import '../../providers/ui_provider.dart';
 import 'gargosy_intents.dart';
 
-/// Turns controller actions (from [GamepadService] via [inputActionBus]) and a
-/// few keys into intents on the focused widget, and tracks the input mode.
+/// Turns controller actions (from [GamepadService] via [inputActionBus]), a
+/// few keys and the mouse's back button (as Escape) into intents on the
+/// focused widget, and tracks the input mode.
 /// The D-pad itself is handled by [GamepadService], which moves focus.
 class InputRouter extends ConsumerStatefulWidget {
   const InputRouter({super.key, required this.child, required this.navigatorKey, this.startGamepads = true});
@@ -79,10 +81,11 @@ class _InputRouterState extends ConsumerState<InputRouter> {
   @override
   Widget build(BuildContext context) {
     return Listener(
-      onPointerDown: (_) {
+      onPointerDown: (e) {
         if (ref.read(inputModeProvider) != InputMode.mouse) {
           ref.read(inputModeProvider.notifier).state = InputMode.mouse;
         }
+        if (e.buttons & kBackMouseButton != 0) _invoke(const BackIntent());
       },
       child: Shortcuts(
         shortcuts: const {

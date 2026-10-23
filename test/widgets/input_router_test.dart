@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,6 +125,52 @@ void main() {
     expect(container.read(inputModeProvider), InputMode.keyboard);
     await tester.tap(find.text('home'));
     await tester.pump();
+    expect(container.read(inputModeProvider), InputMode.mouse);
+  });
+
+  testWidgets("the mouse's back button is Escape: the focused widget's Back first, else the page goes", (tester) async {
+    await pump(tester, const Scaffold(body: Text('home')));
+    var closed = 0;
+    nav.currentState!.push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          body: Actions(
+            actions: {
+              BackIntent: CallbackAction<BackIntent>(
+                onInvoke: (_) {
+                  closed++;
+                  return null;
+                },
+              ),
+            },
+            child: const Focus(autofocus: true, child: Text('keyboard open')),
+          ),
+        ),
+      ),
+    );
+    nav.currentState!.push(
+      MaterialPageRoute(
+        builder: (_) => const Scaffold(body: Focus(autofocus: true, child: Text('second'))),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> back() async {
+      final g = await tester.startGesture(
+        tester.getCenter(find.byType(Scaffold).last),
+        kind: PointerDeviceKind.mouse,
+        buttons: kBackMouseButton,
+      );
+      await g.up();
+      await tester.pumpAndSettle();
+    }
+
+    await back();
+    expect(find.text('second'), findsNothing);
+    expect(find.text('keyboard open'), findsOneWidget);
+    await back();
+    expect(closed, 1, reason: 'the focused widget took it');
+    expect(find.text('keyboard open'), findsOneWidget);
     expect(container.read(inputModeProvider), InputMode.mouse);
   });
 }
