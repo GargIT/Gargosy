@@ -147,7 +147,8 @@ final raProgressionProvider = FutureProvider<Map<int, Map<String, dynamic>>>((re
   return romm == null ? const {} : romm.getRetroAchievementsProgression();
 });
 
-String? coverUrlFor(WidgetRef ref, Game g) => ref.read(rommServiceProvider)?.resolveCoverUrl(g);
+String? coverUrlFor(WidgetRef ref, Game g, {bool small = false}) =>
+    ref.read(rommServiceProvider)?.resolveCoverUrl(g, small: small);
 
 /// [path] (e.g. `/assets/romm/...`) on the active profile's server.
 String? assetUrl(WidgetRef ref, String? path) {

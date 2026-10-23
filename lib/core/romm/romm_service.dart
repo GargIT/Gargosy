@@ -414,9 +414,10 @@ class RommService implements RommStatesApi {
     }
   }
 
-  String? resolveCoverUrl(Game game) {
+  /// [small]: RomM's small cover (240 × 360), for grids and shelves.
+  String? resolveCoverUrl(Game game, {bool small = false}) {
     final host = _normalizeBaseUrl(_config.baseUrl);
-    String? path = game.pathCoverLarge ?? game.pathCoverSmall;
+    String? path = small ? game.pathCoverSmall ?? game.pathCoverLarge : game.pathCoverLarge ?? game.pathCoverSmall;
     if (path != null && path.isNotEmpty) return path.startsWith('http') ? path : "$host$path";
     String? url = game.urlCover;
     if (url != null && url.isNotEmpty) {
