@@ -38,6 +38,7 @@ class GalleryView extends ConsumerStatefulWidget {
     this.emptyText = 'No games here',
     this.autofocus = true,
     this.pinnedBar = false,
+    this.platforms,
   });
 
   final GalleryQuery query;
@@ -51,6 +52,9 @@ class GalleryView extends ConsumerStatefulWidget {
   /// The bar stays above the grid instead of scrolling with it (the
   /// platform page, where it sits under the pinned tabs).
   final bool pinnedBar;
+
+  /// The bar's Platform pick (a collection's page): see [GalleryBar.platforms].
+  final List<Platform>? platforms;
 
   @override
   ConsumerState<GalleryView> createState() => _GalleryViewState();
@@ -286,8 +290,10 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       thisPcCount: _thisPc ? total : null,
       onThisPc: _setThisPc,
       filterHint: widget.filterHint,
-      onScan: _query.platformId == null ? null : _scan,
+      // Scan is a platform page's: in a collection, the platform is a pick.
+      onScan: _query.platformId == null || _query.inCollection ? null : _scan,
       scanning: _scanning,
+      platforms: widget.platforms,
     );
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

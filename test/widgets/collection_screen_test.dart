@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_library_api.dart';
+import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/library_snapshot.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
@@ -14,9 +15,17 @@ import '../helpers/widget_env.dart';
 void main() {
   late FakeLibraryApi api;
 
-  Future<void> pump(WidgetTester tester, RommCollection c, {int games = 3}) async {
+  Future<void> pump(
+    WidgetTester tester,
+    RommCollection c, {
+    int games = 3,
+    List<int> platformIds = const [],
+    List<Platform> platforms = const [],
+  }) async {
     await setDesktopSize(tester);
-    api = FakeLibraryApi([for (var i = 1; i <= games; i++) game(i, 'Game ${i.toString().padLeft(3, '0')}')]);
+    api = FakeLibraryApi([
+      for (var i = 1; i <= games; i++) game(i, 'Game ${i.toString().padLeft(3, '0')}'),
+    ], values: FilterValues(platforms: platformIds));
     await tester.pumpWidget(
       testApp(
         CollectionScreen(collection: c),
@@ -25,6 +34,7 @@ void main() {
           rommUserIdProvider.overrideWithValue(7),
           favouriteIdsProvider.overrideWithValue(const {}),
           gamesOnThisPcProvider.overrideWithValue([game(2, 'Game 002')]),
+          platformsProvider.overrideWith((ref) => platforms),
         ],
       ),
     );
@@ -98,5 +108,52 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('collection-header')), findsNothing);
     expect(find.byKey(const ValueKey('collection-pinned-name')), findsOneWidget);
+  });
+
+  testWidgets("its platforms: counted in the header, picked on the bar, RomM asked for the collection's games there", (
+    tester,
+  ) async {
+    Platform platform(int id, String name) => Platform(id: id, name: name, slug: name.toLowerCase(), gamesCount: 9);
+    await pump(
+      tester,
+      const RommCollection(id: 2, name: 'Couch co-op', romIds: {1, 2, 3}, romCount: 3),
+      platformIds: [4, 5],
+      platforms: [platform(3, 'Dreamcast'), platform(4, 'N64'), platform(5, 'SNES')],
+    );
+    expect(find.text('PLATFORMS'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byKey(const ValueKey('collection-platforms')), matching: find.text('2')),
+      findsOneWidget,
+      reason: 'the ids RomM gave, not every platform',
+    );
+    expect(find.text('Platform: All 2'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('bar-platform')));
+    await tester.pumpAndSettle();
+    expect(find.text('Dreamcast'), findsNothing);
+    await tester.tap(find.text('SNES'));
+    await tester.pumpAndSettle();
+    expect(find.text('Platform: SNES'), findsOneWidget);
+    final asked = api.queries.last.$1;
+    expect((asked.collectionId, asked.platformId), (2, 5));
+    expect(find.byKey(const ValueKey('bar-scan')), findsNothing);
+    expect(find.text('Platform: SNES'), findsOneWidget, reason: 'the list stays the whole collection\'s');
+
+    await tester.tap(find.byKey(const ValueKey('bar-platform')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('All 2'));
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.platformId, isNull);
+  });
+
+  testWidgets('one platform: no pick, the count still shows', (tester) async {
+    await pump(
+      tester,
+      const RommCollection(id: 2, name: 'N64 only', romIds: {1}, romCount: 1),
+      platformIds: [4],
+      platforms: [Platform(id: 4, name: 'N64', slug: 'n64', gamesCount: 9)],
+    );
+    expect(find.text('PLATFORMS'), findsOneWidget);
+    expect(find.byKey(const ValueKey('bar-platform')), findsNothing);
   });
 }

@@ -195,3 +195,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 80. [x] Covers in the gallery, Home shelves and platform cards look sharp enough with RomM's small covers (else revert to the large ones); a game's page still shows the large cover.
 81. [x] Settings → Image cache: Keep up to changes (2 000–50 000), On this PC now shows the count and size, Clear the cache empties it and covers load again. `userdata\app\temp\gargosy-images` is gone after the first start; `userdata\app\cache\images` fills instead.
 82. [x] The mouse's back button works like Escape: on a game's page it goes back, with a dropdown, the on-screen keyboard or a dialog open it closes that first.
+
+## A collection's platforms (#128)
+
+83. [ ] A collection with games on several platforms: the header's PLATFORMS counts them, and Platform on the bar says "All N". Pick one with the controller: only its games show, and the list still offers the others; All brings them all back. On this PC with a platform picked shows that platform's downloaded games of the collection. A collection on one platform has the count but no Platform pick.
