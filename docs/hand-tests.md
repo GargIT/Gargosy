@@ -176,7 +176,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## A–Z rail: the current letter (#118)
 
-73. [ ] A platform's games sorted by name: scroll with the mouse wheel, then with the D-pad. The rail lights the letter you're at and follows; after a jump to T it lights T.
+73. [x] A platform's games sorted by name: scroll with the mouse wheel, then with the D-pad. The rail lights the letter you're at and follows; after a jump to T it lights T.
 
 ## DSiWare not in standalone melonDS (#119)
 
