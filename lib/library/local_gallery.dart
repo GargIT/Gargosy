@@ -10,7 +10,7 @@ bool inGalleryScope(
   Set<String> favouriteIds = const {},
 }) {
   if (q.platformId != null && g.platformId != q.platformId) return false;
-  if (q.collectionId != null && !collectionRomIds.contains(int.tryParse(g.id))) return false;
+  if (q.inCollection && !collectionRomIds.contains(int.tryParse(g.id))) return false;
   if (q.favourites && !favouriteIds.contains(g.id)) return false;
   if (q.lastPlayedOnly && g.lastPlayed == null) return false;
   return true;

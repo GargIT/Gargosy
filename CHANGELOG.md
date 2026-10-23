@@ -8,6 +8,14 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- The Collections tab is new, after RomM's: your collections and the ones
+  other players share, in a panel with Favourites first, then RomM's
+  virtual collections (series, franchise, genre, play mode, company) by
+  type. Smart collections are there too. Each shows a mosaic of its covers
+  with marks for smart, shared, another player's, and how many of its
+  games are on this PC. Filter them by name, Kind (Collections, Smart,
+  Virtual) and whose (Mine, Others'), and sort by name, games or recently
+  updated. Y on one opens a random game of it.
 - Saves other players shared on RomM: the play screen and the game's Saves
   tab list them under From other players, by player. Play with one, or put it
   on this PC (X on the Saves tab): it becomes your save, and your next one

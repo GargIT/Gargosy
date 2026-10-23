@@ -182,3 +182,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 74. [ ] Zuma's Revenge! (USA): its play screen offers RetroArch (melonDS DS) only, not melonDS, though melonDS is installed. A DSi or DS cartridge game still offers melonDS.
 75. [ ] A DSiWare game you played in standalone melonDS before (Zuma's Revenge! (Europe, Australia)): its play screen picks RetroArch now, not melonDS, and Play starts it there.
+
+## Collections page (#121)
+
+76. [ ] The Collections tab: your collections and the shared ones in the panel, Favourites first; RomM's virtual ones below it by type (Franchise, Genre …). The covers, the smart / shared / player marks and "N on PC" look right.
+77. [ ] Filter by name, Kind (Smart, Virtual) and Whose (Mine, Others'); Whose is greyed with Virtual; Sort by Games and Recently updated. All of it with the controller.
+78. [ ] A on a smart and on a virtual collection opens its games; Y on one opens a random game of it.

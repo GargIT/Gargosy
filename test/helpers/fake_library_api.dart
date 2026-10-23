@@ -55,11 +55,27 @@ class FakeLibraryApi implements LibraryApi {
   }
 
   @override
-  Future<List<RommCollection>> collections() async => const [];
+  Future<List<RommCollection>> collections() async => regular;
+
+  /// What [collections], [smartCollections] and [virtualCollections] give.
+  List<RommCollection> regular = const [];
+  List<RommCollection> smart = const [];
+  Map<String, List<RommCollection>> virtualByType = const {};
 
   @override
-  Future<Game?> randomGame({int? platformId}) async =>
-      all.where((g) => platformId == null || g.platformId == platformId).firstOrNull;
+  Future<List<RommCollection>> smartCollections() async => smart;
+
+  @override
+  Future<List<RommCollection>> virtualCollections(String type) async => virtualByType[type] ?? const [];
+
+  /// The scope [randomGame] was last asked for.
+  GalleryQuery? randomWithin;
+
+  @override
+  Future<Game?> randomGame({int? platformId, GalleryQuery? within}) async {
+    randomWithin = within;
+    return all.where((g) => platformId == null || g.platformId == platformId).firstOrNull;
+  }
 
   final notesById = <String, List<RomNote>>{};
 
