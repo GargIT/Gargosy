@@ -77,6 +77,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Changed
 
+- The back button on a mouse works like Escape: it closes what is open,
+  else goes back a page.
+
 - Covers load faster and more of them stay on this PC: grids and shelves
   use RomM's small covers (a game's page keeps the large one), and the
   image cache keeps 10 000 by default instead of 1 000. Settings → Image
