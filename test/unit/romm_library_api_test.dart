@@ -217,6 +217,78 @@ void main() {
     expect(a.requests.map((r) => r.queryParameters['platform_ids']), everyElement([3]));
   });
 
+  test('smart and virtual collections are read with their kind, covers and query (#121)', () async {
+    final a = FakeDioAdapter(
+      (r) => (
+        status: 200,
+        body: r.path.endsWith('/smart')
+            ? [
+                {
+                  ...coll(3, 'Never finished', roms: [1, 2]),
+                  'is_smart': true,
+                  'filter_summary': 'Status: unfinished',
+                  'path_covers_small': ['/a.png', '/b.png'],
+                  'updated_at': '2026-10-01T10:00:00Z',
+                },
+              ]
+            : [
+                {
+                  'id': 'eyJuYW1lIjoiTWFyaW8ifQ',
+                  'name': 'Mario',
+                  'type': 'franchise',
+                  'description': '',
+                  'rom_ids': [4, 5, 6],
+                  'rom_count': 3,
+                  'path_covers_small': <String>[],
+                  'path_covers_large': ['/m.png'],
+                  'is_virtual': true,
+                },
+              ],
+      ),
+    );
+    final smart = (await api(a).smartCollections()).single;
+    expect(a.requests.last.path, '/api/collections/smart');
+    expect(smart.kind, CollectionKind.smart);
+    expect(smart.coverPaths, ['/a.png', '/b.png']);
+    expect(smart.filterSummary, 'Status: unfinished');
+    expect(smart.updatedAt, DateTime.utc(2026, 10, 1, 10));
+    expect(smart.query, const GalleryQuery(smartCollectionId: 3));
+    expect(smart.query.toParams(offset: 0, limit: 1)['smart_collection_id'], 3);
+
+    final mario = (await api(a).virtualCollections('franchise')).single;
+    expect(a.requests.last.path, '/api/collections/virtual');
+    expect(a.requests.last.queryParameters['type'], 'franchise');
+    expect(mario.kind, CollectionKind.virtual);
+    expect(mario.virtualId, 'eyJuYW1lIjoiTWFyaW8ifQ');
+    expect(mario.virtualType, 'franchise');
+    expect(mario.coverPaths, ['/m.png'], reason: 'the large covers when there are no small ones');
+    expect(mario.romCount, 3);
+    expect(mario.key, 'virtual-eyJuYW1lIjoiTWFyaW8ifQ');
+    expect(mario.query.toParams(offset: 0, limit: 1)['virtual_collection_id'], 'eyJuYW1lIjoiTWFyaW8ifQ');
+    expect(mario.query.inCollection, isTrue);
+  });
+
+  test("a collection's random game is asked within it", () async {
+    final a = FakeDioAdapter(
+      (r) => (
+        status: 200,
+        body: {
+          'items': [gameJson(1, 'Ico')],
+          'total': 5,
+        },
+      ),
+    );
+    await api(a).randomGame(within: const GalleryQuery(smartCollectionId: 3));
+    expect(a.requests.map((r) => r.queryParameters['smart_collection_id']), everyElement(3));
+  });
+
+  test("the favourites collection's query is the favourites gallery; a scope keeps only the scope", () {
+    final fav = RommCollection.fromJson(coll(1, 'Favorites', fav: true));
+    expect(fav.query, const GalleryQuery(favourites: true));
+    const q = GalleryQuery(collectionId: 2, search: 'zel', sort: GallerySort.rating, genres: {'RPG'});
+    expect(q.scopeOnly, const GalleryQuery(collectionId: 2));
+  });
+
   test('notes are read, added private, and deleted; failures throw', () async {
     final a = FakeDioAdapter(
       (r) => switch (r.method) {

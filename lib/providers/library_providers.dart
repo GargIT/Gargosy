@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../library/library_snapshot.dart';
@@ -25,6 +26,42 @@ final collectionsProvider = FutureProvider<List<RommCollection>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   return api == null ? const [] : api.collections();
 });
+
+/// The smart collections the user can see; none from a RomM without them.
+final smartCollectionsProvider = FutureProvider<List<RommCollection>>((ref) async {
+  final api = ref.watch(libraryApiProvider);
+  return api == null ? const [] : _orNoneIfMissing(api.smartCollections());
+});
+
+/// RomM's virtual collections of one type (`virtualCollectionTypes`); none
+/// from a RomM without them.
+final virtualCollectionsProvider = FutureProvider.family<List<RommCollection>, String>((ref, type) async {
+  final api = ref.watch(libraryApiProvider);
+  return api == null ? const [] : _orNoneIfMissing(api.virtualCollections(type));
+});
+
+/// An older RomM answers 404 (or 422 for a type it doesn't know): nothing to show.
+Future<List<RommCollection>> _orNoneIfMissing(Future<List<RommCollection>> call) async {
+  try {
+    return await call;
+  } on DioException catch (e) {
+    final status = e.response?.statusCode;
+    if (status == 404 || status == 422) return const [];
+    rethrow;
+  }
+}
+
+/// The collection, of any kind, whose games [q] is the gallery of, from the
+/// lists loaded so far; null when none is.
+RommCollection? collectionOf(WidgetRef ref, GalleryQuery q) {
+  if (!q.inCollection) return null;
+  final all = [
+    ...?ref.watch(collectionsProvider).valueOrNull,
+    ...?ref.watch(smartCollectionsProvider).valueOrNull,
+    for (final type in virtualCollectionTypes.keys) ...?ref.watch(virtualCollectionsProvider(type)).valueOrNull,
+  ];
+  return all.where((c) => c.query == q.scopeOnly).firstOrNull;
+}
 
 /// The active profile's RomM user id.
 final rommUserIdProvider = Provider<int?>(

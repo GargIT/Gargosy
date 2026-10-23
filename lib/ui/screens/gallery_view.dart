@@ -258,13 +258,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   /// The downloaded games in this gallery's scope, before its filters.
   List<Game> _onThisPc() {
     final favs = ref.watch(favouriteIdsProvider);
-    final ids = _query.collectionId == null
-        ? const <int>{}
-        : (ref.watch(collectionsProvider).valueOrNull ?? const <RommCollection>[])
-                  .where((c) => c.id == _query.collectionId)
-                  .firstOrNull
-                  ?.romIds ??
-              const <int>{};
+    final ids = collectionOf(ref, _query)?.romIds ?? const <int>{};
     return [
       for (final g in ref.watch(gamesOnThisPcProvider))
         if (inGalleryScope(g, _query, collectionRomIds: ids, favouriteIds: favs)) g,

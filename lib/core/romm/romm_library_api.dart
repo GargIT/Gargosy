@@ -44,13 +44,15 @@ enum GallerySort {
 
 const _keep = Object();
 
-/// What a gallery shows: its scope (a platform, a collection, favourites or a
-/// search), its sort and its filters.
+/// What a gallery shows: its scope (a platform, a collection of any kind,
+/// favourites or a search), its sort and its filters.
 @immutable
 class GalleryQuery {
   const GalleryQuery({
     this.platformId,
     this.collectionId,
+    this.smartCollectionId,
+    this.virtualCollectionId,
     this.favourites = false,
     this.search,
     this.sort = GallerySort.name,
@@ -62,7 +64,17 @@ class GalleryQuery {
 
   final int? platformId;
   final int? collectionId;
+
+  /// A smart collection's id (RomM picks its games by its filters).
+  final int? smartCollectionId;
+
+  /// A virtual collection's id (RomM's, from the games' metadata: a
+  /// franchise, genre, company …).
+  final String? virtualCollectionId;
   final bool favourites;
+
+  /// The scope is one collection, of any kind.
+  bool get inCollection => collectionId != null || smartCollectionId != null || virtualCollectionId != null;
   final String? search;
   final GallerySort sort;
   final bool descending;
@@ -81,6 +93,8 @@ class GalleryQuery {
   }) => GalleryQuery(
     platformId: platformId,
     collectionId: collectionId,
+    smartCollectionId: smartCollectionId,
+    virtualCollectionId: virtualCollectionId,
     favourites: favourites,
     search: identical(search, _keep) ? this.search : search as String?,
     sort: sort ?? this.sort,
@@ -91,6 +105,16 @@ class GalleryQuery {
   );
 
   bool get hasFilters => genres.isNotEmpty || regions.isNotEmpty;
+
+  /// Only the scope: no search, sort or filters.
+  GalleryQuery get scopeOnly => GalleryQuery(
+    platformId: platformId,
+    collectionId: collectionId,
+    smartCollectionId: smartCollectionId,
+    virtualCollectionId: virtualCollectionId,
+    favourites: favourites,
+    lastPlayedOnly: lastPlayedOnly,
+  );
 
   Map<String, dynamic> toParams({
     required int offset,
@@ -116,6 +140,8 @@ class GalleryQuery {
       if (lastPlayedOnly) 'last_played': true,
       if (platformId != null) 'platform_ids': [platformId],
       if (collectionId != null) 'collection_id': collectionId,
+      if (smartCollectionId != null) 'smart_collection_id': smartCollectionId,
+      if (virtualCollectionId != null) 'virtual_collection_id': virtualCollectionId,
       if (favourites) 'favorite': true,
       if (term.isNotEmpty) 'search_term': term,
       if (genres.isNotEmpty) 'genres': (genres.toList()..sort()),
@@ -128,6 +154,8 @@ class GalleryQuery {
       other is GalleryQuery &&
       other.platformId == platformId &&
       other.collectionId == collectionId &&
+      other.smartCollectionId == smartCollectionId &&
+      other.virtualCollectionId == virtualCollectionId &&
       other.favourites == favourites &&
       other.search == search &&
       other.sort == sort &&
@@ -140,6 +168,8 @@ class GalleryQuery {
   int get hashCode => Object.hash(
     platformId,
     collectionId,
+    smartCollectionId,
+    virtualCollectionId,
     favourites,
     search,
     sort,
@@ -176,47 +206,105 @@ class GalleryPage {
   final Map<String, int>? charIndex;
 }
 
+/// A collection's kind, as RomM has them: one the players made, a smart one
+/// (games picked by its filters) or a virtual one (RomM's own, from the
+/// games' metadata).
+enum CollectionKind { regular, smart, virtual }
+
+/// The types of RomM's virtual collections, in the order Gargosy shows them,
+/// with their names (RomM's `type`).
+const virtualCollectionTypes = {
+  'collection': 'Series',
+  'franchise': 'Franchise',
+  'genre': 'Genre',
+  'mode': 'Play mode',
+  'company': 'Company',
+};
+
 class RommCollection {
   const RommCollection({
     required this.id,
     required this.name,
+    this.kind = CollectionKind.regular,
+    this.virtualId,
+    this.virtualType,
     this.description = '',
     this.romIds = const {},
     this.romCount = 0,
     this.coverPath,
+    this.coverPaths = const [],
     this.isFavorite = false,
     this.isPublic = false,
     this.userId,
     this.ownerUsername,
+    this.updatedAt,
+    this.filterSummary,
   });
 
+  /// RomM's id of a regular or smart collection; 0 for a virtual one.
   final int id;
   final String name;
+  final CollectionKind kind;
+
+  /// A virtual collection's id and type (`genre` …).
+  final String? virtualId;
+  final String? virtualType;
   final String description;
   final Set<int> romIds;
   final int romCount;
   final String? coverPath;
+
+  /// A few of its games' covers, for the tile's mosaic.
+  final List<String> coverPaths;
   final bool isFavorite;
   final bool isPublic;
   final int? userId;
   final String? ownerUsername;
+  final DateTime? updatedAt;
 
-  factory RommCollection.fromJson(Map<String, dynamic> json) {
+  /// A smart collection's filters in words (RomM's `filter_summary`).
+  final String? filterSummary;
+
+  /// One key for every collection of every kind.
+  String get key => kind == CollectionKind.virtual ? 'virtual-$virtualId' : '${kind.name}-$id';
+
+  /// The gallery of its games.
+  GalleryQuery get query => switch (kind) {
+    _ when isFavorite => const GalleryQuery(favourites: true),
+    CollectionKind.regular => GalleryQuery(collectionId: id),
+    CollectionKind.smart => GalleryQuery(smartCollectionId: id),
+    CollectionKind.virtual => GalleryQuery(virtualCollectionId: virtualId),
+  };
+
+  static List<String> _paths(Object? v) => [
+    for (final s in (v is List ? v : const []))
+      if (s is String && s.isNotEmpty) s,
+  ];
+
+  factory RommCollection.fromJson(Map<String, dynamic> json, {CollectionKind kind = CollectionKind.regular}) {
     final ids = {
       for (final i in (json['rom_ids'] is List ? json['rom_ids'] as List : const []))
         if (i is int) i,
     };
+    final small = _paths(json['path_covers_small']);
+    final virtual = kind == CollectionKind.virtual;
     return RommCollection(
-      id: json['id'] as int,
+      id: virtual || json['id'] is! int ? 0 : json['id'] as int,
       name: json['name'] as String? ?? '',
+      kind: kind,
+      virtualId: virtual ? '${json['id']}' : null,
+      virtualType: virtual ? json['type'] as String? : null,
       description: json['description'] as String? ?? '',
       romIds: ids,
       romCount: json['rom_count'] is int ? json['rom_count'] as int : ids.length,
       coverPath: (json['path_cover_large'] ?? json['path_cover_small']) as String?,
+      coverPaths: small.isNotEmpty ? small : _paths(json['path_covers_large']),
       isFavorite: json['is_favorite'] == true,
       isPublic: json['is_public'] == true,
       userId: json['user_id'] as int?,
       ownerUsername: json['owner_username'] as String?,
+      updatedAt: json['updated_at'] is String ? DateTime.tryParse(json['updated_at'] as String) : null,
+      filterSummary: json['filter_summary'] as String?,
     );
   }
 }
@@ -233,13 +321,20 @@ abstract class LibraryApi {
   });
   Future<List<RommCollection>> collections();
 
+  /// The smart collections the user can see.
+  Future<List<RommCollection>> smartCollections();
+
+  /// RomM's virtual collections of one [type] (`genre` … in
+  /// [virtualCollectionTypes]).
+  Future<List<RommCollection>> virtualCollections(String type);
+
   /// Adds [gameId] to (or removes it from) the user's own favourites, creating
   /// that collection first when the user has none.
   Future<RommCollection> setFavourite(String gameId, bool favourite, {required int userId});
 
-  /// A random game of the library (of one platform with [platformId]), or
-  /// null when there is none.
-  Future<Game?> randomGame({int? platformId});
+  /// A random game of the library, of one platform with [platformId] or of
+  /// the gallery [within]; null when there is none.
+  Future<Game?> randomGame({int? platformId, GalleryQuery? within});
 
   /// The user's notes on a game. Unlike the copied RommService calls, these
   /// throw when RomM can't be reached, so pages can show the error.
@@ -300,12 +395,21 @@ class RommLibraryApi implements LibraryApi {
   }
 
   @override
-  Future<List<RommCollection>> collections() async {
-    final r = await dio.get('/api/collections', options: auth());
+  Future<List<RommCollection>> collections() => _list('/api/collections', CollectionKind.regular);
+
+  @override
+  Future<List<RommCollection>> smartCollections() => _list('/api/collections/smart', CollectionKind.smart);
+
+  @override
+  Future<List<RommCollection>> virtualCollections(String type) =>
+      _list('/api/collections/virtual', CollectionKind.virtual, {'type': type});
+
+  Future<List<RommCollection>> _list(String path, CollectionKind kind, [Map<String, dynamic>? params]) async {
+    final r = await dio.get(path, queryParameters: params, options: auth());
     final list = r.data is List ? r.data as List : const [];
     return [
       for (final c in list)
-        if (c is Map<String, dynamic>) RommCollection.fromJson(c),
+        if (c is Map<String, dynamic>) RommCollection.fromJson(c, kind: kind),
     ];
   }
 
@@ -323,8 +427,8 @@ class RommLibraryApi implements LibraryApi {
   }
 
   @override
-  Future<Game?> randomGame({int? platformId}) async {
-    final q = GalleryQuery(platformId: platformId);
+  Future<Game?> randomGame({int? platformId, GalleryQuery? within}) async {
+    final q = within ?? GalleryQuery(platformId: platformId);
     final first = await page(q, limit: 1);
     if (first.total == 0) return null;
     final pick = await page(q, offset: Random().nextInt(first.total), limit: 1);
