@@ -28,6 +28,9 @@ What changed in each release of Gargosy. The format follows
   Dreamcast VMU is refused with why, for now.
 - Delete a save state (hold A on the States list, or click it): on this PC
   and on RomM.
+- A DSiWare game's Details tab says so, and which regions' DSi NAND it needs.
+  Put one NAND per region in `bios\` under any name: melonDS DS picks the
+  one that matches the game.
 
 - A platform has its own page, as in RomM: its logo and name with its type,
   maker and generation, how many games it has in the library and on this PC,
@@ -75,6 +78,9 @@ What changed in each release of Gargosy. The format follows
 - A DSiWare game's save in RetroArch (`<game>.public.sav`, and its
   `.private.sav` and `.banner.sav`) syncs whole and comes back under its own
   name; it was put back as `.srm`, which the game never reads.
+- A DSi NAND in `bios\` is no longer changed by playing: each profile gets
+  its own copy (melonDS DS writes into the NAND it plays on), where it was a
+  link to the shared file.
 - A RetroArch core chosen on a platform's page is used for that platform's
   games when RomM names the platform differently (the DSi's, the DS Lite's).
 
