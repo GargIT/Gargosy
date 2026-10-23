@@ -13,18 +13,69 @@ import '../profiles/path_guard.dart';
 /// `pcsx2\bios`, Flycast's in `dc`, …). Hard links, so every profile shares
 /// the bytes; a copy where the drive can't link (exFAT). Nothing in
 /// `system\` is ever removed: cores keep their own files there.
+///
+/// A DSi NAND is the exception (#114): melonDS DS writes into it (a DSiWare
+/// game is installed for the session), so each profile gets its own copy,
+/// never a link that would change the shared one.
 void linkBiosInto(String bios, String system, PathGuard guard) {
   final src = io.Directory(bios);
   if (!src.existsSync()) return;
+  final copies = _OwnCopies(system, guard);
   for (final e in src.listSync(recursive: true)) {
     if (e is! io.File) continue;
     final rel = p.relative(e.path, from: bios);
+    if (isDsiNandSize(e.lengthSync())) {
+      copies.place(e, rel);
+      continue;
+    }
     _place(e, p.join(system, rel), guard);
     if (p.split(rel).length > 1) continue; // already in a core's folder
     final name = p.basename(rel);
     for (final folder in _coreFoldersFor(name, e.lengthSync())) {
       _place(e, p.join(system, folder, name), guard);
     }
+  }
+  copies.save();
+}
+
+/// A DSi NAND image by its size, as melonDS DS finds one (any name): 240 MB
+/// or 245.5 MB, with or without no$gba's 64-byte footer.
+bool isDsiNandSize(int bytes) => const {251658304, 257425472, 251658240, 257425408}.contains(bytes);
+
+/// The files in `system\` that are the profile's own copies of a `bios\`
+/// file, listed in `.gargosy-own-copies.txt`. One not listed yet was a hard
+/// link (Gargosy linked NANDs before #114) and is copied over.
+class _OwnCopies {
+  _OwnCopies(this.system, this.guard)
+    : _list = io.File(p.join(system, _name)),
+      _names = {
+        if (io.File(p.join(system, _name)).existsSync())
+          ...io.File(p.join(system, _name)).readAsLinesSync().where((l) => l.trim().isNotEmpty),
+      };
+
+  static const _name = '.gargosy-own-copies.txt';
+
+  final String system;
+  final PathGuard guard;
+  final io.File _list;
+  final Set<String> _names;
+  bool _changed = false;
+
+  void place(io.File from, String rel) {
+    final dest = io.File(guard.check(p.join(system, rel)));
+    final key = rel.replaceAll(r'\', '/');
+    if (dest.existsSync()) {
+      if (_names.contains(key) && dest.lengthSync() == from.lengthSync()) return;
+      dest.deleteSync(); // a link to the shared file, or an old copy of another
+    }
+    dest.parent.createSync(recursive: true);
+    from.copySync(dest.path);
+    _changed |= _names.add(key);
+  }
+
+  void save() {
+    if (!_changed) return;
+    io.File(guard.check(_list.path)).writeAsStringSync('${(_names.toList()..sort()).join('\n')}\n');
   }
 }
 

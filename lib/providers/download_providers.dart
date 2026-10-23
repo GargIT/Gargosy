@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/romm/romm_models.dart';
 import '../library/download_service.dart';
+import '../library/dsi_title.dart';
 import '../library/library_snapshot.dart';
 import '../library/rom_files.dart';
 import '../profiles/path_guard.dart';
@@ -19,6 +20,9 @@ bool watchDownloaded(WidgetRef ref, Game g) {
   ref.watch(romFilesVersionProvider);
   return ref.read(romFilesProvider).isDownloaded(g);
 }
+
+/// The DSi header of a game on this PC (#114), by its path.
+final dsiTitleProvider = FutureProvider.autoDispose.family<DsiTitle?, String>((ref, path) => readDsiTitle(path));
 
 final downloadServiceProvider = Provider<DownloadService?>((ref) {
   final romm = ref.watch(rommServiceProvider);

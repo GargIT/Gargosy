@@ -500,5 +500,53 @@ void main() {
       src.writeAsBytesSync([9, 9, 9], mode: io.FileMode.writeOnly);
       expect(io.File(p.join(c.data, 'system', 'scph1001.bin')).readAsBytesSync(), [9, 9, 9]);
     });
+
+    test(
+      "a DSi NAND is each profile's own copy: melonDS DS writes into it, never into the shared one (#114)",
+      () async {
+        final nand = io.File(p.join(root.bios, 'dsi_nand_eur.bin'))..createSync(recursive: true);
+        nand.openSync(mode: io.FileMode.write)
+          ..truncateSync(251658304)
+          ..closeSync();
+        final a = ctx('retroarch');
+        await ProfileLaunchConfig.of('retroarch')!.prepare(a);
+        final copy = io.File(p.join(a.data, 'system', 'dsi_nand_eur.bin'));
+        expect(copy.lengthSync(), 251658304);
+        copy.openSync(mode: io.FileMode.append)
+          ..setPositionSync(0)
+          ..writeByteSync(7)
+          ..closeSync();
+        expect(firstByte(nand), 0);
+        // The next launch keeps the profile's copy as it is.
+        await ProfileLaunchConfig.of('retroarch')!.prepare(a);
+        expect(firstByte(copy), 7);
+      },
+    );
+
+    test('a NAND Gargosy linked before #114 is replaced by a copy', () async {
+      final nand = io.File(p.join(root.bios, 'dsi_nand.bin'))..createSync(recursive: true);
+      nand.openSync(mode: io.FileMode.write)
+        ..truncateSync(251658304)
+        ..closeSync();
+      final a = ctx('retroarch');
+      // What the old launch left: the shared file's bytes under the same name.
+      final old = io.File(p.join(a.data, 'system', 'dsi_nand.bin'))..createSync(recursive: true);
+      old.openSync(mode: io.FileMode.write)
+        ..truncateSync(251658304)
+        ..writeByteSync(5)
+        ..closeSync();
+      await ProfileLaunchConfig.of('retroarch')!.prepare(a);
+      expect(firstByte(old), 0);
+      expect(io.File(p.join(a.data, 'system', '.gargosy-own-copies.txt')).readAsStringSync(), 'dsi_nand.bin\n');
+    });
   });
+}
+
+int firstByte(io.File f) {
+  final raf = f.openSync();
+  try {
+    return raf.readByteSync();
+  } finally {
+    raf.closeSync();
+  }
 }
