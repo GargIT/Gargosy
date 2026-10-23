@@ -7,7 +7,7 @@ import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/pages/collections_page.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
-import 'package:gargosy/ui/screens/gallery_screen.dart';
+import 'package:gargosy/ui/screens/collection/collection_screen.dart';
 
 import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
@@ -89,7 +89,7 @@ void main() {
     await pump(tester);
     await tester.tap(find.text('Never finished'));
     await tester.pumpAndSettle();
-    expect(find.byType(GalleryScreen), findsOneWidget);
+    expect(find.byType(CollectionScreen), findsOneWidget);
     expect(api.queries.last.$1.smartCollectionId, 4);
     await press(tester, GameAction.back);
     await tester.pumpAndSettle();

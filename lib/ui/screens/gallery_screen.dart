@@ -15,7 +15,7 @@ import 'gallery_view.dart';
 /// The filter field's hint for a gallery of [q].
 String filterHintFor(GalleryQuery q) => q.platformId != null
     ? 'Filter this platform…'
-    : q.collectionId != null
+    : q.inCollection
     ? 'Filter this collection…'
     : q.favourites
     ? 'Filter favourites…'

@@ -8,7 +8,7 @@ import '../../library/library_snapshot.dart';
 import '../../providers/library_providers.dart';
 import '../../providers/romm_providers.dart';
 import '../input/wrap_grid_policy.dart';
-import '../screens/gallery_screen.dart';
+import '../screens/collection/collection_screen.dart';
 import '../screens/game/open_game.dart';
 import '../theme/tokens.dart';
 import '../widgets/collection_tile.dart';
@@ -57,11 +57,8 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
     });
   }
 
-  void _open(RommCollection c) => Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => GalleryScreen(title: c.isFavorite ? 'Favourites' : c.name, query: c.query),
-    ),
-  );
+  void _open(RommCollection c) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => CollectionScreen(collection: c)));
 
   Future<void> _random(RommCollection c) async {
     final game = await ref.read(libraryApiProvider)?.randomGame(within: c.query);

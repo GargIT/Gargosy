@@ -7,7 +7,7 @@ import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/pages/collections_page.dart';
 import 'package:gargosy/ui/pages/search_page.dart';
-import 'package:gargosy/ui/screens/gallery_screen.dart';
+import 'package:gargosy/ui/screens/collection/collection_screen.dart';
 
 import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
@@ -37,7 +37,7 @@ void main() {
     final names = tester.widgetList<Text>(find.byKey(const ValueKey('collection-name'))).map((t) => t.data).toList();
     expect(names, ['Favourites', 'Arcade', 'RPGs']);
     await press(tester, GameAction.confirm);
-    expect(find.byType(GalleryScreen), findsOneWidget);
+    expect(find.byType(CollectionScreen), findsOneWidget);
     expect(api.queries.last.$1.favourites, isTrue);
   });
 
