@@ -21,6 +21,13 @@ ThemeData gargosyTheme() {
       backgroundColor: GColors.panel,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(GRadius.xl))),
     ),
+    // A bright fill on a dark track, thick enough to read across the room.
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: GColors.primaryHover,
+      linearTrackColor: GColors.surfaceHover,
+      linearMinHeight: 6,
+      borderRadius: BorderRadius.all(Radius.circular(3)),
+    ),
     focusColor: GColors.focus,
     hoverColor: GColors.surfaceHover,
     splashFactory: NoSplash.splashFactory,

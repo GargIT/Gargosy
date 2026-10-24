@@ -232,7 +232,7 @@ class GameCoverColumn extends ConsumerWidget {
         children: [
           SizedBox(
             width: coverWidth,
-            child: LinearProgressIndicator(value: progress.fraction, color: GColors.primary),
+            child: LinearProgressIndicator(value: progress.fraction),
           ),
           const SizedBox(height: GSpace.s2),
           Text(
