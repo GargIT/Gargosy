@@ -20,6 +20,7 @@ import '../widgets/cover_grid.dart';
 import '../widgets/error_retry.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/gallery_bar.dart';
+import '../widgets/nothing_matches.dart';
 import '../widgets/toast.dart';
 import 'filter_sheet.dart';
 import 'game/open_game.dart';
@@ -42,6 +43,7 @@ class GalleryView extends ConsumerStatefulWidget {
     this.search,
     this.bestMatch = false,
     this.barLeading,
+    this.onOpened,
   });
 
   final GalleryQuery query;
@@ -68,6 +70,9 @@ class GalleryView extends ConsumerStatefulWidget {
 
   /// See [GalleryBar.leading].
   final Widget? barLeading;
+
+  /// A game opened from the gallery (Search remembers its term).
+  final ValueChanged<Game>? onOpened;
 
   @override
   ConsumerState<GalleryView> createState() => _GalleryViewState();
@@ -280,6 +285,29 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     if (next != null) _setQuery(next);
   }
 
+  /// Show all: the bar's filters off (On this PC, a platform picked, genres,
+  /// regions), keeping the term and the sort.
+  void _showAll() {
+    final next = _query.copyWith(platformId: widget.query.platformId, genres: const {}, regions: const {});
+    setState(() {
+      _thisPc = false;
+      // Downloaded is Gargosy's own order; RomM can't sort by it.
+      _query = next.sort.group == SortGroup.thisPc ? next.copyWith(sort: GallerySort.name, descending: false) : next;
+    });
+    _reload();
+  }
+
+  /// The empty gallery when the bar's filters hide RomM's games (#132); null
+  /// when nothing is filtered, or RomM has none either.
+  Widget? _nothingMatches() {
+    final hidden = hiddenBy(_query, widget.query, thisPc: _thisPc, platforms: widget.platforms);
+    if (hidden.isEmpty) return null;
+    final scope = ref.watch(galleryScopeProvider(widget.query.copyWith(search: _query.search)));
+    final count = scope.valueOrNull?.total;
+    if (count == 0) return null;
+    return NothingMatches(term: _query.search, hidden: hidden, count: count, onShowAll: _showAll);
+  }
+
   /// The downloaded games in this gallery's scope, before its filters.
   List<Game> _onThisPc() {
     final favs = ref.watch(favouriteIdsProvider);
@@ -361,11 +389,16 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
           ? ErrorRetry(message: describeLoadError(_error!), onRetry: _reload)
           : total == null
           ? const Center(child: CircularProgressIndicator())
+          : total == 0
+          ? _nothingMatches()
           : null,
       emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
       autofocus: widget.autofocus && !_autofocusDone,
       coverUrl: (g) => coverUrlFor(ref, g, small: true),
-      onOpen: (g) => openGameVersion(context, ref, g),
+      onOpen: (g) {
+        widget.onOpened?.call(g);
+        openGameVersion(context, ref, g);
+      },
       onFavorite: (g) => favourite(context, ref, g),
       isFavourite: (g) => favIds.contains(g.id),
       isDownloaded: (g) => watchDownloaded(ref, g),

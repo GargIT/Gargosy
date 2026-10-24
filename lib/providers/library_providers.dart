@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../library/library_snapshot.dart';
 import '../library/platform_covers.dart';
+import '../library/recent_searches.dart';
 import 'engine_providers.dart';
 import 'download_providers.dart';
 import '../core/romm/romm_library_api.dart';
@@ -214,6 +215,11 @@ Future<String?> toggleFavourite(WidgetRef ref, Game g) async {
 /// The Platforms page's Covers setting, per profile.
 final platformCoversChoiceProvider = StateNotifierProvider<PlatformCoversChoice, PlatformCovers>(
   (ref) => PlatformCoversChoice(ref.watch(profilePrefsProvider)),
+);
+
+/// Search's recent terms (#132), the profile's own.
+final recentSearchesProvider = StateNotifierProvider<RecentSearches, List<String>>(
+  (ref) => RecentSearches(ref.watch(profilePrefsProvider)),
 );
 
 /// One Random per run: Random covers change each time Gargosy starts, not each time the page opens.

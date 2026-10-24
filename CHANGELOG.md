@@ -30,6 +30,12 @@ What changed in each release of Gargosy. The format follows
   header goes as you scroll, and the box moves onto the bar.
 - In Filters, X applies and Y clears, wherever the focus is; the two buttons
   show them when you play with a controller.
+- Search remembers your recent searches, each profile its own: they show under
+  the box, A runs one again and holding A (or its × with a mouse) forgets it.
+  A search is remembered when you press Enter or Done, or open a game from it.
+- When the filters hide every game, a gallery says which ones (On this PC, a
+  platform, genres, regions) and how many games RomM has, with Show all to
+  clear them.
 - Saves other players shared on RomM: the play screen and the game's Saves
   tab list them under From other players, by player. Play with one, or put it
   on this PC (X on the Saves tab): it becomes your save, and your next one

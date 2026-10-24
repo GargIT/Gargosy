@@ -265,6 +265,7 @@ class FilterField extends ConsumerStatefulWidget {
     required this.hint,
     required this.text,
     required this.onChanged,
+    this.onSubmitted,
     this.delay = const Duration(milliseconds: 400),
     this.large = false,
     this.autofocus = false,
@@ -273,6 +274,10 @@ class FilterField extends ConsumerStatefulWidget {
   final String hint;
   final String text;
   final ValueChanged<String> onChanged;
+
+  /// Enter, or the on-screen keyboard's Done: the text is meant (Search
+  /// remembers it).
+  final ValueChanged<String>? onSubmitted;
   final Duration delay;
 
   /// Search's box in its header (#132): bigger text and room.
@@ -340,6 +345,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
       if (v == null || !mounted) return;
       _controller.text = v;
       _apply();
+      widget.onSubmitted?.call(v);
       return;
     }
     setState(() => _editing = true);
@@ -390,7 +396,10 @@ class _FilterFieldState extends ConsumerState<FilterField> {
                     focusNode: _input,
                     controller: _controller,
                     onChanged: _typed,
-                    onSubmitted: (_) => _stop(),
+                    onSubmitted: (t) {
+                      _stop();
+                      widget.onSubmitted?.call(t);
+                    },
                     cursorColor: GColors.primary,
                     style: TextStyle(fontSize: size, color: GColors.fg),
                     decoration: InputDecoration.collapsed(
