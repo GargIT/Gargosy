@@ -38,6 +38,16 @@ What changed in each release of Gargosy. The format follows
   your own, with a ✓ on those it's in, and New collection… makes one (only
   yours, or shared) with the game in it. On your own collection's page, ⋯
   renames it, shares it or stops sharing it, and deletes it.
+- Settings → Storage shows what takes space on this PC: the drive, then
+  ROMs, emulators, BIOS, the profiles' data, the image cache and Temp. ROMs
+  are listed by platform, largest first; open one to see its games by size
+  and when they were last played, and delete one or several (X marks them)
+  from this PC. Only the ROM files go; the saves stay. Temp can be emptied.
+  The image cache's settings moved here.
+
+### Changed
+
+- Progress bars are easier to see: a bright fill on a dark track, thicker.
 
 ## [0.3.0] - 2026-10-24
 

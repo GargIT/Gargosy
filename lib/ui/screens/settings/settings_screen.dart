@@ -12,7 +12,7 @@ import 'about_section.dart';
 import 'device_sections.dart';
 import 'emulator_install_section.dart';
 import 'emulators_section.dart';
-import 'image_cache_section.dart';
+import 'storage_section.dart';
 import 'profile_section.dart';
 import 'ra_section.dart';
 import 'settings_pages.dart';
@@ -52,7 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsPage.emulatorSettings => const EmulatorsSection(),
     SettingsPage.controller => const ControllerSection(),
     SettingsPage.display => const DisplaySection(),
-    SettingsPage.imageCache => const ImageCacheSection(),
+    SettingsPage.storage => const StorageSection(),
     SettingsPage.about => ListView(
       children: const [
         SettingsCard(title: 'About', icon: Icons.info, children: [AboutSection()]),

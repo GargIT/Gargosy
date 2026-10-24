@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
 import 'package:gargosy/core/romm/romm_auth_client.dart';
@@ -14,6 +15,7 @@ import 'package:gargosy/emulators/emulator_library.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/quit_combo.dart';
+import 'package:gargosy/ui/screens/settings/storage_section.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/pin.dart';
@@ -221,7 +223,7 @@ void main() {
     await press(tester, GameAction.r1);
     expect(find.text('Fullscreen (F11)'), findsOneWidget, reason: 'Display');
     await press(tester, GameAction.r1);
-    expect(find.text('Keep up to'), findsOneWidget, reason: 'Image cache');
+    expect(find.text('Empty Temp'), findsOneWidget, reason: 'Storage');
     await press(tester, GameAction.r1);
     expect(find.text('ABOUT'), findsOneWidget, reason: 'About');
     await press(tester, GameAction.r1);
@@ -237,8 +239,21 @@ void main() {
     expect(c.read(appPreferencesProvider).getBool(QuitCombo.prefKey), isFalse);
   });
 
-  testWidgets('Image cache: how many images are kept, picked from a list', (tester) async {
-    await pump(tester, initial: SettingsPage.imageCache);
+  testWidgets('Storage (#145): the drive, the folders, the ROMs by platform, and the image cache', (tester) async {
+    await pump(tester, initial: SettingsPage.storage);
+    final roms = io.Directory(p.join(c.read(appRootProvider).roms, 'psx'))..createSync(recursive: true);
+    io.File(p.join(roms.path, 'Crash.chd')).writeAsBytesSync(List<int>.filled(2048, 1));
+    c.invalidate(storageUsageProvider);
+    for (var i = 0; i < 5; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump();
+    }
+    expect(find.text('ROMs'), findsOneWidget);
+    expect(find.text('Temp'), findsOneWidget);
+    expect(find.byKey(const ValueKey('storage-platform-psx')), findsOneWidget);
+    expect(find.text('2.0 KB · 1 game'), findsOneWidget);
+    expect(find.text('PlayStation'), findsWidgets, reason: "the platform's name, not its folder");
+    await tester.scrollUntilVisible(find.text('Change'), 200, scrollable: find.byType(Scrollable).last);
     expect(find.text('10 000 images (about 1.1 GB)'), findsOneWidget);
     await tester.tap(find.text('Change'));
     await tester.pumpAndSettle();
