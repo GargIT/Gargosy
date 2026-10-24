@@ -198,4 +198,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## A collection's platforms (#128)
 
-83. [ ] A collection with games on several platforms: the header's PLATFORMS counts them, and Platform on the bar says "All N". Pick one with the controller: only its games show, and the list still offers the others; All brings them all back. On this PC with a platform picked shows that platform's downloaded games of the collection. A collection on one platform has the count but no Platform pick.
+83. [x] A collection with games on several platforms: the header's PLATFORMS counts them, and Platform on the bar says "All N". Pick one with the controller: only its games show, and the list still offers the others; All brings them all back. On this PC with a platform picked shows that platform's downloaded games of the collection. A collection on one platform has the count but no Platform pick.
