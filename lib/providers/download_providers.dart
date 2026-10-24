@@ -95,11 +95,25 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     if (_ref.read(downloadServiceProvider) == null) return Future.value();
     if (state[game.id]?.phase.active ?? false) return _waiting[game.id]?.future ?? Future.value();
     _games[game.id] = game;
+    // Room for it and for everything before it (#143): refused now, not
+    // when its turn comes.
+    try {
+      checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(freeSpaceProvider));
+    } on NotEnoughSpace catch (e) {
+      _set(game.id, DownloadProgress(DownloadPhase.failed, error: 'With the downloads before it: $e'));
+      return Future.value();
+    }
     _queue.add(game);
     final done = _waiting[game.id] = Completer<void>();
     _set(game.id, const DownloadProgress(DownloadPhase.queued));
     _next();
     return done.future;
+  }
+
+  /// What the queue and the running download will still write.
+  int _stillToCome() {
+    final running = _current == null ? 0 : _current!.fileSize - (state[_current!.id]?.received ?? 0);
+    return _queue.fold(running.clamp(0, 1 << 62), (n, g) => n + g.fileSize);
   }
 
   void _next() {

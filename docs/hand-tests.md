@@ -230,7 +230,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Download queue and the Downloads page (#143)
 
-96. [ ] Press Download on three games, one after another: only the first downloads, the game page of the others says Queued (with Remove from the queue). Start → Downloads (it shows the number waiting) lists the running one with its size, speed and time left, then the queue. Y on the last queued one moves it first; X on a queued one takes it out; X on the running one stops it and the next starts. When they're done they're under DONE, and A opens the game. Switch profile while one waits: Gargosy asks first, and Cancel keeps them going.
+96. [ ] Press Download on three games, one after another: only the first downloads, the game page of the others says Queued (with Remove from the queue). Start → Downloads (it shows the number waiting) lists the running one with its size, speed and time left, then the queue. Y on the last queued one moves it first; X on a queued one takes it out; X on the running one stops it and the next starts. When they're done they're under DONE, and A opens the game. Switch profile while one waits: Gargosy asks first, and Cancel keeps them going. Queue more than the drive holds: the one that wouldn't fit with those before it isn't queued, and its page says "With the downloads before it: Needs …".
 
 ## Collections from the game page (#144)
 

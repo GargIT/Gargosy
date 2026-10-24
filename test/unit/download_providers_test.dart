@@ -3,6 +3,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/download_service.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/profiles/login_store.dart';
@@ -60,9 +61,11 @@ void main() {
     late FakeDownloadService fake;
     late ProviderContainer c;
     late DownloadsNotifier downloads;
+    int? free;
     final a = game(1, 'A'), b = game(2, 'B'), d = game(3, 'D');
 
     setUp(() async {
+      free = null;
       final root = await tempAppRoot();
       addTearDown(() => io.Directory(root.root).delete(recursive: true));
       fake = FakeDownloadService(RomFiles(root), PathGuard(root));
@@ -74,6 +77,7 @@ void main() {
           appRootProvider.overrideWithValue(root),
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),
           downloadServiceProvider.overrideWithValue(fake),
+          freeSpaceProvider.overrideWithValue((_) => free),
         ],
       );
       addTearDown(c.dispose);
@@ -120,6 +124,20 @@ void main() {
       fake.holds['3']!.complete();
       await last;
       expect(downloads.pending, 0);
+    });
+
+    test('queued only when it fits with everything before it', () async {
+      const gb = 1 << 30;
+      Game sized(int id) => Game.fromJson({...gameJson(id, 'G$id'), 'file_size_bytes': 2 * gb});
+      free = 5 * gb; // room for two of them, not three
+      unawaited(downloads.start(sized(1)));
+      unawaited(downloads.start(sized(2)));
+      unawaited(downloads.start(sized(3)));
+      await tick();
+      expect(downloads.queue.map((g) => g.id), ['2']);
+      expect(c.read(downloadsProvider)['3']!.phase, DownloadPhase.failed);
+      expect(c.read(downloadsProvider)['3']!.error, startsWith('With the downloads before it: Needs 6.0 GB'));
+      fake.holds['1']!.complete();
     });
 
     test('a failed one is listed until retried, and the queue goes on', () async {

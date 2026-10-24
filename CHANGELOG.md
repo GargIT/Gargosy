@@ -31,7 +31,8 @@ What changed in each release of Gargosy. The format follows
   the others "Queued" on their game page. A Downloads page in the user menu
   (while there are any) shows the running one with its speed and time left,
   the queue (Y puts one first, X takes one out or stops the running one),
-  the ones that failed (A tries again) and the ones done. Switching profile
+  the ones that failed (A tries again) and the ones done. A game that won't
+  fit with the downloads queued before it isn't queued. Switching profile
   asks first while downloads are waiting.
 - Add a game to your collections from its page: ⋯ → Add to collection… lists
   your own, with a ✓ on those it's in, and New collection… makes one (only
