@@ -33,6 +33,8 @@ What changed in each release of Gargosy. The format follows
 - Search remembers your recent searches, each profile its own: they show under
   the box, A runs one again and holding A (or its × with a mouse) forgets it.
   A search is remembered when you press Enter or Done, or open a game from it.
+- B on a search or filter box clears it, like its ×; on an empty box B goes
+  back as before.
 - When the filters hide every game, a gallery says which ones (On this PC, a
   platform, genres, regions) and how many games RomM has, with Show all to
   clear them.

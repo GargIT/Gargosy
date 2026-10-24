@@ -190,4 +190,30 @@ void main() {
     expect(find.text('Nothing matches "zelda".'), findsOneWidget);
     expect(find.byKey(const ValueKey('show-all')), findsNothing);
   });
+
+  testWidgets('B on the box clears the term; on an empty box it goes back', (tester) async {
+    await pump(tester, ['Okami', 'Ico', 'Okamiden']);
+    final nav = Navigator.of(tester.element(find.byType(SearchPage)));
+    nav.push(MaterialPageRoute<void>(builder: (_) => const Material(child: SearchPage())));
+    await tester.pumpAndSettle();
+    expect(find.byType(SearchPage), findsOneWidget, reason: 'the first one is under the route');
+    ProviderScope.containerOf(tester.element(find.byType(SearchPage))).read(inputModeProvider.notifier).state =
+        InputMode.gamepad;
+    await tester.pump();
+    await press(tester, GameAction.confirm);
+    for (final ch in 'ico'.split('')) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.findKeyByKeyId(ch.codeUnitAt(0))!, character: ch);
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.search, 'ico');
+
+    await press(tester, GameAction.back);
+    expect(api.queries.last.$1.search, isNull);
+    expect(find.text('Search your library'), findsOneWidget, reason: 'the box is empty, still on this page');
+    expect(nav.canPop(), isTrue);
+
+    await press(tester, GameAction.back);
+    expect(nav.canPop(), isFalse, reason: 'B on the empty box went back');
+  });
 }
