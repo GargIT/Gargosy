@@ -151,7 +151,7 @@ class DownloadsScreen extends ConsumerWidget {
                         row(
                           current,
                           progressLine(running, started == null ? Duration.zero : DateTime.now().difference(started)),
-                          below: LinearProgressIndicator(value: running.fraction, color: GColors.primary),
+                          below: LinearProgressIndicator(value: running.fraction),
                           onX: running.phase == DownloadPhase.downloading ? () => downloads.cancel(current.id) : null,
                         ),
                       ],

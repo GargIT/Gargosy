@@ -30,6 +30,9 @@ class CollectionScreen extends ConsumerStatefulWidget {
 class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   bool _collapsed = false;
 
+  /// As RomM has it now: renamed or shared from the header's ⋯ (#144).
+  late RommCollection _collection = widget.collection;
+
   // Scrolled this far the header goes; it comes back at the top. Only when
   // the grid is long enough to stay scrolled without it.
   static const _hideAt = 48.0;
@@ -66,7 +69,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.collection;
+    final c = _collection;
     final name = c.isFavorite ? 'Favourites' : c.name;
     final platforms = ref.watch(galleryScopeProvider(c.query)).valueOrNull?.platforms;
     return Actions(
@@ -114,7 +117,11 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                               ],
                             ),
                           )
-                        : CollectionHeader(key: const ValueKey('collection-header'), collection: c),
+                        : CollectionHeader(
+                            key: const ValueKey('collection-header'),
+                            collection: c,
+                            onChanged: (changed) => setState(() => _collection = changed),
+                          ),
                   ),
                   Expanded(
                     child: NotificationListener<ScrollNotification>(

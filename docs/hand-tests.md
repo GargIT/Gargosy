@@ -231,3 +231,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Download queue and the Downloads page (#143)
 
 96. [ ] Press Download on three games, one after another: only the first downloads, the game page of the others says Queued (with Remove from the queue). Start → Downloads (it shows the number waiting) lists the running one with its size, speed and time left, then the queue. Y on the last queued one moves it first; X on a queued one takes it out; X on the running one stops it and the next starts. When they're done they're under DONE, and A opens the game. Switch profile while one waits: Gargosy asks first, and Cancel keeps them going.
+
+## Collections from the game page (#144)
+
+97. [ ] On a game's page, ⋯ → Add to collection…: your own collections are listed (Favourites first, not other players'), ✓ on those it's in. A on one puts the game in, A again takes it out; RomM's web UI shows the same. New collection…: type a name, choose Only you or Shared: it's made with the game in it, and shows on the Collections tab. On your own collection's page, ⋯: Rename… changes the name there and on RomM; Share / Stop sharing changes the "Shared on RomM" chip; Delete collection… asks first, then the page closes and the collection is gone (its games stay). Another player's shared collection has no ⋯.

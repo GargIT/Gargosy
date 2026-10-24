@@ -13,6 +13,7 @@ import '../../../play/play_engine.dart';
 import '../../../play/save_actions.dart';
 import '../../../providers/download_providers.dart';
 import '../../../providers/library_providers.dart';
+import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/cover_image.dart';
@@ -23,6 +24,7 @@ import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/toast.dart';
 import '../play/play_screen.dart';
+import 'add_to_collection.dart';
 import 'delete_game_dialog.dart';
 
 /// Opens a folder in Windows' Explorer; tests replace it.
@@ -105,6 +107,8 @@ class GameCoverColumn extends ConsumerWidget {
     final menu = ref.read(playMenuProvider(PlayMenuKey(game))).valueOrNull;
     final remembered = menu?.remembered;
     final items = <({String label, bool danger, Future<void> Function() run})>[
+      if (ref.read(collectionEditsProvider) != null)
+        (label: 'Add to collection…', danger: false, run: () => showAddToCollection(context, game)),
       if (downloaded)
         (
           label: "Open the game's folder",
@@ -228,7 +232,7 @@ class GameCoverColumn extends ConsumerWidget {
         children: [
           SizedBox(
             width: coverWidth,
-            child: LinearProgressIndicator(value: progress.fraction, color: GColors.primary),
+            child: LinearProgressIndicator(value: progress.fraction),
           ),
           const SizedBox(height: GSpace.s2),
           Text(

@@ -8,9 +8,11 @@ import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/collection_tile.dart';
+import '../../widgets/controller_dialogs.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/header_stat.dart';
+import '../../widgets/on_screen_keyboard.dart';
 import '../../widgets/toast.dart';
 import '../game/open_game.dart';
 
@@ -18,9 +20,12 @@ import '../game/open_game.dart';
 /// whether it's shared and whose it is, its description (a smart one's
 /// filters), how many games it has and how many are on this PC, and Random.
 class CollectionHeader extends ConsumerStatefulWidget {
-  const CollectionHeader({super.key, required this.collection});
+  const CollectionHeader({super.key, required this.collection, this.onChanged});
 
   final RommCollection collection;
+
+  /// The collection after a rename or a share from ⋯ (#144).
+  final ValueChanged<RommCollection>? onChanged;
 
   @override
   ConsumerState<CollectionHeader> createState() => _CollectionHeaderState();
@@ -45,6 +50,48 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
       if (mounted) showToast(context, describeLoadError(e));
     } finally {
       if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  /// ⋯ on the user's own collection (#144): Rename, Share or Stop sharing,
+  /// Delete (its games stay in RomM).
+  Future<void> _more() async {
+    final c = widget.collection;
+    final edits = ref.read(collectionEditsProvider);
+    if (edits == null) return;
+    final pick = await showChoice(
+      context,
+      title: c.name,
+      labels: ['Rename…', c.isPublic ? 'Stop sharing' : 'Share with every player', 'Delete collection…'],
+    );
+    if (pick == null || !mounted) return;
+    try {
+      switch (pick) {
+        case 0:
+          final name = (await showOnScreenKeyboard(context, title: 'Rename ${c.name}', initial: c.name))?.trim();
+          if (name == null || name.isEmpty || name == c.name) return;
+          widget.onChanged?.call(await edits.rename(c, name));
+        case 1:
+          widget.onChanged?.call(await edits.setShared(c.id, !c.isPublic));
+        case 2:
+          final ok = await showConfirm(
+            context,
+            title: 'Delete ${c.name}?',
+            body: 'The collection goes from RomM for every player. Its games stay in the library.',
+            yes: 'Delete',
+            no: 'Keep',
+            focusYes: false,
+            danger: true,
+          );
+          if (!ok) return;
+          await edits.delete(c.id);
+          ref.invalidate(collectionsProvider);
+          if (mounted) Navigator.of(context).pop();
+          return;
+      }
+      ref.invalidate(collectionsProvider);
+    } on Object catch (e) {
+      if (mounted) showToast(context, "Couldn't change ${c.name}: $e");
     }
   }
 
@@ -143,6 +190,24 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
             ),
           ),
           const SizedBox(width: GSpace.s4),
+          if (c.kind == CollectionKind.regular && !c.isFavorite && c.userId != null && c.userId == userId) ...[
+            GFocusable(
+              key: const ValueKey('collection-more'),
+              borderRadius: GRadius.pill,
+              onActivate: _more,
+              semanticLabel: 'More',
+              child: Container(
+                padding: const EdgeInsets.all(GSpace.s3),
+                decoration: BoxDecoration(
+                  color: GColors.surface,
+                  borderRadius: BorderRadius.circular(GRadius.pill),
+                  border: Border.all(color: GColors.borderStrong),
+                ),
+                child: const Icon(Icons.more_horiz, size: 18),
+              ),
+            ),
+            const SizedBox(width: GSpace.s2),
+          ],
           GFocusable(
             key: const ValueKey('collection-random'),
             borderRadius: GRadius.pill,

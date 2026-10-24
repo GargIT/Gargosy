@@ -154,7 +154,7 @@ class _DownloadDialogState extends ConsumerState<_DownloadDialog> {
                   ),
                   const SizedBox(height: GSpace.s4),
                   if (_error == null) ...[
-                    LinearProgressIndicator(value: fraction, color: GColors.primary, backgroundColor: GColors.surface),
+                    LinearProgressIndicator(value: fraction),
                     const SizedBox(height: GSpace.s2),
                     Text(
                       fraction == null ? '' : '${(fraction * 100).round()} %',

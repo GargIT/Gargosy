@@ -44,7 +44,7 @@ class AchievementsTab extends ConsumerWidget {
         ),
         if (progress != null && progress.totalCount > 0) ...[
           const SizedBox(height: GSpace.s2),
-          LinearProgressIndicator(value: progress.unlockedCount / progress.totalCount, color: GColors.primary),
+          LinearProgressIndicator(value: progress.unlockedCount / progress.totalCount),
         ],
         const SizedBox(height: GSpace.s4),
         for (final a in list)
