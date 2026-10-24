@@ -12,6 +12,7 @@ import 'package:gargosy/ui/widgets/g_focusable.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/download_service.dart';
+import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/path_guard.dart';
@@ -160,6 +161,13 @@ void main() {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
     await tester.pumpAndSettle();
     expect(RomFiles(root).isDownloaded(burnout), isFalse);
+  });
+
+  testWidgets("Download says the drive's free space when it is tight (#142)", (tester) async {
+    await pump(tester, extra: [freeSpaceProvider.overrideWithValue((_) => burnout.fileSize + spaceHeadroom)]);
+    expect(find.byKey(const ValueKey('free-space')), findsOneWidget);
+    await pump(tester, extra: [freeSpaceProvider.overrideWithValue((_) => 1 << 50)]);
+    expect(find.byKey(const ValueKey('free-space')), findsNothing);
   });
 
   testWidgets('a favourite shows a filled heart', (tester) async {

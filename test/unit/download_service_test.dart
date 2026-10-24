@@ -5,6 +5,7 @@ import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/download_service.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/profiles/app_root.dart';
@@ -26,7 +27,7 @@ void main() {
   setUp(() async => root = await tempAppRoot());
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  DownloadService service(FakeDioAdapter a, {Game? detail}) => DownloadService(
+  DownloadService service(FakeDioAdapter a, {Game? detail, FreeSpaceOf? free}) => DownloadService(
     dio: fakeDio(a),
     auth: () => Options(headers: {'Authorization': 'Bearer t'}),
     files: RomFiles(root),
@@ -34,6 +35,7 @@ void main() {
     tempDir: p.join(root.appData, 'temp'),
     urlFor: (g) => '/api/roms/${g.id}/content/${g.fsName}',
     detail: (id) async => detail,
+    freeSpace: free,
   );
 
   Game withFiles(int id, String fsName, List<String> fullPaths) => Game.fromJson({
@@ -106,6 +108,59 @@ void main() {
     expect(romsTree(), isEmpty);
     expect(io.File(p.join(root.userdata, 'evil.txt')).existsSync(), isFalse);
     expect(io.Directory(p.join(root.appData, 'temp')).listSync(), isEmpty);
+  });
+
+  group('free space (#142)', () {
+    const gb = 1024 * 1024 * 1024;
+    Game big() => Game.fromJson({...gameJson(7, 'Big', fsName: 'Big.iso'), 'file_size_bytes': 4 * gb});
+
+    test('not enough: refused before anything is asked of RomM, and it says how much', () async {
+      final a = FakeDioAdapter((r) => (status: 200, body: List<int>.filled(10, 1)));
+      await expectLater(
+        service(a, free: (_) => 2 * gb).download(big()),
+        throwsA(
+          isA<NotEnoughSpace>().having((e) => '$e', 'message', 'Needs 4.0 GB, 2.0 GB free on ${driveOf(root.roms)}.'),
+        ),
+      );
+      expect(a.requests, isEmpty);
+      expect(romsTree(), isEmpty);
+    });
+
+    test('enough: it downloads; a zip needs room for itself and its unpacked copy', () async {
+      final a = FakeDioAdapter((r) => (status: 200, body: List<int>.filled(10, 1)));
+      await service(a, free: (_) => 5 * gb).download(big());
+      expect(romsTree(), [p.join('ps2', 'Big.iso')]);
+      expect(
+        () => checkSpace(
+          DownloadService.spaceFor(size: 4 * gb, zip: true, part: r'D:\t\a.part', staging: r'D:\t\x', target: r'D:\r'),
+          (_) => 5 * gb,
+        ),
+        throwsA(isA<NotEnoughSpace>()),
+      );
+    });
+
+    test('drives add up on their own; another drive for roms needs its own room', () {
+      final writes = DownloadService.spaceFor(
+        size: 3 * gb,
+        zip: false,
+        part: r'C:\G\temp\a.part',
+        staging: r'C:\G\temp\x',
+        target: r'E:\roms\ps2\a.iso',
+      );
+      expect(writes.length, 2);
+      expect(
+        () => checkSpace(writes, (path) => path.startsWith('E') ? gb : 10 * gb),
+        throwsA(isA<NotEnoughSpace>().having((e) => e.drive, 'drive', 'E:')),
+      );
+      checkSpace(writes, (_) => null); // can't be told: not checked
+    });
+
+    test('tight is less than twice the size', () {
+      expect(spaceIsTight(4 * gb, 6 * gb), isTrue);
+      expect(spaceIsTight(4 * gb, 20 * gb), isFalse);
+      expect(spaceIsTight(4 * gb, null), isFalse);
+      expect(spaceIsTight(0, gb), isFalse);
+    });
   });
 
   test('a failed download leaves nothing in roms', () async {
