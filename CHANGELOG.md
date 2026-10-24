@@ -28,6 +28,8 @@ What changed in each release of Gargosy. The format follows
   same bar, with Filters, Platform, On this PC and Sort by. Typing sorts by
   Best match, RomM's own search order, unless you picked another sort. The
   header goes as you scroll, and the box moves onto the bar.
+- In Filters, X applies and Y clears, wherever the focus is; the two buttons
+  show them when you play with a controller.
 - Saves other players shared on RomM: the play screen and the game's Saves
   tab list them under From other players, by player. Play with one, or put it
   on this PC (X on the Saves tab): it becomes your save, and your next one
