@@ -239,3 +239,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Storage on this PC (#145)
 
 98. [ ] Settings → Storage (THIS PC; it replaces Image cache, whose card is at its end): the drive's free space and size, then ROMs, Emulators, BIOS, profiles' data, Image cache and Temp with their sizes (Explorer's folder properties agree, roughly). ROMs by platform, largest first: A on one lists its games largest first, with size and when last played; a game another profile downloaded says it isn't in this profile's library. A on one asks, then deletes only that ROM (its saves stay; the game page says Download again). X marks two, Delete marked asks with the total, and both go. Empty Temp is refused while a download runs.
+
+## Play time (#146)
+
+99. [ ] Play a game for a few minutes and close it. Its page's Overview says "Last played … · Played N min · 1 session", and Home's header shows "N min played". RomM's web UI (the game's play sessions, or Profile → Play sessions) lists the session. Play it on another PC (or another profile of the same RomM user): the time adds up there too. With RomM unreachable, play again: the time says "on this PC", and the session reaches RomM after the next game played with RomM back.

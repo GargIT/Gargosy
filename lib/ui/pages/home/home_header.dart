@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../library/download_service.dart';
 import '../../../play/play_controller.dart';
+import '../../../play/play_time.dart';
 import '../../../providers/download_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../screens/game/open_game.dart';
@@ -11,6 +12,7 @@ import '../../screens/game/resume_newest.dart';
 import '../../screens/play/play_screen.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
+import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/game_transition.dart';
 import '../../widgets/save_list/save_labels.dart';
@@ -83,6 +85,7 @@ class HomeHeader extends ConsumerWidget {
     // The states only for the game played last: Resume needs them.
     if (!random) ref.watch(playStatesProvider(PlayMenuKey(game)));
     final state = random ? null : newestState(ref, game);
+    final played = random ? null : ref.watch(playTimeProvider(game.id)).valueOrNull;
     final released = game.firstReleaseDate == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!).year;
@@ -187,13 +190,14 @@ class HomeHeader extends ConsumerWidget {
                         style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
                       ),
                     ],
-                    if (downloaded || state != null) ...[
+                    if (downloaded || state != null || played != null) ...[
                       const SizedBox(height: GSpace.s3),
                       Wrap(
                         spacing: GSpace.s2,
                         runSpacing: GSpace.s2,
                         children: [
                           if (downloaded) _chip('On this PC', color: GColors.gargosyTeal),
+                          if (played != null) _chip('${formatPlayTime(played.total)} played'),
                           if (state != null)
                             _chip(
                               'State from ${formatSaveTime(state.savedAt)}'

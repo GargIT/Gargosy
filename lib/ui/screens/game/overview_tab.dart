@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/save_list/save_labels.dart';
 import '../../../core/romm/romm_models.dart';
+import '../../../play/play_time.dart';
 import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
+import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 
 class OverviewTab extends ConsumerWidget {
@@ -15,12 +17,20 @@ class OverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final time = ref.watch(playTimeProvider(game.id)).valueOrNull;
     final shots = [for (final s in game.mergedScreenshots) assetUrl(ref, s)].whereType<String>().toList();
     return ListView(
       padding: const EdgeInsets.only(bottom: GSpace.s14),
       children: [
-        if (game.lastPlayed case final played?) ...[
-          Text('Last played ${formatSaveTime(played)}', style: const TextStyle(color: GColors.fgMuted)),
+        if (game.lastPlayed != null || time != null) ...[
+          Text(
+            [
+              if (game.lastPlayed case final played?) 'Last played ${formatSaveTime(played)}',
+              if (time != null) playTimeLine(time),
+            ].join(' · '),
+            key: const ValueKey('overview-played'),
+            style: const TextStyle(color: GColors.fgMuted),
+          ),
           const SizedBox(height: GSpace.s3),
         ],
         if (game.summary != null && game.summary!.isNotEmpty)

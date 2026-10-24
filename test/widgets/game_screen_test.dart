@@ -11,6 +11,7 @@ import 'package:gargosy/ui/widgets/hint_bar.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/core/romm/romm_play_sessions.dart';
 import 'package:gargosy/library/download_service.dart';
 import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/rom_files.dart';
@@ -22,6 +23,7 @@ import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/core/save/catalog/save_catalog.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/play/play_engine.dart';
+import 'package:gargosy/play/play_time.dart';
 import 'package:gargosy/play/play_menu.dart';
 import 'package:gargosy/ui/screens/play/play_screen.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
@@ -185,6 +187,14 @@ void main() {
     downloads.holds['1']!.complete();
   });
 
+  testWidgets('the Overview says how long it was played (#146)', (tester) async {
+    await pump(
+      tester,
+      extra: [playTimeProvider.overrideWith((ref, id) async => const PlayTime(Duration(hours: 12, minutes: 40), 8))],
+    );
+    expect(find.textContaining('Played 12 h 40 min · 8 sessions'), findsOneWidget);
+  });
+
   testWidgets('a favourite shows a filled heart', (tester) async {
     await pump(tester, favourites: {'7564'});
     expect(find.byIcon(Icons.favorite), findsOneWidget);
@@ -277,6 +287,8 @@ void main() {
         extra: [
           canDeleteGamesProvider.overrideWith((ref) async => allowed),
           rommServiceProvider.overrideWithValue(romm),
+          // Only the delete is asked of this server.
+          playSessionsApiProvider.overrideWithValue(null),
         ],
       );
     }
