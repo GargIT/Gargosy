@@ -175,6 +175,12 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `windows/updater/` — `GargosyUpdate.exe` (Win32 C++, static CRT, built by `windows/CMakeLists.txt` and on its own): waits for the PID (60 s), moves the old listed files to `update\previous\`, copies the new ones, rolls back on any failure, starts Gargosy with `--updated-from=` / `--update-failed`. Exit codes: 0 updated, 1 rolled back, 2 Gargosy didn't exit, 3 bad arguments, 4 refused. `--silent` for tests. `tool/test_updater.ps1` (CI, release, preview) runs it against fake Gargosy folders.
 - `tool/make_release.ps1` writes `app-files.txt` (every app file, never the user's folders) and fails without `GargosyUpdate.exe`.
 
+## Claude Code setup
+- `.claude/settings.json` — hooks: `.claude/hooks/guard.js` (PreToolUse: blocks a session link in a `git`/`gh` command, hand edits to `pubspec.lock`, `build/`, `dist/`, `third_party/argosy-sigil/`, and `Platform.isWindows`/`Platform.environment` in `lib/` outside `platform_info.dart`), `format-dart.js` (PostToolUse: `dart format` on the edited `.dart` file); `paths.js` maps `C:\…` and `/c/…` paths to the project.
+- `.mcp.json` — the Dart SDK's MCP server (`dart mcp-server`: analyze, format, tests, pub.dev, a running app's widget tree).
+- `.claude/skills/new-emulator/` (every place an emulator is wired in), `.claude/skills/ship/` (`/ship`: gate, docs, push, PR, dev install, CI, merge).
+- `.claude/agents/rules-reviewer.md` (a diff against the rules above, read-only), `file-map-keeper.md` (the File Map for a branch's files).
+
 ## Branding
 - The app logo is the "G" with three face buttons: `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png` (1024 px) and `gargosy_logo.ico` (16–256 px).
 - To change it, edit the SVG and render again.

@@ -53,3 +53,7 @@ devtools_options.yaml
 
 # Release builds (tool/make_release.ps1)
 /dist/
+
+# Claude Code: per-user files
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
