@@ -16,6 +16,7 @@ enum SettingsGroup {
 enum SettingsPage {
   profile(SettingsGroup.profile, 'Profile', Icons.person_outline),
   retroAchievements(SettingsGroup.profile, 'RetroAchievements', Icons.emoji_events_outlined),
+  home(SettingsGroup.profile, 'Home', Icons.home_outlined),
   emulators(SettingsGroup.library, 'Emulators', Icons.download_outlined),
   emulatorSettings(SettingsGroup.library, 'Emulator settings', Icons.tune),
   controller(SettingsGroup.thisPc, 'Controller', Icons.gamepad_outlined),

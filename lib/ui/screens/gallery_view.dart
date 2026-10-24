@@ -44,6 +44,7 @@ class GalleryView extends ConsumerStatefulWidget {
     this.bestMatch = false,
     this.barLeading,
     this.onOpened,
+    this.thisPc = false,
   });
 
   final GalleryQuery query;
@@ -74,6 +75,9 @@ class GalleryView extends ConsumerStatefulWidget {
   /// A game opened from the gallery (Search remembers its term).
   final ValueChanged<Game>? onOpened;
 
+  /// On this PC is on when the gallery opens.
+  final bool thisPc;
+
   @override
   ConsumerState<GalleryView> createState() => _GalleryViewState();
 }
@@ -97,7 +101,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   final _top = ValueNotifier<int>(0);
   Object? _error;
   int _generation = 0;
-  bool _thisPc = false;
+  late bool _thisPc = widget.thisPc;
   bool _scanning = false;
 
   /// The first cover takes focus once, when the page opens: a reload (a

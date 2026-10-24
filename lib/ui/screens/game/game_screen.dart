@@ -5,8 +5,6 @@ import '../../../core/input/gamepad_service.dart';
 import '../../../core/retroachievements/retroachievements_game_models.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../core/save/resume_service.dart';
-import '../../../core/save/catalog/play_view.dart';
-import '../../../core/save/catalog/play_choice.dart';
 import '../../../core/save/catalog/save_count.dart';
 import '../../../play/play_controller.dart';
 import '../../../providers/library_providers.dart';
@@ -14,16 +12,14 @@ import '../../input/gargosy_intents.dart';
 import '../../shell/page_top_bar.dart';
 import '../../shell/shell_menu.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/controller_dialogs.dart';
 import '../../widgets/game_transition.dart';
 import '../../widgets/hint_bar.dart';
-import '../../widgets/save_list/save_labels.dart';
-import '../../widgets/toast.dart';
 import 'achievements_tab.dart';
 import 'details_tab.dart';
 import 'game_cover_column.dart';
 import 'game_personal_pills.dart';
 import 'game_tabs.dart';
+import 'resume_newest.dart';
 import 'version_field.dart';
 import 'notes_tab.dart';
 import 'overview_tab.dart';
@@ -98,64 +94,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     setState(() => _tab = i);
   }
 
-  ResumeEntry? _newestState() {
-    final states = ref.read(playStatesProvider(_key)).valueOrNull ?? const <ResumeEntry>[];
-    ResumeEntry? newest;
-    for (final s in states) {
-      if (!s.resumable) continue; // loaded from the emulator's own menu
-      if (newest == null || s.savedAt.isAfter(newest.savedAt)) newest = s;
-    }
-    return newest;
-  }
+  ResumeEntry? _newestState() => newestState(ref, widget.game);
 
   /// Y: the newest save state, with the play screen's version question.
-  Future<void> _resumeNewest(Game game) async {
-    final entry = _newestState();
-    if (entry == null) return;
-    // As on the play screen: a state older than the newest save may roll it back.
-    final menu = ref.read(playMenuProvider(_key)).valueOrNull;
-    if (menu != null) {
-      final view = buildPlayView(
-        catalog: menu.catalog,
-        states: ref.read(playStatesProvider(_key)).valueOrNull ?? const [],
-        platformSlug: game.platformSlug ?? '',
-        picked: menu.forThisGame,
-        platformDefault: menu.platformDefault,
-        installed: menu.installedIds,
-      );
-      if (view.promptFor(StatePlay(entry)) != null) {
-        final ok = await showConfirm(
-          context,
-          title: 'Resume an older state?',
-          body:
-              'This state is from ${formatSaveTime(entry.savedAt)}, but your save is from '
-              '${formatSaveTime(view.newestSave!)}. Resuming may roll your save back.',
-          yes: 'Resume anyway',
-          focusYes: false,
-        );
-        if (!ok || !mounted) return;
-      }
-    }
-    final reason = await ref
-        .read(playControllerProvider.notifier)
-        .resume(
-          game,
-          entry,
-          confirmVersion: (v, i) => showConfirm(
-            context,
-            title: 'Load a state from another version?',
-            body:
-                '${entry.slot.label} was made by ${entry.emulatorName} $v; you have $i. '
-                'It may not load, or the game may misbehave.',
-            yes: 'Load it',
-            focusYes: false,
-          ),
-          onNotice: (m) {
-            if (mounted) showToast(context, m);
-          },
-        );
-    if (reason != null && mounted) showToast(context, reason);
-  }
+  Future<void> _resumeNewest(Game game) => resumeNewest(context, ref, game);
 
   Map<int, String> _badges(Game game) {
     final badges = <int, String>{};

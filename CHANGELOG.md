@@ -6,6 +6,19 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Home is new, after RomM's v2 Home: the game you played last at the top, over
+  its art, with Resume when it has a save state (a random pick until you've
+  played something); three small widgets (a random pick, games released on
+  this day, your library in numbers); then rows: Continue playing, Recently
+  added, Favourites, On this PC, Platforms and Collections, each with See all.
+  While RomM is offline it shows what's on this PC.
+- Customize Home, at the end of Home and in Settings → Home: what's at the top,
+  which widgets show, and which rows show in what order, each profile its own.
+  For you (RomM 5.4's recommendations), Smart collections and Virtual
+  collections are there to turn on.
+
 ## [0.3.0] - 2026-10-24
 
 A page for each platform and collection, the Collections tab, Search like

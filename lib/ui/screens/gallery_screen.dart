@@ -23,10 +23,13 @@ String filterHintFor(GalleryQuery q) => q.platformId != null
 
 /// A platform's, a collection's or the favourites' games (spec §2).
 class GalleryScreen extends ConsumerStatefulWidget {
-  const GalleryScreen({super.key, required this.title, required this.query});
+  const GalleryScreen({super.key, required this.title, required this.query, this.thisPc = false});
 
   final String title;
   final GalleryQuery query;
+
+  /// Opens with On this PC on (Home's On this PC → See all).
+  final bool thisPc;
 
   @override
   ConsumerState<GalleryScreen> createState() => _GalleryScreenState();
@@ -59,6 +62,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                         title: widget.title,
                         query: widget.query,
                         filterHint: filterHintFor(widget.query),
+                        thisPc: widget.thisPc,
                       ),
                     ),
                   ),

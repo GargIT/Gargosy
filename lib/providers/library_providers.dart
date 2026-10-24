@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../library/library_snapshot.dart';
+import '../library/home_layout.dart';
 import '../library/platform_covers.dart';
 import '../library/recent_searches.dart';
 import 'engine_providers.dart';
@@ -136,6 +137,24 @@ final favouriteGamesProvider = FutureProvider<List<Game>>((ref) async {
 });
 
 final randomGameProvider = FutureProvider<Game?>((ref) async => ref.watch(libraryApiProvider)?.randomGame());
+
+/// Home's For you (#139): RomM's recommendations; none from an older RomM.
+final recommendedGamesProvider = FutureProvider<List<Game>>((ref) async {
+  final api = ref.watch(libraryApiProvider);
+  return api == null ? const [] : api.recommended();
+});
+
+/// Home's On this day (#139): the games released on today's date in an
+/// earlier year, and how many.
+final onThisDayProvider = FutureProvider<GalleryPage>((ref) async {
+  final api = ref.watch(libraryApiProvider);
+  return api == null ? const GalleryPage(games: [], total: 0) : api.releasedOn(DateTime.now());
+});
+
+/// The profile's Home: what's at the top, its widgets and rows (#139).
+final homeLayoutProvider = StateNotifierProvider<HomeLayoutNotifier, HomeLayout>(
+  (ref) => HomeLayoutNotifier(ref.watch(profilePrefsProvider)),
+);
 
 final gameProvider = FutureProvider.family<Game?, String>((ref, id) async {
   final snap = ref.watch(librarySnapshotProvider);
