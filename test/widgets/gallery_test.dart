@@ -90,6 +90,27 @@ void main() {
     expect(find.text('Filters · 1'), findsOneWidget);
   });
 
+  testWidgets('a genre that hides every match: the panel names it, and Show all clears the filters', (tester) async {
+    final api = await pump(tester);
+    await tester.tap(find.byKey(const ValueKey('filter-field')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('filter-input')), 'Game 001');
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bar-filters')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Racing'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(find.text('RomM has 1 game that matches, hidden by the genre Racing.'), findsOneWidget);
+    await tester.tap(find.text('Show all 1'));
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.genres, isEmpty);
+    expect((api.queries.last.$1.search, api.queries.last.$1.platformId), ('Game 001', 1));
+    expect(find.text('Game 001'), findsWidgets);
+  });
+
   testWidgets("Sort by lists RomM's and the player's fields under headings; a pick reloads in its order", (
     tester,
   ) async {

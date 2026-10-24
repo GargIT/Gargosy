@@ -258,13 +258,15 @@ class _BarButton extends StatelessWidget {
 
 /// A filter box. With a controller, A opens the on-screen keyboard and the
 /// text applies when it closes; with a mouse or keyboard it's typed in place
-/// and applies [delay] after typing stops. B or Escape ends the typing.
+/// and applies [delay] after typing stops. B or Escape ends the typing; on
+/// the box, they clear its text (and with none, go back as usual).
 class FilterField extends ConsumerStatefulWidget {
   const FilterField({
     super.key,
     required this.hint,
     required this.text,
     required this.onChanged,
+    this.onSubmitted,
     this.delay = const Duration(milliseconds: 400),
     this.large = false,
     this.autofocus = false,
@@ -273,6 +275,10 @@ class FilterField extends ConsumerStatefulWidget {
   final String hint;
   final String text;
   final ValueChanged<String> onChanged;
+
+  /// Enter, or the on-screen keyboard's Done: the text is meant (Search
+  /// remembers it).
+  final ValueChanged<String>? onSubmitted;
   final Duration delay;
 
   /// Search's box in its header (#132): bigger text and room.
@@ -340,6 +346,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
       if (v == null || !mounted) return;
       _controller.text = v;
       _apply();
+      widget.onSubmitted?.call(v);
       return;
     }
     setState(() => _editing = true);
@@ -359,6 +366,12 @@ class _FilterFieldState extends ConsumerState<FilterField> {
   void _apply() {
     _timer?.cancel();
     if (_controller.text != widget.text) widget.onChanged(_controller.text);
+  }
+
+  void _clear() {
+    _controller.clear();
+    _apply();
+    setState(() {});
   }
 
   void _stop({bool refocus = true}) {
@@ -390,7 +403,10 @@ class _FilterFieldState extends ConsumerState<FilterField> {
                     focusNode: _input,
                     controller: _controller,
                     onChanged: _typed,
-                    onSubmitted: (_) => _stop(),
+                    onSubmitted: (t) {
+                      _stop();
+                      widget.onSubmitted?.call(t);
+                    },
                     cursorColor: GColors.primary,
                     style: TextStyle(fontSize: size, color: GColors.fg),
                     decoration: InputDecoration.collapsed(
@@ -408,11 +424,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
         if (!empty && !_editing)
           GestureDetector(
             key: const ValueKey('filter-clear'),
-            onTap: () {
-              _controller.clear();
-              _apply();
-              setState(() {});
-            },
+            onTap: _clear,
             child: const Icon(Icons.close, size: 18, color: GColors.fgMuted),
           ),
       ],
@@ -429,14 +441,31 @@ class _FilterFieldState extends ConsumerState<FilterField> {
       child: content,
     );
     if (_editing) return box;
-    return GFocusable(
-      key: const ValueKey('filter-field'),
-      focusNode: _box,
-      autofocus: widget.autofocus,
-      borderRadius: GRadius.pill,
-      onActivate: _activate,
-      semanticLabel: widget.hint,
-      child: box,
+    return Actions(
+      actions: {BackIntent: _ClearAction(this)},
+      child: GFocusable(
+        key: const ValueKey('filter-field'),
+        focusNode: _box,
+        autofocus: widget.autofocus,
+        borderRadius: GRadius.pill,
+        onActivate: _activate,
+        semanticLabel: widget.hint,
+        child: box,
+      ),
     );
   }
+}
+
+/// B on the filter box: its text cleared. Not enabled while it's empty, so B
+/// goes back as anywhere else.
+class _ClearAction extends Action<BackIntent> {
+  _ClearAction(this._field);
+
+  final _FilterFieldState _field;
+
+  @override
+  bool isEnabled(BackIntent intent) => _field._controller.text.isNotEmpty;
+
+  @override
+  void invoke(BackIntent intent) => _field._clear();
 }

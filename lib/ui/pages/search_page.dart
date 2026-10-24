@@ -14,7 +14,8 @@ import 'search_header.dart';
 /// Search (#132), like a collection's page: the header with the box, then the
 /// games under the filter and sort bar. Before anything is typed it's the
 /// whole library by name; a term sorts by Best match. The header goes once
-/// the games are scrolled, and the box moves onto the bar.
+/// the games are scrolled, and the box moves onto the bar. A term submitted,
+/// or one a game is opened from, goes into the profile's recent searches.
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
 
@@ -33,7 +34,17 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   // As a collection's page: scrolled this far the header goes, and it comes
   // back at the top, only when the grid stays scrolled without it.
   static const _hideAt = 48.0;
-  static const _headerHeight = 200.0;
+  static const _headerHeight = 250.0;
+
+  void _remember([String? term]) {
+    final t = term ?? _term;
+    if (t != null) ref.read(recentSearchesProvider.notifier).remember(t);
+  }
+
+  void _run(String term) {
+    setState(() => _term = term);
+    _remember(term);
+  }
 
   bool _onScroll(ScrollNotification n) {
     if (n.depth != 0 || n.metrics.axis != Axis.vertical) return false;
@@ -57,7 +68,9 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       large: !_collapsed,
       autofocus: true,
       onChanged: (t) => setState(() => _term = t.trim().isEmpty ? null : t.trim()),
+      onSubmitted: _remember,
     );
+    final recent = ref.watch(recentSearchesProvider);
     return Padding(
       key: const Key('page-Search'),
       padding: const EdgeInsets.only(top: GLayout.navHeight),
@@ -70,7 +83,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             alignment: Alignment.topCenter,
             child: _collapsed
                 ? const SizedBox(width: double.infinity)
-                : SearchHeader(key: const ValueKey('search-header'), box: box, scope: scope, onThisPc: onPc),
+                : SearchHeader(
+                    key: const ValueKey('search-header'),
+                    box: box,
+                    scope: scope,
+                    onThisPc: onPc,
+                    recent: recent,
+                    onRecent: _run,
+                    onForget: (t) => ref.read(recentSearchesProvider.notifier).forget(t),
+                  ),
           ),
           Expanded(
             child: NotificationListener<ScrollNotification>(
@@ -83,6 +104,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 autofocus: false,
                 platforms: scope?.platforms,
                 barLeading: _collapsed ? SizedBox(width: 320, child: box) : null,
+                onOpened: (_) => _remember(),
                 emptyText: _term == null ? 'No games in your library yet.' : 'Nothing matches "$_term".',
               ),
             ),

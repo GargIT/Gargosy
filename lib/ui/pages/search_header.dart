@@ -1,17 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/library_providers.dart';
+import '../../providers/ui_provider.dart';
 import '../theme/tokens.dart';
+import '../widgets/g_focusable.dart';
 import '../widgets/header_stat.dart';
 
-/// Search's header (#132): the heading, the search [box], and what the box
-/// matches: GAMES, ON THIS PC and PLATFORMS ([scope] while it loads is null).
+/// Search's header (#132): the heading, the search [box], what the box
+/// matches: GAMES, ON THIS PC and PLATFORMS ([scope] while it loads is null),
+/// and the profile's [recent] searches under it.
 class SearchHeader extends StatelessWidget {
-  const SearchHeader({super.key, required this.box, required this.scope, required this.onThisPc});
+  const SearchHeader({
+    super.key,
+    required this.box,
+    required this.scope,
+    required this.onThisPc,
+    this.recent = const [],
+    this.onRecent,
+    this.onForget,
+  });
 
   final Widget box;
   final GalleryScope? scope;
   final int onThisPc;
+  final List<String> recent;
+
+  /// A runs a recent search; hold A (or its ×) forgets it.
+  final ValueChanged<String>? onRecent;
+  final ValueChanged<String>? onForget;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +66,76 @@ class SearchHeader extends StatelessWidget {
               ),
             ],
           ),
+          if (recent.isNotEmpty) ...[
+            const SizedBox(height: GSpace.s4),
+            Wrap(
+              key: const ValueKey('search-recent'),
+              spacing: GSpace.s2,
+              runSpacing: GSpace.s2,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(right: GSpace.s1),
+                  child: Text(
+                    'RECENT',
+                    style: TextStyle(
+                      fontSize: GFont.sm,
+                      letterSpacing: 1,
+                      fontWeight: FontWeight.w600,
+                      color: GColors.fgSecondary,
+                    ),
+                  ),
+                ),
+                for (final r in recent)
+                  _RecentChip(r, onRun: () => onRecent?.call(r), onForget: () => onForget?.call(r)),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _RecentChip extends ConsumerWidget {
+  const _RecentChip(this.term, {required this.onRun, required this.onForget});
+
+  final String term;
+  final VoidCallback onRun;
+  final VoidCallback onForget;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mouse = ref.watch(inputModeProvider) == InputMode.mouse;
+    return GFocusable(
+      key: ValueKey('recent-$term'),
+      borderRadius: GRadius.pill,
+      onActivate: onRun,
+      onLongActivate: onForget,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(GSpace.s3, 5, mouse ? GSpace.s2 : GSpace.s3, 5),
+        decoration: BoxDecoration(
+          color: GColors.bgElevated,
+          border: Border.all(color: GColors.borderStrong),
+          borderRadius: BorderRadius.circular(GRadius.pill),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              term,
+              style: const TextStyle(fontSize: GFont.md, color: GColors.fgSecondary),
+            ),
+            if (mouse) ...[
+              const SizedBox(width: GSpace.s1),
+              GestureDetector(
+                key: ValueKey('recent-forget-$term'),
+                onTap: onForget,
+                child: const Icon(Icons.close, size: 14, color: GColors.fgMuted),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

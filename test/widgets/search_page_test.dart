@@ -112,4 +112,108 @@ void main() {
     expect(find.byKey(const ValueKey('search-header')), findsNothing);
     expect(find.byKey(const ValueKey('filter-field')), findsOneWidget, reason: 'the one box, on the bar now');
   });
+
+  testWidgets('a submitted term goes into Recent; A runs one, hold A forgets it', (tester) async {
+    await pump(tester, ['Okami', 'Ico', 'Okamiden']);
+    expect(find.byKey(const ValueKey('search-recent')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('filter-field')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('filter-input')), 'oka');
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('search-recent')), findsNothing, reason: 'typed, not yet meant');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('filter-field')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('filter-input')), 'ico');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('recent-ico')), findsOneWidget);
+    expect(find.byKey(const ValueKey('recent-oka')), findsOneWidget);
+    expect(api.queries.last.$1.search, 'ico');
+
+    await tester.tap(find.byKey(const ValueKey('recent-oka')));
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.search, 'oka');
+    expect(find.text('Okamiden'), findsWidgets);
+    expect(find.text('Ico'), findsNothing);
+    final chips = tester.widgetList<Widget>(
+      find.descendant(
+        of: find.byKey(const ValueKey('search-recent')),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w.key is ValueKey<String> &&
+              (w.key! as ValueKey<String>).value.startsWith('recent-') &&
+              !(w.key! as ValueKey<String>).value.startsWith('recent-forget'),
+        ),
+      ),
+    );
+    expect(
+      [for (final c in chips) (c.key! as ValueKey<String>).value],
+      ['recent-oka', 'recent-ico'],
+      reason: 'run, it comes first',
+    );
+
+    await tester.longPress(find.byKey(const ValueKey('recent-ico')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('recent-ico')), findsNothing);
+    expect(find.byKey(const ValueKey('recent-oka')), findsOneWidget);
+  });
+
+  testWidgets('nothing matches with On this PC: says so and Show all turns it off', (tester) async {
+    await pump(tester, ['Okami', 'Ico', 'Okamiden']);
+    await tester.tap(find.byKey(const ValueKey('filter-field')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('filter-input')), 'ico');
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bar-this-pc')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('nothing-matches')), findsOneWidget);
+    expect(find.text('Nothing matches “ico” here.'), findsOneWidget);
+    expect(find.text('RomM has 1 game that matches, hidden by On this PC.'), findsOneWidget);
+    await tester.tap(find.text('Show all 1'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('nothing-matches')), findsNothing);
+    expect(find.text('Ico'), findsWidgets);
+    expect(api.queries.last.$1.search, 'ico');
+  });
+
+  testWidgets('nothing matches anywhere: only the plain line, no Show all', (tester) async {
+    await pump(tester, ['Okami', 'Ico']);
+    await tester.tap(find.byKey(const ValueKey('filter-field')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('filter-input')), 'zelda');
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(find.text('Nothing matches "zelda".'), findsOneWidget);
+    expect(find.byKey(const ValueKey('show-all')), findsNothing);
+  });
+
+  testWidgets('B on the box clears the term; on an empty box it goes back', (tester) async {
+    await pump(tester, ['Okami', 'Ico', 'Okamiden']);
+    final nav = Navigator.of(tester.element(find.byType(SearchPage)));
+    nav.push(MaterialPageRoute<void>(builder: (_) => const Material(child: SearchPage())));
+    await tester.pumpAndSettle();
+    expect(find.byType(SearchPage), findsOneWidget, reason: 'the first one is under the route');
+    ProviderScope.containerOf(tester.element(find.byType(SearchPage))).read(inputModeProvider.notifier).state =
+        InputMode.gamepad;
+    await tester.pump();
+    await press(tester, GameAction.confirm);
+    for (final ch in 'ico'.split('')) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.findKeyByKeyId(ch.codeUnitAt(0))!, character: ch);
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(api.queries.last.$1.search, 'ico');
+
+    await press(tester, GameAction.back);
+    expect(api.queries.last.$1.search, isNull);
+    expect(find.text('Search your library'), findsOneWidget, reason: 'the box is empty, still on this page');
+    expect(nav.canPop(), isTrue);
+
+    await press(tester, GameAction.back);
+    expect(nav.canPop(), isFalse, reason: 'B on the empty box went back');
+  });
 }
