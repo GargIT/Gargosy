@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_library_api.dart';
@@ -9,6 +12,7 @@ import '../../library/library_snapshot.dart';
 import '../../providers/download_providers.dart';
 import '../../providers/library_providers.dart';
 import '../../providers/romm_providers.dart';
+import '../../providers/ui_provider.dart';
 import '../input/gargosy_intents.dart';
 import '../screens/collection/collection_screen.dart';
 import '../screens/gallery_screen.dart';
@@ -212,7 +216,9 @@ class HomePage extends ConsumerWidget {
         padding: EdgeInsets.only(top: headerGame == null ? GLayout.navHeight + GSpace.s6 : 0, bottom: GSpace.s14),
         children: [
           if (headerGame != null)
-            HomeHeader(game: headerGame, random: headerRandom, autofocus: true)
+            _RevealOnFocus(
+              child: HomeHeader(game: headerGame, random: headerRandom, autofocus: true),
+            )
           else
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
@@ -222,12 +228,14 @@ class HomePage extends ConsumerWidget {
               ),
             ),
           if (!offline)
-            HomeWidgets(
-              // The random pick isn't shown twice.
-              shown: {
-                for (final w in layout.widgets)
-                  if (!(w == HomeWidget.randomPick && headerRandom)) w,
-              },
+            _RevealOnFocus(
+              child: HomeWidgets(
+                // The random pick isn't shown twice.
+                shown: {
+                  for (final w in layout.widgets)
+                    if (!(w == HomeWidget.randomPick && headerRandom)) w,
+                },
+              ),
             ),
           if (loading) const Padding(padding: EdgeInsets.all(GSpace.rowPad), child: LinearProgressIndicator()),
           if (error != null)
@@ -251,7 +259,7 @@ class HomePage extends ConsumerWidget {
                 style: TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
               ),
             ),
-          for (final row in showRows) rowOf(row),
+          for (final row in showRows) _RevealOnFocus(child: rowOf(row)),
           Padding(
             padding: const EdgeInsets.only(top: GSpace.s8),
             child: Center(
@@ -281,5 +289,40 @@ class HomePage extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Scrolls Home so all of [child] shows below the top bar when the
+/// controller or keyboard moves focus into it. Flutter's own scroll only
+/// brings the focused button into view, which left the header's art and
+/// title, and a row's title, above the top of the screen.
+class _RevealOnFocus extends ConsumerWidget {
+  const _RevealOnFocus({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Focus(
+    canRequestFocus: false,
+    skipTraversal: true,
+    onFocusChange: (focused) {
+      if (focused && ref.read(inputModeProvider) != InputMode.mouse) _reveal(context);
+    },
+    child: child,
+  );
+
+  static void _reveal(BuildContext context) {
+    final box = context.findRenderObject();
+    final position = Scrollable.maybeOf(context)?.position;
+    if (box == null || !box.attached || position == null) return;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null) return;
+    // Its top just below the top bar, or its bottom at the bottom edge;
+    // the top wins when it doesn't fit.
+    final top = viewport.getOffsetToReveal(box, 0).offset - GLayout.navHeight;
+    final bottom = viewport.getOffsetToReveal(box, 1).offset;
+    final target = math.min(top, math.max(position.pixels, bottom));
+    final clamped = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+    if (clamped != position.pixels) position.jumpTo(clamped);
   }
 }

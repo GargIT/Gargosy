@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/romm/romm_library_api.dart';
@@ -10,6 +11,7 @@ import 'package:gargosy/library/library_snapshot.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
+import 'package:gargosy/providers/ui_provider.dart';
 import 'package:gargosy/ui/pages/home_page.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
 
@@ -174,6 +176,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('home-resume')), findsOneWidget);
     expect(find.byKey(const ValueKey('widget-library')), findsOneWidget);
+  });
+
+  testWidgets('down to the end and back up with the D-pad scrolls back to the top', (tester) async {
+    await setDesktopSize(tester);
+    tester.view.physicalSize = const Size(1280, 720);
+    await tester.pumpWidget(
+      testApp(
+        const HomePage(name: 'Anna'),
+        overrides: overrides(states: [state], installed: [game(9, 'Pikmin 2')]).cast(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final page = find.byKey(const Key('page-Home'));
+    ProviderScope.containerOf(tester.element(page)).read(inputModeProvider.notifier).state = InputMode.gamepad;
+    ScrollPosition position() =>
+        tester.state<ScrollableState>(find.descendant(of: page, matching: find.byType(Scrollable)).first).position;
+    for (var i = 0; i < 8; i++) {
+      await press(tester, GameAction.down);
+    }
+    expect(position().pixels, greaterThan(0));
+    for (var i = 0; i < 8; i++) {
+      await press(tester, GameAction.up);
+    }
+    final focused = FocusManager.instance.primaryFocus!.context!;
+    expect(
+      find.ancestor(of: find.byWidget(focused.widget), matching: find.byKey(const ValueKey('home-header'))),
+      findsOneWidget,
+    );
+    expect(position().pixels, 0, reason: 'the whole header shows, not just its buttons');
   });
 
   testWidgets('an empty library says so', (tester) async {
