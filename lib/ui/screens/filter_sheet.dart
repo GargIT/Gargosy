@@ -32,6 +32,10 @@ class _FilterSheet extends ConsumerStatefulWidget {
 class _FilterSheetState extends ConsumerState<_FilterSheet> {
   late GalleryQuery _q = widget.query;
 
+  /// Room for the focus ring around a chip, which the scrolling list would
+  /// clip: the list is inset by it and the dialog's padding is that less.
+  static const _ring = GFocusRing.offset + GFocusRing.pad + 1.5;
+
   void _clear() => setState(() => _q = _q.copyWith(genres: const {}, regions: const {}));
   void _apply() => Navigator.of(context).pop(_q);
 
@@ -100,17 +104,21 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 820, maxHeight: 720),
           child: Padding(
-            padding: const EdgeInsets.all(GSpace.s6),
+            padding: const EdgeInsets.fromLTRB(GSpace.s6 - _ring, GSpace.s6, GSpace.s6 - _ring, GSpace.s6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Filters',
-                  style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: _ring),
+                  child: Text(
+                    'Filters',
+                    style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+                  ),
                 ),
                 Flexible(
                   child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(_ring),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -138,19 +146,22 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(height: GSpace.s5),
-                Row(
-                  children: [
-                    _chip('Clear filters', false, _clear, button: pad ? 'Y' : null),
-                    const Spacer(),
-                    _chip(
-                      'Apply',
-                      true,
-                      _apply,
-                      autofocus: widget.values.genres.isEmpty && widget.values.regions.isEmpty,
-                      button: pad ? 'X' : null,
-                    ),
-                  ],
+                const SizedBox(height: GSpace.s5 - _ring),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: _ring),
+                  child: Row(
+                    children: [
+                      _chip('Clear filters', false, _clear, button: pad ? 'Y' : null),
+                      const Spacer(),
+                      _chip(
+                        'Apply',
+                        true,
+                        _apply,
+                        autofocus: widget.values.genres.isEmpty && widget.values.regions.isEmpty,
+                        button: pad ? 'X' : null,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
