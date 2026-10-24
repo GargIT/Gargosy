@@ -27,6 +27,12 @@ What changed in each release of Gargosy. The format follows
   start and says how much it needs and how much is free. The game page shows
   the free space under Download when it's tight. Unpacking a zip for an
   emulator checks the same.
+- Downloads go in a queue: one at a time, in the order you pressed Download,
+  the others "Queued" on their game page. A Downloads page in the user menu
+  (while there are any) shows the running one with its speed and time left,
+  the queue (Y puts one first, X takes one out or stops the running one),
+  the ones that failed (A tries again) and the ones done. Switching profile
+  asks first while downloads are waiting.
 
 ## [0.3.0] - 2026-10-24
 

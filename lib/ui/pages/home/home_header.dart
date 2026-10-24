@@ -127,7 +127,7 @@ class HomeHeader extends ConsumerWidget {
         )
       else
         _button(
-          downloading ? 'Downloading…' : 'Download',
+          downloading ? (progress.phase == DownloadPhase.queued ? 'Queued' : 'Downloading…') : 'Download',
           Icons.download,
           downloading ? null : () => ref.read(downloadsProvider.notifier).start(game),
           primary: true,

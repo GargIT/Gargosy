@@ -18,19 +18,25 @@ class FakeDownloadService extends DownloadService {
   Completer<void>? hold;
   DownloadPhase holdIn = DownloadPhase.downloading;
 
+  /// One game's own [hold]; [fail] makes a game's download fail.
+  final holds = <String, Completer<void>>{};
+  final fail = <String>{};
+
   @override
   Future<void> download(Game game, {void Function(DownloadProgress)? onProgress, CancelToken? cancel}) async {
     started.add(game.id);
     onProgress?.call(const DownloadProgress(DownloadPhase.downloading, received: 5, total: 10));
-    if (hold != null) {
+    final held = holds[game.id] ?? hold;
+    if (held != null) {
       onProgress?.call(DownloadProgress(holdIn, received: 5, total: 10));
       cancel?.whenCancel.then((_) {
-        if (!hold!.isCompleted) {
-          hold!.completeError(DioException.requestCancelled(requestOptions: RequestOptions(), reason: 'cancelled'));
+        if (!held.isCompleted) {
+          held.completeError(DioException.requestCancelled(requestOptions: RequestOptions(), reason: 'cancelled'));
         }
       });
-      await hold!.future;
+      await held.future;
     }
+    if (fail.contains(game.id)) throw StateError('no room');
     io.File(files.pathFor(game))
       ..createSync(recursive: true)
       ..writeAsStringSync('rom');
