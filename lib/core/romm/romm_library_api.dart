@@ -339,6 +339,23 @@ class RommCollection {
   }
 }
 
+/// RomM's `released_days` for [today] (as its v2 Home): `M-D`, and 29
+/// February with the 28th in a year without it. None on 1 January, which
+/// many sources give a game known only by its year.
+List<String> anniversaryDays(DateTime today) {
+  if (today.month == 1 && today.day == 1) return const [];
+  final leap = DateTime(today.year, 2, 29).month == 2;
+  return ['${today.month}-${today.day}', if (today.month == 2 && today.day == 28 && !leap) '2-29'];
+}
+
+/// Whether [game] came out on [today]'s day in an earlier year.
+bool releasedOnDay(Game game, DateTime today) {
+  final ms = game.firstReleaseDate;
+  if (ms == null) return false;
+  final d = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+  return d.year < today.year && anniversaryDays(today).contains('${d.month}-${d.day}');
+}
+
 /// What the library pages need from RomM. [RommLibraryApi] is the real one.
 abstract class LibraryApi {
   Future<GalleryPage> page(
@@ -365,6 +382,14 @@ abstract class LibraryApi {
   /// A random game of the library, of one platform with [platformId] or of
   /// the gallery [within]; null when there is none.
   Future<Game?> randomGame({int? platformId, GalleryQuery? within});
+
+  /// RomM's recommendations for the user (Home's For you, #139), best first;
+  /// none from a RomM before 5.4, which has no `/api/recommendations`.
+  Future<List<Game>> recommended({int limit = 20});
+
+  /// The games released on [today]'s day and month in an earlier year (Home's
+  /// On this day, #139), oldest first, and how many.
+  Future<GalleryPage> releasedOn(DateTime today, {int limit = 20});
 
   /// The user's notes on a game. Unlike the copied RommService calls, these
   /// throw when RomM can't be reached, so pages can show the error.
@@ -454,6 +479,53 @@ class RommLibraryApi implements LibraryApi {
         ? await dio.post('/api/collections/${fav.id}/roms', data: body, options: auth())
         : await dio.delete('/api/collections/${fav.id}/roms', data: body, options: auth());
     return RommCollection.fromJson(r.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<List<Game>> recommended({int limit = 20}) async {
+    final Response<dynamic> r;
+    try {
+      r = await dio.get('/api/recommendations', queryParameters: {'limit': limit}, options: auth());
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const [];
+      rethrow;
+    }
+    return [
+      for (final item in r.data is List ? r.data as List : const [])
+        if (item is Map && item['rom'] is Map<String, dynamic>) Game.fromJson(item['rom'] as Map<String, dynamic>),
+    ];
+  }
+
+  @override
+  Future<GalleryPage> releasedOn(DateTime today, {int limit = 20}) async {
+    final days = anniversaryDays(today);
+    if (days.isEmpty) return const GalleryPage(games: [], total: 0);
+    final r = await dio.get(
+      '/api/roms',
+      queryParameters: {
+        'released_days': days,
+        'released_before_year': today.year,
+        'order_by': 'first_release_date',
+        'order_dir': 'asc',
+        'group_by_meta_id': true,
+        'limit': limit,
+        'offset': 0,
+      },
+      options: auth(),
+    );
+    final data = r.data as Map<String, dynamic>;
+    final items = [
+      for (final g in (data['items'] as List? ?? const []))
+        if (g is Map<String, dynamic>) Game.fromJson(g),
+    ];
+    // A RomM before 5.4 ignores released_days and sends any games: only
+    // those really released on the day count.
+    final games = [
+      for (final g in items)
+        if (releasedOnDay(g, today)) g,
+    ];
+    final total = games.length == items.length && data['total'] is int ? data['total'] as int : games.length;
+    return GalleryPage(games: games, total: total);
   }
 
   @override

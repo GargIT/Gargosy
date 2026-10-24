@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/input/gamepad_service.dart';
 import '../../input/gargosy_intents.dart';
+import '../../pages/home/customize_home.dart';
 import '../../shell/backdrop.dart';
 import '../../shell/page_top_bar.dart';
 import '../../theme/tokens.dart';
@@ -37,6 +38,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _content() => switch (_page) {
     SettingsPage.profile => const ProfileSection(),
     SettingsPage.retroAchievements => const RaSection(),
+    SettingsPage.home => ListView(
+      children: const [
+        SettingsCard(
+          title: 'Home',
+          icon: Icons.home,
+          note: "What this profile's Home shows, and in what order. Also Customize Home at the end of Home.",
+          children: [HomeLayoutEditor()],
+        ),
+      ],
+    ),
     SettingsPage.emulators => const EmulatorInstallSection(),
     SettingsPage.emulatorSettings => const EmulatorsSection(),
     SettingsPage.controller => const ControllerSection(),

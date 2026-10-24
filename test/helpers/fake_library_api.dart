@@ -77,6 +77,25 @@ class FakeLibraryApi implements LibraryApi {
     return all.where((g) => platformId == null || g.platformId == platformId).firstOrNull;
   }
 
+  /// What [recommended] gives.
+  List<Game> recommendations = const [];
+
+  @override
+  Future<List<Game>> recommended({int limit = 20}) async {
+    if (failWith != null) throw failWith!;
+    return recommendations.take(limit).toList();
+  }
+
+  @override
+  Future<GalleryPage> releasedOn(DateTime today, {int limit = 20}) async {
+    if (failWith != null) throw failWith!;
+    final list = [
+      for (final g in all)
+        if (releasedOnDay(g, today)) g,
+    ];
+    return GalleryPage(games: list.take(limit).toList(), total: list.length);
+  }
+
   final notesById = <String, List<RomNote>>{};
 
   @override

@@ -210,6 +210,8 @@ void main() {
     await press(tester, GameAction.r1);
     expect(find.text('Connect'), findsOneWidget, reason: 'RetroAchievements');
     await press(tester, GameAction.r1);
+    expect(find.text('ROWS, IN ORDER'), findsOneWidget, reason: 'Home');
+    await press(tester, GameAction.r1);
     expect(find.text('Get BIOS files from RomM'), findsOneWidget, reason: 'Emulators');
     await press(tester, GameAction.r1);
     expect(find.text('WHICH EMULATOR PLAYS'), findsOneWidget, reason: 'Emulator settings');

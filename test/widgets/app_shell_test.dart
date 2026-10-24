@@ -97,7 +97,6 @@ void main() {
       expect(find.text(t), findsWidgets);
     }
     expect(find.byKey(const Key('page-Home')), findsOneWidget);
-    expect(find.text('Welcome, Anna'), findsOneWidget);
     expect(find.byKey(const Key('top-bar-logo')), findsOneWidget);
   });
 
