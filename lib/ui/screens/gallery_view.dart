@@ -39,6 +39,9 @@ class GalleryView extends ConsumerStatefulWidget {
     this.autofocus = true,
     this.pinnedBar = false,
     this.platforms,
+    this.search,
+    this.bestMatch = false,
+    this.barLeading,
   });
 
   final GalleryQuery query;
@@ -56,12 +59,24 @@ class GalleryView extends ConsumerStatefulWidget {
   /// The bar's Platform pick (a collection's page): see [GalleryBar.platforms].
   final List<Platform>? platforms;
 
+  /// A search term from outside the bar (Search's box, #132), applied over
+  /// [query] and kept with the sort and filters picked since.
+  final String? search;
+
+  /// A term typed into an empty box sorts by Best match (Search).
+  final bool bestMatch;
+
+  /// See [GalleryBar.leading].
+  final Widget? barLeading;
+
   @override
   ConsumerState<GalleryView> createState() => _GalleryViewState();
 }
 
 class _GalleryViewState extends ConsumerState<GalleryView> {
-  late GalleryQuery _query = widget.query;
+  late GalleryQuery _query = widget.search == null
+      ? widget.query
+      : widget.query.withSearch(widget.search, bestMatch: widget.bestMatch);
   final List<Game> _games = [];
   int? _total;
   FilterValues _values = const FilterValues();
@@ -100,8 +115,10 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   void didUpdateWidget(GalleryView old) {
     super.didUpdateWidget(old);
     if (old.query != widget.query) {
-      _query = widget.query;
+      _query = widget.query.withSearch(widget.search ?? widget.query.search, bestMatch: widget.bestMatch);
       _reload();
+    } else if (old.search != widget.search && widget.search != _query.search) {
+      _setQuery(_query.copyWith(search: widget.search));
     }
   }
 
@@ -217,6 +234,10 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   }
 
   void _setQuery(GalleryQuery next) {
+    // A new term: Best match comes and goes with it.
+    if (next.search != _query.search) {
+      next = next.copyWith(search: _query.search).withSearch(next.search, bestMatch: widget.bestMatch);
+    }
     if (next == _query) return;
     setState(() => _query = next);
     if (!_thisPc) _reload();
@@ -294,6 +315,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       onScan: _query.platformId == null || _query.inCollection ? null : _scan,
       scanning: _scanning,
       platforms: widget.platforms,
+      leading: widget.barLeading,
     );
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

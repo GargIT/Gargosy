@@ -10,6 +10,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/collection_tile.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/g_focusable.dart';
+import '../../widgets/header_stat.dart';
 import '../../widgets/toast.dart';
 import '../game/open_game.dart';
 
@@ -52,7 +53,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     final c = widget.collection;
     final userId = ref.watch(rommUserIdProvider);
     final downloaded = {for (final g in ref.watch(gamesOnThisPcProvider)) ?int.tryParse(g.id)};
-    final platforms = ref.watch(collectionPlatformsProvider(c.query)).valueOrNull;
+    final platforms = ref.watch(galleryScopeProvider(c.query)).valueOrNull?.platforms;
     final virtual = c.kind == CollectionKind.virtual;
     final whose = virtual || c.userId == null
         ? null
@@ -132,10 +133,10 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
                   spacing: GSpace.s10,
                   runSpacing: GSpace.s3,
                   children: [
-                    _Stat('${c.romCount}', 'GAMES'),
-                    _Stat('${onThisPc(c, downloaded)}', 'ON THIS PC', color: GColors.gargosyTeal),
+                    HeaderStat('${c.romCount}', 'GAMES'),
+                    HeaderStat('${onThisPc(c, downloaded)}', 'ON THIS PC', color: GColors.gargosyTeal),
                     if (platforms != null && platforms.isNotEmpty)
-                      _Stat('${platforms.length}', 'PLATFORMS', key: const ValueKey('collection-platforms')),
+                      HeaderStat('${platforms.length}', 'PLATFORMS', key: const ValueKey('collection-platforms')),
                   ],
                 ),
               ],
@@ -198,33 +199,5 @@ class _Chip extends StatelessWidget {
         ),
       ],
     ),
-  );
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat(this.value, this.label, {super.key, this.color});
-  final String value;
-  final String label;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        value,
-        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700, color: color),
-      ),
-      Text(
-        label,
-        style: const TextStyle(
-          fontSize: GFont.sm,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1,
-          color: GColors.fgMuted,
-        ),
-      ),
-    ],
   );
 }

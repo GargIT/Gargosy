@@ -71,6 +71,25 @@ void main() {
     expect(find.text('Filters · 1'), findsOneWidget);
   });
 
+  testWidgets('in the filters, X applies and Y clears wherever the focus is', (tester) async {
+    final api = await pump(tester);
+    await tester.tap(find.byKey(const ValueKey('bar-filters')));
+    await tester.pumpAndSettle();
+    ProviderScope.containerOf(tester.element(find.text('Apply'))).read(inputModeProvider.notifier).state =
+        InputMode.gamepad;
+    await tester.pump();
+    expect(find.byKey(const ValueKey('filter-button-X')), findsOneWidget);
+    expect(find.byKey(const ValueKey('filter-button-Y')), findsOneWidget);
+    await press(tester, GameAction.confirm); // the first genre, focused
+    await press(tester, GameAction.favorite);
+    await press(tester, GameAction.confirm);
+    await press(tester, GameAction.detail);
+    await tester.pumpAndSettle();
+    expect(find.text('Apply'), findsNothing);
+    expect(api.queries.last.$1.genres, {'Action'});
+    expect(find.text('Filters · 1'), findsOneWidget);
+  });
+
   testWidgets("Sort by lists RomM's and the player's fields under headings; a pick reloads in its order", (
     tester,
   ) async {

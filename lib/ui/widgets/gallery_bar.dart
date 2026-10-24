@@ -12,11 +12,11 @@ import 'g_dropdown.dart';
 import 'g_focusable.dart';
 import 'on_screen_keyboard.dart';
 
-/// The sorts the Sort by list offers: RomM's and the player's own, and
-/// Downloaded with On this PC on.
-List<GallerySort> sortsFor({required bool thisPc}) => [
+/// The sorts the Sort by list offers: RomM's and the player's own, Best
+/// match while [searching], and Downloaded with On this PC on.
+List<GallerySort> sortsFor({required bool thisPc, bool searching = false}) => [
   for (final s in GallerySort.values)
-    if (s.group != SortGroup.thisPc || thisPc) s,
+    if ((s.group != SortGroup.thisPc || thisPc) && (s != GallerySort.bestMatch || searching)) s,
 ];
 
 /// A games page's filter and sort bar (RomM v2's): the filter field, the
@@ -34,6 +34,7 @@ class GalleryBar extends StatelessWidget {
     this.onScan,
     this.scanning = false,
     this.platforms,
+    this.leading,
   });
 
   final GalleryQuery query;
@@ -56,6 +57,9 @@ class GalleryBar extends StatelessWidget {
   /// are on; shown with two or more.
   final List<Platform>? platforms;
 
+  /// First on the bar (Search's box once the header has gone, #132).
+  final Widget? leading;
+
   @override
   Widget build(BuildContext context) {
     final filters = query.genres.length + query.regions.length;
@@ -74,6 +78,7 @@ class GalleryBar extends StatelessWidget {
         children: [
           Expanded(
             child: group([
+              ?leading,
               if (filterHint != null)
                 SizedBox(
                   width: 320,
@@ -139,7 +144,7 @@ class _SortFieldState extends State<_SortField> {
   bool _open = false;
 
   Future<void> _pick() async {
-    final sorts = sortsFor(thisPc: widget.thisPc);
+    final sorts = sortsFor(thisPc: widget.thisPc, searching: widget.query.search?.trim().isNotEmpty ?? false);
     final headings = <int, String>{};
     for (var i = 0; i < sorts.length; i++) {
       if (i == 0 || sorts[i].group != sorts[i - 1].group) headings[i] = sorts[i].group.label;
@@ -261,12 +266,18 @@ class FilterField extends ConsumerStatefulWidget {
     required this.text,
     required this.onChanged,
     this.delay = const Duration(milliseconds: 400),
+    this.large = false,
+    this.autofocus = false,
   });
 
   final String hint;
   final String text;
   final ValueChanged<String> onChanged;
   final Duration delay;
+
+  /// Search's box in its header (#132): bigger text and room.
+  final bool large;
+  final bool autofocus;
 
   @override
   ConsumerState<FilterField> createState() => _FilterFieldState();
@@ -365,10 +376,11 @@ class _FilterFieldState extends ConsumerState<FilterField> {
   @override
   Widget build(BuildContext context) {
     final empty = _controller.text.isEmpty;
+    final size = widget.large ? GFont.xl : GFont.lg;
     final content = Row(
       children: [
-        const Icon(Icons.search, size: 18, color: GColors.fgMuted),
-        const SizedBox(width: GSpace.s2),
+        Icon(Icons.search, size: widget.large ? 22 : 18, color: GColors.fgMuted),
+        SizedBox(width: widget.large ? GSpace.s3 : GSpace.s2),
         Expanded(
           child: _editing
               ? Actions(
@@ -380,7 +392,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
                     onChanged: _typed,
                     onSubmitted: (_) => _stop(),
                     cursorColor: GColors.primary,
-                    style: const TextStyle(fontSize: GFont.lg, color: GColors.fg),
+                    style: TextStyle(fontSize: size, color: GColors.fg),
                     decoration: InputDecoration.collapsed(
                       hintText: widget.hint,
                       hintStyle: const TextStyle(color: GColors.fgMuted),
@@ -390,7 +402,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
               : Text(
                   empty ? widget.hint : _controller.text,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: GFont.lg, color: empty ? GColors.fgMuted : GColors.fg),
+                  style: TextStyle(fontSize: size, color: empty ? GColors.fgMuted : GColors.fg),
                 ),
         ),
         if (!empty && !_editing)
@@ -406,7 +418,9 @@ class _FilterFieldState extends ConsumerState<FilterField> {
       ],
     );
     final box = Container(
-      padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
+      padding: widget.large
+          ? const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s4)
+          : const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
       decoration: BoxDecoration(
         color: GColors.bg.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(GRadius.pill),
@@ -418,6 +432,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
     return GFocusable(
       key: const ValueKey('filter-field'),
       focusNode: _box,
+      autofocus: widget.autofocus,
       borderRadius: GRadius.pill,
       onActivate: _activate,
       semanticLabel: widget.hint,

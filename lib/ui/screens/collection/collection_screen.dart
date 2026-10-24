@@ -68,7 +68,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   Widget build(BuildContext context) {
     final c = widget.collection;
     final name = c.isFavorite ? 'Favourites' : c.name;
-    final platforms = ref.watch(collectionPlatformsProvider(c.query)).valueOrNull;
+    final platforms = ref.watch(galleryScopeProvider(c.query)).valueOrNull?.platforms;
     return Actions(
       actions: {MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => openUserMenu(context, ref))},
       child: Scaffold(

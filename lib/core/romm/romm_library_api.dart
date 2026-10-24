@@ -20,6 +20,9 @@ enum SortGroup {
 /// `Rom`, `RomUser` or metadata column, checked against RomM 5.4.0's
 /// `_resolve_gallery_sort_key`; an older RomM sorts an unknown name by name).
 enum GallerySort {
+  /// RomM's search order (relevance: an empty `order_by` with a search term);
+  /// offered only while searching (#132).
+  bestMatch('', 'Best match', false),
   name('name', 'Name', false),
   recentlyAdded('created_at', 'Recently added', true),
   lastPlayed('last_played', 'Last played', true),
@@ -104,6 +107,23 @@ class GalleryQuery {
     regions: regions ?? this.regions,
     lastPlayedOnly: lastPlayedOnly,
   );
+
+  /// This query searching for [term] (blank: nothing). Best match never
+  /// stays without a term: it goes back to Name. With [bestMatch] (Search,
+  /// #132) a term typed into an empty box sorts by Best match, unless a sort
+  /// other than Name was picked.
+  GalleryQuery withSearch(String? term, {bool bestMatch = false}) {
+    final t = term?.trim() ?? '';
+    final next = copyWith(search: t.isEmpty ? null : t);
+    if (t.isEmpty) {
+      return sort == GallerySort.bestMatch ? next.copyWith(sort: GallerySort.name, descending: false) : next;
+    }
+    final wasEmpty = search?.trim().isEmpty ?? true;
+    if (bestMatch && wasEmpty && sort == GallerySort.name && !descending) {
+      return next.copyWith(sort: GallerySort.bestMatch);
+    }
+    return next;
+  }
 
   bool get hasFilters => genres.isNotEmpty || regions.isNotEmpty;
 
