@@ -1,7 +1,7 @@
 name: gargosy
 description: "A RomM desktop client for Windows, controller-first, in the look of RomM's v2 UI."
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ^3.13.2
