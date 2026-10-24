@@ -13,6 +13,7 @@ import 'package:gargosy/emulators/bios_sync.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/play/play_controller.dart';
+import 'package:gargosy/play/quit_combo.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/pin.dart';
@@ -225,6 +226,15 @@ void main() {
     expect(find.text('ABOUT'), findsOneWidget, reason: 'About');
     await press(tester, GameAction.r1);
     expect(find.text('ABOUT'), findsOneWidget, reason: 'the last one');
+  });
+
+  testWidgets('Controller: Select + Start quits a game, on by default; turned off it stays off', (tester) async {
+    await pump(tester, initial: SettingsPage.controller);
+    expect(c.read(quitComboOnProvider), isTrue);
+    await tester.tap(find.text('Hold Select + Start to quit'));
+    await tester.pumpAndSettle();
+    expect(c.read(quitComboOnProvider), isFalse);
+    expect(c.read(appPreferencesProvider).getBool(QuitCombo.prefKey), isFalse);
   });
 
   testWidgets('Image cache: how many images are kept, picked from a list', (tester) async {

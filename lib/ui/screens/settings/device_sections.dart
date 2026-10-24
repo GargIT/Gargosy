@@ -3,20 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/input/deadzone_config.dart';
 import '../../../core/platform/window_service.dart';
+import '../../../play/quit_combo.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../shell/user_menu.dart';
 import '../../theme/tokens.dart';
 import 'settings_rows.dart';
 
-/// Settings → Controller: the stick deadzone (this PC's, for every profile).
-class ControllerSection extends StatefulWidget {
+/// Settings → Controller: the stick deadzone and quitting a game with
+/// Select + Start (#141), this PC's, for every profile.
+class ControllerSection extends ConsumerStatefulWidget {
   const ControllerSection({super.key});
 
   @override
-  State<ControllerSection> createState() => _ControllerSectionState();
+  ConsumerState<ControllerSection> createState() => _ControllerSectionState();
 }
 
-class _ControllerSectionState extends State<ControllerSection> {
+class _ControllerSectionState extends ConsumerState<ControllerSection> {
   Future<void> _step(double by) async {
     final next = (globalDeadzone + by).clamp(kMinDeadzone, kMaxDeadzone);
     await setGlobalDeadzone(double.parse(next.toStringAsFixed(2)));
@@ -66,6 +68,24 @@ class _ControllerSectionState extends State<ControllerSection> {
                 if (mounted) setState(() {});
               },
             ),
+          ),
+        ],
+      ),
+      SettingsCard(
+        title: 'Quit a game',
+        icon: Icons.power_settings_new,
+        note: "This PC's setting, for every profile.",
+        children: [
+          SettingsToggle(
+            label: 'Hold Select + Start to quit',
+            note:
+                'Held for ${QuitCombo.holdTime.inSeconds} seconds while a game runs: Gargosy closes the emulator '
+                'the way its close button does, so it saves first, and syncs as usual.',
+            on: ref.watch(quitComboOnProvider),
+            onChanged: (on) async {
+              await ref.read(appPreferencesProvider).setBool(QuitCombo.prefKey, on);
+              ref.invalidate(quitComboOnProvider);
+            },
           ),
         ],
       ),
