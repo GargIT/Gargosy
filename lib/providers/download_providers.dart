@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/romm/romm_models.dart';
+import '../library/disk_space.dart';
 import '../library/download_service.dart';
 import '../library/dsi_title.dart';
 import '../library/library_snapshot.dart';
@@ -12,6 +13,9 @@ import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
+
+/// The free space on a path's drive (#142); tests give their own.
+final freeSpaceProvider = Provider<FreeSpaceOf>((ref) => windowsFreeSpace);
 
 /// Bumped after a download or a delete, so "downloaded?" is read again.
 final romFilesVersionProvider = StateProvider<int>((ref) => 0);
@@ -36,6 +40,7 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
     tempDir: p.join(root.appData, 'temp'),
     urlFor: romm.getDownloadUrl,
     detail: romm.getGame,
+    freeSpace: ref.watch(freeSpaceProvider),
   );
 });
 

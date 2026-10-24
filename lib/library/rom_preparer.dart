@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../profiles/path_guard.dart';
+import 'disk_space.dart';
 import 'rom_files.dart';
 import 'xbox_disc.dart';
 
@@ -35,6 +36,7 @@ class RomPreparer {
     required this.guard,
     required this.tempDir,
     this.gamePartition = xgd1GamePartition,
+    this.freeSpace,
     PlatformInfo? platform,
   }) : _tar = p.join(
          (platform ?? PlatformInfo.current).environment['SystemRoot'] ?? r'C:\Windows',
@@ -46,6 +48,9 @@ class RomPreparer {
   final PathGuard guard;
   final String tempDir;
   final int gamePartition;
+
+  /// The free space on a path's drive (#142); null skips the check.
+  final FreeSpaceOf? freeSpace;
   final String _tar;
 
   /// Emulators that open a zipped ROM themselves.
@@ -97,6 +102,14 @@ class RomPreparer {
     io.Directory(staging).createSync(recursive: true);
     try {
       final entries = await _list(zip, game);
+      if (freeSpace case final free?) {
+        final total = entries.fold<int>(0, (n, e) => n + e.size);
+        // Unpacked in temp, then moved into roms\ (copied when that's another drive).
+        checkSpace({
+          staging: total,
+          if (driveOf(dest).toUpperCase() != driveOf(staging).toUpperCase()) dest: total,
+        }, free);
+      }
       final isos = [
         for (final e in entries)
           if (p.extension(e.name).toLowerCase() == '.iso') e,

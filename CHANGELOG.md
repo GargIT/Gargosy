@@ -22,6 +22,11 @@ What changed in each release of Gargosy. The format follows
   2 seconds while a game runs, and Gargosy closes the emulator the way its
   close button does, so it saves first, then syncs as usual. It works in
   every emulator; Settings → Controller turns it off.
+- A download checks the free space first: when the drive hasn't room for the
+  game (and, for a game that comes as a zip, its unpacked copy), it doesn't
+  start and says how much it needs and how much is free. The game page shows
+  the free space under Download when it's tight. Unpacking a zip for an
+  emulator checks the same.
 
 ## [0.3.0] - 2026-10-24
 

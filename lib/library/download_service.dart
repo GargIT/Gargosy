@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/romm/romm_models.dart';
 import '../profiles/path_guard.dart';
+import 'disk_space.dart';
 import 'rom_files.dart';
 
 enum DownloadPhase { downloading, extracting, done, failed, cancelled }
@@ -48,6 +49,7 @@ class DownloadService {
     required this.tempDir,
     required this.urlFor,
     this.detail,
+    this.freeSpace,
   });
 
   final Dio dio;
@@ -59,6 +61,24 @@ class DownloadService {
 
   /// The game with its file list (list pages leave it out).
   final Future<Game?> Function(String id)? detail;
+
+  /// The free space on a path's drive (#142); null skips the check.
+  final FreeSpaceOf? freeSpace;
+
+  /// What [download] writes, by place: the download in temp, a zip's
+  /// unpacked copy beside it, and the game in `roms\` when that's another
+  /// drive (on the same one it's only renamed).
+  static Map<String, int> spaceFor({
+    required int size,
+    required bool zip,
+    required String part,
+    required String staging,
+    required String target,
+  }) => {
+    part: size,
+    if (zip) staging: size,
+    if (driveOf(target).toUpperCase() != driveOf(part).toUpperCase()) target: size,
+  };
 
   /// What RomM will send for [game], and the file's name when it sits in the
   /// game's folder.
@@ -80,6 +100,12 @@ class DownloadService {
     await io.Directory(guard.check(tempDir)).create(recursive: true);
     final part = guard.check(p.join(tempDir, 'download-${game.id}.part'));
     final staging = guard.check(p.join(tempDir, 'extract-${game.id}'));
+    if (freeSpace case final free?) {
+      checkSpace(
+        spaceFor(size: game.fileSize, zip: shape == _Shape.zip, part: part, staging: staging, target: target),
+        free,
+      );
+    }
     try {
       await dio.download(
         urlFor(game),
