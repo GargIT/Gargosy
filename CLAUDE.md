@@ -178,6 +178,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 ## Claude Code setup
 - `.claude/settings.json` — hooks: `.claude/hooks/guard.js` (PreToolUse: blocks a session link in a `git`/`gh` command, hand edits to `pubspec.lock`, `build/`, `dist/`, `third_party/argosy-sigil/`, and `Platform.isWindows`/`Platform.environment` in `lib/` outside `platform_info.dart`), `format-dart.js` (PostToolUse: `dart format` on the edited `.dart` file); `paths.js` maps `C:\…` and `/c/…` paths to the project.
 - `.mcp.json` — the Dart SDK's MCP server (`dart mcp-server`: analyze, format, tests, pub.dev, a running app's widget tree).
+- Caveman rule files (terse replies; from `caveman-init.js`): `AGENTS.md`, `.github/copilot-instructions.md`, `.opencode/AGENTS.md` (fenced `<!-- caveman-begin -->` … `<!-- caveman-end -->`), `.cursor/rules/caveman.mdc`, `.windsurf/rules/caveman.md`, `.clinerules/caveman.md`.
 - `.claude/skills/new-emulator/` (every place an emulator is wired in), `.claude/skills/ship/` (`/ship`: gate, docs, push, PR, dev install, CI, merge).
 - `.claude/agents/rules-reviewer.md` (a diff against the rules above, read-only), `file-map-keeper.md` (the File Map for a branch's files).
 
