@@ -85,13 +85,14 @@ class GalleryQuery {
   final bool lastPlayedOnly;
 
   GalleryQuery copyWith({
+    Object? platformId = _keep,
     Object? search = _keep,
     GallerySort? sort,
     bool? descending,
     Set<String>? genres,
     Set<String>? regions,
   }) => GalleryQuery(
-    platformId: platformId,
+    platformId: identical(platformId, _keep) ? this.platformId : platformId as int?,
     collectionId: collectionId,
     smartCollectionId: smartCollectionId,
     virtualCollectionId: virtualCollectionId,
@@ -182,17 +183,26 @@ class GalleryQuery {
 
 /// The values a gallery's filters can take (RomM's `filter_values`).
 class FilterValues {
-  const FilterValues({this.genres = const [], this.regions = const []});
+  const FilterValues({this.genres = const [], this.regions = const [], this.platforms = const []});
   final List<String> genres;
   final List<String> regions;
+
+  /// The ids of the platforms the scope's games are on (RomM 5.4).
+  final List<int> platforms;
 
   static List<String> _list(Object? v) => [
     for (final s in (v is List ? v : const []))
       if (s is String && s.isNotEmpty) s,
   ]..sort();
 
-  factory FilterValues.fromJson(Map<String, dynamic> json) =>
-      FilterValues(genres: _list(json['genres']), regions: _list(json['regions']));
+  factory FilterValues.fromJson(Map<String, dynamic> json) => FilterValues(
+    genres: _list(json['genres']),
+    regions: _list(json['regions']),
+    platforms: [
+      for (final id in (json['platforms'] is List ? json['platforms'] as List : const []))
+        if (id is int) id,
+    ],
+  );
 }
 
 class GalleryPage {

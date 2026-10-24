@@ -52,6 +52,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     final c = widget.collection;
     final userId = ref.watch(rommUserIdProvider);
     final downloaded = {for (final g in ref.watch(gamesOnThisPcProvider)) ?int.tryParse(g.id)};
+    final platforms = ref.watch(collectionPlatformsProvider(c.query)).valueOrNull;
     final virtual = c.kind == CollectionKind.virtual;
     final whose = virtual || c.userId == null
         ? null
@@ -133,6 +134,8 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
                   children: [
                     _Stat('${c.romCount}', 'GAMES'),
                     _Stat('${onThisPc(c, downloaded)}', 'ON THIS PC', color: GColors.gargosyTeal),
+                    if (platforms != null && platforms.isNotEmpty)
+                      _Stat('${platforms.length}', 'PLATFORMS', key: const ValueKey('collection-platforms')),
                   ],
                 ),
               ],
@@ -199,7 +202,7 @@ class _Chip extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat(this.value, this.label, {this.color});
+  const _Stat(this.value, this.label, {super.key, this.color});
   final String value;
   final String label;
   final Color? color;

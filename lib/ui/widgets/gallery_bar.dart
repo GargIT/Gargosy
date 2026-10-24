@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/romm/romm_library_api.dart';
+import '../../core/romm/romm_models.dart';
 import '../../providers/ui_provider.dart';
 import '../input/gargosy_intents.dart';
 import '../theme/tokens.dart';
@@ -32,6 +33,7 @@ class GalleryBar extends StatelessWidget {
     this.filterHint,
     this.onScan,
     this.scanning = false,
+    this.platforms,
   });
 
   final GalleryQuery query;
@@ -49,6 +51,10 @@ class GalleryBar extends StatelessWidget {
   /// Scan, beside On this PC while it's on (a platform's page only).
   final VoidCallback? onScan;
   final bool scanning;
+
+  /// The Platform pick (a collection's page, #128): the platforms its games
+  /// are on; shown with two or more.
+  final List<Platform>? platforms;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +90,7 @@ class GalleryBar extends StatelessWidget {
                 on: filters > 0,
                 onPress: onFilters,
               ),
+              if ((platforms?.length ?? 0) > 1) _PlatformField(query: query, platforms: platforms!, onQuery: onQuery),
               _BarButton(
                 key: const ValueKey('bar-this-pc'),
                 icon: thisPc ? Icons.toggle_on : Icons.toggle_off_outlined,
@@ -163,6 +170,53 @@ class _SortFieldState extends State<_SortField> {
       onPress: _pick,
     ),
   );
+}
+
+class _PlatformField extends StatefulWidget {
+  const _PlatformField({required this.query, required this.platforms, required this.onQuery});
+
+  final GalleryQuery query;
+  final List<Platform> platforms;
+  final ValueChanged<GalleryQuery> onQuery;
+
+  @override
+  State<_PlatformField> createState() => _PlatformFieldState();
+}
+
+class _PlatformFieldState extends State<_PlatformField> {
+  final _key = GlobalKey();
+  bool _open = false;
+
+  Future<void> _pick() async {
+    final platforms = widget.platforms;
+    setState(() => _open = true);
+    final i = await showDropdown(
+      context,
+      field: _key,
+      labels: ['All ${platforms.length}', for (final p in platforms) p.nameForDisplay],
+      current: platforms.indexWhere((p) => p.id == widget.query.platformId) + 1,
+    );
+    if (!mounted) return;
+    setState(() => _open = false);
+    if (i == null) return;
+    widget.onQuery(widget.query.copyWith(platformId: i == 0 ? null : platforms[i - 1].id));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final picked = widget.platforms.where((p) => p.id == widget.query.platformId).firstOrNull;
+    return KeyedSubtree(
+      key: _key,
+      child: GDropdownField(
+        key: const ValueKey('bar-platform'),
+        icon: Icons.videogame_asset_outlined,
+        text: 'Platform: ${picked?.nameForDisplay ?? 'All ${widget.platforms.length}'}',
+        open: _open,
+        compact: true,
+        onPress: _pick,
+      ),
+    );
+  }
 }
 
 class _BarButton extends StatelessWidget {

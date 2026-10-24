@@ -22,6 +22,19 @@ final platformsProvider = FutureProvider<List<Platform>>((ref) async {
   return list;
 });
 
+/// The platforms a collection's games are on (#128), by name: RomM's filter
+/// values for the collection's scope, named from [platformsProvider].
+final collectionPlatformsProvider = FutureProvider.autoDispose.family<List<Platform>, GalleryQuery>((ref, scope) async {
+  final api = ref.watch(libraryApiProvider);
+  if (api == null) return const [];
+  final page = await api.page(scope.scopeOnly, limit: 1, withFilterValues: true);
+  final ids = {...?page.filters?.platforms};
+  return [
+    for (final p in await ref.watch(platformsProvider.future))
+      if (ids.contains(p.id)) p,
+  ];
+});
+
 final collectionsProvider = FutureProvider<List<RommCollection>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   return api == null ? const [] : api.collections();

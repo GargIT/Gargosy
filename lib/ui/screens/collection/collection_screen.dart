@@ -68,6 +68,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   Widget build(BuildContext context) {
     final c = widget.collection;
     final name = c.isFavorite ? 'Favourites' : c.name;
+    final platforms = ref.watch(collectionPlatformsProvider(c.query)).valueOrNull;
     return Actions(
       actions: {MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => openUserMenu(context, ref))},
       child: Scaffold(
@@ -118,7 +119,12 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                   Expanded(
                     child: NotificationListener<ScrollNotification>(
                       onNotification: _onScroll,
-                      child: GalleryView(query: c.query, filterHint: 'Filter this collection…', pinnedBar: true),
+                      child: GalleryView(
+                        query: c.query,
+                        filterHint: 'Filter this collection…',
+                        pinnedBar: true,
+                        platforms: platforms,
+                      ),
                     ),
                   ),
                   const HintBar(

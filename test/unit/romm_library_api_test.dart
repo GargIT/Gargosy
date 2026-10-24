@@ -318,4 +318,21 @@ void main() {
   test('RomNote comes from the reply', () {
     expect(RomNote.fromJson({'id': 1, 'title': 't', 'content': 'c'}).id, 1);
   });
+
+  test("filter values carry the scope's platform ids (#128); a collection's query takes a platform", () {
+    final v = FilterValues.fromJson({
+      'genres': ['Action'],
+      'platforms': [4, 'x', 5],
+    });
+    expect(v.platforms, [4, 5]);
+    expect(FilterValues.fromJson({}).platforms, isEmpty);
+
+    const q = GalleryQuery(collectionId: 2, search: 'zelda');
+    final picked = q.copyWith(platformId: 5);
+    expect((picked.collectionId, picked.platformId, picked.search), (2, 5, 'zelda'));
+    expect(picked.toParams(offset: 0, limit: 1)['platform_ids'], [5]);
+    expect(picked.toParams(offset: 0, limit: 1)['collection_id'], 2);
+    expect(picked.copyWith(search: null).platformId, 5, reason: 'kept unless given');
+    expect(picked.copyWith(platformId: null).platformId, isNull);
+  });
 }
