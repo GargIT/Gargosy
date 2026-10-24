@@ -1,3 +1,5 @@
+import '../../core/romm/romm_play_sessions.dart';
+
 /// 1.4 GB, 512 MB, 12 KB.
 String formatBytes(int bytes) {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -16,3 +18,17 @@ String formatDate(DateTime d) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${l.year}-${two(l.month)}-${two(l.day)} ${two(l.hour)}:${two(l.minute)}';
 }
+
+/// 12 h 40 min, 35 min, under a minute (#146).
+String formatPlayTime(Duration d) {
+  if (d.inMinutes < 1) return 'under a minute';
+  final h = d.inHours;
+  final m = d.inMinutes % 60;
+  if (h == 0) return '$m min';
+  return m == 0 ? '$h h' : '$h h $m min';
+}
+
+/// "Played 12 h 40 min · 8 sessions", "… on this PC" when RomM's aren't in it.
+String playTimeLine(PlayTime t) =>
+    'Played ${formatPlayTime(t.total)} · ${t.sessions} ${t.sessions == 1 ? 'session' : 'sessions'}'
+    '${t.thisPcOnly ? ' on this PC' : ''}';
