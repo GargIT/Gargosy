@@ -235,28 +235,48 @@ class PlayController extends StateNotifier<PlayState> {
     String? loadStatePath,
     void Function(String)? onNotice,
   }) async {
+    void started(CloseGame close) => _started(game, close);
     try {
-      return await engine.launch(game, romPath, emulator, coreOverride: coreOverride, loadStatePath: loadStatePath);
+      return await engine.launch(
+        game,
+        romPath,
+        emulator,
+        coreOverride: coreOverride,
+        loadStatePath: loadStatePath,
+        onStarted: started,
+      );
     } on MissingRetroArchCoreException catch (missing) {
       onNotice?.call('Downloading the ${coreLabel(missing.coreName)} core for RetroArch…');
       await engine.installCore(emulator, missing);
-      return engine.launch(game, romPath, emulator, coreOverride: coreOverride, loadStatePath: loadStatePath);
+      return engine.launch(
+        game,
+        romPath,
+        emulator,
+        coreOverride: coreOverride,
+        loadStatePath: loadStatePath,
+        onStarted: started,
+      );
     }
   }
 
   QuitCombo? _quitCombo;
   Future<void> Function()? _close;
 
-  /// While [session] runs: Select + Start held closes it (#141), when this
-  /// PC allows it; its end is [_ended].
-  void _running(Game game, PlaySession session) {
-    _close = session.close;
-    if (session.close != null && _ref.read(quitComboOnProvider)) {
+  /// The emulator of [game] started: Select + Start held closes it (#141),
+  /// when this PC allows it.
+  void _started(Game game, CloseGame close) {
+    _close = close;
+    _quitCombo?.cancel();
+    if (_ref.read(quitComboOnProvider)) {
       _quitCombo = QuitCombo(selectStartHeld.stream, quitGame);
       debugPrint('[Quit] Select + Start closes ${game.displayName}');
     } else {
-      debugPrint('[Quit] Select + Start is off for this game (${session.close == null ? 'no process' : 'Settings'})');
+      debugPrint('[Quit] Select + Start is off in Settings');
     }
+  }
+
+  /// [session]'s end is [_ended].
+  void _running(Game game, PlaySession session) {
     session.finished.then(
       (result) => _ended(game, result.message, synced: result.synced),
       onError: (Object e) => _ended(game, 'Saves not synced: $e'),

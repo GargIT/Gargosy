@@ -188,8 +188,13 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     process.stdout.drain<void>();
     process.stderr.drain<void>();
     process.exitCode.then((_) => config.finish(c));
+    onGameStarted?.call(process);
     return process;
   }
+
+  /// Told each game's emulator process as it starts (#141): the copied
+  /// launch returns only once the emulator has exited, too late to close it.
+  void Function(io.Process process)? onGameStarted;
 
   /// Opens [emulatorId]'s own window on this profile's data, with no game
   /// (Settings → Emulators, Open): the folders and settings a launch points
