@@ -16,6 +16,7 @@ import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/quit_combo.dart';
 import 'package:gargosy/ui/screens/settings/storage_section.dart';
+import 'package:gargosy/ui/shell/screensaver.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/pin.dart';
@@ -261,6 +262,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('25 000 images (about 2.9 GB)'), findsOneWidget);
     expect(find.text('Clear the cache'), findsOneWidget);
+  });
+
+  testWidgets('Display: the screensaver after 5 minutes by default, changed from a list (#147)', (tester) async {
+    await pump(tester, initial: SettingsPage.display);
+    expect(find.text('After 5 minutes'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('screensaver')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Off'));
+    await tester.pumpAndSettle();
+    expect(c.read(screensaverMinutesProvider), 0);
+    expect(find.text('Off'), findsOneWidget);
   });
 
   testWidgets('Rename goes through the Name field', (tester) async {

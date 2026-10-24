@@ -44,6 +44,10 @@ What changed in each release of Gargosy. The format follows
   and when they were last played, and delete one or several (X marks them)
   from this PC. Only the ROM files go; the saves stay. Temp can be emptied.
   The image cache's settings moved here.
+- A screensaver: left untouched on Home or a tab for 5 minutes, Gargosy
+  shows the library a game at a time over its art. Any button puts you back
+  where you were; A opens the game shown. Settings → Display sets the wait
+  (2, 5, 10 or 30 minutes) or turns it off.
 
 ### Changed
 

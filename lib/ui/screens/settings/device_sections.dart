@@ -5,7 +5,9 @@ import '../../../core/input/deadzone_config.dart';
 import '../../../core/platform/window_service.dart';
 import '../../../play/quit_combo.dart';
 import '../../../profiles/profile_providers.dart';
+import '../../shell/screensaver.dart';
 import '../../shell/user_menu.dart';
+import '../../widgets/controller_dialogs.dart';
 import '../../theme/tokens.dart';
 import 'settings_rows.dart';
 
@@ -140,7 +142,8 @@ class _DeadzoneBar extends StatelessWidget {
   }
 }
 
-/// Settings → Display: fullscreen (F11), remembered for the next start.
+/// Settings → Display: fullscreen (F11), remembered for the next start, and
+/// the screensaver's wait (#147).
 class DisplaySection extends ConsumerStatefulWidget {
   const DisplaySection({super.key});
 
@@ -175,6 +178,24 @@ class _DisplaySectionState extends ConsumerState<DisplaySection> {
               await toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool);
               final v = await WindowService.isFullScreen();
               if (mounted) setState(() => _full = v);
+            },
+          ),
+          SettingsField(
+            key: const ValueKey('screensaver'),
+            label: 'Screensaver',
+            value: ScreensaverDelay.label(ref.watch(screensaverMinutesProvider)),
+            action: 'Change',
+            onActivate: () async {
+              const choices = ScreensaverDelay.choices;
+              final i = await showChoice(
+                context,
+                title: 'Screensaver on Home and the tabs',
+                labels: [for (final n in choices) ScreensaverDelay.label(n)],
+                current: choices.indexOf(ref.read(screensaverMinutesProvider)),
+              );
+              if (i == null || i < 0) return;
+              await ref.read(appPreferencesProvider).setString(ScreensaverDelay.prefKey, '${choices[i]}');
+              ref.invalidate(screensaverMinutesProvider);
             },
           ),
         ],
