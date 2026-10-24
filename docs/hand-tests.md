@@ -235,3 +235,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Collections from the game page (#144)
 
 97. [ ] On a game's page, ⋯ → Add to collection…: your own collections are listed (Favourites first, not other players'), ✓ on those it's in. A on one puts the game in, A again takes it out; RomM's web UI shows the same. New collection…: type a name, choose Only you or Shared: it's made with the game in it, and shows on the Collections tab. On your own collection's page, ⋯: Rename… changes the name there and on RomM; Share / Stop sharing changes the "Shared on RomM" chip; Delete collection… asks first, then the page closes and the collection is gone (its games stay). Another player's shared collection has no ⋯.
+
+## Storage on this PC (#145)
+
+98. [ ] Settings → Storage (THIS PC; it replaces Image cache, whose card is at its end): the drive's free space and size, then ROMs, Emulators, BIOS, profiles' data, Image cache and Temp with their sizes (Explorer's folder properties agree, roughly). ROMs by platform, largest first: A on one lists its games largest first, with size and when last played; a game another profile downloaded says it isn't in this profile's library. A on one asks, then deletes only that ROM (its saves stay; the game page says Download again). X marks two, Delete marked asks with the total, and both go. Empty Temp is refused while a download runs.

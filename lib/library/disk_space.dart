@@ -13,7 +13,10 @@ typedef FreeSpaceOf = int? Function(String path);
 
 /// [FreeSpaceOf] on Windows: `GetDiskFreeSpaceExW` on the nearest folder of
 /// [path] that exists.
-int? windowsFreeSpace(String path) {
+int? windowsFreeSpace(String path) => windowsDiskUsage(path)?.free;
+
+/// The free bytes (to this user) and the size of [path]'s drive (#145).
+({int free, int total})? windowsDiskUsage(String path) {
   var dir = p.normalize(p.absolute(path));
   while (!io.Directory(dir).existsSync()) {
     final up = p.dirname(dir);
@@ -22,8 +25,9 @@ int? windowsFreeSpace(String path) {
   }
   return using((arena) {
     final free = arena<Uint64>();
-    final ok = GetDiskFreeSpaceEx(dir.toNativeUtf16(allocator: arena), free, nullptr, nullptr);
-    return ok == 0 ? null : free.value;
+    final total = arena<Uint64>();
+    final ok = GetDiskFreeSpaceEx(dir.toNativeUtf16(allocator: arena), free, total, nullptr);
+    return ok == 0 ? null : (free: free.value, total: total.value);
   });
 }
 

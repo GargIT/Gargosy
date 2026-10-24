@@ -1,0 +1,144 @@
+import 'dart:io' as io;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+
+import '../../../library/disk_space.dart';
+import '../../../library/storage_usage.dart';
+import '../../../play/play_controller.dart';
+import '../../../profiles/path_guard.dart';
+import '../../../profiles/profile_providers.dart';
+import '../../../providers/download_providers.dart';
+import '../../../providers/engine_providers.dart';
+import '../../../providers/library_providers.dart';
+import '../../theme/tokens.dart';
+import '../../widgets/format.dart';
+import '../../widgets/toast.dart';
+import '../storage_platform_screen.dart';
+import 'image_cache_section.dart';
+import 'settings_rows.dart';
+
+/// What Gargosy's folders take, read again when Storage opens (#145).
+final storageUsageProvider = FutureProvider.autoDispose<StorageUsage>((ref) => readStorage(ref.watch(appRootProvider)));
+
+/// The drive of the Gargosy folder: free and size; tests give their own.
+final diskUsageProvider = Provider<({int free, int total})? Function(String path)>((ref) => windowsDiskUsage);
+
+/// A platform's name from its folder (RomM's slug).
+String platformNameFor(WidgetRef ref, String folder) {
+  final platforms = ref.watch(platformsProvider).valueOrNull ?? const [];
+  return platforms.where((x) => x.slug == folder).firstOrNull?.name ?? folder;
+}
+
+/// Settings → Storage (#145): the drive, what Gargosy's folders take, the
+/// ROMs by platform (A opens one: its games, to delete from this PC), Temp
+/// emptied, and the image cache.
+class StorageSection extends ConsumerStatefulWidget {
+  const StorageSection({super.key});
+
+  @override
+  ConsumerState<StorageSection> createState() => _StorageSectionState();
+}
+
+class _StorageSectionState extends ConsumerState<StorageSection> {
+  bool _emptying = false;
+
+  /// Temp's leftovers: never while a download, a game or a sync might use them.
+  Future<void> _emptyTemp() async {
+    if (ref.read(downloadsProvider.notifier).pending > 0 ||
+        ref.read(playControllerProvider).runningGameId != null ||
+        ref.read(syncActivityProvider)?.value != null) {
+      showToast(context, 'Not while a download, a game or a save sync runs.');
+      return;
+    }
+    setState(() => _emptying = true);
+    final root = ref.read(appRootProvider);
+    final guard = PathGuard(root);
+    final temp = p.join(root.appData, 'temp');
+    try {
+      if (io.Directory(temp).existsSync()) {
+        for (final e in io.Directory(temp).listSync(followLinks: false)) {
+          try {
+            e is io.Directory ? e.deleteSync(recursive: true) : io.File(guard.check(e.path)).deleteSync();
+          } on io.FileSystemException {
+            // In use: left for next time.
+          }
+        }
+      }
+    } finally {
+      ref.invalidate(storageUsageProvider);
+      if (mounted) setState(() => _emptying = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final root = ref.watch(appRootProvider);
+    final disk = ref.watch(diskUsageProvider)(root.root);
+    final usage = ref.watch(storageUsageProvider);
+    final counting = switch (usage) {
+      AsyncError() => "Couldn't be read",
+      _ => 'Counting…',
+    };
+    final folders = usage.valueOrNull?.folders;
+    final platforms = usage.valueOrNull?.platforms ?? const <PlatformUsage>[];
+    return ListView(
+      children: [
+        SettingsCard(
+          title: 'Storage',
+          icon: Icons.storage,
+          note: "What takes space in the Gargosy folder on this PC. ROMs are shared by every profile; saves aren't in them.",
+          children: [
+            if (disk != null) ...[
+              SettingsField(
+                key: const ValueKey('storage-drive'),
+                label: 'Drive ${driveOf(root.root)}',
+                value: '${formatBytes(disk.free)} free of ${formatBytes(disk.total)}',
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(GRadius.pill),
+                child: LinearProgressIndicator(value: disk.total == 0 ? 0 : 1 - disk.free / disk.total),
+              ),
+            ],
+            for (final label in folders?.keys ?? const ['ROMs'])
+              SettingsField(label: label, value: folders == null ? counting : formatBytes(folders[label]!)),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SettingsButton(
+                key: const ValueKey('storage-empty-temp'),
+                label: _emptying ? 'Emptying…' : 'Empty Temp',
+                icon: Icons.delete_sweep_outlined,
+                onActivate: _emptying ? null : _emptyTemp,
+              ),
+            ),
+          ],
+        ),
+        SettingsCard(
+          title: 'ROMs by platform',
+          icon: Icons.sports_esports_outlined,
+          note: 'Largest first. Open one to see its games and delete them from this PC.',
+          children: [
+            if (usage.isLoading) const Text('Counting…', style: TextStyle(color: GColors.fgMuted)),
+            if (!usage.isLoading && platforms.isEmpty)
+              const Text('No ROMs on this PC yet.', style: TextStyle(color: GColors.fgMuted)),
+            for (final (i, x) in platforms.indexed)
+              SettingsField(
+                key: ValueKey('storage-platform-${x.folder}'),
+                autofocus: i == 0,
+                label: platformNameFor(ref, x.folder),
+                value: '${formatBytes(x.bytes)} · ${x.entries.length} ${x.entries.length == 1 ? 'game' : 'games'}',
+                action: 'Open',
+                onActivate: () async {
+                  await Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => StoragePlatformScreen(folder: x.folder)));
+                  ref.invalidate(storageUsageProvider);
+                },
+              ),
+          ],
+        ),
+        const ImageCacheCard(),
+      ],
+    );
+  }
+}

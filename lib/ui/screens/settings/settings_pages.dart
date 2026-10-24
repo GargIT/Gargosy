@@ -21,7 +21,7 @@ enum SettingsPage {
   emulatorSettings(SettingsGroup.library, 'Emulator settings', Icons.tune),
   controller(SettingsGroup.thisPc, 'Controller', Icons.gamepad_outlined),
   display(SettingsGroup.thisPc, 'Display', Icons.desktop_windows_outlined),
-  imageCache(SettingsGroup.thisPc, 'Image cache', Icons.photo_library_outlined),
+  storage(SettingsGroup.thisPc, 'Storage', Icons.storage_outlined),
   about(SettingsGroup.gargosy, 'About', Icons.info_outline);
 
   const SettingsPage(this.group, this.label, this.icon);

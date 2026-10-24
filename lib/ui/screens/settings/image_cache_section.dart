@@ -12,16 +12,18 @@ String _grouped(int n) => n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+$)
 
 String imageCacheChoiceLabel(int n) => '${_grouped(n)} images (about ${formatBytes(n * ImageCacheSize.bytesPerImage)})';
 
-/// Settings → Image cache: how many covers and logos this PC keeps, what
-/// they take now, and Clear.
-class ImageCacheSection extends ConsumerStatefulWidget {
-  const ImageCacheSection({super.key});
+/// Settings → Storage's Image cache card: how many covers and logos this PC
+/// keeps, what they take now, and Clear.
+class ImageCacheCard extends ConsumerStatefulWidget {
+  const ImageCacheCard({super.key, this.autofocus = false});
+
+  final bool autofocus;
 
   @override
-  ConsumerState<ImageCacheSection> createState() => _ImageCacheSectionState();
+  ConsumerState<ImageCacheCard> createState() => _ImageCacheCardState();
 }
 
-class _ImageCacheSectionState extends ConsumerState<ImageCacheSection> {
+class _ImageCacheCardState extends ConsumerState<ImageCacheCard> {
   bool _clearing = false;
 
   Future<void> _pick(int current) async {
@@ -50,43 +52,39 @@ class _ImageCacheSectionState extends ConsumerState<ImageCacheSection> {
   Widget build(BuildContext context) {
     final size = ref.watch(imageCacheSizeProvider);
     final usage = ref.watch(imageCacheUsageProvider);
-    return ListView(
+    return SettingsCard(
+      title: 'Image cache',
+      icon: Icons.photo_library_outlined,
+      note:
+          "Covers and platform logos kept on this PC, so browsing doesn't ask RomM for them again. "
+          "Grids use RomM's small covers, a game's page the large one. Past the limit, the ones looked "
+          "at longest ago go. This PC's setting, for every profile.",
       children: [
-        SettingsCard(
-          title: 'Image cache',
-          icon: Icons.photo_library_outlined,
-          note:
-              "Covers and platform logos kept on this PC, so browsing doesn't ask RomM for them again. "
-              "Grids use RomM's small covers, a game's page the large one. Past the limit, the ones looked "
-              "at longest ago go. This PC's setting, for every profile.",
-          children: [
-            SettingsField(
-              key: const ValueKey('image-cache-size'),
-              label: 'Keep up to',
-              value: imageCacheChoiceLabel(size),
-              action: 'Change',
-              onActivate: () => _pick(size),
-              autofocus: true,
-            ),
-            SettingsField(
-              key: const ValueKey('image-cache-usage'),
-              label: 'On this PC now',
-              value: switch (usage) {
-                AsyncData(:final value) => '${_grouped(value.files)} images · ${formatBytes(value.bytes)}',
-                AsyncError() => "Couldn't be read",
-                _ => 'Counting…',
-              },
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SettingsButton(
-                key: const ValueKey('image-cache-clear'),
-                label: _clearing ? 'Clearing…' : 'Clear the cache',
-                icon: Icons.delete_sweep_outlined,
-                onActivate: _clearing ? null : _clear,
-              ),
-            ),
-          ],
+        SettingsField(
+          key: const ValueKey('image-cache-size'),
+          label: 'Keep up to',
+          value: imageCacheChoiceLabel(size),
+          action: 'Change',
+          onActivate: () => _pick(size),
+          autofocus: widget.autofocus,
+        ),
+        SettingsField(
+          key: const ValueKey('image-cache-usage'),
+          label: 'On this PC now',
+          value: switch (usage) {
+            AsyncData(:final value) => '${_grouped(value.files)} images · ${formatBytes(value.bytes)}',
+            AsyncError() => "Couldn't be read",
+            _ => 'Counting…',
+          },
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SettingsButton(
+            key: const ValueKey('image-cache-clear'),
+            label: _clearing ? 'Clearing…' : 'Clear the cache',
+            icon: Icons.delete_sweep_outlined,
+            onActivate: _clearing ? null : _clear,
+          ),
         ),
       ],
     );
