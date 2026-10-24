@@ -130,7 +130,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
       if (!mounted) return;
       _set(game.id, null);
       _finished
-        ..remove(game)
+        ..removeWhere((g) => g.id == game.id)
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
       await _ref.read(librarySnapshotProvider)?.remember(game);
