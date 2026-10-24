@@ -8,6 +8,7 @@ import '../profiles/app_root.dart';
 import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
 import 'bios_links.dart' show BiosFiles;
+import 'close_process.dart';
 import 'profile_directories.dart';
 import 'rpcs3_config.dart';
 
@@ -105,19 +106,6 @@ class Ps3Firmware {
       await run.finish();
     }
     if (!installed) throw const Ps3FirmwareException("RPCS3 couldn't install the firmware.");
-  }
-}
-
-/// Asks [process] to close (as its window's close button does: taskkill
-/// without /F), then ends it after 10 s.
-Future<void> closeProcess(io.Process process) async {
-  await io.Process.run('taskkill', ['/PID', '${process.pid}', '/T']);
-  try {
-    await process.exitCode.timeout(const Duration(seconds: 10));
-  } on TimeoutException {
-    process.kill();
-    // Returned only once it's gone: the next launch mustn't meet it.
-    await process.exitCode.timeout(const Duration(seconds: 10), onTimeout: () => -1);
   }
 }
 

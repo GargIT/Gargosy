@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
+import 'package:gargosy/core/input/held_combo.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/library/upload_queue.dart';
@@ -16,6 +18,7 @@ import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/play/play_menu.dart';
+import 'package:gargosy/play/quit_combo.dart';
 
 import '../helpers/game_fixtures.dart';
 
@@ -38,6 +41,10 @@ class FakeEngine implements PlayEngine {
   String? coreOverride;
   final remembered = <String, String?>{};
   final fullscreen = <String, bool>{};
+
+  /// Whether the session can be closed (#141), and how often it was.
+  bool closable = false;
+  int closes = 0;
 
   @override
   Future<void> setFullscreen(String emulatorId, bool on) async => fullscreen[emulatorId] = on;
@@ -260,7 +267,15 @@ class FakeEngine implements PlayEngine {
     launchedIn = s.emulatorId;
     this.coreOverride = coreOverride;
     running = Completer<PlayResult>();
-    return PlaySession(running!.future);
+    return PlaySession(
+      running!.future,
+      close: closable
+          ? () async {
+              closes++;
+              running!.complete(const PlayResult('The game ended.'));
+            }
+          : null,
+    );
   }
 
   /// The emulator opened on its own, and how to close it.
@@ -293,6 +308,74 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(c.read(playControllerProvider).runningGameId, isNull);
     expect(c.read(playControllerProvider).message, 'Save synced');
+  });
+
+  group('Select + Start held (#141)', () {
+    void playing(FakeAsync async, ProviderContainer c) {
+      engine.closable = true;
+      c.read(playControllerProvider.notifier).play(game(1, 'G'));
+      async.elapse(Duration.zero);
+      expect(engine.steps, ['states', 'prepare', 'launch']);
+      expect(c.read(playControllerProvider).runningGameId, '1');
+    }
+
+    test('for 2 seconds closes the emulator; the session ends as usual', () {
+      fakeAsync((async) {
+        final c = ProviderContainer(
+          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+        );
+        playing(async, c);
+        selectStartHeld.add(true);
+        async.elapse(const Duration(milliseconds: 1900));
+        expect(engine.closes, 0);
+        async.elapse(const Duration(milliseconds: 200));
+        expect(engine.closes, 1);
+        expect(c.read(playControllerProvider).runningGameId, isNull);
+        expect(c.read(playControllerProvider).message, 'The game ended.');
+        c.dispose();
+      });
+    });
+
+    test('let go too soon, or turned off in Settings: nothing closes', () {
+      fakeAsync((async) {
+        final c = ProviderContainer(
+          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+        );
+        playing(async, c);
+        selectStartHeld.add(true);
+        async.elapse(const Duration(seconds: 1));
+        selectStartHeld.add(false);
+        async.elapse(const Duration(seconds: 5));
+        expect(engine.closes, 0);
+        c.dispose();
+      });
+      engine = FakeEngine();
+      fakeAsync((async) {
+        final c = ProviderContainer(
+          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(false)],
+        );
+        playing(async, c);
+        selectStartHeld.add(true);
+        async.elapse(const Duration(seconds: 5));
+        expect(engine.closes, 0);
+        c.dispose();
+      });
+    });
+
+    test('after the game ended, held does nothing', () {
+      fakeAsync((async) {
+        final c = ProviderContainer(
+          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+        );
+        playing(async, c);
+        engine.running!.complete(const PlayResult('Save synced'));
+        async.flushMicrotasks();
+        selectStartHeld.add(true);
+        async.elapse(const Duration(seconds: 5));
+        expect(engine.closes, 0);
+        c.dispose();
+      });
+    });
   });
 
   test('a second Play while a game runs is refused', () async {

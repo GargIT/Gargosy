@@ -12,6 +12,7 @@ import 'input_action_bus.dart';
 import 'custom_controller_mappings.dart';
 import 'gamepad_utils.dart';
 import 'deadzone_config.dart';
+import 'held_combo.dart';
 
 enum GameAction {
   up,
@@ -307,6 +308,25 @@ class GamepadService extends WidgetsBindingObserver {
     return kDefaultMapping;
   }
 
+  final _quitCombo = HeldCombo({GameAction.select, GameAction.start});
+  final _quitComboMappings = <String, Map<String, GameAction>>{};
+
+  /// Gargosy (#141): Select + Start held on one controller, told to
+  /// [selectStartHeld] even while an emulator has the focus. A plain lookup
+  /// (no logging): it sees every event of a game being played.
+  void _trackQuitCombo(GamepadEvent event) {
+    if (event.type != KeyType.button) return;
+    // Looked up once per controller while a game is in front (finding it
+    // can log); looked up afresh once Gargosy has the focus again.
+    if (_appHasFocus) _quitComboMappings.clear();
+    final mapping = _quitComboMappings.putIfAbsent(event.gamepadId, () => _getMappingFor(event.gamepadId));
+    final key = GamepadUtils.disambiguateKey(event.key, isButton: true);
+    final action = mapping[key] ?? mapping[event.key];
+    if (action == null) return;
+    final changed = _quitCombo.update(event.gamepadId, action, down: event.value.abs() > 0.5);
+    if (changed != null && !selectStartHeld.isClosed) selectStartHeld.add(changed);
+  }
+
   NormalizedInput? _normalize(GamepadEvent event) {
     final mapping = _getMappingFor(event.gamepadId);
 
@@ -380,6 +400,7 @@ class GamepadService extends WidgetsBindingObserver {
     if (_rawEventController.isClosed) return;
     _rawEventController.add(event);
     _scanForUnknown(event.gamepadId);
+    _trackQuitCombo(event);
 
     // If app is not focused, skip input processing but allow raw event broadcasting
     if (!_appHasFocus) return;

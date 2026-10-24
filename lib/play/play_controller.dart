@@ -5,6 +5,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/input/held_combo.dart';
 import '../core/romm/romm_models.dart';
 import '../core/save/catalog/play_request.dart';
 import '../core/save/resume_service.dart';
@@ -13,6 +14,7 @@ import '../providers/library_providers.dart';
 import '../library/upload_queue.dart';
 import 'play_engine.dart';
 import 'play_menu.dart';
+import 'quit_combo.dart';
 
 class PlayState {
   const PlayState({this.runningGameId, this.message, this.preparing});
@@ -75,10 +77,7 @@ class PlayController extends StateNotifier<PlayState> {
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
       final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
-      session.finished.then(
-        (result) => _ended(game, result.message, synced: result.synced),
-        onError: (Object e) => _ended(game, 'Saves not synced: $e'),
-      );
+      _running(game, session);
       return null;
     } on SaveChoiceException catch (e) {
       return refuse("Couldn't start with that save: ${e.message}");
@@ -201,10 +200,7 @@ class PlayController extends StateNotifier<PlayState> {
         loadStatePath: loadPath,
         onNotice: onNotice,
       );
-      session.finished.then(
-        (result) => _ended(game, result.message, synced: result.synced),
-        onError: (Object e) => _ended(game, 'Saves not synced: $e'),
-      );
+      _running(game, session);
       return null;
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
@@ -247,7 +243,36 @@ class PlayController extends StateNotifier<PlayState> {
     }
   }
 
+  QuitCombo? _quitCombo;
+  Future<void> Function()? _close;
+
+  /// While [session] runs: Select + Start held closes it (#141), when this
+  /// PC allows it; its end is [_ended].
+  void _running(Game game, PlaySession session) {
+    _close = session.close;
+    if (session.close != null && _ref.read(quitComboOnProvider)) {
+      _quitCombo = QuitCombo(selectStartHeld.stream, quitGame);
+    }
+    session.finished.then(
+      (result) => _ended(game, result.message, synced: result.synced),
+      onError: (Object e) => _ended(game, 'Saves not synced: $e'),
+    );
+  }
+
+  /// Closes the running game's emulator, as its close button does; the
+  /// session ends as usual (saves synced). False when no game can be closed.
+  Future<bool> quitGame() async {
+    final close = _close;
+    if (close == null) return false;
+    _close = null;
+    await close();
+    return true;
+  }
+
   void _ended(Game game, String message, {bool synced = false}) {
+    _quitCombo?.cancel();
+    _quitCombo = null;
+    _close = null;
     if (!mounted) return;
     // What waited to upload for this game is older than what RomM has now.
     if (synced) _ref.read(uploadQueueProvider.future).then((q) => q?.settle(game.id)).catchError((Object _) {});
