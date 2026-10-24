@@ -3,6 +3,7 @@ import '../core/emulator/emulator_strategy.dart';
 
 import 'dart:io' as io;
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/input/held_combo.dart';
@@ -252,6 +253,9 @@ class PlayController extends StateNotifier<PlayState> {
     _close = session.close;
     if (session.close != null && _ref.read(quitComboOnProvider)) {
       _quitCombo = QuitCombo(selectStartHeld.stream, quitGame);
+      debugPrint('[Quit] Select + Start closes ${game.displayName}');
+    } else {
+      debugPrint('[Quit] Select + Start is off for this game (${session.close == null ? 'no process' : 'Settings'})');
     }
     session.finished.then(
       (result) => _ended(game, result.message, synced: result.synced),

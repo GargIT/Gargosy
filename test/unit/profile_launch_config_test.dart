@@ -92,6 +92,14 @@ void main() {
     expect(text, contains('Bios = ${root.bios}'));
     expect(text, contains('MemoryCards = memcards'));
     expect(text, contains('SetupWizardIncomplete = true'));
+    expect(text, contains('ConfirmShutdown = false'), reason: 'Select + Start closes it without asking (#141)');
+  });
+
+  test('dolphin stops without asking when closed (#141)', () async {
+    final d = ctx('dolphin');
+    await ProfileLaunchConfig.of('dolphin')!.prepare(d);
+    final ini = io.File(p.join(d.data, 'Config', 'Dolphin.ini')).readAsStringSync();
+    expect(ini, contains('ConfirmStop = False'));
   });
 
   test('pcsx2: -datapath, and portable markers next to the exe are turned off', () async {

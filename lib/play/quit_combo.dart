@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/storage/app_preferences.dart';
@@ -11,6 +12,7 @@ import '../profiles/profile_providers.dart';
 class QuitCombo {
   QuitCombo(Stream<bool> held, this.onQuit, {this.hold = holdTime}) {
     _sub = held.listen((on) {
+      debugPrint('[Quit] Select + Start ${on ? 'held' : 'let go'}');
       _timer?.cancel();
       _timer = on && !_fired ? Timer(hold, _fire) : null;
     });
@@ -29,6 +31,7 @@ class QuitCombo {
   bool _fired = false;
 
   void _fire() {
+    debugPrint('[Quit] held ${hold.inSeconds} s: closing the game');
     _fired = true;
     unawaited(onQuit());
   }
