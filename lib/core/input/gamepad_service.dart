@@ -309,13 +309,17 @@ class GamepadService extends WidgetsBindingObserver {
   }
 
   final _quitCombo = HeldCombo({GameAction.select, GameAction.start});
+  final _quitComboMappings = <String, Map<String, GameAction>>{};
 
   /// Gargosy (#141): Select + Start held on one controller, told to
   /// [selectStartHeld] even while an emulator has the focus. A plain lookup
   /// (no logging): it sees every event of a game being played.
   void _trackQuitCombo(GamepadEvent event) {
     if (event.type != KeyType.button) return;
-    final mapping = _getMappingFor(event.gamepadId);
+    // Looked up once per controller while a game is in front (finding it
+    // can log); looked up afresh once Gargosy has the focus again.
+    if (_appHasFocus) _quitComboMappings.clear();
+    final mapping = _quitComboMappings.putIfAbsent(event.gamepadId, () => _getMappingFor(event.gamepadId));
     final key = GamepadUtils.disambiguateKey(event.key, isButton: true);
     final action = mapping[key] ?? mapping[event.key];
     if (action == null) return;
