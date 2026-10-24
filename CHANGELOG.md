@@ -33,6 +33,10 @@ What changed in each release of Gargosy. The format follows
   the queue (Y puts one first, X takes one out or stops the running one),
   the ones that failed (A tries again) and the ones done. Switching profile
   asks first while downloads are waiting.
+- Add a game to your collections from its page: ⋯ → Add to collection… lists
+  your own, with a ✓ on those it's in, and New collection… makes one (only
+  yours, or shared) with the game in it. On your own collection's page, ⋯
+  renames it, shares it or stops sharing it, and deletes it.
 
 ## [0.3.0] - 2026-10-24
 

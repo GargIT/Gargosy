@@ -8,6 +8,7 @@ import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/screens/collection/collection_screen.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
 
+import '../helpers/fake_collection_edits.dart';
 import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/widget_env.dart';
@@ -21,6 +22,7 @@ void main() {
     int games = 3,
     List<int> platformIds = const [],
     List<Platform> platforms = const [],
+    FakeCollectionEdits? edits,
   }) async {
     await setDesktopSize(tester);
     api = FakeLibraryApi([
@@ -35,6 +37,7 @@ void main() {
           favouriteIdsProvider.overrideWithValue(const {}),
           gamesOnThisPcProvider.overrideWithValue([game(2, 'Game 002')]),
           platformsProvider.overrideWith((ref) => platforms),
+          collectionEditsProvider.overrideWithValue(edits),
         ],
       ),
     );
@@ -65,6 +68,30 @@ void main() {
     expect(find.text('GAMES'), findsOneWidget);
     expect(find.text('1'), findsOneWidget, reason: 'one of its games on this PC');
     expect(api.queries.first.$1.collectionId, 2);
+  });
+
+  testWidgets("⋯ on your own collection (#144): share it, rename it; not on another player's", (tester) async {
+    const mine = RommCollection(id: 2, name: 'Couch co-op', userId: 7, romIds: {1, 2, 3}, romCount: 3);
+    final edits = FakeCollectionEdits([mine]);
+    await pump(tester, mine, edits: edits);
+    await tester.tap(find.byKey(const ValueKey('collection-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share with every player'));
+    await tester.pumpAndSettle();
+    expect(edits.calls, ['share 2 true']);
+    expect(find.text('Shared on RomM'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('collection-more')));
+    await tester.pumpAndSettle();
+    expect(find.text('Stop sharing'), findsOneWidget);
+    await tester.tap(find.text('Delete collection…'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Its games stay in the library'), findsOneWidget);
+    await tester.tap(find.text('Keep'));
+    await tester.pumpAndSettle();
+    expect(edits.calls, ['share 2 true']);
+
+    await pump(tester, const RommCollection(id: 5, name: "Bob's", userId: 8, isPublic: true), edits: edits);
+    expect(find.byKey(const ValueKey('collection-more')), findsNothing);
   });
 
   testWidgets("a smart one says its filters and whose; a virtual one its type; Random picks within it", (tester) async {

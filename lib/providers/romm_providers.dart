@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/romm/romm_collection_edits.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
 import '../core/romm/romm_service.dart';
@@ -30,6 +31,12 @@ final rommServiceProvider = Provider<RommService?>((ref) {
 final libraryApiProvider = Provider<LibraryApi?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   return romm == null ? null : RommLibraryApi(romm.dio, () => romm.authOptions);
+});
+
+/// The user's own collections changed on RomM (#144).
+final collectionEditsProvider = Provider<CollectionEdits?>((ref) {
+  final romm = ref.watch(rommServiceProvider);
+  return romm == null ? null : RommCollectionEdits(romm.dio, () => romm.authOptions);
 });
 
 /// Whether RomM's heartbeat runs (every 5 s). Off in tests: no timers.
