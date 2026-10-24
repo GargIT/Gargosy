@@ -10,7 +10,18 @@ import '../profiles/path_guard.dart';
 import 'disk_space.dart';
 import 'rom_files.dart';
 
-enum DownloadPhase { downloading, extracting, done, failed, cancelled }
+enum DownloadPhase {
+  /// Waiting for the downloads before it (#143).
+  queued,
+  downloading,
+  extracting,
+  done,
+  failed,
+  cancelled;
+
+  /// Waiting or running: not yet on this PC, and not to be started again.
+  bool get active => this == queued || this == downloading || this == extracting;
+}
 
 class DownloadProgress {
   const DownloadProgress(this.phase, {this.received = 0, this.total = 0, this.error});

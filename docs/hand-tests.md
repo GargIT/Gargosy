@@ -227,3 +227,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Free space before a download (#142)
 
 95. [ ] On a drive with less free space than a game needs (a small USB stick or a nearly full partition holding the Gargosy folder, or pick a game bigger than the free space): the game page shows "… free on X:" under Download, and Download fails at once with "Needs …, … free on X:", leaving nothing in `roms\` or `userdata\app\temp`. With enough space it downloads as before, without the line.
+
+## Download queue and the Downloads page (#143)
+
+96. [ ] Press Download on three games, one after another: only the first downloads, the game page of the others says Queued (with Remove from the queue). Start → Downloads (it shows the number waiting) lists the running one with its size, speed and time left, then the queue. Y on the last queued one moves it first; X on a queued one takes it out; X on the running one stops it and the next starts. When they're done they're under DONE, and A opens the game. Switch profile while one waits: Gargosy asks first, and Cancel keeps them going.

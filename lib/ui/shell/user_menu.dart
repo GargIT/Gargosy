@@ -9,7 +9,7 @@ import '../widgets/g_focusable.dart';
 import '../widgets/profile_badge.dart';
 
 /// The menu's own items, beside the settings sections.
-enum UserMenuAction { fullscreen, changelog, switchProfile }
+enum UserMenuAction { downloads, fullscreen, changelog, switchProfile }
 
 /// What the user menu picked: a section of Settings, or one of its actions.
 class UserMenuChoice {
@@ -30,13 +30,16 @@ class UserMenuChoice {
 /// with Gargosy's version beside its name, every section of Settings in its
 /// group (one item each, from [SettingsPage]), Fullscreen, About and the
 /// changelog, and Switch profile at the bottom (RomM's Logout). [update]
-/// ("Update available: 0.2.0") is an item of its own that opens About.
+/// ("Update available: 0.2.0") is an item of its own that opens About;
+/// Downloads (#143), only when there's something to see: [downloads],
+/// those waiting or running (null: none, and none failed or done).
 /// Focus starts on Profile; the menu scrolls when the window is short.
 Future<UserMenuChoice?> showUserMenu(
   BuildContext context, {
   required Profile profile,
   String? avatarPath,
   String? update,
+  int? downloads,
 }) {
   Widget item(
     BuildContext c,
@@ -161,7 +164,15 @@ Future<UserMenuChoice?> showUserMenu(
                         UserMenuChoice.settings(page),
                         autofocus: page == SettingsPage.values.first,
                       ),
-                    if (group == SettingsGroup.thisPc)
+                    if (group == SettingsGroup.thisPc) ...[
+                      if (downloads != null)
+                        item(
+                          c,
+                          'Downloads',
+                          Icons.download,
+                          const UserMenuChoice.action(UserMenuAction.downloads),
+                          trailing: downloads == 0 ? null : _KeyChip('$downloads'),
+                        ),
                       item(
                         c,
                         'Fullscreen',
@@ -169,6 +180,7 @@ Future<UserMenuChoice?> showUserMenu(
                         const UserMenuChoice.action(UserMenuAction.fullscreen),
                         trailing: const _KeyChip('F11'),
                       ),
+                    ],
                   ],
                   line,
                   if (update != null)

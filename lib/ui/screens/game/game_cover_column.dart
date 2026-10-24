@@ -213,7 +213,16 @@ class GameCoverColumn extends ConsumerWidget {
       }
     });
     final Widget main;
-    if (progress != null && progress.phase != DownloadPhase.failed) {
+    if (progress?.phase == DownloadPhase.queued) {
+      // Waiting for the downloads before it (#143).
+      main = Column(
+        children: [
+          const Text('Queued', style: TextStyle(color: GColors.fgSecondary)),
+          const SizedBox(height: GSpace.s3),
+          _wide('Remove from the queue', Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
+        ],
+      );
+    } else if (progress != null && progress.phase != DownloadPhase.failed) {
       final pct = progress.fraction == null ? '' : ' ${(progress.fraction! * 100).round()} %';
       main = Column(
         children: [

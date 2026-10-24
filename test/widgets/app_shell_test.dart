@@ -269,7 +269,8 @@ void main() {
     final others = [
       for (final page in SettingsPage.values) page.name,
       for (final a in UserMenuAction.values)
-        if (a != UserMenuAction.switchProfile) a.name,
+        // Downloads shows only while there are some (#143).
+        if (a != UserMenuAction.switchProfile && a != UserMenuAction.downloads) a.name,
     ];
     for (final name in others) {
       expect(tester.getRect(find.byKey(ValueKey('user-menu-$name'))).bottom, lessThanOrEqualTo(last.top), reason: name);

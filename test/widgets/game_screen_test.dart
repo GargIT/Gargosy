@@ -170,6 +170,21 @@ void main() {
     expect(find.byKey(const ValueKey('free-space')), findsNothing);
   });
 
+  testWidgets('behind another download it is Queued, and can be taken out of the queue (#143)', (tester) async {
+    await pump(tester);
+    downloads.holds['1'] = Completer<void>();
+    final c = ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+    unawaited(c.read(downloadsProvider.notifier).start(game(1, 'Okami')));
+    await tester.pump();
+    await press(tester, GameAction.confirm); // Download
+    expect(find.text('Queued'), findsOneWidget);
+    await tester.tap(find.text('Remove from the queue'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Download'), findsOneWidget);
+    expect(c.read(downloadsProvider).containsKey('7564'), isFalse);
+    downloads.holds['1']!.complete();
+  });
+
   testWidgets('a favourite shows a filled heart', (tester) async {
     await pump(tester, favourites: {'7564'});
     expect(find.byIcon(Icons.favorite), findsOneWidget);
