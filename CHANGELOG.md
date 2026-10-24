@@ -48,6 +48,10 @@ What changed in each release of Gargosy. The format follows
   a game's page says how long you've played it, on every device ("Played
   12 h 40 min · 8 sessions"); Home's header too. A session RomM didn't take
   goes after the next game, and on an older RomM the time is this PC's.
+- A screensaver: left untouched on Home or a tab for 5 minutes, Gargosy
+  shows the library a game at a time over its art. Any button puts you back
+  where you were; A opens the game shown. Settings → Display sets the wait
+  (2, 5, 10 or 30 minutes) or turns it off.
 
 ### Changed
 
