@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-24
+
+A page for each platform and collection, the Collections tab, Search like
+RomM's with recent searches, the A–Z rail, a game's versions on one card,
+saves and states other players shared, deleting saves and states (and, for
+RomM's admins and editors, games), and DSi games in RetroArch.
+
 ### Added
 
 - The Collections tab is new, after RomM's: your collections and the ones
@@ -386,6 +393,7 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.3.0
 [0.2.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.1.0
