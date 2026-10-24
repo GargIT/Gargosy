@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/romm/romm_models.dart';
 import '../../../core/save/catalog/play_request.dart';
+import '../../../library/disk_space.dart';
 import '../../../library/download_service.dart';
 import '../../../play/play_controller.dart';
+import '../../../profiles/profile_providers.dart';
 import '../../../play/play_engine.dart';
 import '../../../play/save_actions.dart';
 import '../../../providers/download_providers.dart';
@@ -240,9 +242,20 @@ class GameCoverColumn extends ConsumerWidget {
       );
     } else {
       final size = game.fileSize > 0 ? ' (${formatBytes(game.fileSize)})' : '';
+      final roms = ref.watch(appRootProvider).roms;
+      final free = ref.watch(freeSpaceProvider)(roms);
       main = Column(
         children: [
           _wide('Download$size', Icons.download, () => ref.read(downloadsProvider.notifier).start(game), primary: true),
+          // Said before it's pressed when the drive is nearly full (#142).
+          if (spaceIsTight(game.fileSize, free) && progress?.phase != DownloadPhase.failed) ...[
+            const SizedBox(height: GSpace.s2),
+            Text(
+              '${formatBytes(free!)} free on ${driveOf(roms)}',
+              key: const ValueKey('free-space'),
+              style: const TextStyle(color: GColors.gargosyGold, fontSize: GFont.sm),
+            ),
+          ],
           if (progress?.phase == DownloadPhase.failed) ...[
             const SizedBox(height: GSpace.s2),
             SizedBox(

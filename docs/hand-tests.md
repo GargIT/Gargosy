@@ -219,3 +219,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 92. [x] Customize Home (at the end of Home, and Settings → Home): turn Favourites off, move Recently added to the top with ↑, turn For you on, turn On this day off, choose Random pick at the top: Home follows at once and keeps it after a restart. Another profile's Home is unchanged. Reset to the default brings the standard Home back.
 93. [x] With RomM unreachable (stop it, or unplug the network): Home shows the game last played on this PC at the top, On this PC first, then Continue playing from this PC; no widgets, nothing that needs RomM. A new profile that has played nothing gets the random pick at the top with Download and Another.
 
+
+## Free space before a download (#142)
+
+95. [ ] On a drive with less free space than a game needs (a small USB stick or a nearly full partition holding the Gargosy folder, or pick a game bigger than the free space): the game page shows "… free on X:" under Download, and Download fails at once with "Needs …, … free on X:", leaving nothing in `roms\` or `userdata\app\temp`. With enough space it downloads as before, without the line.

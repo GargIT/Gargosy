@@ -18,6 +18,11 @@ What changed in each release of Gargosy. The format follows
   which widgets show, and which rows show in what order, each profile its own.
   For you (RomM 5.4's recommendations), Smart collections and Virtual
   collections are there to turn on.
+- A download checks the free space first: when the drive hasn't room for the
+  game (and, for a game that comes as a zip, its unpacked copy), it doesn't
+  start and says how much it needs and how much is free. The game page shows
+  the free space under Download when it's tight. Unpacking a zip for an
+  emulator checks the same.
 
 ## [0.3.0] - 2026-10-24
 

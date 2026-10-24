@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/library/rom_files.dart';
+import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/rom_preparer.dart';
 import 'package:gargosy/library/xbox_disc.dart';
 import 'package:gargosy/profiles/app_root.dart';
@@ -96,6 +97,24 @@ void main() {
     io.File(path).writeAsBytesSync(ZipEncoder().encodeBytes(Archive()..addFile(ArchiveFile.bytes('bm01.12d', [1]))));
     expect(await preparer.ready(set, path, 'flycast'), isNull);
     expect(io.File(path).existsSync(), isTrue);
+  });
+
+  test('no room to unpack (#142): refused before unpacking; the zip stays', () async {
+    final ps2 = game(4, 'Okami', platform: 'ps2', fsName: 'Okami.zip');
+    final path = files.pathFor(ps2);
+    io.Directory(p.dirname(path)).createSync(recursive: true);
+    io.File(path).writeAsBytesSync(
+      ZipEncoder().encodeBytes(Archive()..addFile(ArchiveFile.bytes('Okami.iso', List<int>.filled(1000, 7)))),
+    );
+    final tight = RomPreparer(
+      files: files,
+      guard: PathGuard(root),
+      tempDir: p.join(root.appData, 'temp'),
+      freeSpace: (_) => spaceHeadroom + 999,
+    );
+    await expectLater(tight.ready(ps2, path, 'pcsx2'), throwsA(isA<NotEnoughSpace>()));
+    expect(io.File(path).existsSync(), isTrue);
+    expect(io.Directory(files.unpackedDirFor(ps2)!).existsSync(), isFalse);
   });
 
   test('an emulator that cannot read zips gets the zip unpacked, as it is', () async {

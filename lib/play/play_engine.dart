@@ -27,6 +27,7 @@ import '../emulators/profile_launch_config.dart';
 import '../providers/download_providers.dart';
 import '../providers/engine_providers.dart';
 import '../providers/romm_providers.dart';
+import '../library/disk_space.dart';
 import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
 import 'dsiware_limits.dart';
@@ -373,6 +374,7 @@ class GargosyPlayEngine implements PlayEngine {
       files: _ref.read(romFilesProvider),
       guard: PathGuard(root),
       tempDir: p.join(root.appData, 'temp'),
+      freeSpace: windowsFreeSpace,
     );
     final unpacked = await preparer.ready(game, romPath, strategy.emulatorId, onProgress: onProgress);
     if (unpacked == null) return romPath;
