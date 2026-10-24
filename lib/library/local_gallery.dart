@@ -35,7 +35,8 @@ List<Game> localGallery(
         g,
   ];
   int byName(Game a, Game b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
-  if (q.sort == GallerySort.name) {
+  // Best match is RomM's ranking; on this PC the names' order stands in.
+  if (q.sort == GallerySort.name || q.sort == GallerySort.bestMatch) {
     list.sort((a, b) => q.descending ? byName(b, a) : byName(a, b));
     return list;
   }
@@ -59,7 +60,7 @@ List<Game> localGallery(
 Comparable<Object>? sortValue(Game g, GallerySort sort, DateTime? Function(Game) installedAt) {
   int? positive(int v) => v > 0 ? v : null;
   return switch (sort) {
-    GallerySort.name => g.displayName.toLowerCase(),
+    GallerySort.name || GallerySort.bestMatch => g.displayName.toLowerCase(),
     GallerySort.recentlyAdded => g.createdAt,
     GallerySort.lastPlayed => g.lastPlayed,
     GallerySort.releaseDate => g.firstReleaseDate,

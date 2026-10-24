@@ -105,4 +105,31 @@ void main() {
     expect(api.randomWithin, const GalleryQuery(virtualCollectionId: 'v1'));
     expect(find.byType(GameScreen), findsOneWidget);
   });
+
+  testWidgets('collections: favourites first, then by name; A opens a gallery', (tester) async {
+    await setDesktopSize(tester);
+    final api = FakeLibraryApi([game(1, 'Okami')]);
+    await tester.pumpWidget(
+      testApp(
+        const CollectionsPage(),
+        overrides: [
+          collectionsProvider.overrideWith(
+            (ref) async => const [
+              RommCollection(id: 2, name: 'RPGs', romCount: 12, userId: 7),
+              RommCollection(id: 1, name: 'Favorites', isFavorite: true, romCount: 3, userId: 7),
+              RommCollection(id: 3, name: 'Arcade', romCount: 5, userId: 7),
+            ],
+          ),
+          libraryApiProvider.overrideWithValue(api),
+          favouriteIdsProvider.overrideWithValue(const {}),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    final names = tester.widgetList<Text>(find.byKey(const ValueKey('collection-name'))).map((t) => t.data).toList();
+    expect(names, ['Favourites', 'Arcade', 'RPGs']);
+    await press(tester, GameAction.confirm);
+    expect(find.byType(CollectionScreen), findsOneWidget);
+    expect(api.queries.last.$1.favourites, isTrue);
+  });
 }

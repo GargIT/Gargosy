@@ -22,17 +22,31 @@ final platformsProvider = FutureProvider<List<Platform>>((ref) async {
   return list;
 });
 
-/// The platforms a collection's games are on (#128), by name: RomM's filter
-/// values for the collection's scope, named from [platformsProvider].
-final collectionPlatformsProvider = FutureProvider.autoDispose.family<List<Platform>, GalleryQuery>((ref, scope) async {
+/// What a gallery's scope holds: how many games (versions folded, as the
+/// gallery shows them) and the platforms they're on.
+class GalleryScope {
+  const GalleryScope({required this.total, required this.platforms});
+
+  final int total;
+  final List<Platform> platforms;
+}
+
+/// A collection's or a search's scope (#128, #132): its scope and search term
+/// only, without the bar's filters. The platforms are RomM's filter values
+/// for it, named from [platformsProvider].
+final galleryScopeProvider = FutureProvider.autoDispose.family<GalleryScope, GalleryQuery>((ref, query) async {
   final api = ref.watch(libraryApiProvider);
-  if (api == null) return const [];
-  final page = await api.page(scope.scopeOnly, limit: 1, withFilterValues: true);
+  if (api == null) return const GalleryScope(total: 0, platforms: []);
+  final scope = query.scopeOnly.withSearch(query.search);
+  final page = await api.page(scope, limit: 1, withFilterValues: true, foldVersions: true);
   final ids = {...?page.filters?.platforms};
-  return [
-    for (final p in await ref.watch(platformsProvider.future))
-      if (ids.contains(p.id)) p,
-  ];
+  return GalleryScope(
+    total: page.total,
+    platforms: [
+      for (final p in await ref.watch(platformsProvider.future))
+        if (ids.contains(p.id)) p,
+    ],
+  );
 });
 
 final collectionsProvider = FutureProvider<List<RommCollection>>((ref) async {

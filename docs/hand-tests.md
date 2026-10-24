@@ -199,3 +199,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## A collection's platforms (#128)
 
 83. [x] A collection with games on several platforms: the header's PLATFORMS counts them, and Platform on the bar says "All N". Pick one with the controller: only its games show, and the list still offers the others; All brings them all back. On this PC with a platform picked shows that platform's downloaded games of the collection. A collection on one platform has the count but no Platform pick.
+
+## Search like a collection's page (#132)
+
+84. [ ] Open Search with the controller: the box has focus, the whole library shows by name with the A–Z rail, and GAMES / ON THIS PC / PLATFORMS count it. A on the box opens the keyboard; a term shows its matches, sorted by Best match, with the counts for the term. Pick Rating, then change the term: Rating stays. Clear the box: the whole library by name again. Platform and On this PC narrow the matches. Scroll down: the header goes and the box is on the bar, still working; at the top the header is back. With a mouse and keyboard, click the box and type: the matches follow as you stop typing.
