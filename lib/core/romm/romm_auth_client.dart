@@ -5,11 +5,14 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 
-/// The RomM scopes Gargosy asks for (spec §5). Admin scopes are never asked for.
+/// The RomM scopes Gargosy asks for (spec §5). Admin scopes are never asked
+/// for. RomM grants only those the user has: `roms.write` (deleting a game)
+/// only an admin's or editor's.
 const gargosyScopes = [
   'me.read',
   'me.write',
   'roms.read',
+  'roms.write',
   'roms.user.read',
   'roms.user.write',
   'platforms.read',

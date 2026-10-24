@@ -14,6 +14,11 @@ import '../platform/platform_info.dart';
 import 'romm_models.dart';
 import 'romm_state.dart';
 
+/// Gargosy: what deleting a game on RomM came to. [notAllowed]: RomM
+/// refused (the user may not delete, or the profile's sign-in predates Gargosy
+/// asking for `roms.write`).
+enum RomDeleteResult { deleted, notAllowed, failed }
+
 class RommService implements RommStatesApi {
   RomMConfig _config;
   final Dio _dio;
@@ -834,6 +839,61 @@ class RommService implements RommStatesApi {
   /// [getSharedSavesOrNull] (`all_user_states`).
   Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String gameId, {required int exceptUserId}) =>
       _sharedOf(gameId, 'all_user_states', exceptUserId);
+
+  /// Gargosy: whether the user may delete games on RomM: RomM 5.4's
+  /// `/api/permissions/me` (an admin, or the `rom.delete` action), else on an
+  /// older RomM an admin's or editor's role. False when RomM can't say.
+  Future<bool> canDeleteGames() async {
+    try {
+      final data = (await _dio.get('/api/permissions/me', options: _authOptions)).data;
+      if (data is! Map) return false;
+      final grants = data['grants'];
+      return data['is_admin'] == true || (grants is List && grants.any((g) => g is Map && g['action'] == 'rom.delete'));
+    } on DioException catch (e) {
+      if (e.response?.statusCode != 404) {
+        debugPrint('[RomM] permissions not read: ${e.response?.statusCode ?? e.type}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('[RomM] permissions not read: $e');
+      return false;
+    }
+    try {
+      final data = (await _dio.get('/api/users/me', options: _authOptions)).data;
+      final role = data is Map ? data['role'] : null;
+      return role == 'admin' || role == 'editor';
+    } catch (e) {
+      debugPrint('[RomM] role not read: $e');
+      return false;
+    }
+  }
+
+  /// Gargosy: deletes a game from RomM's library (`POST /api/roms/delete`),
+  /// with [fromServerDisk] its file or folder on RomM's server too. Every
+  /// player's saves and states of it go with it.
+  Future<RomDeleteResult> deleteGame(int romId, {required bool fromServerDisk}) async {
+    try {
+      final r = await _dio.post(
+        '/api/roms/delete',
+        data: {
+          'roms': [romId],
+          'delete_from_fs': [if (fromServerDisk) romId],
+        },
+        options: _authOptions.copyWith(contentType: 'application/json'),
+      );
+      final data = r.data;
+      final ok = data is Map ? (data['successful_items'] as num?)?.toInt() : null;
+      if (ok == 1 || (ok == null && r.statusCode == 200)) return RomDeleteResult.deleted;
+      debugPrint('[RomM] rom $romId not deleted: ${data is Map ? data['errors'] : r.statusCode}');
+      return RomDeleteResult.failed;
+    } on DioException catch (e) {
+      debugPrint('[RomM] rom $romId not deleted: ${e.response?.statusCode ?? e.type}');
+      return e.response?.statusCode == 403 ? RomDeleteResult.notAllowed : RomDeleteResult.failed;
+    } catch (e) {
+      debugPrint('[RomM] rom $romId not deleted: $e');
+      return RomDeleteResult.failed;
+    }
+  }
 
   /// Gargosy (#92): shares the player's own save with every other user of
   /// RomM, or stops ([shared] false): `PUT /api/saves/{id}/visibility`,

@@ -9,6 +9,7 @@ import '../../../library/upload_queue.dart';
 import '../../../play/play_controller.dart';
 import '../../../profiles/pin.dart';
 import '../../../profiles/profile.dart';
+import '../../../profiles/profile_paths.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
@@ -17,6 +18,7 @@ import '../../widgets/pin_pad.dart';
 import '../../widgets/profile_badge.dart';
 import '../../widgets/sync_wait.dart';
 import '../../widgets/toast.dart';
+import '../login_step.dart';
 import 'settings_rows.dart';
 
 /// Settings → Profile: the header (avatar, name, account), then cards for the
@@ -31,6 +33,36 @@ class ProfileSection extends ConsumerWidget {
   }
 
   /// The current PIN, through the profile's gate (5 tries, then a wait).
+  /// Signs the profile in to RomM again, as the same RomM user, and uses the
+  /// new login from then on: how a profile gets a permission Gargosy asks for
+  /// since it signed in (deleting games). Refused while a game runs.
+  Future<void> _signInAgain(BuildContext context, WidgetRef ref, Profile p) async {
+    if (ref.read(playControllerProvider).runningGameId != null) {
+      showToast(context, 'Close the game first.');
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => Scaffold(
+          body: LoginStep(
+            serverUrl: p.serverUrl,
+            trustSelfSigned: p.trustSelfSigned,
+            deviceName: 'Gargosy on ${ref.read(pcIdentityProvider).machineName}',
+            expectedUserId: p.rommUserId,
+            expectedUsername: p.rommUsername,
+            onBack: () => Navigator.of(routeContext).pop(),
+            onLoggedIn: (login, me) async {
+              await loginStoreForWidget(ref, p).write(ProfilePaths(ref.read(appRootProvider), p.id).guard, login);
+              if (routeContext.mounted) Navigator.of(routeContext).pop();
+              await ref.read(activeProfileProvider.notifier).activate(p, login);
+              if (context.mounted) showToast(context, 'Signed in again as ${me.username}.');
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<bool> _checkCurrent(BuildContext context, WidgetRef ref, Profile p) async {
     final pin = p.pin;
     if (pin == null) return true;
@@ -163,7 +195,15 @@ class ProfileSection extends ConsumerWidget {
               actionIcon: Icons.edit_outlined,
               onActivate: () => _rename(context, ref, p),
             ),
-            SettingsField(label: 'RomM account', icon: Icons.dns_outlined, value: '${p.rommUsername} on $host'),
+            SettingsField(
+              key: const ValueKey('romm-account'),
+              label: 'RomM account',
+              icon: Icons.dns_outlined,
+              value: '${p.rommUsername} on $host',
+              action: 'Sign in again',
+              actionIcon: Icons.login,
+              onActivate: () => _signInAgain(context, ref, p),
+            ),
           ],
         ),
         SettingsCard(

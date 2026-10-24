@@ -35,6 +35,13 @@ What changed in each release of Gargosy. The format follows
   A search is remembered when you press Enter or Done, or open a game from it.
 - B on a search or filter box clears it, like its ×; on an empty box B goes
   back as before.
+- A RomM admin or editor can delete a game from RomM: the game page's ⋯ →
+  Delete from RomM…. The prompt says it's permanent and that everyone's saves
+  and states of it on RomM go too; it can also delete the file on the server
+  and the copy on this PC (both ticked), and Delete has to be held.
+- Settings → Profile → RomM account → Sign in again: signs the profile in
+  again as the same RomM user. A profile made before this version needs it
+  once to delete games.
 - When the filters hide every game, a gallery says which ones (On this PC, a
   platform, genres, regions) and how many games RomM has, with Show all to
   clear them.

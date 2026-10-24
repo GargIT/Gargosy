@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/romm/romm_service.dart';
+import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/widgets/game_transition.dart';
 import 'package:gargosy/ui/widgets/hint_bar.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
@@ -27,6 +30,7 @@ import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/core/save/resume_service.dart';
 import 'package:gargosy/core/save/catalog/save_entry.dart';
 
+import '../helpers/fake_dio_adapter.dart';
 import '../helpers/fake_download_service.dart';
 import 'play_screen_test.dart' show gamePageCoverOffset;
 import '../unit/play_controller_test.dart' show FakeEngine;
@@ -59,6 +63,7 @@ void main() {
     PlayMenu? menu,
     List<ResumeEntry> states = const [],
     bool downloaded = false,
+    List<Override> extra = const [],
   }) async {
     await setDesktopSize(tester);
     root = (await tester.runAsync(tempAppRoot))!;
@@ -103,6 +108,7 @@ void main() {
           romStatesProvider.overrideWith((ref, id) async => const []),
           romNotesProvider.overrideWith((ref, id) async => const []),
           raProgressionProvider.overrideWith((ref) async => const {}),
+          ...extra,
         ],
       ),
     );
@@ -228,6 +234,115 @@ void main() {
     await tester.tap(find.text("Open the game's folder"));
     await tester.pumpAndSettle();
     expect(opened.single, contains('ps2'));
+  });
+
+  group('Delete from RomM', () {
+    late FakeDioAdapter server;
+
+    Future<void> pumpDeletable(WidgetTester tester, {required bool allowed, int status = 200}) {
+      server = FakeDioAdapter(
+        (_) => (status: status, body: status == 200 ? {'successful_items': 1, 'failed_items': 0} : {}),
+      );
+      final romm = RommService(
+        RomMConfig(baseUrl: 'https://romm.example', username: '', password: '', apiKey: 't'),
+        dio: fakeDio(server),
+        skipConnectivityCheck: true,
+      );
+      return pump(
+        tester,
+        downloaded: true,
+        extra: [
+          canDeleteGamesProvider.overrideWith((ref) async => allowed),
+          rommServiceProvider.overrideWithValue(romm),
+        ],
+      );
+    }
+
+    Future<void> openPrompt(WidgetTester tester) async {
+      await tester.tap(find.byKey(const ValueKey('game-more')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete from RomM…'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('⋯ offers it only to a RomM user who may delete games, last, after Delete from this PC', (
+      tester,
+    ) async {
+      await pumpDeletable(tester, allowed: true);
+      await tester.tap(find.byKey(const ValueKey('game-more')));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.text('Delete from RomM…')).dy,
+        greaterThan(tester.getTopLeft(find.text('Delete from this PC…')).dy),
+      );
+    });
+
+    testWidgets('not for a RomM user who may not delete games', (tester) async {
+      await pumpDeletable(tester, allowed: false);
+      await tester.tap(find.byKey(const ValueKey('game-more')));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete from this PC…'), findsOneWidget);
+      expect(find.text('Delete from RomM…'), findsNothing);
+    });
+
+    testWidgets('the prompt: permanent, Cancel focused, a press of Delete does nothing, holding it deletes', (
+      tester,
+    ) async {
+      await pumpDeletable(tester, allowed: true);
+      await openPrompt(tester);
+      expect(find.text('Delete Burnout 3: Takedown from RomM?'), findsOneWidget);
+      expect(find.textContaining('permanent'), findsOneWidget);
+      final focused = FocusManager.instance.primaryFocus!.context!;
+      expect(
+        find.ancestor(of: find.byWidget(focused.widget), matching: find.byKey(const ValueKey('delete-cancel'))),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('delete-confirm')));
+      await tester.pumpAndSettle();
+      expect(server.requests, isEmpty, reason: 'a press is not a hold');
+      expect(find.byKey(const ValueKey('delete-confirm')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('delete-server-file'))); // off
+      await tester.pump();
+      await tester.longPress(find.byKey(const ValueKey('delete-confirm')));
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pumpAndSettle();
+      expect(server.requests.single.data, {
+        'roms': [7564],
+        'delete_from_fs': <int>[],
+      });
+      expect(io.File(RomFiles(root).pathFor(burnout)).existsSync(), isFalse, reason: 'this PC ticked');
+      expect(find.text('Deleted Burnout 3: Takedown from RomM.'), findsOneWidget);
+    });
+
+    testWidgets('B cancels; this PC unticked keeps the copy', (tester) async {
+      await pumpDeletable(tester, allowed: true);
+      await openPrompt(tester);
+      await press(tester, GameAction.back);
+      expect(find.byKey(const ValueKey('delete-confirm')), findsNothing);
+      expect(server.requests, isEmpty);
+
+      await openPrompt(tester);
+      await tester.tap(find.byKey(const ValueKey('delete-this-pc')));
+      await tester.pump();
+      await tester.longPress(find.byKey(const ValueKey('delete-confirm')));
+      await tester.pumpAndSettle();
+      expect(server.requests.single.data, {
+        'roms': [7564],
+        'delete_from_fs': [7564],
+      });
+      expect(io.File(RomFiles(root).pathFor(burnout)).existsSync(), isTrue);
+    });
+
+    testWidgets('RomM refuses: says to sign in again, and nothing is deleted here', (tester) async {
+      await pumpDeletable(tester, allowed: true, status: 403);
+      await openPrompt(tester);
+      await tester.longPress(find.byKey(const ValueKey('delete-confirm')));
+      await tester.pumpAndSettle();
+      expect(find.text("RomM didn't allow it"), findsOneWidget);
+      expect(find.textContaining('Sign in again'), findsOneWidget);
+      expect(io.File(RomFiles(root).pathFor(burnout)).existsSync(), isTrue);
+    });
   });
 
   testWidgets('⋯ offers Forget "Always in PCSX2" only when one is remembered', (tester) async {

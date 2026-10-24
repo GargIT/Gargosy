@@ -14,6 +14,7 @@ const meJson = {
     'me.read',
     'me.write',
     'roms.read',
+    'roms.write',
     'roms.user.read',
     'roms.user.write',
     'platforms.read',

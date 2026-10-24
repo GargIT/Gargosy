@@ -217,6 +217,16 @@ final platformCoversChoiceProvider = StateNotifierProvider<PlatformCoversChoice,
   (ref) => PlatformCoversChoice(ref.watch(profilePrefsProvider)),
 );
 
+/// Whether the profile's RomM user may delete games (RomM's own permission:
+/// an admin or editor); false offline.
+final canDeleteGamesProvider = FutureProvider<bool>((ref) async {
+  final romm = ref.watch(rommServiceProvider);
+  return romm != null && await romm.canDeleteGames();
+});
+
+/// Games deleted from RomM this session, left out of galleries already loaded.
+final deletedGameIdsProvider = StateProvider<Set<String>>((ref) => const {});
+
 /// Search's recent terms (#132), the profile's own.
 final recentSearchesProvider = StateNotifierProvider<RecentSearches, List<String>>(
   (ref) => RecentSearches(ref.watch(profilePrefsProvider)),
