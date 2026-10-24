@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
+import 'package:gargosy/core/romm/romm_auth_client.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/core/save/state_sync_service.dart';
@@ -13,6 +14,7 @@ import 'package:gargosy/emulators/emulator_library.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/profiles/login_store.dart';
+import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/pin.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/engine_providers.dart';
@@ -26,6 +28,8 @@ import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
 
+import '../helpers/fake_protector.dart';
+import '../helpers/fake_romm_auth.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
@@ -48,6 +52,7 @@ void main() {
     UploadQueue? queue,
     BiosSync? bios,
     SettingsPage initial = SettingsPage.profile,
+    FakeRommAuth? auth,
   }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
@@ -62,6 +67,9 @@ void main() {
         rommHeartbeatEnabledProvider.overrideWithValue(false),
         uploadQueueProvider.overrideWith((ref) async => queue),
         biosSyncProvider.overrideWithValue(bios),
+        dataProtectorProvider.overrideWithValue(FakeProtector()),
+        pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
+        rommAuthFactoryProvider.overrideWithValue((url, trust) => auth ?? FakeRommAuth()),
         platformsProvider.overrideWith((ref) async => [Platform(id: 1, name: 'PlayStation', slug: 'psx')]),
         emulatorsProvider.overrideWith(
           (ref) async => const [
@@ -114,6 +122,36 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('Profile → RomM account → Sign in again: the same RomM user, the new login used from then on', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      auth: FakeRommAuth(
+        start: const DeviceAuthStart(
+          deviceCode: 'dc',
+          userCode: 'CODE-1',
+          verificationUrl: 'https://r/pair/device?user_code=CODE-1',
+          expiresIn: 600,
+          interval: 1,
+        ),
+        polls: [const DeviceApproved(token: 'new', deviceId: 'd')],
+      ),
+    );
+    expect(find.text('Sign in again'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('romm-account')));
+    for (var i = 0; i < 60 && c.read(activeProfileProvider)!.login.token != 'new'; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    await tester.pumpAndSettle();
+    expect(c.read(activeProfileProvider)!.login.token, 'new');
+    final saved = await tester.runAsync(() => loginStoreForWidgetless(c).read());
+    expect(saved!.token, 'new');
+    expect(find.byType(SettingsScreen), findsOneWidget, reason: 'back on Settings');
+    expect(find.text('Signed in again as anna.'), findsOneWidget);
+  });
 
   testWidgets('lists the sections; each opens its settings', (tester) async {
     await pump(tester);
@@ -350,4 +388,13 @@ class _FakeBios implements BiosSync {
     calls.add('all ${(installed.toList()..sort()).join(',')}');
     return found;
   }
+}
+
+ProfileLoginStore loginStoreForWidgetless(ProviderContainer c) {
+  final p = c.read(activeProfileProvider)!;
+  return ProfileLoginStore(
+    profileDir: p.paths.dir,
+    protector: c.read(dataProtectorProvider),
+    pc: c.read(pcIdentityProvider),
+  );
 }

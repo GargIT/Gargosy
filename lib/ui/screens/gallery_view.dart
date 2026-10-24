@@ -321,8 +321,17 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   @override
   Widget build(BuildContext context) {
     final favIds = ref.watch(favouriteIdsProvider);
+    final deleted = ref.watch(deletedGameIdsProvider);
     List<Game> games = _shown;
     int? total = _total;
+    if (deleted.isNotEmpty) {
+      final before = games.length;
+      games = [
+        for (final g in games)
+          if (!deleted.contains(g.id)) g,
+      ];
+      if (total != null) total -= before - games.length;
+    }
     var values = _values;
     if (_thisPc) {
       final local = _onThisPc();

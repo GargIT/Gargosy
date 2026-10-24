@@ -21,6 +21,7 @@ import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/toast.dart';
 import '../play/play_screen.dart';
+import 'delete_game_dialog.dart';
 
 /// Opens a folder in Windows' Explorer; tests replace it.
 final folderOpenerProvider = Provider<void Function(String path)>(
@@ -148,6 +149,12 @@ class GameCoverColumn extends ConsumerWidget {
             if (ok) await ref.read(downloadsProvider.notifier).delete(game);
           },
         ),
+      if (ref.read(canDeleteGamesProvider).valueOrNull ?? false)
+        (
+          label: 'Delete from RomM…',
+          danger: true,
+          run: () => deleteGameFromRomm(context, ref, game, downloaded: downloaded),
+        ),
     ];
     if (items.isEmpty) return;
     final i = await showDialog<int>(
@@ -165,7 +172,8 @@ class GameCoverColumn extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (var k = 0; k < items.length; k++) ...[
-                    if (items[k].danger && k > 0) const Divider(color: GColors.borderStrong, height: GSpace.s4),
+                    if (items[k].danger && k > 0 && !items[k - 1].danger)
+                      const Divider(color: GColors.borderStrong, height: GSpace.s4),
                     GFocusable(
                       autofocus: k == 0,
                       borderRadius: GRadius.md,
@@ -193,6 +201,7 @@ class GameCoverColumn extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = ref.watch(downloadsProvider)[game.id];
     final downloaded = watchDownloaded(ref, game);
+    ref.watch(canDeleteGamesProvider); // asked once, ready for ⋯
     final isFavourite = ref.watch(favouriteIdsProvider).contains(game.id);
     final playing = ref.watch(playControllerProvider.select((s) => s.runningGameId == game.id));
     // When this game's session ends, say how its saves went.

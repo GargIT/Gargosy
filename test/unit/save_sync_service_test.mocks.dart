@@ -347,6 +347,17 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
       ) as _i11.Future<List<Map<String, dynamic>>?>);
 
   @override
+  _i11.Future<bool> canDeleteGames() =>
+      (super.noSuchMethod(Invocation.method(#canDeleteGames, []), returnValue: _i11.Future<bool>.value(false))
+          as _i11.Future<bool>);
+
+  @override
+  _i11.Future<_i9.RomDeleteResult> deleteGame(int? romId, {required bool? fromServerDisk}) => (super.noSuchMethod(
+    Invocation.method(#deleteGame, [romId], {#fromServerDisk: fromServerDisk}),
+    returnValue: _i11.Future<_i9.RomDeleteResult>.value(_i9.RomDeleteResult.deleted),
+  ) as _i11.Future<_i9.RomDeleteResult>);
+
+  @override
   _i11.Future<bool> setSaveShared(int? saveId, bool? shared) => (super.noSuchMethod(
     Invocation.method(#setSaveShared, [saveId, shared]),
     returnValue: _i11.Future<bool>.value(false),
