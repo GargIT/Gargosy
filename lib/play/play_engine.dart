@@ -21,6 +21,7 @@ import '../core/save/catalog/play_request.dart';
 import '../core/save/catalog/save_catalog_sources.dart';
 import '../core/save/catalog/save_maker.dart';
 import '../core/save/resume_service.dart';
+import '../emulators/close_process.dart';
 import '../emulators/emulator_layout.dart';
 import '../emulators/emulator_library.dart';
 import '../emulators/profile_launch_config.dart';
@@ -46,8 +47,12 @@ class PlayResult {
 
 /// A running game; [finished] completes once it exits and its saves synced.
 class PlaySession {
-  const PlaySession(this.finished);
+  const PlaySession(this.finished, {this.close});
   final Future<PlayResult> finished;
+
+  /// Asks the emulator to close, as its window's close button does (#141);
+  /// [finished] then completes as usual. Null when it can't be closed.
+  final Future<void> Function()? close;
 }
 
 /// What the pre-launch state pull did: the states it brought down or found
@@ -613,7 +618,8 @@ class GargosyPlayEngine implements PlayEngine {
             }
           }
         });
-    return PlaySession(finished);
+    final process = session.process;
+    return PlaySession(finished, close: process == null ? null : () => closeProcess(process));
   }
 
   static PlayResult _describe(LaunchResult? r) {

@@ -18,6 +18,10 @@ What changed in each release of Gargosy. The format follows
   which widgets show, and which rows show in what order, each profile its own.
   For you (RomM 5.4's recommendations), Smart collections and Virtual
   collections are there to turn on.
+- Quit a game with the controller: hold Select (View) and Start together for
+  2 seconds while a game runs, and Gargosy closes the emulator the way its
+  close button does, so it saves first, then syncs as usual. It works in
+  every emulator; Settings → Controller turns it off.
 
 ## [0.3.0] - 2026-10-24
 

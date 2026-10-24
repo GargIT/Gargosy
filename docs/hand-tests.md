@@ -219,3 +219,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 92. [x] Customize Home (at the end of Home, and Settings → Home): turn Favourites off, move Recently added to the top with ↑, turn For you on, turn On this day off, choose Random pick at the top: Home follows at once and keeps it after a restart. Another profile's Home is unchanged. Reset to the default brings the standard Home back.
 93. [x] With RomM unreachable (stop it, or unplug the network): Home shows the game last played on this PC at the top, On this PC first, then Continue playing from this PC; no widgets, nothing that needs RomM. A new profile that has played nothing gets the random pick at the top with Download and Another.
 
+
+## Quit a game with the controller (#141)
+
+94. [ ] Start a game in RetroArch from the controller and play a bit (make a save). Hold Select (View) + Start for 2 seconds: the emulator closes on its own, Gargosy comes back, and the session's message says the save synced. Try it in a standalone emulator too (PCSX2 or Dolphin): it closes the same way (one that asks "are you sure?" is ended after 10 s). Let go before 2 seconds: nothing happens. Settings → Controller → Hold Select + Start to quit off: holding does nothing.
