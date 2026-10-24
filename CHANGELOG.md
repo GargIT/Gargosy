@@ -44,6 +44,10 @@ What changed in each release of Gargosy. The format follows
   and when they were last played, and delete one or several (X marks them)
   from this PC. Only the ROM files go; the saves stay. Temp can be emptied.
   The image cache's settings moved here.
+- Play time: every game you play is sent to RomM 5.4's play sessions, and
+  a game's page says how long you've played it, on every device ("Played
+  12 h 40 min · 8 sessions"); Home's header too. A session RomM didn't take
+  goes after the next game, and on an older RomM the time is this PC's.
 - A screensaver: left untouched on Home or a tab for 5 minutes, Gargosy
   shows the library a game at a time over its art. Any button puts you back
   where you were; A opens the game shown. Settings → Display sets the wait

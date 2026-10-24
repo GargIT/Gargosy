@@ -10,12 +10,15 @@ import 'package:dio/dio.dart';
 import 'dart:io' as io;
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/emulator/emulator_strategy.dart';
 import '../core/emulator/game_launch_service.dart';
 import '../core/emulator/retroarch_core_list.dart';
 import '../core/romm/romm_models.dart';
+import '../core/romm/romm_play_sessions.dart';
 import '../core/save/catalog/play_preparer.dart';
 import '../core/save/catalog/play_request.dart';
 import '../core/save/catalog/save_catalog_sources.dart';
@@ -33,6 +36,7 @@ import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
 import 'dsiware_limits.dart';
 import 'play_menu.dart';
+import 'play_time.dart';
 import 'pre_launch_pull.dart';
 import 'save_deletion.dart';
 import 'state_copies.dart';
@@ -602,6 +606,8 @@ class GargosyPlayEngine implements PlayEngine {
       overrideCoreId: coreOverride,
       loadStatePath: statePath,
     );
+    final started = session.sessionStart;
+    unawaited(session.process?.exitCode.then((_) => _played(game, started, DateTime.now())));
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
@@ -622,6 +628,22 @@ class GargosyPlayEngine implements PlayEngine {
         });
     final process = session.process;
     return PlaySession(finished, close: process == null ? null : () => closeProcess(process));
+  }
+
+  /// A session of [game] ended (#146): kept in the profile's log, then
+  /// sent to RomM with any it didn't take before. Shorter than a few
+  /// seconds (it didn't start) isn't kept.
+  Future<void> _played(Game game, DateTime start, DateTime end) async {
+    if (end.difference(start) < const Duration(seconds: 5)) return;
+    final log = _ref.read(playTimeLogProvider);
+    if (log == null) return;
+    try {
+      await log.add(PlaySessionRecord(gameId: game.id, start: start, end: end));
+      if (_ref.read(playSessionsApiProvider) case final api?) await log.sendUnsent(api);
+    } on Object catch (e) {
+      debugPrint('[PlayTime] not kept: $e');
+    }
+    _ref.invalidate(playTimeProvider(game.id));
   }
 
   static PlayResult _describe(LaunchResult? r) {
