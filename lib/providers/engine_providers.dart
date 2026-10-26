@@ -27,6 +27,11 @@ final profilePrefsProvider = Provider<ProfilePreferences?>((ref) {
   final paths = ref.watch(_profilePathsProvider);
   if (paths == null) return null;
   final prefs = ProfilePreferences.open(paths);
+  ref.listen(
+    activeProfileProvider.select((c) => c?.login.deviceId),
+    (_, id) => prefs.deviceId = id,
+    fireImmediately: true,
+  );
   // The old per-emulator state-sync switches become the one (state-sync plan S0.4).
   migrateStateSyncPref(prefs).catchError((Object e) => debugPrint('[StateSync] switch migration failed: $e'));
   return prefs;
@@ -144,5 +149,7 @@ final gameLaunchServiceProvider = FutureProvider<GameLaunchService?>((ref) async
     prefs: prefs,
     rommService: ref.watch(rommServiceProvider),
     stateSyncService: ref.watch(stateSyncServiceProvider),
+    // Gargosy's own play-time log sends the sessions (`play_time.dart`).
+    recordPlaySessions: false,
   );
 });

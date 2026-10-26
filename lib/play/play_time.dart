@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/romm/romm_play_sessions.dart';
 import '../profiles/profile_preferences.dart';
+import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
 import '../providers/romm_providers.dart';
 
@@ -79,7 +80,13 @@ class PlayTimeLog {
 /// RomM's play sessions for the active profile; null with no RomM.
 final playSessionsApiProvider = Provider<PlaySessionsApi?>((ref) {
   final romm = ref.watch(rommServiceProvider);
-  return romm == null ? null : RommPlaySessions(romm.dio, () => romm.authOptions);
+  return romm == null
+      ? null
+      : RommPlaySessions(
+          romm.dio,
+          () => romm.authOptions,
+          deviceId: () => ref.read(activeProfileProvider)?.login.deviceId,
+        );
 });
 
 final playTimeLogProvider = Provider<PlayTimeLog?>((ref) {

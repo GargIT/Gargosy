@@ -57,18 +57,22 @@ abstract class PlaySessionsApi {
 }
 
 class RommPlaySessions implements PlaySessionsApi {
-  RommPlaySessions(this.dio, this.auth);
+  RommPlaySessions(this.dio, this.auth, {this.deviceId});
 
   final Dio dio;
   final Options Function() auth;
 
+  /// This PC as a RomM device, when registered.
+  final String? Function()? deviceId;
+
   @override
   Future<void> record(List<PlaySessionRecord> sessions) async {
     if (sessions.isEmpty) return;
-    // No device id: RomM takes the one the login is paired with, if any.
+    // Without a device id RomM takes the one the login is paired with, if any.
     await dio.post(
       '/api/play-sessions',
       data: {
+        'device_id': ?deviceId?.call(),
         'sessions': [
           for (final s in sessions.take(PlaySessionsApi.batch))
             {

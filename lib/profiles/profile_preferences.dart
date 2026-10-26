@@ -46,11 +46,21 @@ class ProfilePreferences implements AppPreferences {
     return done.future;
   }
 
+  /// The engine's key for this PC as a RomM device.
+  static const deviceIdKey = 'romm_device_id';
+
+  /// This PC as a RomM device, from the PC's login: read by the engine as
+  /// [deviceIdKey], never written to `prefs.json`, which moves between PCs.
+  String? deviceId;
+
   /// Waits for every pending write.
   Future<void> flush() => _queue;
 
   @override
-  String? getString(String key) => _values[key] is String ? _values[key] as String : null;
+  String? getString(String key) {
+    if (key == deviceIdKey) return deviceId;
+    return _values[key] is String ? _values[key] as String : null;
+  }
 
   @override
   bool? getBool(String key) => _values[key] is bool ? _values[key] as bool : null;
@@ -60,6 +70,10 @@ class ProfilePreferences implements AppPreferences {
 
   @override
   Future<bool> setString(String key, String value) {
+    if (key == deviceIdKey) {
+      deviceId = value;
+      return Future.value(true);
+    }
     _values[key] = value;
     return _persist();
   }

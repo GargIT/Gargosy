@@ -107,6 +107,12 @@ void main() {
     expect(await old.timeFor('7'), isNull);
   });
 
+  test("sent with this PC's device id once it has one", () async {
+    final a = FakeDioAdapter((r) => (status: 201, body: {'created_count': 1}));
+    await RommPlaySessions(fakeDio(a), Options.new, deviceId: () => 'pc-1').record([s('7', 5)]);
+    expect((a.requests.single.data as Map)['device_id'], 'pc-1');
+  });
+
   test('the line', () {
     expect(formatPlayTime(const Duration(seconds: 20)), 'under a minute');
     expect(formatPlayTime(const Duration(minutes: 35)), '35 min');

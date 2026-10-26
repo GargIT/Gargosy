@@ -26,6 +26,20 @@ void main() {
     expect(ProfilePreferences.open(a).getBool('flag'), isNull);
   });
 
+  test("this PC's RomM device id is read by the engine but never written to prefs.json", () async {
+    final root = await tempAppRoot();
+    addTearDown(() => io.Directory(root.root).delete(recursive: true));
+    final a = ProfilePaths(root, 'aaa');
+    final prefs = ProfilePreferences.open(a)..deviceId = 'pc-1';
+    expect(prefs.getString(ProfilePreferences.deviceIdKey), 'pc-1');
+    await prefs.setString(ProfilePreferences.deviceIdKey, 'pc-2');
+    await prefs.setBool('flag', true);
+    await prefs.flush();
+    expect(prefs.getString('romm_device_id'), 'pc-2');
+    expect(io.File(a.prefsFile).readAsStringSync(), isNot(contains('pc-')));
+    expect(ProfilePreferences.open(a).getString(ProfilePreferences.deviceIdKey), isNull);
+  });
+
   test('a damaged prefs.json starts empty instead of failing', () async {
     final root = await tempAppRoot();
     addTearDown(() => io.Directory(root.root).delete(recursive: true));

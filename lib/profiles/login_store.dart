@@ -11,12 +11,16 @@ import 'pc_identity.dart';
 
 /// A profile's RomM token on this PC. [kind] is `device` (device pairing) or
 /// `client-token` (made after a password login). The password is never kept.
+/// [deviceId] is this PC as a RomM device: a paired login's own, or one
+/// registered for a password login once the profile opens.
 class ProfileLogin {
   const ProfileLogin({required this.token, required this.kind, this.deviceId});
 
   final String token;
   final String kind;
   final String? deviceId;
+
+  ProfileLogin withDeviceId(String id) => ProfileLogin(token: token, kind: kind, deviceId: id);
 
   Map<String, dynamic> toJson() => {'token': token, 'kind': kind, if (deviceId != null) 'deviceId': deviceId};
 
