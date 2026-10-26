@@ -115,7 +115,11 @@ class GameLaunchService {
     required this.prefs,
     this.rommService,
     this.stateSyncService,
+    this.recordPlaySessions = true,
   });
+
+  /// Gargosy: false where the app sends the play sessions itself.
+  final bool recordPlaySessions;
 
   /// Disc-image extensions [scanForDiscFiles] recognises (playlists aside).
   static const List<String> discImageExtensions = [
@@ -451,7 +455,7 @@ class GameLaunchService {
 
     var playSessionRecorded = false;
     try {
-      if (rommService != null) {
+      if (rommService != null && recordPlaySessions) {
         final caps = await rommService!.fetchCapabilities();
         if (caps.hasPlaySessionTracking) {
           final deviceId = prefs.getString('romm_device_id');

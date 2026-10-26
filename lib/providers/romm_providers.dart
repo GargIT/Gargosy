@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/romm/romm_collection_edits.dart';
@@ -52,3 +53,23 @@ final rommOfflineProvider = Provider<bool>((ref) {
   ref.onDispose(() => romm.isOffline.removeListener(changed));
   return romm.isOffline.value;
 });
+
+/// Registers this PC as a RomM device for the active profile, once: a paired
+/// login has its own, a password login has none. RomM then knows which PC a
+/// save, a play session or "now playing" came from. The id stays in the PC's
+/// login file ([ActiveProfileNotifier.setDeviceId]). Offline or refused (an
+/// older RomM, a token without `devices.write`), it's tried at the next start.
+Future<void> registerRommDevice(WidgetRef ref) async {
+  final ctx = ref.read(activeProfileProvider);
+  final romm = ref.read(rommServiceProvider);
+  if (ctx == null || romm == null || ctx.login.deviceId != null) return;
+  final pc = ref.read(pcIdentityProvider);
+  final id = await romm.registerDevice(
+    name: 'Gargosy on ${pc.machineName}',
+    platform: 'Windows',
+    hostname: pc.machineName,
+  );
+  if (id == null || id.isEmpty) return;
+  debugPrint('[RomM] this PC is device $id');
+  await ref.read(activeProfileProvider.notifier).setDeviceId(ctx.profile.id, id);
+}

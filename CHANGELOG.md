@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Gargosy registers this PC as a device on RomM ("Gargosy on <PC name>") the
+  first time a profile opens, so RomM knows which PC your saves and play
+  sessions came from and shows what you're playing now.
 - Closing a game in RetroArch, DuckStation or PCSX2 (the quit buttons too)
   keeps a save state of where you were: RetroArch's auto state, DuckStation's
   and PCSX2's resume state. It syncs to RomM like your other states, and
