@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/input/held_combo.dart';
 import 'package:gargosy/core/input/hid_pads.dart';
@@ -43,4 +44,134 @@ xinput,XInput Controller,a:b0,platform:Windows,
     pads.stop();
     await held.close();
   });
+
+  group('devices come and go during a game (#172)', () {
+    late StreamController<HeldButtons> held;
+    late List<HeldButtons> sent;
+    late List<String> paths;
+    late Map<String, _FakeDevice> devices;
+    late List<String> opened;
+
+    HidPads pads() => HidPads(
+      held,
+      database: () async => '',
+      paths: () => paths,
+      open: (path, id, _) {
+        opened.add('$path=$id');
+        return devices[path];
+      },
+    );
+
+    setUp(() {
+      held = StreamController<HeldButtons>.broadcast(sync: true);
+      sent = [];
+      held.stream.listen(sent.add);
+      paths = [];
+      devices = {};
+      opened = [];
+    });
+
+    test('a controller connected mid-game is read from the next scan', () {
+      fakeAsync((async) {
+        paths = ['kbd'];
+        final hid = pads()..start();
+        async.elapse(const Duration(milliseconds: 100));
+        expect(opened, ['kbd=hid0']);
+
+        final pad = devices['pad'] = _FakeDevice();
+        paths = ['kbd', 'pad'];
+        async.elapse(const Duration(seconds: 2));
+        expect(opened.last, 'pad=hid0', reason: 'the keyboard is not tried again; ids count opened pads');
+
+        pad.next = {PadButton.select, PadButton.l1};
+        async.elapse(const Duration(milliseconds: 50));
+        expect(sent.single.pad, 'hid0');
+        expect(sent.single.buttons, {PadButton.select, PadButton.l1});
+        hid.stop();
+        expect(pad.closed, isTrue);
+      });
+    });
+
+    test('a controller that went is closed and lets go of its buttons', () {
+      fakeAsync((async) {
+        final a = devices['a'] = _FakeDevice();
+        final b = devices['b'] = _FakeDevice();
+        paths = ['a', 'b'];
+        final hid = pads()..start();
+        async.elapse(const Duration(milliseconds: 100));
+        a.next = {PadButton.start};
+        async.elapse(const Duration(milliseconds: 50));
+
+        paths = ['b'];
+        async.elapse(const Duration(seconds: 2));
+        expect(a.closed, isTrue);
+        expect(b.closed, isFalse);
+        expect(sent.last.pad, 'hid0');
+        expect(sent.last.buttons, isEmpty);
+
+        // Back again: a new id, read as before.
+        paths = ['a', 'b'];
+        async.elapse(const Duration(seconds: 2));
+        expect(opened.last, 'a=hid2');
+        hid.stop();
+      });
+    });
+
+    test('a device whose reads fail is not opened again until it leaves the list', () {
+      fakeAsync((async) {
+        final a = devices['a'] = _FakeDevice();
+        paths = ['a'];
+        final hid = pads()..start();
+        async.elapse(const Duration(milliseconds: 100));
+        a.gone = true;
+        async.elapse(const Duration(seconds: 6));
+        expect(opened, ['a=hid0']);
+        expect(a.closed, isTrue);
+
+        paths = [];
+        async.elapse(const Duration(seconds: 2));
+        devices['a'] = _FakeDevice();
+        paths = ['a'];
+        async.elapse(const Duration(seconds: 2));
+        expect(opened, ['a=hid0', 'a=hid1']);
+        hid.stop();
+      });
+    });
+
+    test('a list that fails leaves the pads read as they are', () {
+      fakeAsync((async) {
+        final a = devices['a'] = _FakeDevice();
+        paths = ['a'];
+        var fail = false;
+        final hid = HidPads(
+          held,
+          database: () async => '',
+          paths: () => fail ? throw StateError('SetupDi') : paths,
+          open: (path, id, _) => devices[path],
+        )..start();
+        async.elapse(const Duration(milliseconds: 100));
+        fail = true;
+        async.elapse(const Duration(seconds: 4));
+        expect(a.closed, isFalse);
+        hid.stop();
+      });
+    });
+  });
+}
+
+class _FakeDevice implements HidDevice {
+  Set<PadButton>? next;
+  var closed = false;
+  @override
+  var gone = false;
+
+  @override
+  Set<PadButton>? poll() {
+    final changed = next;
+    next = null;
+    return changed;
+  }
+
+  @override
+  void close() => closed = true;
 }

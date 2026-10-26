@@ -14,19 +14,41 @@ import 'held_combo.dart';
 /// while an emulator is in front. Each controller is a pad of its own
 /// (`hid<n>`) on [held]. Which HID button is which comes from SDL's
 /// controller database ([SdlButtons]); a controller missing there is left
-/// out. XInput controllers are [XInputPads]'.
+/// out. XInput controllers are [XInputPads]'. The devices are listed again
+/// every [rescanEvery] (#172): one connected or woken during the game is
+/// read from then on, one that went is closed.
 class HidPads implements BackgroundPads {
-  HidPads(this.held, {this.every = const Duration(milliseconds: 50), Future<String> Function()? database})
-    : _database = database ?? (() => rootBundle.loadString('thirdparty/gamecontrollerdb.txt'));
+  HidPads(
+    this.held, {
+    this.every = const Duration(milliseconds: 50),
+    this.rescanEvery = const Duration(seconds: 2),
+    Future<String> Function()? database,
+    List<String> Function()? paths,
+    HidDevice? Function(String path, String id, SdlButtons buttons)? open,
+  }) : _database = database ?? (() => rootBundle.loadString('thirdparty/gamecontrollerdb.txt')),
+       _paths = paths ?? _hidPaths,
+       _openDevice = open ?? _HidPad.open;
 
   final StreamController<HeldButtons> held;
   final Duration every;
+  final Duration rescanEvery;
   final Future<String> Function() _database;
+  final List<String> Function() _paths;
+  final HidDevice? Function(String path, String id, SdlButtons buttons) _openDevice;
 
   SdlButtons? _buttons;
   Timer? _timer;
-  final _pads = <_HidPad>[];
+  Timer? _rescan;
+
+  /// The controllers read now, by device path.
+  final _pads = <String, ({String id, HidDevice device})>{};
+
+  /// Paths that aren't a controller to read (or whose reads failed), not
+  /// opened again until they're gone from the list.
+  final _skipped = <String>{};
+  var _next = 0;
   var _run = 0;
+  var _listFailed = false;
 
   @override
   void start() {
@@ -41,37 +63,96 @@ class HidPads implements BackgroundPads {
     _run++;
     _timer?.cancel();
     _timer = null;
-    for (final pad in _pads) {
-      pad.close();
+    _rescan?.cancel();
+    _rescan = null;
+    for (final pad in _pads.values) {
+      pad.device.close();
     }
     _pads.clear();
+    _skipped.clear();
+    _next = 0;
+    _listFailed = false;
   }
 
   Future<void> _open(int run) async {
     try {
-      final buttons = _buttons ??= SdlButtons.parse(await _database());
-      if (run != _run) return;
-      for (final path in _hidPaths()) {
-        final pad = _HidPad.open(path, 'hid${_pads.length}', buttons);
-        if (pad != null) _pads.add(pad);
-      }
+      _buttons ??= SdlButtons.parse(await _database());
     } catch (e) {
       debugPrint('[Quit] HID controllers can not be read: $e');
+      return;
+    }
+    if (run != _run) return;
+    _scan();
+    _rescan = Timer.periodic(rescanEvery, (_) => _scan());
+  }
+
+  /// Opens the controllers that came, closes the ones that went.
+  void _scan() {
+    final buttons = _buttons;
+    if (buttons == null) return;
+    final List<String> paths;
+    try {
+      paths = _paths();
+      _listFailed = false;
+    } catch (e) {
+      if (!_listFailed) debugPrint('[Quit] HID controllers can not be listed: $e');
+      _listFailed = true;
+      return;
+    }
+    final present = paths.toSet();
+    for (final path in [..._pads.keys]) {
+      if (present.contains(path)) continue;
+      final pad = _pads.remove(path)!;
+      debugPrint('[Quit] ${pad.id} disconnected');
+      _drop(pad.id, pad.device);
+    }
+    _skipped.retainAll(present);
+    for (final path in paths) {
+      if (_pads.containsKey(path) || _skipped.contains(path)) continue;
+      final id = 'hid$_next';
+      final device = _openDevice(path, id, buttons);
+      if (device == null) {
+        _skipped.add(path);
+        continue;
+      }
+      _next++;
+      _pads[path] = (id: id, device: device);
     }
   }
 
   void _poll() {
-    for (final pad in [..._pads]) {
-      final changed = pad.poll();
-      if (pad.gone) {
-        pad.close();
-        _pads.remove(pad);
+    for (final path in [..._pads.keys]) {
+      final pad = _pads[path]!;
+      final changed = pad.device.poll();
+      if (pad.device.gone) {
+        _pads.remove(path);
+        _skipped.add(path);
+        _drop(pad.id, pad.device);
+        continue;
       }
       if (changed == null) continue;
       debugPrint('[Quit] ${pad.id} holds ${changed.map((b) => b.name).join(' + ')}');
       if (!held.isClosed) held.add(HeldButtons(pad.id, changed));
     }
   }
+
+  /// Closes [device]; whatever [id] held is let go.
+  void _drop(String id, HidDevice device) {
+    device.close();
+    if (!held.isClosed) held.add(HeldButtons(id, const {}));
+  }
+}
+
+/// One controller [HidPads] reads (a seam for tests).
+abstract interface class HidDevice {
+  /// What came since the last poll: the held buttons when they changed,
+  /// else null.
+  Set<PadButton>? poll();
+
+  /// The device can't be read any more.
+  bool get gone;
+
+  void close();
 }
 
 /// Which HID button (counted from 0, as SDL's `b<n>`) is which [PadButton],
@@ -197,7 +278,7 @@ List<String> _hidPaths() {
 }
 
 /// One HID game controller, read with overlapped reads polled by [poll].
-class _HidPad {
+class _HidPad implements HidDevice {
   _HidPad._(this.id, this._handle, this._preparsed, this._length, this._buttons)
     : _report = calloc<Uint8>(_length),
       _read = calloc<Uint32>(),
@@ -217,6 +298,7 @@ class _HidPad {
   final Pointer<Uint32> _count;
   var _pending = false;
   var _held = <PadButton>{};
+  @override
   var gone = false;
 
   /// A game controller at [path] SDL knows; null for anything else (XInput
@@ -281,8 +363,7 @@ class _HidPad {
     }
   }
 
-  /// Reads what came since the last poll; the held buttons when they
-  /// changed, else null.
+  @override
   Set<PadButton>? poll() {
     if (gone) return null;
     final was = _held;
@@ -340,6 +421,7 @@ class _HidPad {
     _held = {};
   }
 
+  @override
   void close() {
     if (_pending) {
       CancelIoEx(_handle, _overlapped);
