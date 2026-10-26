@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-26
+
+Home after RomM's v2 Home, a download queue with a Downloads page, adding
+games to collections, Storage, play time, a screensaver, quitting a game
+with the controller (and a save state kept on close), and this PC as a
+device on RomM.
+
 ### Added
 
 - Gargosy registers this PC as a device on RomM ("Gargosy on <PC name>") the
@@ -455,7 +462,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.4.0
 [0.3.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.3.0
 [0.2.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.1.0
