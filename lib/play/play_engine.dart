@@ -1,4 +1,5 @@
 import '../emulators/fullscreen.dart';
+import '../core/platform/window_service.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../profiles/profile_providers.dart';
 import '../profiles/path_guard.dart';
@@ -355,7 +356,10 @@ class GargosyPlayEngine implements PlayEngine {
   Future<void> openEmulator(String emulatorId, String exePath, {required void Function() onExit}) async {
     final dirs = _ref.read(launchDirectoriesProvider) ?? (throw StateError('No profile is active.'));
     final process = await dirs.openEmulator(emulatorId, exePath);
-    process.exitCode.whenComplete(onExit);
+    process.exitCode.whenComplete(() {
+      onExit();
+      WindowService.bringToFront();
+    });
   }
 
   @override
@@ -604,7 +608,10 @@ class GargosyPlayEngine implements PlayEngine {
         : await stateForThisPc(strategy, loadStatePath, romPath, _ref.read(appRootProvider));
     // Told as soon as the emulator starts: service.launch returns only
     // after it has exited.
-    dirs?.onGameStarted = (process) => onStarted?.call(() => closeProcess(process));
+    dirs?.onGameStarted = (process) {
+      onStarted?.call(() => closeProcess(process));
+      process.exitCode.whenComplete(WindowService.bringToFront);
+    };
     final GameSession session;
     try {
       session = await service.launch(game, romPath, strategy, overrideCoreId: coreOverride, loadStatePath: statePath);

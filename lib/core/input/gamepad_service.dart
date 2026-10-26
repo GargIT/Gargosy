@@ -308,11 +308,11 @@ class GamepadService extends WidgetsBindingObserver {
     return kDefaultMapping;
   }
 
-  final _quitCombo = HeldCombo({GameAction.select, GameAction.start});
+  final _quitCombo = HeldCombo(quitComboButtons);
   final _quitComboMappings = <String, Map<String, GameAction>>{};
 
-  /// Gargosy (#141): Select + Start held on one controller, told to
-  /// [selectStartHeld] even while an emulator has the focus. A plain lookup
+  /// Gargosy (#141): the quit combo's buttons held on each controller, told
+  /// to [heldButtons] even while an emulator has the focus. A plain lookup
   /// (no logging): it sees every event of a game being played.
   void _trackQuitCombo(GamepadEvent event) {
     if (event.type != KeyType.button) return;
@@ -324,7 +324,7 @@ class GamepadService extends WidgetsBindingObserver {
     final action = mapping[key] ?? mapping[event.key];
     if (action == null) return;
     final changed = _quitCombo.update(event.gamepadId, action, down: event.value.abs() > 0.5);
-    if (changed != null && !selectStartHeld.isClosed) selectStartHeld.add(changed);
+    if (changed != null && !heldButtons.isClosed) heldButtons.add(changed);
   }
 
   NormalizedInput? _normalize(GamepadEvent event) {

@@ -18,10 +18,11 @@ What changed in each release of Gargosy. The format follows
   which widgets show, and which rows show in what order, each profile its own.
   For you (RomM 5.4's recommendations), Smart collections and Virtual
   collections are there to turn on.
-- Quit a game with the controller: hold Select (View) and Start together for
-  2 seconds while a game runs, and Gargosy closes the emulator the way its
-  close button does, so it saves first, then syncs as usual. It works in
-  every emulator; Settings → Controller turns it off.
+- Quit a game with the controller: hold Select (View), LB and RB together for
+  a second while a game runs, and Gargosy closes the emulator the way its
+  close button does, so it saves first, then syncs as usual, and comes back
+  in front. It works in every emulator; Settings → Controller picks other
+  buttons (Select + Start among them) or turns it off.
 - A download checks the free space first: when the drive hasn't room for the
   game (and, for a game that comes as a zip, its unpacked copy), it doesn't
   start and says how much it needs and how much is free. The game page shows

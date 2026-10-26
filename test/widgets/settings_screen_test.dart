@@ -231,13 +231,21 @@ void main() {
     expect(find.text('ABOUT'), findsOneWidget, reason: 'the last one');
   });
 
-  testWidgets('Controller: Select + Start quits a game, on by default; turned off it stays off', (tester) async {
+  testWidgets('Controller: Select + LB + RB quits a game by default; another pick, or off, is kept', (tester) async {
     await pump(tester, initial: SettingsPage.controller);
-    expect(c.read(quitComboOnProvider), isTrue);
-    await tester.tap(find.text('Hold Select + Start to quit'));
+    expect(c.read(quitButtonsProvider), QuitButtons.selectBumpers);
+    expect(find.text('Select + LB + RB'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('quit-buttons')));
     await tester.pumpAndSettle();
-    expect(c.read(quitComboOnProvider), isFalse);
-    expect(c.read(appPreferencesProvider).getBool(QuitCombo.prefKey), isFalse);
+    await tester.tap(find.text('Select + Start').last);
+    await tester.pumpAndSettle();
+    expect(c.read(quitButtonsProvider), QuitButtons.selectStart);
+    await tester.tap(find.byKey(const ValueKey('quit-buttons')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Off').last);
+    await tester.pumpAndSettle();
+    expect(c.read(quitButtonsProvider), isNull);
+    expect(c.read(appPreferencesProvider).getString(QuitButtons.prefKey), QuitButtons.off);
   });
 
   testWidgets('Storage (#145): the drive, the folders, the ROMs by platform, and the image cache', (tester) async {

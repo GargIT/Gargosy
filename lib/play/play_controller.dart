@@ -262,16 +262,17 @@ class PlayController extends StateNotifier<PlayState> {
   QuitCombo? _quitCombo;
   Future<void> Function()? _close;
 
-  /// The emulator of [game] started: Select + Start held closes it (#141),
-  /// when this PC allows it.
+  /// The emulator of [game] started: this PC's quit buttons held close it
+  /// (#141), unless they're off.
   void _started(Game game, CloseGame close) {
     _close = close;
     _quitCombo?.cancel();
-    if (_ref.read(quitComboOnProvider)) {
-      _quitCombo = QuitCombo(selectStartHeld.stream, quitGame);
-      debugPrint('[Quit] Select + Start closes ${game.displayName}');
+    final quit = _ref.read(quitButtonsProvider);
+    if (quit != null) {
+      _quitCombo = QuitCombo(heldButtons.stream, quit.buttons, quitGame);
+      debugPrint('[Quit] ${quit.label} closes ${game.displayName}');
     } else {
-      debugPrint('[Quit] Select + Start is off in Settings');
+      debugPrint('[Quit] quitting with the controller is off in Settings');
     }
   }
 
