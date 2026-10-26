@@ -266,7 +266,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## A controller connected during a game (#172)
 
-105. [ ] Start a game with only an Xbox controller (or the keyboard). Then turn on or plug in a DualSense, Switch Pro controller or the 8BitDo in D mode, wait 2 seconds and hold the quit buttons for 1 second: the emulator closes. The log has `[Quit] hid<n> is <name>` after the controller came. Turn a controller off during a game: the log has `[Quit] hid<n> disconnected` once and nothing more; another controller still quits.
+105. [x] Start a game with only an Xbox controller (or the keyboard). Then turn on or plug in a DualSense, Switch Pro controller or the 8BitDo in D mode, wait 2 seconds and hold the quit buttons for 1 second: the emulator closes. The log has `[Quit] hid<n> is <name>` after the controller came. Turn a controller off during a game: the log has `[Quit] hid<n> disconnected` once and nothing more; another controller still quits.
 
 ## The Achievements tab as RomM's (#174)
 
