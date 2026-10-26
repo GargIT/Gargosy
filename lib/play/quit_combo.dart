@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/input/held_combo.dart';
+import '../core/input/hid_pads.dart';
 import '../core/input/xinput_pads.dart';
 import '../core/platform/platform_info.dart';
 import '../core/storage/app_preferences.dart';
@@ -89,7 +90,8 @@ class QuitCombo {
 /// after Settings changes it.
 final quitButtonsProvider = Provider<QuitButtons?>((ref) => QuitButtons.of(ref.watch(appPreferencesProvider)));
 
-/// XInput read while a game runs (#141); null off Windows.
-final xinputPadsProvider = Provider<XInputPads?>(
-  (ref) => PlatformInfo.current.isWindows ? XInputPads(heldButtons) : null,
+/// The controllers read while a game runs (#141): XInput's, and HID's that
+/// aren't XInput (#164). None off Windows.
+final backgroundPadsProvider = Provider<List<BackgroundPads>>(
+  (ref) => PlatformInfo.current.isWindows ? [XInputPads(heldButtons), HidPads(heldButtons)] : const [],
 );

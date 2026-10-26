@@ -28,8 +28,10 @@ What changed in each release of Gargosy. The format follows
 - Quit a game with the controller: hold Select (View), LB and RB together for
   a second while a game runs, and Gargosy closes the emulator the way its
   close button does, so it saves first, then syncs as usual, and comes back
-  in front. It works in every emulator; Settings → Controller picks other
-  buttons (Select + Start, or both sticks pressed in) or turns it off.
+  in front. It works in every emulator and with most controllers (Xbox ones,
+  a DualSense or DualShock, a Switch Pro controller, an 8BitDo in any mode);
+  Settings → Controller picks other buttons (Select + Start, or both sticks
+  pressed in) or turns it off.
 - A download checks the free space first: when the drive hasn't room for the
   game (and, for a game that comes as a zip, its unpacked copy), it doesn't
   start and says how much it needs and how much is free. The game page shows
