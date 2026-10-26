@@ -92,7 +92,7 @@ void main() {
     expect(text, contains('Bios = ${root.bios}'));
     expect(text, contains('MemoryCards = memcards'));
     expect(text, contains('SetupWizardIncomplete = true'));
-    expect(text, contains('ConfirmShutdown = false'), reason: 'Select + Start closes it without asking (#141)');
+    expect(text, contains('ConfirmShutdown = false'), reason: 'the quit buttons close it without asking (#141)');
   });
 
   test('dolphin stops without asking when closed (#141)', () async {

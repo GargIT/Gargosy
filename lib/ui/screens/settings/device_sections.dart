@@ -12,7 +12,7 @@ import '../../theme/tokens.dart';
 import 'settings_rows.dart';
 
 /// Settings → Controller: the stick deadzone and quitting a game with
-/// Select + Start (#141), this PC's, for every profile.
+/// held buttons (#141), this PC's, for every profile.
 class ControllerSection extends ConsumerStatefulWidget {
   const ControllerSection({super.key});
 
@@ -76,17 +76,29 @@ class _ControllerSectionState extends ConsumerState<ControllerSection> {
       SettingsCard(
         title: 'Quit a game',
         icon: Icons.power_settings_new,
-        note: "This PC's setting, for every profile.",
+        note:
+            'Held for ${QuitCombo.holdTime.inSeconds} second while a game runs: Gargosy closes the emulator the way '
+            'its close button does, so it saves first, and syncs as usual. Pick buttons nothing else uses (Game Bar, '
+            "Steam or the emulator may take Select + Start). This PC's setting, for every profile.",
         children: [
-          SettingsToggle(
-            label: 'Hold Select + Start to quit',
-            note:
-                'Held for ${QuitCombo.holdTime.inSeconds} seconds while a game runs: Gargosy closes the emulator '
-                'the way its close button does, so it saves first, and syncs as usual.',
-            on: ref.watch(quitComboOnProvider),
-            onChanged: (on) async {
-              await ref.read(appPreferencesProvider).setBool(QuitCombo.prefKey, on);
-              ref.invalidate(quitComboOnProvider);
+          SettingsField(
+            key: const ValueKey('quit-buttons'),
+            label: 'Hold to quit',
+            value: QuitButtons.labelOf(ref.watch(quitButtonsProvider)),
+            action: 'Change',
+            onActivate: () async {
+              const choices = [...QuitButtons.values, null];
+              final i = await showChoice(
+                context,
+                title: 'Hold to quit a game',
+                labels: [for (final b in choices) QuitButtons.labelOf(b)],
+                current: choices.indexOf(ref.read(quitButtonsProvider)),
+              );
+              if (i == null || i < 0) return;
+              await ref
+                  .read(appPreferencesProvider)
+                  .setString(QuitButtons.prefKey, choices[i]?.name ?? QuitButtons.off);
+              ref.invalidate(quitButtonsProvider);
             },
           ),
         ],

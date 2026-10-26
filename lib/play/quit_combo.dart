@@ -3,35 +3,74 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/input/gamepad_service.dart';
+import '../core/input/held_combo.dart';
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
 
-/// Quitting a game with the controller (#141): Select + Start held for
+/// The buttons held to quit a game (#141), this PC's choice in Settings →
+/// Controller. Select + Start alone is often taken (Game Bar, Steam, an
+/// emulator's menu), so the default adds the bumpers instead of Start.
+enum QuitButtons {
+  selectBumpers('Select + LB + RB', {GameAction.select, GameAction.l1, GameAction.r1}),
+  startBumpers('Start + LB + RB', {GameAction.start, GameAction.l1, GameAction.r1}),
+  selectStartBumpers('Select + Start + LB + RB', {GameAction.select, GameAction.start, GameAction.l1, GameAction.r1}),
+  selectStart('Select + Start', {GameAction.select, GameAction.start});
+
+  const QuitButtons(this.label, this.buttons);
+  final String label;
+  final Set<GameAction> buttons;
+
+  static const fallback = QuitButtons.selectBumpers;
+
+  /// The pref's value: a [QuitButtons] name, or `off`.
+  static const prefKey = 'controller.quitButtons';
+  static const off = 'off';
+
+  /// The on/off switch before the choice: off stays off.
+  static const oldPrefKey = 'controller.quitCombo';
+
+  /// This PC's choice; null when quitting with the controller is off.
+  static QuitButtons? of(AppPreferences prefs) {
+    final v = prefs.getString(prefKey);
+    if (v == null) return prefs.getBool(oldPrefKey) == false ? null : fallback;
+    if (v == off) return null;
+    return QuitButtons.values.where((b) => b.name == v).firstOrNull ?? fallback;
+  }
+
+  static String labelOf(QuitButtons? b) => b?.label ?? 'Off';
+}
+
+/// Quitting a game with the controller (#141): [buttons] held together for
 /// [hold] on one controller calls [onQuit], once. Listens to [held]
-/// (`selectStartHeld`) until [cancel].
+/// (`heldButtons`) until [cancel].
 class QuitCombo {
-  QuitCombo(Stream<bool> held, this.onQuit, {this.hold = holdTime}) {
-    _sub = held.listen((on) {
-      debugPrint('[Quit] Select + Start ${on ? 'held' : 'let go'}');
+  QuitCombo(Stream<HeldButtons> held, this.buttons, this.onQuit, {this.hold = holdTime}) {
+    _sub = held.listen((h) {
+      final was = _on;
+      _pads[h.pad] = h.buttons.containsAll(buttons);
+      final on = _on;
+      if (on == was) return;
+      debugPrint('[Quit] ${on ? 'held' : 'let go'}');
       _timer?.cancel();
       _timer = on && !_fired ? Timer(hold, _fire) : null;
     });
   }
 
-  static const holdTime = Duration(seconds: 2);
+  static const holdTime = Duration(seconds: 1);
 
-  /// This PC's setting (Settings → Controller), on by default.
-  static const prefKey = 'controller.quitCombo';
-  static bool enabledIn(AppPreferences prefs) => prefs.getBool(prefKey) ?? true;
-
+  final Set<GameAction> buttons;
   final Future<void> Function() onQuit;
   final Duration hold;
-  late final StreamSubscription<bool> _sub;
+  late final StreamSubscription<HeldButtons> _sub;
+  final _pads = <String, bool>{};
   Timer? _timer;
   bool _fired = false;
 
+  bool get _on => _pads.values.any((on) => on);
+
   void _fire() {
-    debugPrint('[Quit] held ${hold.inSeconds} s: closing the game');
+    debugPrint('[Quit] held ${hold.inMilliseconds} ms: closing the game');
     _fired = true;
     unawaited(onQuit());
   }
@@ -42,6 +81,6 @@ class QuitCombo {
   }
 }
 
-/// Whether Select + Start quits a game on this PC; read again after
-/// Settings changes it.
-final quitComboOnProvider = Provider<bool>((ref) => QuitCombo.enabledIn(ref.watch(appPreferencesProvider)));
+/// The buttons that quit a game on this PC, null when off; read again
+/// after Settings changes it.
+final quitButtonsProvider = Provider<QuitButtons?>((ref) => QuitButtons.of(ref.watch(appPreferencesProvider)));

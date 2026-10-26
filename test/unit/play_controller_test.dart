@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
+import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/held_combo.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
@@ -293,6 +294,9 @@ class FakeEngine implements PlayEngine {
   }
 }
 
+/// Select + LB + RB held on one controller.
+const _quit = HeldButtons('p1', {GameAction.select, GameAction.l1, GameAction.r1});
+
 void main() {
   late FakeEngine engine;
   late ProviderContainer c;
@@ -312,7 +316,7 @@ void main() {
     expect(c.read(playControllerProvider).message, 'Save synced');
   });
 
-  group('Select + Start held (#141)', () {
+  group('the quit buttons held (#141)', () {
     void playing(FakeAsync async, ProviderContainer c) {
       engine.closable = true;
       c.read(playControllerProvider.notifier).play(game(1, 'G'));
@@ -321,14 +325,17 @@ void main() {
       expect(c.read(playControllerProvider).runningGameId, '1');
     }
 
-    test('for 2 seconds closes the emulator; the session ends as usual', () {
+    test('for 1 second closes the emulator; the session ends as usual', () {
       fakeAsync((async) {
         final c = ProviderContainer(
-          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+          overrides: [
+            playEngineProvider.overrideWithValue(engine),
+            quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
+          ],
         );
         playing(async, c);
-        selectStartHeld.add(true);
-        async.elapse(const Duration(milliseconds: 1900));
+        heldButtons.add(_quit);
+        async.elapse(const Duration(milliseconds: 900));
         expect(engine.closes, 0);
         async.elapse(const Duration(milliseconds: 200));
         expect(engine.closes, 1);
@@ -342,10 +349,13 @@ void main() {
       fakeAsync((async) {
         engine.returnsAfterExit = true;
         final c = ProviderContainer(
-          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+          overrides: [
+            playEngineProvider.overrideWithValue(engine),
+            quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
+          ],
         );
         playing(async, c);
-        selectStartHeld.add(true);
+        heldButtons.add(_quit);
         async.elapse(const Duration(seconds: 3));
         expect(engine.closes, 1);
         async.elapse(Duration.zero);
@@ -357,12 +367,15 @@ void main() {
     test('let go too soon, or turned off in Settings: nothing closes', () {
       fakeAsync((async) {
         final c = ProviderContainer(
-          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+          overrides: [
+            playEngineProvider.overrideWithValue(engine),
+            quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
+          ],
         );
         playing(async, c);
-        selectStartHeld.add(true);
-        async.elapse(const Duration(seconds: 1));
-        selectStartHeld.add(false);
+        heldButtons.add(_quit);
+        async.elapse(const Duration(milliseconds: 500));
+        heldButtons.add(const HeldButtons('p1', {GameAction.select}));
         async.elapse(const Duration(seconds: 5));
         expect(engine.closes, 0);
         c.dispose();
@@ -370,10 +383,10 @@ void main() {
       engine = FakeEngine();
       fakeAsync((async) {
         final c = ProviderContainer(
-          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(false)],
+          overrides: [playEngineProvider.overrideWithValue(engine), quitButtonsProvider.overrideWithValue(null)],
         );
         playing(async, c);
-        selectStartHeld.add(true);
+        heldButtons.add(_quit);
         async.elapse(const Duration(seconds: 5));
         expect(engine.closes, 0);
         c.dispose();
@@ -383,12 +396,15 @@ void main() {
     test('after the game ended, held does nothing', () {
       fakeAsync((async) {
         final c = ProviderContainer(
-          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+          overrides: [
+            playEngineProvider.overrideWithValue(engine),
+            quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
+          ],
         );
         playing(async, c);
         engine.running!.complete(const PlayResult('Save synced'));
         async.flushMicrotasks();
-        selectStartHeld.add(true);
+        heldButtons.add(_quit);
         async.elapse(const Duration(seconds: 5));
         expect(engine.closes, 0);
         c.dispose();

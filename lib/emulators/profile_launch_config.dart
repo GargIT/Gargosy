@@ -200,7 +200,7 @@ void _pcsx2Settings(LaunchContext c) {
   final settings = IniFile(ini.existsSync() ? ini.readAsStringSync() : '');
   if (!ini.existsSync()) settings.set('UI', 'SettingsVersion', '1');
   settings.set('Folders', 'Bios', c.bios);
-  // Closed by Select + Start (#141), it shuts down at once instead of
+  // Closed by the quit buttons (#141), it shuts down at once instead of
   // asking first (the question takes it out of full screen, and waits).
   settings.set('UI', 'ConfirmShutdown', 'false');
   for (final f in c.gameFolders) {
@@ -240,7 +240,7 @@ void _dolphinGameFolders(LaunchContext c) {
   file.writeAsStringSync(ini.toText());
 }
 
-/// Dolphin stops when closed (Select + Start, #141) without asking first:
+/// Dolphin stops when closed (the quit buttons, #141) without asking first:
 /// `[Interface] ConfirmStop` off.
 void _dolphinNoStopQuestion(LaunchContext c) {
   final file = io.File(c.guard.check(p.join(c.data, 'Config', 'Dolphin.ini')));

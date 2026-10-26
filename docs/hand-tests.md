@@ -222,7 +222,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Quit a game with the controller (#141)
 
-94. [ ] Start a game in RetroArch from the controller and play a bit (make a save). Hold Select (View) + Start for 2 seconds: the emulator closes on its own, Gargosy comes back, and the session's message says the save synced. Try it in PCSX2 and Dolphin too: they close the same way, without asking "are you sure?" (one that still doesn't close is ended after 10 s); the log has `[Quit]` and `[Close]` lines. Let go before 2 seconds: nothing happens. Settings → Controller → Hold Select + Start to quit off: holding does nothing.
+94. [ ] Start a game in RetroArch from the controller and play a bit (make a save). Hold Select (View) + LB + RB for 1 second: the emulator closes on its own, Gargosy comes back in front with the focus (the controller moves around Gargosy at once, no click needed), and the session's message says the save synced. Try it in PCSX2 and Dolphin too: they close the same way, without asking "are you sure?"; the log has `[Quit]`, `[Close]` and `[Window]` lines. Let go before 1 second: nothing happens. Settings → Controller → Hold to quit: Select + Start works instead, with both an Xbox controller and an 8BitDo; Off: holding does nothing. Close an emulator the usual way (its own menu): Gargosy comes back in front too.
 
 ## Free space before a download (#142)
 
