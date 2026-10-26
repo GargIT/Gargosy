@@ -61,4 +61,25 @@ void main() {
     expect(c.read(activeProfileProvider)!.profile.hasAvatar, isTrue);
     expect((await c.read(profileStoreProvider).list()).single.hasAvatar, isTrue);
   });
+
+  test("this PC's RomM device id is kept in its login file and the open profile", () async {
+    final root = await tempAppRoot();
+    addTearDown(() => io.Directory(root.root).delete(recursive: true));
+    final c = ProviderContainer(
+      overrides: [appRootProvider.overrideWithValue(root), appPreferencesProvider.overrideWithValue(MemoryPrefs())],
+    );
+    addTearDown(c.dispose);
+    final anna = await c
+        .read(profileStoreProvider)
+        .create(name: 'Anna', colorIndex: 0, serverUrl: 'https://r', rommUserId: 7, rommUsername: 'anna');
+    final notifier = c.read(activeProfileProvider.notifier);
+    await notifier.activate(anna, const ProfileLogin(token: 't', kind: 'client-token'));
+
+    await notifier.setDeviceId('someone-else', 'x');
+    expect(c.read(activeProfileProvider)!.login.deviceId, isNull);
+    await notifier.setDeviceId(anna.id, 'pc-1');
+    expect(c.read(activeProfileProvider)!.login.deviceId, 'pc-1');
+    final saved = await loginStoreFor(c.read(Provider((ref) => ref)), anna).read();
+    expect((saved!.token, saved.kind, saved.deviceId), ('t', 'client-token', 'pc-1'));
+  });
 }

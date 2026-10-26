@@ -64,6 +64,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _upload();
       _whatsNew();
+      unawaited(registerRommDevice(ref));
     });
   }
 

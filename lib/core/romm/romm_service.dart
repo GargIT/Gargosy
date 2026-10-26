@@ -296,6 +296,7 @@ class RommService implements RommStatesApi {
   Future<String?> registerDevice({
     required String name,
     required String platform,
+    String? hostname,
     String? clientVersion,
     bool allowExisting = true,
   }) async {
@@ -305,6 +306,7 @@ class RommService implements RommStatesApi {
         'platform': platform,
         'client': 'Gargosy',
         'client_version': clientVersion ?? AppConstants.version,
+        'hostname': ?hostname,
       };
       final response = await _dio.post(
         '/api/devices',

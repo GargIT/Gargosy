@@ -88,6 +88,17 @@ class ActiveProfileNotifier extends StateNotifier<ProfileContext?> {
     }
   }
 
+  /// Keeps [deviceId], this PC as a RomM device, in [profileId]'s login on
+  /// this PC (not in the profile's settings: the folder moves between PCs).
+  Future<void> setDeviceId(String profileId, String deviceId) async {
+    final current = state;
+    if (current == null || current.profile.id != profileId) return;
+    final login = current.login.withDeviceId(deviceId);
+    await loginStoreFor(_ref, current.profile).write(current.guard, login);
+    if (!mounted || state?.profile.id != profileId) return;
+    state = ProfileContext(profile: state!.profile, paths: current.paths, guard: current.guard, login: login);
+  }
+
   /// Back to the profile picker. The login stays on this PC.
   void signOut() => state = null;
 

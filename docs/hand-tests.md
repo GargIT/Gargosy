@@ -252,6 +252,10 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 101. [x] With save-state sync on, play a game in RetroArch, DuckStation and PCSX2 in turn, a minute each, and close it with the quit buttons. Each time the game's Saves tab → States has a new state from now (RetroArch: Auto; DuckStation and PCSX2: Resume) and it is on RomM; Resume starts the game where it was closed. A plain Play still starts the game from the beginning.
 
+## This PC as a RomM device (#162)
+
+102. [ ] Open a profile that signed in with a password: RomM's web UI (Profile → Devices) lists "Gargosy on <PC name>" once, and the log has `[RomM] this PC is device …`. Close and open Gargosy: no second device. Play a game: while it runs RomM shows it as being played on that device; after, the play session and the uploaded save name that device. Copy the Gargosy folder to another PC (or Windows user) and open the profile there: it signs in again and gets its own device. A profile paired with a code keeps the device it was paired as.
+
 ## Both sticks in to quit (#163)
 
 103. [ ] Settings → Controller → Hold to quit → Both sticks in (L3 + R3). Start a game and press both sticks in for 1 second: the emulator closes and Gargosy comes back in front, with an Xbox controller and with the 8BitDo in X mode. One stick alone does nothing; Select + LB + RB does nothing while this is chosen.

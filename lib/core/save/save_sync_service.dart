@@ -1556,15 +1556,10 @@ class SaveSyncService {
         return false;
       }
 
-      // If server says we already have the current version, skip
-      if (saveData == null && deviceId != null) {
-        final syncs = save['device_syncs'] as List<dynamic>?;
-        final mySync = syncs?.firstWhere((d) => d['device_id'] == deviceId, orElse: () => null);
-        if (mySync != null && mySync['is_current'] == true) {
-          debugPrint('[SaveSync] [pull] Already current on this device — skipping');
-          return false;
-        }
-      }
+      // Gargosy: RomM's `is_current` for this device isn't trusted to skip
+      // the pull. A save deleted on this PC (#94) or a profile folder brought
+      // from elsewhere would never come back; the checks below compare the
+      // files themselves.
 
       if (saveData == null && await _localSaveIsNewer(strategy, game, romPath, save)) {
         debugPrint('[SaveSync] [pull] The local save is newer than RomM\'s — keeping it');
