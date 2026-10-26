@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
-import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/held_combo.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
@@ -295,7 +294,7 @@ class FakeEngine implements PlayEngine {
 }
 
 /// Select + LB + RB held on one controller.
-const _quit = HeldButtons('p1', {GameAction.select, GameAction.l1, GameAction.r1});
+const _quit = HeldButtons('p1', {PadButton.select, PadButton.l1, PadButton.r1});
 
 void main() {
   late FakeEngine engine;
@@ -375,7 +374,7 @@ void main() {
         playing(async, c);
         heldButtons.add(_quit);
         async.elapse(const Duration(milliseconds: 500));
-        heldButtons.add(const HeldButtons('p1', {GameAction.select}));
+        heldButtons.add(const HeldButtons('p1', {PadButton.select}));
         async.elapse(const Duration(seconds: 5));
         expect(engine.closes, 0);
         c.dispose();

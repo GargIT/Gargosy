@@ -11,13 +11,21 @@ import '../helpers/profile_test_env.dart';
 
 void main() {
   test("each controller's held buttons, told when they change", () {
-    final combo = HeldCombo(quitComboButtons);
-    expect(combo.update('p1', GameAction.select, down: true)?.buttons, {GameAction.select});
-    expect(combo.update('p2', GameAction.l1, down: true)?.buttons, {GameAction.l1}, reason: 'its own set');
-    expect(combo.update('p1', GameAction.l1, down: true)?.buttons, {GameAction.select, GameAction.l1});
-    expect(combo.update('p1', GameAction.confirm, down: true), isNull, reason: 'not part of any combo');
-    expect(combo.update('p1', GameAction.select, down: false)?.buttons, {GameAction.l1});
-    expect(combo.update('p1', GameAction.select, down: false), isNull, reason: 'no change');
+    final combo = HeldCombo();
+    expect(combo.update('p1', PadButton.select, down: true)?.buttons, {PadButton.select});
+    expect(combo.update('p2', PadButton.l1, down: true)?.buttons, {PadButton.l1}, reason: 'its own set');
+    expect(combo.update('p1', PadButton.l1, down: true)?.buttons, {PadButton.select, PadButton.l1});
+    expect(combo.update('p1', PadButton.select, down: false)?.buttons, {PadButton.l1});
+    expect(combo.update('p1', PadButton.select, down: false), isNull, reason: 'no change');
+  });
+
+  test("a combo can use the stick clicks, from a mapped action or GameInput's own name", () {
+    expect(PadButton.ofAction(GameAction.l1), PadButton.l1);
+    expect(PadButton.ofAction(GameAction.confirm), isNull, reason: 'not part of any combo');
+    expect(PadButton.ofKey('leftThumbstick'), PadButton.l3);
+    expect(PadButton.ofKey('rightThumbstick'), PadButton.r3);
+    expect(PadButton.ofKey('a'), isNull);
+    expect(QuitButtons.sticks.buttons, {PadButton.l3, PadButton.r3});
   });
 
   test('QuitCombo fires once when one controller holds all its buttons for the hold time', () {
@@ -25,17 +33,17 @@ void main() {
       final held = StreamController<HeldButtons>.broadcast();
       var quits = 0;
       final combo = QuitCombo(held.stream, QuitButtons.selectBumpers.buttons, () async => quits++);
-      held.add(const HeldButtons('p1', {GameAction.select, GameAction.l1}));
-      held.add(const HeldButtons('p2', {GameAction.r1}));
+      held.add(const HeldButtons('p1', {PadButton.select, PadButton.l1}));
+      held.add(const HeldButtons('p2', {PadButton.r1}));
       async.elapse(const Duration(seconds: 2));
       expect(quits, 0, reason: 'split over two controllers');
-      held.add(const HeldButtons('p1', {GameAction.select, GameAction.l1, GameAction.r1, GameAction.start}));
+      held.add(const HeldButtons('p1', {PadButton.select, PadButton.l1, PadButton.r1, PadButton.start}));
       async.elapse(const Duration(milliseconds: 900));
       expect(quits, 0);
       async.elapse(const Duration(milliseconds: 200));
       expect(quits, 1);
       held.add(const HeldButtons('p1', {}));
-      held.add(const HeldButtons('p1', {GameAction.select, GameAction.l1, GameAction.r1}));
+      held.add(const HeldButtons('p1', {PadButton.select, PadButton.l1, PadButton.r1}));
       async.elapse(const Duration(seconds: 2));
       expect(quits, 1, reason: 'once');
       combo.cancel();

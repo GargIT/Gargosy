@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/input/gamepad_service.dart';
 import '../core/input/held_combo.dart';
 import '../core/input/xinput_pads.dart';
 import '../core/platform/platform_info.dart';
@@ -14,14 +13,17 @@ import '../profiles/profile_providers.dart';
 /// Controller. Select + Start alone is often taken (Game Bar, Steam, an
 /// emulator's menu), so the default adds the bumpers instead of Start.
 enum QuitButtons {
-  selectBumpers('Select + LB + RB', {GameAction.select, GameAction.l1, GameAction.r1}),
-  startBumpers('Start + LB + RB', {GameAction.start, GameAction.l1, GameAction.r1}),
-  selectStartBumpers('Select + Start + LB + RB', {GameAction.select, GameAction.start, GameAction.l1, GameAction.r1}),
-  selectStart('Select + Start', {GameAction.select, GameAction.start});
+  selectBumpers('Select + LB + RB', {PadButton.select, PadButton.l1, PadButton.r1}),
+  startBumpers('Start + LB + RB', {PadButton.start, PadButton.l1, PadButton.r1}),
+  selectStartBumpers('Select + Start + LB + RB', {PadButton.select, PadButton.start, PadButton.l1, PadButton.r1}),
+  selectStart('Select + Start', {PadButton.select, PadButton.start}),
+
+  /// Both sticks pressed in (#163): no emulator menu or Game Bar uses them.
+  sticks('Both sticks in (L3 + R3)', {PadButton.l3, PadButton.r3});
 
   const QuitButtons(this.label, this.buttons);
   final String label;
-  final Set<GameAction> buttons;
+  final Set<PadButton> buttons;
 
   static const fallback = QuitButtons.selectBumpers;
 
@@ -61,7 +63,7 @@ class QuitCombo {
 
   static const holdTime = Duration(seconds: 1);
 
-  final Set<GameAction> buttons;
+  final Set<PadButton> buttons;
   final Future<void> Function() onQuit;
   final Duration hold;
   late final StreamSubscription<HeldButtons> _sub;

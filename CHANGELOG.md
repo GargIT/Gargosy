@@ -29,7 +29,7 @@ What changed in each release of Gargosy. The format follows
   a second while a game runs, and Gargosy closes the emulator the way its
   close button does, so it saves first, then syncs as usual, and comes back
   in front. It works in every emulator; Settings → Controller picks other
-  buttons (Select + Start among them) or turns it off.
+  buttons (Select + Start, or both sticks pressed in) or turns it off.
 - A download checks the free space first: when the drive hasn't room for the
   game (and, for a game that comes as a zip, its unpacked copy), it doesn't
   start and says how much it needs and how much is free. The game page shows
