@@ -84,4 +84,20 @@ void main() {
     await press(tester, GameAction.detail);
     expect(await again, isNull);
   });
+
+  testWidgets('each game drifts across the screen from one place to another', (tester) async {
+    await pump(tester);
+    final nav = tester.state<NavigatorState>(find.byType(Navigator));
+    final shown = nav.push<Game>(MaterialPageRoute(builder: (_) => const ScreensaverScreen()));
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    Alignment at() =>
+        tester.widget<Align>(find.ancestor(of: find.text('Okami').first, matching: find.byType(Align)).first).alignment
+            as Alignment;
+    final start = at();
+    await tester.pump(const Duration(seconds: 4));
+    expect(at(), isNot(start));
+    await press(tester, GameAction.detail);
+    expect(await shown, isNull);
+  });
 }
