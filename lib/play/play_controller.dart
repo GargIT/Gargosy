@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/input/held_combo.dart';
-import '../core/input/xinput_pads.dart';
 import '../core/romm/romm_models.dart';
 import '../core/save/catalog/play_request.dart';
 import '../core/save/resume_service.dart';
@@ -263,12 +262,14 @@ class PlayController extends StateNotifier<PlayState> {
   @override
   void dispose() {
     _quitCombo?.cancel();
-    _pads?.stop();
+    for (final pads in _pads) {
+      pads.stop();
+    }
     super.dispose();
   }
 
   QuitCombo? _quitCombo;
-  XInputPads? _pads;
+  var _pads = const <BackgroundPads>[];
   Future<void> Function()? _close;
 
   /// The emulator of [game] started: this PC's quit buttons held close it
@@ -279,7 +280,10 @@ class PlayController extends StateNotifier<PlayState> {
     final quit = _ref.read(quitButtonsProvider);
     if (quit != null) {
       _quitCombo = QuitCombo(heldButtons.stream, quit.buttons, quitGame);
-      _pads = _ref.read(xinputPadsProvider)?..start();
+      _pads = _ref.read(backgroundPadsProvider);
+      for (final pads in _pads) {
+        pads.start();
+      }
       debugPrint('[Quit] ${quit.label} closes ${game.displayName}');
     } else {
       debugPrint('[Quit] quitting with the controller is off in Settings');
@@ -307,8 +311,10 @@ class PlayController extends StateNotifier<PlayState> {
   void _ended(Game game, String message, {bool synced = false}) {
     _quitCombo?.cancel();
     _quitCombo = null;
-    _pads?.stop();
-    _pads = null;
+    for (final pads in _pads) {
+      pads.stop();
+    }
+    _pads = const [];
     _close = null;
     if (!mounted) return;
     // What waited to upload for this game is older than what RomM has now.

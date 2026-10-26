@@ -255,3 +255,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Both sticks in to quit (#163)
 
 103. [ ] Settings → Controller → Hold to quit → Both sticks in (L3 + R3). Start a game and press both sticks in for 1 second: the emulator closes and Gargosy comes back in front, with an Xbox controller and with the 8BitDo in X mode. One stick alone does nothing; Select + LB + RB does nothing while this is chosen.
+
+## Quit with a controller that isn't XInput (#164)
+
+104. [ ] With a DualSense (or DualShock 4), a Switch Pro controller, or the 8BitDo in D or S mode: start a game from that controller, hold the quit buttons for 1 second (Select is Create/Share on a DualSense, − on Switch): the emulator closes and Gargosy comes back in front. The log has `[Quit] hid<n> is <name> (<vendor>:<product>)` at the start and `[Quit] hid<n> holds …` while you press. With a controller SDL doesn't know, the log says so and nothing else changes. An Xbox controller still works as before.

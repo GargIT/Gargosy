@@ -13,7 +13,7 @@ import 'held_combo.dart';
 /// emulator is in front, and XInput answers whichever window has the
 /// focus. Each of the four XInput slots is a controller of its own
 /// (`xinput<n>`) on [held].
-class XInputPads {
+class XInputPads implements BackgroundPads {
   XInputPads(this.held, {this.every = const Duration(milliseconds: 50)});
 
   final StreamController<HeldButtons> held;
@@ -32,6 +32,7 @@ class XInputPads {
   Pointer<XINPUT_STATE>? _state;
   final _last = List<int>.filled(XUSER_MAX_COUNT, 0);
 
+  @override
   void start() {
     if (_timer != null) return;
     _state = calloc<XINPUT_STATE>();
@@ -39,6 +40,7 @@ class XInputPads {
     _timer = Timer.periodic(every, (_) => _poll());
   }
 
+  @override
   void stop() {
     _timer?.cancel();
     _timer = null;

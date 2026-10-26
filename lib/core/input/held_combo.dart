@@ -34,6 +34,13 @@ enum PadButton {
   };
 }
 
+/// Reads controllers for [heldButtons] that Gargosy's window doesn't hear
+/// while a game is in front (#141, #164).
+abstract interface class BackgroundPads {
+  void start();
+  void stop();
+}
+
 /// The [PadButton]s that [pad] holds now.
 class HeldButtons {
   const HeldButtons(this.pad, this.buttons);
