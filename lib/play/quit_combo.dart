@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/input/gamepad_service.dart';
 import '../core/input/held_combo.dart';
+import '../core/input/xinput_pads.dart';
+import '../core/platform/platform_info.dart';
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
 
@@ -84,3 +86,8 @@ class QuitCombo {
 /// The buttons that quit a game on this PC, null when off; read again
 /// after Settings changes it.
 final quitButtonsProvider = Provider<QuitButtons?>((ref) => QuitButtons.of(ref.watch(appPreferencesProvider)));
+
+/// XInput read while a game runs (#141); null off Windows.
+final xinputPadsProvider = Provider<XInputPads?>(
+  (ref) => PlatformInfo.current.isWindows ? XInputPads(heldButtons) : null,
+);
