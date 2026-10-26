@@ -308,7 +308,7 @@ class GamepadService extends WidgetsBindingObserver {
     return kDefaultMapping;
   }
 
-  final _quitCombo = HeldCombo(quitComboButtons);
+  final _quitCombo = HeldCombo();
   final _quitComboMappings = <String, Map<String, GameAction>>{};
 
   /// Gargosy (#141): the quit combo's buttons held on each controller, told
@@ -322,11 +322,12 @@ class GamepadService extends WidgetsBindingObserver {
     final mapping = _quitComboMappings.putIfAbsent(event.gamepadId, () => _getMappingFor(event.gamepadId));
     final key = GamepadUtils.disambiguateKey(event.key, isButton: true);
     final action = mapping[key] ?? mapping[event.key];
+    final button = PadButton.ofKey(event.key) ?? (action == null ? null : PadButton.ofAction(action));
     // A press seen while the emulator is in front (few: buttons only), to
     // tell from the log whether they reach Gargosy then.
-    if (!_appHasFocus) debugPrint('[Quit] in the background: ${event.key} ${event.value} → ${action?.name}');
-    if (action == null) return;
-    final changed = _quitCombo.update(event.gamepadId, action, down: event.value.abs() > 0.5);
+    if (!_appHasFocus) debugPrint('[Quit] in the background: ${event.key} ${event.value} → ${button?.name}');
+    if (button == null) return;
+    final changed = _quitCombo.update(event.gamepadId, button, down: event.value.abs() > 0.5);
     if (changed != null && !heldButtons.isClosed) heldButtons.add(changed);
   }
 

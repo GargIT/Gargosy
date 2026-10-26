@@ -251,3 +251,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## A save state on close
 
 101. [x] With save-state sync on, play a game in RetroArch, DuckStation and PCSX2 in turn, a minute each, and close it with the quit buttons. Each time the game's Saves tab → States has a new state from now (RetroArch: Auto; DuckStation and PCSX2: Resume) and it is on RomM; Resume starts the game where it was closed. A plain Play still starts the game from the beginning.
+
+## Both sticks in to quit (#163)
+
+103. [ ] Settings → Controller → Hold to quit → Both sticks in (L3 + R3). Start a game and press both sticks in for 1 second: the emulator closes and Gargosy comes back in front, with an Xbox controller and with the 8BitDo in X mode. One stick alone does nothing; Select + LB + RB does nothing while this is chosen.

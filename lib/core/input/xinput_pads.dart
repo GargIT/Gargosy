@@ -20,10 +20,12 @@ class XInputPads {
   final Duration every;
 
   static const _bits = {
-    XINPUT_GAMEPAD_BACK: GameAction.select,
-    XINPUT_GAMEPAD_START: GameAction.start,
-    XINPUT_GAMEPAD_LEFT_SHOULDER: GameAction.l1,
-    XINPUT_GAMEPAD_RIGHT_SHOULDER: GameAction.r1,
+    XINPUT_GAMEPAD_BACK: PadButton.select,
+    XINPUT_GAMEPAD_START: PadButton.start,
+    XINPUT_GAMEPAD_LEFT_SHOULDER: PadButton.l1,
+    XINPUT_GAMEPAD_RIGHT_SHOULDER: PadButton.r1,
+    XINPUT_GAMEPAD_LEFT_THUMB: PadButton.l3,
+    XINPUT_GAMEPAD_RIGHT_THUMB: PadButton.r3,
   };
 
   Timer? _timer;
