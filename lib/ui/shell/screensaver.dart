@@ -132,6 +132,7 @@ class ScreensaverScreen extends ConsumerStatefulWidget {
 class _ScreensaverScreenState extends ConsumerState<ScreensaverScreen> {
   final _random = Random();
   Game? _game;
+  int _seed = 0;
   Timer? _next;
   StreamSubscription<GameAction>? _actions;
   bool _done = false;
@@ -170,7 +171,12 @@ class _ScreensaverScreenState extends ConsumerState<ScreensaverScreen> {
       final here = ref.read(gamesOnThisPcProvider);
       if (here.isNotEmpty) game = here[_random.nextInt(here.length)];
     }
-    if (mounted && game != null) setState(() => _game = game);
+    if (mounted && game != null) {
+      setState(() {
+        _game = game;
+        _seed = _random.nextInt(1 << 31);
+      });
+    }
   }
 
   void _close([Game? open]) {
@@ -223,7 +229,12 @@ class _ScreensaverScreenState extends ConsumerState<ScreensaverScreen> {
               duration: const Duration(milliseconds: 1200),
               child: game == null
                   ? const SizedBox.expand(key: ValueKey('screensaver-empty'))
-                  : _Slide(key: ValueKey('screensaver-${game.id}'), game: game, every: widget.every),
+                  : _Slide(
+                      key: ValueKey('screensaver-${game.id}-$_seed'),
+                      game: game,
+                      every: widget.every,
+                      seed: _seed,
+                    ),
             ),
           ),
         ),
@@ -232,12 +243,14 @@ class _ScreensaverScreenState extends ConsumerState<ScreensaverScreen> {
   }
 }
 
-/// One game, slowly drifting for [every].
+/// One game for [every], drifting from a random place on the screen to
+/// another, zooming in or out, its cover on either side ([seed] picks).
 class _Slide extends ConsumerWidget {
-  const _Slide({super.key, required this.game, required this.every});
+  const _Slide({super.key, required this.game, required this.every, required this.seed});
 
   final Game game;
   final Duration every;
+  final int seed;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -245,50 +258,58 @@ class _Slide extends ConsumerWidget {
         ? null
         : DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!, isUtc: true).year;
     final line = [game.platformDisplayName, if (year != null) '$year'].whereType<String>().join(' · ');
+    final random = Random(seed);
+    Alignment spot() => Alignment(random.nextDouble() * 1.6 - 0.8, random.nextDouble() * 1.6 - 0.8);
+    final from = spot();
+    final to = spot();
+    final zoomIn = random.nextBool();
+    final coverRight = random.nextBool();
+    final cover = CoverImage(url: coverUrlFor(ref, game), title: game.displayName, width: 240, height: 324);
     return GameArtBackdrop(
       game: game,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
         duration: every,
-        builder: (context, t, child) => Transform.translate(
-          offset: Offset(-24 + 48 * t, 0),
-          child: Transform.scale(scale: 1 + 0.04 * t, child: child),
+        builder: (context, t, child) => Padding(
+          padding: const EdgeInsets.all(GSpace.s8),
+          child: Align(
+            alignment: Alignment.lerp(from, to, Curves.easeInOut.transform(t))!,
+            child: Transform.scale(scale: zoomIn ? 0.96 + 0.08 * t : 1.04 - 0.08 * t, child: child),
+          ),
         ),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CoverImage(url: coverUrlFor(ref, game), title: game.displayName, width: 240, height: 324),
-              const SizedBox(width: GSpace.s8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 640),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!coverRight) ...[cover, const SizedBox(width: GSpace.s8)],
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    game.displayName,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1),
+                  ),
+                  if (line.isNotEmpty) ...[
+                    const SizedBox(height: GSpace.s3),
                     Text(
-                      game.displayName,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1),
-                    ),
-                    if (line.isNotEmpty) ...[
-                      const SizedBox(height: GSpace.s3),
-                      Text(
-                        line,
-                        style: const TextStyle(fontSize: GFont.xl, color: GColors.fgSecondary),
-                      ),
-                    ],
-                    const SizedBox(height: GSpace.s6),
-                    const Text(
-                      'A opens it · any other button goes back',
-                      style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                      line,
+                      style: const TextStyle(fontSize: GFont.xl, color: GColors.fgSecondary),
                     ),
                   ],
-                ),
+                  const SizedBox(height: GSpace.s6),
+                  const Text(
+                    'A opens it · any other button goes back',
+                    style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            if (coverRight) ...[const SizedBox(width: GSpace.s8), cover],
+          ],
         ),
       ),
     );
