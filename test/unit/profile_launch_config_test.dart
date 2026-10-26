@@ -93,6 +93,7 @@ void main() {
     expect(text, contains('MemoryCards = memcards'));
     expect(text, contains('SetupWizardIncomplete = true'));
     expect(text, contains('ConfirmShutdown = false'), reason: 'the quit buttons close it without asking (#141)');
+    expect(text, contains('SaveStateOnShutdown = true'), reason: 'closing keeps a resume state');
   });
 
   test('dolphin stops without asking when closed (#141)', () async {
@@ -229,6 +230,7 @@ void main() {
     expect(io.File(p.join(a.exeDir, 'portable.txt')).existsSync(), isTrue);
     expect(live.readAsStringSync(), contains('Directory = ${p.join(a.data, 'memcards')}'));
     expect(live.readAsStringSync(), contains('SaveStates = ${p.join(a.data, 'savestates')}'));
+    expect(live.readAsStringSync(), contains('SaveStateOnExit = true'), reason: 'closing keeps a resume state');
     live.writeAsStringSync('${live.readAsStringSync()}[Display]\nFullscreen = true\n'); // the user changed a setting
     await cfg.finish(a);
     expect(io.File(p.join(a.data, 'settings.ini')).readAsStringSync(), contains('Fullscreen = true'));
@@ -386,6 +388,11 @@ void main() {
     expect(autoLoad(), 'false', reason: 'a numbered slot loads with -e');
     await dirs.launchGameWithHandle(game(1, 'G'), r'D:\roms\psx\g.chd', 'retroarch', exe.path);
     expect(autoLoad(), 'false', reason: 'a plain Play never starts in the auto state');
+    expect(
+      io.File(p.join(paths.emulatorDir('retroarch'), 'retroarch.cfg')).readAsStringSync(),
+      contains('savestate_auto_save = "true"'),
+      reason: 'closing keeps the auto state',
+    );
   });
 
   test('an emulator Gargosy can\'t point at a profile is refused', () async {

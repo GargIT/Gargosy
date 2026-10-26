@@ -75,6 +75,8 @@ Where each emulator writes its states in a profile, and how far each is checked.
 | ares | `<data>\saves\<system>\<ROM stem>.bs<N>` (slots 1–9), beside the game's saves; `.bsu`/`.blu` (undo) never synced; no header Gargosy reads (`desktop-ui/program/states.cpp`) | `--setting Paths/Saves=<data>\saves\`. Resume: `--save-state <slot>` (1–9, `desktop-ui/desktop-ui.cpp`), after `--system`: `AresStrategy` overrides the `…ExtraArgs` launches | code (#66); hand: pending |
 | retroarch | `<data>\states\<core folder>\<content>.state<N>` | `savestate_directory`; `sort_savestates_enable = "true"` and `sort_savestates_by_content_enable = "false"` written when the profile's cfg has none (a choice already there stays) | code (#58); hand: pending |
 
+On close, three of them keep a state of where the game was (#141 follow-up): RetroArch `savestate_auto_save = "true"` (the auto slot, `<content>.state.auto`), DuckStation `[Main] SaveStateOnExit = true` (`<SERIAL>_resume.sav`), PCSX2 `[EmuCore] SaveStateOnShutdown = true` (`<SERIAL> (<CRC>).resume.p2s`). Flycast's `Dreamcast.AutoSaveState` is left off: it writes into the current slot (0), over a state the player saved there. Dolphin, PPSSPP, mGBA, ares, melonDS and Azahar have no such setting; MAME's `-autosave` also loads it at every start.
+
 ## Not supported in v1
 
 None so far. Every installed emulator passed with one of the two mechanisms.

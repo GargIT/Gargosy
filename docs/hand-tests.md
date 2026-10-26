@@ -247,3 +247,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Screensaver (#147)
 
 100. [ ] Leave Gargosy on Home untouched for 5 minutes: the screensaver shows a game at a time (its art, cover, name, platform and year, drifting), a new one every 8 seconds. Any button (or a key, a click, moving the mouse) closes it and puts you back on Home, and that press does nothing else. A opens the game shown. It doesn't come while a game runs, or over a game's page or a menu. Settings → Display → Screensaver: Off stops it; After 2 minutes makes it come sooner.
+
+## A save state on close
+
+101. [ ] With save-state sync on, play a game in RetroArch, DuckStation and PCSX2 in turn, a minute each, and close it with the quit buttons. Each time the game's Saves tab → States has a new state from now (RetroArch: Auto; DuckStation and PCSX2: Resume) and it is on RomM; Resume starts the game where it was closed. A plain Play still starts the game from the beginning.
