@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The Achievements tab looks like RomM's: each achievement's badge, a
+  summary (earned, points, progression and missable), filters by type and
+  by earned or locked, the type as a coloured tag, and the list in up to
+  four columns on a wide screen.
+
 ### Fixed
 
 - A controller that isn't XInput (a DualSense, a Switch Pro controller, an
