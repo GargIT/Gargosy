@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A controller that isn't XInput (a DualSense, a Switch Pro controller, an
+  8BitDo in D mode), connected or woken during a game, can now quit that
+  game; before, it worked only from the next game.
+
 ## [0.4.0] - 2026-10-26
 
 Home after RomM's v2 Home, a download queue with a Downloads page, adding
