@@ -24,6 +24,11 @@ abstract final class GColors {
   static const danger = Color(0xFFFF5050);
   static const dangerFill = Color(0xFFD83A3A); // a red button, white text on it
   static const success = Color(0xFF4ADE80);
+  static const warning = Color(0xFFFBBF24);
+  static const warningFg = Color(0xFFFACC15);
+  static const statusSuccess = Color(0xFF22C55E);
+  static const statusDanger = Color(0xFFEF4444);
+  static const providerIgdb = Color(0xFF6366F1);
   static const coverArtBase = Color(0xFF553E98);
   static const coverArtShade = Color(0xFF371F69);
   static const coverArtWarm = Color(0xFFFF9B85);

@@ -266,4 +266,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## A controller connected during a game (#172)
 
-105. [ ] Start a game with only an Xbox controller (or the keyboard). Then turn on or plug in a DualSense, Switch Pro controller or the 8BitDo in D mode, wait 2 seconds and hold the quit buttons for 1 second: the emulator closes. The log has `[Quit] hid<n> is <name>` after the controller came. Turn a controller off during a game: the log has `[Quit] hid<n> disconnected` once and nothing more; another controller still quits.
+105. [x] Start a game with only an Xbox controller (or the keyboard). Then turn on or plug in a DualSense, Switch Pro controller or the 8BitDo in D mode, wait 2 seconds and hold the quit buttons for 1 second: the emulator closes. The log has `[Quit] hid<n> is <name>` after the controller came. Turn a controller off during a game: the log has `[Quit] hid<n> disconnected` once and nothing more; another controller still quits.
+
+## The Achievements tab as RomM's (#174)
+
+106. [x] Open a game with RetroAchievements and some unlocked on RomM, then its Achievements tab: each row has its badge (the locked ones greyed and dimmed), the summary shows earned / all, points, and the progression and missable counts, and the rows have their type tag. With the controller alone, go up to the filters: Missable shows only missable ones, ✓ Earned only earned ones, pressing it again shows all. The list is 2 columns at 1280 px wide, 3 at 1920, 4 on a wider screen.
