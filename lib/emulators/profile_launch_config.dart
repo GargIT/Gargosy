@@ -92,7 +92,13 @@ abstract class ProfileLaunchConfig {
   void repoint(LaunchContext c) {}
 
   static final Map<String, ProfileLaunchConfig> _configs = {
-    'dolphin': _Args((c) => ['--user=${c.data}'], before: (c) async => _dolphinGameFolders(c)),
+    'dolphin': _Args(
+      (c) => ['--user=${c.data}'],
+      before: (c) async {
+        _dolphinGameFolders(c);
+        _dolphinNoStopQuestion(c);
+      },
+    ),
     'pcsx2': _Args(
       (c) => ['-datapath', c.data],
       before: (c) async {
@@ -194,6 +200,9 @@ void _pcsx2Settings(LaunchContext c) {
   final settings = IniFile(ini.existsSync() ? ini.readAsStringSync() : '');
   if (!ini.existsSync()) settings.set('UI', 'SettingsVersion', '1');
   settings.set('Folders', 'Bios', c.bios);
+  // Closed by Select + Start (#141), it shuts down at once instead of
+  // asking first (the question takes it out of full screen, and waits).
+  settings.set('UI', 'ConfirmShutdown', 'false');
   for (final f in c.gameFolders) {
     settings.add('GameList', 'RecursivePaths', f);
   }
@@ -227,6 +236,17 @@ void _dolphinGameFolders(LaunchContext c) {
     ini.set('General', 'ISOPath$i', c.gameFolders[i]);
   }
   ini.set('General', 'RecursiveISOPaths', 'True');
+  file.parent.createSync(recursive: true);
+  file.writeAsStringSync(ini.toText());
+}
+
+/// Dolphin stops when closed (Select + Start, #141) without asking first:
+/// `[Interface] ConfirmStop` off.
+void _dolphinNoStopQuestion(LaunchContext c) {
+  final file = io.File(c.guard.check(p.join(c.data, 'Config', 'Dolphin.ini')));
+  final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '');
+  if (ini.get('Interface', 'ConfirmStop') == 'False') return;
+  ini.set('Interface', 'ConfirmStop', 'False');
   file.parent.createSync(recursive: true);
   file.writeAsStringSync(ini.toText());
 }

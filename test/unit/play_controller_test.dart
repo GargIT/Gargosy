@@ -45,6 +45,7 @@ class FakeEngine implements PlayEngine {
   /// Whether the session can be closed (#141), and how often it was.
   bool closable = false;
   int closes = 0;
+  bool returnsAfterExit = false;
 
   @override
   Future<void> setFullscreen(String emulatorId, bool on) async => fullscreen[emulatorId] = on;
@@ -250,6 +251,7 @@ class FakeEngine implements PlayEngine {
     EmulatorStrategy s, {
     String? coreOverride,
     String? loadStatePath,
+    void Function(CloseGame close)? onStarted,
   }) async {
     final missing = missingCore;
     if (missing != null) {
@@ -267,15 +269,15 @@ class FakeEngine implements PlayEngine {
     launchedIn = s.emulatorId;
     this.coreOverride = coreOverride;
     running = Completer<PlayResult>();
-    return PlaySession(
-      running!.future,
-      close: closable
-          ? () async {
-              closes++;
-              running!.complete(const PlayResult('The game ended.'));
-            }
-          : null,
-    );
+    if (closable) {
+      onStarted?.call(() async {
+        closes++;
+        running!.complete(const PlayResult('The game ended.'));
+      });
+    }
+    // As the copied launch does: it returns once the emulator has exited.
+    if (returnsAfterExit) await running!.future;
+    return PlaySession(running!.future);
   }
 
   /// The emulator opened on its own, and how to close it.
@@ -332,6 +334,22 @@ void main() {
         expect(engine.closes, 1);
         expect(c.read(playControllerProvider).runningGameId, isNull);
         expect(c.read(playControllerProvider).message, 'The game ended.');
+        c.dispose();
+      });
+    });
+
+    test('the launch returns only after the emulator exits: held still closes it', () {
+      fakeAsync((async) {
+        engine.returnsAfterExit = true;
+        final c = ProviderContainer(
+          overrides: [playEngineProvider.overrideWithValue(engine), quitComboOnProvider.overrideWithValue(true)],
+        );
+        playing(async, c);
+        selectStartHeld.add(true);
+        async.elapse(const Duration(seconds: 3));
+        expect(engine.closes, 1);
+        async.elapse(Duration.zero);
+        expect(c.read(playControllerProvider).runningGameId, isNull);
         c.dispose();
       });
     });

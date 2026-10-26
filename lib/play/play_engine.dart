@@ -52,13 +52,13 @@ class PlayResult {
 
 /// A running game; [finished] completes once it exits and its saves synced.
 class PlaySession {
-  const PlaySession(this.finished, {this.close});
+  const PlaySession(this.finished);
   final Future<PlayResult> finished;
-
-  /// Asks the emulator to close, as its window's close button does (#141);
-  /// [finished] then completes as usual. Null when it can't be closed.
-  final Future<void> Function()? close;
 }
+
+/// Asks the running emulator to close, as its window's close button does
+/// (#141); the session then ends as usual.
+typedef CloseGame = Future<void> Function();
 
 /// What the pre-launch state pull did: the states it brought down or found
 /// up to date, and those that differ on RomM (left alone; this PC's copy is
@@ -143,6 +143,7 @@ abstract class PlayEngine {
     EmulatorStrategy strategy, {
     String? coreOverride,
     String? loadStatePath,
+    void Function(CloseGame close)? onStarted,
   });
 
   /// Opens the emulator at [exePath] on the profile's data with no game, for
@@ -594,18 +595,22 @@ class GargosyPlayEngine implements PlayEngine {
     EmulatorStrategy strategy, {
     String? coreOverride,
     String? loadStatePath,
+    void Function(CloseGame close)? onStarted,
   }) async {
     final service = await _launch();
+    final dirs = _ref.read(launchDirectoriesProvider);
     final statePath = loadStatePath == null
         ? null
         : await stateForThisPc(strategy, loadStatePath, romPath, _ref.read(appRootProvider));
-    final session = await service.launch(
-      game,
-      romPath,
-      strategy,
-      overrideCoreId: coreOverride,
-      loadStatePath: statePath,
-    );
+    // Told as soon as the emulator starts: service.launch returns only
+    // after it has exited.
+    dirs?.onGameStarted = (process) => onStarted?.call(() => closeProcess(process));
+    final GameSession session;
+    try {
+      session = await service.launch(game, romPath, strategy, overrideCoreId: coreOverride, loadStatePath: statePath);
+    } finally {
+      dirs?.onGameStarted = null;
+    }
     final started = session.sessionStart;
     unawaited(session.process?.exitCode.then((_) => _played(game, started, DateTime.now())));
     final finished = service
@@ -626,8 +631,7 @@ class GargosyPlayEngine implements PlayEngine {
             }
           }
         });
-    final process = session.process;
-    return PlaySession(finished, close: process == null ? null : () => closeProcess(process));
+    return PlaySession(finished);
   }
 
   /// A session of [game] ended (#146): kept in the profile's log, then
