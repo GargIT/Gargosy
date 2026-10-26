@@ -51,9 +51,8 @@ class HidPads implements BackgroundPads {
     try {
       final buttons = _buttons ??= SdlButtons.parse(await _database());
       if (run != _run) return;
-      var n = 0;
       for (final path in _hidPaths()) {
-        final pad = _HidPad.open(path, 'hid${n++}', buttons);
+        final pad = _HidPad.open(path, 'hid${_pads.length}', buttons);
         if (pad != null) _pads.add(pad);
       }
     } catch (e) {
@@ -152,8 +151,13 @@ final _getUsages = _hid
 const _hidpStatusSuccess = 0x00110000;
 const _hidpInput = 0;
 const _buttonPage = 0x09;
+const _statusSuccess = 0;
 const _statusPending = 0x103;
-const _errorIoPending = 997;
+const _statusDeviceNotConnected = 0xC000009D;
+const _statusCancelled = 0xC0000120;
+
+/// What a read's status is until Windows takes it.
+const _notStarted = 0xFFFFFFFF;
 const _maxUsages = 128;
 
 /// Every HID device's path.
@@ -282,34 +286,41 @@ class _HidPad {
   Set<PadButton>? poll() {
     if (gone) return null;
     final was = _held;
-    // A few reports at most between polls; the last one counts.
+    // A few reports at most between polls; the last one counts. A read's
+    // outcome is its OVERLAPPED's status (NTSTATUS): GetLastError isn't
+    // kept between Dart's native calls, so it can't tell a pending read.
     for (var n = 0; n < 64; n++) {
       if (_pending) {
-        if (_overlapped.ref.Internal == _statusPending) break;
+        final status = _status;
+        if (status == _statusPending) break;
         _pending = false;
-        if (GetOverlappedResult(_handle, _overlapped, _read, FALSE) == 0) {
-          _lost(GetLastError());
+        if (status != _statusSuccess) {
+          _lost(status);
           break;
         }
         _parse();
       }
       _overlapped.ref
-        ..Internal = 0
+        ..Internal = _notStarted
         ..InternalHigh = 0
         ..hEvent = 0;
-      if (ReadFile(_handle, _report, _length, _read, _overlapped) != 0) {
+      if (ReadFile(_handle, _report, _length, nullptr, _overlapped) != 0) {
         _parse();
         continue;
       }
-      final error = GetLastError();
-      if (error != _errorIoPending) {
-        _lost(error);
+      final status = _status;
+      if (status == _statusPending) {
+        _pending = true;
         break;
       }
-      _pending = true;
+      _lost(status);
+      break;
     }
     return setEquals(was, _held) ? null : _held;
   }
+
+  /// The read's NTSTATUS (32 bits, sign-extended in the pointer-sized field).
+  int get _status => _overlapped.ref.Internal & 0xFFFFFFFF;
 
   void _parse() {
     _count.value = _maxUsages;
@@ -320,9 +331,10 @@ class _HidPad {
     _held = {for (var i = 0; i < _count.value; i++) ?_buttons[_usages[i] - 1]};
   }
 
-  void _lost(int error) {
-    if (error != ERROR_DEVICE_NOT_CONNECTED && error != ERROR_OPERATION_ABORTED) {
-      debugPrint('[Quit] $id read: $error');
+  void _lost(int status) {
+    if (status != _statusDeviceNotConnected && status != _statusCancelled) {
+      final why = status == _notStarted ? 'could not start' : '0x${status.toRadixString(16)}';
+      debugPrint('[Quit] $id read: $why');
     }
     gone = true;
     _held = {};
