@@ -262,4 +262,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Quit with a controller that isn't XInput (#164)
 
-104. [ ] With a DualSense (or DualShock 4), a Switch Pro controller, or the 8BitDo in D or S mode: start a game from that controller, hold the quit buttons for 1 second (Select is Create/Share on a DualSense, − on Switch): the emulator closes and Gargosy comes back in front. The log has `[Quit] hid<n> is <name> (<vendor>:<product>)` at the start and `[Quit] hid<n> holds …` while you press. With a controller SDL doesn't know, the log says so and nothing else changes. An Xbox controller still works as before.
+104. [x] With a DualSense (or DualShock 4), a Switch Pro controller, or the 8BitDo in D or S mode: start a game from that controller, hold the quit buttons for 1 second (Select is Create/Share on a DualSense, − on Switch): the emulator closes and Gargosy comes back in front. The log has `[Quit] hid<n> is <name> (<vendor>:<product>)` at the start and `[Quit] hid<n> holds …` while you press. With a controller SDL doesn't know, the log says so and nothing else changes. An Xbox controller still works as before.
