@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Closing a game in RetroArch, DuckStation or PCSX2 (the quit buttons too)
+  keeps a save state of where you were: RetroArch's auto state, DuckStation's
+  and PCSX2's resume state. It syncs to RomM like your other states, and
+  Resume starts from it.
 - Home is new, after RomM's v2 Home: the game you played last at the top, over
   its art, with Resume when it has a save state (a random pick until you've
   played something); three small widgets (a random pick, games released on

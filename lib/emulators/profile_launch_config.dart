@@ -203,6 +203,10 @@ void _pcsx2Settings(LaunchContext c) {
   // Closed by the quit buttons (#141), it shuts down at once instead of
   // asking first (the question takes it out of full screen, and waits).
   settings.set('UI', 'ConfirmShutdown', 'false');
+  // Closed however (the quit buttons too), it keeps where the game was in
+  // its resume state (`<serial> (<CRC>).resume.p2s`), which syncs like the
+  // other states and is the newest to Resume from.
+  settings.set('EmuCore', 'SaveStateOnShutdown', 'true');
   for (final f in c.gameFolders) {
     settings.add('GameList', 'RecursivePaths', f);
   }
@@ -395,6 +399,9 @@ class _RetroArch extends ProfileLaunchConfig {
         // --entryslot can't load; off for every other launch, so a plain Play
         // never starts in it.
         'savestate_auto_load': '${c.resumeAutoState}',
+        // Closing the game keeps where it was in the auto slot, which syncs
+        // and resumes like the other states.
+        'savestate_auto_save': 'true',
         'system_directory': systemDir(c),
         if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
         'playlist_directory': p.join(c.data, 'playlists'),
@@ -499,6 +506,9 @@ IniFile _duckstationFolders(IniFile ini, LaunchContext c) {
     ini.add('GameList', 'RecursivePaths', f);
   }
   ini.set('BIOS', 'SearchDirectory', c.bios);
+  // Closing the game keeps where it was in `<serial>_resume.sav`, which
+  // syncs and resumes like the other states.
+  ini.set('Main', 'SaveStateOnExit', 'true');
   for (final key in const [
     'Cache',
     'Cheats',
