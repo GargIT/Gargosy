@@ -1,4 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'game_overview.dart';
 import '../retroachievements/retroachievements_game_models.dart';
 import 'save_target_layout.dart';
 
@@ -50,6 +51,7 @@ class Game {
   final DateTime? createdAt; // when RomM added the game
   final int? hltbMainStory; // HowLongToBeat's main story, in seconds
   final List<GameVersion> siblings; // RomM's other versions of this game (regions, revisions)
+  final GameOverview overview; // age ratings, HowLongToBeat, IGDB's related games (#179)
 
   bool get isMultiFile => hasMultipleFiles;
 
@@ -118,6 +120,7 @@ class Game {
     this.createdAt,
     this.hltbMainStory,
     this.siblings = const [],
+    this.overview = GameOverview.empty,
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -179,6 +182,9 @@ class Game {
         for (final s in (json['sibling_roms'] is List ? json['sibling_roms'] as List : const []))
           if (s is Map<String, dynamic> && s['id'] != null) GameVersion.fromJson(s),
       ],
+      overview: json['gargosy_overview'] is Map<String, dynamic>
+          ? GameOverview.fromJson(json['gargosy_overview'] as Map<String, dynamic>)
+          : GameOverview.fromRomm(json),
     );
   }
 
@@ -239,6 +245,7 @@ class Game {
       'created_at': createdAt?.toIso8601String(),
       'hltb_metadata': {'main_story': hltbMainStory},
       'sibling_roms': [for (final v in siblings) v.toJson()],
+      'gargosy_overview': overview.toJson(),
     };
   }
 }

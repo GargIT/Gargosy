@@ -77,6 +77,15 @@ class FakeLibraryApi implements LibraryApi {
     return all.where((g) => platformId == null || g.platformId == platformId).firstOrNull;
   }
 
+  /// What [similar] gives, by game id.
+  Map<String, List<Game>> similarGames = const {};
+
+  @override
+  Future<List<Game>> similar(String gameId, {int limit = 12}) async {
+    if (failWith != null) throw failWith!;
+    return (similarGames[gameId] ?? const []).take(limit).toList();
+  }
+
   /// What [recommended] gives.
   List<Game> recommendations = const [];
 

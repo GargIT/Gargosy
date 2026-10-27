@@ -145,6 +145,17 @@ final recommendedGamesProvider = FutureProvider<List<Game>>((ref) async {
   return api == null ? const [] : api.recommended();
 });
 
+/// The Overview's Similar games (#179); none offline or when RomM can't say.
+final similarGamesProvider = FutureProvider.family<List<Game>, String>((ref, gameId) async {
+  final api = ref.watch(libraryApiProvider);
+  if (api == null) return const [];
+  try {
+    return await api.similar(gameId);
+  } catch (_) {
+    return const [];
+  }
+});
+
 /// Home's On this day (#139): the games released on today's date in an
 /// earlier year, and how many.
 final onThisDayProvider = FutureProvider<GalleryPage>((ref) async {
