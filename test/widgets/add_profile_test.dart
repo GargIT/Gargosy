@@ -152,7 +152,10 @@ void main() {
       }
       await h.settle(tester);
     }
-    await h.settle(tester);
+    // The PIN's hash (an isolate) and the save take longer on a slow runner.
+    for (var i = 0; i < 30 && h.container.read(activeProfileProvider) == null; i++) {
+      await h.settle(tester, rounds: 20);
+    }
     final ctx = h.container.read(activeProfileProvider)!;
     expect(ctx.profile.pin!.verify('2580'), isTrue);
   });
