@@ -289,6 +289,7 @@ void main() {
           rommServiceProvider.overrideWithValue(romm),
           // Only the delete is asked of this server.
           playSessionsApiProvider.overrideWithValue(null),
+          similarGamesProvider.overrideWith((ref, id) async => const []),
         ],
       );
     }

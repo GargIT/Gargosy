@@ -9,7 +9,11 @@ import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
+import 'overview_facts.dart';
+import 'related_games.dart';
 
+/// The game page's Overview: when it was played, the facts (#179), the
+/// summary and genres, How long to beat, screenshots, and related games.
 class OverviewTab extends ConsumerWidget {
   const OverviewTab({super.key, required this.game});
 
@@ -33,6 +37,7 @@ class OverviewTab extends ConsumerWidget {
           ),
           const SizedBox(height: GSpace.s3),
         ],
+        OverviewFacts(game: game),
         if (game.summary != null && game.summary!.isNotEmpty)
           Text(
             game.summary!,
@@ -51,6 +56,7 @@ class OverviewTab extends ConsumerWidget {
               ),
           ],
         ),
+        if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s5), HltbStrip(hltb)],
         if (shots.isNotEmpty) ...[
           const SizedBox(height: GSpace.s6),
           const Text(
@@ -71,6 +77,7 @@ class OverviewTab extends ConsumerWidget {
             ),
           ),
         ],
+        RelatedGames(game: game),
       ],
     );
   }

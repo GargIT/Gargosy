@@ -387,6 +387,14 @@ abstract class LibraryApi {
   /// none from a RomM before 5.4, which has no `/api/recommendations`.
   Future<List<Game>> recommended({int limit = 20});
 
+  /// Games in the library like [gameId] (the Overview's Similar games,
+  /// #179), from RomM's similarity index; none from a RomM without one.
+  Future<List<Game>> similar(String gameId, {int limit = 12});
+
+  /// The library's game IGDB knows as [igdbId], null when there is none
+  /// (the Overview's related games, #179).
+  Future<Game?> byIgdbId(int igdbId);
+
   /// The games released on [today]'s day and month in an earlier year (Home's
   /// On this day, #139), oldest first, and how many.
   Future<GalleryPage> releasedOn(DateTime today, {int limit = 20});
@@ -494,6 +502,32 @@ class RommLibraryApi implements LibraryApi {
       for (final item in r.data is List ? r.data as List : const [])
         if (item is Map && item['rom'] is Map<String, dynamic>) Game.fromJson(item['rom'] as Map<String, dynamic>),
     ];
+  }
+
+  @override
+  Future<List<Game>> similar(String gameId, {int limit = 12}) async {
+    final Response<dynamic> r;
+    try {
+      r = await dio.get('/api/roms/$gameId/similar', queryParameters: {'limit': limit}, options: auth());
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const [];
+      rethrow;
+    }
+    return [
+      for (final item in r.data is List ? r.data as List : const [])
+        if (item is Map && item['rom'] is Map<String, dynamic>) Game.fromJson(item['rom'] as Map<String, dynamic>),
+    ];
+  }
+
+  @override
+  Future<Game?> byIgdbId(int igdbId) async {
+    try {
+      final r = await dio.get('/api/roms/by-metadata-provider', queryParameters: {'igdb_id': igdbId}, options: auth());
+      return r.data is Map<String, dynamic> ? Game.fromJson(r.data as Map<String, dynamic>) : null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
   }
 
   @override
