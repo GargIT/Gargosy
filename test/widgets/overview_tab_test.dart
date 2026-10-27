@@ -18,7 +18,7 @@ void main() {
     'hltb_metadata': {'main_story': 25200, 'completionist': 43200},
   });
 
-  testWidgets('Overview (#179): facts, How long to beat, the description, similar games', (tester) async {
+  testWidgets('Overview (#179): the description, facts, How long to beat, similar games', (tester) async {
     await setDesktopSize(tester);
     final api = FakeLibraryApi(const [])
       ..similarGames = {
@@ -30,16 +30,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PLAYERS'), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
-    expect(find.text('PEGI 7'), findsOneWidget);
+    expect(find.byTooltip('PEGI 7'), findsOneWidget);
     expect(find.text('HOW LONG TO BEAT'), findsOneWidget);
     expect(find.text('7 h'), findsOneWidget);
     expect(find.text('12 h'), findsOneWidget);
     expect(find.text('SIMILAR GAMES IN YOUR LIBRARY'), findsOneWidget);
     expect(find.text('Metroid Fusion'), findsWidgets);
     double top(Finder f) => tester.getTopLeft(f).dy;
+    expect(top(find.text('Samus returns to Zebes.')), lessThan(top(find.text('PLAYERS'))));
     expect(top(find.text('PLAYERS')), lessThan(top(find.text('HOW LONG TO BEAT'))));
-    expect(top(find.text('HOW LONG TO BEAT')), lessThan(top(find.text('Samus returns to Zebes.'))));
-    expect(top(find.text('Samus returns to Zebes.')), lessThan(top(find.text('SIMILAR GAMES IN YOUR LIBRARY'))));
+    expect(top(find.text('HOW LONG TO BEAT')), lessThan(top(find.text('SIMILAR GAMES IN YOUR LIBRARY'))));
   });
 
   testWidgets('without facts, times or similar games none of it shows', (tester) async {

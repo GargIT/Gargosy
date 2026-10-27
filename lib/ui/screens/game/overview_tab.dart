@@ -12,9 +12,9 @@ import '../../widgets/g_focusable.dart';
 import 'overview_facts.dart';
 import 'similar_games.dart';
 
-/// The game page's Overview (#179): the facts (last played, players, age
-/// rating), How long to beat, the description and genres, screenshots, and
-/// similar games in the library.
+/// The game page's Overview (#179), in RomM's order: the description and
+/// genres, the facts (last played, players, age rating), How long to beat,
+/// screenshots, and similar games in the library.
 class OverviewTab extends ConsumerWidget {
   const OverviewTab({super.key, required this.game});
 
@@ -29,15 +29,11 @@ class OverviewTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: GSpace.s14),
       children: [
-        OverviewFacts(game: game, played: played.isEmpty ? null : played.join(' · ')),
-        if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s3), HltbStrip(hltb)],
-        if (summary.isNotEmpty) ...[
-          const SizedBox(height: GSpace.s6),
+        if (summary.isNotEmpty)
           Text(
             summary,
             style: const TextStyle(fontSize: GFont.lg, height: 1.6, color: GColors.fgSecondary),
           ),
-        ],
         if (game.genres.isNotEmpty) ...[
           const SizedBox(height: GSpace.s4),
           Wrap(
@@ -53,6 +49,9 @@ class OverviewTab extends ConsumerWidget {
             ],
           ),
         ],
+        const SizedBox(height: GSpace.s6),
+        OverviewFacts(game: game, played: played.isEmpty ? null : played.join(' · ')),
+        if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s3), HltbStrip(hltb)],
         if (shots.isNotEmpty) ...[
           const SizedBox(height: GSpace.s6),
           const Text(

@@ -6,7 +6,7 @@ import '../../theme/tokens.dart';
 
 /// The Overview's fact rows (#179), label on the left as on RomM's page:
 /// when it was last played and for how long ([played]), how many play, and
-/// the age ratings. Nothing when there is none of it.
+/// the age ratings as their boards' icons. Nothing when there is none of it.
 class OverviewFacts extends StatelessWidget {
   const OverviewFacts({super.key, required this.game, this.played});
 
@@ -44,7 +44,7 @@ class OverviewFacts extends StatelessWidget {
           ],
         ),
       if (players != null && players.isNotEmpty) ('Players', [_Badge(players, icon: playersIcon(players))]),
-      if (ratings.isNotEmpty) ('Age rating', [for (final r in ratings) _Badge(r)]),
+      if (ratings.isNotEmpty) ('Age rating', [for (final r in ratings) AgeRatingBadge(r)]),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -56,7 +56,14 @@ class OverviewFacts extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(width: 130, child: _Label(label)),
-                Expanded(child: Wrap(spacing: 6, runSpacing: 6, children: values)),
+                Expanded(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: values,
+                  ),
+                ),
               ],
             ),
           ),
@@ -148,4 +155,41 @@ class _Badge extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// An age rating as its board's icon from IGDB, as RomM's page shows it, its
+/// text as the tooltip; the text as a badge when there is no icon or it
+/// doesn't load (offline, a board IGDB has no icon for).
+class AgeRatingBadge extends StatelessWidget {
+  const AgeRatingBadge(this.rating, {super.key});
+
+  final AgeRating rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = _Badge(rating.label, icon: Icons.shield_outlined);
+    return Tooltip(
+      message: rating.label,
+      waitDuration: const Duration(milliseconds: 250),
+      child: switch (rating.iconUrl) {
+        null => badge,
+        final url => Container(
+          width: 44,
+          height: 44,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: GColors.surface,
+            border: Border.all(color: GColors.border),
+            borderRadius: BorderRadius.circular(GRadius.sm),
+          ),
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            semanticLabel: rating.label,
+            errorBuilder: (_, _, _) => FittedBox(child: Text(rating.label, textAlign: TextAlign.center)),
+          ),
+        ),
+      },
+    );
+  }
 }

@@ -6,8 +6,7 @@ class GameOverview {
 
   static const empty = GameOverview();
 
-  /// Each rating as it reads: `ESRB T`, `PEGI 12`.
-  final List<String> ageRatings;
+  final List<AgeRating> ageRatings;
   final HowLongToBeat? hltb;
 
   /// From RomM's game: `metadatum.age_ratings` (matched with IGDB's and
@@ -25,38 +24,115 @@ class GameOverview {
 
   /// What [toJson] wrote.
   factory GameOverview.fromJson(Map<String, dynamic> json) => GameOverview(
-    ageRatings: [for (final r in json['age_ratings'] is List ? json['age_ratings'] as List : const []) '$r'],
+    ageRatings: [
+      for (final r in json['age_ratings'] is List ? json['age_ratings'] as List : const []) ?AgeRating.fromJson(r),
+    ],
     hltb: HowLongToBeat.fromJson(json['hltb']),
   );
 
-  Map<String, dynamic> toJson() => {'age_ratings': ageRatings, 'hltb': hltb?.toJson()};
+  Map<String, dynamic> toJson() => {
+    'age_ratings': [for (final r in ageRatings) r.toJson()],
+    'hltb': hltb?.toJson(),
+  };
 }
 
-/// RomM's `metadatum.age_ratings` as they read: `CATEGORY:RATING` (typed by
-/// hand) becomes `CATEGORY RATING`; a bare rating takes its category from
-/// a provider's list in [providers] (`{rating, category}` maps) when one
-/// has it.
-List<String> ageRatingLabels(Object? ratings, List<Object?> providers) {
-  final categories = <String, String>{};
+/// One age rating: its board ([category], empty when unknown), the
+/// [rating] and the board's icon on IGDB ([iconUrl]), as RomM's page shows it.
+class AgeRating {
+  const AgeRating(this.category, this.rating, {this.iconUrl});
+
+  final String category;
+  final String rating;
+  final String? iconUrl;
+
+  /// As it reads: `ESRB T`, `PEGI 12`.
+  String get label => category.isEmpty ? rating : '$category $rating';
+
+  /// What [toJson] wrote; a snapshot from before icons held the [label].
+  static AgeRating? fromJson(Object? json) {
+    if (json is Map && json['rating'] != null) {
+      final category = '${json['category'] ?? ''}';
+      final rating = '${json['rating']}';
+      return AgeRating(category, rating, iconUrl: json['icon'] is String ? json['icon'] as String : null);
+    }
+    if (json is String && json.trim().isNotEmpty) {
+      final words = json.trim().split(' ');
+      return words.length > 1 && ageRatingBoards.containsKey(words.first)
+          ? AgeRating(
+              words.first,
+              words.skip(1).join(' '),
+              iconUrl: igdbRatingIcon(words.first, words.skip(1).join(' ')),
+            )
+          : AgeRating('', json.trim());
+    }
+    return null;
+  }
+
+  Map<String, dynamic> toJson() => {'category': category, 'rating': rating, 'icon': iconUrl};
+
+  @override
+  bool operator ==(Object other) =>
+      other is AgeRating && other.category == category && other.rating == rating && other.iconUrl == iconUrl;
+
+  @override
+  int get hashCode => Object.hash(category, rating, iconUrl);
+
+  @override
+  String toString() => label;
+}
+
+/// The rating boards and their folder in IGDB's rating icons.
+const ageRatingBoards = {
+  'ESRB': 'esrb',
+  'PEGI': 'pegi',
+  'CERO': 'cero',
+  'USK': 'usk',
+  'GRAC': 'grac',
+  'CLASS_IND': 'class_ind',
+  'ACB': 'acb',
+};
+
+/// IGDB's icon for a board's rating, by the same rule as RomM's page
+/// (`PEGI`, `16+` → `…/pegi/pegi_16.png`); null for a board it doesn't know.
+String? igdbRatingIcon(String category, String rating) {
+  final folder = ageRatingBoards[category];
+  if (folder == null || rating.isEmpty) return null;
+  return 'https://www.igdb.com/icons/rating_icons/$folder/${folder}_${rating.toLowerCase().replaceFirst('+', '')}.png';
+}
+
+/// RomM's `metadatum.age_ratings` as ratings: `CATEGORY:RATING` (typed by
+/// hand) as written; a bare rating takes its category, and IGDB's icon, from
+/// a provider's list in [providers] (`{rating, category, rating_cover_url}`
+/// maps) when one has it. The icon is IGDB's by RomM's rule when no provider
+/// gave one.
+List<AgeRating> ageRatingLabels(Object? ratings, List<Object?> providers) {
+  final known = <String, (String, String?)>{};
   for (final list in providers) {
     for (final r in list is List ? list : const []) {
       if (r is Map && r['rating'] != null && r['category'] is String) {
-        categories.putIfAbsent('${r['rating']}'.trim(), () => (r['category'] as String).trim());
+        final cover = r['rating_cover_url'];
+        known.putIfAbsent(
+          '${r['rating']}'.trim(),
+          () => ((r['category'] as String).trim(), cover is String && cover.isNotEmpty ? _https(cover) : null),
+        );
       }
     }
   }
-  final labels = <String>[];
+  final out = <AgeRating>[];
   for (final entry in ratings is List ? ratings : const []) {
     final text = '$entry'.trim();
     if (text.isEmpty) continue;
     final colon = text.indexOf(':');
-    final label = colon > 0
-        ? '${text.substring(0, colon).trim()} ${text.substring(colon + 1).trim()}'
-        : [?categories[text], text].join(' ');
-    if (!labels.contains(label)) labels.add(label);
+    final (category, rating, icon) = colon > 0
+        ? (text.substring(0, colon).trim(), text.substring(colon + 1).trim(), null)
+        : (known[text]?.$1 ?? '', text, known[text]?.$2);
+    final r = AgeRating(category, rating, iconUrl: icon ?? igdbRatingIcon(category, rating));
+    if (!out.contains(r)) out.add(r);
   }
-  return labels;
+  return out;
 }
+
+String _https(String url) => url.startsWith('//') ? 'https:$url' : url;
 
 /// HowLongToBeat's times for a game, in seconds.
 class HowLongToBeat {

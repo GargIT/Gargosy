@@ -29,8 +29,20 @@ void main() {
     'hltb_metadata': {'main_story': 25200, 'main_plus_extra': 34200, 'completionist': 0, 'all_styles': 2700},
   };
 
-  test("RomM's age ratings read as category and rating, once each", () {
-    expect(Game.fromJson(json).overview.ageRatings, ['PEGI 7', 'ESRB E', 'USK T', 'A']);
+  test("RomM's age ratings read as category and rating, once each, with IGDB's icon", () {
+    final ratings = Game.fromJson(json).overview.ageRatings;
+    expect([for (final r in ratings) r.label], ['PEGI 7', 'ESRB E', 'USK T', 'A']);
+    expect(
+      [for (final r in ratings) r.iconUrl],
+      [
+        'https://www.igdb.com/icons/rating_icons/pegi/pegi_7.png',
+        'https://images.igdb.com/e.png',
+        'https://www.igdb.com/icons/rating_icons/usk/usk_t.png',
+        null,
+      ],
+    );
+    expect(igdbRatingIcon('PEGI', '16+'), 'https://www.igdb.com/icons/rating_icons/pegi/pegi_16.png');
+    expect(igdbRatingIcon('BBFC', '15'), isNull);
   });
 
   test("HowLongToBeat's times there are, and none when RomM has none", () {
@@ -49,7 +61,14 @@ void main() {
 
   test('the overview comes back from the offline snapshot', () {
     final again = Game.fromJson(Game.fromJson(json).toJson()).overview;
-    expect(again.ageRatings, ['PEGI 7', 'ESRB E', 'USK T', 'A']);
+    expect(again.ageRatings, Game.fromJson(json).overview.ageRatings);
+    final before = GameOverview.fromJson({
+      'age_ratings': ['PEGI 7', 'A'],
+    });
+    expect(
+      [for (final r in before.ageRatings) (r.category, r.rating, r.iconUrl != null)],
+      [('PEGI', '7', true), ('', 'A', false)],
+    );
     expect(again.hltb!.mainPlusExtra, 34200);
   });
 

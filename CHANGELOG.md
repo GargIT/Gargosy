@@ -8,9 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
-- A game's Overview starts with its facts (last played and for how long,
-  how many play, age ratings) and How long to beat's times, then the
-  description, and similar games in your library.
+- A game's Overview, in RomM's order: the description, then its facts
+  (last played and for how long, how many play, age ratings as their
+  boards' icons) and How long to beat's times, screenshots, and similar
+  games in your library.
 - Quitting a game works with controllers SDL's controller list doesn't
   know: Gargosy guesses the usual button layout, and Settings → Controller
   → Controllers taught lets you press each quit button once to teach it.
