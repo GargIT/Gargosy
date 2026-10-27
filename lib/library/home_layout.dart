@@ -27,6 +27,8 @@ enum HomeWidget {
 
 /// Home's rows (#139), each on or off and in the player's order.
 enum HomeRow {
+  /// Who plays what on RomM now (#180); hidden while nobody does.
+  playingNow('Playing now', 'who plays what on RomM'),
   continuePlaying('Continue playing', 'last played first'),
   recentlyAdded('Recently added', "RomM's newest"),
   favourites('Favourites', 'your ♥ games'),
@@ -96,7 +98,8 @@ class HomeLayout {
   };
 
   /// A saved layout; a row it doesn't know (a newer Gargosy's) is dropped,
-  /// one it lacks is added last as it is by default.
+  /// one it lacks (an older Gargosy's) is added at its place by default, on
+  /// or off as by default.
   factory HomeLayout.fromJson(Map<String, dynamic> json) {
     T? byName<T extends Enum>(List<T> values, Object? name) => values.where((v) => v.name == name).firstOrNull;
     final rows = <(HomeRow, bool)>[];
@@ -104,8 +107,8 @@ class HomeLayout {
       final r = e is Map ? byName(HomeRow.values, e['row']) : null;
       if (r != null && !rows.any((x) => x.$1 == r)) rows.add((r, e['on'] != false));
     }
-    for (final r in HomeRow.values) {
-      if (!rows.any((x) => x.$1 == r)) rows.add((r, !r.offByDefault));
+    for (final (i, r) in HomeRow.values.indexed) {
+      if (!rows.any((x) => x.$1 == r)) rows.insert(i < rows.length ? i : rows.length, (r, !r.offByDefault));
     }
     final widgets = json['widgets'];
     return HomeLayout(

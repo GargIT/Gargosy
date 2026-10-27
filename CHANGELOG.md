@@ -8,6 +8,12 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Home starts with Playing now: who plays what on RomM right now, with
+  the game's cover and the player's avatar, where and for how long, read
+  again every 30 seconds. A opens the game. Other players' saves show
+  their avatar too.
+- In a wide window (1600 px and up) Random pick and On this day stand
+  beside the game played last; Your library is a slim strip under them.
 - A game's Overview, in RomM's order: the description, then its facts
   (last played and for how long, how many play, age ratings as their
   boards' icons) and How long to beat's times, screenshots, and similar

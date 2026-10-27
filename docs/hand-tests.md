@@ -283,3 +283,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Overview as RomM's (#179)
 
 109. [x] Open a well-known game RomM matched on HowLongToBeat (Super Metroid, Ocarina of Time): the Overview starts with the description and genres, then Last played, Players with an icon and Age rating as the boards' icons (PEGI, ESRB…; the mouse over one shows its text, e.g. `PEGI 7`) as rows, then How long to beat's times, then screenshots, then Similar games in your library as small covers (A opens one). Go through it all with the controller alone. A game without facts, times or similar games shows none of those.
+
+## Playing now (#180)
+
+110. [x] Start a game in RomM's web UI (or on another PC with Gargosy) as another RomM user. Within 30 seconds Home in Gargosy starts with Playing now: a card as large as Random pick with the game's cover on the left, then the game, the platform, their avatar from RomM (their initial when they have none), their name, where ("in RomM's web UI", "on Gargosy") and for how long. Start a game in Gargosy on this PC: after it, the card says "You" and "on this PC". A on a card opens the game's page. When nobody plays, the row is gone. Customize Home lists Playing now first and can turn it off. In a window 1600 px wide or more, Random pick and On this day are stacked to the right of the game played last, as tall as its cover, and the D-pad reaches them from its buttons; narrower, they sit side by side under it. Your library is one slim line under them either way.

@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -207,6 +208,11 @@ final raProgressionProvider = FutureProvider<Map<int, Map<String, dynamic>>>((re
 
 String? coverUrlFor(WidgetRef ref, Game g, {bool small = false}) =>
     ref.read(rommServiceProvider)?.resolveCoverUrl(g, small: small);
+
+/// A RomM player's avatar (#180), read once a session; null without one.
+final userAvatarProvider = FutureProvider.family<Uint8List?, int>(
+  (ref, userId) async => ref.watch(rommServiceProvider)?.userAvatar(userId),
+);
 
 /// [path] (e.g. `/assets/romm/...`) on the active profile's server.
 String? assetUrl(WidgetRef ref, String? path) {
