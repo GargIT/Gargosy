@@ -17,7 +17,7 @@ It is built on code copied from Freegosy (MIT, © 2026 abduznik). There is no sh
 - **Look and feel = RomM v2, dark only; controller-first.** Follow `DESIGN.md` (principles, tokens, layout, components, the controller map, patterns, each screen's order, decisions log); a design change updates it in the same PR. Theme values live in `lib/ui/theme/tokens.dart`. Copy token *values* only: no RomM code, CSS, icons or logo (RomM is AGPL-3.0). Every screen works with a controller alone, and with mouse and keyboard.
 - **Copied code is marked.** A file copied from Freegosy starts with `// Adapted from Freegosy (MIT, © 2026 abduznik).`, and its tests come along with it.
 - Aim for files under 600 lines. When a file is over it, or a change would push it over, move self-contained parts (a class, a parser, a group of pure functions, a dialog or sub-widget) to a helper file when the result is clearer. A cohesive unit (e.g. a data table) may stay whole.
-- All RomM API calls go through `romm_service.dart` only. Never call the API from UI or providers.
+- All RomM API calls go through `romm_service.dart` (and its parts in `core/romm/romm_service/`) only. Never call the API from UI or providers.
 - All emulator logic goes through the strategy pattern; never hardcode emulator behaviour in the UI.
   - A new emulator is a new file in `core/emulator/strategies/`, registered in `strategy_registry.dart` only.
   - A new save strategy is a new file in `core/save/strategies/`, registered in `save_sync_service.dart` only.
@@ -85,7 +85,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 - `ui/screens/profile_picker_screen.dart` ("Who is playing?": PIN, re-login, X = options/delete), `add_profile_screen.dart` (server → login → name/colour → PIN), `login_step.dart` (pairing QR or password; refuses another RomM user on re-login), `profile_options_dialog.dart`, `startup_error_app.dart`.
 
 ### Library (milestone B)
-- `core/romm/romm_service.dart` (adapted copy, ~1060 lines: one cohesive client, kept close to Freegosy) — every RomM call; token only, no password code. `dio` / `authOptions` getters for the library API.
+- `core/romm/romm_service.dart` (adapted copy) — `RommService`, every RomM call; token only, no password code. This file keeps the client (`_RommBase`: config, `Dio`, auth), connectivity, capabilities and device registration; the calls are in its parts in `core/romm/romm_service/` (#190), one mixin per area: `library.dart` (games, platforms, collections, props, notes, deleting a game), `users.dart` (RetroAchievements link and progress, avatars, permissions), `saves.dart`, `states.dart` (`RommStatesApi`), `sharing.dart` (other players' saves and states, sharing), `play.dart` (play sessions, activity heartbeat), `firmware.dart`. A new call goes in its area's part. `dio` / `authOptions` getters for the library API.
 - `core/romm/romm_state.dart` (copied) — save states on RomM; `core/constants/app_constants.dart` (copied) — app version.
 - `core/romm/romm_library_api.dart` — `LibraryApi` / `RommLibraryApi`: gallery pages (`GalleryQuery`: platform / collection / favourites / search, `GallerySort`, genre and region filters, `FilterValues`), collections (`RommCollection`), favourites (the user's own `is_favorite` collection, created once when missing).
 - `providers/romm_providers.dart` — `rommServiceProvider` and `libraryApiProvider`, built from the active profile's server and token.
