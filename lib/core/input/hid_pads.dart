@@ -19,7 +19,8 @@ import 'hid_buttons.dart';
 /// [XInputPads]'. The devices are listed again every [rescanEvery] (#172):
 /// one connected or woken during the game is read from then on, one that
 /// went is closed. [onRaw] hears every controller's held HID buttons as
-/// numbers (teaching).
+/// numbers, and [onDevices] which controllers are read after each listing,
+/// and whether an XInput one is there (teaching).
 class HidPads implements BackgroundPads {
   HidPads(
     this.held, {
@@ -27,6 +28,7 @@ class HidPads implements BackgroundPads {
     this.rescanEvery = const Duration(seconds: 2),
     this.ignoreSdl = false,
     this.onRaw,
+    this.onDevices,
     Map<String, Map<int, PadButton>> Function()? learned,
     Future<String> Function()? database,
     List<String> Function()? paths,
@@ -41,6 +43,7 @@ class HidPads implements BackgroundPads {
   final Duration rescanEvery;
   final bool ignoreSdl;
   final void Function(HidDevice device, Set<int> buttons)? onRaw;
+  final void Function(List<HidDevice> devices, bool xinput)? onDevices;
   final Map<String, Map<int, PadButton>> Function() _learned;
   final Future<String> Function() _database;
   final List<String> Function() _paths;
@@ -136,6 +139,7 @@ class HidPads implements BackgroundPads {
       );
       _pads[path] = _Pad(id, device, map.buttons);
     }
+    onDevices?.call([for (final pad in _pads.values) pad.device], paths.any(_isXInput));
   }
 
   void _poll() {
@@ -225,6 +229,9 @@ const _statusCancelled = 0xC0000120;
 const _notStarted = 0xFFFFFFFF;
 const _maxUsages = 128;
 
+/// XInput's (`IG_` in the path) are read by XInputPads.
+bool _isXInput(String path) => path.toLowerCase().contains('ig_');
+
 /// Every HID device's path.
 List<String> _hidPaths() {
   final paths = <String>[];
@@ -292,8 +299,7 @@ class _HidPad implements HidDevice {
   /// The game controller at [path]; null for anything else (XInput
   /// controllers, keyboards, mice, headsets).
   static _HidPad? open(String path) {
-    // XInput's (`IG_` in the path) are read by XInputPads.
-    if (path.toLowerCase().contains('ig_')) return null;
+    if (_isXInput(path)) return null;
     final name = path.toNativeUtf16();
     final handle = CreateFile(
       name,

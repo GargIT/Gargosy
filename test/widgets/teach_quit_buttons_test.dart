@@ -12,8 +12,9 @@ import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
 class _Reader implements BackgroundPads {
-  _Reader(this.onRaw);
+  _Reader(this.onRaw, this.onDevices);
   final void Function(HidDevice, Set<int>) onRaw;
+  final void Function(List<HidDevice>, bool) onDevices;
   var started = false;
   var stopped = false;
   @override
@@ -56,7 +57,7 @@ void main() {
         ),
         overrides: [
           appPreferencesProvider.overrideWithValue(prefs),
-          hidTeachReaderProvider.overrideWithValue((onRaw) => reader = _Reader(onRaw)),
+          hidTeachReaderProvider.overrideWithValue((onRaw, onDevices) => reader = _Reader(onRaw, onDevices)),
         ],
       ),
     );
@@ -74,8 +75,12 @@ void main() {
   testWidgets('each button pressed once is kept for that controller', (tester) async {
     await open(tester);
     expect(reader.started, isTrue);
+    expect(find.textContaining('Looking for controllers'), findsOneWidget);
     expect(find.textContaining('Press Select'), findsOneWidget);
     final pad = _Device(0x1234, 0xabcd);
+    reader.onDevices([pad], false);
+    await tester.pump();
+    expect(find.textContaining('Hears Odd Pad.'), findsOneWidget);
     await tap(tester, pad, 8);
     expect(find.textContaining('Teaching Odd Pad (1234:abcd)'), findsOneWidget);
     expect(find.textContaining('Press Start'), findsOneWidget);
@@ -103,6 +108,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(result, isTrue);
     expect(reader.stopped, isTrue);
+  });
+
+  testWidgets('it says when only Xbox controllers, or none, are connected', (tester) async {
+    await open(tester);
+    reader.onDevices(const [], true);
+    await tester.pump();
+    expect(find.textContaining('Only Xbox (XInput) controllers are connected'), findsOneWidget);
+    reader.onDevices(const [], false);
+    await tester.pump();
+    expect(find.textContaining('No controller found'), findsOneWidget);
   });
 
   testWidgets("the controller's B is taught, not Back; Escape cancels", (tester) async {

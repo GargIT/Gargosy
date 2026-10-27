@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint, listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,11 +14,18 @@ import '../../input/gargosy_intents.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_focusable.dart';
 
-/// Reads every HID controller's held buttons as numbers for
-/// [TeachQuitButtons] while it's open; tests replace it.
-final hidTeachReaderProvider = Provider<BackgroundPads Function(void Function(HidDevice, Set<int>) onRaw)>(
+/// What [TeachQuitButtons] hears: each HID controller's held buttons as
+/// numbers, and which controllers there are.
+typedef HidTeachReader = BackgroundPads Function(
+  void Function(HidDevice device, Set<int> buttons) onRaw,
+  void Function(List<HidDevice> devices, bool xinput) onDevices,
+);
+
+/// Reads every HID controller for [TeachQuitButtons] while it's open; tests
+/// replace it.
+final hidTeachReaderProvider = Provider<HidTeachReader>(
   (ref) =>
-      (onRaw) => HidPads(StreamController<HeldButtons>.broadcast(), onRaw: onRaw),
+      (onRaw, onDevices) => HidPads(StreamController<HeldButtons>.broadcast(), onRaw: onRaw, onDevices: onDevices),
 );
 
 /// Teaches Gargosy which HID button is which on a controller that isn't
@@ -61,6 +69,11 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
   var _step = 0;
   String? _note;
 
+  /// The controllers heard, null before the first listing; and whether an
+  /// XInput one is there.
+  List<HidDevice>? _devices;
+  var _xinput = false;
+
   bool get _done => _step >= _steps.length;
 
   @override
@@ -69,16 +82,43 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
     _lock = ref.read(navigationLockedProvider.notifier);
     // The D-pad mustn't move focus out from under the dialog while it's taught.
     Future.microtask(() => _lock.state = true);
-    _reader = ref.read(hidTeachReaderProvider)(_onRaw)..start();
+    _reader = ref.read(hidTeachReaderProvider)(_onRaw, _onDevices)..start();
   }
 
   @override
   void dispose() {
     _reader.stop();
     final lock = _lock;
-    Future.microtask(() => lock.state = false);
+    Future.microtask(() {
+      if (lock.mounted) lock.state = false;
+    });
     _focus.dispose();
     super.dispose();
+  }
+
+  void _onDevices(List<HidDevice> devices, bool xinput) {
+    if (!mounted) return;
+    final names = [for (final d in devices) d.name];
+    if (_devices == null || !listEquals(names, [for (final d in _devices!) d.name]) || xinput != _xinput) {
+      debugPrint(
+        '[Quit] teaching hears ${names.isEmpty ? 'no controller' : names.join(', ')}${xinput ? ' (and XInput)' : ''}',
+      );
+    }
+    setState(() {
+      _devices = devices;
+      _xinput = xinput;
+    });
+  }
+
+  /// What the dialog hears, before a button is pressed.
+  String get _heard {
+    final devices = _devices;
+    if (devices == null) return 'Looking for controllers…';
+    if (devices.isNotEmpty) return 'Hears ${devices.map((d) => d.name).join(', ')}.';
+    return _xinput
+        ? 'Only Xbox (XInput) controllers are connected, and they need no teaching. '
+              'An 8BitDo in X mode is one: switch it to D mode to teach it.'
+        : 'No controller found. Connect one: it is found within 2 seconds.';
   }
 
   void _onRaw(HidDevice device, Set<int> buttons) {
@@ -174,7 +214,7 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
                       Text(
                         device == null
                             ? 'For a controller that is not an Xbox one, if holding the quit buttons does nothing. '
-                                  'Press each button once on that controller.'
+                                  'Press each button once on that controller. $_heard'
                             : 'Teaching ${device.name} (${hidDeviceKey(device.vendor, device.product)}).',
                         style: const TextStyle(color: GColors.fgSecondary),
                       ),
