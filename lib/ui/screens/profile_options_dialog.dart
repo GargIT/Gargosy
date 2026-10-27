@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
+import '../../l10n/tr.dart';
 
 enum ProfileOption { delete }
 
@@ -14,14 +15,14 @@ Future<ProfileOption?> showProfileOptions(BuildContext context, {required String
       autofocus: true,
       borderRadius: GRadius.md,
       onActivate: () => Navigator.of(c).pop(ProfileOption.delete),
-      child: const Padding(
-        padding: EdgeInsets.all(GSpace.s3),
+      child: Padding(
+        padding: const EdgeInsets.all(GSpace.s3),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.delete_outline, color: GColors.danger),
-            SizedBox(width: GSpace.s3),
-            Text('Delete profile', style: TextStyle(fontSize: GFont.lg)),
+            const Icon(Icons.delete_outline, color: GColors.danger),
+            const SizedBox(width: GSpace.s3),
+            Text(tr('Delete profile'), style: const TextStyle(fontSize: GFont.lg)),
           ],
         ),
       ),
@@ -34,24 +35,25 @@ Future<bool> confirmDeleteProfile(BuildContext context, {required String name}) 
   final ok = await showDialog<bool>(
     context: context,
     builder: (c) => AlertDialog(
-      title: Text('Delete $name?'),
-      content: const Text(
-        'This removes the profile and its saves, states and emulator settings from this PC. '
-        'Nothing on the RomM server is deleted.',
+      title: Text(tr('Delete {0}?', [name])),
+      content: Text(
+        tr(
+          'This removes the profile and its saves, states and emulator settings from this PC. Nothing on the RomM server is deleted.',
+        ),
       ),
       actions: [
         GFocusable(
           autofocus: true,
           borderRadius: GRadius.pill,
           onActivate: () => Navigator.of(c).pop(false),
-          child: const Padding(padding: EdgeInsets.all(GSpace.s3), child: Text('Keep')),
+          child: Padding(padding: const EdgeInsets.all(GSpace.s3), child: Text(tr('Keep'))),
         ),
         GFocusable(
           borderRadius: GRadius.pill,
           onActivate: () => Navigator.of(c).pop(true),
-          child: const Padding(
-            padding: EdgeInsets.all(GSpace.s3),
-            child: Text('Delete', style: TextStyle(color: GColors.danger)),
+          child: Padding(
+            padding: const EdgeInsets.all(GSpace.s3),
+            child: Text(tr('Delete'), style: const TextStyle(color: GColors.danger)),
           ),
         ),
       ],

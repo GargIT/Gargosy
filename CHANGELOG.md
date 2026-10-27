@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Gargosy in Swedish: Settings → Display → Language (System, English,
+  Svenska). System follows Windows. Dates and decimals follow the language;
+  names and descriptions from RomM stay as RomM has them. The on-screen
+  keyboard has å, ä and ö.
+
 ## [0.5.0] - 2026-10-27
 
 Playing now on Home, a game's Overview and Achievements as RomM's, Home's

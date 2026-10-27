@@ -10,6 +10,7 @@ import '../theme/tokens.dart';
 import '../widgets/error_retry.dart';
 import '../widgets/g_dropdown.dart';
 import 'platform_card.dart';
+import '../../l10n/tr.dart';
 
 /// All platforms with games, as cover-strip cards: as many per row as fit;
 /// the Covers setting picks what each card fans. A opens a platform's gallery.
@@ -45,14 +46,14 @@ class _PlatformsPageState extends ConsumerState<PlatformsPage> {
       padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s5),
       child: Row(
         children: [
-          const Text(
-            'Platforms',
-            style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+          Text(
+            tr('Platforms'),
+            style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
           ),
           const SizedBox(width: GSpace.s3),
           Expanded(
             child: Text(
-              '${list.length} platforms · $games games',
+              tr('{0} platforms · {1} games', [list.length, games]),
               key: const ValueKey('platforms-heading'),
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: GColors.fgMuted),
@@ -63,7 +64,7 @@ class _PlatformsPageState extends ConsumerState<PlatformsPage> {
             child: GDropdownField(
               key: const ValueKey('platforms-covers'),
               icon: Icons.photo_library_outlined,
-              text: 'Covers: ${choice.label}',
+              text: tr('Covers: {0}', [choice.label]),
               onPress: _pickCovers,
               open: _coversOpen,
               compact: true,
@@ -87,8 +88,8 @@ class _PlatformsPageState extends ConsumerState<PlatformsPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorRetry(message: describeLoadError(e), onRetry: () => ref.invalidate(platformsProvider)),
         data: (list) => list.isEmpty
-            ? const Center(
-                child: Text('No platforms with games yet.', style: TextStyle(color: GColors.fgMuted)),
+            ? Center(
+                child: Text(tr('No platforms with games yet.'), style: const TextStyle(color: GColors.fgMuted)),
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

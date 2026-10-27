@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/tr.dart';
+
 /// Settings' groups, as RomM's profile page has them.
 enum SettingsGroup {
   profile('PROFILE'),
@@ -7,8 +9,11 @@ enum SettingsGroup {
   thisPc('THIS PC'),
   gargosy('GARGOSY');
 
-  const SettingsGroup(this.heading);
-  final String heading;
+  const SettingsGroup(this._heading);
+  final String _heading;
+
+  /// In the shown language (#191).
+  String get heading => tr(_heading);
 }
 
 /// A section of Settings, in the sidebar's order. The user menu lists the
@@ -24,8 +29,11 @@ enum SettingsPage {
   storage(SettingsGroup.thisPc, 'Storage', Icons.storage_outlined),
   about(SettingsGroup.gargosy, 'About', Icons.info_outline);
 
-  const SettingsPage(this.group, this.label, this.icon);
+  const SettingsPage(this.group, this._label, this.icon);
   final SettingsGroup group;
-  final String label;
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
   final IconData icon;
 }

@@ -6,6 +6,7 @@ import '../../providers/ui_provider.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/header_stat.dart';
+import '../../l10n/tr.dart';
 
 /// Search's header (#132): the heading, the search [box], what the box
 /// matches: GAMES, ON THIS PC and PLATFORMS ([scope] while it loads is null),
@@ -38,9 +39,9 @@ class SearchHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Search',
-            style: TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1),
+          Text(
+            tr('Search'),
+            style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1),
           ),
           const SizedBox(height: GSpace.s4),
           Wrap(
@@ -56,7 +57,7 @@ class SearchHeader extends StatelessWidget {
                   HeaderStat(scope == null ? '–' : '${scope.total}', 'GAMES', key: const ValueKey('search-games')),
                   HeaderStat(
                     '$onThisPc',
-                    'ON THIS PC',
+                    tr('ON THIS PC'),
                     color: GColors.gargosyTeal,
                     key: const ValueKey('search-on-pc'),
                   ),
@@ -74,11 +75,11 @@ class SearchHeader extends StatelessWidget {
               runSpacing: GSpace.s2,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(right: GSpace.s1),
+                Padding(
+                  padding: const EdgeInsets.only(right: GSpace.s1),
                   child: Text(
-                    'RECENT',
-                    style: TextStyle(
+                    tr('RECENT'),
+                    style: const TextStyle(
                       fontSize: GFont.sm,
                       letterSpacing: 1,
                       fontWeight: FontWeight.w600,

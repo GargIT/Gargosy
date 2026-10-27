@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
+import '../../l10n/tr.dart';
 
 /// A page that couldn't load: what went wrong, and Retry (spec §8).
 class ErrorRetry extends StatelessWidget {
@@ -36,9 +37,9 @@ class ErrorRetry extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: GSpace.s6, vertical: GSpace.s3),
                 decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-                child: const Text(
-                  'Retry',
-                  style: TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600),
+                child: Text(
+                  tr('Retry'),
+                  style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -53,15 +54,15 @@ class ErrorRetry extends StatelessWidget {
 String describeLoadError(Object error) {
   final text = error.toString();
   if (text.contains('SocketException') || text.contains('connection')) {
-    return "Can't reach RomM. Check your network.";
+    return tr('Can\'t reach RomM. Check your network.');
   }
   if (error is DioException) {
     final status = error.response?.statusCode;
     final path = error.requestOptions.path;
     if (status != null && status >= 500) {
-      return 'RomM had a problem answering (error $status for $path). Try again in a moment.';
+      return tr('RomM had a problem answering (error {0} for {1}). Try again in a moment.', [status, path]);
     }
-    if (status != null) return 'RomM said no (error $status for $path).';
+    if (status != null) return tr('RomM said no (error {0} for {1}).', [status, path]);
   }
-  return 'RomM could not be read ($text).';
+  return tr('RomM could not be read ({0}).', [text]);
 }

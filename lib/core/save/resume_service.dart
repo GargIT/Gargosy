@@ -17,6 +17,7 @@ import 'save_strategy.dart';
 import 'state_sync_capable.dart';
 import 'state_sync_record.dart';
 import 'state_sync_service.dart';
+import '../../l10n/tr.dart';
 
 /// Where a resumable state is.
 enum ResumeWhere { thisPc, romm, both }
@@ -117,11 +118,11 @@ final class ResumeMissing extends ResumeCheck {
 /// before launch ([ResumeMissing]), or when there was no resume service to
 /// check it with ([serviceAvailable] false).
 String resumeMissingMessage(ResumeEntry entry, {required bool serviceAvailable}) {
-  if (!serviceAvailable) return "Resume isn't available right now. Nothing was started.";
+  if (!serviceAvailable) return tr('Resume isn\'t available right now. Nothing was started.');
   final fromRomm = entry.where == ResumeWhere.romm || entry.newerOnRomm;
   return fromRomm
-      ? "Couldn't get ${entry.slot.label} from RomM. Nothing was started."
-      : "Couldn't find ${entry.slot.label} on this PC. Nothing was started.";
+      ? tr('Couldn\'t get {0} from RomM. Nothing was started.', [entry.slot.label])
+      : tr('Couldn\'t find {0} on this PC. Nothing was started.', [entry.slot.label]);
 }
 
 /// One emulator's view of one ROM file: a multi-disc game has one source per
@@ -363,11 +364,11 @@ class ResumeService {
   Future<Uint8List> downloadShared(ResumeEntry entry, Game game) async {
     final api = _api;
     final id = entry.remoteId;
-    if (api == null || id == null) throw StateError("RomM can't be reached");
+    if (api == null || id == null) throw StateError(tr('RomM can\'t be reached'));
     final bytes = await api.downloadState(id);
     final strategy = _resolve(game, emulatorId: entry.emulatorId);
     if (strategy is StateSyncCapable && !strategy.looksLikeValidState(bytes)) {
-      throw StateError("it isn't a ${entry.emulatorName} state");
+      throw StateError(tr('it isn\'t a {0} state', [entry.emulatorName]));
     }
     return bytes;
   }
@@ -379,7 +380,7 @@ class ResumeService {
   Future<String> freeSlotFor(ResumeEntry entry, Game game, String romPath) async {
     final sources = await _sources(game, romPath, {});
     final source = _firstWhereOrNull(sources, (s) => s.emulator.emulatorId == entry.emulatorId);
-    if (source == null) throw StateError("${entry.emulatorName} can't find the game's states");
+    if (source == null) throw StateError(tr('{0} can\'t find the game\'s states', [entry.emulatorName]));
     final records = _records.load(game.id);
     for (var slot = 1; slot <= 9; slot++) {
       final name = source.strategy.stateFileForSlot(entry.fileName, slot);
@@ -387,7 +388,7 @@ class ResumeService {
       if (records.containsKey(name) || await io.File(p.join(source.dir.path, name)).exists()) continue;
       return p.join(source.dir.path, name);
     }
-    throw StateError('every ${entry.emulatorName} state slot of yours is in use');
+    throw StateError(tr('every {0} state slot of yours is in use', [entry.emulatorName]));
   }
 
   /// Checks the chosen state right before launch (after the pre-launch pull).

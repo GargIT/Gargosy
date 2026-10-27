@@ -16,6 +16,7 @@ import '../gallery_view.dart';
 import 'emulator_tab.dart';
 import 'firmware_tab.dart';
 import 'platform_header.dart';
+import '../../../l10n/tr.dart';
 
 /// A platform's page (RomM v2's, #95): the header, then the tabs Library,
 /// Firmware / BIOS and Emulator, pinned with the Library's filter and sort
@@ -26,7 +27,7 @@ class PlatformScreen extends ConsumerStatefulWidget {
 
   final Platform platform;
 
-  static const tabs = ['Library', 'Firmware / BIOS', 'Emulator'];
+  static List<String> get tabs => [tr('Library'), tr('Firmware / BIOS'), tr('Emulator')];
 
   @override
   ConsumerState<PlatformScreen> createState() => _PlatformScreenState();
@@ -107,15 +108,15 @@ class _PlatformScreenState extends ConsumerState<PlatformScreen> {
 
   List<Hint> get _hints => [
     if (_tab == 0) ...[
-      const Hint(GameAction.confirm, 'Open'),
-      const Hint(GameAction.favorite, 'Favourite'),
-      const Hint(GameAction.detail, 'A–Z'),
+      Hint(GameAction.confirm, tr('Open')),
+      Hint(GameAction.favorite, tr('Favourite')),
+      Hint(GameAction.detail, tr('A–Z')),
     ],
-    if (_tab == 1) const Hint(GameAction.confirm, 'Get missing'),
-    if (_tab == 2) const Hint(GameAction.confirm, 'Change'),
-    const Hint(GameAction.l1, 'Previous tab'),
-    const Hint(GameAction.r1, 'Next tab'),
-    const Hint(GameAction.back, 'Back'),
+    if (_tab == 1) Hint(GameAction.confirm, tr('Get missing')),
+    if (_tab == 2) Hint(GameAction.confirm, tr('Change')),
+    Hint(GameAction.l1, tr('Previous tab')),
+    Hint(GameAction.r1, tr('Next tab')),
+    Hint(GameAction.back, tr('Back')),
   ];
 
   Widget _tabBody(int i) {
@@ -125,7 +126,7 @@ class _PlatformScreenState extends ConsumerState<PlatformScreen> {
         onNotification: _onScroll,
         child: GalleryView(
           query: GalleryQuery(platformId: p.id),
-          filterHint: 'Filter this platform…',
+          filterHint: tr('Filter this platform…'),
           pinnedBar: true,
         ),
       ),

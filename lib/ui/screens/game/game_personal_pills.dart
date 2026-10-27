@@ -8,6 +8,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// The player's own RomM fields for the game, as RomM's pills (spec Part 1):
 /// status (with Backlog and Now playing), rating 0–10 and completion. A
@@ -22,12 +23,12 @@ class GamePersonalPills extends ConsumerStatefulWidget {
 
 class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   /// RomM's status values and how they read.
-  static const statuses = {
-    'never_playing': 'Never played',
-    'incomplete': 'Incomplete',
-    'finished': 'Finished',
-    'completed_100': '100 % completed',
-    'retired': 'Dropped',
+  static Map<String, String> get statuses => {
+    'never_playing': tr('Never played'),
+    'incomplete': tr('Incomplete'),
+    'finished': tr('Finished'),
+    'completed_100': tr('100 % completed'),
+    'retired': tr('Dropped'),
   };
 
   late String? _status = widget.game.status;
@@ -62,19 +63,19 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
     }
     if (!mounted) return;
     setState(undo);
-    showToast(context, "RomM didn't save that. It's as it was.");
+    showToast(context, tr('RomM didn\'t save that. It\'s as it was.'));
   }
 
   Future<void> _pickStatus() async {
     final keys = statuses.keys.toList();
     final labels = [
       ...statuses.values,
-      _backlog ? 'Backlog ✓' : 'Backlog',
-      _nowPlaying ? 'Now playing ✓' : 'Now playing',
+      _backlog ? tr('Backlog ✓') : tr('Backlog'),
+      _nowPlaying ? tr('Now playing ✓') : tr('Now playing'),
     ];
     final i = await showChoice(
       context,
-      title: 'Status',
+      title: tr('Status'),
       labels: labels,
       current: _status == null ? null : keys.indexOf(_status!),
     );
@@ -97,7 +98,7 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   Future<void> _pickRating() async {
     final i = await showChoice(
       context,
-      title: 'Your rating',
+      title: tr('Your rating'),
       labels: [for (var r = 0; r <= 10; r++) '$r'],
       current: _rating,
     );
@@ -110,7 +111,7 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
   Future<void> _pickCompletion() async {
     final i = await showChoice(
       context,
-      title: 'Completion',
+      title: tr('Completion'),
       labels: [for (var c = 0; c <= 100; c += 10) '$c %'],
       current: _completion ~/ 10,
     );
@@ -146,8 +147,8 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
 
   @override
   Widget build(BuildContext context) {
-    final status = statuses[_status] ?? 'Set status';
-    final extra = [if (_nowPlaying) 'now playing', if (_backlog) 'backlog'];
+    final status = statuses[_status] ?? tr('Set status');
+    final extra = [if (_nowPlaying) tr('now playing'), if (_backlog) tr('backlog')];
     return Wrap(
       runSpacing: GSpace.s2,
       children: [

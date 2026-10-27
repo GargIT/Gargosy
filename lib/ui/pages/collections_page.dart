@@ -16,6 +16,7 @@ import '../widgets/error_retry.dart';
 import '../widgets/g_dropdown.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/gallery_bar.dart';
+import '../../l10n/tr.dart';
 
 /// The Collections tab (#121), after RomM v2's: the players' collections
 /// (yours first, favourites at the front, and the ones others share) in a
@@ -123,15 +124,15 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _heading('$ownCount collections · $virtualCount virtual'),
+        _heading(tr('{0} collections · {1} virtual', [ownCount, virtualCount])),
         _bar(),
         Expanded(
           child: empty
               ? Center(
                   child: Text(
                     regular.isEmpty && smart.isEmpty && virtualCount == 0
-                        ? 'No collections yet.'
-                        : 'No collections match.',
+                        ? tr('No collections yet.')
+                        : tr('No collections match.'),
                     style: const TextStyle(color: GColors.fgMuted),
                   ),
                 )
@@ -164,8 +165,8 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
                                   padding: const EdgeInsets.fromLTRB(GSpace.s5, GSpace.s4, GSpace.s5, GSpace.s5),
                                   sliver: SliverMainAxisGroup(
                                     slivers: [
-                                      const SliverToBoxAdapter(
-                                        child: _SectionTitle(icon: Icons.bookmark, text: 'COLLECTIONS'),
+                                      SliverToBoxAdapter(
+                                        child: _SectionTitle(icon: Icons.bookmark, text: tr('COLLECTIONS')),
                                       ),
                                       SliverGrid(
                                         gridDelegate: _inset(grid, columns, tileW, GSpace.s5 * 2),
@@ -185,7 +186,7 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
                               sliver: SliverToBoxAdapter(
                                 child: _SectionTitle(
                                   icon: Icons.collections_bookmark_outlined,
-                                  text: 'VIRTUAL · ${virtualCollectionTypes[type]!.toUpperCase()}',
+                                  text: tr('VIRTUAL · {0}', [tr(virtualCollectionTypes[type]!).toUpperCase()]),
                                   count: items.length,
                                 ),
                               ),
@@ -229,9 +230,9 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        const Text(
-          'Collections',
-          style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+        Text(
+          tr('Collections'),
+          style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
         ),
         const SizedBox(width: GSpace.s3),
         Expanded(
@@ -262,7 +263,7 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
                 width: 280,
                 child: FilterField(
                   key: const ValueKey('collections-filter'),
-                  hint: 'Filter collections…',
+                  hint: tr('Filter collections…'),
                   text: _filter,
                   onChanged: (t) => setState(() => _filter = t),
                 ),
@@ -291,7 +292,7 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
           child: GDropdownField(
             key: const ValueKey('collections-sort'),
             icon: Icons.sort,
-            text: 'Sort by: ${_sort.label}',
+            text: tr('Sort by: {0}', [_sort.label]),
             onPress: _pickSort,
             open: _sortOpen,
             compact: true,

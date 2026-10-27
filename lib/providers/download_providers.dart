@@ -13,6 +13,7 @@ import '../library/rom_files.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
+import '../l10n/tr.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
 
@@ -100,7 +101,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     try {
       checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(freeSpaceProvider));
     } on NotEnoughSpace catch (e) {
-      _set(game.id, DownloadProgress(DownloadPhase.failed, error: 'With the downloads before it: $e'));
+      _set(game.id, DownloadProgress(DownloadPhase.failed, error: tr('With the downloads before it: {0}', [e])));
       return Future.value();
     }
     _queue.add(game);

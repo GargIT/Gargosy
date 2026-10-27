@@ -7,6 +7,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/g_focusable.dart';
 import 'open_game.dart';
+import '../../../l10n/tr.dart';
 
 /// The Overview's Similar games in your library (#179), from RomM's
 /// similarity index, as small covers; nothing when RomM has none.
@@ -25,7 +26,7 @@ class SimilarGames extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Similar games in your library'.toUpperCase(),
+            tr('Similar games in your library').toUpperCase(),
             style: const TextStyle(
               fontSize: GFont.xs,
               fontWeight: FontWeight.w700,

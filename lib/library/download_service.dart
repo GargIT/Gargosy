@@ -9,6 +9,7 @@ import '../core/romm/romm_models.dart';
 import '../profiles/path_guard.dart';
 import 'disk_space.dart';
 import 'rom_files.dart';
+import '../l10n/tr.dart';
 
 enum DownloadPhase {
   /// Waiting for the downloads before it (#143).
@@ -181,7 +182,7 @@ void unzipInto(String zip, String dir, PathGuard guard) {
     final archive = ZipDecoder().decodeStream(input);
     for (final entry in archive) {
       final out = guard.join(dir, entry.name);
-      if (!p.isWithin(dir, out)) throw PathGuardException(entry.name, 'outside the game folder');
+      if (!p.isWithin(dir, out)) throw PathGuardException(entry.name, tr('outside the game folder'));
       if (!entry.isFile) {
         io.Directory(out).createSync(recursive: true);
         continue;

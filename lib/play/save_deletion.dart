@@ -13,6 +13,7 @@ import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
 import '../profiles/json_file.dart';
 import '../profiles/path_guard.dart';
+import '../l10n/tr.dart';
 
 /// A save of the game page's Saves tab deleted: on RomM ([romm]), a backup
 /// (its zip and its place in [backups]), or this PC's own ([deleteLocal]).
@@ -26,12 +27,12 @@ Future<void> deleteSaveEntry(
   switch (save.source) {
     case SaveSource.romm:
       final id = save.rommSave?['id'];
-      if (id is! int || romm == null) throw StateError('RomM has no id for this save');
-      if (save.owner != null) throw StateError("another player's save isn't yours to delete");
-      if (!await romm.deleteSaves([id])) throw StateError('RomM refused');
+      if (id is! int || romm == null) throw StateError(tr('RomM has no id for this save'));
+      if (save.owner != null) throw StateError(tr('another player\'s save isn\'t yours to delete'));
+      if (!await romm.deleteSaves([id])) throw StateError(tr('RomM refused'));
     case SaveSource.backup:
       final entry = save.backup;
-      if (entry == null || backups == null) throw StateError('the backup is gone');
+      if (entry == null || backups == null) throw StateError(tr('the backup is gone'));
       await backups.removeEntry(game.id, entry);
       final zip = io.File(entry.localZipPath);
       if (zip.existsSync()) zip.deleteSync();
@@ -58,7 +59,7 @@ Future<void> deleteLocalSave(
   required String profileDir,
   DateTime Function() now = DateTime.now,
 }) async {
-  final who = save.maker ?? (throw StateError("it isn't known which emulator made this save"));
+  final who = save.maker ?? (throw StateError(tr('it isn\'t known which emulator made this save')));
   final core = who.coreId == null ? null : '${who.coreId}_libretro';
   final planned = await sync.withStrategy(
     game,
@@ -66,7 +67,7 @@ Future<void> deleteLocalSave(
     emulatorId: who.emulatorId,
     coreOverride: core,
   );
-  if (planned == null) throw StateError("${who.emulatorId}'s saves can't be deleted from here");
+  if (planned == null) throw StateError(tr('{0}\'s saves can\'t be deleted from here', [who.emulatorId]));
   for (final path in planned.paths) {
     guard.check(path);
   }
@@ -134,7 +135,7 @@ Future<String?> deleteOwnState(
   required PathGuard guard,
   required RommService? romm,
 }) async {
-  if (entry.owner != null) throw StateError("another player's state isn't yours to delete");
+  if (entry.owner != null) throw StateError(tr('another player\'s state isn\'t yours to delete'));
   for (final f in resume.localFilesOf(entry)) {
     if (await f.exists()) await io.File(guard.check(f.path)).delete();
   }
@@ -142,7 +143,9 @@ Future<String?> deleteOwnState(
   final id = entry.remoteId;
   if (id == null) return null;
   if (romm == null || romm.isOffline.value || !await romm.deleteStates([id])) {
-    return entry.localFile == null ? "RomM can't be reached" : "it's deleted on this PC, but RomM can't be reached";
+    return entry.localFile == null
+        ? tr('RomM can\'t be reached')
+        : tr('it\'s deleted on this PC, but RomM can\'t be reached');
   }
   return null;
 }

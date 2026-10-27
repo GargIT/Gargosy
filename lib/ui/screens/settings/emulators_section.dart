@@ -10,6 +10,7 @@ import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import 'settings_rows.dart';
+import '../../../l10n/tr.dart';
 
 /// Settings → Emulator settings: which installed emulator plays each of the
 /// profile's platforms, and the one save-state sync switch (state-sync plan
@@ -25,7 +26,7 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
   Future<void> _choose(String slug, String title, List<({String id, String name})> options, String? current) async {
     final i = await showChoice(
       context,
-      title: 'Play $title in',
+      title: tr('Play {0} in', [title]),
       labels: [for (final o in options) o.name],
       current: options.indexWhere((o) => o.id == current),
     );
@@ -83,14 +84,17 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
     return ListView(
       children: [
         SettingsCard(
-          title: 'Which emulator plays',
+          title: tr('Which emulator plays'),
           icon: Icons.tune,
-          note:
-              'For platforms with more than one emulator installed. '
-              'A game can still be played in another one from its play screen.',
+          note: tr(
+            'For platforms with more than one emulator installed. A game can still be played in another one from its play screen.',
+          ),
           children: [
             if (rows.isEmpty)
-              const Text('Only one emulator per platform is installed.', style: TextStyle(color: GColors.fgSecondary))
+              Text(
+                tr('Only one emulator per platform is installed.'),
+                style: const TextStyle(color: GColors.fgSecondary),
+              )
             else
               LayoutBuilder(
                 builder: (context, box) {
@@ -106,18 +110,18 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
           ],
         ),
         SettingsCard(
-          title: 'Save states on RomM',
+          title: tr('Save states on RomM'),
           icon: Icons.cloud_upload,
-          note:
-              'Upload save states after playing and bring them down before, like saves. On by default. '
-              'States on this PC always work, sync or not.',
+          note: tr(
+            'Upload save states after playing and bring them down before, like saves. On by default. States on this PC always work, sync or not.',
+          ),
           children: [
             if (prefs == null)
-              const Text('Open a profile to change this.', style: TextStyle(color: GColors.fgSecondary))
+              Text(tr('Open a profile to change this.'), style: const TextStyle(color: GColors.fgSecondary))
             else
               SettingsToggle(
                 key: const ValueKey('state-sync'),
-                label: 'Sync save states with RomM',
+                label: tr('Sync save states with RomM'),
                 on: StateSyncService.isOn(prefs),
                 onChanged: (on) async {
                   await prefs.setBool(StateSyncService.enabledKey, on);
@@ -143,7 +147,7 @@ class _StateSyncCoverage extends StatelessWidget {
   final List<String> fromMenu;
 
   static String _names(List<String> list) =>
-      list.length < 2 ? list.join() : '${list.sublist(0, list.length - 1).join(', ')} and ${list.last}';
+      list.length < 2 ? list.join() : tr('{0} and {1}', [list.sublist(0, list.length - 1).join(', '), list.last]);
 
   @override
   Widget build(BuildContext context) {
@@ -170,18 +174,21 @@ class _StateSyncCoverage extends StatelessWidget {
         ),
       ],
     );
-    if (syncing.isEmpty) return const Text('No installed emulator syncs save states yet.', style: note);
+    if (syncing.isEmpty) return Text(tr('No installed emulator syncs save states yet.'), style: note);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        group('state-sync-synced', Icons.cloud_done, 'Synced with RomM', GColors.success, syncing),
+        group('state-sync-synced', Icons.cloud_done, tr('Synced with RomM'), GColors.success, syncing),
         if (fromMenu.isNotEmpty) ...[
           const SizedBox(height: GSpace.s2),
-          Text('${_names(fromMenu)}: start the game, then load the state from the emulator\'s own menu.', style: note),
+          Text(
+            tr('{0}: start the game, then load the state from the emulator\'s own menu.', [_names(fromMenu)]),
+            style: note,
+          ),
         ],
         if (localOnly.isNotEmpty) ...[
           const SizedBox(height: GSpace.s4),
-          group('state-sync-local', Icons.computer, 'Only on this PC', GColors.fgSecondary, localOnly),
+          group('state-sync-local', Icons.computer, tr('Only on this PC'), GColors.fgSecondary, localOnly),
         ],
       ],
     );

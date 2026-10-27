@@ -163,6 +163,19 @@ when a token exists.
 
 Mockups are linked from each issue.
 
+## Language
+
+- Gargosy's own text is in English or Swedish (Settings → Display →
+  Language; System follows Windows). Names, descriptions, genres and
+  regions from RomM are shown as RomM sends them.
+- Every text the player sees goes through `tr()`; nothing is hard-coded.
+  The English text is the key, and `sv.dart` holds its Swedish.
+- Words: game **spel**, save **sparfil**, state **sparläge**, collection
+  **samling**, platform **plattform**, profile **profil**, achievement
+  **prestation**, On this PC **På datorn** (short, it sits on buttons).
+- Swedish runs longer than English: rows of buttons wrap rather than
+  overflow, and a label that sits on a button stays short.
+
 ## Branding
 
 - The app logo is the "G" with three face buttons:
@@ -189,3 +202,4 @@ Mockups are linked from each issue.
 | 2026-10-27 | Playing now as large as a Home widget, cover left, the player's avatar | #180 |
 | 2026-10-27 | From 1600 px Home's widgets stand beside the header; Your library one slim line | #180 |
 | 2026-10-27 | Home rows show only what fits, See all last; nothing scrolls sideways | #184 |
+| 2026-10-27 | Swedish beside English, the English text as the key (`tr()`); app-wide, System follows Windows | #191 |

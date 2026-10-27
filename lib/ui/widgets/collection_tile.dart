@@ -6,6 +6,7 @@ import '../theme/tokens.dart';
 import 'cover_image.dart';
 import 'g_focusable.dart';
 import 'save_list/player_avatar.dart';
+import '../../l10n/tr.dart';
 
 /// A collection on the Collections tab (#121): a mosaic of its covers with
 /// marks (smart, shared, another player's, how many are on this PC), its
@@ -44,7 +45,7 @@ class CollectionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = collection;
-    final name = c.isFavorite ? 'Favourites' : c.name;
+    final name = c.isFavorite ? tr('Favourites') : c.name;
     return GFocusable(
       key: ValueKey('collection-${c.key}'),
       autofocus: autofocus,
@@ -63,36 +64,41 @@ class CollectionTile extends StatelessWidget {
               children: [
                 CollectionMosaic(urls: coverUrls, favourite: c.isFavorite),
                 if (c.kind == CollectionKind.smart)
-                  const Positioned(
+                  Positioned(
                     left: GSpace.s2,
                     top: GSpace.s2,
                     child: _Mark(
-                      key: ValueKey('mark-smart'),
-                      tooltip: 'Smart collection',
-                      child: Icon(Icons.bolt, size: 15, color: GColors.gargosyGold),
+                      key: const ValueKey('mark-smart'),
+                      tooltip: tr('Smart collection'),
+                      child: const Icon(Icons.bolt, size: 15, color: GColors.gargosyGold),
                     ),
                   ),
                 if (c.kind == CollectionKind.virtual && c.virtualType != null)
                   Positioned(
                     left: GSpace.s2,
                     top: GSpace.s2,
-                    child: _Tag((virtualCollectionTypes[c.virtualType] ?? c.virtualType!).toUpperCase()),
+                    child: _Tag(
+                      (switch (virtualCollectionTypes[c.virtualType]) {
+                        final t? => tr(t),
+                        null => c.virtualType!,
+                      }).toUpperCase(),
+                    ),
                   ),
                 if (c.isPublic && c.kind != CollectionKind.virtual)
-                  const Positioned(
+                  Positioned(
                     right: GSpace.s2,
                     top: GSpace.s2,
                     child: _Mark(
-                      key: ValueKey('mark-shared'),
-                      tooltip: 'Shared on RomM',
-                      child: Icon(Icons.public, size: 15, color: GColors.gargosyTeal),
+                      key: const ValueKey('mark-shared'),
+                      tooltip: tr('Shared on RomM'),
+                      child: const Icon(Icons.public, size: 15, color: GColors.gargosyTeal),
                     ),
                   ),
                 if (owner != null)
                   Positioned(
                     left: GSpace.s2,
                     bottom: GSpace.s2,
-                    child: Tooltip(message: "${owner!.username}'s", child: PlayerAvatar(owner!, size: 22)),
+                    child: Tooltip(message: tr('{0}\'s', [owner!.username]), child: PlayerAvatar(owner!, size: 22)),
                   ),
                 if (onPc > 0)
                   Positioned(
@@ -106,7 +112,7 @@ class CollectionTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(GRadius.pill),
                       ),
                       child: Text(
-                        '$onPc on PC',
+                        tr('{0} on PC', [onPc]),
                         style: const TextStyle(fontSize: GFont.xs, fontWeight: FontWeight.w700, color: GColors.bg),
                       ),
                     ),

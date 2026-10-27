@@ -7,6 +7,7 @@ import '../../../library/dsi_title.dart';
 import '../../../providers/download_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/format.dart';
+import '../../../l10n/tr.dart';
 
 class DetailsTab extends ConsumerWidget {
   const DetailsTab({super.key, required this.game});
@@ -25,25 +26,25 @@ class DetailsTab extends ConsumerWidget {
     final dsi = _dsi(ref);
     final released = game.firstReleaseDate == null ? null : DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!);
     final rows = <(String, String)>[
-      ('Platform', game.platformDisplayName ?? ''),
+      (tr('Platform'), game.platformDisplayName ?? ''),
       if (released != null)
         (
-          'Released',
+          tr('Released'),
           '${released.year}-${released.month.toString().padLeft(2, '0')}-${released.day.toString().padLeft(2, '0')}',
         ),
-      if (game.genres.isNotEmpty) ('Genres', game.genres.join(', ')),
-      if (game.companies.isNotEmpty) ('Companies', game.companies.join(', ')),
-      if (game.regions.isNotEmpty) ('Regions', game.regions.join(', ')),
-      if (game.languages.isNotEmpty) ('Languages', game.languages.join(', ')),
-      if (game.playerCount != null) ('Players', game.playerCount!),
-      if (game.averageRating != null) ('Rating', game.averageRating!.toStringAsFixed(1)),
-      ('File', game.fsName ?? game.fileName ?? ''),
-      if (game.fileSize > 0) ('Size', formatBytes(game.fileSize)),
-      if (game.titleId != null) ('Game id', game.titleId!),
+      if (game.genres.isNotEmpty) (tr('Genres'), game.genres.join(', ')),
+      if (game.companies.isNotEmpty) (tr('Companies'), game.companies.join(', ')),
+      if (game.regions.isNotEmpty) (tr('Regions'), game.regions.join(', ')),
+      if (game.languages.isNotEmpty) (tr('Languages'), game.languages.join(', ')),
+      if (game.playerCount != null) (tr('Players'), game.playerCount!),
+      if (game.averageRating != null) (tr('Rating'), decimal(game.averageRating!, 1)),
+      (tr('File'), game.fsName ?? game.fileName ?? ''),
+      if (game.fileSize > 0) (tr('Size'), formatBytes(game.fileSize)),
+      if (game.titleId != null) (tr('Game id'), game.titleId!),
       // DSiWare runs only on a NAND of its region (#114).
       if (dsi != null && dsi.dsiWare)
-        ('DSiWare', 'Needs a DSi NAND from ${dsiRegionLine(dsi.regions)} in the bios folder'),
-      ('RomM id', game.id),
+        ('DSiWare', tr('Needs a DSi NAND from {0} in the bios folder', [dsiRegionLine(dsi.regions)])),
+      (tr('RomM id'), game.id),
     ];
     return ListView(
       padding: const EdgeInsets.only(bottom: GSpace.s14),

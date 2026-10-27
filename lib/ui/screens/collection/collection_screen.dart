@@ -14,6 +14,7 @@ import '../../widgets/cover_grid.dart';
 import '../../widgets/hint_bar.dart';
 import '../gallery_view.dart';
 import 'collection_header.dart';
+import '../../../l10n/tr.dart';
 
 /// A collection's page (#121), like a platform's: the header, then its games
 /// under the filter and sort bar. The header goes once the games are
@@ -70,7 +71,7 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
   @override
   Widget build(BuildContext context) {
     final c = _collection;
-    final name = c.isFavorite ? 'Favourites' : c.name;
+    final name = c.isFavorite ? tr('Favourites') : c.name;
     final platforms = ref.watch(galleryScopeProvider(c.query)).valueOrNull?.platforms;
     return Actions(
       actions: {MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => openUserMenu(context, ref))},
@@ -128,18 +129,18 @@ class _CollectionScreenState extends ConsumerState<CollectionScreen> {
                       onNotification: _onScroll,
                       child: GalleryView(
                         query: c.query,
-                        filterHint: 'Filter this collection…',
+                        filterHint: tr('Filter this collection…'),
                         pinnedBar: true,
                         platforms: platforms,
                       ),
                     ),
                   ),
-                  const HintBar(
+                  HintBar(
                     hints: [
-                      Hint(GameAction.confirm, 'Open'),
-                      Hint(GameAction.favorite, 'Favourite'),
-                      Hint(GameAction.detail, 'A–Z'),
-                      Hint(GameAction.back, 'Back'),
+                      Hint(GameAction.confirm, tr('Open')),
+                      Hint(GameAction.favorite, tr('Favourite')),
+                      Hint(GameAction.detail, tr('A–Z')),
+                      Hint(GameAction.back, tr('Back')),
                     ],
                   ),
                 ],

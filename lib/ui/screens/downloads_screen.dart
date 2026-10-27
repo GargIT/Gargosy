@@ -14,6 +14,7 @@ import '../widgets/format.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
 import 'game/open_game.dart';
+import '../../l10n/tr.dart';
 
 /// Downloads (#143), from the user menu: the one running, with its speed
 /// and time left; then the queue (Y puts one first); the ones that failed
@@ -23,9 +24,9 @@ class DownloadsScreen extends ConsumerWidget {
 
   /// "1.2 GB of 4.3 GB · 12 MB/s · 4 min left" while downloading.
   static String progressLine(DownloadProgress p, Duration elapsed) {
-    if (p.phase == DownloadPhase.extracting) return 'Unpacking…';
+    if (p.phase == DownloadPhase.extracting) return tr('Unpacking…');
     final parts = <String>[
-      p.total > 0 ? '${formatBytes(p.received)} of ${formatBytes(p.total)}' : formatBytes(p.received),
+      p.total > 0 ? tr('{0} of {1}', [formatBytes(p.received), formatBytes(p.total)]) : formatBytes(p.received),
     ];
     final seconds = elapsed.inMilliseconds / 1000;
     if (seconds >= 1 && p.received > 0) {
@@ -33,7 +34,9 @@ class DownloadsScreen extends ConsumerWidget {
       parts.add('${formatBytes(speed.round())}/s');
       if (p.total > p.received) {
         final left = Duration(seconds: ((p.total - p.received) / speed).round());
-        parts.add(left.inMinutes >= 1 ? '${left.inMinutes} min left' : '${left.inSeconds.clamp(1, 59)} s left');
+        parts.add(
+          left.inMinutes >= 1 ? tr('{0} min left', [left.inMinutes]) : tr('{0} s left', [left.inSeconds.clamp(1, 59)]),
+        );
       }
     }
     return parts.join(' · ');
@@ -134,20 +137,20 @@ class DownloadsScreen extends ConsumerWidget {
                     key: const Key('page-Downloads'),
                     padding: const EdgeInsets.symmetric(horizontal: GSpace.s8, vertical: GSpace.s6),
                     children: [
-                      const Text(
-                        'Downloads',
-                        style: TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800),
+                      Text(
+                        tr('Downloads'),
+                        style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800),
                       ),
                       if (empty)
-                        const Padding(
-                          padding: EdgeInsets.only(top: GSpace.s5),
+                        Padding(
+                          padding: const EdgeInsets.only(top: GSpace.s5),
                           child: Text(
-                            "Nothing downloading. A game's Download puts it here.",
-                            style: TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
+                            tr('Nothing downloading. A game\'s Download puts it here.'),
+                            style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
                           ),
                         ),
                       if (current != null && running != null) ...[
-                        heading('DOWNLOADING'),
+                        heading(tr('DOWNLOADING')),
                         row(
                           current,
                           progressLine(running, started == null ? Duration.zero : DateTime.now().difference(started)),
@@ -156,41 +159,41 @@ class DownloadsScreen extends ConsumerWidget {
                         ),
                       ],
                       if (queue.isNotEmpty) ...[
-                        heading('QUEUED · ${queue.length}'),
+                        heading(tr('QUEUED · {0}', [queue.length])),
                         for (final g in queue)
                           row(
                             g,
-                            g.fileSize > 0 ? 'Queued · ${formatBytes(g.fileSize)}' : 'Queued',
+                            g.fileSize > 0 ? tr('Queued · {0}', [formatBytes(g.fileSize)]) : tr('Queued'),
                             onX: () => downloads.cancel(g.id),
                             onY: () => downloads.moveToFront(g.id),
                           ),
                       ],
                       if (failed.isNotEmpty) ...[
-                        heading('FAILED'),
+                        heading(tr('FAILED')),
                         for (final g in failed)
                           row(
                             g,
-                            'Failed: ${states[g.id]?.error ?? ''}',
+                            tr('Failed: {0}', [states[g.id]?.error ?? '']),
                             onA: () => downloads.start(g),
                             onX: () => downloads.dismiss(g.id),
                           ),
                       ],
                       if (finished.isNotEmpty) ...[
-                        heading('DONE'),
+                        heading(tr('DONE')),
                         for (final g in finished)
-                          row(g, g.fileSize > 0 ? 'On this PC · ${formatBytes(g.fileSize)}' : 'On this PC'),
+                          row(g, g.fileSize > 0 ? tr('On this PC · {0}', [formatBytes(g.fileSize)]) : tr('On this PC')),
                       ],
                     ],
                   ),
                 ),
               ),
             ),
-            const HintBar(
+            HintBar(
               hints: [
-                Hint(GameAction.confirm, 'Open · Retry'),
-                Hint(GameAction.detail, 'Stop · Remove'),
-                Hint(GameAction.favorite, 'First in the queue'),
-                Hint(GameAction.back, 'Back'),
+                Hint(GameAction.confirm, tr('Open · Retry')),
+                Hint(GameAction.detail, tr('Stop · Remove')),
+                Hint(GameAction.favorite, tr('First in the queue')),
+                Hint(GameAction.back, tr('Back')),
               ],
             ),
           ],

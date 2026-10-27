@@ -31,6 +31,7 @@ import 'home/home_header.dart';
 import 'home/home_widgets.dart';
 import 'home/playing_now.dart';
 import 'platform_card.dart';
+import '../../l10n/tr.dart';
 
 /// Home (#139), after RomM v2's: the game played last (or a random pick) over
 /// its art, the widgets, then the rows the profile chose, in its order
@@ -105,8 +106,8 @@ class HomePage extends ConsumerWidget {
         count: list.length,
         itemCount: list.length,
         height: GameCard.width / CollectionTile.coverAspect + 48,
-        seeAllSize: Size(GameCard.width, GameCard.width / CollectionTile.coverAspect),
-        onSeeAll: () => tab('Collections'),
+        seeAllSize: const Size(GameCard.width, GameCard.width / CollectionTile.coverAspect),
+        onSeeAll: () => tab(tr('Collections')),
         itemBuilder: (context, i) {
           final c = list[i];
           return SizedBox(
@@ -141,7 +142,7 @@ class HomePage extends ConsumerWidget {
             onSeeAll: offline
                 ? null
                 : () => gallery(
-                    'Continue playing',
+                    tr('Continue playing'),
                     const GalleryQuery(lastPlayedOnly: true, sort: GallerySort.lastPlayed, descending: true),
                   ),
           );
@@ -150,21 +151,21 @@ class HomePage extends ConsumerWidget {
             row,
             ref.watch(recentlyAddedProvider).valueOrNull ?? const [],
             onSeeAll: () =>
-                gallery('Recently added', const GalleryQuery(sort: GallerySort.recentlyAdded, descending: true)),
+                gallery(tr('Recently added'), const GalleryQuery(sort: GallerySort.recentlyAdded, descending: true)),
           );
         case HomeRow.favourites:
           return gameShelf(
             row,
             ref.watch(favouriteGamesProvider).valueOrNull ?? const [],
             count: favIds.length,
-            onSeeAll: () => gallery('Favourites', const GalleryQuery(favourites: true)),
+            onSeeAll: () => gallery(tr('Favourites'), const GalleryQuery(favourites: true)),
           );
         case HomeRow.onThisPc:
           return gameShelf(
             row,
             installed.take(20).toList(),
             count: installed.length,
-            onSeeAll: offline ? null : () => gallery('On this PC', const GalleryQuery(), thisPc: true),
+            onSeeAll: offline ? null : () => gallery(tr('On this PC'), const GalleryQuery(), thisPc: true),
           );
         case HomeRow.forYou:
           return gameShelf(row, ref.watch(recommendedGamesProvider).valueOrNull ?? const []);
@@ -178,7 +179,7 @@ class HomePage extends ConsumerWidget {
             height: PlatformCard.height,
             seeAllSize: const Size(GameCard.width, PlatformCard.height),
             itemWidth: _platformWidth,
-            onSeeAll: () => tab('Platforms'),
+            onSeeAll: () => tab(tr('Platforms')),
             itemBuilder: (context, i) => SizedBox(
               width: _platformWidth,
               child: PlatformCard(
@@ -243,7 +244,7 @@ class HomePage extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
               child: Text(
-                'Welcome, $name',
+                tr('Welcome, {0}', [name]),
                 style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800),
               ),
             ),
@@ -266,11 +267,11 @@ class HomePage extends ConsumerWidget {
               ),
             ),
           if (empty)
-            const Padding(
-              padding: EdgeInsets.all(GSpace.rowPad),
+            Padding(
+              padding: const EdgeInsets.all(GSpace.rowPad),
               child: Text(
-                'No games yet. Add some to RomM and they show up here.',
-                style: TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
+                tr('No games yet. Add some to RomM and they show up here.'),
+                style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
               ),
             ),
           for (final row in showRows) _RevealOnFocus(child: rowOf(row)),
@@ -288,12 +289,12 @@ class HomePage extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(GRadius.pill),
                     border: Border.all(color: GColors.borderStrong),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune, size: 18, color: GColors.fgSecondary),
-                      SizedBox(width: GSpace.s2),
-                      Text('Customize Home', style: TextStyle(color: GColors.fgSecondary)),
+                      const Icon(Icons.tune, size: 18, color: GColors.fgSecondary),
+                      const SizedBox(width: GSpace.s2),
+                      Text(tr('Customize Home'), style: const TextStyle(color: GColors.fgSecondary)),
                     ],
                   ),
                 ),

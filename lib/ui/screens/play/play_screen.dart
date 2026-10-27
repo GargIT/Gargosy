@@ -32,6 +32,7 @@ import '../../widgets/save_list/save_list.dart';
 import '../../widgets/save_list/state_list.dart';
 import '../../widgets/toast.dart';
 import 'play_settings_panel.dart';
+import '../../../l10n/tr.dart';
 
 /// Choose the save or state and the emulator a game starts with (spec Part
 /// 4), after Freegosy's play screen in the v2 style: the cover and the main
@@ -159,21 +160,22 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   }
 
   static String _sourceLabel(SaveEntry e) => switch (e.source) {
-    _ when e.owner != null => "${e.owner!.username}'s save",
-    SaveSource.local => 'save on this PC',
-    SaveSource.backup => 'backup',
-    SaveSource.romm => 'RomM save',
+    _ when e.owner != null => tr('{0}\'s save', [e.owner!.username]),
+    SaveSource.local => tr('save on this PC'),
+    SaveSource.backup => tr('backup'),
+    SaveSource.romm => tr('RomM save'),
   };
 
   Future<bool> _confirm(PlayPrompt prompt, PlayItem chosen, PlayView view, PlayMenu menu) {
     if (chosen is StatePlay) {
       return showConfirm(
         context,
-        title: 'Resume an older state?',
-        body:
-            'This state is from ${formatSaveTime(chosen.entry.savedAt)}, but your save is from '
-            '${formatSaveTime(view.newestSave!)}. Resuming may roll your save back.',
-        yes: 'Resume anyway',
+        title: tr('Resume an older state?'),
+        body: tr('This state is from {0}, but your save is from {1}. Resuming may roll your save back.', [
+          formatSaveTime(chosen.entry.savedAt),
+          formatSaveTime(view.newestSave!),
+        ]),
+        yes: tr('Resume anyway'),
         focusYes: false,
       );
     }
@@ -182,29 +184,42 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     final name = menu.nameOf(target);
     final (title, body) = switch (prompt) {
       PlayPrompt.olderSave => (
-        'Play an older save?',
-        'This replaces your $name save from ${formatSaveTime(view.newestLocalFor(target)!)} with the '
-            '${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)}'
-            '${item.fit.kind == SaveFitKind.converted ? ', converted for $name' : ''}.\n\n'
-            'Your current save is backed up first, so you can get it back.',
+        tr('Play an older save?'),
+        tr(
+          'This replaces your {0} save from {1} with the {2} from {3}{4}.\n\nYour current save is backed up first, so you can get it back.',
+          [
+            name,
+            formatSaveTime(view.newestLocalFor(target)!),
+            _sourceLabel(item.entry),
+            formatSaveTime(item.entry.savedAt),
+            item.fit.kind == SaveFitKind.converted ? ', converted for $name' : '',
+          ],
+        ),
       ),
       PlayPrompt.notOnRomm => (
-        "Your save on this PC isn't on RomM",
-        'Your $name save on this PC changed since its last upload (played offline?). Playing '
-            '${item.entry.owner == null ? 'the ' : ''}${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)} replaces it.\n\n'
-            'A backup of it is kept on this PC.',
+        tr('Your save on this PC isn\'t on RomM'),
+        tr(
+          'Your {0} save on this PC changed since its last upload (played offline?). Playing {1}{2} from {3} replaces it.\n\nA backup of it is kept on this PC.',
+          [name, item.entry.owner == null ? 'the ' : '', _sourceLabel(item.entry), formatSaveTime(item.entry.savedAt)],
+        ),
       ),
-      PlayPrompt.olderState => ('Resume an older state?', 'Resuming may roll your save back.'),
+      PlayPrompt.olderState => (tr('Resume an older state?'), tr('Resuming may roll your save back.')),
       PlayPrompt.othersSave => (
-        "Play ${item.entry.owner?.username ?? 'their'}'s save?",
-        'This replaces your $name save${view.newestLocalFor(target) == null ? '' : ' from ${formatSaveTime(view.newestLocalFor(target)!)}'} '
-            'with ${_sourceLabel(item.entry)} from ${formatSaveTime(item.entry.savedAt)}'
-            '${item.fit.kind == SaveFitKind.converted ? ', converted for $name' : ''}.\n\n'
-            'Your current save is backed up first, so you can get it back. When you stop playing, the save goes to '
-            "RomM as yours. ${item.entry.owner?.username ?? 'Their'}'s save stays as it is.",
+        tr('Play {0}\'s save?', [item.entry.owner?.username ?? 'their']),
+        tr(
+          'This replaces your {0} save{1} with {2} from {3}{4}.\n\nYour current save is backed up first, so you can get it back. When you stop playing, the save goes to RomM as yours. {5}\'s save stays as it is.',
+          [
+            name,
+            view.newestLocalFor(target) == null ? '' : ' from ${formatSaveTime(view.newestLocalFor(target)!)}',
+            _sourceLabel(item.entry),
+            formatSaveTime(item.entry.savedAt),
+            item.fit.kind == SaveFitKind.converted ? ', converted for $name' : '',
+            item.entry.owner?.username ?? 'Their',
+          ],
+        ),
       ),
     };
-    return showConfirm(context, title: title, body: body, yes: 'Replace and play', focusYes: false);
+    return showConfirm(context, title: title, body: body, yes: tr('Replace and play'), focusYes: false);
   }
 
   /// RomM's copy of the save on this PC [entry] (same content or the RomM
@@ -225,11 +240,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   Future<bool> _confirmVersion(ResumeEntry entry, String stateVersion, String installed) => showConfirm(
     context,
-    title: 'Load a state from another version?',
-    body:
-        '${entry.slot.label} was made by ${entry.emulatorName} $stateVersion; you have $installed. '
-        'It may not load, or the game may misbehave.',
-    yes: 'Load it',
+    title: tr('Load a state from another version?'),
+    body: tr('{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.', [
+      entry.slot.label,
+      entry.emulatorName,
+      stateVersion,
+      installed,
+    ]),
+    yes: tr('Load it'),
     focusYes: false,
   );
 
@@ -294,13 +312,21 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
 
   /// What A does, in one line under the main button.
   String _whatA(PlayMenu menu, PlayItem? chosen) => switch (chosen) {
-    SavePlay(:final entry, :final fit) when entry.owner != null =>
-      'in ${menu.nameOf(fit.playsIn ?? _picked!)} · ${_sourceLabel(entry)}, ${formatSaveTime(entry.savedAt)}. '
-          "It becomes your save: your next one goes to RomM under you. ${entry.owner!.username}'s stays as it is.",
-    SavePlay(:final entry, :final fit) =>
-      'in ${menu.nameOf(fit.playsIn ?? _picked!)} · ${_sourceLabel(entry)}, ${formatSaveTime(entry.savedAt)}',
-    StatePlay(:final entry) => '${entry.slot.label} in ${entry.emulatorName} · ${formatSaveTime(entry.savedAt)}',
-    _ => _picked == null ? '' : 'in ${menu.nameOf(_picked!)} · starts without a save',
+    SavePlay(:final entry, :final fit) when entry.owner != null => tr(
+      'in {0} · {1}, {2}. It becomes your save: your next one goes to RomM under you. {3}\'s stays as it is.',
+      [menu.nameOf(fit.playsIn ?? _picked!), _sourceLabel(entry), formatSaveTime(entry.savedAt), entry.owner!.username],
+    ),
+    SavePlay(:final entry, :final fit) => tr('in {0} · {1}, {2}', [
+      menu.nameOf(fit.playsIn ?? _picked!),
+      _sourceLabel(entry),
+      formatSaveTime(entry.savedAt),
+    ]),
+    StatePlay(:final entry) => tr('{0} in {1} · {2}', [
+      entry.slot.label,
+      entry.emulatorName,
+      formatSaveTime(entry.savedAt),
+    ]),
+    _ => _picked == null ? '' : tr('in {0} · starts without a save', [menu.nameOf(_picked!)]),
   };
 
   Widget _segment(String label, bool on, VoidCallback onPress) => GFocusable(
@@ -350,7 +376,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                   Icon(resume ? Icons.replay : Icons.play_arrow),
                   const SizedBox(width: GSpace.s2),
                   Text(
-                    _starting ? 'Starting…' : (resume ? 'Resume' : 'Play'),
+                    _starting ? tr('Starting…') : (resume ? tr('Resume') : tr('Play')),
                     style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w800),
                   ),
                 ],
@@ -385,8 +411,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     final panel = picked == null
         ? Text(
             menu.note ??
-                'No emulator for ${widget.game.platformDisplayName ?? 'this platform'} is installed. '
-                    'Install one under Emulators (Start → Emulators).',
+                tr('No emulator for {0} is installed. Install one under Emulators (Start → Emulators).', [
+                  widget.game.platformDisplayName ?? 'this platform',
+                ]),
             style: const TextStyle(color: GColors.fgSecondary),
           )
         : PlaySettingsPanel(
@@ -420,11 +447,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               _segment(
-                'Saves ${distinctSaveCount([for (final r in view.saveRows) r.entry])}',
+                tr('Saves {0}', [
+                  distinctSaveCount([for (final r in view.saveRows) r.entry]),
+                ]),
                 tab == 0,
                 () => setState(() => _tab = 0),
               ),
-              _segment('States ${view.ownStateCount}', tab == 1, () => setState(() => _tab = 1)),
+              _segment(tr('States {0}', [view.ownStateCount]), tab == 1, () => setState(() => _tab = 1)),
             ],
           ),
         ),
@@ -505,14 +534,14 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                 ),
               ),
             ),
-            const HintBar(
+            HintBar(
               hints: [
-                Hint(GameAction.confirm, 'Choose / Play'),
-                Hint(GameAction.l1, 'Saves'),
-                Hint(GameAction.r1, 'States'),
-                Hint(GameAction.favorite, 'Emulator'),
-                Hint(GameAction.detail, 'Fold'),
-                Hint(GameAction.back, 'Back'),
+                Hint(GameAction.confirm, tr('Choose / Play')),
+                Hint(GameAction.l1, tr('Saves')),
+                Hint(GameAction.r1, tr('States')),
+                Hint(GameAction.favorite, tr('Emulator')),
+                Hint(GameAction.detail, tr('Fold')),
+                Hint(GameAction.back, tr('Back')),
               ],
             ),
           ],

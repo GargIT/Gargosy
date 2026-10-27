@@ -15,6 +15,7 @@ import '../profiles/profile_paths.dart';
 import '../profiles/profile_preferences.dart';
 import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
+import '../l10n/tr.dart';
 
 /// Freegosy's save and launch engine, built for the active profile: its own
 /// settings, folders, backups and RomM account (spec §4). Null without one.
@@ -106,7 +107,7 @@ final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
     romm,
     prefs,
     sync.stateStrategyForGame,
-    exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: 'Syncing save states'),
+    exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: tr('Syncing save states')),
     emulatorSyncs: (id) => ref.read(strategyRegistryProvider)?.getStrategyById(id)?.supportsStateSync ?? false,
   );
 });

@@ -11,15 +11,16 @@ import '../shell/backdrop.dart';
 import '../theme/tokens.dart';
 import '../widgets/hint_bar.dart';
 import 'gallery_view.dart';
+import '../../l10n/tr.dart';
 
 /// The filter field's hint for a gallery of [q].
 String filterHintFor(GalleryQuery q) => q.platformId != null
-    ? 'Filter this platform…'
+    ? tr('Filter this platform…')
     : q.inCollection
-    ? 'Filter this collection…'
+    ? tr('Filter this collection…')
     : q.favourites
-    ? 'Filter favourites…'
-    : 'Filter…';
+    ? tr('Filter favourites…')
+    : tr('Filter…');
 
 /// A platform's, a collection's or the favourites' games (spec §2).
 class GalleryScreen extends ConsumerStatefulWidget {
@@ -66,12 +67,12 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
                       ),
                     ),
                   ),
-                  const HintBar(
+                  HintBar(
                     hints: [
-                      Hint(GameAction.confirm, 'Open'),
-                      Hint(GameAction.favorite, 'Favourite'),
-                      Hint(GameAction.detail, 'A–Z'),
-                      Hint(GameAction.back, 'Back'),
+                      Hint(GameAction.confirm, tr('Open')),
+                      Hint(GameAction.favorite, tr('Favourite')),
+                      Hint(GameAction.detail, tr('A–Z')),
+                      Hint(GameAction.back, tr('Back')),
                     ],
                   ),
                 ],

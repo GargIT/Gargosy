@@ -6,6 +6,7 @@ import '../input/gargosy_intents.dart';
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
 import 'hint_bar.dart';
+import '../../l10n/tr.dart';
 
 /// Four-digit PIN entry for the controller (spec §5).
 class PinPad extends StatefulWidget {
@@ -152,7 +153,7 @@ class _PinPadState extends State<PinPad> {
                   const SizedBox(width: 76 + GSpace.s4),
                 ],
               ),
-              const HintBar(hints: [Hint(GameAction.confirm, 'Press'), Hint(GameAction.back, 'Delete / Back')]),
+              HintBar(hints: [Hint(GameAction.confirm, tr('Press')), Hint(GameAction.back, tr('Delete / Back'))]),
             ],
           ),
         ),

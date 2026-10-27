@@ -28,6 +28,7 @@ import 'sigil/sigil_library.dart';
 import 'core/platform/platform_info.dart';
 import 'update/update_installer.dart';
 import 'ui/screens/startup_error_app.dart';
+import 'l10n/tr.dart';
 
 Future<void> main(List<String> args) async {
   markAppStart();
@@ -59,6 +60,11 @@ Future<void> main(List<String> args) async {
   );
   SharedPreferencesStorePlatform.instance = JsonFilePreferencesStore(io.File(root.settingsFile));
   final prefs = await SharedPreferences.getInstance();
+  // #191: the chosen language before the first frame; System is Windows'.
+  await showLanguage(
+    AppLanguage.of(SharedPreferencesAppPreferences(prefs))
+        .resolve(io.Platform.localeName.split(RegExp('[_-]')).first.toLowerCase()),
+  );
   // Started by GargosyUpdate.exe: clean up after the update, or say why it failed.
   final updateOutcome = await UpdateInstaller(
     root: root,

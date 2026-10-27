@@ -11,6 +11,7 @@ import '../theme/tokens.dart';
 import 'g_dropdown.dart';
 import 'g_focusable.dart';
 import 'on_screen_keyboard.dart';
+import '../../l10n/tr.dart';
 
 /// The sorts the Sort by list offers: RomM's and the player's own, Best
 /// match while [searching], and Downloaded with On this PC on.
@@ -91,7 +92,7 @@ class GalleryBar extends StatelessWidget {
               _BarButton(
                 key: const ValueKey('bar-filters'),
                 icon: Icons.tune,
-                label: filters == 0 ? 'Filters' : 'Filters · $filters',
+                label: filters == 0 ? tr('Filters') : tr('Filters · {0}', [filters]),
                 on: filters > 0,
                 onPress: onFilters,
               ),
@@ -99,7 +100,7 @@ class GalleryBar extends StatelessWidget {
               _BarButton(
                 key: const ValueKey('bar-this-pc'),
                 icon: thisPc ? Icons.toggle_on : Icons.toggle_off_outlined,
-                label: thisPc && thisPcCount != null ? 'On this PC · $thisPcCount' : 'On this PC',
+                label: thisPc && thisPcCount != null ? tr('On this PC · {0}', [thisPcCount]) : tr('On this PC'),
                 on: thisPc,
                 onPress: () => onThisPc(!thisPc),
               ),
@@ -107,7 +108,7 @@ class GalleryBar extends StatelessWidget {
                 _BarButton(
                   key: const ValueKey('bar-scan'),
                   icon: scanning ? Icons.hourglass_top : Icons.manage_search,
-                  label: scanning ? 'Scanning…' : 'Scan',
+                  label: scanning ? tr('Scanning…') : tr('Scan'),
                   onPress: scanning ? () {} : onScan!,
                 ),
             ]),
@@ -118,7 +119,7 @@ class GalleryBar extends StatelessWidget {
             _BarButton(
               key: const ValueKey('bar-direction'),
               icon: query.descending ? Icons.arrow_downward : Icons.arrow_upward,
-              label: query.descending ? 'Descending' : 'Ascending',
+              label: query.descending ? tr('Descending') : tr('Ascending'),
               onPress: () => onQuery(query.copyWith(descending: !query.descending)),
             ),
           ]),
@@ -169,7 +170,7 @@ class _SortFieldState extends State<_SortField> {
     child: GDropdownField(
       key: const ValueKey('bar-sort'),
       icon: Icons.sort,
-      text: 'Sort by ${widget.query.sort.label}',
+      text: tr('Sort by {0}', [widget.query.sort.label]),
       open: _open,
       compact: true,
       onPress: _pick,
@@ -198,7 +199,10 @@ class _PlatformFieldState extends State<_PlatformField> {
     final i = await showDropdown(
       context,
       field: _key,
-      labels: ['All ${platforms.length}', for (final p in platforms) p.nameForDisplay],
+      labels: [
+        tr('All {0}', [platforms.length]),
+        for (final p in platforms) p.nameForDisplay,
+      ],
       current: platforms.indexWhere((p) => p.id == widget.query.platformId) + 1,
     );
     if (!mounted) return;
@@ -215,7 +219,9 @@ class _PlatformFieldState extends State<_PlatformField> {
       child: GDropdownField(
         key: const ValueKey('bar-platform'),
         icon: Icons.videogame_asset_outlined,
-        text: 'Platform: ${picked?.nameForDisplay ?? 'All ${widget.platforms.length}'}',
+        text: tr('Platform: {0}', [
+          picked?.nameForDisplay ?? tr('All {0}', [widget.platforms.length]),
+        ]),
         open: _open,
         compact: true,
         onPress: _pick,
@@ -337,7 +343,7 @@ class _FilterFieldState extends ConsumerState<FilterField> {
       if (!name.startsWith('_')) chain.add(name);
       return chain.length < 8;
     });
-    return '$node in ${chain.join(' < ')}';
+    return tr('{0} in {1}', [node, chain.join(' < ')]);
   }
 
   Future<void> _activate() async {

@@ -8,6 +8,7 @@ import '../../../providers/ui_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
+import '../../../l10n/tr.dart';
 
 /// Customize Home (#139), from the end of Home: [HomeLayoutEditor] in a
 /// dialog; B closes it, every change is kept as it's made.
@@ -25,16 +26,19 @@ Future<void> showCustomizeHome(BuildContext context) => showDialog<void>(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Customize Home',
-                style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+              Text(
+                tr('Customize Home'),
+                style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: GSpace.s1),
-              const Text("This profile's Home only. Changes show at once.", style: TextStyle(color: GColors.fgMuted)),
+              Text(
+                tr('This profile\'s Home only. Changes show at once.'),
+                style: const TextStyle(color: GColors.fgMuted),
+              ),
               const SizedBox(height: GSpace.s5),
               const Flexible(child: SingleChildScrollView(child: HomeLayoutEditor(autofocus: true))),
               const SizedBox(height: GSpace.s4),
-              const HintBar(hints: [Hint(GameAction.confirm, 'On / off'), Hint(GameAction.back, 'Done')]),
+              HintBar(hints: [Hint(GameAction.confirm, tr('On / off')), Hint(GameAction.back, tr('Done'))]),
             ],
           ),
         ),
@@ -145,10 +149,10 @@ class HomeLayoutEditor extends ConsumerWidget {
     final left = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _heading('AT THE TOP'),
+        _heading(tr('AT THE TOP')),
         top,
         const SizedBox(height: GSpace.s5),
-        _heading('WIDGETS'),
+        _heading(tr('WIDGETS')),
         for (var i = 0; i < HomeWidget.values.length; i++)
           check(
             ValueKey('home-widget-${HomeWidget.values[i].name}'),
@@ -168,7 +172,7 @@ class HomeLayoutEditor extends ConsumerWidget {
               borderRadius: BorderRadius.circular(GRadius.pill),
               border: Border.all(color: GColors.borderStrong),
             ),
-            child: const Text('Reset to the default', style: TextStyle(color: GColors.fgSecondary)),
+            child: Text(tr('Reset to the default'), style: const TextStyle(color: GColors.fgSecondary)),
           ),
         ),
       ],
@@ -177,7 +181,7 @@ class HomeLayoutEditor extends ConsumerWidget {
     final rows = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _heading('ROWS, IN ORDER'),
+        _heading(tr('ROWS, IN ORDER')),
         for (var i = 0; i < layout.rows.length; i++)
           Row(
             // The same row's widgets (and their focus) follow it as it moves.
@@ -198,13 +202,13 @@ class HomeLayoutEditor extends ConsumerWidget {
               arrow(
                 ValueKey('home-row-up-${layout.rows[i].$1.name}'),
                 Icons.arrow_upward,
-                'Up',
+                tr('Up'),
                 i == 0 ? null : () => home.change((l) => l.moved(layout.rows[i].$1, -1)),
               ),
               arrow(
                 ValueKey('home-row-down-${layout.rows[i].$1.name}'),
                 Icons.arrow_downward,
-                'Down',
+                tr('Down'),
                 i == layout.rows.length - 1 ? null : () => home.change((l) => l.moved(layout.rows[i].$1, 1)),
               ),
             ],

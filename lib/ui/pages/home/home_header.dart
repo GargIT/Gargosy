@@ -17,6 +17,7 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/game_transition.dart';
 import '../../widgets/save_list/save_labels.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// Home's header (#139): one game over its art. [random] false is the game
 /// played last, with Resume when it has a save state; true is the random
@@ -107,13 +108,14 @@ class HomeHeader extends ConsumerWidget {
       if (game.genres.isNotEmpty) game.genres.take(2).join(', '),
     ].whereType<String>().join(' · ');
     final when = game.lastPlayed == null ? null : formatSaveTime(game.lastPlayed!);
-    final top = label ?? (random ? 'RANDOM PICK' : 'LAST PLAYED${when == null ? '' : ' · ${when.toUpperCase()}'}');
+    final top =
+        label ?? (random ? tr('RANDOM PICK') : tr('LAST PLAYED{0}', [when == null ? '' : ' · ${when.toUpperCase()}']));
 
     final downloading = progress != null && progress.phase != DownloadPhase.failed;
     final buttons = <Widget>[
       if (state != null)
         _button(
-          'Resume',
+          tr('Resume'),
           Icons.play_arrow,
           playing ? null : () => resumeNewest(context, ref, game),
           primary: true,
@@ -122,7 +124,7 @@ class HomeHeader extends ConsumerWidget {
         ),
       if (downloaded)
         _button(
-          playing ? 'Playing…' : 'Play',
+          playing ? tr('Playing…') : tr('Play'),
           state == null ? Icons.play_arrow : null,
           playing
               ? null
@@ -142,7 +144,7 @@ class HomeHeader extends ConsumerWidget {
         )
       else
         _button(
-          downloading ? (progress.phase == DownloadPhase.queued ? 'Queued' : 'Downloading…') : 'Download',
+          downloading ? (progress.phase == DownloadPhase.queued ? tr('Queued') : tr('Downloading…')) : tr('Download'),
           Icons.download,
           downloading ? null : () => ref.read(downloadsProvider.notifier).start(game),
           primary: true,
@@ -151,7 +153,7 @@ class HomeHeader extends ConsumerWidget {
         ),
       if (random)
         _button(
-          'Another',
+          tr('Another'),
           Icons.shuffle,
           () => ref.invalidate(randomGameProvider),
           key: const ValueKey('home-another'),
@@ -208,12 +210,14 @@ class HomeHeader extends ConsumerWidget {
                         spacing: GSpace.s2,
                         runSpacing: GSpace.s2,
                         children: [
-                          if (downloaded) _chip('On this PC', color: GColors.gargosyTeal),
-                          if (played != null) _chip('${formatPlayTime(played.total)} played'),
+                          if (downloaded) _chip(tr('On this PC'), color: GColors.gargosyTeal),
+                          if (played != null) _chip(tr('{0} played', [formatPlayTime(played.total)])),
                           if (state != null)
                             _chip(
-                              'State from ${formatSaveTime(state.savedAt)}'
-                              '${state.emulatorName.isEmpty ? '' : ' · ${state.emulatorName}'}',
+                              tr('State from {0}{1}', [
+                                formatSaveTime(state.savedAt),
+                                state.emulatorName.isEmpty ? '' : ' · ${state.emulatorName}',
+                              ]),
                             ),
                         ],
                       ),

@@ -7,11 +7,12 @@ import '../../library/upload_queue.dart';
 import '../../providers/engine_providers.dart';
 import '../theme/tokens.dart';
 import 'hint_bar.dart';
+import '../../l10n/tr.dart';
 
 /// What the profile's saves are busy with right now (the save lock, or the
 /// upload queue between its games), or null.
 String? syncBusyWith(ValueListenable<String?>? activity, UploadQueue? queue) =>
-    activity?.value ?? (queue?.running.value == true ? 'Uploading saves that were waiting' : null);
+    activity?.value ?? (queue?.running.value == true ? tr('Uploading saves that were waiting') : null);
 
 /// Before the profile changes or goes: waits until its saves are done,
 /// saying what it waits for. True when nothing runs any more; false when
@@ -73,13 +74,13 @@ class _SyncWaitState extends State<_SyncWait> {
             const Icon(Icons.hourglass_top, size: 40, color: GColors.primary),
             const SizedBox(height: GSpace.s4),
             Text(
-              'Waiting for: ${syncBusyWith(widget.activity, widget.queue) ?? 'the sync'}',
+              tr('Waiting for: {0}', [syncBusyWith(widget.activity, widget.queue) ?? 'the sync']),
               style: const TextStyle(fontSize: GFont.lg),
             ),
             const SizedBox(height: GSpace.s2),
-            const Text('It goes on by itself when it is done.', style: TextStyle(color: GColors.fgMuted)),
+            Text(tr('It goes on by itself when it is done.'), style: const TextStyle(color: GColors.fgMuted)),
             const SizedBox(height: GSpace.s4),
-            const HintBar(hints: [Hint(GameAction.back, 'Stay on this profile')]),
+            HintBar(hints: [Hint(GameAction.back, tr('Stay on this profile'))]),
           ],
         ),
       ),

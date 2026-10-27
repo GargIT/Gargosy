@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 
+import '../l10n/tr.dart';
+
 /// What a DS/DSi ROM's header says about the DSi (#114): whether it's
 /// DSiWare (a download title, which melonDS DS installs into a NAND) and
 /// the regions whose DSi runs it. DSiWare runs only on a NAND of one of
@@ -91,7 +93,7 @@ Uint8List? _headerOf(String path) {
 
 /// [regions] as a line: `Europe or Australia`.
 String dsiRegionLine(List<String> regions) => switch (regions) {
-  [] => 'any region',
+  [] => tr('any region'),
   [final one] => one,
-  _ => '${regions.sublist(0, regions.length - 1).join(', ')} or ${regions.last}',
+  _ => tr('{0} or {1}', [regions.sublist(0, regions.length - 1).join(', '), regions.last]),
 };

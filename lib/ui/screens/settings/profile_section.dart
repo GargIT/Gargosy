@@ -20,6 +20,7 @@ import '../../widgets/sync_wait.dart';
 import '../../widgets/toast.dart';
 import '../login_step.dart';
 import 'settings_rows.dart';
+import '../../../l10n/tr.dart';
 
 /// Settings → Profile: the header (avatar, name, account), then cards for the
 /// name, the PIN and deleting the profile (spec §5).
@@ -27,7 +28,7 @@ class ProfileSection extends ConsumerWidget {
   const ProfileSection({super.key});
 
   Future<void> _rename(BuildContext context, WidgetRef ref, Profile p) async {
-    final name = await showOnScreenKeyboard(context, title: 'Profile name', initial: p.name);
+    final name = await showOnScreenKeyboard(context, title: tr('Profile name'), initial: p.name);
     if (name == null || name.trim().isEmpty) return;
     await ref.read(activeProfileProvider.notifier).update(p.copyWith(name: name.trim()));
   }
@@ -38,7 +39,7 @@ class ProfileSection extends ConsumerWidget {
   /// since it signed in (deleting games). Refused while a game runs.
   Future<void> _signInAgain(BuildContext context, WidgetRef ref, Profile p) async {
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, 'Close the game first.');
+      showToast(context, tr('Close the game first.'));
       return;
     }
     await Navigator.of(context).push(
@@ -47,7 +48,7 @@ class ProfileSection extends ConsumerWidget {
           body: LoginStep(
             serverUrl: p.serverUrl,
             trustSelfSigned: p.trustSelfSigned,
-            deviceName: 'Gargosy on ${ref.read(pcIdentityProvider).machineName}',
+            deviceName: tr('Gargosy on {0}', [ref.read(pcIdentityProvider).machineName]),
             expectedUserId: p.rommUserId,
             expectedUsername: p.rommUsername,
             onBack: () => Navigator.of(routeContext).pop(),
@@ -55,7 +56,7 @@ class ProfileSection extends ConsumerWidget {
               await loginStoreForWidget(ref, p).write(ProfilePaths(ref.read(appRootProvider), p.id).guard, login);
               if (routeContext.mounted) Navigator.of(routeContext).pop();
               await ref.read(activeProfileProvider.notifier).activate(p, login);
-              if (context.mounted) showToast(context, 'Signed in again as ${me.username}.');
+              if (context.mounted) showToast(context, tr('Signed in again as {0}.', [me.username]));
             },
           ),
         ),
@@ -69,15 +70,15 @@ class ProfileSection extends ConsumerWidget {
     final gate = ref.read(pinGatesProvider).putIfAbsent(p.id, () => PinGate(pin));
     final ok = await showPinEntry(
       context,
-      title: 'Current PIN',
+      title: tr('Current PIN'),
       check: (entered) async {
         switch (await gate.attempt(entered)) {
           case PinResult.ok:
             return null;
           case PinResult.wrong:
-            return 'Wrong PIN';
+            return tr('Wrong PIN');
           case PinResult.locked:
-            return 'Too many tries. Wait ${gate.lockedFor?.inSeconds ?? 30} seconds.';
+            return tr('Too many tries. Wait {0} seconds.', [gate.lockedFor?.inSeconds ?? 30]);
         }
       },
     );
@@ -86,51 +87,57 @@ class ProfileSection extends ConsumerWidget {
 
   Future<void> _choosePin(BuildContext context, WidgetRef ref, Profile p) async {
     if (!await _checkCurrent(context, ref, p) || !context.mounted) return;
-    final first = await showPinEntry(context, title: 'Choose a PIN', check: (_) async => null);
+    final first = await showPinEntry(context, title: tr('Choose a PIN'), check: (_) async => null);
     if (first == null || !context.mounted) return;
     final second = await showPinEntry(
       context,
-      title: 'Enter the PIN again',
-      check: (pin) async => pin == first ? null : "The PINs don't match",
+      title: tr('Enter the PIN again'),
+      check: (pin) async => pin == first ? null : tr('The PINs don\'t match'),
     );
     if (second == null) return;
     final hash = await Isolate.run(() => PinHash.create(second));
     ref.read(pinGatesProvider).remove(p.id);
     await ref.read(activeProfileProvider.notifier).update(p.copyWith(pin: hash));
-    if (context.mounted) showToast(context, 'The PIN is set.');
+    if (context.mounted) showToast(context, tr('The PIN is set.'));
   }
 
   Future<void> _removePin(BuildContext context, WidgetRef ref, Profile p) async {
     if (!await _checkCurrent(context, ref, p)) return;
     ref.read(pinGatesProvider).remove(p.id);
     await ref.read(activeProfileProvider.notifier).update(p.copyWith(clearPin: true));
-    if (context.mounted) showToast(context, 'The PIN is removed.');
+    if (context.mounted) showToast(context, tr('The PIN is removed.'));
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref, Profile p) async {
     // The game runs on this profile's data, and its saves sync after: both first.
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, "Close the game first: a profile can't be deleted while a game runs.");
+      showToast(context, tr('Close the game first: a profile can\'t be deleted while a game runs.'));
       return;
     }
     // Saves that never reached RomM go with the profile: say which.
     final queue = await ref.read(uploadQueueProvider.future);
     final waiting = <String>{for (final w in queue?.pending() ?? const []) w.romId};
     final snap = ref.read(librarySnapshotProvider);
-    final names = [for (final id in waiting) snap?.find(id)?.displayName ?? 'game $id'];
+    final names = [
+      for (final id in waiting) snap?.find(id)?.displayName ?? tr('game {0}', [id]),
+    ];
     final lost = waiting.isEmpty
         ? ''
-        : '\n\n${waiting.length == 1 ? "1 save hasn't" : "${waiting.length} saves haven't"} reached RomM yet '
-              '(${names.join(', ')}) and ${waiting.length == 1 ? 'is' : 'are'} lost with the profile.';
+        : tr('\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.', [
+            waiting.length == 1 ? "1 save hasn't" : "${waiting.length} saves haven't",
+            names.join(', '),
+            waiting.length == 1 ? 'is' : 'are',
+          ]);
     if (!context.mounted) return;
     final ok = await showConfirm(
       context,
-      title: 'Delete ${p.name}?',
-      body:
-          'This removes the profile and its saves, states and emulator settings from this PC. '
-          'Nothing on the RomM server is deleted.$lost',
-      yes: 'Delete',
-      no: 'Keep',
+      title: tr('Delete {0}?', [p.name]),
+      body: tr(
+        'This removes the profile and its saves, states and emulator settings from this PC. Nothing on the RomM server is deleted.{0}',
+        [lost],
+      ),
+      yes: tr('Delete'),
+      no: tr('Keep'),
       focusYes: false,
       danger: true,
     );
@@ -171,10 +178,10 @@ class ProfileSection extends ConsumerWidget {
                       style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: GSpace.s1),
-                    _InfoLine(Icons.dns_outlined, '${p.rommUsername} on $host'),
+                    _InfoLine(Icons.dns_outlined, tr('{0} on {1}', [p.rommUsername, host])),
                     _InfoLine(
                       Icons.calendar_today_outlined,
-                      'Profile created ${DateFormat('d MMM y').format(p.createdAt)}',
+                      tr('Profile created {0}', [DateFormat('d MMM y').format(p.createdAt)]),
                     ),
                   ],
                 ),
@@ -183,24 +190,24 @@ class ProfileSection extends ConsumerWidget {
           ),
         ),
         SettingsCard(
-          title: 'Profile',
+          title: tr('Profile'),
           icon: Icons.person,
-          note: 'One RomM user per profile. Its saves and emulator settings are its own.',
+          note: tr('One RomM user per profile. Its saves and emulator settings are its own.'),
           children: [
             SettingsField(
-              label: 'Name',
+              label: tr('Name'),
               icon: Icons.person_outline,
               value: p.name,
-              action: 'Rename',
+              action: tr('Rename'),
               actionIcon: Icons.edit_outlined,
               onActivate: () => _rename(context, ref, p),
             ),
             SettingsField(
               key: const ValueKey('romm-account'),
-              label: 'RomM account',
+              label: tr('RomM account'),
               icon: Icons.dns_outlined,
-              value: '${p.rommUsername} on $host',
-              action: 'Sign in again',
+              value: tr('{0} on {1}', [p.rommUsername, host]),
+              action: tr('Sign in again'),
               actionIcon: Icons.login,
               onActivate: () => _signInAgain(context, ref, p),
             ),
@@ -209,9 +216,9 @@ class ProfileSection extends ConsumerWidget {
         SettingsCard(
           title: 'PIN',
           icon: Icons.lock,
-          note:
-              "A PIN keeps others in the family from opening this profile. It's a family lock, not security: "
-              'anyone using this Windows account can open the Gargosy folder.',
+          note: tr(
+            'A PIN keeps others in the family from opening this profile. It\'s a family lock, not security: anyone using this Windows account can open the Gargosy folder.',
+          ),
           children: [
             Wrap(
               spacing: GSpace.s3,
@@ -219,19 +226,19 @@ class ProfileSection extends ConsumerWidget {
               children: [
                 if (p.pin == null)
                   SettingsButton(
-                    label: 'Set a PIN',
+                    label: tr('Set a PIN'),
                     icon: Icons.lock_outline,
                     kind: SettingsButtonKind.primary,
                     onActivate: () => _choosePin(context, ref, p),
                   )
                 else ...[
                   SettingsButton(
-                    label: 'Change PIN',
+                    label: tr('Change PIN'),
                     icon: Icons.key_outlined,
                     onActivate: () => _choosePin(context, ref, p),
                   ),
                   SettingsButton(
-                    label: 'Remove PIN',
+                    label: tr('Remove PIN'),
                     icon: Icons.lock_open_outlined,
                     onActivate: () => _removePin(context, ref, p),
                   ),
@@ -241,20 +248,22 @@ class ProfileSection extends ConsumerWidget {
           ],
         ),
         SettingsCard(
-          title: 'Delete',
+          title: tr('Delete'),
           icon: Icons.delete,
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    "Removes this profile's saves, states and emulator settings from this PC. What's on RomM stays.",
-                    style: TextStyle(fontSize: GFont.md, color: GColors.fgSecondary),
+                    tr(
+                      'Removes this profile\'s saves, states and emulator settings from this PC. What\'s on RomM stays.',
+                    ),
+                    style: const TextStyle(fontSize: GFont.md, color: GColors.fgSecondary),
                   ),
                 ),
                 const SizedBox(width: GSpace.s4),
                 SettingsButton(
-                  label: 'Delete profile',
+                  label: tr('Delete profile'),
                   icon: Icons.delete_outline,
                   kind: SettingsButtonKind.danger,
                   onActivate: () => _delete(context, ref, p),

@@ -25,6 +25,7 @@ import '../widgets/toast.dart';
 import 'filter_sheet.dart';
 import 'game/open_game.dart';
 import '../widgets/favourite.dart';
+import '../../l10n/tr.dart';
 
 /// A gallery's games for [query], loaded a page at a time as you scroll, with
 /// the filter and sort bar (spec §2, #95). Used by the gallery screen and by
@@ -270,13 +271,13 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     final scan = ref.read(platformScanProvider);
     final platformId = _query.platformId;
     if (scan == null || platformId == null || _scanning) {
-      if (scan == null) showToast(context, "Can't reach RomM.");
+      if (scan == null) showToast(context, tr('Can\'t reach RomM.'));
       return;
     }
     setState(() => _scanning = true);
     try {
       final n = await scan(platformId);
-      if (mounted) showToast(context, n == 0 ? 'Nothing new found.' : 'Found $n more on this PC.');
+      if (mounted) showToast(context, n == 0 ? tr('Nothing new found.') : tr('Found {0} more on this PC.', [n]));
     } on Object catch (e) {
       if (mounted) showToast(context, describeLoadError(e));
     } finally {
@@ -377,7 +378,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
                 const SizedBox(width: GSpace.s4),
                 if (total != null)
                   Text(
-                    '$total games',
+                    tr('{0} games', [total]),
                     style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
                   ),
               ],
@@ -405,7 +406,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
           : total == 0
           ? _nothingMatches()
           : null,
-      emptyText: _thisPc ? 'None of these games are on this PC.' : widget.emptyText,
+      emptyText: _thisPc ? tr('None of these games are on this PC.') : tr(widget.emptyText),
       autofocus: widget.autofocus && !_autofocusDone,
       coverUrl: (g) => coverUrlFor(ref, g, small: true),
       onOpen: (g) {
@@ -488,7 +489,7 @@ class _LoadMoreFailed extends StatelessWidget {
       children: [
         Flexible(
           child: Text(
-            "Couldn't load more  ·  ${describeLoadError(error)}",
+            tr('Couldn\'t load more  ·  {0}', [describeLoadError(error)]),
             style: const TextStyle(color: GColors.fgSecondary),
           ),
         ),
@@ -499,7 +500,7 @@ class _LoadMoreFailed extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s2),
             decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-            child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(tr('Retry'), style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         ),
       ],

@@ -9,6 +9,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/g_dropdown.dart';
 import '../../widgets/update_flow.dart';
 import 'settings_rows.dart';
+import '../../../l10n/tr.dart';
 
 /// About's Updates block (issue #16): the channel, Check automatically,
 /// Check now, and what the check found, with Update now.
@@ -46,11 +47,11 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(GSpace.s2, GSpace.s4, GSpace.s2, GSpace.s1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(GSpace.s2, GSpace.s4, GSpace.s2, GSpace.s1),
           child: Text(
-            'UPDATES',
-            style: TextStyle(
+            tr('UPDATES'),
+            style: const TextStyle(
               fontSize: GFont.xs,
               fontWeight: FontWeight.w700,
               letterSpacing: 1,
@@ -58,22 +59,22 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
             ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(GSpace.s2, 0, GSpace.s2, GSpace.s2),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(GSpace.s2, 0, GSpace.s2, GSpace.s2),
           child: Text(
-            'Latest: releases only. Preview: the next version while it is being made.',
-            style: TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
+            tr('Latest: releases only. Preview: the next version while it is being made.'),
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
           ),
         ),
         Padding(
           padding: const EdgeInsets.only(bottom: GSpace.s2),
           child: Row(
             children: [
-              const Padding(
-                padding: EdgeInsets.only(left: GSpace.s2),
+              Padding(
+                padding: const EdgeInsets.only(left: GSpace.s2),
                 child: Text(
-                  'Channel',
-                  style: TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600),
+                  tr('Channel'),
+                  style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600),
                 ),
               ),
               const Spacer(),
@@ -90,14 +91,14 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
           ),
         ),
         SettingsToggle(
-          label: 'Check automatically',
+          label: tr('Check automatically'),
           on: checker.autoCheck,
           onChanged: (on) => ref.read(updateStateProvider.notifier).setAutoCheck(on),
         ),
         SettingsLinkRow(
           icon: Icons.refresh,
-          label: 'Check now',
-          value: state.checking ? 'Checking…' : null,
+          label: tr('Check now'),
+          value: state.checking ? tr('Checking…') : null,
           onActivate: () {
             if (!state.checking) ref.read(updateStateProvider.notifier).checkNow();
           },
@@ -115,7 +116,7 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
             SettingsLinkRow(
               key: const Key('update-now'),
               icon: Icons.system_update_alt,
-              label: 'Update now',
+              label: tr('Update now'),
               value: 'v${available.version}',
               onActivate: () => runUpdate(context, ref, available),
             )
@@ -126,13 +127,13 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
             ),
             SettingsLinkRow(
               icon: Icons.open_in_new,
-              label: 'Open the release page',
+              label: tr('Open the release page'),
               onActivate: () => ref.read(externalOpenerProvider)(available.htmlUrl),
             ),
           ],
           SettingsLinkRow(
             icon: Icons.notes,
-            label: "What's in ${available.version}",
+            label: tr('What\'s in {0}', [available.version]),
             onActivate: () => openReleaseNotes(context, ref, available),
           ),
         ],
@@ -141,19 +142,20 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
   }
 
   static String _status(UpdateCheck? result, String installed, UpdateChannel channel) => switch (result) {
-    null => 'Not checked yet.',
-    UpdateAvailable(:final release) => '${release.version} is available.',
-    UpToDate(:final newest) when newest != null && newest.toString() != installed =>
-      'You have $installed, newer than what ${channel.label} offers ($newest). '
-          'Gargosy never goes back: ${channel.label} offers an update once one is newer.',
-    UpToDate() => 'Gargosy is up to date.',
-    CheckFailed(:final reason) => "Couldn't check: $reason",
+    null => tr('Not checked yet.'),
+    UpdateAvailable(:final release) => tr('{0} is available.', [release.version]),
+    UpToDate(:final newest) when newest != null && newest.toString() != installed => tr(
+      'You have {0}, newer than what {1} offers ({2}). Gargosy never goes back: {3} offers an update once one is newer.',
+      [installed, channel.label, newest, channel.label],
+    ),
+    UpToDate() => tr('Gargosy is up to date.'),
+    CheckFailed(:final reason) => tr('Couldn\'t check: {0}', [reason]),
   };
 }
 
 /// What the last update did, for About's header; null when nothing.
 String? updateOutcomeLine(UpdateOutcome? outcome, String version) => switch (outcome) {
-  UpdatedFrom(:final oldVersion) => 'Updated from v$oldVersion to v$version.',
-  UpdateFailed(:final detail) => "The update couldn't be installed${detail == null ? '.' : ': $detail'}",
+  UpdatedFrom(:final oldVersion) => tr('Updated from v{0} to v{1}.', [oldVersion, version]),
+  UpdateFailed(:final detail) => tr('The update couldn\'t be installed{0}', [detail == null ? '.' : ': $detail']),
   null => null,
 };

@@ -9,6 +9,7 @@ import '../../../play/play_controller.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/save_list/save_labels.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// The game's newest save state this PC can start in (Resume), or null.
 ResumeEntry? newestState(WidgetRef ref, Game game) {
@@ -41,11 +42,12 @@ Future<void> resumeNewest(BuildContext context, WidgetRef ref, Game game) async 
     if (view.promptFor(StatePlay(entry)) != null) {
       final ok = await showConfirm(
         context,
-        title: 'Resume an older state?',
-        body:
-            'This state is from ${formatSaveTime(entry.savedAt)}, but your save is from '
-            '${formatSaveTime(view.newestSave!)}. Resuming may roll your save back.',
-        yes: 'Resume anyway',
+        title: tr('Resume an older state?'),
+        body: tr('This state is from {0}, but your save is from {1}. Resuming may roll your save back.', [
+          formatSaveTime(entry.savedAt),
+          formatSaveTime(view.newestSave!),
+        ]),
+        yes: tr('Resume anyway'),
         focusYes: false,
       );
       if (!ok || !context.mounted) return;
@@ -58,11 +60,14 @@ Future<void> resumeNewest(BuildContext context, WidgetRef ref, Game game) async 
         entry,
         confirmVersion: (v, i) => showConfirm(
           context,
-          title: 'Load a state from another version?',
-          body:
-              '${entry.slot.label} was made by ${entry.emulatorName} $v; you have $i. '
-              'It may not load, or the game may misbehave.',
-          yes: 'Load it',
+          title: tr('Load a state from another version?'),
+          body: tr('{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.', [
+            entry.slot.label,
+            entry.emulatorName,
+            v,
+            i,
+          ]),
+          yes: tr('Load it'),
           focusYes: false,
         ),
         onNotice: (m) {

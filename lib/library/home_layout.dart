@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/storage/app_preferences.dart';
+import '../l10n/tr.dart';
 
 /// What sits at the top of Home (#139).
 enum HomeTop {
@@ -10,19 +11,28 @@ enum HomeTop {
   randomPick('Random pick'),
   nothing('Nothing');
 
-  const HomeTop(this.label);
-  final String label;
+  const HomeTop(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 }
 
 /// Home's small cards under the header (#139); each on or off.
 enum HomeWidget {
   randomPick('Random pick', 'Y on Home picks another'),
-  onThisDay('On this day', "games released on today's date"),
+  onThisDay('On this day', 'games released on today\'s date'),
   library('Your library', 'games, on this PC, platforms');
 
-  const HomeWidget(this.label, this.note);
-  final String label;
-  final String note;
+  const HomeWidget(this._label, this._note);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
+  final String _note;
+
+  /// In the shown language (#191).
+  String get note => tr(_note);
 }
 
 /// Home's rows (#139), each on or off and in the player's order.
@@ -30,18 +40,24 @@ enum HomeRow {
   /// Who plays what on RomM now (#180); hidden while nobody does.
   playingNow('Playing now', 'who plays what on RomM'),
   continuePlaying('Continue playing', 'last played first'),
-  recentlyAdded('Recently added', "RomM's newest"),
+  recentlyAdded('Recently added', 'RomM\'s newest'),
   favourites('Favourites', 'your ♥ games'),
   onThisPc('On this PC', 'first while RomM is offline'),
   platforms('Platforms', 'as on the Platforms tab'),
   collections('Collections', 'yours and shared'),
-  forYou('For you', "RomM 5.4's recommendations"),
+  forYou('For you', 'RomM 5.4\'s recommendations'),
   smartCollections('Smart collections', ''),
-  virtualCollections('Virtual collections', "RomM's series");
+  virtualCollections('Virtual collections', 'RomM\'s series');
 
-  const HomeRow(this.label, this.note);
-  final String label;
-  final String note;
+  const HomeRow(this._label, this._note);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
+  final String _note;
+
+  /// In the shown language (#191).
+  String get note => tr(_note);
 
   /// Off until the player turns it on.
   bool get offByDefault => this == forYou || this == smartCollections || this == virtualCollections;

@@ -14,6 +14,7 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/save_list/player_avatar.dart';
 import '../../widgets/shelf.dart';
 import 'home_widgets.dart';
+import '../../../l10n/tr.dart';
 
 /// Home's Playing now (#180): one card a player on RomM, as RomM's Activity
 /// board; nothing while nobody plays.
@@ -104,7 +105,7 @@ class PlayingNowCard extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                you ? 'You' : entry.username,
+                                you ? tr('You') : entry.username,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w600),

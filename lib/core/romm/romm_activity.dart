@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../../l10n/tr.dart';
+
 /// One player's game right now on RomM (#180), from `GET /api/activity`:
 /// kept alive by the heartbeats of whatever plays it (Gargosy sends them
 /// while a game runs), gone 90 s after the last.
@@ -95,21 +97,21 @@ class RommActivity implements ActivityApi {
 /// Where [entry] plays, as a card says it: this PC when it's this profile's
 /// device here, else by the client.
 String activityWhere(ActivityEntry entry, {String? thisDeviceId}) {
-  if (thisDeviceId != null && entry.deviceId == thisDeviceId) return 'on this PC';
+  if (thisDeviceId != null && entry.deviceId == thisDeviceId) return tr('on this PC');
   return switch (entry.client.toLowerCase()) {
-    'gargosy' => 'on Gargosy',
-    'web' => "in RomM's web UI",
-    'streaming' => 'streamed by RomM',
-    '' || 'unknown' => 'on RomM',
-    _ => 'on ${entry.client}',
+    'gargosy' => tr('on Gargosy'),
+    'web' => tr('in RomM\'s web UI'),
+    'streaming' => tr('streamed by RomM'),
+    '' || 'unknown' => tr('on RomM'),
+    _ => tr('on {0}', [entry.client]),
   };
 }
 
 /// How long [entry] has been played at [now]: `for 4 min`, `for 1 h 10 min`.
 String activityFor(ActivityEntry entry, DateTime now) {
   final minutes = now.toUtc().difference(entry.startedAt).inMinutes;
-  if (minutes < 1) return 'just started';
-  if (minutes < 60) return 'for $minutes min';
+  if (minutes < 1) return tr('just started');
+  if (minutes < 60) return tr('for {0} min', [minutes]);
   final rest = minutes % 60;
-  return rest == 0 ? 'for ${minutes ~/ 60} h' : 'for ${minutes ~/ 60} h $rest min';
+  return rest == 0 ? tr('for {0} h', [minutes ~/ 60]) : tr('for {0} h {1} min', [minutes ~/ 60, rest]);
 }

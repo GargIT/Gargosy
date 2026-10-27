@@ -29,6 +29,7 @@ It is built on code copied from Freegosy (MIT, © 2026 abduznik). There is no sh
 - A save strategy that needs a game id (serial, title id) takes RomM's `Game.titleId`/`saveTarget` through `GameIdResolver` before reading the ROM itself; with RomM's id it never opens the disc.
 - RomM calls from UI go through the providers in `lib/providers/` (which use `RommService` / `LibraryApi`).
 - Downloads stage in `userdata\app\temp`; `roms\` only ever receives complete ROMs.
+- **Text the player sees goes through `tr()`** (`lib/l10n/tr.dart`): the English text is the key, `{0}` … for values (`tr('Added to {0}.', [name])`), and its Swedish goes in `lib/l10n/sv.dart` in the same PR (`test/unit/l10n_test.dart` fails otherwise). Not logs, keys, paths or names from RomM.
 - Write files with LF line endings (`.gitattributes` normalizes). From Python, use `open(..., 'w', newline='\n')`.
 - Commit messages, PR titles and PR descriptions never contain a link to the session that made them (no `claude.ai/code/session_…` line).
 
@@ -50,6 +51,7 @@ Gargosy\
 Update this section as files are created. Milestone A (log in) is in; B (browse) and C (play and sync) add to it.
 
 ### Entry points
+- `lib/l10n/` (#191) — `tr.dart`: `tr(english, [args])` (the English text is the key; text without a translation stays English), `fillPlaceholders`, `decimal` (the language's decimal mark), `AppLanguage` (System, English, Svenska; app-wide pref `ui.language`, System is Windows' language when Gargosy has it), `showLanguage` (from `main.dart` before the first frame; sets `Intl.defaultLocale` for dates and numbers), `languageProvider`, `changeLanguage` (Settings → Display → Language: saved, shown, every widget built again). An enum's shown text is a private English field read through a getter (`String get label => tr(_label)`); a const default stays English and is passed through `tr` where it's shown. `sv.dart` — `svText`, the Swedish by English text, edited by hand. The on-screen keyboard has å, ä, ö.
 - `lib/main.dart` — finds the root (`AppRoot.fromArgs`; `--root=<dir>` for `flutter run`), checks it can be written (else `StartupErrorApp`) and that `sigil.dll` loads (else `StartupErrorApp.sigil`, #57: no save code without sigil), points `path_provider`, `shared_preferences` and TMP/TEMP (`profiles/portable_temp.dart`) into `userdata\`, starts the window, runs `GargosyApp`.
 - `lib/app.dart` — `GargosyApp`: theme, `InputRouter`, F11; the profile picker when no profile is active, else `AppShell`. A profile switch pops every pushed page.
 

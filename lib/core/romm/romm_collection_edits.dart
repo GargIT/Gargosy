@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import 'romm_library_api.dart';
+import '../../l10n/tr.dart';
 
 /// Changing the user's own collections on RomM (#144): a game in or out,
 /// a new one, renamed, shared, deleted. RomM lets only the owner do it.
@@ -46,7 +47,7 @@ class RommCollectionEdits implements CollectionEdits {
       final detail = data is Map ? data['detail'] : null;
       if (detail is String && detail.isNotEmpty) throw CollectionEditException(detail);
       if (e.response?.statusCode == 403) {
-        throw const CollectionEditException('RomM lets only its owner change this collection.');
+        throw CollectionEditException(tr('RomM lets only its owner change this collection.'));
       }
       rethrow;
     }

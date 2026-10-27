@@ -10,6 +10,7 @@ import '../core/romm/romm_models.dart';
 import '../core/romm/romm_service.dart';
 import '../core/romm/server_error_retry.dart';
 import '../profiles/profile_providers.dart';
+import '../l10n/tr.dart';
 
 /// The active profile's RomM client (spec §4: every RomM call goes through the
 /// profile's own session). Rebuilt only when the server or token changes.
@@ -91,7 +92,7 @@ Future<void> registerRommDevice(WidgetRef ref) async {
   if (ctx == null || romm == null || ctx.login.deviceId != null) return;
   final pc = ref.read(pcIdentityProvider);
   final id = await romm.registerDevice(
-    name: 'Gargosy on ${pc.machineName}',
+    name: tr('Gargosy on {0}', [pc.machineName]),
     platform: 'Windows',
     hostname: pc.machineName,
   );

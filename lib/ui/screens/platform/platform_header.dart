@@ -11,6 +11,7 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/platform_logo.dart';
 import '../../widgets/toast.dart';
 import '../game/open_game.dart';
+import '../../../l10n/tr.dart';
 
 /// The platform page's header (RomM v2's): the logo, the name with RomM's
 /// type, maker and generation, four numbers, and Random.
@@ -34,7 +35,7 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
       final game = await api.randomGame(platformId: widget.platform.id);
       if (!mounted) return;
       if (game == null) {
-        showToast(context, 'No games here yet.');
+        showToast(context, tr('No games here yet.'));
       } else {
         openGame(context, game);
       }
@@ -49,7 +50,11 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
   Widget build(BuildContext context) {
     final p = widget.platform;
     final onPc = ref.watch(gamesOnThisPcProvider).where((g) => g.platformId == p.id).length;
-    final chips = [?p.category, ?p.familyName, if (p.generation != null) 'Generation ${p.generation}'];
+    final chips = [
+      ?p.category,
+      ?p.familyName,
+      if (p.generation != null) tr('Generation {0}', [p.generation]),
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s5, GSpace.rowPad, GSpace.s4),
       child: Row(
@@ -82,10 +87,10 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
                   spacing: GSpace.s10,
                   runSpacing: GSpace.s3,
                   children: [
-                    _Stat('${p.gamesCount}', 'IN LIBRARY'),
-                    _Stat('$onPc', 'ON THIS PC', color: GColors.gargosyTeal),
-                    _Stat(p.fsSizeBytes > 0 ? formatBytes(p.fsSizeBytes) : '–', 'ON DISK'),
-                    _Stat('${p.firmware.length}', 'FIRMWARE'),
+                    _Stat('${p.gamesCount}', tr('IN LIBRARY')),
+                    _Stat('$onPc', tr('ON THIS PC'), color: GColors.gargosyTeal),
+                    _Stat(p.fsSizeBytes > 0 ? formatBytes(p.fsSizeBytes) : '–', tr('ON DISK')),
+                    _Stat('${p.firmware.length}', tr('FIRMWARE')),
                   ],
                 ),
               ],
@@ -111,7 +116,7 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.shuffle, size: 18),
                   const SizedBox(width: GSpace.s2),
-                  const Text('Random', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(tr('Random'), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
               ),
             ),

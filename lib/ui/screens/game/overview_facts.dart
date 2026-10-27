@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/romm/game_overview.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../theme/tokens.dart';
+import '../../../l10n/tr.dart';
 
 /// The Overview's fact rows (#179), label on the left as on RomM's page:
 /// when it was last played and for how long ([played]), how many play, and
@@ -34,7 +35,7 @@ class OverviewFacts extends StatelessWidget {
     final rows = <(String, List<Widget>)>[
       if (played case final p?)
         (
-          'Last played',
+          tr('Last played'),
           [
             Text(
               p,
@@ -43,8 +44,8 @@ class OverviewFacts extends StatelessWidget {
             ),
           ],
         ),
-      if (players != null && players.isNotEmpty) ('Players', [_Badge(players, icon: playersIcon(players))]),
-      if (ratings.isNotEmpty) ('Age rating', [for (final r in ratings) AgeRatingBadge(r)]),
+      if (players != null && players.isNotEmpty) (tr('Players'), [_Badge(players, icon: playersIcon(players))]),
+      if (ratings.isNotEmpty) (tr('Age rating'), [for (final r in ratings) AgeRatingBadge(r)]),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -83,7 +84,7 @@ class HltbStrip extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const _Label('How long to beat'),
+      _Label(tr('How long to beat')),
       const SizedBox(height: GSpace.s2),
       Container(
         padding: const EdgeInsets.symmetric(vertical: GSpace.s3),

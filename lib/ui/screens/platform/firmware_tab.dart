@@ -11,6 +11,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// The platform page's Firmware / BIOS tab: RomM's files for the platform,
 /// each on this PC (in the shared `bios\`) or missing, and one button that
@@ -30,20 +31,20 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
   Future<void> _getMissing() async {
     if (_busy) return;
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, 'A game is running. Close it first.');
+      showToast(context, tr('A game is running. Close it first.'));
       return;
     }
     final sync = ref.read(biosSyncProvider);
     if (sync == null) {
-      showToast(context, "Can't reach RomM.");
+      showToast(context, tr('Can\'t reach RomM.'));
       return;
     }
     setState(() => _busy = true);
     try {
       final n = await sync.forPlatform(widget.platform.slug);
-      if (mounted) showToast(context, n == 0 ? 'Nothing new came from RomM.' : 'Got $n from RomM.');
+      if (mounted) showToast(context, n == 0 ? tr('Nothing new came from RomM.') : tr('Got {0} from RomM.', [n]));
     } on Object catch (e) {
-      if (mounted) showToast(context, "Couldn't get the files: $e");
+      if (mounted) showToast(context, tr('Couldn\'t get the files: {0}', [e]));
     } finally {
       // The rebuild reads bios\ again.
       if (mounted) setState(() => _busy = false);
@@ -54,9 +55,9 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
   Widget build(BuildContext context) {
     final p = widget.platform;
     if (p.firmware.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(GSpace.rowPad),
-        child: Text('RomM has no firmware for this platform.', style: TextStyle(color: GColors.fgSecondary)),
+      return Padding(
+        padding: const EdgeInsets.all(GSpace.rowPad),
+        child: Text(tr('RomM has no firmware for this platform.'), style: const TextStyle(color: GColors.fgSecondary)),
       );
     }
     final bios = ref.watch(appRootProvider).bios;
@@ -76,10 +77,10 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: '$have of ${files.length}',
+                        text: tr('{0} of {1}', [have, files.length]),
                         style: const TextStyle(fontWeight: FontWeight.w700, color: GColors.fg),
                       ),
-                      const TextSpan(text: ' on this PC, in '),
+                      TextSpan(text: tr(' on this PC, in ')),
                       const TextSpan(
                         text: r'bios\',
                         style: TextStyle(fontFamily: 'Consolas'),
@@ -109,10 +110,10 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
                       const SizedBox(width: GSpace.s2),
                       Text(
                         _busy
-                            ? 'Getting…'
+                            ? tr('Getting…')
                             : missing == 0
-                            ? 'All on this PC'
-                            : 'Get missing from RomM',
+                            ? tr('All on this PC')
+                            : tr('Get missing from RomM'),
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -134,13 +135,13 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
                     child: Row(
                       children: [
-                        Expanded(child: Text('FILE', style: head)),
-                        SizedBox(width: 120, child: Text('SIZE', style: head)),
-                        SizedBox(width: 160, child: Text('THIS PC', style: head)),
+                        Expanded(child: Text(tr('FILE'), style: head)),
+                        SizedBox(width: 120, child: Text(tr('SIZE'), style: head)),
+                        SizedBox(width: 160, child: Text(tr('THIS PC'), style: head)),
                       ],
                     ),
                   ),
@@ -197,7 +198,7 @@ class _FirmwareRow extends StatelessWidget {
                   const SizedBox(width: GSpace.s2),
                   Flexible(
                     child: Text(
-                      status.onThisPc ? 'On this PC' : 'Missing',
+                      status.onThisPc ? tr('On this PC') : tr('Missing'),
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600, color: color),
                     ),

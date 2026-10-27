@@ -291,3 +291,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Home rows fit the window (#184)
 
 111. [x] On Home, every row (Continue playing, Recently added, Favourites, On this PC, Platforms, Collections, Playing now) ends inside the window: no card cut off at the right edge, and nothing scrolls sideways. A row with more than fit ends with See all, which opens that section; a short row shows all its games with See all after them. Make the window narrower and wider: rows show fewer and more. Go along a row with the D-pad to See all and press A.
+
+## Swedish (#191)
+
+114. [ ] Settings → Display → Language → Svenska: the whole of Gargosy is Swedish at once, the sidebar and the top bar too, without a restart. Go through Home, a platform's page, a game's page (every tab), the play screen, Downloads, Collections, Search and every Settings page with the controller: no English left in Gargosy's own text (names and descriptions from RomM stay as they are), nothing cut off or overlapping at 1080p. A save's date reads "28 sep." and a size "1,4 MB". Quit and start Gargosy: still Swedish, the profile picker too. Type å, ä and ö on the on-screen keyboard. Set System: Swedish when Windows is, English otherwise. Set English: all English again.
