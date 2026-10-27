@@ -282,4 +282,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Overview as RomM's (#179)
 
-109. [ ] Open a well-known game RomM matched on HowLongToBeat (Super Metroid, Ocarina of Time): the Overview starts with Last played, Players with an icon and Age rating badges as rows, then How long to beat's times, then the description and genres, then Similar games in your library as small covers (A opens one), then screenshots. Go through it all with the controller alone. A game without facts, times or similar games shows none of those.
+109. [ ] Open a well-known game RomM matched on HowLongToBeat (Super Metroid, Ocarina of Time): the Overview starts with Last played, Players with an icon and Age rating badges as rows, then How long to beat's times, then the description and genres, then screenshots, then Similar games in your library as small covers (A opens one). Go through it all with the controller alone. A game without facts, times or similar games shows none of those.

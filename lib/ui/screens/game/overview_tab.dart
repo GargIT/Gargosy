@@ -13,8 +13,8 @@ import 'overview_facts.dart';
 import 'similar_games.dart';
 
 /// The game page's Overview (#179): the facts (last played, players, age
-/// rating), How long to beat, the description and genres, similar games in
-/// the library, and screenshots.
+/// rating), How long to beat, the description and genres, screenshots, and
+/// similar games in the library.
 class OverviewTab extends ConsumerWidget {
   const OverviewTab({super.key, required this.game});
 
@@ -53,7 +53,6 @@ class OverviewTab extends ConsumerWidget {
             ],
           ),
         ],
-        SimilarGames(game: game),
         if (shots.isNotEmpty) ...[
           const SizedBox(height: GSpace.s6),
           const Text(
@@ -74,6 +73,7 @@ class OverviewTab extends ConsumerWidget {
             ),
           ),
         ],
+        SimilarGames(game: game),
       ],
     );
   }
