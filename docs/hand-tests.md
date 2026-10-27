@@ -278,4 +278,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Status, rating and completion kept on RomM 5.4 (#177)
 
-108. [ ] On a game's page, change its status, rating and completion. Go back and open the game again: the new values are there. RomM's web UI shows them too. Set Backlog and Now playing: they stay as well.
+108. [x] On a game's page, change its status, rating and completion. Go back and open the game again: the new values are there. RomM's web UI shows them too. Set Backlog and Now playing: they stay as well.
