@@ -6,6 +6,11 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-27
+
+Playing now on Home, a game's Overview and Achievements as RomM's, Home's
+rows fitted to the window, and quitting a game with any controller.
+
 ### Added
 
 - Home starts with Playing now: who plays what on RomM right now, with
@@ -495,7 +500,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.5.0
 [0.4.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.4.0
 [0.3.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.3.0
 [0.2.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.2.0
