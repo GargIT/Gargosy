@@ -163,6 +163,18 @@ when a token exists.
 
 Mockups are linked from each issue.
 
+## Branding
+
+- The app logo is the "G" with three face buttons:
+  `assets/branding/gargosy_logo.svg`. It's the source for `gargosy_logo.png`
+  (1024 px) and `gargosy_logo.ico` (16–256 px). To change it, edit the SVG
+  and render again.
+- `assets/branding/drafts/` keeps the other drafts for later use (A1/A2
+  controller, B2 G with a D-pad, C1 controller with player badges).
+- The logo uses v2's purple with Gargosy's own gold `#F2C14E` and teal
+  `#3DD6C4`, in a rounded square.
+- Never use RomM's circle, its diagonal split or its logo.
+
 ## Decisions log
 
 | Date | Decision | Issue |
