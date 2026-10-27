@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/romm/romm_activity.dart';
 import '../core/romm/romm_collection_edits.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
@@ -38,6 +41,29 @@ final libraryApiProvider = Provider<LibraryApi?>((ref) {
 final collectionEditsProvider = Provider<CollectionEdits?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   return romm == null ? null : RommCollectionEdits(romm.dio, () => romm.authOptions);
+});
+
+/// RomM's activity board for the active profile (#180).
+final activityApiProvider = Provider<ActivityApi?>((ref) {
+  final romm = ref.watch(rommServiceProvider);
+  return romm == null ? null : RommActivity(romm.dio, () => romm.authOptions);
+});
+
+/// Who plays what on RomM now (#180), oldest first: read again every 30 s
+/// while something shows it; none offline or when RomM can't say.
+final playingNowProvider = FutureProvider.autoDispose<List<ActivityEntry>>((ref) async {
+  final api = ref.watch(activityApiProvider);
+  if (api == null || ref.watch(rommOfflineProvider)) return const [];
+  // No timer where the heartbeat is off (tests).
+  if (ref.watch(rommHeartbeatEnabledProvider)) {
+    final again = Timer(const Duration(seconds: 30), ref.invalidateSelf);
+    ref.onDispose(again.cancel);
+  }
+  try {
+    return await api.playingNow();
+  } catch (_) {
+    return const [];
+  }
 });
 
 /// Whether RomM's heartbeat runs (every 5 s). Off in tests: no timers.

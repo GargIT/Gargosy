@@ -245,6 +245,7 @@ void main() {
     final l = HomeLayout.standard;
     expect(l.top, HomeTop.lastPlayed);
     expect(l.shown, [
+      HomeRow.playingNow,
       HomeRow.continuePlaying,
       HomeRow.recentlyAdded,
       HomeRow.favourites,
@@ -252,9 +253,9 @@ void main() {
       HomeRow.platforms,
       HomeRow.collections,
     ]);
-    final moved = l.moved(HomeRow.platforms, -1).moved(HomeRow.continuePlaying, -1);
-    expect(moved.shown[3], HomeRow.platforms);
-    expect(moved.shown.first, HomeRow.continuePlaying, reason: 'nothing past the top');
+    final moved = l.moved(HomeRow.platforms, -1).moved(HomeRow.playingNow, -1);
+    expect(moved.shown[4], HomeRow.platforms);
+    expect(moved.shown.first, HomeRow.playingNow, reason: 'nothing past the top');
     final back = HomeLayout.fromJson({
       'top': 'randomPick',
       'widgets': ['library'],
@@ -266,8 +267,12 @@ void main() {
     });
     expect(back.top, HomeTop.randomPick);
     expect(back.widgets, {HomeWidget.library});
-    expect(back.rows.first, (HomeRow.forYou, true));
-    expect(back.rows[1], (HomeRow.favourites, false));
+    expect(back.rows.first, (HomeRow.playingNow, true), reason: 'a row it lacks goes where it is by default');
+    final saved = [
+      for (final (r, on) in back.rows)
+        if (r == HomeRow.forYou || r == HomeRow.favourites) (r, on),
+    ];
+    expect(saved, [(HomeRow.forYou, true), (HomeRow.favourites, false)], reason: 'the saved order is kept');
     expect(back.rows.length, HomeRow.values.length);
     expect(HomeLayout.fromJson(back.toJson()).shown, back.shown);
   });

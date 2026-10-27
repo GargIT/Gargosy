@@ -279,3 +279,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Status, rating and completion kept on RomM 5.4 (#177)
 
 108. [x] On a game's page, change its status, rating and completion. Go back and open the game again: the new values are there. RomM's web UI shows them too. Set Backlog and Now playing: they stay as well.
+
+## Playing now (#180)
+
+110. [ ] Start a game in RomM's web UI (or on another PC with Gargosy) as another RomM user. Within 30 seconds Home in Gargosy starts with Playing now: a card with their screenshot or the cover, their initial, the game, the platform, where ("in RomM's web UI", "on Gargosy") and for how long. Start a game in Gargosy on this PC: after it, the card says "You" and "on this PC". A on a card opens the game's page. When nobody plays, the row is gone. Customize Home lists Playing now first and can turn it off.

@@ -29,6 +29,7 @@ import '../widgets/shelf.dart';
 import 'home/customize_home.dart';
 import 'home/home_header.dart';
 import 'home/home_widgets.dart';
+import 'home/playing_now.dart';
 import 'platform_card.dart';
 
 /// Home (#139), after RomM v2's: the game played last (or a random pick) over
@@ -129,6 +130,8 @@ class HomePage extends ConsumerWidget {
 
     Widget rowOf(HomeRow row) {
       switch (row) {
+        case HomeRow.playingNow:
+          return const PlayingNowRow();
         case HomeRow.continuePlaying:
           // The header's game isn't repeated first in the row.
           final rest = headerGame != null && !headerRandom ? playedList.skip(1).toList() : playedList;
