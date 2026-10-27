@@ -145,7 +145,8 @@ void main() {
     );
     expect(find.text('Sign in again'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('romm-account')));
-    for (var i = 0; i < 60 && c.read(activeProfileProvider)!.login.token != 'new'; i++) {
+    // Up to 3 s of real time for the pairing, the login file and the profile (a slow runner).
+    for (var i = 0; i < 300 && c.read(activeProfileProvider)!.login.token != 'new'; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
       await tester.pump(const Duration(milliseconds: 500));
     }
