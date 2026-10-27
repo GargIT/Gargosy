@@ -291,3 +291,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Home rows fit the window (#184)
 
 111. [x] On Home, every row (Continue playing, Recently added, Favourites, On this PC, Platforms, Collections, Playing now) ends inside the window: no card cut off at the right edge, and nothing scrolls sideways. A row with more than fit ends with See all, which opens that section; a short row shows all its games with See all after them. Make the window narrower and wider: rows show fewer and more. Go along a row with the D-pad to See all and press A.
+
+## Achievements earned in a session (#189)
+
+113. [ ] With a RetroAchievements login in Settings → RetroAchievements and your RA username linked on your RomM profile, play a game RomM matched on RetroAchievements and earn one achievement (an easy first one: Sonic's rings, a first level). Quit: the save message comes first, then within a minute a second line says "1 achievement earned · N points (softcore)" (hardcore when that switch is on), and the Achievements tab shows it earned. Play again without earning one: no second line. A game without RetroAchievements, or a profile without an RA login: no second line, and nothing else changes.

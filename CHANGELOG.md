@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- After a game, Gargosy says which RetroAchievements you earned in it:
+  "2 achievements earned · 15 points (hardcore)", once RomM has read them,
+  and the game's Achievements tab shows them.
+
 ## [0.5.0] - 2026-10-27
 
 Playing now on Home, a game's Overview and Achievements as RomM's, Home's

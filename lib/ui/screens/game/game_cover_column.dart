@@ -8,6 +8,7 @@ import '../../../core/save/catalog/play_request.dart';
 import '../../../library/disk_space.dart';
 import '../../../library/download_service.dart';
 import '../../../play/play_controller.dart';
+import '../../../play/session_achievements.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../../play/play_engine.dart';
 import '../../../play/save_actions.dart';
@@ -215,6 +216,10 @@ class GameCoverColumn extends ConsumerWidget {
       if (prev?.runningGameId == game.id && next.runningGameId == null && next.message != null) {
         showToast(context, next.message!);
       }
+    });
+    // Then what the session earned (#189), once RomM has read it.
+    ref.listen(sessionAchievementsProvider, (prev, next) {
+      if (next != null && next != prev && next.gameId == game.id) showToast(context, next.line);
     });
     final Widget main;
     if (progress?.phase == DownloadPhase.queued) {

@@ -16,6 +16,7 @@ import '../library/upload_queue.dart';
 import 'play_engine.dart';
 import 'play_menu.dart';
 import 'quit_combo.dart';
+import 'session_achievements.dart';
 
 class PlayState {
   const PlayState({this.runningGameId, this.message, this.preparing});
@@ -77,8 +78,9 @@ class PlayController extends StateNotifier<PlayState> {
       if (request != null) await _remember(engine, game, request);
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
+      final watch = watchSessionAchievements(_ref, game);
       final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
-      _running(game, session);
+      _running(game, session, watch);
       return null;
     } on SaveChoiceException catch (e) {
       return refuse("Couldn't start with that save: ${e.message}");
@@ -192,6 +194,7 @@ class PlayController extends StateNotifier<PlayState> {
         }
       }
       await engine.prepare(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
+      final watch = watchSessionAchievements(_ref, game);
       final session = await _launch(
         engine,
         game,
@@ -201,7 +204,7 @@ class PlayController extends StateNotifier<PlayState> {
         loadStatePath: loadPath,
         onNotice: onNotice,
       );
-      _running(game, session);
+      _running(game, session, watch);
       return null;
     } on Object catch (e) {
       return refuse("Couldn't start ${game.displayName}: $e");
@@ -290,12 +293,20 @@ class PlayController extends StateNotifier<PlayState> {
     }
   }
 
-  /// [session]'s end is [_ended].
-  void _running(Game game, PlaySession session) {
-    session.finished.then(
-      (result) => _ended(game, result.message, synced: result.synced),
-      onError: (Object e) => _ended(game, 'Saves not synced: $e'),
-    );
+  /// [session]'s end is [_ended]; then what [watch] finds earned (#189),
+  /// after the saves' message, never holding it up.
+  void _running(Game game, PlaySession session, SessionAchievementsWatch? watch) {
+    session.finished
+        .then(
+          (result) => _ended(game, result.message, synced: result.synced),
+          onError: (Object e) => _ended(game, 'Saves not synced: $e'),
+        )
+        .then((_) => watch?.finish())
+        .then((earned) {
+          if (earned == null || !mounted) return;
+          _ref.read(sessionAchievementsProvider.notifier).state = earned;
+          _ref.invalidate(raProgressionProvider);
+        });
   }
 
   /// Closes the running game's emulator, as its close button does; the
