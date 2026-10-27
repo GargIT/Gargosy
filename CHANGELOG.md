@@ -21,6 +21,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Fixed
 
+- A game's status, rating and completion, changed on its page, are kept
+  on RomM 5.4: before, RomM took the change without saving it.
 - A controller that isn't XInput (a DualSense, a Switch Pro controller, an
   8BitDo in D mode), connected or woken during a game, can now quit that
   game; before, it worked only from the next game.

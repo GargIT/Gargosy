@@ -275,3 +275,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Controllers SDL's list doesn't know (#171)
 
 107. [x] Start Gargosy with `--hid-ignore-sdl` (add it to a shortcut's target), so the 8BitDo in D mode counts as unknown. Start a game: the log has `[Quit] hid<n> is … buttons from a guess`; try holding the quit buttons (it may or may not work, it's a guess). Quit the game, then Settings → Controller → Controllers taught → Teach: press Select, Start, LB, RB, L3 and R3 on the 8BitDo, one at a time. B and A on it are taught too, not Back or OK; a button pressed twice says it's already taught; Escape cancels, Enter skips. It ends with "Saved for …" and the row says 1 controller. Start a game: the log has `buttons from taught` and holding the quit buttons closes it. Forget taught buttons sets the row back to None.
+
+## Status, rating and completion kept on RomM 5.4 (#177)
+
+108. [x] On a game's page, change its status, rating and completion. Go back and open the game again: the new values are there. RomM's web UI shows them too. Set Backlog and Now playing: they stay as well.
