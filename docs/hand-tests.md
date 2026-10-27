@@ -279,3 +279,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Status, rating and completion kept on RomM 5.4 (#177)
 
 108. [x] On a game's page, change its status, rating and completion. Go back and open the game again: the new values are there. RomM's web UI shows them too. Set Backlog and Now playing: they stay as well.
+
+## Overview as RomM's (#179)
+
+109. [x] Open a well-known game RomM matched on HowLongToBeat (Super Metroid, Ocarina of Time): the Overview starts with the description and genres, then Last played, Players with an icon and Age rating as the boards' icons (PEGI, ESRB…; the mouse over one shows its text, e.g. `PEGI 7`) as rows, then How long to beat's times, then screenshots, then Similar games in your library as small covers (A opens one). Go through it all with the controller alone. A game without facts, times or similar games shows none of those.
