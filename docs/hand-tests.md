@@ -287,3 +287,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Playing now (#180)
 
 110. [x] Start a game in RomM's web UI (or on another PC with Gargosy) as another RomM user. Within 30 seconds Home in Gargosy starts with Playing now: a card as large as Random pick with the game's cover on the left, then the game, the platform, their avatar from RomM (their initial when they have none), their name, where ("in RomM's web UI", "on Gargosy") and for how long. Start a game in Gargosy on this PC: after it, the card says "You" and "on this PC". A on a card opens the game's page. When nobody plays, the row is gone. Customize Home lists Playing now first and can turn it off. In a window 1600 px wide or more, Random pick and On this day are stacked to the right of the game played last, as tall as its cover, and the D-pad reaches them from its buttons; narrower, they sit side by side under it. Your library is one slim line under them either way.
+
+## Home rows fit the window (#184)
+
+111. [x] On Home, every row (Continue playing, Recently added, Favourites, On this PC, Platforms, Collections, Playing now) ends inside the window: no card cut off at the right edge, and nothing scrolls sideways. A row with more than fit ends with See all, which opens that section; a short row shows all its games with See all after them. Make the window narrower and wider: rows show fewer and more. Go along a row with the D-pad to See all and press A.

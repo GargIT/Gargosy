@@ -12,6 +12,8 @@ What changed in each release of Gargosy. The format follows
   the game's cover and the player's avatar, where and for how long, read
   again every 30 seconds. A opens the game. Other players' saves show
   their avatar too.
+- Home's rows show only the games that fit the window, with See all in
+  the last place; nothing scrolls sideways.
 - In a wide window (1600 px and up) Random pick and On this day stand
   beside the game played last; Your library is a slim strip under them.
 - A game's Overview, in RomM's order: the description, then its facts
