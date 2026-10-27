@@ -22,7 +22,15 @@ import '../../widgets/toast.dart';
 /// played last, with Resume when it has a save state; true is the random
 /// pick, with Another (Y) to draw again.
 class HomeHeader extends ConsumerWidget {
-  const HomeHeader({super.key, required this.game, required this.random, this.label, this.autofocus = false});
+  const HomeHeader({
+    super.key,
+    required this.game,
+    required this.random,
+    this.label,
+    this.autofocus = false,
+    this.side,
+    this.sideWidth = 440,
+  });
 
   final Game game;
   final bool random;
@@ -30,6 +38,10 @@ class HomeHeader extends ConsumerWidget {
   /// Above the name; by default when it was last played, or RANDOM PICK.
   final String? label;
   final bool autofocus;
+
+  /// At the right end, as tall as the cover: Home's widgets in a wide window.
+  final Widget? side;
+  final double sideWidth;
 
   static const coverWidth = 190.0;
   static const coverHeight = 256.0;
@@ -211,6 +223,7 @@ class HomeHeader extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (side case final side?) ...[const SizedBox(width: GSpace.s8), SizedBox(width: sideWidth, child: side)],
             ],
           ),
         ),

@@ -12,42 +12,75 @@ import '../../screens/game/open_game.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/g_focusable.dart';
-import '../../widgets/header_stat.dart';
 
-/// Home's widgets under the header (#139), those [shown], side by side:
-/// Random pick (Y draws another), On this day, Your library.
+/// Home's widgets (#139), those [shown]: Random pick (Y draws another) and
+/// On this day side by side under the header, or stacked beside it
+/// ([HomeWidgets.beside]) in a wide window; Your library as a strip under
+/// them.
 class HomeWidgets extends ConsumerWidget {
-  const HomeWidgets({super.key, required this.shown});
+  const HomeWidgets({super.key, required this.shown, this.besideHeader = false});
+
+  /// Random pick and On this day stacked, as tall as the header's cover;
+  /// null when neither is shown.
+  static Widget? beside(Set<HomeWidget> shown) {
+    final cards = _cards(shown);
+    if (cards.isEmpty) return null;
+    return Column(
+      key: const ValueKey('home-widgets-beside'),
+      children: [
+        for (var i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(height: GSpace.s4),
+          SizedBox(height: stackedHeight, child: cards[i]),
+        ],
+      ],
+    );
+  }
+
+  /// The window width from which [beside] goes next to the header.
+  static const besideFrom = 1600.0;
+  static const besideWidth = 440.0;
 
   final Set<HomeWidget> shown;
 
+  /// Random pick and On this day are beside the header: only Your library here.
+  final bool besideHeader;
+
   static const height = 128.0;
+
+  /// Each of two stacked cards: the two and the gap as tall as the header's cover.
+  static const stackedHeight = 120.0;
+
+  static List<Widget> _cards(Set<HomeWidget> shown) => [
+    if (shown.contains(HomeWidget.randomPick)) const _RandomPick(),
+    if (shown.contains(HomeWidget.onThisDay)) const _OnThisDay(),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cards = <Widget>[
-      for (final w in HomeWidget.values)
-        if (shown.contains(w))
-          switch (w) {
-            HomeWidget.randomPick => const _RandomPick(),
-            HomeWidget.onThisDay => const _OnThisDay(),
-            HomeWidget.library => const _Library(),
-          },
-    ];
-    if (cards.isEmpty) return const SizedBox.shrink();
+    final cards = besideHeader ? const <Widget>[] : _cards(shown);
+    final library = shown.contains(HomeWidget.library);
+    if (cards.isEmpty && !library) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s2, GSpace.rowPad, 0),
-      child: SizedBox(
-        height: height,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < cards.length; i++) ...[
-              if (i > 0) const SizedBox(width: GSpace.s4),
-              Expanded(child: cards[i]),
-            ],
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (cards.isNotEmpty)
+            SizedBox(
+              height: height,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < cards.length; i++) ...[
+                    if (i > 0) const SizedBox(width: GSpace.s4),
+                    Expanded(child: cards[i]),
+                  ],
+                ],
+              ),
+            ),
+          if (cards.isNotEmpty && library) const SizedBox(height: GSpace.s4),
+          if (library) const _Library(),
+        ],
       ),
     );
   }
@@ -173,6 +206,7 @@ class _OnThisDay extends ConsumerWidget {
   }
 }
 
+/// Your library as one slim strip: the label, then each number with its name.
 class _Library extends ConsumerWidget {
   const _Library();
 
@@ -183,24 +217,49 @@ class _Library extends ConsumerWidget {
     final platforms = ref.watch(platformsProvider).valueOrNull?.length;
     final collections = ref.watch(collectionsProvider).valueOrNull?.length;
     String n(int? v) => v == null ? '–' : NumberFormat.decimalPattern().format(v);
-    return _Card(
-      key: const ValueKey('widget-library'),
-      label: 'YOUR LIBRARY',
-      child: Padding(
-        padding: const EdgeInsets.only(top: GSpace.s2),
-        // One line; smaller in a narrow window rather than two lines.
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Row(
-            spacing: GSpace.s6,
-            children: [
-              HeaderStat(n(games), 'GAMES'),
-              HeaderStat(n(onPc), 'ON THIS PC', color: GColors.gargosyTeal),
-              HeaderStat(n(platforms), 'PLATFORMS'),
-              HeaderStat(n(collections), 'COLLECTIONS'),
-            ],
+    Widget stat(String value, String label, {Color? color}) => Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: value,
+            style: TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w700, color: color),
           ),
+          TextSpan(
+            text: ' $label',
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+          ),
+        ],
+      ),
+    );
+    return Container(
+      key: const ValueKey('widget-library'),
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s3),
+      decoration: BoxDecoration(
+        color: GColors.card,
+        borderRadius: BorderRadius.circular(GRadius.card),
+        border: Border.all(color: GColors.border),
+      ),
+      // One line; smaller in a narrow window rather than two lines.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          spacing: GSpace.s8,
+          children: [
+            const Text(
+              'YOUR LIBRARY',
+              style: TextStyle(
+                fontSize: GFont.xs,
+                letterSpacing: 1,
+                fontWeight: FontWeight.w700,
+                color: GColors.fgSecondary,
+              ),
+            ),
+            stat(n(games), 'games'),
+            stat(n(onPc), 'on this PC', color: GColors.gargosyTeal),
+            stat(n(platforms), 'platforms'),
+            stat(n(collections), 'collections'),
+          ],
         ),
       ),
     );

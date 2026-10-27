@@ -209,6 +209,16 @@ class HomePage extends ConsumerWidget {
         (added.valueOrNull?.isEmpty ?? true) &&
         layout.top != HomeTop.nothing;
 
+    // The random pick isn't shown twice.
+    final widgets = {
+      for (final w in layout.widgets)
+        if (!(w == HomeWidget.randomPick && headerRandom)) w,
+    };
+    // A wide window: Random pick and On this day beside the header's game.
+    final beside = !offline && headerGame != null && MediaQuery.sizeOf(context).width >= HomeWidgets.besideFrom
+        ? HomeWidgets.beside(widgets)
+        : null;
+
     return Actions(
       actions: {
         // Y: another random pick (a focused game's Y is its ♥).
@@ -220,7 +230,13 @@ class HomePage extends ConsumerWidget {
         children: [
           if (headerGame != null)
             _RevealOnFocus(
-              child: HomeHeader(game: headerGame, random: headerRandom, autofocus: true),
+              child: HomeHeader(
+                game: headerGame,
+                random: headerRandom,
+                autofocus: true,
+                side: beside,
+                sideWidth: HomeWidgets.besideWidth,
+              ),
             )
           else
             Padding(
@@ -232,13 +248,7 @@ class HomePage extends ConsumerWidget {
             ),
           if (!offline)
             _RevealOnFocus(
-              child: HomeWidgets(
-                // The random pick isn't shown twice.
-                shown: {
-                  for (final w in layout.widgets)
-                    if (!(w == HomeWidget.randomPick && headerRandom)) w,
-                },
-              ),
+              child: HomeWidgets(shown: widgets, besideHeader: beside != null),
             ),
           if (loading) const Padding(padding: EdgeInsets.all(GSpace.rowPad), child: LinearProgressIndicator()),
           if (error != null)

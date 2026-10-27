@@ -84,6 +84,34 @@ void main() {
     expect(find.byKey(const ValueKey('home-another')), findsNothing);
   });
 
+  testWidgets('a wide window stacks Random pick and On this day beside the header; Your library under', (tester) async {
+    await pump(tester, overrides());
+    final header = find.byKey(const ValueKey('home-header'));
+    for (final key in ['widget-random', 'widget-on-this-day']) {
+      expect(find.descendant(of: header, matching: find.byKey(ValueKey(key))), findsOneWidget);
+    }
+    expect(find.descendant(of: header, matching: find.byKey(const ValueKey('widget-library'))), findsNothing);
+    final random = tester.getRect(find.byKey(const ValueKey('widget-random')));
+    final onThisDay = tester.getRect(find.byKey(const ValueKey('widget-on-this-day')));
+    expect(onThisDay.top, greaterThan(random.bottom), reason: 'stacked');
+    expect(random.left, greaterThan(tester.getRect(find.byKey(const ValueKey('home-game-page'))).right));
+    expect(
+      tester.getRect(find.byKey(const ValueKey('widget-library'))).top,
+      greaterThan(tester.getRect(header).bottom),
+    );
+
+    tester.view.physicalSize = const Size(1280, 4000);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: header, matching: find.byKey(const ValueKey('widget-random'))), findsNothing);
+    final narrowRandom = tester.getRect(find.byKey(const ValueKey('widget-random')));
+    expect(narrowRandom.top, greaterThan(tester.getRect(header).bottom));
+    expect(
+      narrowRandom.top,
+      tester.getRect(find.byKey(const ValueKey('widget-on-this-day'))).top,
+      reason: 'side by side',
+    );
+  });
+
   testWidgets('without a state there is no Resume; Game page opens the game, B comes back', (tester) async {
     await pump(tester, overrides());
     expect(find.byKey(const ValueKey('home-resume')), findsNothing);
