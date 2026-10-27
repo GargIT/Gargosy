@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Save a gallery as a smart collection: in Filters, Save as smart
+  collection keeps its platform or collection, search, genres, regions and
+  sort on RomM, asks a name and who sees it, and opens it. Your own smart
+  collections can be renamed, shared and deleted from ⋯ on their page.
+
 ## [0.5.0] - 2026-10-27
 
 Playing now on Home, a game's Overview and Achievements as RomM's, Home's

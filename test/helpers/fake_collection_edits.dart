@@ -15,6 +15,8 @@ class FakeCollectionEdits implements CollectionEdits {
 
   RommCollection _with(RommCollection c, {String? name, Set<int>? romIds, bool? isPublic}) => RommCollection(
     id: c.id,
+    kind: c.kind,
+    filterSummary: c.filterSummary,
     name: name ?? c.name,
     romIds: romIds ?? c.romIds,
     romCount: (romIds ?? c.romIds).length,
@@ -48,20 +50,28 @@ class FakeCollectionEdits implements CollectionEdits {
   }
 
   @override
+  Future<RommCollection> createSmart(String name, Map<String, dynamic> criteria, {bool shared = false}) async {
+    calls.add('create smart $name${shared ? ' shared' : ''} $criteria');
+    final c = RommCollection(id: 100 + all.length, name: name, kind: CollectionKind.smart, isPublic: shared, userId: 7);
+    all.add(c);
+    return c;
+  }
+
+  @override
   Future<RommCollection> rename(RommCollection c, String name) async {
     calls.add('rename ${c.id} $name');
     return _swap(c.id, (x) => _with(x, name: name));
   }
 
   @override
-  Future<RommCollection> setShared(int collectionId, bool shared) async {
-    calls.add('share $collectionId $shared');
-    return _swap(collectionId, (x) => _with(x, isPublic: shared));
+  Future<RommCollection> setShared(RommCollection c, bool shared) async {
+    calls.add('share ${c.id} $shared');
+    return _swap(c.id, (x) => _with(x, isPublic: shared));
   }
 
   @override
-  Future<void> delete(int collectionId) async {
-    calls.add('delete $collectionId');
-    all.removeWhere((c) => c.id == collectionId);
+  Future<void> delete(RommCollection c) async {
+    calls.add('delete ${c.id}');
+    all.removeWhere((x) => x.id == c.id);
   }
 }

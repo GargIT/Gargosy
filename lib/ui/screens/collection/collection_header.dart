@@ -53,8 +53,8 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     }
   }
 
-  /// ⋯ on the user's own collection (#144): Rename, Share or Stop sharing,
-  /// Delete (its games stay in RomM).
+  /// ⋯ on the user's own collection (#144), regular or smart (#188): Rename,
+  /// Share or Stop sharing, Delete (its games stay in RomM).
   Future<void> _more() async {
     final c = widget.collection;
     final edits = ref.read(collectionEditsProvider);
@@ -72,7 +72,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
           if (name == null || name.isEmpty || name == c.name) return;
           widget.onChanged?.call(await edits.rename(c, name));
         case 1:
-          widget.onChanged?.call(await edits.setShared(c.id, !c.isPublic));
+          widget.onChanged?.call(await edits.setShared(c, !c.isPublic));
         case 2:
           final ok = await showConfirm(
             context,
@@ -84,12 +84,14 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
             danger: true,
           );
           if (!ok) return;
-          await edits.delete(c.id);
+          await edits.delete(c);
           ref.invalidate(collectionsProvider);
+          ref.invalidate(smartCollectionsProvider);
           if (mounted) Navigator.of(context).pop();
           return;
       }
       ref.invalidate(collectionsProvider);
+      ref.invalidate(smartCollectionsProvider);
     } on Object catch (e) {
       if (mounted) showToast(context, "Couldn't change ${c.name}: $e");
     }
@@ -190,7 +192,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
             ),
           ),
           const SizedBox(width: GSpace.s4),
-          if (c.kind == CollectionKind.regular && !c.isFavorite && c.userId != null && c.userId == userId) ...[
+          if (c.kind != CollectionKind.virtual && !c.isFavorite && c.userId != null && c.userId == userId) ...[
             GFocusable(
               key: const ValueKey('collection-more'),
               borderRadius: GRadius.pill,
