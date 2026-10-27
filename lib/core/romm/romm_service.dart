@@ -842,6 +842,22 @@ class RommService implements RommStatesApi {
   Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String gameId, {required int exceptUserId}) =>
       _sharedOf(gameId, 'all_user_states', exceptUserId);
 
+  /// Gargosy (#180): a RomM user's avatar (`/api/users/{id}/avatar`, which
+  /// asks for the token); null when they have none or it couldn't be read.
+  Future<Uint8List?> userAvatar(int userId) async {
+    try {
+      final r = await _dio.get<List<int>>(
+        '/api/users/$userId/avatar',
+        options: _authOptions.copyWith(responseType: ResponseType.bytes),
+      );
+      final bytes = r.data;
+      return bytes == null || bytes.isEmpty ? null : Uint8List.fromList(bytes);
+    } catch (e) {
+      debugPrint('[RomM] avatar of user $userId not read: $e');
+      return null;
+    }
+  }
+
   /// Gargosy: whether the user may delete games on RomM: RomM 5.4's
   /// `/api/permissions/me` (an admin, or the `rom.delete` action), else on an
   /// older RomM an admin's or editor's role. False when RomM can't say.

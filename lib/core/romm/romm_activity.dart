@@ -13,6 +13,7 @@ class ActivityEntry {
     required this.deviceId,
     required this.client,
     required this.startedAt,
+    this.avatarPath = '',
     this.coverPath = '',
     this.screenshotPath = '',
   });
@@ -32,7 +33,8 @@ class ActivityEntry {
       deviceId: text('device_id'),
       client: text('device_type'),
       startedAt: started.toUtc(),
-      coverPath: text('rom_cover_path'),
+      avatarPath: text('avatar_path'),
+      coverPath: _resource(text('rom_cover_path')),
       screenshotPath: text('screenshot_path'),
     );
   }
@@ -49,12 +51,20 @@ class ActivityEntry {
   final String client;
   final DateTime startedAt;
 
+  /// RomM's path of the player's avatar; empty when they have none.
+  final String avatarPath;
+
   /// RomM paths (`/assets/romm/…`); empty when there is none.
   final String coverPath;
 
   /// The player's latest save screenshot, else the title screen.
   final String screenshotPath;
 }
+
+/// RomM sends the cover as stored (`roms/…/cover/small.png`), without the
+/// resources' folder its pages put in front.
+String _resource(String path) =>
+    path.isEmpty || path.startsWith('/') || path.startsWith('http') ? path : '/assets/romm/resources/$path';
 
 /// RomM's activity board (#180); the seam tests fake.
 abstract interface class ActivityApi {

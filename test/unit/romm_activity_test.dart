@@ -8,10 +8,10 @@ void main() {
   Map<String, dynamic> entry(int user, String game, String started, {String client = 'Gargosy'}) => {
     'user_id': user,
     'username': 'user$user',
-    'avatar_path': '',
+    'avatar_path': user == 1 ? 'users/1/profile/avatar.png' : '',
     'rom_id': 40 + user,
     'rom_name': game,
-    'rom_cover_path': '/assets/romm/resources/roms/1/$user/cover/small.png',
+    'rom_cover_path': 'roms/1/$user/cover/small.png',
     'screenshot_path': '',
     'platform_slug': 'snes',
     'platform_name': 'Super Nintendo',
@@ -35,6 +35,9 @@ void main() {
     expect([for (final e in now) e.gameName], ['Super Metroid', 'Kirby']);
     expect(now.first.gameId, '41');
     expect(now.first.platformName, 'Super Nintendo');
+    expect(now.first.coverPath, '/assets/romm/resources/roms/1/1/cover/small.png', reason: 'RomM sends it bare');
+    expect(now.first.avatarPath, 'users/1/profile/avatar.png');
+    expect(now.last.avatarPath, isEmpty);
     expect(a.requests.single.path, '/api/activity');
     final old = FakeDioAdapter((_) => (status: 404, body: <String, dynamic>{}));
     expect(await RommActivity(fakeDio(old), () => Options()).playingNow(), isEmpty);

@@ -8,8 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
-- Home starts with Playing now: who plays what on RomM right now, where
-  and for how long, read again every 30 seconds. A opens the game.
+- Home starts with Playing now: who plays what on RomM right now, with
+  the game's cover and the player's avatar, where and for how long, read
+  again every 30 seconds. A opens the game. Other players' saves show
+  their avatar too.
 - Quitting a game works with controllers SDL's controller list doesn't
   know: Gargosy guesses the usual button layout, and Settings → Controller
   → Controllers taught lets you press each quit button once to teach it.
