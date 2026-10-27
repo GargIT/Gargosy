@@ -4,9 +4,11 @@ import '../theme/tokens.dart';
 import 'g_focusable.dart';
 import 'game_card.dart';
 
-/// A titled row (v2's Home rows): [itemCount] items from [itemBuilder], the
-/// row [height] tall, and with [onSeeAll] a See all tile at its end. Nothing
-/// when it has no items.
+/// A titled row (v2's Home rows): as many of [itemCount] items from
+/// [itemBuilder] as fit the width, each [itemWidth] wide, the row [height]
+/// tall (#184: no scrolling sideways). With [onSeeAll], See all takes the
+/// last place when they don't all fit, else comes after them when there is
+/// room. Nothing when it has no items.
 class Shelf extends StatelessWidget {
   const Shelf({
     super.key,
@@ -17,6 +19,7 @@ class Shelf extends StatelessWidget {
     this.height = GameCard.height,
     this.onSeeAll,
     this.seeAllSize = const Size(GameCard.width, GameCard.coverHeight),
+    this.itemWidth = GameCard.width,
   });
 
   final String title;
@@ -28,11 +31,21 @@ class Shelf extends StatelessWidget {
   final double height;
   final VoidCallback? onSeeAll;
   final Size seeAllSize;
+  final double itemWidth;
+
+  static const _gap = GSpace.s4;
+
+  /// How many items [width] shows, and whether See all is among them.
+  static (int, bool) fit({required double width, required double itemWidth, required int count, required bool seeAll}) {
+    final places = ((width + _gap) / (itemWidth + _gap)).floor().clamp(1, 1 << 20);
+    if (count + (seeAll ? 1 : 0) <= places) return (count, seeAll);
+    if (!seeAll) return (places, false);
+    return (places == 1 ? 0 : places - 1, true);
+  }
 
   @override
   Widget build(BuildContext context) {
     if (itemCount == 0) return const SizedBox.shrink();
-    final n = itemCount + (onSeeAll == null ? 0 : 1);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -54,13 +67,26 @@ class Shelf extends StatelessWidget {
         ),
         SizedBox(
           height: height + GSpace.s3,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
-            itemCount: n,
-            separatorBuilder: (_, _) => const SizedBox(width: GSpace.s4),
-            itemBuilder: (context, i) =>
-                i < itemCount ? itemBuilder(context, i) : _SeeAll(size: seeAllSize, onActivate: onSeeAll!),
+          child: LayoutBuilder(
+            builder: (context, box) {
+              final (shown, seeAll) = fit(
+                width: box.maxWidth - 2 * GSpace.rowPad,
+                itemWidth: itemWidth,
+                count: itemCount,
+                seeAll: onSeeAll != null,
+              );
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: GSpace.rowPad),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: _gap,
+                  children: [
+                    for (var i = 0; i < shown; i++) itemBuilder(context, i),
+                    if (seeAll) _SeeAll(size: Size(itemWidth, seeAllSize.height), onActivate: onSeeAll!),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ],

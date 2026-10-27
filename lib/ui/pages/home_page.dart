@@ -177,6 +177,7 @@ class HomePage extends ConsumerWidget {
             itemCount: list.length,
             height: PlatformCard.height,
             seeAllSize: const Size(GameCard.width, PlatformCard.height),
+            itemWidth: _platformWidth,
             onSeeAll: () => tab('Platforms'),
             itemBuilder: (context, i) => SizedBox(
               width: _platformWidth,

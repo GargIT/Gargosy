@@ -29,6 +29,7 @@ class PlayingNowRow extends ConsumerWidget {
       count: entries.length,
       itemCount: entries.length,
       height: PlayingNowCard.height,
+      itemWidth: PlayingNowCard.width,
       itemBuilder: (context, i) => PlayingNowCard(entries[i]),
     );
   }
