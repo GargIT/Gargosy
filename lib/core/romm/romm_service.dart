@@ -1229,9 +1229,12 @@ class RommService implements RommStatesApi {
       if (rating != null) data['rating'] = rating;
       if (status != null) data['status'] = status.toLowerCase();
       if (completion != null) data['completion'] = completion;
+      // RomM 5.4 takes the fields as the body itself (its RomUserData) and
+      // ignores the rest, so the older `{"data": {...}}` alone saved nothing;
+      // older RomM reads only `data`. Both go, so either one saves.
       final response = await _dio.put(
         '/api/roms/$romId/props',
-        data: {'data': data, 'update_last_played': false, 'remove_last_played': false},
+        data: {...data, 'data': data, 'update_last_played': false, 'remove_last_played': false},
         options: Options(
           headers: Map<String, dynamic>.from(_authOptions.headers ?? {})..['Content-Type'] = 'application/json',
           validateStatus: (status) => status != null && status < 500,
