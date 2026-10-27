@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/input/deadzone_config.dart';
+import '../../../core/input/hid_buttons.dart';
 import '../../../core/platform/window_service.dart';
 import '../../../play/quit_combo.dart';
 import '../../../profiles/profile_providers.dart';
@@ -10,9 +11,11 @@ import '../../shell/user_menu.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../theme/tokens.dart';
 import 'settings_rows.dart';
+import 'teach_quit_buttons.dart';
 
 /// Settings → Controller: the stick deadzone and quitting a game with
-/// held buttons (#141), this PC's, for every profile.
+/// held buttons (#141) and teaching them to a controller (#171), this PC's, for
+/// every profile.
 class ControllerSection extends ConsumerStatefulWidget {
   const ControllerSection({super.key});
 
@@ -101,6 +104,32 @@ class _ControllerSectionState extends ConsumerState<ControllerSection> {
               ref.invalidate(quitButtonsProvider);
             },
           ),
+          SettingsField(
+            key: const ValueKey('teach-quit-buttons'),
+            label: 'Controllers taught',
+            value: switch (LearnedHidButtons.read(ref.watch(appPreferencesProvider)).length) {
+              0 => "None (Xbox controllers and the ones SDL's list knows need none)",
+              1 => '1 controller',
+              final n => '$n controllers',
+            },
+            action: 'Teach',
+            onActivate: () async {
+              await showTeachQuitButtons(context);
+              if (mounted) setState(() {});
+            },
+          ),
+          if (LearnedHidButtons.read(ref.watch(appPreferencesProvider)).isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SettingsButton(
+                label: 'Forget taught buttons',
+                icon: Icons.restart_alt,
+                onActivate: () async {
+                  await LearnedHidButtons.forgetAll(ref.read(appPreferencesProvider));
+                  if (mounted) setState(() {});
+                },
+              ),
+            ),
         ],
       ),
     ],
