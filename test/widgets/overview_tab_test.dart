@@ -10,23 +10,17 @@ import '../helpers/widget_env.dart';
 void main() {
   final metroid = Game.fromJson({
     ...gameJson(1, 'Super Metroid'),
+    'summary': 'Samus returns to Zebes.',
     'metadatum': {
       'player_count': '1',
       'age_ratings': ['PEGI:7'],
     },
-    'igdb_metadata': {
-      'remasters': [
-        {'id': 1001, 'name': 'Super Metroid (GBA)', 'cover_url': ''},
-        {'id': 1002, 'name': 'Metroid Prime Remastered', 'cover_url': ''},
-      ],
-    },
     'hltb_metadata': {'main_story': 25200, 'completionist': 43200},
   });
 
-  testWidgets('Overview (#179): players, age rating, How long to beat, related and similar games', (tester) async {
+  testWidgets('Overview (#179): facts, How long to beat, the description, similar games', (tester) async {
     await setDesktopSize(tester);
     final api = FakeLibraryApi(const [])
-      ..byIgdb = {1001: game(2, 'Super Metroid GBA')}
       ..similarGames = {
         '1': [game(3, 'Metroid Fusion')],
       };
@@ -40,15 +34,15 @@ void main() {
     expect(find.text('HOW LONG TO BEAT'), findsOneWidget);
     expect(find.text('7 h'), findsOneWidget);
     expect(find.text('12 h'), findsOneWidget);
-    expect(find.text('Remasters'), findsOneWidget);
-    expect(find.text('Super Metroid GBA'), findsWidgets, reason: "the library's game");
-    expect(find.text('Metroid Prime Remastered'), findsWidgets);
-    expect(find.text('NOT ON ROMM'), findsOneWidget);
-    expect(find.text('Similar games in your library'), findsOneWidget);
+    expect(find.text('SIMILAR GAMES IN YOUR LIBRARY'), findsOneWidget);
     expect(find.text('Metroid Fusion'), findsWidgets);
+    double top(Finder f) => tester.getTopLeft(f).dy;
+    expect(top(find.text('PLAYERS')), lessThan(top(find.text('HOW LONG TO BEAT'))));
+    expect(top(find.text('HOW LONG TO BEAT')), lessThan(top(find.text('Samus returns to Zebes.'))));
+    expect(top(find.text('Samus returns to Zebes.')), lessThan(top(find.text('SIMILAR GAMES IN YOUR LIBRARY'))));
   });
 
-  testWidgets('without facts, times or related games none of it shows', (tester) async {
+  testWidgets('without facts, times or similar games none of it shows', (tester) async {
     await setDesktopSize(tester);
     await tester.pumpWidget(
       testApp(
@@ -59,6 +53,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PLAYERS'), findsNothing);
     expect(find.text('HOW LONG TO BEAT'), findsNothing);
-    expect(find.text('Similar games in your library'), findsNothing);
+    expect(find.text('SIMILAR GAMES IN YOUR LIBRARY'), findsNothing);
   });
 }

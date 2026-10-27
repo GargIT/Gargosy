@@ -20,19 +20,6 @@ void main() {
       'age_ratings': [
         {'rating': 'E', 'category': 'ESRB', 'rating_cover_url': '//images.igdb.com/e.png'},
       ],
-      'remasters': [
-        {
-          'id': 1001,
-          'name': 'Super Metroid (GBA)',
-          'slug': 'x',
-          'type': 'remaster',
-          'cover_url': '//images.igdb.com/1.jpg',
-        },
-      ],
-      'ports': <Object>[],
-      'dlcs': [
-        {'id': 'bad', 'name': 'No id'},
-      ],
     },
     'ss_metadata': {
       'age_ratings': [
@@ -60,38 +47,26 @@ void main() {
     expect(hltbTime(26000), '7 h');
   });
 
-  test("IGDB's related games by kind, the empty and broken ones left out", () {
-    final related = Game.fromJson(json).overview.related;
-    expect(related.keys, [RelatedKind.remasters]);
-    expect(related[RelatedKind.remasters]!.single.name, 'Super Metroid (GBA)');
-    expect(related[RelatedKind.remasters]!.single.coverUrl, 'https://images.igdb.com/1.jpg');
-  });
-
   test('the overview comes back from the offline snapshot', () {
     final again = Game.fromJson(Game.fromJson(json).toJson()).overview;
     expect(again.ageRatings, ['PEGI 7', 'ESRB E', 'USK T', 'A']);
     expect(again.hltb!.mainPlusExtra, 34200);
-    expect(again.related[RelatedKind.remasters]!.single.igdbId, 1001);
   });
 
-  test("similar games from RomM's index; an IGDB id's game in the library; none on a 404", () async {
+  test("similar games from RomM's index; none on a 404", () async {
     RommLibraryApi api(FakeDioAdapter a) => RommLibraryApi(fakeDio(a), () => Options());
     final a = FakeDioAdapter(
-      (r) => r.path.endsWith('/similar')
-          ? (
-              status: 200,
-              body: [
-                {'rom': gameJson(3, 'Metroid Fusion'), 'score': 0.7, 'reasons': []},
-              ],
-            )
-          : (status: 200, body: gameJson(2, 'Super Metroid GBA')),
+      (_) => (
+        status: 200,
+        body: [
+          {'rom': gameJson(3, 'Metroid Fusion'), 'score': 0.7, 'reasons': []},
+        ],
+      ),
     );
     expect([for (final g in await api(a).similar('1')) g.name], ['Metroid Fusion']);
-    expect((await api(a).byIgdbId(1001))?.name, 'Super Metroid GBA');
-    expect(a.requests.last.queryParameters, {'igdb_id': 1001});
+    expect(a.requests.single.path, '/api/roms/1/similar');
     final missing = FakeDioAdapter((_) => (status: 404, body: <String, dynamic>{}));
     expect(await api(missing).similar('1'), isEmpty);
-    expect(await api(missing).byIgdbId(1), isNull);
   });
 
   test("the players' icon follows the largest number", () {

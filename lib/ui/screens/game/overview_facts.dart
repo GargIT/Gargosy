@@ -5,11 +5,15 @@ import '../../../core/romm/romm_models.dart';
 import '../../theme/tokens.dart';
 
 /// The Overview's fact rows (#179), label on the left as on RomM's page:
-/// how many play, and the age ratings. Nothing when RomM has neither.
+/// when it was last played and for how long ([played]), how many play, and
+/// the age ratings. Nothing when there is none of it.
 class OverviewFacts extends StatelessWidget {
-  const OverviewFacts({super.key, required this.game});
+  const OverviewFacts({super.key, required this.game, this.played});
 
   final Game game;
+
+  /// When and how long, as the row reads; null when never played.
+  final String? played;
 
   /// The icon for a provider's free-text player count ("1", "1-4", "Up to
   /// 4 players", "Massively Multiplayer"): by the largest number in it.
@@ -27,28 +31,36 @@ class OverviewFacts extends StatelessWidget {
   Widget build(BuildContext context) {
     final players = game.playerCount?.trim();
     final ratings = game.overview.ageRatings;
-    final rows = [
+    final rows = <(String, List<Widget>)>[
+      if (played case final p?)
+        (
+          'Last played',
+          [
+            Text(
+              p,
+              key: const ValueKey('overview-played'),
+              style: const TextStyle(fontSize: GFont.md, color: GColors.fgSecondary),
+            ),
+          ],
+        ),
       if (players != null && players.isNotEmpty) ('Players', [_Badge(players, icon: playersIcon(players))]),
       if (ratings.isNotEmpty) ('Age rating', [for (final r in ratings) _Badge(r)]),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: GSpace.s4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final (label, badges) in rows)
-            Padding(
-              padding: const EdgeInsets.only(bottom: GSpace.s2),
-              child: Row(
-                children: [
-                  SizedBox(width: 120, child: _Label(label)),
-                  Expanded(child: Wrap(spacing: 6, runSpacing: 6, children: badges)),
-                ],
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (label, values) in rows)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                SizedBox(width: 130, child: _Label(label)),
+                Expanded(child: Wrap(spacing: 6, runSpacing: 6, children: values)),
+              ],
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -111,7 +123,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text.toUpperCase(),
-    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.7, color: GColors.fgMuted),
+    style: const TextStyle(fontSize: GFont.xs, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: GColors.fgMuted),
   );
 }
 
@@ -123,15 +135,15 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: GSpace.s1),
-    decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.chip)),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+    decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[Icon(icon, size: 15, color: GColors.fgSecondary), const SizedBox(width: 6)],
+        if (icon != null) ...[Icon(icon, size: 16, color: GColors.fgSecondary), const SizedBox(width: 6)],
         Text(
           text,
-          style: const TextStyle(fontSize: GFont.sm, fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: GFont.md, fontWeight: FontWeight.w600),
         ),
       ],
     ),

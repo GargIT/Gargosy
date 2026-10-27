@@ -1,8 +1,8 @@
 /// What the game page's Overview shows beyond the summary (#179): the age
-/// ratings, HowLongToBeat's times and IGDB's related games, read from a
-/// RomM game and kept in the offline snapshot ([toJson] / [fromJson]).
+/// ratings and HowLongToBeat's times, read from a RomM game and kept in the
+/// offline snapshot ([toJson] / [fromJson]).
 class GameOverview {
-  const GameOverview({this.ageRatings = const [], this.hltb, this.related = const {}});
+  const GameOverview({this.ageRatings = const [], this.hltb});
 
   static const empty = GameOverview();
 
@@ -10,28 +10,16 @@ class GameOverview {
   final List<String> ageRatings;
   final HowLongToBeat? hltb;
 
-  /// IGDB's related games by kind; kinds without any are left out.
-  final Map<RelatedKind, List<RelatedGame>> related;
-
   /// From RomM's game: `metadatum.age_ratings` (matched with IGDB's and
-  /// ScreenScraper's for the category, as RomM's own page does),
-  /// `hltb_metadata` and `igdb_metadata`'s related lists.
+  /// ScreenScraper's for the category, as RomM's own page does) and
+  /// `hltb_metadata`.
   factory GameOverview.fromRomm(Map<String, dynamic> json) {
     final igdb = json['igdb_metadata'] is Map ? json['igdb_metadata'] as Map : const {};
     final ss = json['ss_metadata'] is Map ? json['ss_metadata'] as Map : const {};
     final metadatum = json['metadatum'] is Map ? json['metadatum'] as Map : const {};
-    final related = <RelatedKind, List<RelatedGame>>{};
-    for (final kind in RelatedKind.values) {
-      final games = [
-        for (final g in igdb[kind.key] is List ? igdb[kind.key] as List : const [])
-          if (g is Map && g['id'] is int && g['name'] is String) RelatedGame.fromJson(g),
-      ];
-      if (games.isNotEmpty) related[kind] = games;
-    }
     return GameOverview(
       ageRatings: ageRatingLabels(metadatum['age_ratings'], [igdb['age_ratings'], ss['age_ratings']]),
       hltb: HowLongToBeat.fromJson(json['hltb_metadata']),
-      related: related,
     );
   }
 
@@ -39,21 +27,9 @@ class GameOverview {
   factory GameOverview.fromJson(Map<String, dynamic> json) => GameOverview(
     ageRatings: [for (final r in json['age_ratings'] is List ? json['age_ratings'] as List : const []) '$r'],
     hltb: HowLongToBeat.fromJson(json['hltb']),
-    related: {
-      for (final kind in RelatedKind.values)
-        if (json['related'] is Map && (json['related'] as Map)[kind.key] is List)
-          kind: [
-            for (final g in (json['related'] as Map)[kind.key] as List)
-              if (g is Map && g['id'] is int && g['name'] is String) RelatedGame.fromJson(g),
-          ],
-    },
   );
 
-  Map<String, dynamic> toJson() => {
-    'age_ratings': ageRatings,
-    'hltb': hltb?.toJson(),
-    'related': {for (final kind in related.keys) kind.key: related[kind]!.map((g) => g.toJson()).toList()},
-  };
+  Map<String, dynamic> toJson() => {'age_ratings': ageRatings, 'hltb': hltb?.toJson()};
 }
 
 /// RomM's `metadatum.age_ratings` as they read: `CATEGORY:RATING` (typed by
@@ -126,41 +102,4 @@ String hltbTime(int seconds) {
   if (seconds < 3600) return '${(seconds / 60).round()} min';
   final halves = (seconds / 1800).round();
   return halves.isEven ? '${halves ~/ 2} h' : '${halves ~/ 2}.5 h';
-}
-
-/// IGDB's kinds of related game, in RomM's order.
-enum RelatedKind {
-  expansions('expansions', 'Expansions'),
-  dlcs('dlcs', 'DLC'),
-  remakes('remakes', 'Remakes'),
-  remasters('remasters', 'Remasters'),
-  ports('ports', 'Ports');
-
-  const RelatedKind(this.key, this.label);
-
-  /// The list's name in RomM's `igdb_metadata`.
-  final String key;
-  final String label;
-}
-
-/// A game IGDB relates to this one; maybe not in the library.
-class RelatedGame {
-  const RelatedGame({required this.igdbId, required this.name, this.coverUrl});
-
-  factory RelatedGame.fromJson(Map<dynamic, dynamic> json) {
-    final cover = json['cover_url'];
-    return RelatedGame(
-      igdbId: json['id'] as int,
-      name: json['name'] as String,
-      coverUrl: cover is String && cover.isNotEmpty ? (cover.startsWith('//') ? 'https:$cover' : cover) : null,
-    );
-  }
-
-  final int igdbId;
-  final String name;
-
-  /// IGDB's cover, an absolute URL.
-  final String? coverUrl;
-
-  Map<String, dynamic> toJson() => {'id': igdbId, 'name': name, 'cover_url': coverUrl};
 }

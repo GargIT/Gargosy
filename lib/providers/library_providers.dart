@@ -155,18 +155,6 @@ final similarGamesProvider = FutureProvider.family<List<Game>, String>((ref, gam
   }
 });
 
-/// The library's game for an IGDB related game (#179); null when it isn't
-/// there or RomM can't be asked.
-final gameByIgdbProvider = FutureProvider.family<Game?, int>((ref, igdbId) async {
-  final api = ref.watch(libraryApiProvider);
-  if (api == null) return null;
-  try {
-    return await api.byIgdbId(igdbId);
-  } catch (_) {
-    return null;
-  }
-});
-
 /// Home's On this day (#139): the games released on today's date in an
 /// earlier year, and how many.
 final onThisDayProvider = FutureProvider<GalleryPage>((ref) async {

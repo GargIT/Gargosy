@@ -603,7 +603,7 @@ void main() {
 
   testWidgets('Overview says when the game was last played', (tester) async {
     await pump(tester);
-    expect(find.textContaining('Last played'), findsNothing);
+    expect(find.text('LAST PLAYED'), findsNothing);
   });
 
   testWidgets('Overview: last played, from RomM', (tester) async {
@@ -614,7 +614,8 @@ void main() {
     await setDesktopSize(tester);
     await tester.pumpWidget(testApp(OverviewTab(game: played)));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Last played 1 Oct'), findsOneWidget);
+    expect(find.text('LAST PLAYED'), findsOneWidget);
+    expect(find.textContaining('1 Oct'), findsOneWidget);
   });
 
   testWidgets('Y on a state older than the newest save asks first; Cancel starts nothing', (tester) async {

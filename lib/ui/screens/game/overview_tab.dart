@@ -10,10 +10,11 @@ import '../../widgets/cover_image.dart';
 import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import 'overview_facts.dart';
-import 'related_games.dart';
+import 'similar_games.dart';
 
-/// The game page's Overview: when it was played, the facts (#179), the
-/// summary and genres, How long to beat, screenshots, and related games.
+/// The game page's Overview (#179): the facts (last played, players, age
+/// rating), How long to beat, the description and genres, similar games in
+/// the library, and screenshots.
 class OverviewTab extends ConsumerWidget {
   const OverviewTab({super.key, required this.game});
 
@@ -23,40 +24,36 @@ class OverviewTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final time = ref.watch(playTimeProvider(game.id)).valueOrNull;
     final shots = [for (final s in game.mergedScreenshots) assetUrl(ref, s)].whereType<String>().toList();
+    final played = [if (game.lastPlayed case final last?) formatSaveTime(last), if (time != null) playTimeLine(time)];
+    final summary = game.summary?.trim() ?? '';
     return ListView(
       padding: const EdgeInsets.only(bottom: GSpace.s14),
       children: [
-        if (game.lastPlayed != null || time != null) ...[
+        OverviewFacts(game: game, played: played.isEmpty ? null : played.join(' · ')),
+        if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s3), HltbStrip(hltb)],
+        if (summary.isNotEmpty) ...[
+          const SizedBox(height: GSpace.s6),
           Text(
-            [
-              if (game.lastPlayed case final played?) 'Last played ${formatSaveTime(played)}',
-              if (time != null) playTimeLine(time),
-            ].join(' · '),
-            key: const ValueKey('overview-played'),
-            style: const TextStyle(color: GColors.fgMuted),
-          ),
-          const SizedBox(height: GSpace.s3),
-        ],
-        OverviewFacts(game: game),
-        if (game.summary != null && game.summary!.isNotEmpty)
-          Text(
-            game.summary!,
+            summary,
             style: const TextStyle(fontSize: GFont.lg, height: 1.6, color: GColors.fgSecondary),
           ),
-        const SizedBox(height: GSpace.s5),
-        Wrap(
-          spacing: GSpace.s2,
-          runSpacing: GSpace.s2,
-          children: [
-            for (final g in game.genres)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: GSpace.s3, vertical: GSpace.s1),
-                decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.chip)),
-                child: Text(g, style: const TextStyle(fontSize: GFont.sm)),
-              ),
-          ],
-        ),
-        if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s5), HltbStrip(hltb)],
+        ],
+        if (game.genres.isNotEmpty) ...[
+          const SizedBox(height: GSpace.s4),
+          Wrap(
+            spacing: GSpace.s2,
+            runSpacing: GSpace.s2,
+            children: [
+              for (final g in game.genres)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: GSpace.s3, vertical: GSpace.s1),
+                  decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.chip)),
+                  child: Text(g, style: const TextStyle(fontSize: GFont.sm)),
+                ),
+            ],
+          ),
+        ],
+        SimilarGames(game: game),
         if (shots.isNotEmpty) ...[
           const SizedBox(height: GSpace.s6),
           const Text(
@@ -77,7 +74,6 @@ class OverviewTab extends ConsumerWidget {
             ),
           ),
         ],
-        RelatedGames(game: game),
       ],
     );
   }
