@@ -4,11 +4,13 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/input/held_combo.dart';
+import '../core/input/hid_buttons.dart';
 import '../core/input/hid_pads.dart';
 import '../core/input/xinput_pads.dart';
 import '../core/platform/platform_info.dart';
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
+import '../providers/update_providers.dart';
 
 /// The buttons held to quit a game (#141), this PC's choice in Settings →
 /// Controller. Select + Start alone is often taken (Game Bar, Steam, an
@@ -90,8 +92,21 @@ class QuitCombo {
 /// after Settings changes it.
 final quitButtonsProvider = Provider<QuitButtons?>((ref) => QuitButtons.of(ref.watch(appPreferencesProvider)));
 
+/// Gargosy started with this reads HID controllers as if SDL's list were
+/// empty, so a known controller tests the guessed and taught buttons (#171).
+const hidIgnoreSdlArg = '--hid-ignore-sdl';
+
 /// The controllers read while a game runs (#141): XInput's, and HID's that
-/// aren't XInput (#164). None off Windows.
-final backgroundPadsProvider = Provider<List<BackgroundPads>>(
-  (ref) => PlatformInfo.current.isWindows ? [XInputPads(heldButtons), HidPads(heldButtons)] : const [],
-);
+/// aren't XInput (#164) with the buttons taught in Settings (#171). None off
+/// Windows.
+final backgroundPadsProvider = Provider<List<BackgroundPads>>((ref) {
+  if (!PlatformInfo.current.isWindows) return const [];
+  return [
+    XInputPads(heldButtons),
+    HidPads(
+      heldButtons,
+      ignoreSdl: ref.watch(launchArgsProvider).contains(hidIgnoreSdlArg),
+      learned: () => LearnedHidButtons.read(ref.read(appPreferencesProvider)),
+    ),
+  ];
+});

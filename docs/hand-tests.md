@@ -271,3 +271,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## The Achievements tab as RomM's (#174)
 
 106. [x] Open a game with RetroAchievements and some unlocked on RomM, then its Achievements tab: each row has its badge (the locked ones greyed and dimmed), the summary shows earned / all, points, and the progression and missable counts, and the rows have their type tag. With the controller alone, go up to the filters: Missable shows only missable ones, ✓ Earned only earned ones, pressing it again shows all. The list is 2 columns at 1280 px wide, 3 at 1920, 4 on a wider screen.
+
+## Controllers SDL's list doesn't know (#171)
+
+107. [ ] Start Gargosy with `--hid-ignore-sdl` (add it to a shortcut's target), so the 8BitDo in D mode counts as unknown. Start a game: the log has `[Quit] hid<n> is … buttons from a guess`; try holding the quit buttons (it may or may not work, it's a guess). Quit the game, then Settings → Controller → Controllers taught → Teach: press Select, Start, LB, RB, L3 and R3 on the 8BitDo, one at a time. B and A on it are taught too, not Back or OK; a button pressed twice says it's already taught; Escape cancels, Enter skips. It ends with "Saved for …" and the row says 1 controller. Start a game: the log has `buttons from taught` and holding the quit buttons closes it. Forget taught buttons sets the row back to None.

@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/input/held_combo.dart';
+import 'package:gargosy/core/input/hid_buttons.dart';
 import 'package:gargosy/core/input/hid_pads.dart';
+
+import '../helpers/profile_test_env.dart';
 
 void main() {
   const db = '''
@@ -37,7 +40,7 @@ xinput,XInput Controller,a:b0,platform:Windows,
 
   test('starts and stops without a controller SDL knows', () async {
     final held = StreamController<HeldButtons>.broadcast();
-    final pads = HidPads(held, database: () async => '');
+    final pads = HidPads(held, database: () async => '', paths: () => const []);
     pads.start();
     await Future<void>.delayed(const Duration(milliseconds: 120));
     pads.stop();
@@ -56,8 +59,8 @@ xinput,XInput Controller,a:b0,platform:Windows,
       held,
       database: () async => '',
       paths: () => paths,
-      open: (path, id, _) {
-        opened.add('$path=$id');
+      open: (path) {
+        opened.add(path);
         return devices[path];
       },
     );
@@ -76,16 +79,16 @@ xinput,XInput Controller,a:b0,platform:Windows,
         paths = ['kbd'];
         final hid = pads()..start();
         async.elapse(const Duration(milliseconds: 100));
-        expect(opened, ['kbd=hid0']);
+        expect(opened, ['kbd']);
 
         final pad = devices['pad'] = _FakeDevice();
         paths = ['kbd', 'pad'];
         async.elapse(const Duration(seconds: 2));
-        expect(opened.last, 'pad=hid0', reason: 'the keyboard is not tried again; ids count opened pads');
+        expect(opened, ['kbd', 'pad'], reason: 'the keyboard is not tried again');
 
-        pad.next = {PadButton.select, PadButton.l1};
+        pad.next = {6, 4};
         async.elapse(const Duration(milliseconds: 50));
-        expect(sent.single.pad, 'hid0');
+        expect(sent.single.pad, 'hid0', reason: 'ids count opened pads');
         expect(sent.single.buttons, {PadButton.select, PadButton.l1});
         hid.stop();
         expect(pad.closed, isTrue);
@@ -99,7 +102,7 @@ xinput,XInput Controller,a:b0,platform:Windows,
         paths = ['a', 'b'];
         final hid = pads()..start();
         async.elapse(const Duration(milliseconds: 100));
-        a.next = {PadButton.start};
+        a.next = {7};
         async.elapse(const Duration(milliseconds: 50));
 
         paths = ['b'];
@@ -110,9 +113,12 @@ xinput,XInput Controller,a:b0,platform:Windows,
         expect(sent.last.buttons, isEmpty);
 
         // Back again: a new id, read as before.
+        devices['a'] = _FakeDevice();
         paths = ['a', 'b'];
         async.elapse(const Duration(seconds: 2));
-        expect(opened.last, 'a=hid2');
+        devices['a']!.next = {7};
+        async.elapse(const Duration(milliseconds: 50));
+        expect(sent.last.pad, 'hid2');
         hid.stop();
       });
     });
@@ -125,7 +131,7 @@ xinput,XInput Controller,a:b0,platform:Windows,
         async.elapse(const Duration(milliseconds: 100));
         a.gone = true;
         async.elapse(const Duration(seconds: 6));
-        expect(opened, ['a=hid0']);
+        expect(opened, ['a']);
         expect(a.closed, isTrue);
 
         paths = [];
@@ -133,7 +139,7 @@ xinput,XInput Controller,a:b0,platform:Windows,
         devices['a'] = _FakeDevice();
         paths = ['a'];
         async.elapse(const Duration(seconds: 2));
-        expect(opened, ['a=hid0', 'a=hid1']);
+        expect(opened, ['a', 'a']);
         hid.stop();
       });
     });
@@ -147,7 +153,7 @@ xinput,XInput Controller,a:b0,platform:Windows,
           held,
           database: () async => '',
           paths: () => fail ? throw StateError('SetupDi') : paths,
-          open: (path, id, _) => devices[path],
+          open: (path) => devices[path],
         )..start();
         async.elapse(const Duration(milliseconds: 100));
         fail = true;
@@ -157,16 +163,87 @@ xinput,XInput Controller,a:b0,platform:Windows,
       });
     });
   });
+
+  group('which buttons a controller has (#171)', () {
+    final sdl = SdlButtons.parse(db);
+
+    test('taught first, then SDL, then the guess', () {
+      final taught = {
+        '2dc8:6003': {1: PadButton.select},
+      };
+      final eightBitDo = hidButtonsFor(0x2dc8, 0x6003, sdl: sdl, learned: taught);
+      expect(eightBitDo.source, HidButtonSource.learned);
+      expect(eightBitDo.buttons, {1: PadButton.select});
+      expect(hidButtonsFor(0x054c, 0x0ce6, sdl: sdl, learned: taught).source, HidButtonSource.sdl);
+      final unknown = hidButtonsFor(0x1234, 0x5678, sdl: sdl, learned: taught);
+      expect(unknown.source, HidButtonSource.guess);
+      expect(unknown.buttons, guessedHidButtons);
+    });
+
+    test('without SDL (--hid-ignore-sdl) a known controller gets the guess', () {
+      expect(hidButtonsFor(0x2dc8, 0x6003, sdl: null, learned: const {}).source, HidButtonSource.guess);
+    });
+
+    test('taught buttons are kept per controller in the app-wide prefs', () async {
+      final prefs = MemoryPrefs();
+      expect(LearnedHidButtons.read(prefs), isEmpty);
+      await LearnedHidButtons.save(prefs, '2dc8:6006', {10: PadButton.select, 6: PadButton.l1});
+      await LearnedHidButtons.save(prefs, '054c:0ce6', {8: PadButton.select});
+      await LearnedHidButtons.save(prefs, '2dc8:6006', {11: PadButton.start});
+      expect(LearnedHidButtons.read(prefs), {
+        '2dc8:6006': {11: PadButton.start},
+        '054c:0ce6': {8: PadButton.select},
+      });
+      prefs.values[LearnedHidButtons.prefKey] = '{not json';
+      expect(LearnedHidButtons.read(prefs), isEmpty);
+      await LearnedHidButtons.forgetAll(prefs);
+      expect(prefs.getString(LearnedHidButtons.prefKey), isNull);
+    });
+
+    test('a pad reads with its taught buttons, and onRaw hears the numbers', () {
+      fakeAsync((async) {
+        final held = StreamController<HeldButtons>.broadcast(sync: true);
+        final sent = <HeldButtons>[];
+        held.stream.listen(sent.add);
+        final raw = <Set<int>>[];
+        final pad = _FakeDevice(vendor: 0x2dc8, product: 0x6003);
+        final hid = HidPads(
+          held,
+          database: () async => db,
+          learned: () => {
+            '2dc8:6003': {2: PadButton.select, 3: PadButton.start},
+          },
+          paths: () => ['p'],
+          open: (_) => pad,
+          onRaw: (device, buttons) => raw.add(buttons),
+        )..start();
+        async.elapse(const Duration(milliseconds: 100));
+        pad.next = {2, 3, 10};
+        async.elapse(const Duration(milliseconds: 50));
+        expect(sent.single.buttons, {PadButton.select, PadButton.start}, reason: "SDL's b10 is not used");
+        expect(raw.single, {2, 3, 10});
+        hid.stop();
+      });
+    });
+  });
 }
 
 class _FakeDevice implements HidDevice {
-  Set<PadButton>? next;
+  _FakeDevice({this.vendor = 0x1234, this.product = 0x5678});
+
+  @override
+  final int vendor;
+  @override
+  final int product;
+  @override
+  String get name => 'Fake pad';
+  Set<int>? next;
   var closed = false;
   @override
   var gone = false;
 
   @override
-  Set<PadButton>? poll() {
+  Set<int>? poll() {
     final changed = next;
     next = null;
     return changed;

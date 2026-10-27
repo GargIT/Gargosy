@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Quitting a game works with controllers SDL's controller list doesn't
+  know: Gargosy guesses the usual button layout, and Settings → Controller
+  → Controllers taught lets you press each quit button once to teach it.
+
 ### Changed
 
 - The Achievements tab looks like RomM's: each achievement's badge, a
