@@ -288,6 +288,7 @@ const svText = <String, String>{
   'Import from folder': 'Importera från mapp',
   'Importing…': 'Importerar…',
   'In / out': 'In / ut',
+  'In collection {0}': 'I samling {0}',
   'Incomplete': 'Ej klart',
   'Install PS3 firmware from bios\\ ({0})': 'Installera PS3-firmware från bios\\ ({0})',
   'Install under Emulators': 'Installera under Emulatorer',
@@ -388,6 +389,7 @@ const svText = <String, String>{
   'Not supported yet': 'Stöds inte än',
   'Not this one': 'Inte den här',
   'Not while a download, a game or a save sync runs.': 'Inte medan en nedladdning, ett spel eller en synkning pågår.',
+  'Not {0}': 'Inte {0}',
   'Note': 'Anteckning',
   'Note title': 'Anteckningens rubrik',
   'Notes': 'Anteckningar',
@@ -441,6 +443,7 @@ const svText = <String, String>{
   'Pick a filter first: a smart collection of everything is the library.':
       'Välj ett filter först: en smart samling av allt är biblioteket.',
   'Platform': 'Plattform',
+  'Platform {0}': 'Plattform {0}',
   'Platform: {0}': 'Plattform: {0}',
   'Platforms': 'Plattformar',
   'Play': 'Spela',
@@ -572,6 +575,7 @@ const svText = <String, String>{
   'Scroll': 'Rulla',
   'Search': 'Sök',
   'Search your library': 'Sök i ditt bibliotek',
+  'Search “{0}”': 'Sök ”{0}”',
   'Security policy': 'Säkerhetspolicy',
   'See all': 'Visa alla',
   'Select': 'Välj',
@@ -599,6 +603,7 @@ const svText = <String, String>{
   'Smart collections': 'Smarta samlingar',
   'Sort by {0}': 'Sortera efter {0}',
   'Sort by: {0}': 'Sortera: {0}',
+  'Sorted by {0}, {1}': 'Sorterad efter {0}, {1}',
   'Space': 'Blanksteg',
   'Start (Menu, Options or +)': 'Start (Menu, Options eller +)',
   'Start the game, then load it from {0}\'s menu: {1} can\'t start in a state.':
@@ -772,6 +777,7 @@ const svText = <String, String>{
   'Your saves on this PC are kept.': 'Dina sparfiler på den här datorn behålls.',
   'Your {0} save on this PC changed since its last upload (played offline?). Playing {1}{2} from {3} replaces it.\n\nA backup of it is kept on this PC.': 'Din {0}-sparfil på den här datorn har ändrats sedan den senaste uppladdningen (spelat offline?). Att spela {1}{2} från {3} ersätter den.\n\nEn säkerhetskopia av den sparas på den här datorn.',
   'Yours': 'Dina',
+  'Z–A': 'Ö–A',
   '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
       '\n\n{0} nått RomM än ({1}) och {2} förlorade med profilen.',
   'and {0} more from your library': 'och {0} till från ditt bibliotek',
@@ -779,6 +785,7 @@ const svText = <String, String>{
   'another player\'s state isn\'t yours to delete': 'en annan spelares sparläge är inte ditt att ta bort',
   'any region': 'alla regioner',
   'as on the Platforms tab': 'som på fliken Plattformar',
+  'ascending': 'stigande',
   'back up the save': 'säkerhetskopiera sparfilen',
   'backlog': 'att spela',
   'backup': 'säkerhetskopia',
@@ -788,6 +795,7 @@ const svText = <String, String>{
   'converted': 'konverterad',
   'delete the save': 'ta bort sparfilen',
   'delete the state': 'ta bort sparläget',
+  'descending': 'fallande',
   'every {0} state slot of yours is in use': 'alla dina {0}-platser för sparlägen används',
   'first while RomM is offline': 'först medan RomM är offline',
   'for {0} h': 'i {0} h',
@@ -933,5 +941,6 @@ const svText = <String, String>{
   '{0}\n\nThis version is the one that runs; nothing was lost.':
       '{0}\n\nDen här versionen är den som körs; inget gick förlorat.',
   '⊘ Locked': '⊘ Låsta',
+  '♥ Favourites': '♥ Favoriter',
   '✓ Earned': '✓ Upplåsta',
 };

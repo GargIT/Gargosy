@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -276,6 +277,7 @@ class RommCollection {
     this.ownerUsername,
     this.updatedAt,
     this.filterSummary,
+    this.filterCriteria = const {},
   });
 
   /// RomM's id of a regular or smart collection; 0 for a virtual one.
@@ -302,6 +304,9 @@ class RommCollection {
   /// A smart collection's filters in words (RomM's `filter_summary`).
   final String? filterSummary;
 
+  /// A smart collection's filters as RomM keeps them (`filter_criteria`).
+  final Map<String, dynamic> filterCriteria;
+
   /// One key for every collection of every kind.
   String get key => kind == CollectionKind.virtual ? 'virtual-$virtualId' : '${kind.name}-$id';
 
@@ -312,6 +317,20 @@ class RommCollection {
     CollectionKind.smart => GalleryQuery(smartCollectionId: id),
     CollectionKind.virtual => GalleryQuery(virtualCollectionId: virtualId),
   };
+
+  /// `filter_criteria`, else the same read back from `filter_summary` (its JSON).
+  static Map<String, dynamic> _criteria(Map<String, dynamic> json) {
+    final c = json['filter_criteria'];
+    if (c is Map) return c.cast<String, dynamic>();
+    final s = json['filter_summary'];
+    if (s is! String || !s.trimLeft().startsWith('{')) return const {};
+    try {
+      final d = jsonDecode(s);
+      return d is Map ? d.cast<String, dynamic>() : const {};
+    } on FormatException {
+      return const {};
+    }
+  }
 
   static List<String> _paths(Object? v) => [
     for (final s in (v is List ? v : const []))
@@ -342,6 +361,7 @@ class RommCollection {
       ownerUsername: json['owner_username'] as String?,
       updatedAt: json['updated_at'] is String ? DateTime.tryParse(json['updated_at'] as String) : null,
       filterSummary: json['filter_summary'] as String?,
+      filterCriteria: _criteria(json),
     );
   }
 }

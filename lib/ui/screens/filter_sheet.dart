@@ -8,23 +8,30 @@ import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../../l10n/tr.dart';
 
+/// What the sheet closed with: the new query, and whether the player asked
+/// to save the gallery with it as a smart collection (#188).
+typedef FilterSheetResult = ({GalleryQuery query, bool saveAsSmart});
+
 /// A gallery's filters (genres, regions), from the bar's Filters button.
 /// Returns the new query, or null when closed with B. A picks a filter, X
-/// applies and Y clears, wherever the focus is.
-Future<GalleryQuery?> showFilterSheet(
+/// applies and Y clears, wherever the focus is. With [offerSave], Save as
+/// smart collection applies and asks for it.
+Future<FilterSheetResult?> showFilterSheet(
   BuildContext context, {
   required GalleryQuery query,
   required FilterValues values,
-}) => showDialog<GalleryQuery>(
+  bool offerSave = false,
+}) => showDialog<FilterSheetResult>(
   context: context,
-  builder: (_) => _FilterSheet(query: query, values: values),
+  builder: (_) => _FilterSheet(query: query, values: values, offerSave: offerSave),
 );
 
 class _FilterSheet extends ConsumerStatefulWidget {
-  const _FilterSheet({required this.query, required this.values});
+  const _FilterSheet({required this.query, required this.values, required this.offerSave});
 
   final GalleryQuery query;
   final FilterValues values;
+  final bool offerSave;
 
   @override
   ConsumerState<_FilterSheet> createState() => _FilterSheetState();
@@ -38,7 +45,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
   static const _ring = GFocusRing.offset + GFocusRing.pad + 1.5;
 
   void _clear() => setState(() => _q = _q.copyWith(genres: const {}, regions: const {}));
-  void _apply() => Navigator.of(context).pop(_q);
+  void _apply({bool save = false}) => Navigator.of(context).pop((query: _q, saveAsSmart: save));
 
   /// [button] is the controller button that does it too, shown in gamepad mode.
   Widget _chip(String label, bool on, VoidCallback onTap, {bool autofocus = false, String? button}) => GFocusable(
@@ -154,6 +161,13 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                     children: [
                       _chip(tr('Clear filters'), false, _clear, button: pad ? 'Y' : null),
                       const Spacer(),
+                      if (widget.offerSave) ...[
+                        KeyedSubtree(
+                          key: const ValueKey('filter-save-smart'),
+                          child: _chip(tr('Save as smart collection…'), false, () => _apply(save: true)),
+                        ),
+                        const SizedBox(width: GSpace.s2),
+                      ],
                       _chip(
                         tr('Apply'),
                         true,

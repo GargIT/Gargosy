@@ -12,6 +12,15 @@ What changed in each release of Gargosy. The format follows
   Svenska). System follows Windows. Dates and decimals follow the language;
   names and descriptions from RomM stay as RomM has them. The on-screen
   keyboard has å, ä and ö.
+- Save a gallery as a smart collection: in Filters, Save as smart
+  collection keeps its platform or collection, search, genres, regions and
+  sort on RomM, asks a name and who sees it, and opens it. Your own smart
+  collections can be renamed, shared and deleted from ⋯ on their page.
+
+### Fixed
+
+- A smart collection's page said its filters as RomM's raw JSON; now in
+  words (Search “girl” · Sorted by Name, A–Z).
 
 ## [0.5.0] - 2026-10-27
 

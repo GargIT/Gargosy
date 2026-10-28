@@ -6,7 +6,8 @@ import 'romm_library_api.dart';
 import '../../l10n/tr.dart';
 
 /// Changing the user's own collections on RomM (#144): a game in or out,
-/// a new one, renamed, shared, deleted. RomM lets only the owner do it.
+/// a new one, renamed, shared, deleted; smart ones too (#188). RomM lets only
+/// the owner do it.
 abstract class CollectionEdits {
   /// Puts [gameId] in collection [collectionId], or takes it out; only that
   /// game changes (RomM's `/api/collections/{id}/roms`).
@@ -17,9 +18,14 @@ abstract class CollectionEdits {
   /// one of that name.
   Future<RommCollection> create(String name, {bool shared = false, String? gameId});
 
+  /// A new smart collection named [name] holding the games that match
+  /// [criteria] (`/api/roms`'s names; see `smartCriteriaOf`).
+  Future<RommCollection> createSmart(String name, Map<String, dynamic> criteria, {bool shared = false});
+
+  /// Regular or smart, by [RommCollection.kind]; a smart one keeps its filters.
   Future<RommCollection> rename(RommCollection c, String name);
-  Future<RommCollection> setShared(int collectionId, bool shared);
-  Future<void> delete(int collectionId);
+  Future<RommCollection> setShared(RommCollection c, bool shared);
+  Future<void> delete(RommCollection c);
 }
 
 /// What RomM refused, said for the player.
@@ -36,7 +42,11 @@ class RommCollectionEdits implements CollectionEdits {
   final Dio dio;
   final Options Function() auth;
 
-  static RommCollection _read(Response<dynamic> r) => RommCollection.fromJson(r.data as Map<String, dynamic>);
+  static RommCollection _read(Response<dynamic> r, [CollectionKind kind = CollectionKind.regular]) =>
+      RommCollection.fromJson(r.data as Map<String, dynamic>, kind: kind);
+
+  static String _path(RommCollection c) =>
+      c.kind == CollectionKind.smart ? '/api/collections/smart/${c.id}' : '/api/collections/${c.id}';
 
   /// RomM's own reason when it gives one ("A collection named … exists").
   static Future<T> _said<T>(Future<T> Function() call) async {
@@ -78,7 +88,28 @@ class RommCollectionEdits implements CollectionEdits {
   });
 
   @override
+  Future<RommCollection> createSmart(String name, Map<String, dynamic> criteria, {bool shared = false}) =>
+      _said(() async {
+        return _read(
+          await dio.post(
+            '/api/collections/smart',
+            queryParameters: {'is_public': shared},
+            data: FormData.fromMap({'name': name, 'description': '', 'filter_criteria': jsonEncode(criteria)}),
+            options: auth(),
+          ),
+          CollectionKind.smart,
+        );
+      });
+
+  @override
   Future<RommCollection> rename(RommCollection c, String name) => _said(() async {
+    if (c.kind == CollectionKind.smart) {
+      // Without filter_criteria RomM keeps the stored ones.
+      return _read(
+        await dio.put(_path(c), data: FormData.fromMap({'name': name}), options: auth()),
+        CollectionKind.smart,
+      );
+    }
     // RomM's update takes the whole game list; it's sent as it is.
     return _read(
       await dio.put(
@@ -90,12 +121,10 @@ class RommCollectionEdits implements CollectionEdits {
   });
 
   @override
-  Future<RommCollection> setShared(int collectionId, bool shared) => _said(() async {
-    return _read(
-      await dio.put('/api/collections/$collectionId/visibility', data: {'is_public': shared}, options: auth()),
-    );
+  Future<RommCollection> setShared(RommCollection c, bool shared) => _said(() async {
+    return _read(await dio.put('${_path(c)}/visibility', data: {'is_public': shared}, options: auth()), c.kind);
   });
 
   @override
-  Future<void> delete(int collectionId) => _said(() => dio.delete('/api/collections/$collectionId', options: auth()));
+  Future<void> delete(RommCollection c) => _said(() => dio.delete(_path(c), options: auth()));
 }

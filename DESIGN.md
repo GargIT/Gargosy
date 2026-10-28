@@ -156,7 +156,7 @@ when a token exists.
 | Achievements tab | Summary; filters by type and earned / locked; badges in 1–4 columns (380 px each) | #174 |
 | Play screen | Cover + Play / Resume + what A does; Saves \| States; Plays in (emulator, core, full screen) | |
 | Platform page | Header (logo, facts, Random); tabs Library, Firmware, BIOS, Emulator | #95 |
-| Gallery | Filter bar (search, Filters, On this PC, Sort); grid; A–Z rail when sorted by name | #95 |
+| Gallery | Filter bar (search, Filters, On this PC, Sort); grid; A–Z rail when sorted by name. Filters ends with Clear, Save as smart collection…, Apply | #95, #188 |
 | Collections | Heading, filter bar, Kind and Whose; the players' collections; RomM's virtual ones by type | #121 |
 | Search | Header with the search box (moves onto the bar on scroll), counts, recent searches; the library by best match | #132 |
 | Settings | RomM v2's profile page: grouped sidebar (Profile, Library, This PC, Gargosy), cards on the right | #6 |
@@ -203,3 +203,4 @@ Mockups are linked from each issue.
 | 2026-10-27 | From 1600 px Home's widgets stand beside the header; Your library one slim line | #180 |
 | 2026-10-27 | Home rows show only what fits, See all last; nothing scrolls sideways | #184 |
 | 2026-10-27 | Swedish beside English, the English text as the key (`tr()`); app-wide, System follows Windows | #191 |
+| 2026-10-27 | A gallery is saved as a smart collection from its Filters; what RomM can't run is said, not saved | #188 |
