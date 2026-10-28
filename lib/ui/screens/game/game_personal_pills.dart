@@ -158,8 +158,13 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
           extra.isEmpty ? status : '$status · ${extra.join(' · ')}',
           _pickStatus,
         ),
-        _pill(const ValueKey('pill-rating'), Icons.star_outline, _rating == 0 ? 'Rate' : '$_rating / 10', _pickRating),
-        _pill(const ValueKey('pill-completion'), Icons.donut_large, '$_completion % done', _pickCompletion),
+        _pill(
+          const ValueKey('pill-rating'),
+          Icons.star_outline,
+          _rating == 0 ? tr('Rate') : '$_rating / 10',
+          _pickRating,
+        ),
+        _pill(const ValueKey('pill-completion'), Icons.donut_large, tr('{0} % done', [_completion]), _pickCompletion),
       ],
     );
   }

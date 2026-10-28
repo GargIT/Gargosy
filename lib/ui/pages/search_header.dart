@@ -54,7 +54,7 @@ class SearchHeader extends StatelessWidget {
                 spacing: GSpace.s10,
                 runSpacing: GSpace.s3,
                 children: [
-                  HeaderStat(scope == null ? '–' : '${scope.total}', 'GAMES', key: const ValueKey('search-games')),
+                  HeaderStat(scope == null ? '–' : '${scope.total}', tr('GAMES'), key: const ValueKey('search-games')),
                   HeaderStat(
                     '$onThisPc',
                     tr('ON THIS PC'),
@@ -62,7 +62,7 @@ class SearchHeader extends StatelessWidget {
                     key: const ValueKey('search-on-pc'),
                   ),
                   if (scope != null && scope.platforms.isNotEmpty)
-                    HeaderStat('${scope.platforms.length}', 'PLATFORMS', key: const ValueKey('search-platforms')),
+                    HeaderStat('${scope.platforms.length}', tr('PLATFORMS'), key: const ValueKey('search-platforms')),
                 ],
               ),
             ],

@@ -158,7 +158,7 @@ class HomeHeader extends ConsumerWidget {
           () => ref.invalidate(randomGameProvider),
           key: const ValueKey('home-another'),
         ),
-      _button('Game page', null, () => openGame(context, game), key: const ValueKey('home-game-page')),
+      _button(tr('Game page'), null, () => openGame(context, game), key: const ValueKey('home-game-page')),
     ];
 
     // As tall as what it holds (a long name, buttons on two lines), the art

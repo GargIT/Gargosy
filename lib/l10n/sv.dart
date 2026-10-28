@@ -3,8 +3,6 @@
 // checks). Placeholders {0}, {1} … are filled by tr.
 
 const svText = <String, String>{
-  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
-      '\n\n{0} nått RomM än ({1}) och {2} förlorade med profilen.',
   ' Gargosy was approved for {0} in RomM; you can remove that device there.':
       ' Gargosy godkändes för {0} i RomM; du kan ta bort den enheten där.',
   ' One isn\'t in this profile\'s library: another profile may have downloaded it, and loses it too.':
@@ -52,6 +50,7 @@ const svText = <String, String>{
   'BIOS': 'BIOS',
   'Back': 'Tillbaka',
   'Back to the default (15 %)': 'Tillbaka till standard (15 %)',
+  'Back to the game': 'Tillbaka till spelet',
   'Back up now': 'Säkerhetskopiera nu',
   'Backed up on this PC.': 'Säkerhetskopierad på den här datorn.',
   'Backlog': 'Att spela',
@@ -126,8 +125,8 @@ const svText = <String, String>{
   'Couldn\'t load more  ·  {0}': 'Kunde inte ladda fler  ·  {0}',
   'Couldn\'t make {0}: {1}': 'Kunde inte skapa {0}: {1}',
   'Couldn\'t open that version.': 'Kunde inte öppna den versionen.',
-  'Couldn\'t open {0}\'s zip: {1}': 'Kunde inte öppna zipen för {0}: {1}',
   'Couldn\'t open {0}: {1}': 'Kunde inte öppna {0}: {1}',
+  'Couldn\'t open {0}\'s zip: {1}': 'Kunde inte öppna zipen för {0}: {1}',
   'Couldn\'t reach GitHub. Check the connection.': 'Nådde inte GitHub. Kontrollera anslutningen.',
   'Couldn\'t reach RetroAchievements. Try again later.': 'Nådde inte RetroAchievements. Försök igen senare.',
   'Couldn\'t save the note: {0}': 'Kunde inte spara anteckningen: {0}',
@@ -235,6 +234,7 @@ const svText = <String, String>{
   'GAMES': 'SPEL',
   'GARGOSY': 'GARGOSY',
   'Game id': 'Spel-id',
+  'Game page': 'Spelsidan',
   'Games': 'Spel',
   'Gargosy can\'t load sigil.dll': 'Gargosy kan inte läsa in sigil.dll',
   'Gargosy can\'t point these at a profile\'s own folder yet, so it doesn\'t run them.':
@@ -432,6 +432,7 @@ const svText = <String, String>{
   'Others\'': 'Andras',
   'Overview': 'Översikt',
   'PIN for {0}': 'PIN-kod för {0}',
+  'PLATFORMS': 'PLATTFORMAR',
   'PLAYS IN': 'SPELAS I',
   'PROFILE': 'PROFIL',
   'Page down': 'Sida ner',
@@ -487,6 +488,7 @@ const svText = <String, String>{
   'Random': 'Slumpa',
   'Random game': 'Slumpat spel',
   'Random pick': 'Slumpat val',
+  'Rate': 'Betygsätt',
   'Rating': 'Betyg',
   'Read me': 'Läs mig',
   'Recently added': 'Nyligen tillagda',
@@ -627,6 +629,7 @@ const svText = <String, String>{
   'Take it': 'Ta den',
   'Teach': 'Lär in',
   'Teach quit buttons': 'Lär in avslutningsknappar',
+  'Teaching {0} ({1}).': 'Lär in {0} ({1}).',
   'Temp': 'Temp',
   'That button is already {0}.': 'Den knappen är redan {0}.',
   'The PIN is removed.': 'PIN-koden är borttagen.',
@@ -769,6 +772,8 @@ const svText = <String, String>{
   'Your saves on this PC are kept.': 'Dina sparfiler på den här datorn behålls.',
   'Your {0} save on this PC changed since its last upload (played offline?). Playing {1}{2} from {3} replaces it.\n\nA backup of it is kept on this PC.': 'Din {0}-sparfil på den här datorn har ändrats sedan den senaste uppladdningen (spelat offline?). Att spela {1}{2} från {3} ersätter den.\n\nEn säkerhetskopia av den sparas på den här datorn.',
   'Yours': 'Dina',
+  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
+      '\n\n{0} nått RomM än ({1}) och {2} förlorade med profilen.',
   'and {0} more from your library': 'och {0} till från ditt bibliotek',
   'another player\'s save isn\'t yours to delete': 'en annan spelares sparfil är inte din att ta bort',
   'another player\'s state isn\'t yours to delete': 'en annan spelares sparläge är inte ditt att ta bort',
@@ -856,9 +861,8 @@ const svText = <String, String>{
   'yesterday {0}': 'i går {0}',
   'your ♥ games': 'dina ♥-spel',
   'yours and shared': 'dina och delade',
-  '{0}\n\nThis version is the one that runs; nothing was lost.':
-      '{0}\n\nDen här versionen är den som körs; inget gick förlorat.',
   '{0}  ·  This is this game\'s save': '{0}  ·  Det här är spelets sparfil',
+  '{0} % done': '{0} % klart',
   '{0} ({1}) is deleted on RomM, for every device.': '{0} ({1}) tas bort på RomM, för alla enheter.',
   '{0} Nothing was changed.': '{0} Inget ändrades.',
   '{0} PLAYS IN': '{0} SPELAS I',
@@ -920,12 +924,14 @@ const svText = <String, String>{
   '{0} {1} hidden: {2} can\'t use {3}. Show all': '{0} {1} dolda: {2} kan inte använda {3}. Visa alla',
   '{0} {1} · {2} on this PC': '{0} {1} · {2} på den här datorn',
   '{0} · {1} ago': '{0} · för {1} sedan',
-  '{0}\'s': '{0}s',
-  '{0}\'s save': '{0}s sparfil',
-  '{0}\'s saves can\'t be deleted from here': '{0}s sparfiler kan inte tas bort härifrån',
   '{0}. RomM may be restarting; try again in a moment.': '{0}. RomM kanske startar om; försök igen om en stund.',
   '{0}: start the game, then load the state from the emulator\'s own menu.':
       '{0}: starta spelet och ladda sedan sparläget från emulatorns egen meny.',
+  '{0}\'s': '{0}s',
+  '{0}\'s save': '{0}s sparfil',
+  '{0}\'s saves can\'t be deleted from here': '{0}s sparfiler kan inte tas bort härifrån',
+  '{0}\n\nThis version is the one that runs; nothing was lost.':
+      '{0}\n\nDen här versionen är den som körs; inget gick förlorat.',
   '⊘ Locked': '⊘ Låsta',
   '✓ Earned': '✓ Upplåsta',
 };

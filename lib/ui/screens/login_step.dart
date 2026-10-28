@@ -242,12 +242,12 @@ class _LoginStepState extends ConsumerState<LoginStep> {
       ]);
     } else {
       children.addAll([
-        _field(const Key('login-username'), 'Username', _username, () async {
+        _field(const Key('login-username'), tr('Username'), _username, () async {
           final v = await showOnScreenKeyboard(context, title: tr('Username'), initial: _username);
           if (v != null) setState(() => _username = v);
         }, autofocus: true),
         const SizedBox(height: GSpace.s3),
-        _field(const Key('login-password'), 'Password', '•' * _password.length, () async {
+        _field(const Key('login-password'), tr('Password'), '•' * _password.length, () async {
           final v = await showOnScreenKeyboard(context, title: tr('Password'), obscure: true);
           if (v != null) setState(() => _password = v);
         }),

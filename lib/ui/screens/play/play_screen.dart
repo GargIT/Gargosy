@@ -393,7 +393,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
           ),
           const Spacer(),
-          const OutlinedBackButton(key: ValueKey('play-back'), label: 'Back to the game'),
+          OutlinedBackButton(key: const ValueKey('play-back'), label: tr('Back to the game')),
           const SizedBox(height: GSpace.s4),
         ],
       ),

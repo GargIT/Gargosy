@@ -219,7 +219,7 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
                                 'For a controller that is not an Xbox one, if holding the quit buttons does nothing. Press each button once on that controller. {0}',
                                 [_heard],
                               )
-                            : 'Teaching ${device.name} (${hidDeviceKey(device.vendor, device.product)}).',
+                            : tr('Teaching {0} ({1}).', [device.name, hidDeviceKey(device.vendor, device.product)]),
                         style: const TextStyle(color: GColors.fgSecondary),
                       ),
                       const SizedBox(height: GSpace.s5),

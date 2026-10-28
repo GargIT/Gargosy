@@ -196,7 +196,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
                     HeaderStat('${c.romCount}', tr('GAMES')),
                     HeaderStat('${onThisPc(c, downloaded)}', tr('ON THIS PC'), color: GColors.gargosyTeal),
                     if (platforms != null && platforms.isNotEmpty)
-                      HeaderStat('${platforms.length}', 'PLATFORMS', key: const ValueKey('collection-platforms')),
+                      HeaderStat('${platforms.length}', tr('PLATFORMS'), key: const ValueKey('collection-platforms')),
                   ],
                 ),
               ],

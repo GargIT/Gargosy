@@ -321,7 +321,7 @@ class GameCoverColumn extends ConsumerWidget {
             ],
           ),
           const Spacer(),
-          const OutlinedBackButton(key: ValueKey('game-back'), label: 'Back'),
+          OutlinedBackButton(key: const ValueKey('game-back'), label: tr('Back')),
           const SizedBox(height: GSpace.s4),
         ],
       ),
