@@ -8,6 +8,7 @@ import '../../widgets/g_dropdown.dart';
 import '../../widgets/toast.dart';
 import 'game_screen.dart';
 import 'open_game.dart';
+import '../../../l10n/tr.dart';
 
 /// The game page's Version (#95): the game's regions and revisions on RomM,
 /// those on this PC marked. Picking one opens its page in place of this one.
@@ -38,7 +39,7 @@ class _VersionFieldState extends ConsumerState<VersionField> {
     final other = await gameOfVersion(ref, versions[i].id);
     if (!mounted) return;
     if (other == null) {
-      showToast(context, "Couldn't open that version.");
+      showToast(context, tr('Couldn\'t open that version.'));
       return;
     }
     await Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => GameScreen(game: other)));
@@ -56,7 +57,10 @@ class _VersionFieldState extends ConsumerState<VersionField> {
       child: GDropdownField(
         key: const ValueKey('game-version'),
         icon: Icons.layers_outlined,
-        text: 'Version: ${versionLabel(versions.first.name, versions.first.fsNameNoExt)}  (${versions.length})',
+        text: tr('Version: {0}  ({1})', [
+          versionLabel(versions.first.name, versions.first.fsNameNoExt),
+          versions.length,
+        ]),
         open: _open,
         compact: true,
         onPress: () => _pick(versions, onPc),

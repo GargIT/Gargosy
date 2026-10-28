@@ -15,6 +15,7 @@ import '../shell/backdrop.dart';
 import '../theme/tokens.dart';
 import '../widgets/controller_dialogs.dart';
 import '../widgets/hint_bar.dart';
+import '../../l10n/tr.dart';
 
 /// Opens the document at [path] (a file in the Gargosy folder) in the reader.
 Future<void> openDoc(BuildContext context, String path) =>
@@ -131,7 +132,7 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
   Future<void> _showLinks(String text) async {
     final links = markdownLinks(text);
     if (links.isEmpty) return;
-    final i = await showChoice(context, title: 'Links', labels: [for (final l in links) l.label]);
+    final i = await showChoice(context, title: tr('Links'), labels: [for (final l in links) l.label]);
     if (i != null && mounted) _openLink(links[i].href);
   }
 
@@ -204,7 +205,7 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
                       child: text == null
                           ? Center(
                               child: Text(
-                                "${widget.title ?? p.basename(widget.path!)} isn't in the Gargosy folder.",
+                                tr('{0} isn\'t in the Gargosy folder.', [widget.title ?? p.basename(widget.path!)]),
                                 style: const TextStyle(color: GColors.fgSecondary),
                               ),
                             )
@@ -225,11 +226,11 @@ class _DocReaderScreenState extends ConsumerState<DocReaderScreen> {
                     ),
                     HintBar(
                       hints: [
-                        const Hint(GameAction.verticalAxis, 'Scroll'),
-                        const Hint(GameAction.l1, 'Page up'),
-                        const Hint(GameAction.r1, 'Page down'),
-                        if (hasLinks) const Hint(GameAction.detail, 'Links'),
-                        const Hint(GameAction.back, 'Back'),
+                        Hint(GameAction.verticalAxis, tr('Scroll')),
+                        Hint(GameAction.l1, tr('Page up')),
+                        Hint(GameAction.r1, tr('Page down')),
+                        if (hasLinks) Hint(GameAction.detail, tr('Links')),
+                        Hint(GameAction.back, tr('Back')),
                       ],
                     ),
                   ],

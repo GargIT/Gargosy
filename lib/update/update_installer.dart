@@ -7,6 +7,7 @@ import '../core/platform/platform_info.dart';
 import '../profiles/app_root.dart';
 import '../profiles/path_guard.dart';
 import 'update_paths.dart';
+import '../l10n/tr.dart';
 
 /// Starts a process that outlives Gargosy; tests pass a recorder.
 typedef DetachedStarter = Future<void> Function(String exe, List<String> args);
@@ -73,9 +74,11 @@ class UpdateInstaller {
 
   String? _whyNot() {
     if (!io.File(paths.installedUpdater).existsSync()) {
-      return "This Gargosy has no ${UpdatePaths.updaterExe}: update it by hand from the release page this once.";
+      return tr('This Gargosy has no {0}: update it by hand from the release page this once.', [
+        UpdatePaths.updaterExe,
+      ]);
     }
-    if (_inProtectedFolder) return "Gargosy is in a folder Windows protects, so it can't update itself there.";
+    if (_inProtectedFolder) return tr('Gargosy is in a folder Windows protects, so it can\'t update itself there.');
     return null;
   }
 
@@ -115,7 +118,7 @@ class UpdateInstaller {
   /// quits Gargosy the normal way, so settings are flushed: the
   /// updater waits for this process to end.
   Future<void> start(String unpacked, String newVersion) async {
-    if (!canInstall) throw StateError(whyNot ?? "Can't update");
+    if (!canInstall) throw StateError(whyNot ?? tr('Can\'t update'));
     final copy = _guard.check(paths.updaterCopy);
     await io.Directory(p.dirname(copy)).create(recursive: true);
     await io.File(paths.installedUpdater).copy(copy);

@@ -15,6 +15,7 @@ import '../../widgets/hint_bar.dart';
 import '../doc_reader_screen.dart';
 import 'settings_rows.dart';
 import 'updates_block.dart';
+import '../../../l10n/tr.dart';
 
 const gargosyRepoUrl = 'https://github.com/GargIT/Gargosy';
 
@@ -25,16 +26,16 @@ Future<void> showAboutGargosy(BuildContext context) => showDialog<void>(
     child: Material(
       color: GColors.panel,
       borderRadius: BorderRadius.circular(GRadius.lg),
-      child: const SizedBox(
+      child: SizedBox(
         width: 460,
         child: Padding(
-          padding: EdgeInsets.all(GSpace.s5),
+          padding: const EdgeInsets.all(GSpace.s5),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Flexible(child: SingleChildScrollView(child: AboutSection(autofocus: true))),
-              HintBar(hints: [Hint(GameAction.confirm, 'Open'), Hint(GameAction.back, 'Close')]),
+              const Flexible(child: SingleChildScrollView(child: AboutSection(autofocus: true))),
+              HintBar(hints: [Hint(GameAction.confirm, tr('Open')), Hint(GameAction.back, tr('Close'))]),
             ],
           ),
         ),
@@ -60,9 +61,9 @@ class AboutSection extends ConsumerWidget {
     final version = AppConstants.version;
     final outcome = updateOutcomeLine(ref.watch(updateOutcomeProvider), version);
     final rommText = romm.when(
-      data: (v) => v == null ? 'not reachable' : 'v$v',
+      data: (v) => v == null ? tr('not reachable') : 'v$v',
       loading: () => '…',
-      error: (_, _) => 'not reachable',
+      error: (_, _) => tr('not reachable'),
     );
 
     Widget doc(IconData icon, String label, String name, {bool focus = false}) => SettingsLinkRow(
@@ -115,19 +116,19 @@ class AboutSection extends ConsumerWidget {
             ],
           ),
         ),
-        doc(Icons.history, "What's new", 'CHANGELOG.md', focus: autofocus),
-        doc(Icons.description_outlined, 'Read me', 'README.md'),
-        doc(Icons.verified_outlined, 'Licences', 'NOTICE.md'),
-        doc(Icons.lock_outline, 'Security policy', 'SECURITY.md'),
+        doc(Icons.history, tr('What\'s new'), 'CHANGELOG.md', focus: autofocus),
+        doc(Icons.description_outlined, tr('Read me'), 'README.md'),
+        doc(Icons.verified_outlined, tr('Licences'), 'NOTICE.md'),
+        doc(Icons.lock_outline, tr('Security policy'), 'SECURITY.md'),
         SettingsLinkRow(
           icon: Icons.inventory_2_outlined,
-          label: 'Dart and Flutter packages',
+          label: tr('Dart and Flutter packages'),
           onActivate: () =>
               showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$version'),
         ),
         SettingsLinkRow(
           icon: Icons.folder_open_outlined,
-          label: 'Open log folder',
+          label: tr('Open log folder'),
           value: r'userdata\app\logs',
           onActivate: () {
             // Made when missing (a start that couldn't write it), so Explorer opens the folder.

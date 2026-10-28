@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
 import '../core/storage/app_preferences.dart';
+import '../l10n/tr.dart';
 
 /// The Platforms page's Covers setting: which five games each card fans.
 enum PlatformCovers {
@@ -16,8 +17,11 @@ enum PlatformCovers {
   /// No covers: the platform's logo, large.
   logoOnly('Logo only');
 
-  const PlatformCovers(this.label);
-  final String label;
+  const PlatformCovers(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 }
 
 const _count = 5;

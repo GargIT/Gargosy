@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../providers/ui_provider.dart';
 import '../theme/tokens.dart';
+import '../../l10n/tr.dart';
 
 class Hint {
   const Hint(this.action, this.label);
@@ -18,7 +19,7 @@ class HintBar extends ConsumerWidget {
 
   final List<Hint> hints;
 
-  static const _pad = {
+  static Map<GameAction, String> get _pad => {
     GameAction.confirm: 'A',
     GameAction.back: 'B',
     GameAction.detail: 'X',
@@ -26,18 +27,18 @@ class HintBar extends ConsumerWidget {
     GameAction.l1: 'LB',
     GameAction.r1: 'RB',
     GameAction.start: 'Start',
-    GameAction.confirmHold: 'Hold A',
-    GameAction.verticalAxis: 'D-pad',
+    GameAction.confirmHold: tr('Hold A'),
+    GameAction.verticalAxis: tr('D-pad'),
   };
-  static const _keys = {
+  static Map<GameAction, String> get _keys => {
     GameAction.confirm: 'Enter',
     GameAction.back: 'Esc',
-    GameAction.detail: 'Right-click',
+    GameAction.detail: tr('Right-click'),
     GameAction.favorite: 'F',
     GameAction.l1: 'PgUp',
     GameAction.r1: 'PgDn',
-    GameAction.start: 'Menu',
-    GameAction.confirmHold: 'Hold Enter',
+    GameAction.start: tr('Menu'),
+    GameAction.confirmHold: tr('Hold Enter'),
     GameAction.verticalAxis: '↑ ↓',
   };
 

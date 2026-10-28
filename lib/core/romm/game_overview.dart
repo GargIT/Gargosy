@@ -1,3 +1,5 @@
+import '../../l10n/tr.dart';
+
 /// What the game page's Overview shows beyond the summary (#179): the age
 /// ratings and HowLongToBeat's times, read from a RomM game and kept in the
 /// offline snapshot ([toJson] / [fromJson]).
@@ -158,10 +160,10 @@ class HowLongToBeat {
 
   /// The times there are, as RomM's strip lists them.
   List<(String, int)> get entries => [
-    if (mainStory case final s?) ('Main story', s),
-    if (mainPlusExtra case final s?) ('Main + extra', s),
-    if (completionist case final s?) ('Completionist', s),
-    if (allStyles case final s?) ('All styles', s),
+    if (mainStory case final s?) (tr('Main story'), s),
+    if (mainPlusExtra case final s?) (tr('Main + extra'), s),
+    if (completionist case final s?) (tr('Completionist'), s),
+    if (allStyles case final s?) (tr('All styles'), s),
   ];
 
   Map<String, dynamic> toJson() => {
@@ -175,7 +177,7 @@ class HowLongToBeat {
 /// A HowLongToBeat time as RomM shows it: minutes under an hour, else hours
 /// to the half hour (`45 min`, `7 h`, `9.5 h`).
 String hltbTime(int seconds) {
-  if (seconds < 3600) return '${(seconds / 60).round()} min';
+  if (seconds < 3600) return tr('{0} min', [(seconds / 60).round()]);
   final halves = (seconds / 1800).round();
-  return halves.isEven ? '${halves ~/ 2} h' : '${halves ~/ 2}.5 h';
+  return halves.isEven ? tr('{0} h', [halves ~/ 2]) : tr('{0} h', [decimal(halves / 2, 1)]);
 }

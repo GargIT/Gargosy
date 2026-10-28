@@ -12,6 +12,7 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
 import '../../widgets/on_screen_keyboard.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// The game page's ⋯ → Add to collection… (#144): the user's own
 /// collections, Favourites first, ✓ on those [game] is in; A puts it in or
@@ -27,12 +28,12 @@ Future<void> showAddToCollection(BuildContext context, Game game) => showDialog<
 Future<RommCollection?> createCollection(BuildContext context, WidgetRef ref, {String? gameId}) async {
   final edits = ref.read(collectionEditsProvider);
   if (edits == null) return null;
-  final name = (await showOnScreenKeyboard(context, title: 'New collection'))?.trim();
+  final name = (await showOnScreenKeyboard(context, title: tr('New collection')))?.trim();
   if (name == null || name.isEmpty || !context.mounted) return null;
   final who = await showChoice(
     context,
-    title: 'Who sees $name?',
-    labels: const ['Only you', 'Every player on RomM (shared)'],
+    title: tr('Who sees {0}?', [name]),
+    labels: [tr('Only you'), tr('Every player on RomM (shared)')],
     current: 0,
   );
   if (who == null) return null;
@@ -41,7 +42,7 @@ Future<RommCollection?> createCollection(BuildContext context, WidgetRef ref, {S
     ref.invalidate(collectionsProvider);
     return made;
   } on Object catch (e) {
-    if (context.mounted) showToast(context, "Couldn't make $name: $e");
+    if (context.mounted) showToast(context, tr('Couldn\'t make {0}: {1}', [name, e]));
     return null;
   }
 }
@@ -73,7 +74,7 @@ class _AddToCollectionState extends ConsumerState<_AddToCollection> {
       }
       await ref.read(collectionsProvider.future);
     } on Object catch (e) {
-      if (mounted) showToast(context, "Couldn't change ${c.isFavorite ? 'Favourites' : c.name}: $e");
+      if (mounted) showToast(context, tr('Couldn\'t change {0}: {1}', [c.isFavorite ? 'Favourites' : c.name, e]));
     } finally {
       if (mounted) setState(() => _busy.remove(c.id));
     }
@@ -140,7 +141,7 @@ class _AddToCollectionState extends ConsumerState<_AddToCollection> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Add ${widget.game.displayName} to',
+                  tr('Add {0} to', [widget.game.displayName]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w800),
@@ -156,7 +157,7 @@ class _AddToCollectionState extends ConsumerState<_AddToCollection> {
                             final c = own[i];
                             final inIt = c.romIds.contains(_gameId);
                             return row(
-                              c.isFavorite ? 'Favourites' : c.name,
+                              c.isFavorite ? tr('Favourites') : c.name,
                               '${c.romCount} ${c.romCount == 1 ? 'game' : 'games'}${c.isPublic ? ' · shared' : ''}',
                               inIt ? Icons.check_box : Icons.check_box_outline_blank,
                               inIt ? GColors.primary : GColors.fgMuted,
@@ -165,16 +166,16 @@ class _AddToCollectionState extends ConsumerState<_AddToCollection> {
                               busy: _busy.contains(c.id),
                             );
                           }(),
-                        row('New collection…', '', Icons.add, GColors.fgSecondary, () async {
+                        row(tr('New collection…'), '', Icons.add, GColors.fgSecondary, () async {
                           final made = await createCollection(context, ref, gameId: widget.game.id);
-                          if (made != null && context.mounted) showToast(context, 'Added to ${made.name}.');
+                          if (made != null && context.mounted) showToast(context, tr('Added to {0}.', [made.name]));
                         }, key: const ValueKey('collection-new')),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: GSpace.s3),
-                const HintBar(hints: [Hint(GameAction.confirm, 'In / out'), Hint(GameAction.back, 'Done')]),
+                HintBar(hints: [Hint(GameAction.confirm, tr('In / out')), Hint(GameAction.back, tr('Done'))]),
               ],
             ),
           ),

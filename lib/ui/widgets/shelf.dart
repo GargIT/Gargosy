@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
 import 'game_card.dart';
+import '../../l10n/tr.dart';
 
 /// A titled row (v2's Home rows): as many of [itemCount] items from
 /// [itemBuilder] as fit the width, each [itemWidth] wide, the row [height]
@@ -115,14 +116,14 @@ class _SeeAll extends StatelessWidget {
           borderRadius: BorderRadius.circular(GRadius.card),
           border: Border.all(color: GColors.border),
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.arrow_forward, color: GColors.fgSecondary),
-            SizedBox(height: GSpace.s2),
+            const Icon(Icons.arrow_forward, color: GColors.fgSecondary),
+            const SizedBox(height: GSpace.s2),
             Text(
-              'See all',
-              style: TextStyle(fontWeight: FontWeight.w600, color: GColors.fgSecondary),
+              tr('See all'),
+              style: const TextStyle(fontWeight: FontWeight.w600, color: GColors.fgSecondary),
             ),
           ],
         ),

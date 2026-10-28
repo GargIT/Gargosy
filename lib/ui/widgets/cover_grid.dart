@@ -4,6 +4,7 @@ import '../../core/romm/romm_models.dart';
 import '../input/wrap_grid_policy.dart';
 import '../theme/tokens.dart';
 import 'game_card.dart';
+import '../../l10n/tr.dart';
 
 /// A gallery's grid of game cards. Focus wraps between rows (spec §7), and
 /// [onEndReached] asks for the next page when the end comes into view.
@@ -179,7 +180,7 @@ class CoverGridState extends State<CoverGrid> {
                   hasScrollBody: false,
                   child: Center(
                     child: Text(
-                      w.emptyText,
+                      tr(w.emptyText),
                       style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
                     ),
                   ),

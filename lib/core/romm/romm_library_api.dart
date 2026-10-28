@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import 'romm_models.dart';
+import '../../l10n/tr.dart';
 
 /// Where a sort's order comes from: RomM's fields, the player's own, or
 /// Gargosy's (only with On this PC on).
@@ -13,8 +14,11 @@ enum SortGroup {
   yours('YOURS'),
   thisPc('THIS PC');
 
-  const SortGroup(this.label);
-  final String label;
+  const SortGroup(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 }
 
 /// Gallery sort orders, as RomM's `/api/roms` `order_by` names them (a
@@ -39,9 +43,12 @@ enum GallerySort {
   /// Newest download first; Gargosy sorts it itself.
   downloaded('name', 'Downloaded', true, SortGroup.thisPc);
 
-  const GallerySort(this.field, this.label, this.descByDefault, [this.group = SortGroup.romm]);
+  const GallerySort(this.field, this._label, this.descByDefault, [this.group = SortGroup.romm]);
   final String field;
-  final String label;
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
   final bool descByDefault;
   final SortGroup group;
 }

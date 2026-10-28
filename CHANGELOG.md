@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Gargosy in Swedish: Settings → Display → Language (System, English,
+  Svenska). System follows Windows. Dates and decimals follow the language;
+  names and descriptions from RomM stay as RomM has them. The on-screen
+  keyboard has å, ä and ö.
 - Save a gallery as a smart collection: in Filters, Save as smart
   collection keeps its platform or collection, search, genres, regions and
   sort on RomM, asks a name and who sees it, and opens it. Your own smart

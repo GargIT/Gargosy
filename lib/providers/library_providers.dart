@@ -15,6 +15,7 @@ import '../core/romm/romm_models.dart';
 import '../core/romm/romm_state.dart';
 import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
+import '../l10n/tr.dart';
 
 /// Platforms that have games, by name.
 final platformsProvider = FutureProvider<List<Platform>>((ref) async {
@@ -186,7 +187,7 @@ final romSavesProvider = FutureProvider.family<List<Map<String, dynamic>>, Strin
   final romm = ref.watch(rommServiceProvider);
   if (romm == null) return const [];
   final list = await romm.getSavesListOrNull(id);
-  if (list == null) throw StateError('RomM did not answer');
+  if (list == null) throw StateError(tr('RomM did not answer'));
   return list;
 });
 
@@ -242,7 +243,7 @@ Future<String?> toggleFavourite(WidgetRef ref, Game g) async {
     ref.invalidate(favouriteGamesProvider);
     return null;
   } on Object catch (e) {
-    return "Couldn't update favourites: ${e is Exception ? e.toString().replaceFirst('Exception: ', '') : e}";
+    return tr('Couldn\'t update favourites: {0}', [e is Exception ? e.toString().replaceFirst('Exception: ', '') : e]);
   } finally {
     busy.state = {...busy.state}..remove(g.id);
   }

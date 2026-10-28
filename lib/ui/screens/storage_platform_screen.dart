@@ -22,6 +22,7 @@ import '../widgets/hint_bar.dart';
 import '../widgets/save_list/save_labels.dart';
 import '../widgets/toast.dart';
 import 'settings/storage_section.dart';
+import '../../l10n/tr.dart';
 
 /// A platform's games on this PC (Settings → Storage, #145), largest first:
 /// A deletes one from this PC, X marks several for Delete marked. Only the
@@ -54,7 +55,7 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
   Future<void> _delete(List<RomEntry> entries) async {
     if (entries.isEmpty) return;
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, "Close the game first: nothing is deleted while one runs.");
+      showToast(context, tr('Close the game first: nothing is deleted while one runs.'));
       return;
     }
     final games = _byPath();
@@ -62,18 +63,24 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
     final bytes = entries.fold(0, (n, e) => n + e.bytes);
     final what = entries.length == 1
         ? (games[_key(entries.single)]?.displayName ?? entries.single.name)
-        : '${entries.length} games';
+        : tr('{0} games', [entries.length]);
     final shared = switch (others) {
       0 => '',
-      1 => " One isn't in this profile's library: another profile may have downloaded it, and loses it too.",
-      _ => " $others aren't in this profile's library: another profile may have downloaded them, and loses them too.",
+      1 => tr(' One isn\'t in this profile\'s library: another profile may have downloaded it, and loses it too.'),
+      _ => tr(
+        ' {0} aren\'t in this profile\'s library: another profile may have downloaded them, and loses them too.',
+        [others],
+      ),
     };
     final ok = await showConfirm(
       context,
-      title: 'Delete $what from this PC?',
-      body: 'Frees ${formatBytes(bytes)}. Only the ROM files go; your saves stay, and the games stay on RomM.$shared',
-      yes: 'Delete',
-      no: 'Keep',
+      title: tr('Delete {0} from this PC?', [what]),
+      body: tr('Frees {0}. Only the ROM files go; your saves stay, and the games stay on RomM.{1}', [
+        formatBytes(bytes),
+        shared,
+      ]),
+      yes: tr('Delete'),
+      no: tr('Keep'),
       focusYes: false,
       danger: true,
     );
@@ -96,7 +103,7 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
     ref.read(romFilesVersionProvider.notifier).state++;
     ref.invalidate(storageUsageProvider);
     if (!mounted) return;
-    if (failed > 0) showToast(context, "$failed couldn't be deleted (in use?).");
+    if (failed > 0) showToast(context, tr('{0} couldn\'t be deleted (in use?).', [failed]));
     setState(() {
       _marked.clear();
       _entries = _read();
@@ -140,8 +147,11 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
                           ),
                           const SizedBox(height: GSpace.s1),
                           Text(
-                            '${entries.length} ${entries.length == 1 ? 'game' : 'games'} · '
-                            '${formatBytes(entries.fold(0, (n, e) => n + e.bytes))} on this PC',
+                            tr('{0} {1} · {2} on this PC', [
+                              entries.length,
+                              entries.length == 1 ? 'game' : 'games',
+                              formatBytes(entries.fold(0, (n, e) => n + e.bytes)),
+                            ]),
                             style: const TextStyle(color: GColors.fgSecondary),
                           ),
                           const SizedBox(height: GSpace.s4),
@@ -161,8 +171,10 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
                                       borderRadius: BorderRadius.circular(GRadius.pill),
                                     ),
                                     child: Text(
-                                      'Delete marked (${marked.length} · '
-                                      '${formatBytes(marked.fold(0, (n, e) => n + e.bytes))})',
+                                      tr('Delete marked ({0} · {1})', [
+                                        marked.length,
+                                        formatBytes(marked.fold(0, (n, e) => n + e.bytes)),
+                                      ]),
                                       style: const TextStyle(fontWeight: FontWeight.w700),
                                     ),
                                   ),
@@ -178,11 +190,11 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
                 },
               ),
             ),
-            const HintBar(
+            HintBar(
               hints: [
-                Hint(GameAction.confirm, 'Delete'),
-                Hint(GameAction.detail, 'Mark'),
-                Hint(GameAction.back, 'Back'),
+                Hint(GameAction.confirm, tr('Delete')),
+                Hint(GameAction.detail, tr('Mark')),
+                Hint(GameAction.back, tr('Back')),
               ],
             ),
           ],
@@ -196,9 +208,9 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
     final line = [
       formatBytes(e.bytes),
       if (game == null)
-        "not in this profile's library"
+        tr('not in this profile\'s library')
       else
-        played == null ? 'never played' : 'played ${formatSaveTime(played)}',
+        played == null ? tr('never played') : tr('played {0}', [formatSaveTime(played)]),
     ].join(' · ');
     return Padding(
       key: ValueKey('storage-rom-${e.name}'),

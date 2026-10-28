@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
+import '../../l10n/tr.dart';
 
 /// A field that opens a list under itself, as RomM's settings selects: an
 /// outlined box with an icon, the value and a chevron.
@@ -104,7 +105,7 @@ class _DropdownRoute extends PopupRoute<int> {
   bool get barrierDismissible => true;
 
   @override
-  String? get barrierLabel => 'Close';
+  String? get barrierLabel => tr('Close');
 
   @override
   Duration get transitionDuration => GMotion.fast;

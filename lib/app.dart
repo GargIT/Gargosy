@@ -12,6 +12,7 @@ import 'ui/shell/app_shell.dart';
 import 'ui/shell/user_menu.dart';
 import 'ui/theme/gargosy_theme.dart';
 import 'ui/widgets/controller_dialogs.dart';
+import 'l10n/tr.dart';
 
 class GargosyApp extends ConsumerStatefulWidget {
   const GargosyApp({super.key, this.startGamepads = true});
@@ -37,8 +38,10 @@ class _GargosyAppState extends ConsumerState<GargosyApp> {
       if (outcome is UpdateFailed && nav != null) {
         showNotice(
           nav,
-          title: "The update couldn't be installed",
-          body: '${outcome.detail ?? 'The updater stopped.'}\n\nThis version is the one that runs; nothing was lost.',
+          title: tr('The update couldn\'t be installed'),
+          body: tr('{0}\n\nThis version is the one that runs; nothing was lost.', [
+            outcome.detail ?? 'The updater stopped.',
+          ]),
         );
       }
     });

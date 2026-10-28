@@ -9,6 +9,7 @@ import '../controller_dialogs.dart';
 import '../g_focusable.dart';
 import 'player_avatar.dart';
 import 'save_row.dart';
+import '../../../l10n/tr.dart';
 
 /// Choose (the play screen: A picks the save to play) or manage (the Saves
 /// tab: X puts a save on this PC, hold A deletes it, this PC's own too
@@ -94,9 +95,9 @@ class _SaveListState extends State<SaveList> {
   /// A click in manage mode (the mouse's way to what X and hold A do).
   Future<void> _menu(SaveEntry e, {required bool restorable}) async {
     final share = e.source == SaveSource.romm && e.owner == null && !widget.view.rommOffline && widget.onShare != null
-        ? (e.shared ? 'Stop sharing' : 'Share on RomM')
+        ? (e.shared ? tr('Stop sharing') : tr('Share on RomM'))
         : null;
-    final labels = [if (restorable) 'Put on this PC', ?share, if (e.owner == null) 'Delete'];
+    final labels = [if (restorable) tr('Put on this PC'), ?share, if (e.owner == null) tr('Delete')];
     if (labels.isEmpty) return;
     final i = await showChoice(context, title: e.fileName, labels: labels);
     if (i == null) return;
@@ -147,11 +148,11 @@ class _SaveListState extends State<SaveList> {
   List<Widget> _thisPc() {
     final v = widget.view;
     return [
-      _heading('This PC', note: 'What the emulator plays from. A backup is kept before anything replaces it.'),
-      if (v.thisPc.isEmpty) const Text('No save on this PC yet.', style: TextStyle(color: GColors.fgMuted)),
+      _heading(tr('This PC'), note: tr('What the emulator plays from. A backup is kept before anything replaces it.')),
+      if (v.thisPc.isEmpty) Text(tr('No save on this PC yet.'), style: const TextStyle(color: GColors.fgMuted)),
       ...v.thisPc.map(_row),
       if (v.backups.isNotEmpty) ...[
-        _fold('backups', v.backups.length, v.backups.length == 1 ? 'backup' : 'backups'),
+        _fold('backups', v.backups.length, v.backups.length == 1 ? tr('backup') : tr('backups')),
         if (_open.contains('backups')) ...v.backups.map(_row),
       ],
     ];
@@ -161,15 +162,15 @@ class _SaveListState extends State<SaveList> {
     final v = widget.view;
     return [
       _heading(
-        'On RomM',
+        tr('On RomM'),
         note: v.rommOffline
-            ? "RomM can't be reached, so its saves aren't listed."
+            ? tr('RomM can\'t be reached, so its saves aren\'t listed.')
             : widget.mode == SaveListMode.manage && widget.onShare != null
-            ? 'Y shares a save with the other players on this RomM, or stops sharing it.'
-            : 'A live list: nothing is downloaded until you put a save on this PC or play it.',
+            ? tr('Y shares a save with the other players on this RomM, or stops sharing it.')
+            : tr('A live list: nothing is downloaded until you put a save on this PC or play it.'),
       ),
       if (!v.rommOffline && v.romm.isEmpty)
-        const Text('No saves on RomM yet.', style: TextStyle(color: GColors.fgMuted)),
+        Text(tr('No saves on RomM yet.'), style: const TextStyle(color: GColors.fgMuted)),
       for (final g in v.romm) ..._group('romm:${g.group.slot}:${g.group.tag}', g),
     ];
   }
@@ -179,7 +180,7 @@ class _SaveListState extends State<SaveList> {
   List<Widget> _group(String key, PlayRommGroup g) => [
     _row(g.newest),
     if (g.older.isNotEmpty) ...[
-      _fold(key, g.older.length, g.older.length == 1 ? 'older version' : 'older versions'),
+      _fold(key, g.older.length, g.older.length == 1 ? tr('older version') : tr('older versions')),
       if (_open.contains(key)) ...g.older.map(_row),
     ],
   ];
@@ -214,10 +215,10 @@ class _SaveListState extends State<SaveList> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _heading(
-            'From other players',
+            tr('From other players'),
             note: widget.mode == SaveListMode.manage
-                ? "X puts a copy on this PC as your save. Theirs can't be changed or deleted from here."
-                : 'Saves others shared on RomM. Playing one makes a copy for you; theirs never changes.',
+                ? tr('X puts a copy on this PC as your save. Theirs can\'t be changed or deleted from here.')
+                : tr('Saves others shared on RomM. Playing one makes a copy for you; theirs never changes.'),
           ),
           if (!wide)
             for (final p in players) _player(p)

@@ -3,6 +3,7 @@ import 'dart:async';
 import '../core/save/catalog/play_request.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../core/save/save_strategy.dart';
+import '../l10n/tr.dart';
 
 /// Freegosy's pre-launch pull: back up this PC's save, then pull the
 /// profile's RomM save. It never stops the launch: a failure is told
@@ -42,7 +43,7 @@ Future<void> pullBeforeLaunch({
     wait,
     onTimeout: () {
       guard.markTooLate();
-      onProblem?.call("The save from RomM didn't arrive in time, so the game starts with the save on this PC.");
+      onProblem?.call(tr('The save from RomM didn\'t arrive in time, so the game starts with the save on this PC.'));
       return false;
     },
   );

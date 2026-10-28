@@ -13,6 +13,7 @@ import '../../../providers/ui_provider.dart';
 import '../../input/gargosy_intents.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_focusable.dart';
+import '../../../l10n/tr.dart';
 
 /// What [TeachQuitButtons] hears: each HID controller's held buttons as
 /// numbers, and which controllers there are.
@@ -39,13 +40,13 @@ class TeachQuitButtons extends ConsumerStatefulWidget {
   const TeachQuitButtons({super.key});
 
   /// What each button is called on the common controllers.
-  static const names = {
-    PadButton.select: 'Select (Back, View, Share, Create or −)',
-    PadButton.start: 'Start (Menu, Options or +)',
+  static Map<PadButton, String> get names => {
+    PadButton.select: tr('Select (Back, View, Share, Create or −)'),
+    PadButton.start: tr('Start (Menu, Options or +)'),
     PadButton.l1: 'LB (L1, L)',
     PadButton.r1: 'RB (R1, R)',
-    PadButton.l3: 'L3 (the left stick pressed in)',
-    PadButton.r3: 'R3 (the right stick pressed in)',
+    PadButton.l3: tr('L3 (the left stick pressed in)'),
+    PadButton.r3: tr('R3 (the right stick pressed in)'),
   };
 
   @override
@@ -113,12 +114,13 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
   /// What the dialog hears, before a button is pressed.
   String get _heard {
     final devices = _devices;
-    if (devices == null) return 'Looking for controllers…';
-    if (devices.isNotEmpty) return 'Hears ${devices.map((d) => d.name).join(', ')}.';
+    if (devices == null) return tr('Looking for controllers…');
+    if (devices.isNotEmpty) return tr('Hears {0}.', [devices.map((d) => d.name).join(', ')]);
     return _xinput
-        ? 'Only Xbox (XInput) controllers are connected, and they need no teaching. '
-              'An 8BitDo in X mode is one: switch it to D mode to teach it.'
-        : 'No controller found. Connect one: it is found within 2 seconds.';
+        ? tr(
+            'Only Xbox (XInput) controllers are connected, and they need no teaching. An 8BitDo in X mode is one: switch it to D mode to teach it.',
+          )
+        : tr('No controller found. Connect one: it is found within 2 seconds.');
   }
 
   void _onRaw(HidDevice device, Set<int> buttons) {
@@ -131,7 +133,7 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
     final index = pressed.reduce((a, b) => a < b ? a : b);
     final other = _taught[index];
     if (other != null) {
-      setState(() => _note = 'That button is already ${TeachQuitButtons.names[other]}.');
+      setState(() => _note = tr('That button is already {0}.', [TeachQuitButtons.names[other]]));
       return;
     }
     setState(() {
@@ -206,35 +208,39 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Teach quit buttons',
-                        style: TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
+                      Text(
+                        tr('Teach quit buttons'),
+                        style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: GSpace.s3),
                       Text(
                         device == null
-                            ? 'For a controller that is not an Xbox one, if holding the quit buttons does nothing. '
-                                  'Press each button once on that controller. $_heard'
-                            : 'Teaching ${device.name} (${hidDeviceKey(device.vendor, device.product)}).',
+                            ? tr(
+                                'For a controller that is not an Xbox one, if holding the quit buttons does nothing. Press each button once on that controller. {0}',
+                                [_heard],
+                              )
+                            : tr('Teaching {0} ({1}).', [device.name, hidDeviceKey(device.vendor, device.product)]),
                         style: const TextStyle(color: GColors.fgSecondary),
                       ),
                       const SizedBox(height: GSpace.s5),
                       if (!_done) ...[
                         Text(
-                          'Step ${_step + 1} of ${_steps.length}',
+                          tr('Step {0} of {1}', [_step + 1, _steps.length]),
                           style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                         ),
                         const SizedBox(height: GSpace.s1),
                         Text(
-                          'Press ${TeachQuitButtons.names[_steps[_step]]}',
+                          tr('Press {0}', [TeachQuitButtons.names[_steps[_step]]]),
                           style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600),
                         ),
                       ] else
                         Text(
                           saved
-                              ? 'Saved for ${device.name}: ${_taught.length} of ${_steps.length} buttons. '
-                                    'Holding the quit buttons on it closes a game from the next one on.'
-                              : 'Nothing was taught.',
+                              ? tr(
+                                  'Saved for {0}: {1} of {2} buttons. Holding the quit buttons on it closes a game from the next one on.',
+                                  [device.name, _taught.length, _steps.length],
+                                )
+                              : tr('Nothing was taught.'),
                           style: const TextStyle(fontSize: GFont.lg),
                         ),
                       if (_note != null) ...[
@@ -246,16 +252,16 @@ class _TeachQuitButtonsState extends ConsumerState<TeachQuitButtons> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           if (!_done) ...[
-                            _button('Skip', _skip),
+                            _button(tr('Skip'), _skip),
                             const SizedBox(width: GSpace.s2),
-                            _button('Cancel', _close),
+                            _button(tr('Cancel'), _close),
                           ] else
                             _button('OK', _close, primary: true),
                         ],
                       ),
                       const SizedBox(height: GSpace.s3),
                       Text(
-                        _done ? 'Enter or Escape closes.' : 'Enter or Space skips a button, Escape cancels.',
+                        _done ? tr('Enter or Escape closes.') : tr('Enter or Space skips a button, Escape cancels.'),
                         style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                       ),
                     ],

@@ -17,6 +17,7 @@ import 'profile_section.dart';
 import 'ra_section.dart';
 import 'settings_pages.dart';
 import 'settings_rows.dart';
+import '../../../l10n/tr.dart';
 
 export 'settings_pages.dart';
 
@@ -39,12 +40,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsPage.profile => const ProfileSection(),
     SettingsPage.retroAchievements => const RaSection(),
     SettingsPage.home => ListView(
-      children: const [
+      children: [
         SettingsCard(
-          title: 'Home',
+          title: tr('Home'),
           icon: Icons.home,
-          note: "What this profile's Home shows, and in what order. Also Customize Home at the end of Home.",
-          children: [HomeLayoutEditor()],
+          note: tr('What this profile\'s Home shows, and in what order. Also Customize Home at the end of Home.'),
+          children: const [HomeLayoutEditor()],
         ),
       ],
     ),
@@ -54,8 +55,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SettingsPage.display => const DisplaySection(),
     SettingsPage.storage => const StorageSection(),
     SettingsPage.about => ListView(
-      children: const [
-        SettingsCard(title: 'About', icon: Icons.info, children: [AboutSection()]),
+      children: [
+        SettingsCard(title: tr('About'), icon: Icons.info, children: const [AboutSection()]),
       ],
     ),
   };
@@ -158,12 +159,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            const HintBar(
+            HintBar(
               hints: [
-                Hint(GameAction.confirm, 'Choose'),
-                Hint(GameAction.l1, 'Previous'),
-                Hint(GameAction.r1, 'Next'),
-                Hint(GameAction.back, 'Back'),
+                Hint(GameAction.confirm, tr('Choose')),
+                Hint(GameAction.l1, tr('Previous')),
+                Hint(GameAction.r1, tr('Next')),
+                Hint(GameAction.back, tr('Back')),
               ],
             ),
           ],

@@ -11,6 +11,7 @@ import 'bios_links.dart' show BiosFiles;
 import 'close_process.dart';
 import 'profile_directories.dart';
 import 'rpcs3_config.dart';
+import '../l10n/tr.dart';
 
 /// Why the PS3 firmware couldn't be installed; the UI shows [message].
 class Ps3FirmwareException implements Exception {
@@ -78,9 +79,11 @@ class Ps3Firmware {
   Future<void> install(String exePath) async {
     final file = pup;
     if (file == null) {
-      throw const Ps3FirmwareException(
-        'There is no $pupName in bios\\. Get BIOS files from RomM first '
-        "(RomM keeps the PS3 firmware with the platform's firmware).",
+      throw Ps3FirmwareException(
+        tr(
+          'There is no {0} in bios\\. Get BIOS files from RomM first (RomM keeps the PS3 firmware with the platform\'s firmware).',
+          [pupName],
+        ),
       );
     }
     final run = await dirs.startWithProfile('rpcs3', exePath, commandLine(file.path));
@@ -88,7 +91,7 @@ class Ps3Firmware {
     run.process.exitCode.then((_) => exited = true);
     try {
       if (!await confirm(run.process.pid) && !exited) {
-        throw const Ps3FirmwareException("RPCS3 didn't ask to install the firmware; nothing was installed.");
+        throw Ps3FirmwareException(tr('RPCS3 didn\'t ask to install the firmware; nothing was installed.'));
       }
       // Done when the VSH is there and the folder stops growing.
       final until = DateTime.now().add(timeout);
@@ -105,7 +108,7 @@ class Ps3Firmware {
       if (!exited) await close(run.process);
       await run.finish();
     }
-    if (!installed) throw const Ps3FirmwareException("RPCS3 couldn't install the firmware.");
+    if (!installed) throw Ps3FirmwareException(tr('RPCS3 couldn\'t install the firmware.'));
   }
 }
 

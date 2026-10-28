@@ -5,6 +5,7 @@ import '../core/emulator/emulator_download_service.dart';
 import '../core/extraction/extraction_service.dart';
 import '../providers/engine_providers.dart';
 import 'emulator_library.dart';
+import '../l10n/tr.dart';
 
 /// How an install is going: 'downloading', 'extracting', 'done' or 'error'.
 class InstallProgress {
@@ -48,14 +49,14 @@ class GargosyEmulatorInstaller implements EmulatorInstaller {
         return;
       }
       if (pr.status == 'selection_required') {
-        yield const InstallProgress('error', 0, error: 'more than one download matches; nothing was installed');
+        yield InstallProgress('error', 0, error: tr('more than one download matches; nothing was installed'));
         return;
       }
       if (pr.isComplete) finished = true;
       yield InstallProgress(pr.status, pr.percent);
     }
     if (!finished) {
-      yield const InstallProgress('error', 0, error: 'the download stopped before it finished');
+      yield InstallProgress('error', 0, error: tr('the download stopped before it finished'));
       return;
     }
     await _library.recordInstall(id, from: url);

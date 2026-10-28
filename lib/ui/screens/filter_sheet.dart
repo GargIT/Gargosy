@@ -6,6 +6,7 @@ import '../../providers/ui_provider.dart';
 import '../input/gargosy_intents.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
+import '../../l10n/tr.dart';
 
 /// What the sheet closed with: the new query, and whether the player asked
 /// to save the gallery with it as a smart collection (#188).
@@ -116,11 +117,11 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: _ring),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: _ring),
                   child: Text(
-                    'Filters',
-                    style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+                    tr('Filters'),
+                    style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
                   ),
                 ),
                 Flexible(
@@ -130,7 +131,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (widget.values.genres.isNotEmpty)
-                          _section('Genres', [
+                          _section(tr('Genres'), [
                             for (final g in widget.values.genres)
                               _chip(
                                 g,
@@ -140,7 +141,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                               ),
                           ]),
                         if (widget.values.regions.isNotEmpty)
-                          _section('Regions', [
+                          _section(tr('Regions'), [
                             for (final r in widget.values.regions)
                               _chip(
                                 r,
@@ -158,17 +159,17 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: _ring),
                   child: Row(
                     children: [
-                      _chip('Clear filters', false, _clear, button: pad ? 'Y' : null),
+                      _chip(tr('Clear filters'), false, _clear, button: pad ? 'Y' : null),
                       const Spacer(),
                       if (widget.offerSave) ...[
                         KeyedSubtree(
                           key: const ValueKey('filter-save-smart'),
-                          child: _chip('Save as smart collection…', false, () => _apply(save: true)),
+                          child: _chip(tr('Save as smart collection…'), false, () => _apply(save: true)),
                         ),
                         const SizedBox(width: GSpace.s2),
                       ],
                       _chip(
-                        'Apply',
+                        tr('Apply'),
                         true,
                         _apply,
                         autofocus: widget.values.genres.isEmpty && widget.values.regions.isEmpty,

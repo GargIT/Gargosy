@@ -1,4 +1,5 @@
 import '../core/romm/romm_library_api.dart';
+import '../l10n/tr.dart';
 
 /// A gallery saved as a smart collection (#188): RomM's criteria, under the
 /// names its `/api/roms` takes (a smart collection's `filter_criteria` is the
@@ -43,17 +44,17 @@ String describeCriteria(Map<String, dynamic> criteria, {Map<int, String> platfor
       case 'order_by' || 'order_dir':
         continue;
       case 'search_term':
-        parts.add('Search “$value”');
+        parts.add(tr('Search “{0}”', [value]));
       case 'platform_ids' || 'platform_id':
         parts.add(
           [
-            for (final id in (value is List ? value : [value])) platformNames[id] ?? 'Platform $id',
+            for (final id in (value is List ? value : [value])) platformNames[id] ?? tr('Platform {0}', [id]),
           ].join(', '),
         );
       case 'favorite' when value == true:
-        parts.add('♥ Favourites');
+        parts.add(tr('♥ Favourites'));
       case 'collection_id':
-        parts.add('In collection $value');
+        parts.add(tr('In collection {0}', [value]));
       case 'genres' || 'regions':
         parts.add(list(value));
       default:
@@ -63,7 +64,7 @@ String describeCriteria(Map<String, dynamic> criteria, {Map<int, String> platfor
           value == true
               ? label
               : value == false
-              ? 'Not $name'
+              ? tr('Not {0}', [name])
               : '$label: ${list(value)}',
         );
     }
@@ -76,8 +77,8 @@ String describeCriteria(Map<String, dynamic> criteria, {Map<int, String> platfor
     );
     final label = sort.field == by ? sort.label : by.replaceAll('_', ' ');
     final desc = criteria['order_dir'] == 'desc';
-    final dir = by == 'name' ? (desc ? 'Z–A' : 'A–Z') : (desc ? 'descending' : 'ascending');
-    parts.add('Sorted by $label, $dir');
+    final dir = by == 'name' ? (desc ? tr('Z–A') : tr('A–Z')) : (desc ? tr('descending') : tr('ascending'));
+    parts.add(tr('Sorted by {0}, {1}', [label, dir]));
   }
   return parts.join(' · ');
 }

@@ -41,6 +41,7 @@ import 'play_time.dart';
 import 'pre_launch_pull.dart';
 import 'save_deletion.dart';
 import 'state_copies.dart';
+import '../l10n/tr.dart';
 
 /// What a finished session says ("Save synced", …).
 class PlayResult {
@@ -205,7 +206,7 @@ class GargosyPlayEngine implements PlayEngine {
 
   Future<GameLaunchService> _launch() async {
     final s = await _ref.read(gameLaunchServiceProvider.future);
-    if (s == null) throw StateError('No profile is active');
+    if (s == null) throw StateError(tr('No profile is active'));
     return s;
   }
 
@@ -305,8 +306,9 @@ class GargosyPlayEngine implements PlayEngine {
       );
       if (r.conflicts.isNotEmpty) {
         onProblem?.call(
-          '${r.conflicts.length == 1 ? 'A state differs' : '${r.conflicts.length} states differ'} '
-          "on RomM and this PC. This PC's copy is used; RomM's stays on RomM.",
+          tr('{0} on RomM and this PC. This PC\'s copy is used; RomM\'s stays on RomM.', [
+            r.conflicts.length == 1 ? 'A state differs' : '${r.conflicts.length} states differ',
+          ]),
         );
       }
       return StatePull(current: r.currentFiles, conflicted: {for (final c in r.conflicts) c.fileName});
@@ -326,7 +328,7 @@ class GargosyPlayEngine implements PlayEngine {
   Future<String> takeSharedState(ResumeEntry entry, Game game, String romPath, EmulatorStrategy strategy) async {
     final resume = _ref.read(resumeServiceProvider);
     final profile = _ref.read(activeProfileProvider);
-    if (resume == null || profile == null) throw StateError('no profile is active');
+    if (resume == null || profile == null) throw StateError(tr('no profile is active'));
     return copySharedState(
       resume,
       entry,
@@ -354,7 +356,7 @@ class GargosyPlayEngine implements PlayEngine {
 
   @override
   Future<void> openEmulator(String emulatorId, String exePath, {required void Function() onExit}) async {
-    final dirs = _ref.read(launchDirectoriesProvider) ?? (throw StateError('No profile is active.'));
+    final dirs = _ref.read(launchDirectoriesProvider) ?? (throw StateError(tr('No profile is active.')));
     final process = await dirs.openEmulator(emulatorId, exePath);
     process.exitCode.whenComplete(() {
       onExit();
@@ -394,7 +396,7 @@ class GargosyPlayEngine implements PlayEngine {
     if (unpacked == null) return romPath;
     // The unpacked folder's main ROM, readied too (an Xbox disc unpacked
     // as it is by another path still gets its XISO check).
-    final rom = await romPathFor(game) ?? (throw StateError('${game.displayName} is gone after unpacking'));
+    final rom = await romPathFor(game) ?? (throw StateError(tr('{0} is gone after unpacking', [game.displayName])));
     await preparer.ready(game, rom, strategy.emulatorId, onProgress: onProgress);
     return rom;
   }
@@ -452,13 +454,13 @@ class GargosyPlayEngine implements PlayEngine {
   }
 
   Future<String> _romPath(Game game) async =>
-      await romPathFor(game) ?? (throw StateError('the game is not on this PC'));
+      await romPathFor(game) ?? (throw StateError(tr('the game is not on this PC')));
 
   Future<PlayPreparer> _preparer() async {
     final sync = _ref.read(saveSyncServiceProvider);
     final backups = _ref.read(backupServiceProvider);
     final repo = await _ref.read(backupRepositoryProvider.future);
-    if (sync == null || backups == null || repo == null) throw StateError('no profile is active');
+    if (sync == null || backups == null || repo == null) throw StateError(tr('no profile is active'));
     return PlayPreparer(sync: sync, backups: backups, repository: repo);
   }
 
@@ -477,7 +479,7 @@ class GargosyPlayEngine implements PlayEngine {
     deleteLocal: () async {
       final sync = _ref.read(saveSyncServiceProvider);
       final profile = _ref.read(activeProfileProvider);
-      if (sync == null || profile == null) throw StateError('no profile is active');
+      if (sync == null || profile == null) throw StateError(tr('no profile is active'));
       await deleteLocalSave(
         game,
         await _romPath(game),
@@ -494,7 +496,7 @@ class GargosyPlayEngine implements PlayEngine {
   Future<String?> deleteState(Game game, ResumeEntry entry) async {
     final resume = _ref.read(resumeServiceProvider);
     final guard = _ref.read(activeProfileProvider)?.guard;
-    if (resume == null || guard == null) throw StateError('no profile is active');
+    if (resume == null || guard == null) throw StateError(tr('no profile is active'));
     return deleteOwnState(game, entry, resume: resume, guard: guard, romm: _ref.read(rommServiceProvider));
   }
 
@@ -543,13 +545,13 @@ class GargosyPlayEngine implements PlayEngine {
   Future<String> syncStatesNow(Game game) async {
     final states = _ref.read(stateSyncServiceProvider);
     final id = _emulatorIdOf(game);
-    if (states == null || id == null) return "Save states can't be synced for this game.";
+    if (states == null || id == null) return tr('Save states can\'t be synced for this game.');
     final romPath = await _romPath(game);
     final down = await states.pullStates(game, romPath, emulatorId: id);
     final up = await states.pushStates(game, romPath, emulatorId: id);
-    if (down.skipped && up.skipped) return "Save states can't be synced for this game.";
-    String n(int k) => k == 1 ? '1 state' : '$k states';
-    return '${n(down.downloaded)} down, ${up.uploaded} up';
+    if (down.skipped && up.skipped) return tr('Save states can\'t be synced for this game.');
+    String n(int k) => k == 1 ? tr('1 state') : tr('{0} states', [k]);
+    return tr('{0} down, {1} up', [n(down.downloaded), up.uploaded]);
   }
 
   @override
@@ -575,11 +577,13 @@ class GargosyPlayEngine implements PlayEngine {
 
   @override
   Future<void> installCore(EmulatorStrategy strategy, MissingRetroArchCoreException missing) async {
-    if (strategy is! RetroArchStrategy) throw StateError('${strategy.name} has no cores');
+    if (strategy is! RetroArchStrategy) throw StateError(tr('{0} has no cores', [strategy.name]));
     // Only ever into the RetroArch install under emulators\.
     final core = PathGuard(_ref.read(appRootProvider)).check(missing.corePath);
     await strategy.downloadCore(missing.coreName, p.dirname(core), Dio());
-    if (!io.File(core).existsSync()) throw StateError("The ${coreLabel(missing.coreName)} core couldn't be downloaded");
+    if (!io.File(core).existsSync()) {
+      throw StateError(tr('The {0} core couldn\'t be downloaded', [coreLabel(missing.coreName)]));
+    }
   }
 
   @override
@@ -658,16 +662,16 @@ class GargosyPlayEngine implements PlayEngine {
   }
 
   static PlayResult _describe(LaunchResult? r) {
-    if (r == null) return const PlayResult('The game ended.');
+    if (r == null) return PlayResult(tr('The game ended.'));
     if (r.saveConflict != null) {
-      return const PlayResult(
-        "RomM has a newer save from another device. It stays on RomM; yours is backed up on this PC.",
+      return PlayResult(
+        tr('RomM has a newer save from another device. It stays on RomM; yours is backed up on this PC.'),
       );
     }
-    if (r.saveSyncBlocked != null) return PlayResult('Saves not synced: ${r.saveSyncBlocked}');
-    if (r.saveUnchanged) return const PlayResult('Save unchanged.', synced: true);
-    if (r.syncOk) return const PlayResult('Save synced to RomM.', synced: true);
-    return const PlayResult('No save to upload.');
+    if (r.saveSyncBlocked != null) return PlayResult(tr('Saves not synced: {0}', [r.saveSyncBlocked]));
+    if (r.saveUnchanged) return PlayResult(tr('Save unchanged.'), synced: true);
+    if (r.syncOk) return PlayResult(tr('Save synced to RomM.'), synced: true);
+    return PlayResult(tr('No save to upload.'));
   }
 }
 

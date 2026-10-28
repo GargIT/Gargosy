@@ -11,6 +11,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
 import 'settings_rows.dart';
+import '../../../l10n/tr.dart';
 
 /// Settings → Emulators: the emulators Gargosy owns (spec §6). Import an
 /// existing install from a folder, download one, update or remove it, and
@@ -34,17 +35,17 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     if (firmware == null || _installingFirmware) return;
     // One emulator at a time: RPCS3 can't install while a game runs.
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, 'A game is running. Close it first.');
+      showToast(context, tr('A game is running. Close it first.'));
       return;
     }
     setState(() => _installingFirmware = true);
     try {
       await firmware.install(exe);
-      if (mounted) showToast(context, 'The PS3 firmware is installed, for every profile.');
+      if (mounted) showToast(context, tr('The PS3 firmware is installed, for every profile.'));
     } on Ps3FirmwareException catch (e) {
       if (mounted) showToast(context, e.message);
     } on Object catch (e) {
-      if (mounted) showToast(context, "Couldn't install the PS3 firmware: $e");
+      if (mounted) showToast(context, tr('Couldn\'t install the PS3 firmware: {0}', [e]));
     } finally {
       if (mounted) setState(() => _installingFirmware = false);
     }
@@ -60,22 +61,24 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     showToast(
       context,
       refused ??
-          "${e.name} is open with this profile's settings. Set it up there and close it when you're done. "
-              "A game started from it doesn't sync its saves: start games from Gargosy.",
+          tr(
+            '{0} is open with this profile\'s settings. Set it up there and close it when you\'re done. A game started from it doesn\'t sync its saves: start games from Gargosy.',
+            [e.name],
+          ),
     );
   }
 
   Future<void> _import(EmulatorInfo e) async {
     final lib = ref.read(emulatorLibraryProvider);
     if (lib == null) return;
-    final folder = await FilePicker.getDirectoryPath(dialogTitle: 'The folder ${e.name} is installed in');
+    final folder = await FilePicker.getDirectoryPath(dialogTitle: tr('The folder {0} is installed in', [e.name]));
     if (folder == null || !mounted) return;
-    setState(() => _busy[e.id] = 'Importing…');
+    setState(() => _busy[e.id] = tr('Importing…'));
     try {
       await lib.importFrom(e.id, folder);
-      if (mounted) showToast(context, '${e.name} is installed.');
+      if (mounted) showToast(context, tr('{0} is installed.', [e.name]));
     } on Object catch (err) {
-      if (mounted) showToast(context, "Couldn't import ${e.name}: $err");
+      if (mounted) showToast(context, tr('Couldn\'t import {0}: {1}', [e.name, err]));
     } finally {
       if (mounted) setState(() => _busy.remove(e.id));
       ref.invalidate(emulatorsProvider);
@@ -86,16 +89,16 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
   Future<void> _download(EmulatorInfo e) async {
     final installer = ref.read(emulatorInstallerProvider);
     if (installer == null) return;
-    setState(() => _busy[e.id] = 'Looking for the newest…');
+    setState(() => _busy[e.id] = tr('Looking for the newest…'));
     String? error;
     var installed = false;
     try {
       final url = await installer.latestUrl(e.id);
       if (!mounted) return;
       if (url == null) {
-        error = "no download was found";
+        error = tr('no download was found');
       } else if (url == e.installedFrom) {
-        showToast(context, '${e.name} is already the newest.');
+        showToast(context, tr('{0} is already the newest.', [e.name]));
       } else {
         await ref.read(emulatorLibraryProvider)?.clearIfNoProgram(e.id);
         await for (final pr in installer.install(e.id, url)) {
@@ -103,9 +106,9 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
           if (pr.error != null) error = pr.error;
           if (pr.status == 'done' && pr.error == null) installed = true;
           setState(
-            () => _busy[e.id] = pr.status.startsWith('Extracting')
-                ? 'Unpacking…'
-                : 'Downloading ${(pr.percent * 100).round()} %',
+            () => _busy[e.id] = pr.status.startsWith(tr('Extracting'))
+                ? tr('Unpacking…')
+                : tr('Downloading {0} %', [(pr.percent * 100).round()]),
           );
         }
       }
@@ -117,18 +120,20 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     }
     if (!mounted) return;
     if (error != null) {
-      showToast(context, "Couldn't download ${e.name}: $error");
+      showToast(context, tr('Couldn\'t download {0}: {1}', [e.name, error]));
       return;
     }
     if (!installed) return;
-    showToast(context, '${e.name} is installed.');
+    showToast(context, tr('{0} is installed.', [e.name]));
     // Its BIOS files from RomM, into the shared bios folder.
     final bios = ref.read(biosSyncProvider);
     if (bios == null) return;
-    setState(() => _busy[e.id] = 'Getting BIOS files…');
+    setState(() => _busy[e.id] = tr('Getting BIOS files…'));
     try {
       final n = await bios.forEmulator(e.id);
-      if (mounted && n > 0) showToast(context, n == 1 ? 'Got 1 BIOS file from RomM.' : 'Got $n BIOS files from RomM.');
+      if (mounted && n > 0) {
+        showToast(context, n == 1 ? tr('Got 1 BIOS file from RomM.') : tr('Got {0} BIOS files from RomM.', [n]));
+      }
     } on Object {
       // RomM may have none, or be out of reach: the emulator is installed anyway.
     } finally {
@@ -139,10 +144,10 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
   Future<void> _remove(EmulatorInfo e) async {
     final ok = await showConfirm(
       context,
-      title: 'Remove ${e.name}?',
-      body: "The emulator's program is removed. Every profile's saves and settings for it stay.",
-      yes: 'Remove',
-      no: 'Keep',
+      title: tr('Remove {0}?', [e.name]),
+      body: tr('The emulator\'s program is removed. Every profile\'s saves and settings for it stay.'),
+      yes: tr('Remove'),
+      no: tr('Keep'),
       focusYes: false,
       danger: true,
     );
@@ -159,12 +164,12 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
       final n = await bios.forAll(installed);
       if (!mounted) return;
       showToast(context, switch (n) {
-        0 => 'No new BIOS files on RomM.',
-        1 => 'Got 1 BIOS file from RomM.',
-        _ => 'Got $n BIOS files from RomM.',
+        0 => tr('No new BIOS files on RomM.'),
+        1 => tr('Got 1 BIOS file from RomM.'),
+        _ => tr('Got {0} BIOS files from RomM.', [n]),
       });
     } on Object {
-      if (mounted) showToast(context, "Couldn't get BIOS files from RomM.");
+      if (mounted) showToast(context, tr('Couldn\'t get BIOS files from RomM.'));
     } finally {
       if (mounted) setState(() => _gettingBios = false);
     }
@@ -174,10 +179,10 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     final busy = _busy[e.id];
     final installed = e.installedExe != null;
     final state = !e.supported
-        ? 'Not supported yet'
+        ? tr('Not supported yet')
         : (!installed
-              ? e.downloadOff ?? 'Not installed'
-              : (e.version == null ? 'Installed' : 'Installed · ${e.version}'));
+              ? e.downloadOff ?? tr('Not installed')
+              : (e.version == null ? tr('Installed') : tr('Installed · {0}', [e.version])));
     return Row(
       children: [
         Expanded(
@@ -206,14 +211,18 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         if (busy == null && e.supported) ...[
           const SizedBox(width: GSpace.s4),
           if (installed) ...[
-            SettingsButton(label: 'Open', icon: Icons.open_in_new, onActivate: () => _open(e)),
+            SettingsButton(label: tr('Open'), icon: Icons.open_in_new, onActivate: () => _open(e)),
             const SizedBox(width: GSpace.s2),
           ],
-          SettingsButton(label: 'Import from folder', icon: Icons.folder_open_outlined, onActivate: () => _import(e)),
+          SettingsButton(
+            label: tr('Import from folder'),
+            icon: Icons.folder_open_outlined,
+            onActivate: () => _import(e),
+          ),
           if (e.downloadOff == null) ...[
             const SizedBox(width: GSpace.s2),
             SettingsButton(
-              label: installed ? 'Update' : 'Download',
+              label: installed ? tr('Update') : tr('Download'),
               icon: installed ? Icons.update : Icons.download_outlined,
               kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
               onActivate: () => _download(e),
@@ -221,7 +230,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
           ],
           if (installed) ...[
             const SizedBox(width: GSpace.s2),
-            SettingsButton(label: 'Remove', icon: Icons.delete_outline, onActivate: () => _remove(e)),
+            SettingsButton(label: tr('Remove'), icon: Icons.delete_outline, onActivate: () => _remove(e)),
           ],
         ],
       ],
@@ -252,11 +261,11 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         return ListView(
           children: [
             SettingsCard(
-              title: 'Emulators',
+              title: tr('Emulators'),
               icon: Icons.videogame_asset,
-              note:
-                  'Gargosy keeps its own copy of each emulator, in the Gargosy folder. '
-                  'Every profile gets its own saves and settings for it.',
+              note: tr(
+                'Gargosy keeps its own copy of each emulator, in the Gargosy folder. Every profile gets its own saves and settings for it.',
+              ),
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
@@ -265,7 +274,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
                     runSpacing: GSpace.s2,
                     children: [
                       SettingsButton(
-                        label: _gettingBios ? 'Getting BIOS files…' : 'Get BIOS files from RomM',
+                        label: _gettingBios ? tr('Getting BIOS files…') : tr('Get BIOS files from RomM'),
                         icon: Icons.memory,
                         onActivate: _gettingBios ? null : () => _getBios(installed),
                       ),
@@ -273,8 +282,10 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
                         SettingsButton(
                           key: const Key('ps3-firmware'),
                           label: _installingFirmware
-                              ? 'Installing the PS3 firmware…'
-                              : 'Install PS3 firmware from bios\\ (${ps3Firmware.installed ? 'installed' : 'not installed'})',
+                              ? tr('Installing the PS3 firmware…')
+                              : tr('Install PS3 firmware from bios\\ ({0})', [
+                                  ps3Firmware.installed ? 'installed' : 'not installed',
+                                ]),
                           icon: Icons.system_update_alt,
                           onActivate: _installingFirmware ? null : () => _installPs3Firmware(rpcs3Exe),
                         ),
@@ -286,9 +297,9 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
             ),
             if (notYet.isNotEmpty)
               SettingsCard(
-                title: 'Not supported yet',
+                title: tr('Not supported yet'),
                 icon: Icons.hourglass_empty,
-                note: "Gargosy can't point these at a profile's own folder yet, so it doesn't run them.",
+                note: tr('Gargosy can\'t point these at a profile\'s own folder yet, so it doesn\'t run them.'),
                 children: [for (final e in notYet) _row(e)],
               ),
           ],

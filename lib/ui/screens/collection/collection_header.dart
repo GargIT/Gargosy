@@ -17,6 +17,7 @@ import '../../widgets/header_stat.dart';
 import '../../widgets/on_screen_keyboard.dart';
 import '../../widgets/toast.dart';
 import '../game/open_game.dart';
+import '../../../l10n/tr.dart';
 
 /// A collection's page header (#121): its mosaic, the name with its kind,
 /// whether it's shared and whose it is, its description (a smart one's
@@ -44,7 +45,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
       final game = await api.randomGame(within: widget.collection.query);
       if (!mounted) return;
       if (game == null) {
-        showToast(context, 'No games here yet.');
+        showToast(context, tr('No games here yet.'));
       } else {
         openGame(context, game);
       }
@@ -64,13 +65,21 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     final pick = await showChoice(
       context,
       title: c.name,
-      labels: ['Rename…', c.isPublic ? 'Stop sharing' : 'Share with every player', 'Delete collection…'],
+      labels: [
+        tr('Rename…'),
+        c.isPublic ? tr('Stop sharing') : tr('Share with every player'),
+        tr('Delete collection…'),
+      ],
     );
     if (pick == null || !mounted) return;
     try {
       switch (pick) {
         case 0:
-          final name = (await showOnScreenKeyboard(context, title: 'Rename ${c.name}', initial: c.name))?.trim();
+          final name = (await showOnScreenKeyboard(
+            context,
+            title: tr('Rename {0}', [c.name]),
+            initial: c.name,
+          ))?.trim();
           if (name == null || name.isEmpty || name == c.name) return;
           widget.onChanged?.call(await edits.rename(c, name));
         case 1:
@@ -78,10 +87,10 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
         case 2:
           final ok = await showConfirm(
             context,
-            title: 'Delete ${c.name}?',
-            body: 'The collection goes from RomM for every player. Its games stay in the library.',
-            yes: 'Delete',
-            no: 'Keep',
+            title: tr('Delete {0}?', [c.name]),
+            body: tr('The collection goes from RomM for every player. Its games stay in the library.'),
+            yes: tr('Delete'),
+            no: tr('Keep'),
             focusYes: false,
             danger: true,
           );
@@ -95,7 +104,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
       ref.invalidate(collectionsProvider);
       ref.invalidate(smartCollectionsProvider);
     } on Object catch (e) {
-      if (mounted) showToast(context, "Couldn't change ${c.name}: $e");
+      if (mounted) showToast(context, tr('Couldn\'t change {0}: {1}', [c.name, e]));
     }
   }
 
@@ -109,8 +118,8 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     final whose = virtual || c.userId == null
         ? null
         : c.userId == userId
-        ? 'By you'
-        : 'By ${c.ownerUsername ?? 'another player'}';
+        ? tr('By you')
+        : tr('By {0}', [c.ownerUsername ?? 'another player']);
     final names = {for (final p in ref.watch(platformsProvider).valueOrNull ?? const <Platform>[]) p.id: p.name};
     final filters = c.kind == CollectionKind.smart ? describeCriteria(c.filterCriteria, platformNames: names) : '';
     // RomM's filter_summary is its criteria as JSON; said in words when they read back.
@@ -142,7 +151,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  c.isFavorite ? 'Favourites' : c.name,
+                  c.isFavorite ? tr('Favourites') : c.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800, height: 1.1),
@@ -160,17 +169,21 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
                         CollectionKind.virtual => Icons.collections_bookmark_outlined,
                       },
                       text: switch (c.kind) {
-                        CollectionKind.regular => c.isFavorite ? 'Favourites' : 'Collection',
-                        CollectionKind.smart => 'Smart collection',
-                        CollectionKind.virtual =>
-                          'Virtual · ${virtualCollectionTypes[c.virtualType] ?? c.virtualType ?? 'RomM'}',
+                        CollectionKind.regular => c.isFavorite ? tr('Favourites') : tr('Collection'),
+                        CollectionKind.smart => tr('Smart collection'),
+                        CollectionKind.virtual => tr('Virtual · {0}', [
+                          switch (virtualCollectionTypes[c.virtualType]) {
+                            final t? => tr(t),
+                            null => c.virtualType ?? 'RomM',
+                          },
+                        ]),
                       },
                     ),
                     if (c.isPublic && !virtual)
-                      const _Chip(
-                        key: ValueKey('collection-shared'),
+                      _Chip(
+                        key: const ValueKey('collection-shared'),
                         icon: Icons.public,
-                        text: 'Shared on RomM',
+                        text: tr('Shared on RomM'),
                         color: GColors.gargosyTeal,
                       ),
                     if (whose != null) _Chip(text: whose),
@@ -190,10 +203,10 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
                   spacing: GSpace.s10,
                   runSpacing: GSpace.s3,
                   children: [
-                    HeaderStat('${c.romCount}', 'GAMES'),
-                    HeaderStat('${onThisPc(c, downloaded)}', 'ON THIS PC', color: GColors.gargosyTeal),
+                    HeaderStat('${c.romCount}', tr('GAMES')),
+                    HeaderStat('${onThisPc(c, downloaded)}', tr('ON THIS PC'), color: GColors.gargosyTeal),
                     if (platforms != null && platforms.isNotEmpty)
-                      HeaderStat('${platforms.length}', 'PLATFORMS', key: const ValueKey('collection-platforms')),
+                      HeaderStat('${platforms.length}', tr('PLATFORMS'), key: const ValueKey('collection-platforms')),
                   ],
                 ),
               ],
@@ -237,7 +250,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.shuffle, size: 18),
                   const SizedBox(width: GSpace.s2),
-                  const Text('Random', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(tr('Random'), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
               ),
             ),

@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../l10n/tr.dart';
+
 /// The RomM scopes Gargosy asks for (spec §5). Admin scopes are never asked
 /// for. RomM grants only those the user has: `roms.write` (deleting a game)
 /// only an admin's or editor's.
@@ -181,7 +183,7 @@ class RommAuthClient implements RommAuth {
       return read(data);
     } on Object catch (e) {
       if (e is RommAuthException) rethrow;
-      throw const RommAuthException(RommAuthFailure.notRomm, 'This does not look like a RomM server');
+      throw RommAuthException(RommAuthFailure.notRomm, tr('This does not look like a RomM server'));
     }
   }
 
@@ -190,13 +192,18 @@ class RommAuthClient implements RommAuth {
   static Never _fail(DioException e, {RommAuthFailure on404 = RommAuthFailure.other}) {
     final status = e.response?.statusCode;
     if (status == null) {
-      throw RommAuthException(RommAuthFailure.network, e.message ?? 'The server could not be reached');
+      throw RommAuthException(RommAuthFailure.network, e.message ?? tr('The server could not be reached'));
     }
-    if (status == 401) throw const RommAuthException(RommAuthFailure.badCredentials, 'Wrong username or password');
-    if (status == 404 || status == 405) throw RommAuthException(on404, 'The server does not support this');
-    if (status >= 500 || status == 408) throw RommAuthException(RommAuthFailure.server, 'RomM answered $status');
+    if (status == 401) throw RommAuthException(RommAuthFailure.badCredentials, tr('Wrong username or password'));
+    if (status == 404 || status == 405) throw RommAuthException(on404, tr('The server does not support this'));
+    if (status >= 500 || status == 408) {
+      throw RommAuthException(RommAuthFailure.server, tr('RomM answered {0}', [status]));
+    }
     final detail = e.response?.data is Map ? (e.response!.data as Map)['detail'] : null;
-    throw RommAuthException(RommAuthFailure.other, 'RomM answered $status${detail != null ? ': $detail' : ''}');
+    throw RommAuthException(
+      RommAuthFailure.other,
+      tr('RomM answered {0}{1}', [status, detail != null ? ': $detail' : '']),
+    );
   }
 
   @override
@@ -275,7 +282,7 @@ class RommAuthClient implements RommAuth {
       throw RommAuthException(RommAuthFailure.wrongUser, me.username);
     }
     if (!me.oauthScopes.contains('me.write')) {
-      throw const RommAuthException(RommAuthFailure.insufficientScope, 'This RomM user may not create device tokens');
+      throw RommAuthException(RommAuthFailure.insufficientScope, tr('This RomM user may not create device tokens'));
     }
     final scopes = [
       for (final s in gargosyScopes)

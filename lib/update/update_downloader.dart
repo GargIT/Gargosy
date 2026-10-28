@@ -11,6 +11,7 @@ import '../profiles/path_guard.dart';
 import 'app_files.dart';
 import 'update_checker.dart';
 import 'update_paths.dart';
+import '../l10n/tr.dart';
 
 /// Why a download can't be used; the UI shows [message] and nothing was replaced.
 class UpdateDownloadException implements Exception {
@@ -60,19 +61,19 @@ class UpdateDownloader {
         );
       } on DioException catch (e) {
         if (e.type == DioExceptionType.cancel) rethrow;
-        throw UpdateDownloadException("The download didn't finish: ${e.message ?? e.type.name}");
+        throw UpdateDownloadException(tr('The download didn\'t finish: {0}', [e.message ?? e.type.name]));
       }
       io.File(part).renameSync(zip);
 
       final size = io.File(zip).lengthSync();
       if (size != release.size) {
-        throw UpdateDownloadException('The download is $size bytes, but GitHub says ${release.size}.');
+        throw UpdateDownloadException(tr('The download is {0} bytes, but GitHub says {1}.', [size, release.size]));
       }
       final expected = release.sha256;
       if (expected != null) {
         final actual = (await sha256.bind(io.File(zip).openRead()).first).toString();
         if (actual != expected.toLowerCase()) {
-          throw const UpdateDownloadException("The download doesn't match GitHub's checksum (SHA-256).");
+          throw UpdateDownloadException(tr('The download doesn\'t match GitHub\'s checksum (SHA-256).'));
         }
       }
 
@@ -118,15 +119,15 @@ String? unpackUpdate(String zip, String dir, PathGuard guard) {
     try {
       archive = ZipDecoder().decodeStream(input);
     } on Object {
-      return "The download isn't a zip that can be read.";
+      return tr('The download isn\'t a zip that can be read.');
     }
     io.Directory(dir).createSync(recursive: true);
     for (final entry in archive) {
       final parts = entry.name.split(RegExp(r'[\\/]')).where((s) => s.isNotEmpty).toList();
-      if (parts.isEmpty || parts.first != 'Gargosy') return "The zip isn't a Gargosy release (${entry.name}).";
+      if (parts.isEmpty || parts.first != 'Gargosy') return tr('The zip isn\'t a Gargosy release ({0}).', [entry.name]);
       if (parts.length == 1 || AppFiles.protected.contains(parts[1].toLowerCase())) continue;
       final out = guard.join(dir, parts.skip(1).join('/'));
-      if (!p.isWithin(dir, out)) return 'The zip has a path outside its folder (${entry.name}).';
+      if (!p.isWithin(dir, out)) return tr('The zip has a path outside its folder ({0}).', [entry.name]);
       if (!entry.isFile) {
         io.Directory(out).createSync(recursive: true);
         continue;
@@ -140,22 +141,22 @@ String? unpackUpdate(String zip, String dir, PathGuard guard) {
       }
     }
   } on PathGuardException catch (e) {
-    return 'The zip has a path that is not allowed (${e.path}).';
+    return tr('The zip has a path that is not allowed ({0}).', [e.path]);
   } finally {
     input.closeSync();
   }
 
-  if (!io.File(p.join(dir, 'Gargosy.exe')).existsSync()) return 'The zip has no Gargosy.exe.';
+  if (!io.File(p.join(dir, 'Gargosy.exe')).existsSync()) return tr('The zip has no Gargosy.exe.');
   final list = io.File(p.join(dir, AppFiles.fileName));
-  if (!list.existsSync()) return 'The zip has no ${AppFiles.fileName}.';
+  if (!list.existsSync()) return tr('The zip has no {0}.', [AppFiles.fileName]);
   try {
     for (final f in AppFiles.parse(list.readAsStringSync())) {
       if (!io.File(AppFiles.under(dir, f)).existsSync()) {
-        return '${AppFiles.fileName} lists $f, but the zip has no such file.';
+        return tr('{0} lists {1}, but the zip has no such file.', [AppFiles.fileName, f]);
       }
     }
   } on FormatException catch (e) {
-    return 'The release is refused: ${e.message} (${e.source}).';
+    return tr('The release is refused: {0} ({1}).', [e.message, e.source]);
   }
   return null;
 }

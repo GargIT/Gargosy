@@ -16,6 +16,7 @@ import '../library/upload_queue.dart';
 import 'play_engine.dart';
 import 'play_menu.dart';
 import 'quit_combo.dart';
+import '../l10n/tr.dart';
 
 class PlayState {
   const PlayState({this.runningGameId, this.message, this.preparing});
@@ -45,7 +46,7 @@ class PlayController extends StateNotifier<PlayState> {
   /// [request] is the play screen's choice of save and emulator; without
   /// it the game plays in its emulator with the profile's RomM save.
   Future<String?> play(Game game, {PlayRequest? request, void Function(String)? onNotice}) async {
-    if (state.runningGameId != null) return 'A game is already running. Close it first.';
+    if (state.runningGameId != null) return tr('A game is already running. Close it first.');
     // Taken before the first await: a second press, or a profile switch,
     // while this one is still starting is refused too.
     state = PlayState(runningGameId: game.id);
@@ -56,13 +57,15 @@ class PlayController extends StateNotifier<PlayState> {
 
     try {
       final engine = _ref.read(playEngineProvider);
-      if (engine == null) return refuse('No profile is active.');
+      if (engine == null) return refuse(tr('No profile is active.'));
       final foundRom = await engine.romPathFor(game);
-      if (foundRom == null) return refuse('Download the game first.');
+      if (foundRom == null) return refuse(tr('Download the game first.'));
       final emulator = await engine.emulatorFor(game, emulatorId: request?.emulator.emulatorId);
-      if (emulator == null) return refuse('No emulator plays ${game.platformDisplayName ?? 'this platform'} yet.');
+      if (emulator == null) {
+        return refuse(tr('No emulator plays {0} yet.', [game.platformDisplayName ?? 'this platform']));
+      }
       if (!await engine.isInstalled(emulator)) {
-        return refuse('${emulator.name} is needed. Install it under Emulators (Start → Emulators).');
+        return refuse(tr('{0} is needed. Install it under Emulators (Start → Emulators).', [emulator.name]));
       }
       final whyNot = await engine.whyNotIn(game, foundRom, emulator);
       if (whyNot != null) return refuse(whyNot);
@@ -70,7 +73,7 @@ class PlayController extends StateNotifier<PlayState> {
       try {
         romPath = await _ready(engine, game, foundRom, emulator);
       } on Object catch (e) {
-        return refuse("Couldn't start ${game.displayName}: $e");
+        return refuse(tr('Couldn\'t start {0}: {1}', [game.displayName, e]));
       }
       final core = request?.emulator.coreId;
       final coreOverride = core == null ? null : '${core}_libretro';
@@ -81,11 +84,11 @@ class PlayController extends StateNotifier<PlayState> {
       _running(game, session);
       return null;
     } on SaveChoiceException catch (e) {
-      return refuse("Couldn't start with that save: ${e.message}");
+      return refuse(tr('Couldn\'t start with that save: {0}', [e.message]));
     } on StateError catch (e) {
-      return refuse("Couldn't start ${game.displayName}: ${e.message}");
+      return refuse(tr('Couldn\'t start {0}: {1}', [game.displayName, e.message]));
     } on Object catch (e) {
-      return refuse("Couldn't start ${game.displayName}: $e");
+      return refuse(tr('Couldn\'t start {0}: {1}', [game.displayName, e]));
     }
   }
 
@@ -104,13 +107,13 @@ class PlayController extends StateNotifier<PlayState> {
   /// Opens [emulatorId] (at [exePath]) on the profile's data with no game,
   /// for its own settings (controllers). Returns why it couldn't, or null.
   Future<String?> openEmulator(String emulatorId, String name, String exePath) async {
-    if (state.runningGameId != null) return 'A game is running. Close it first.';
+    if (state.runningGameId != null) return tr('A game is running. Close it first.');
     state = PlayState(runningGameId: openEmulatorId(emulatorId));
     try {
       final engine = _ref.read(playEngineProvider);
       if (engine == null) {
         state = const PlayState();
-        return 'No profile is active.';
+        return tr('No profile is active.');
       }
       await engine.openEmulator(
         emulatorId,
@@ -122,7 +125,7 @@ class PlayController extends StateNotifier<PlayState> {
       return null;
     } on Object catch (e) {
       state = const PlayState();
-      return "Couldn't open $name: $e";
+      return tr('Couldn\'t open {0}: {1}', [name, e]);
     }
   }
 
@@ -137,7 +140,7 @@ class PlayController extends StateNotifier<PlayState> {
     void Function(String)? onNotice,
     PlayRequest? remember,
   }) async {
-    if (state.runningGameId != null) return 'A game is already running. Close it first.';
+    if (state.runningGameId != null) return tr('A game is already running. Close it first.');
     state = PlayState(runningGameId: game.id);
     String? refuse(String reason) {
       state = const PlayState();
@@ -146,14 +149,14 @@ class PlayController extends StateNotifier<PlayState> {
 
     try {
       final engine = _ref.read(playEngineProvider);
-      if (engine == null) return refuse('No profile is active.');
+      if (engine == null) return refuse(tr('No profile is active.'));
       // A state belongs to one disc: it boots the ROM file it was made with.
       final own = entry.romPath;
       final foundRom = own != null && io.File(own).existsSync() ? own : await engine.romPathFor(game);
-      if (foundRom == null) return refuse('Download the game first.');
+      if (foundRom == null) return refuse(tr('Download the game first.'));
       final emulator = await engine.emulatorFor(game, emulatorId: entry.emulatorId);
       if (emulator == null || !await engine.isInstalled(emulator)) {
-        return refuse('${entry.emulatorName} is needed. Install it under Emulators (Start → Emulators).');
+        return refuse(tr('{0} is needed. Install it under Emulators (Start → Emulators).', [entry.emulatorName]));
       }
       final romPath = await _ready(engine, game, foundRom, emulator);
       if (remember != null) await _remember(engine, game, remember);
@@ -175,7 +178,11 @@ class PlayController extends StateNotifier<PlayState> {
           loadPath = await engine.takeSharedState(entry, game, romPath, emulator);
         } on Object catch (e) {
           return refuse(
-            "Couldn't get ${owner.username}'s ${entry.slot.label} from RomM (${_reason(e)}). Nothing was started.",
+            tr('Couldn\'t get {0}\'s {1} from RomM ({2}). Nothing was started.', [
+              owner.username,
+              entry.slot.label,
+              _reason(e),
+            ]),
           );
         }
       } else {
@@ -185,9 +192,11 @@ class PlayController extends StateNotifier<PlayState> {
           case ResumeReady(:final path, :final stale, :final prompt):
             if (prompt != null &&
                 (confirmVersion == null || !await confirmVersion(prompt.stateVersion, prompt.installed))) {
-              return refuse('Nothing was started.');
+              return refuse(tr('Nothing was started.'));
             }
-            if (stale) onNotice?.call("Couldn't update ${entry.slot.label} from RomM. Loading the copy on this PC.");
+            if (stale) {
+              onNotice?.call(tr('Couldn\'t update {0} from RomM. Loading the copy on this PC.', [entry.slot.label]));
+            }
             loadPath = path;
         }
       }
@@ -204,7 +213,7 @@ class PlayController extends StateNotifier<PlayState> {
       _running(game, session);
       return null;
     } on Object catch (e) {
-      return refuse("Couldn't start ${game.displayName}: $e");
+      return refuse(tr('Couldn\'t start {0}: {1}', [game.displayName, e]));
     }
   }
 
@@ -246,7 +255,7 @@ class PlayController extends StateNotifier<PlayState> {
         onStarted: started,
       );
     } on MissingRetroArchCoreException catch (missing) {
-      onNotice?.call('Downloading the ${coreLabel(missing.coreName)} core for RetroArch…');
+      onNotice?.call(tr('Downloading the {0} core for RetroArch…', [coreLabel(missing.coreName)]));
       await engine.installCore(emulator, missing);
       return engine.launch(
         game,
@@ -294,7 +303,7 @@ class PlayController extends StateNotifier<PlayState> {
   void _running(Game game, PlaySession session) {
     session.finished.then(
       (result) => _ended(game, result.message, synced: result.synced),
-      onError: (Object e) => _ended(game, 'Saves not synced: $e'),
+      onError: (Object e) => _ended(game, tr('Saves not synced: {0}', [e])),
     );
   }
 

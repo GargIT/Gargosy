@@ -8,6 +8,7 @@ import '../../../providers/library_providers.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
 import 'game_screen.dart';
+import '../../../l10n/tr.dart';
 
 Future<void> openGame(BuildContext context, Game game) =>
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => GameScreen(game: game)));
@@ -28,7 +29,7 @@ Future<void> openGameVersion(BuildContext context, WidgetRef ref, Game game) asy
   } else if (here.length > 1) {
     final i = await showChoice(
       context,
-      title: 'Which version?',
+      title: tr('Which version?'),
       labels: [for (final v in here) versionLabel(v.name, v.fsNameNoExt)],
     );
     if (i == null || !context.mounted) return;
@@ -38,7 +39,7 @@ Future<void> openGameVersion(BuildContext context, WidgetRef ref, Game game) asy
   final other = await gameOfVersion(ref, pick.id);
   if (!context.mounted) return;
   if (other == null) {
-    showToast(context, "Couldn't open that version.");
+    showToast(context, tr('Couldn\'t open that version.'));
     return;
   }
   return openGame(context, other);

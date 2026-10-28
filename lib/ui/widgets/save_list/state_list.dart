@@ -10,6 +10,7 @@ import 'player_avatar.dart';
 import 'save_list.dart';
 import 'save_row.dart';
 import 'save_labels.dart';
+import '../../../l10n/tr.dart';
 
 /// The play screen's save states: newest first, with where each one is.
 /// A chooses one; Start resumes it in the emulator that made it. Other
@@ -42,10 +43,10 @@ class StateList extends StatelessWidget {
   final void Function(ResumeEntry entry)? onDelete;
 
   static String _where(ResumeEntry e) => switch (e.where) {
-    _ when e.owner != null => 'on RomM',
-    ResumeWhere.thisPc => 'on this PC',
-    ResumeWhere.romm => 'on RomM',
-    ResumeWhere.both => e.newerOnRomm ? 'newer on RomM' : 'on this PC and RomM',
+    _ when e.owner != null => tr('on RomM'),
+    ResumeWhere.thisPc => tr('on this PC'),
+    ResumeWhere.romm => tr('on RomM'),
+    ResumeWhere.both => e.newerOnRomm ? tr('newer on RomM') : tr('on this PC and RomM'),
   };
 
   Widget _row(ResumeEntry e) {
@@ -80,7 +81,7 @@ class StateList extends StatelessWidget {
                         Flexible(
                           child: Text(e.slot.label, style: const TextStyle(fontWeight: FontWeight.w600)),
                         ),
-                        if (e.shared) SaveRow.tag('shared', GColors.gargosyTeal),
+                        if (e.shared) SaveRow.tag(tr('shared'), GColors.gargosyTeal),
                       ],
                     ),
                     Text(
@@ -91,18 +92,26 @@ class StateList extends StatelessWidget {
                     // (ResumeService.checkBeforeLaunch: "seen").
                     if (!e.resumable && e.owner != null)
                       Text(
-                        "${e.emulatorName} can't start in this state, so another player's can't be used here.",
+                        tr('{0} can\'t start in this state, so another player\'s can\'t be used here.', [
+                          e.emulatorName,
+                        ]),
                         style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                       )
                     else if (!e.resumable)
                       Text(
-                        "Start the game, then load it from ${e.emulatorName}'s menu: ${e.emulatorName} can't start in a state.",
+                        tr('Start the game, then load it from {0}\'s menu: {1} can\'t start in a state.', [
+                          e.emulatorName,
+                          e.emulatorName,
+                        ]),
                         style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                       ),
                     if (e.compat == StateCompat.mismatch)
                       Text(
-                        'Made with ${e.emulatorName} ${e.emulatorVersion ?? '?'}; you have ${e.installedVersion ?? '?'}. '
-                        'It may not load.',
+                        tr('Made with {0} {1}; you have {2}. It may not load.', [
+                          e.emulatorName,
+                          e.emulatorVersion ?? '?',
+                          e.installedVersion ?? '?',
+                        ]),
                         style: const TextStyle(fontSize: GFont.sm, color: GColors.accent),
                       ),
                   ],
@@ -170,8 +179,8 @@ class StateList extends StatelessWidget {
           border: Border(top: BorderSide(color: GColors.border)),
         ),
         child: _heading(
-          'From other players',
-          note: 'States others shared on RomM. Resuming one downloads a copy; theirs never changes.',
+          tr('From other players'),
+          note: tr('States others shared on RomM. Resuming one downloads a copy; theirs never changes.'),
         ),
       ),
       if (!wide)
@@ -201,21 +210,21 @@ class StateList extends StatelessWidget {
     ];
     if (states.isEmpty) {
       return Text(
-        loading ? 'Looking for save states…' : 'No save states yet.',
+        loading ? tr('Looking for save states…') : tr('No save states yet.'),
         style: const TextStyle(color: GColors.fgMuted),
       );
     }
     return LayoutBuilder(
       builder: (context, c) => ListView(
         children: [
-          if (others.isNotEmpty) _heading('Yours'),
-          if (own.isEmpty) const Text('No save states of yours yet.', style: TextStyle(color: GColors.fgMuted)),
+          if (others.isNotEmpty) _heading(tr('Yours')),
+          if (own.isEmpty) Text(tr('No save states of yours yet.'), style: const TextStyle(color: GColors.fgMuted)),
           ...own.map(_row),
           if (others.isNotEmpty) ..._others(others, c.maxWidth >= SaveList.twoColumnWidth),
           if (loading)
-            const Padding(
-              padding: EdgeInsets.only(top: GSpace.s2),
-              child: Text("Checking RomM's states…", style: TextStyle(color: GColors.fgMuted)),
+            Padding(
+              padding: const EdgeInsets.only(top: GSpace.s2),
+              child: Text(tr('Checking RomM\'s states…'), style: const TextStyle(color: GColors.fgMuted)),
             ),
         ],
       ),

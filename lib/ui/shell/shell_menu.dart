@@ -12,8 +12,9 @@ import '../widgets/controller_dialogs.dart';
 import '../widgets/sync_wait.dart';
 import '../widgets/toast.dart';
 import 'user_menu.dart';
+import '../../l10n/tr.dart';
 
-const shellTabs = ['Home', 'Platforms', 'Collections', 'Search'];
+List<String> get shellTabs => [tr('Home'), tr('Platforms'), tr('Collections'), tr('Search')];
 
 /// The shell's tab. Pages opened on top (the game page, the gallery) set it
 /// from their top bar, then close back to the shell.
@@ -31,7 +32,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     context,
     profile: ctx.profile,
     avatarPath: ctx.paths.avatarFile,
-    update: available == null ? null : 'Update available: ${available.release.version}',
+    update: available == null ? null : tr('Update available: {0}', [available.release.version]),
     downloads: downloads.anything ? downloads.pending : null,
   );
   if (!context.mounted) return;
@@ -45,7 +46,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     case UserMenuAction.switchProfile:
       // The game runs on this profile's emulator data; it must close first.
       if (ref.read(playControllerProvider).runningGameId != null) {
-        showToast(context, "Close the game first: a profile can't change while a game runs.");
+        showToast(context, tr('Close the game first: a profile can\'t change while a game runs.'));
         return;
       }
       // Downloads belong to this profile: switching stops them (#143).
@@ -53,11 +54,11 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
       if (pending > 0 &&
           !await showConfirm(
             context,
-            title: 'Stop the downloads?',
+            title: tr('Stop the downloads?'),
             body: pending == 1
-                ? 'A download is running. Switching profile stops it.'
-                : '$pending downloads are running or waiting. Switching profile stops them.',
-            yes: 'Switch profile',
+                ? tr('A download is running. Switching profile stops it.')
+                : tr('{0} downloads are running or waiting. Switching profile stops them.', [pending]),
+            yes: tr('Switch profile'),
             focusYes: false,
           )) {
         return;
