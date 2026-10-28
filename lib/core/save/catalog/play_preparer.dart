@@ -11,6 +11,7 @@ import '../backup_service.dart';
 import '../save_sync_service.dart';
 import 'save_entry.dart';
 import 'save_maker.dart';
+import '../../../l10n/tr.dart';
 
 export '../save_sync_service.dart' show SaveChoiceException;
 
@@ -31,15 +32,16 @@ class PlayPreparer {
       if (maker!.coreId == target.coreId) return;
       // RetroArch keeps one folder per core; nothing copies between them.
       throw SaveChoiceException(
-        'This save belongs to the ${maker.coreId ?? 'default'} core; pick that core to play it.',
+        tr('This save belongs to the {0} core; pick that core to play it.', [maker.coreId ?? 'default']),
       );
     }
     // ROM folders hold only games: never write a save there.
     final saveDir = await sync.saveDirFor(game, romPath, emulatorId: target.emulatorId, coreOverride: target.coreId);
     if (saveDir != null && p.equals(p.normalize(saveDir), p.normalize(p.dirname(romPath)))) {
       throw SaveChoiceException(
-        "${target.emulatorId} keeps its saves in the game's folder, which holds only games. "
-        'Set its save folder first.',
+        tr('{0} keeps its saves in the game\'s folder, which holds only games. Set its save folder first.', [
+          target.emulatorId,
+        ]),
       );
     }
     // Gargosy: the chosen backup is copied aside first. The backup made just
@@ -48,7 +50,9 @@ class PlayPreparer {
     io.File? chosenCopy;
     if (save.source == SaveSource.backup) {
       final zip = io.File(save.backup!.localZipPath);
-      if (!zip.existsSync()) throw SaveChoiceException("The backup from ${save.savedAt} isn't on this PC any more.");
+      if (!zip.existsSync()) {
+        throw SaveChoiceException(tr('The backup from {0} isn\'t on this PC any more.', [save.savedAt]));
+      }
       final tmp = io.Directory.systemTemp.createTempSync('gargosy_restore');
       chosenCopy = zip.copySync(p.join(tmp.path, p.basename(zip.path)));
     }
@@ -80,10 +84,10 @@ class PlayPreparer {
           emulatorId: target.emulatorId,
           coreOverride: _coreOverride(target),
         );
-        if (!ok) throw SaveChoiceException("The backup from ${save.savedAt} couldn't be restored.");
+        if (!ok) throw SaveChoiceException(tr('The backup from {0} couldn\'t be restored.', [save.savedAt]));
       case SaveSource.local:
         final from = save.maker;
-        if (from == null) throw SaveChoiceException("It isn't known which emulator made this save.");
+        if (from == null) throw SaveChoiceException(tr('It isn\'t known which emulator made this save.'));
         await sync.convertLocalSave(
           game,
           romPath,

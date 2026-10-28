@@ -25,6 +25,7 @@ import 'backdrop.dart';
 import 'screensaver.dart';
 import 'shell_menu.dart';
 import 'top_bar.dart';
+import '../../l10n/tr.dart';
 
 /// The signed-in app: v2's top bar over the current tab's page (spec §7).
 class AppShell extends ConsumerStatefulWidget {
@@ -93,7 +94,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     unawaited(
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => DocReaderScreen.text(title: "What's new in ${news.title}", text: text, baseDir: root.root),
+          builder: (_) =>
+              DocReaderScreen.text(title: tr('What\'s new in {0}', [news.title]), text: text, baseDir: root.root),
         ),
       ),
     );
@@ -107,7 +109,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     if (!mounted) return;
     ref.read(uploadQueueVersionProvider.notifier).state++;
     if (n > 0) {
-      showToast(context, n == 1 ? 'Uploaded 1 save that was waiting.' : 'Uploaded $n saves that were waiting.');
+      showToast(
+        context,
+        n == 1 ? tr('Uploaded 1 save that was waiting.') : tr('Uploaded {0} saves that were waiting.', [n]),
+      );
     }
   }
 
@@ -183,21 +188,21 @@ class _AppShellState extends ConsumerState<AppShell> {
                           color: GColors.accent.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(GRadius.pill),
                         ),
-                        child: const Text(
-                          "RomM can't be reached. Games on this PC still play; saves upload when it's back.",
-                          style: TextStyle(color: GColors.accent, fontWeight: FontWeight.w600),
+                        child: Text(
+                          tr('RomM can\'t be reached. Games on this PC still play; saves upload when it\'s back.'),
+                          style: const TextStyle(color: GColors.accent, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
                   ),
-                const Positioned(
+                Positioned(
                   left: 0,
                   bottom: 0,
                   child: HintBar(
                     hints: [
-                      Hint(GameAction.l1, 'Previous tab'),
-                      Hint(GameAction.r1, 'Next tab'),
-                      Hint(GameAction.start, 'Menu'),
+                      Hint(GameAction.l1, tr('Previous tab')),
+                      Hint(GameAction.r1, tr('Next tab')),
+                      Hint(GameAction.start, tr('Menu')),
                     ],
                   ),
                 ),

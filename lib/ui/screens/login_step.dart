@@ -10,6 +10,7 @@ import '../../profiles/profile_providers.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/on_screen_keyboard.dart';
+import '../../l10n/tr.dart';
 
 /// Logging in to one RomM server (spec §5): device pairing with a QR code
 /// where the server has it, otherwise (or on request) username and password.
@@ -90,9 +91,9 @@ class _LoginStepState extends ConsumerState<LoginStep> {
         case DeviceApproved(:final token, :final deviceId):
           await _finish(ProfileLogin(token: token, kind: 'device', deviceId: deviceId));
         case DeviceDenied():
-          setState(() => _error = 'The login was refused in RomM.');
+          setState(() => _error = tr('The login was refused in RomM.'));
         case DeviceExpired():
-          setState(() => _error = 'The code expired. Go back and try again.');
+          setState(() => _error = tr('The code expired. Go back and try again.'));
         default:
           break;
       }
@@ -113,13 +114,16 @@ class _LoginStepState extends ConsumerState<LoginStep> {
   }
 
   String _describe(RommAuthException e) => switch (e.failure) {
-    RommAuthFailure.network => "Can't reach ${widget.serverUrl}. Check the address and your network.",
-    RommAuthFailure.badCredentials => 'Wrong username or password',
-    RommAuthFailure.serverTooOld => 'This RomM server is too old for Gargosy (it has no client API tokens).',
-    RommAuthFailure.insufficientScope => 'This RomM user may not log in apps. Ask the RomM admin.',
-    RommAuthFailure.server => '${e.message}. RomM may be restarting; try again in a moment.',
-    RommAuthFailure.notRomm => '${widget.serverUrl} does not look like a RomM server. Check the address.',
-    RommAuthFailure.wrongUser => 'This is a different RomM user (${e.message}). Log in as ${widget.expectedUsername}.',
+    RommAuthFailure.network => tr('Can\'t reach {0}. Check the address and your network.', [widget.serverUrl]),
+    RommAuthFailure.badCredentials => tr('Wrong username or password'),
+    RommAuthFailure.serverTooOld => tr('This RomM server is too old for Gargosy (it has no client API tokens).'),
+    RommAuthFailure.insufficientScope => tr('This RomM user may not log in apps. Ask the RomM admin.'),
+    RommAuthFailure.server => tr('{0}. RomM may be restarting; try again in a moment.', [e.message]),
+    RommAuthFailure.notRomm => tr('{0} does not look like a RomM server. Check the address.', [widget.serverUrl]),
+    RommAuthFailure.wrongUser => tr('This is a different RomM user ({0}). Log in as {1}.', [
+      e.message,
+      widget.expectedUsername,
+    ]),
     RommAuthFailure.other => e.message,
   };
 
@@ -130,10 +134,14 @@ class _LoginStepState extends ConsumerState<LoginStep> {
       if (widget.expectedUserId != null && me.id != widget.expectedUserId) {
         // A paired device is already approved for that user in RomM; say so.
         final device = login.kind == 'device'
-            ? ' Gargosy was approved for ${me.username} in RomM; you can remove that device there.'
+            ? tr(' Gargosy was approved for {0} in RomM; you can remove that device there.', [me.username])
             : '';
         setState(
-          () => _error = 'This is a different RomM user (${me.username}). Log in as ${widget.expectedUsername}.$device',
+          () => _error = tr('This is a different RomM user ({0}). Log in as {1}.{2}', [
+            me.username,
+            widget.expectedUsername,
+            device,
+          ]),
         );
         return;
       }
@@ -141,7 +149,7 @@ class _LoginStepState extends ConsumerState<LoginStep> {
     } on RommAuthException catch (e) {
       if (mounted) setState(() => _error = _describe(e));
     } on Object catch (e) {
-      if (mounted) setState(() => _error = 'The login could not be saved on this PC ($e).');
+      if (mounted) setState(() => _error = tr('The login could not be saved on this PC ({0}).', [e]));
     }
   }
 
@@ -201,7 +209,7 @@ class _LoginStepState extends ConsumerState<LoginStep> {
   Widget build(BuildContext context) {
     final children = <Widget>[
       Text(
-        'Log in to ${widget.serverUrl}',
+        tr('Log in to {0}', [widget.serverUrl]),
         style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: GSpace.s5),
@@ -210,7 +218,10 @@ class _LoginStepState extends ConsumerState<LoginStep> {
       children.add(const CircularProgressIndicator());
     } else if (!_passwordMode && _start != null) {
       children.addAll([
-        const Text('On your phone or PC, open this in RomM and approve Gargosy:', style: TextStyle(fontSize: GFont.lg)),
+        Text(
+          tr('On your phone or PC, open this in RomM and approve Gargosy:'),
+          style: const TextStyle(fontSize: GFont.lg),
+        ),
         const SizedBox(height: GSpace.s4),
         Container(
           key: const Key('pair-qr'),
@@ -224,24 +235,24 @@ class _LoginStepState extends ConsumerState<LoginStep> {
           style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800, letterSpacing: 4),
         ),
         const SizedBox(height: GSpace.s5),
-        _button('Use password instead', () {
+        _button(tr('Use password instead'), () {
           _flow?.cancel();
           setState(() => _passwordMode = true);
         }, autofocus: true),
       ]);
     } else {
       children.addAll([
-        _field(const Key('login-username'), 'Username', _username, () async {
-          final v = await showOnScreenKeyboard(context, title: 'Username', initial: _username);
+        _field(const Key('login-username'), tr('Username'), _username, () async {
+          final v = await showOnScreenKeyboard(context, title: tr('Username'), initial: _username);
           if (v != null) setState(() => _username = v);
         }, autofocus: true),
         const SizedBox(height: GSpace.s3),
-        _field(const Key('login-password'), 'Password', '•' * _password.length, () async {
-          final v = await showOnScreenKeyboard(context, title: 'Password', obscure: true);
+        _field(const Key('login-password'), tr('Password'), '•' * _password.length, () async {
+          final v = await showOnScreenKeyboard(context, title: tr('Password'), obscure: true);
           if (v != null) setState(() => _password = v);
         }),
         const SizedBox(height: GSpace.s5),
-        _button('Log in', _passwordLogin),
+        _button(tr('Log in'), _passwordLogin),
       ]);
     }
     if (_error != null) {
@@ -253,7 +264,7 @@ class _LoginStepState extends ConsumerState<LoginStep> {
         ),
       ]);
     }
-    children.addAll([const SizedBox(height: GSpace.s6), _button('Back', widget.onBack)]);
+    children.addAll([const SizedBox(height: GSpace.s6), _button(tr('Back'), widget.onBack)]);
     return Center(
       child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: children),

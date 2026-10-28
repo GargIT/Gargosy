@@ -11,6 +11,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/g_dropdown.dart';
 import '../../widgets/g_focusable.dart';
 import '../settings/settings_screen.dart';
+import '../../../l10n/tr.dart';
 
 /// The platform page's Emulator tab: which installed emulator plays the
 /// platform and RetroArch's core for it (the same setting as Settings →
@@ -93,7 +94,7 @@ class _EmulatorTabState extends ConsumerState<EmulatorTab> {
                 children: [
                   const Icon(Icons.sports_esports_outlined, size: 16, color: GColors.fgMuted),
                   const SizedBox(width: GSpace.s2),
-                  Text('${name.toUpperCase()} PLAYS IN', style: label),
+                  Text(tr('{0} PLAYS IN', [name.toUpperCase()]), style: label),
                 ],
               ),
               const SizedBox(height: GSpace.s4),
@@ -106,7 +107,7 @@ class _EmulatorTabState extends ConsumerState<EmulatorTab> {
                     child: GDropdownField(
                       key: const ValueKey('platform-emulator'),
                       icon: Icons.sports_esports_outlined,
-                      text: current == null ? 'No emulator installed' : infos[current]!.name,
+                      text: current == null ? tr('No emulator installed') : infos[current]!.name,
                       open: _open == 'emulator',
                       compact: true,
                       onPress: installed.length < 2 || registry == null
@@ -126,7 +127,7 @@ class _EmulatorTabState extends ConsumerState<EmulatorTab> {
                       child: GDropdownField(
                         key: const ValueKey('platform-core'),
                         icon: Icons.memory,
-                        text: 'Core: ${coreIndex < 0 ? (coreId ?? '–') : cores[coreIndex].displayName}',
+                        text: tr('Core: {0}', [coreIndex < 0 ? (coreId ?? '–') : cores[coreIndex].displayName]),
                         open: _open == 'core',
                         compact: true,
                         onPress: registry == null
@@ -144,18 +145,20 @@ class _EmulatorTabState extends ConsumerState<EmulatorTab> {
               ),
               const SizedBox(height: GSpace.s3),
               Text(
-                'The same as Settings → Emulator settings, for $name only. '
-                'A game\'s "Always for this game" on the play screen comes before it.',
+                tr(
+                  'The same as Settings → Emulator settings, for {0} only. A game\'s "Always for this game" on the play screen comes before it.',
+                  [name],
+                ),
                 style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary, height: 1.4),
               ),
             ],
           ),
         ),
         const SizedBox(height: GSpace.s6),
-        Text('EMULATORS FOR ${name.toUpperCase()}', style: label),
+        Text(tr('EMULATORS FOR {0}', [name.toUpperCase()]), style: label),
         const SizedBox(height: GSpace.s3),
         if (ids.isEmpty)
-          const Text('Gargosy has no emulator for this platform.', style: TextStyle(color: GColors.fgSecondary)),
+          Text(tr('Gargosy has no emulator for this platform.'), style: const TextStyle(color: GColors.fgSecondary)),
         for (final id in ids)
           _EmulatorRow(
             key: ValueKey('platform-emulator-$id'),
@@ -190,13 +193,13 @@ class _EmulatorRow extends StatelessWidget {
           child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
         ),
         if (installed)
-          const Row(
+          Row(
             children: [
-              Icon(Icons.check_circle, size: 16, color: GColors.success),
-              SizedBox(width: GSpace.s2),
+              const Icon(Icons.check_circle, size: 16, color: GColors.success),
+              const SizedBox(width: GSpace.s2),
               Text(
-                'Installed',
-                style: TextStyle(color: GColors.success, fontWeight: FontWeight.w600),
+                tr('Installed'),
+                style: const TextStyle(color: GColors.success, fontWeight: FontWeight.w600),
               ),
             ],
           )
@@ -210,9 +213,9 @@ class _EmulatorRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(GRadius.pill),
                 border: Border.all(color: GColors.primary),
               ),
-              child: const Text(
-                'Install under Emulators',
-                style: TextStyle(color: GColors.primaryHover, fontWeight: FontWeight.w600),
+              child: Text(
+                tr('Install under Emulators'),
+                style: const TextStyle(color: GColors.primaryHover, fontWeight: FontWeight.w600),
               ),
             ),
           ),

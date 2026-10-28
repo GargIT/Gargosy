@@ -27,6 +27,7 @@ import '../../widgets/toast.dart';
 import '../play/play_screen.dart';
 import 'add_to_collection.dart';
 import 'delete_game_dialog.dart';
+import '../../../l10n/tr.dart';
 
 /// Opens a folder in Windows' Explorer; tests replace it.
 final folderOpenerProvider = Provider<void Function(String path)>(
@@ -109,10 +110,10 @@ class GameCoverColumn extends ConsumerWidget {
     final remembered = menu?.remembered;
     final items = <({String label, bool danger, Future<void> Function() run})>[
       if (ref.read(collectionEditsProvider) != null)
-        (label: 'Add to collection…', danger: false, run: () => showAddToCollection(context, game)),
+        (label: tr('Add to collection…'), danger: false, run: () => showAddToCollection(context, game)),
       if (downloaded)
         (
-          label: "Open the game's folder",
+          label: tr('Open the game\'s folder'),
           danger: false,
           run: () async {
             final path = ref.read(romFilesProvider).pathFor(game);
@@ -123,7 +124,7 @@ class GameCoverColumn extends ConsumerWidget {
         ),
       if (downloaded && (engine?.stateSyncAvailable(game) ?? false))
         (
-          label: 'Sync save states now',
+          label: tr('Sync save states now'),
           danger: false,
           run: () async {
             final said = await ref.read(saveActionsProvider).syncStates(game);
@@ -132,7 +133,7 @@ class GameCoverColumn extends ConsumerWidget {
         ),
       if (remembered != null)
         (
-          label: 'Forget "Always in ${menu!.nameOf(remembered)}"',
+          label: tr('Forget "Always in {0}"', [menu!.nameOf(remembered)]),
           danger: false,
           run: () async {
             await engine?.remember(game, PlayRequest(emulator: remembered, forget: true));
@@ -141,15 +142,15 @@ class GameCoverColumn extends ConsumerWidget {
         ),
       if (downloaded)
         (
-          label: 'Delete from this PC…',
+          label: tr('Delete from this PC…'),
           danger: true,
           run: () async {
             final ok = await showConfirm(
               context,
-              title: 'Delete ${game.displayName} from this PC?',
-              body: 'The ROM is removed from this PC only. It stays on RomM, and your saves are not touched.',
-              yes: 'Delete',
-              no: 'Keep',
+              title: tr('Delete {0} from this PC?', [game.displayName]),
+              body: tr('The ROM is removed from this PC only. It stays on RomM, and your saves are not touched.'),
+              yes: tr('Delete'),
+              no: tr('Keep'),
               focusYes: false,
               danger: true,
             );
@@ -158,7 +159,7 @@ class GameCoverColumn extends ConsumerWidget {
         ),
       if (ref.read(canDeleteGamesProvider).valueOrNull ?? false)
         (
-          label: 'Delete from RomM…',
+          label: tr('Delete from RomM…'),
           danger: true,
           run: () => deleteGameFromRomm(context, ref, game, downloaded: downloaded),
         ),
@@ -226,9 +227,9 @@ class GameCoverColumn extends ConsumerWidget {
       // Waiting for the downloads before it (#143).
       main = Column(
         children: [
-          const Text('Queued', style: TextStyle(color: GColors.fgSecondary)),
+          Text(tr('Queued'), style: const TextStyle(color: GColors.fgSecondary)),
           const SizedBox(height: GSpace.s3),
-          _wide('Remove from the queue', Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
+          _wide(tr('Remove from the queue'), Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
         ],
       );
     } else if (progress != null && progress.phase != DownloadPhase.failed) {
@@ -241,19 +242,19 @@ class GameCoverColumn extends ConsumerWidget {
           ),
           const SizedBox(height: GSpace.s2),
           Text(
-            progress.phase == DownloadPhase.extracting ? 'Unpacking…' : 'Downloading$pct',
+            progress.phase == DownloadPhase.extracting ? tr('Unpacking…') : tr('Downloading{0}', [pct]),
             style: const TextStyle(color: GColors.fgSecondary),
           ),
           // Unpacking can't be stopped halfway, so Cancel goes away once it starts.
           if (progress.phase == DownloadPhase.downloading) ...[
             const SizedBox(height: GSpace.s3),
-            _wide('Cancel', Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
+            _wide(tr('Cancel'), Icons.close, () => ref.read(downloadsProvider.notifier).cancel(game.id)),
           ],
         ],
       );
     } else if (downloaded) {
       main = _wide(
-        playing ? 'Playing…' : 'Play',
+        playing ? tr('Playing…') : tr('Play'),
         Icons.play_arrow,
         playing ? null : () => _play(context),
         primary: true,
@@ -264,12 +265,17 @@ class GameCoverColumn extends ConsumerWidget {
       final free = ref.watch(freeSpaceProvider)(roms);
       main = Column(
         children: [
-          _wide('Download$size', Icons.download, () => ref.read(downloadsProvider.notifier).start(game), primary: true),
+          _wide(
+            tr('Download{0}', [size]),
+            Icons.download,
+            () => ref.read(downloadsProvider.notifier).start(game),
+            primary: true,
+          ),
           // Said before it's pressed when the drive is nearly full (#142).
           if (spaceIsTight(game.fileSize, free) && progress?.phase != DownloadPhase.failed) ...[
             const SizedBox(height: GSpace.s2),
             Text(
-              '${formatBytes(free!)} free on ${driveOf(roms)}',
+              tr('{0} free on {1}', [formatBytes(free!), driveOf(roms)]),
               key: const ValueKey('free-space'),
               style: const TextStyle(color: GColors.gargosyGold, fontSize: GFont.sm),
             ),
@@ -279,7 +285,7 @@ class GameCoverColumn extends ConsumerWidget {
             SizedBox(
               width: coverWidth,
               child: Text(
-                'The download failed: ${progress!.error}',
+                tr('The download failed: {0}', [progress!.error]),
                 style: const TextStyle(color: GColors.danger, fontSize: GFont.sm),
               ),
             ),
@@ -320,7 +326,7 @@ class GameCoverColumn extends ConsumerWidget {
             ],
           ),
           const Spacer(),
-          const OutlinedBackButton(key: ValueKey('game-back'), label: 'Back'),
+          OutlinedBackButton(key: const ValueKey('game-back'), label: tr('Back')),
           const SizedBox(height: GSpace.s4),
         ],
       ),

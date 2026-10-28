@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import 'romm_models.dart';
+import '../../l10n/tr.dart';
 
 /// Where a sort's order comes from: RomM's fields, the player's own, or
 /// Gargosy's (only with On this PC on).
@@ -12,8 +14,11 @@ enum SortGroup {
   yours('YOURS'),
   thisPc('THIS PC');
 
-  const SortGroup(this.label);
-  final String label;
+  const SortGroup(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 }
 
 /// Gallery sort orders, as RomM's `/api/roms` `order_by` names them (a
@@ -38,9 +43,12 @@ enum GallerySort {
   /// Newest download first; Gargosy sorts it itself.
   downloaded('name', 'Downloaded', true, SortGroup.thisPc);
 
-  const GallerySort(this.field, this.label, this.descByDefault, [this.group = SortGroup.romm]);
+  const GallerySort(this.field, this._label, this.descByDefault, [this.group = SortGroup.romm]);
   final String field;
-  final String label;
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
   final bool descByDefault;
   final SortGroup group;
 }
@@ -269,6 +277,7 @@ class RommCollection {
     this.ownerUsername,
     this.updatedAt,
     this.filterSummary,
+    this.filterCriteria = const {},
   });
 
   /// RomM's id of a regular or smart collection; 0 for a virtual one.
@@ -295,6 +304,9 @@ class RommCollection {
   /// A smart collection's filters in words (RomM's `filter_summary`).
   final String? filterSummary;
 
+  /// A smart collection's filters as RomM keeps them (`filter_criteria`).
+  final Map<String, dynamic> filterCriteria;
+
   /// One key for every collection of every kind.
   String get key => kind == CollectionKind.virtual ? 'virtual-$virtualId' : '${kind.name}-$id';
 
@@ -305,6 +317,20 @@ class RommCollection {
     CollectionKind.smart => GalleryQuery(smartCollectionId: id),
     CollectionKind.virtual => GalleryQuery(virtualCollectionId: virtualId),
   };
+
+  /// `filter_criteria`, else the same read back from `filter_summary` (its JSON).
+  static Map<String, dynamic> _criteria(Map<String, dynamic> json) {
+    final c = json['filter_criteria'];
+    if (c is Map) return c.cast<String, dynamic>();
+    final s = json['filter_summary'];
+    if (s is! String || !s.trimLeft().startsWith('{')) return const {};
+    try {
+      final d = jsonDecode(s);
+      return d is Map ? d.cast<String, dynamic>() : const {};
+    } on FormatException {
+      return const {};
+    }
+  }
 
   static List<String> _paths(Object? v) => [
     for (final s in (v is List ? v : const []))
@@ -335,6 +361,7 @@ class RommCollection {
       ownerUsername: json['owner_username'] as String?,
       updatedAt: json['updated_at'] is String ? DateTime.tryParse(json['updated_at'] as String) : null,
       filterSummary: json['filter_summary'] as String?,
+      filterCriteria: _criteria(json),
     );
   }
 }

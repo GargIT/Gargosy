@@ -6,6 +6,7 @@ import '../input/gargosy_intents.dart';
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
 import 'hint_bar.dart';
+import '../../l10n/tr.dart';
 
 /// Text entry with the controller (spec §7): a key grid laid out for URLs,
 /// names and passwords. A physical keyboard types straight in.
@@ -35,9 +36,9 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
 
   static const _rows = [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '@'],
-    ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '-', '_'],
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'å'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '-', '_', '@'],
     ['/', ':', '!', '?', '#', '&', '=', '+', '%', '~'],
   ];
 
@@ -146,17 +147,17 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
                 Row(
                   children: [
                     _key('⇧', () => setState(() => _shift = !_shift)),
-                    _key('Space', () => _type(' '), flex: 4),
+                    _key(tr('Space'), () => _type(' '), flex: 4),
                     _key('⌫', _backspace, flex: 2),
-                    _key('Done', _done, flex: 3),
+                    _key(tr('Done'), _done, flex: 3),
                   ],
                 ),
-                const HintBar(
+                HintBar(
                   hints: [
-                    Hint(GameAction.confirm, 'Press'),
-                    Hint(GameAction.back, 'Delete'),
-                    Hint(GameAction.detail, 'Space'),
-                    Hint(GameAction.start, 'Done'),
+                    Hint(GameAction.confirm, tr('Press')),
+                    Hint(GameAction.back, tr('Delete')),
+                    Hint(GameAction.detail, tr('Space')),
+                    Hint(GameAction.start, tr('Done')),
                   ],
                 ),
               ],

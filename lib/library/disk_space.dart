@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:win32/win32.dart';
 
 import '../ui/widgets/format.dart';
+import '../l10n/tr.dart';
 
 /// The bytes free to this user on the drive of a path, or null when it
 /// can't be told (the check is then skipped).
@@ -40,7 +41,7 @@ class NotEnoughSpace implements Exception {
   final int free;
 
   @override
-  String toString() => 'Needs ${formatBytes(needed)}, ${formatBytes(free)} free on $drive.';
+  String toString() => tr('Needs {0}, {1} free on {2}.', [formatBytes(needed), formatBytes(free), drive]);
 }
 
 /// `D:` for a path on D:, the share for a network path.

@@ -24,6 +24,7 @@ import 'version_field.dart';
 import 'notes_tab.dart';
 import 'overview_tab.dart';
 import 'saves_tab.dart';
+import '../../../l10n/tr.dart';
 
 /// The game page (spec Part 1), after Freegosy's in the v2 style: the art
 /// behind the page, the cover column (▶ Play, ♥, ⋯), the title, the
@@ -34,7 +35,7 @@ class GameScreen extends ConsumerStatefulWidget {
 
   final Game game;
 
-  static const tabs = ['Overview', 'Saves', 'Achievements', 'Notes', 'Details'];
+  static List<String> get tabs => [tr('Overview'), tr('Saves'), tr('Achievements'), tr('Notes'), tr('Details')];
 
   /// Where the page starts below the top bar; the play screen uses the same,
   /// so the cover doesn't move between the two.
@@ -49,7 +50,7 @@ class GameScreen extends ConsumerStatefulWidget {
     final meta = [
       game.platformDisplayName,
       if (released != null) '$released',
-      if (game.averageRating != null) '★ ${game.averageRating!.toStringAsFixed(1)}',
+      if (game.averageRating != null) '★ ${decimal(game.averageRating!, 1)}',
     ].whereType<String>().join('  ·  ');
     return titleHero(
       game,
@@ -196,10 +197,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   // Below the page, as on the play screen, so it never covers Back.
                   HintBar(
                     hints: [
-                      const Hint(GameAction.back, 'Back'),
-                      const Hint(GameAction.l1, 'Previous tab'),
-                      const Hint(GameAction.r1, 'Next tab'),
-                      if (hasStates) const Hint(GameAction.favorite, 'Resume'),
+                      Hint(GameAction.back, tr('Back')),
+                      Hint(GameAction.l1, tr('Previous tab')),
+                      Hint(GameAction.r1, tr('Next tab')),
+                      if (hasStates) Hint(GameAction.favorite, tr('Resume')),
                     ],
                   ),
                 ],

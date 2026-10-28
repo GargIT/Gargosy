@@ -17,6 +17,7 @@ import '../widgets/g_focusable.dart';
 import '../widgets/on_screen_keyboard.dart';
 import '../widgets/pin_pad.dart';
 import 'login_step.dart';
+import '../../l10n/tr.dart';
 
 enum _Step { server, login, details, pin }
 
@@ -42,11 +43,11 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
   bool _creating = false;
   String? _createError;
 
-  String get _deviceName => 'Gargosy on ${ref.read(pcIdentityProvider).machineName}';
+  String get _deviceName => tr('Gargosy on {0}', [ref.read(pcIdentityProvider).machineName]);
 
   Future<void> _checkServer() async {
     if (_server.trim().isEmpty) {
-      setState(() => _serverError = 'Enter the address of your RomM server.');
+      setState(() => _serverError = tr('Enter the address of your RomM server.'));
       return;
     }
     // Reaching the server is checked by LoginStep's first call; an unreachable
@@ -78,7 +79,7 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
       if (mounted) {
         setState(() {
           _creating = false;
-          _createError = 'The profile could not be saved ($e). Try again.';
+          _createError = tr('The profile could not be saved ({0}). Try again.', [e]);
         });
       }
     }
@@ -119,19 +120,19 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
     final stop = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Stop adding this profile?'),
-        content: const Text('You are logged in, but nothing has been saved yet. Stopping adds no profile.'),
+        title: Text(tr('Stop adding this profile?')),
+        content: Text(tr('You are logged in, but nothing has been saved yet. Stopping adds no profile.')),
         actions: [
           GFocusable(
             autofocus: true,
             borderRadius: GRadius.pill,
             onActivate: () => Navigator.of(c).pop(false),
-            child: const Padding(padding: EdgeInsets.all(GSpace.s3), child: Text('Keep going')),
+            child: Padding(padding: const EdgeInsets.all(GSpace.s3), child: Text(tr('Keep going'))),
           ),
           GFocusable(
             borderRadius: GRadius.pill,
             onActivate: () => Navigator.of(c).pop(true),
-            child: const Padding(padding: EdgeInsets.all(GSpace.s3), child: Text('Stop')),
+            child: Padding(padding: const EdgeInsets.all(GSpace.s3), child: Text(tr('Stop'))),
           ),
         ],
       ),
@@ -142,12 +143,12 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
   }
 
   Future<void> _askPin() async {
-    final first = await showPinEntry(context, title: 'Choose a PIN', check: (_) async => null);
+    final first = await showPinEntry(context, title: tr('Choose a PIN'), check: (_) async => null);
     if (first == null || !mounted) return;
     final second = await showPinEntry(
       context,
-      title: 'Enter the PIN again',
-      check: (pin) async => pin == first ? null : "The PINs don't match",
+      title: tr('Enter the PIN again'),
+      check: (pin) async => pin == first ? null : tr('The PINs don\'t match'),
     );
     if (second == null) return;
     await _create(await Isolate.run(() => PinHash.create(second)));
@@ -170,9 +171,9 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
   Widget _serverStep() => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      const Text(
-        'Your RomM server',
-        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      Text(
+        tr('Your RomM server'),
+        style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: GSpace.s5),
       GFocusable(
@@ -180,7 +181,7 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
         autofocus: true,
         borderRadius: GRadius.lg,
         onActivate: () async {
-          final v = await showOnScreenKeyboard(context, title: 'Server address', initial: _server);
+          final v = await showOnScreenKeyboard(context, title: tr('Server address'), initial: _server);
           if (v != null) setState(() => _server = v);
         },
         child: Container(
@@ -199,7 +200,7 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
       ),
       const SizedBox(height: GSpace.s3),
       _button(
-        _trustSelfSigned ? 'Self-signed certificate: allowed' : 'Self-signed certificate: not allowed',
+        _trustSelfSigned ? tr('Self-signed certificate: allowed') : tr('Self-signed certificate: not allowed'),
         () => setState(() => _trustSelfSigned = !_trustSelfSigned),
       ),
       if (_serverError != null) ...[
@@ -213,9 +214,9 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
       Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _button('Cancel', () => Navigator.of(context).pop()),
+          _button(tr('Cancel'), () => Navigator.of(context).pop()),
           const SizedBox(width: GSpace.s3),
-          _button('Continue', _checkServer),
+          _button(tr('Continue'), _checkServer),
         ],
       ),
     ],
@@ -224,16 +225,16 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
   Widget _detailsStep() => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      const Text(
-        'Your profile',
-        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      Text(
+        tr('Your profile'),
+        style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: GSpace.s5),
       GFocusable(
         autofocus: true,
         borderRadius: GRadius.lg,
         onActivate: () async {
-          final v = await showOnScreenKeyboard(context, title: 'Name', initial: _name);
+          final v = await showOnScreenKeyboard(context, title: tr('Name'), initial: _name);
           if (v != null) setState(() => _name = v);
         },
         child: Container(
@@ -274,9 +275,9 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
       Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _button('Cancel', _cancel),
+          _button(tr('Cancel'), _cancel),
           const SizedBox(width: GSpace.s3),
-          _button('Continue', () => setState(() => _step = _Step.pin)),
+          _button(tr('Continue'), () => setState(() => _step = _Step.pin)),
         ],
       ),
     ],
@@ -285,24 +286,24 @@ class _AddProfileScreenState extends ConsumerState<AddProfileScreen> {
   Widget _pinStep() => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      const Text(
-        'Protect it with a PIN?',
-        style: TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
+      Text(
+        tr('Protect it with a PIN?'),
+        style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w700),
       ),
       const SizedBox(height: GSpace.s2),
-      const Text(
-        'A PIN keeps others on this PC from playing as you by mistake. It is a lock, not security.',
-        style: TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
+      Text(
+        tr('A PIN keeps others on this PC from playing as you by mistake. It is a lock, not security.'),
+        style: const TextStyle(fontSize: GFont.lg, color: GColors.fgSecondary),
       ),
       const SizedBox(height: GSpace.s5),
       Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _button('No PIN', () => _create(null), autofocus: true),
+          _button(tr('No PIN'), () => _create(null), autofocus: true),
           const SizedBox(width: GSpace.s3),
-          _button('Set a PIN', _askPin),
+          _button(tr('Set a PIN'), _askPin),
           const SizedBox(width: GSpace.s3),
-          _button('Cancel', _cancel),
+          _button(tr('Cancel'), _cancel),
         ],
       ),
       if (_createError != null) ...[

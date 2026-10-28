@@ -8,6 +8,7 @@ import '../core/romm/romm_models.dart';
 import '../providers/library_providers.dart';
 import '../providers/romm_providers.dart';
 import '../retroachievements/ra_account.dart';
+import '../l10n/tr.dart';
 
 /// RomM's RetroAchievements progress, as a session needs it (#189). The
 /// real one asks `RommService`; tests fake it.
@@ -34,8 +35,8 @@ class SessionAchievements {
   /// For the session's end: "2 achievements earned · 15 points (hardcore)".
   String get line {
     final n = earned.length;
-    final what = n == 1 ? '1 achievement earned' : '$n achievements earned';
-    final pts = points == 1 ? '1 point' : '$points points';
+    final what = n == 1 ? tr('1 achievement earned') : tr('{0} achievements earned', [n]);
+    final pts = points == 1 ? tr('1 point') : tr('{0} points', [points]);
     return '$what · $pts (${hardcore ? 'hardcore' : 'softcore'})';
   }
 }

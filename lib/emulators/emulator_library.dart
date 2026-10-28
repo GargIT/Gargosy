@@ -13,6 +13,7 @@ import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
 import 'folder_link.dart';
 import 'profile_launch_config.dart';
+import '../l10n/tr.dart';
 
 class EmulatorInfo {
   const EmulatorInfo({
@@ -57,7 +58,7 @@ class EmulatorLibrary {
   /// Emulators whose download is off for now, and why.
   static const downloadsOff = <String, String>{
     // Ryubing's GitLab doesn't answer (2026-10-16); back on when it does (#9).
-    'ryujinx': "Download off: Ryubing's server can't be reached",
+    'ryujinx': 'Download off: Ryubing\'s server can\'t be reached',
   };
 
   /// What an install keeps besides the program: left out on import.
@@ -199,7 +200,10 @@ class EmulatorLibrary {
           installedExe: exe,
           installedFrom: exe == null ? null : _installedFrom(s.emulatorId),
           version: exe == null ? null : await PeVersionReader.fileVersion(exe),
-          downloadOff: downloadsOff[s.emulatorId],
+          downloadOff: switch (downloadsOff[s.emulatorId]) {
+            final why? => tr(why),
+            null => null,
+          },
         ),
       );
     }
@@ -212,7 +216,7 @@ class EmulatorLibrary {
   Future<void> importFrom(String id, String folder) async {
     final strategy = strategies.firstWhere((s) => s.emulatorId == id);
     if (_findExe(folder, strategy.windowsExecutable) == null) {
-      throw StateError('${strategy.windowsExecutable} was not found in $folder');
+      throw StateError(tr('{0} was not found in {1}', [strategy.windowsExecutable, folder]));
     }
     final target = _guard.check(p.join(root.emulators, id));
     final staging = _guard.check(p.join(root.emulators, '.$id.importing'));

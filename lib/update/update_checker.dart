@@ -5,14 +5,18 @@ import 'package:pub_semver/pub_semver.dart';
 
 import '../core/storage/app_preferences.dart';
 import 'update_version.dart';
+import '../l10n/tr.dart';
 
 /// Where updates come from: releases only, or the rolling preview too.
 enum UpdateChannel {
   latest('Latest'),
   preview('Preview');
 
-  const UpdateChannel(this.label);
-  final String label;
+  const UpdateChannel(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 
   static UpdateChannel fromName(String? name) => name == 'preview' ? preview : latest;
 }
@@ -183,12 +187,12 @@ class UpdateChecker {
     }
     if (status == 404) {
       // No release yet, or the preview is being rebuilt (deleted, then made again).
-      return const CheckFailed('GitHub has no release on this channel right now. Try again in a few minutes.');
+      return CheckFailed(tr('GitHub has no release on this channel right now. Try again in a few minutes.'));
     }
     if (status == 403 || status == 429) {
-      return const CheckFailed("GitHub's limit for update checks was reached. Try again in an hour.");
+      return CheckFailed(tr('GitHub\'s limit for update checks was reached. Try again in an hour.'));
     }
-    if (status != 200) return CheckFailed('GitHub answered $status.');
+    if (status != 200) return CheckFailed(tr('GitHub answered {0}.', [status]));
 
     final ReleaseInfo? newest;
     try {
@@ -196,7 +200,7 @@ class UpdateChecker {
       final body = data is String ? jsonDecode(data) : data;
       newest = c == UpdateChannel.latest ? _fromRelease(body, allowPrerelease: false) : _newestOf(body);
     } on FormatException {
-      return const CheckFailed("GitHub's answer couldn't be read.");
+      return CheckFailed(tr('GitHub\'s answer couldn\'t be read.'));
     }
 
     final tag = response.headers.value('etag');
@@ -282,7 +286,7 @@ class UpdateChecker {
     DioExceptionType.connectionError ||
     DioExceptionType.connectionTimeout ||
     DioExceptionType.receiveTimeout ||
-    DioExceptionType.sendTimeout => "Couldn't reach GitHub. Check the connection.",
-    _ => "Couldn't check: ${e.message ?? e.type.name}",
+    DioExceptionType.sendTimeout => tr('Couldn\'t reach GitHub. Check the connection.'),
+    _ => tr('Couldn\'t check: {0}', [e.message ?? e.type.name]),
   };
 }

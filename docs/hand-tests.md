@@ -292,6 +292,14 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 111. [x] On Home, every row (Continue playing, Recently added, Favourites, On this PC, Platforms, Collections, Playing now) ends inside the window: no card cut off at the right edge, and nothing scrolls sideways. A row with more than fit ends with See all, which opens that section; a short row shows all its games with See all after them. Make the window narrower and wider: rows show fewer and more. Go along a row with the D-pad to See all and press A.
 
+## A gallery saved as a smart collection (#188)
+
+112. [x] Open a platform's page, then Filters: pick a genre, then Save as smart collection…. Type a name with the on-screen keyboard, pick Only you: the new collection opens, marked Smart collection, with that platform's games of that genre, and RomM's web UI lists it under smart collections with the same games. Turn On this PC on and save again: Gargosy says On this PC can't be saved before asking a name. On the new collection's page, ⋯ renames it, shares it (Shared on RomM) and deletes it (after asking); its games stay. Do it once with the controller alone. Inside a smart collection, Filters has no Save button.
+
 ## Achievements earned in a session (#189)
 
 113. [ ] With a RetroAchievements login in Settings → RetroAchievements and your RA username linked on your RomM profile, play a game RomM matched on RetroAchievements and earn one achievement (an easy first one: Sonic's rings, a first level). Quit: the save message comes first, then within a minute a second line says "1 achievement earned · N points (softcore)" (hardcore when that switch is on), and the Achievements tab shows it earned. Play again without earning one: no second line. A game without RetroAchievements, or a profile without an RA login: no second line, and nothing else changes.
+
+## Swedish (#191)
+
+114. [x] Settings → Display → Language → Svenska: the whole of Gargosy is Swedish at once, the sidebar and the top bar too, without a restart. Go through Home, a platform's page, a game's page (every tab), the play screen, Downloads, Collections, Search and every Settings page with the controller: no English left in Gargosy's own text (names and descriptions from RomM stay as they are), nothing cut off or overlapping at 1080p. A save's date reads "28 sep." and a size "1,4 MB". Quit and start Gargosy: still Swedish, the profile picker too. Type å, ä and ö on the on-screen keyboard. Set System: Swedish when Windows is, English otherwise. Set English: all English again.

@@ -7,6 +7,7 @@ import '../../../core/save/catalog/save_maker.dart';
 import '../../theme/tokens.dart';
 import '../g_focusable.dart';
 import 'save_labels.dart';
+import '../../../l10n/tr.dart';
 
 /// One save in the list: its name, when and how big, the emulator that made
 /// it (orange), whether RomM has it (green), whether it's converted to the
@@ -56,10 +57,10 @@ class SaveRow extends StatelessWidget {
     final e = row.entry;
     final fit = row.fit;
     return [
-      if (e.source == SaveSource.romm && e.slot != null) 'slot ${e.slot}',
+      if (e.source == SaveSource.romm && e.slot != null) tr('slot {0}', [e.slot]),
       formatSaveTime(e.savedAt),
       if (e.sizeBytes != null) formatSaveSize(e.sizeBytes!),
-      if (!fit.usable) fit.reason ?? "can't be played here",
+      if (!fit.usable) fit.reason ?? tr('can\'t be played here'),
     ].join(' · ');
   }
 
@@ -112,9 +113,9 @@ class SaveRow extends StatelessWidget {
                   ),
                 ),
                 if (maker != null && maker.isNotEmpty) tag(maker, GColors.accent),
-                if (row.fit.kind == SaveFitKind.converted) tag('converted', GColors.primary),
-                if (onRomm) tag('on RomM', GColors.success),
-                if (e.shared) tag('shared', GColors.gargosyTeal),
+                if (row.fit.kind == SaveFitKind.converted) tag(tr('converted'), GColors.primary),
+                if (onRomm) tag(tr('on RomM'), GColors.success),
+                if (e.shared) tag(tr('shared'), GColors.gargosyTeal),
               ],
             ),
           ),

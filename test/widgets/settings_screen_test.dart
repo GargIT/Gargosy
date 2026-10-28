@@ -17,6 +17,7 @@ import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/quit_combo.dart';
 import 'package:gargosy/ui/screens/settings/storage_section.dart';
 import 'package:gargosy/ui/shell/screensaver.dart';
+import 'package:gargosy/l10n/tr.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/pin.dart';
@@ -282,6 +283,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.read(screensaverMinutesProvider), 0);
     expect(find.text('Off'), findsOneWidget);
+  });
+
+  testWidgets('Display → Language (#191): Svenska shows at once, the sidebar too; English again', (tester) async {
+    addTearDown(() => showLanguage(AppLanguage.en));
+    await pump(tester, initial: SettingsPage.display);
+    expect(find.text("System (Windows' language)"), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('language')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Svenska'));
+    await tester.pumpAndSettle();
+    expect(c.read(languageProvider), AppLanguage.sv);
+    expect(find.text('Språk'), findsOneWidget);
+    expect(find.text('Skärmsläckare'), findsOneWidget);
+    expect(find.text('Handkontroll'), findsOneWidget, reason: 'the sidebar is built again');
+    await tester.tap(find.byKey(const ValueKey('language')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+    expect(find.text('Language'), findsOneWidget);
   });
 
   testWidgets('Rename goes through the Name field', (tester) async {

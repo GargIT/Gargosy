@@ -5,6 +5,7 @@ import '../../../play/play_menu.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/g_dropdown.dart';
 import '../../widgets/g_focusable.dart';
+import '../../../l10n/tr.dart';
 
 /// The play screen's "⚙ Plays in" (spec Part 4), as RomM's settings: the
 /// emulator and RetroArch's core as dropdowns, Full screen, Always for this
@@ -63,8 +64,8 @@ class PlaySettingsPanel extends StatelessWidget {
         children: [
           Icon(remember ? Icons.check_box : Icons.check_box_outline_blank, size: 20, color: GColors.fgSecondary),
           const SizedBox(width: GSpace.s2),
-          const Flexible(
-            child: Text('Always for this game', style: TextStyle(color: GColors.fgSecondary)),
+          Flexible(
+            child: Text(tr('Always for this game'), style: const TextStyle(color: GColors.fgSecondary)),
           ),
         ],
       ),
@@ -97,16 +98,16 @@ class PlaySettingsPanel extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Full screen',
+                      tr('Full screen'),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: on == true ? GColors.primaryHover : GColors.fgSecondary,
                       ),
                     ),
                     if (on == null)
-                      const Text(
-                        'Set in the emulator',
-                        style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                      Text(
+                        tr('Set in the emulator'),
+                        style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                       ),
                   ],
                 ),
@@ -138,7 +139,7 @@ class PlaySettingsPanel extends StatelessWidget {
       child: GDropdownField(
         key: const ValueKey('play-core'),
         icon: Icons.memory,
-        text: hasCores ? 'Core: ${option.coreName(picked.coreId)}' : 'Core: RetroArch only',
+        text: hasCores ? tr('Core: {0}', [option.coreName(picked.coreId)]) : tr('Core: RetroArch only'),
         onPress: hasCores ? onPickCore : null,
         open: openField == 'core',
         compact: compact,
@@ -153,9 +154,13 @@ class PlaySettingsPanel extends StatelessWidget {
               padding: const EdgeInsets.all(GSpace.s2),
               child: Text(
                 showAll
-                    ? 'Hide the saves ${menu.nameOf(picked)} can\'t use'
-                    : '$hidden ${hidden == 1 ? 'save is' : 'saves are'} hidden: ${menu.nameOf(picked)} can\'t use '
-                          '${hidden == 1 ? 'it' : 'them'}. Show all',
+                    ? tr('Hide the saves {0} can\'t use', [menu.nameOf(picked)])
+                    : tr('{0} {1} hidden: {2} can\'t use {3}. Show all', [
+                        hidden,
+                        hidden == 1 ? 'save is' : 'saves are',
+                        menu.nameOf(picked),
+                        hidden == 1 ? 'it' : 'them',
+                      ]),
                 style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
               ),
             ),
@@ -177,13 +182,13 @@ class PlaySettingsPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.settings, size: 16, color: GColors.fgMuted),
-              SizedBox(width: GSpace.s2),
+              const Icon(Icons.settings, size: 16, color: GColors.fgMuted),
+              const SizedBox(width: GSpace.s2),
               Text(
-                'PLAYS IN',
-                style: TextStyle(
+                tr('PLAYS IN'),
+                style: const TextStyle(
                   fontSize: GFont.sm,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,

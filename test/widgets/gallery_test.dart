@@ -10,12 +10,14 @@ import 'package:gargosy/library/on_pc_scan.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/ui_provider.dart';
 import 'package:gargosy/providers/romm_providers.dart';
+import 'package:gargosy/ui/screens/collection/collection_screen.dart';
 import 'package:gargosy/ui/screens/gallery_screen.dart';
 import 'package:gargosy/ui/widgets/gallery_bar.dart';
 import 'package:gargosy/ui/widgets/g_dropdown.dart';
 import 'package:gargosy/ui/widgets/game_card.dart';
 import 'package:gargosy/ui/widgets/on_screen_keyboard.dart';
 
+import '../helpers/fake_collection_edits.dart';
 import '../helpers/fake_library_api.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/widget_env.dart';
@@ -31,7 +33,12 @@ void main() {
       }),
   ];
 
-  Future<FakeLibraryApi> pump(WidgetTester tester, {Object? failWith, int? failFromOffset}) async {
+  Future<FakeLibraryApi> pump(
+    WidgetTester tester, {
+    Object? failWith,
+    int? failFromOffset,
+    FakeCollectionEdits? edits,
+  }) async {
     await setDesktopSize(tester);
     final api = FakeLibraryApi(games)
       ..failWith = failWith
@@ -39,7 +46,11 @@ void main() {
     await tester.pumpWidget(
       testApp(
         const GalleryScreen(title: 'PlayStation 2', query: GalleryQuery(platformId: 1)),
-        overrides: [libraryApiProvider.overrideWithValue(api), favouriteIdsProvider.overrideWithValue(const {})],
+        overrides: [
+          libraryApiProvider.overrideWithValue(api),
+          favouriteIdsProvider.overrideWithValue(const {}),
+          collectionEditsProvider.overrideWithValue(edits),
+        ],
       ),
     );
     await tester.pumpAndSettle();
@@ -69,6 +80,51 @@ void main() {
     expect(api.queries.last.$1.genres, {'Racing'});
     expect(find.text('60 games'), findsOneWidget);
     expect(find.text('Filters · 1'), findsOneWidget);
+  });
+
+  testWidgets('Save as smart collection (#188): applies the picks, asks a name and who sees it, opens it', (
+    tester,
+  ) async {
+    final edits = FakeCollectionEdits([]);
+    await pump(tester, edits: edits);
+    await tester.tap(find.byKey(const ValueKey('bar-filters')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Racing'));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('filter-save-smart')));
+    await tester.pumpAndSettle();
+    for (final k in ['f', 'a', 's', 't']) {
+      await tester.tap(find.text(k).last);
+      await tester.pump();
+    }
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Who sees fast?'), findsOneWidget);
+    await tester.tap(find.text('Only you'));
+    await tester.pumpAndSettle();
+    expect(edits.calls, ['create smart fast {order_by: name, order_dir: asc, platform_ids: [1], genres: [Racing]}']);
+    expect(find.byType(CollectionScreen), findsOneWidget);
+    expect(find.text('Smart collection'), findsOneWidget);
+  });
+
+  testWidgets('Save as smart collection with On this PC on says it is left out; no edits, no button', (tester) async {
+    final edits = FakeCollectionEdits([]);
+    await pump(tester, edits: edits);
+    await tester.tap(find.byKey(const ValueKey('bar-this-pc')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bar-filters')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('filter-save-smart')));
+    await tester.pumpAndSettle();
+    expect(find.text("On this PC can't be saved"), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(edits.calls, isEmpty);
+
+    await pump(tester);
+    await tester.tap(find.byKey(const ValueKey('bar-filters')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('filter-save-smart')), findsNothing, reason: 'RomM unreachable');
   });
 
   testWidgets('in the filters, X applies and Y clears wherever the focus is', (tester) async {

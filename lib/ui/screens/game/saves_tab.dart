@@ -20,6 +20,7 @@ import '../../widgets/save_list/save_labels.dart';
 import '../../widgets/save_list/save_list.dart';
 import '../../widgets/save_list/state_list.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// The game page's Saves tab (spec Part 3): every save of the game, to
 /// manage — put one on this PC (X), delete one (hold A), upload, back up.
@@ -64,38 +65,40 @@ class _SavesTabState extends ConsumerState<SavesTab> {
       final ok = await showConfirm(
         context,
         title: switch (prompt) {
-          PlayPrompt.notOnRomm => "Your save on this PC isn't on RomM",
-          PlayPrompt.othersSave => "Put ${save.owner?.username ?? 'their'}'s save on this PC?",
-          _ => 'Put an older save on this PC?',
+          PlayPrompt.notOnRomm => tr('Your save on this PC isn\'t on RomM'),
+          PlayPrompt.othersSave => tr('Put {0}\'s save on this PC?', [save.owner?.username ?? 'their']),
+          _ => tr('Put an older save on this PC?'),
         },
-        body:
-            'This replaces your ${menu.nameOf(target)} save${older == null ? '' : ' from ${formatSaveTime(older)}'} '
-            'with the one from ${formatSaveTime(save.savedAt)}. Your current save is backed up first.',
-        yes: 'Put it on this PC',
+        body: tr('This replaces your {0} save{1} with the one from {2}. Your current save is backed up first.', [
+          menu.nameOf(target),
+          older == null ? '' : ' from ${formatSaveTime(older)}',
+          formatSaveTime(save.savedAt),
+        ]),
+        yes: tr('Put it on this PC'),
         focusYes: false,
       );
       if (!ok || !mounted) return;
     }
     final reason = await ref.read(saveActionsProvider).restore(_game, save, target);
-    _say(reason, 'The save from ${formatSaveTime(save.savedAt)} is on this PC now.');
+    _say(reason, tr('The save from {0} is on this PC now.', [formatSaveTime(save.savedAt)]));
   }
 
   /// Y on the player's own RomM save or state (#92).
   Future<void> _share({int? saveId, int? stateId, required bool shared}) async {
     final reason = await ref.read(saveActionsProvider).share(_game, saveId: saveId, stateId: stateId, shared: shared);
     _say(
-      reason == null ? null : "Couldn't change sharing: $reason",
+      reason == null ? null : tr('Couldn\'t change sharing: {0}', [reason]),
       shared
-          ? 'Shared on RomM: the other players there can see it and play from it.'
-          : "Not shared any more: it's yours alone again.",
+          ? tr('Shared on RomM: the other players there can see it and play from it.')
+          : tr('Not shared any more: it\'s yours alone again.'),
     );
   }
 
   /// A click (or A) on a state (#94): what can be done with it.
   Future<void> _stateMenu(ResumeEntry s) async {
     if (s.owner != null) return;
-    final share = s.remoteId == null ? null : (s.shared ? 'Stop sharing' : 'Share on RomM');
-    final labels = [?share, 'Delete'];
+    final share = s.remoteId == null ? null : (s.shared ? tr('Stop sharing') : tr('Share on RomM'));
+    final labels = [?share, tr('Delete')];
     final i = await showChoice(context, title: s.slot.label, labels: labels);
     if (i == null || !mounted) return;
     if (labels[i] == share) await _share(stateId: s.remoteId, shared: !s.shared);
@@ -105,22 +108,22 @@ class _SavesTabState extends ConsumerState<SavesTab> {
   /// Hold A on the player's own state (#94).
   Future<void> _deleteState(ResumeEntry s) async {
     final where = switch (s.where) {
-      ResumeWhere.thisPc => 'on this PC',
-      ResumeWhere.romm => 'on RomM, for every device',
-      ResumeWhere.both => 'on this PC and on RomM, for every device',
+      ResumeWhere.thisPc => tr('on this PC'),
+      ResumeWhere.romm => tr('on RomM, for every device'),
+      ResumeWhere.both => tr('on this PC and on RomM, for every device'),
     };
     final ok = await showConfirm(
       context,
-      title: 'Delete this state?',
-      body: '${s.slot.label} in ${s.emulatorName} (${formatSaveTime(s.savedAt)}) is deleted $where.',
-      yes: 'Delete',
-      no: 'Keep',
+      title: tr('Delete this state?'),
+      body: tr('{0} in {1} ({2}) is deleted {3}.', [s.slot.label, s.emulatorName, formatSaveTime(s.savedAt), where]),
+      yes: tr('Delete'),
+      no: tr('Keep'),
       focusYes: false,
       danger: true,
     );
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).deleteState(_game, s);
-    _say(reason, 'Deleted.');
+    _say(reason, tr('Deleted.'));
   }
 
   Future<void> _delete(SaveEntry save) async {
@@ -128,55 +131,58 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     final romm = save.source == SaveSource.romm;
     final ok = await showConfirm(
       context,
-      title: romm ? 'Delete this save from RomM?' : 'Delete this backup?',
+      title: romm ? tr('Delete this save from RomM?') : tr('Delete this backup?'),
       body: romm
-          ? '${save.fileName} (${formatSaveTime(save.savedAt)}) is deleted on RomM, for every device.'
-          : 'The backup from ${formatSaveTime(save.savedAt)} is deleted from this PC.',
-      yes: 'Delete',
-      no: 'Keep',
+          ? tr('{0} ({1}) is deleted on RomM, for every device.', [save.fileName, formatSaveTime(save.savedAt)])
+          : tr('The backup from {0} is deleted from this PC.', [formatSaveTime(save.savedAt)]),
+      yes: tr('Delete'),
+      no: tr('Keep'),
       focusYes: false,
       danger: true,
     );
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).delete(_game, save);
-    _say(reason, 'Deleted.');
+    _say(reason, tr('Deleted.'));
   }
 
   /// This PC's own save (#94): backed up, then deleted; RomM's copy stays.
   Future<void> _deleteLocal(SaveEntry save) async {
     final ok = await showConfirm(
       context,
-      title: "Delete this PC's save?",
-      body:
-          'The ${save.tag ?? save.maker?.emulatorId ?? ''} save on this PC (${formatSaveTime(save.savedAt)}) is deleted. '
-          "A backup is kept here first. RomM's copy stays, and comes back the next time you play.",
-      yes: 'Delete',
-      no: 'Keep',
+      title: tr('Delete this PC\'s save?'),
+      body: tr(
+        'The {0} save on this PC ({1}) is deleted. A backup is kept here first. RomM\'s copy stays, and comes back the next time you play.',
+        [save.tag ?? save.maker?.emulatorId ?? '', formatSaveTime(save.savedAt)],
+      ),
+      yes: tr('Delete'),
+      no: tr('Keep'),
       focusYes: false,
       danger: true,
     );
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).delete(_game, save);
-    _say(reason, "Deleted on this PC. It's in the backups.");
+    _say(reason, tr('Deleted on this PC. It\'s in the backups.'));
   }
 
   /// The shared card's name for the game's system.
-  String get _volume => const {'dc', 'dreamcast'}.contains(_game.platformSlug?.toLowerCase()) ? 'VMU' : 'memory card';
+  String get _volume =>
+      const {'dc', 'dreamcast'}.contains(_game.platformSlug?.toLowerCase()) ? 'VMU' : tr('memory card');
 
   Future<void> _claim(SaveMaker who, String name) async {
     final ok = await showConfirm(
       context,
-      title: "Is $name this game's save?",
-      body:
-          'It goes to RomM with ${_game.displayName} and comes back with it on other PCs. '
-          'It stays on the shared $_volume, and the other games keep their saves.',
-      yes: 'Take it',
-      no: 'Not this one',
+      title: tr('Is {0} this game\'s save?', [name]),
+      body: tr(
+        'It goes to RomM with {0} and comes back with it on other PCs. It stays on the shared {1}, and the other games keep their saves.',
+        [_game.displayName, _volume],
+      ),
+      yes: tr('Take it'),
+      no: tr('Not this one'),
       focusYes: false,
     );
     if (!ok || !mounted) return;
     final reason = await ref.read(saveActionsProvider).claim(_game, who, name);
-    _say(reason, "$name is ${_game.displayName}'s save now, and it's on RomM.");
+    _say(reason, tr('{0} is {1}\'s save now, and it\'s on RomM.', [name, _game.displayName]));
   }
 
   /// Saves on the shared card that no game owns (#56), to claim one.
@@ -187,10 +193,10 @@ class _SavesTabState extends ConsumerState<SavesTab> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Unclaimed saves on the shared $_volume', style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(tr('Unclaimed saves on the shared {0}', [_volume]), style: const TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: GSpace.s1),
         Text(
-          "No game is known to own these. If one is this game's, take it: it then syncs with this game.",
+          tr('No game is known to own these. If one is this game\'s, take it: it then syncs with this game.'),
           style: const TextStyle(color: GColors.fgSecondary),
         ),
         const SizedBox(height: GSpace.s2),
@@ -205,7 +211,7 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: GSpace.s4, vertical: GSpace.s2),
                   decoration: BoxDecoration(color: GColors.bg, borderRadius: BorderRadius.circular(GRadius.pill)),
-                  child: Text("$name  ·  This is this game's save"),
+                  child: Text(tr('{0}  ·  This is this game\'s save', [name])),
                 ),
               ),
           ],
@@ -286,8 +292,9 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                   borderRadius: BorderRadius.circular(GRadius.lg),
                 ),
                 child: Text(
-                  'Waiting to upload: your save from ${formatSaveTime(waiting.first.timestamp)} '
-                  "isn't on RomM yet. It goes up when RomM can be reached.",
+                  tr('Waiting to upload: your save from {0} isn\'t on RomM yet. It goes up when RomM can be reached.', [
+                    formatSaveTime(waiting.first.timestamp),
+                  ]),
                   style: const TextStyle(color: GColors.accent),
                 ),
               ),
@@ -299,9 +306,9 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _segment('Saves $count', !_states, () => setState(() => _states = false)),
+                      _segment(tr('Saves {0}', [count]), !_states, () => setState(() => _states = false)),
                       _segment(
-                        'States ${states.where((s) => s.owner == null).length}',
+                        tr('States {0}', [states.where((s) => s.owner == null).length]),
                         _states,
                         () => setState(() => _states = true),
                       ),
@@ -310,14 +317,16 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                 ),
                 const Spacer(),
                 _button(
-                  'Upload to RomM',
+                  tr('Upload to RomM'),
                   Icons.upload,
-                  who == null ? null : () async => _say(await actions.upload(_game, who), 'Uploaded to RomM.'),
+                  who == null ? null : () async => _say(await actions.upload(_game, who), tr('Uploaded to RomM.')),
                 ),
                 _button(
-                  'Back up now',
+                  tr('Back up now'),
                   Icons.add,
-                  who == null ? null : () async => _say(await actions.backUpNow(_game, who), 'Backed up on this PC.'),
+                  who == null
+                      ? null
+                      : () async => _say(await actions.backUpNow(_game, who), tr('Backed up on this PC.')),
                 ),
               ],
             ),

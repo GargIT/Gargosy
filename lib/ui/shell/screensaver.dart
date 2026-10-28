@@ -20,6 +20,7 @@ import '../screens/game/open_game.dart';
 import '../theme/tokens.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/game_transition.dart';
+import '../../l10n/tr.dart';
 
 /// The screensaver's wait (#147), this PC's setting (Settings → Display):
 /// minutes, 0 for off; 5 by default.
@@ -33,7 +34,7 @@ class ScreensaverDelay {
     return n != null && choices.contains(n) ? n : fallback;
   }
 
-  static String label(int minutes) => minutes == 0 ? 'Off' : 'After $minutes minutes';
+  static String label(int minutes) => minutes == 0 ? tr('Off') : tr('After {0} minutes', [minutes]);
 }
 
 final screensaverMinutesProvider = Provider<int>((ref) => ScreensaverDelay.of(ref.watch(appPreferencesProvider)));
@@ -301,9 +302,9 @@ class _Slide extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: GSpace.s6),
-                  const Text(
-                    'A opens it · any other button goes back',
-                    style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                  Text(
+                    tr('A opens it · any other button goes back'),
+                    style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
                   ),
                 ],
               ),

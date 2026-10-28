@@ -10,6 +10,7 @@ import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/on_screen_keyboard.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// Your notes on the game, kept on RomM (new ones are private).
 class NotesTab extends ConsumerWidget {
@@ -18,14 +19,14 @@ class NotesTab extends ConsumerWidget {
   final Game game;
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {
-    final title = await showOnScreenKeyboard(context, title: 'Note title');
+    final title = await showOnScreenKeyboard(context, title: tr('Note title'));
     if (title == null || title.trim().isEmpty || !context.mounted) return;
-    final content = await showOnScreenKeyboard(context, title: 'Note');
+    final content = await showOnScreenKeyboard(context, title: tr('Note'));
     if (content == null) return;
     try {
       await ref.read(libraryApiProvider)?.addNote(game.id, title.trim(), content);
     } on Object catch (e) {
-      if (context.mounted) showToast(context, "Couldn't save the note: $e");
+      if (context.mounted) showToast(context, tr('Couldn\'t save the note: {0}', [e]));
       return;
     }
     ref.invalidate(romNotesProvider(game.id));
@@ -35,21 +36,21 @@ class NotesTab extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: Text('Delete "${note.title}"?'),
-        content: const Text('The note is deleted from RomM.'),
+        title: Text(tr('Delete "{0}"?', [note.title])),
+        content: Text(tr('The note is deleted from RomM.')),
         actions: [
           GFocusable(
             autofocus: true,
             borderRadius: GRadius.pill,
             onActivate: () => Navigator.of(c).pop(false),
-            child: const Padding(padding: EdgeInsets.all(GSpace.s3), child: Text('Keep')),
+            child: Padding(padding: const EdgeInsets.all(GSpace.s3), child: Text(tr('Keep'))),
           ),
           GFocusable(
             borderRadius: GRadius.pill,
             onActivate: () => Navigator.of(c).pop(true),
-            child: const Padding(
-              padding: EdgeInsets.all(GSpace.s3),
-              child: Text('Delete', style: TextStyle(color: GColors.danger)),
+            child: Padding(
+              padding: const EdgeInsets.all(GSpace.s3),
+              child: Text(tr('Delete'), style: const TextStyle(color: GColors.danger)),
             ),
           ),
         ],
@@ -59,7 +60,7 @@ class NotesTab extends ConsumerWidget {
     try {
       await ref.read(libraryApiProvider)?.deleteNote(game.id, note.id);
     } on Object catch (e) {
-      if (context.mounted) showToast(context, "Couldn't delete the note: $e");
+      if (context.mounted) showToast(context, tr('Couldn\'t delete the note: {0}', [e]));
       return;
     }
     ref.invalidate(romNotesProvider(game.id));
@@ -79,12 +80,12 @@ class NotesTab extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
               decoration: BoxDecoration(color: GColors.surface, borderRadius: BorderRadius.circular(GRadius.pill)),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add, size: 18),
-                  SizedBox(width: GSpace.s2),
-                  Text('Add a note', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Icon(Icons.add, size: 18),
+                  const SizedBox(width: GSpace.s2),
+                  Text(tr('Add a note'), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -103,7 +104,7 @@ class NotesTab extends ConsumerWidget {
             ),
           ],
           data: (list) => list.isEmpty
-              ? [const Text('No notes yet.', style: TextStyle(color: GColors.fgMuted))]
+              ? [Text(tr('No notes yet.'), style: const TextStyle(color: GColors.fgMuted))]
               : [
                   for (final n in list)
                     GFocusable(

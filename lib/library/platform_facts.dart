@@ -1,5 +1,6 @@
 import '../core/emulator/platform_slugs.dart';
 import '../core/romm/romm_models.dart';
+import '../l10n/tr.dart';
 
 /// Who made a system and when it came out, for the Platforms cards. RomM's
 /// platform data has nothing that fits, so the common systems are listed here.
@@ -71,6 +72,6 @@ PlatformFacts? factsFor(String slug) {
 /// "Sony · 2000 · 412 games", or "412 games" for a system not listed.
 String platformLine(Platform p) {
   final f = factsFor(p.slug);
-  final count = p.gamesCount == 1 ? '1 game' : '${p.gamesCount} games';
+  final count = p.gamesCount == 1 ? tr('1 game') : tr('{0} games', [p.gamesCount]);
   return [?f?.maker, if (f?.year != null) '${f!.year}', count].join(' · ');
 }

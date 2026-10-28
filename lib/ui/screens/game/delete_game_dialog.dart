@@ -14,6 +14,7 @@ import '../../widgets/controller_dialogs.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
 import '../../widgets/toast.dart';
+import '../../../l10n/tr.dart';
 
 /// What the delete prompt asked for: the file on RomM's server too, the copy
 /// on this PC too.
@@ -24,13 +25,13 @@ typedef GameDeletion = ({bool serverFile, bool thisPc});
 /// to a RomM user who may delete games ([canDeleteGamesProvider]).
 Future<void> deleteGameFromRomm(BuildContext context, WidgetRef ref, Game game, {required bool downloaded}) async {
   if (ref.read(playControllerProvider).runningGameId == game.id) {
-    showToast(context, 'Close the game first.');
+    showToast(context, tr('Close the game first.'));
     return;
   }
   final romId = int.tryParse(game.id);
   final romm = ref.read(rommServiceProvider);
   if (romId == null || romm == null) {
-    showToast(context, "Can't reach RomM.");
+    showToast(context, tr('Can\'t reach RomM.'));
     return;
   }
   final asked = await showDeleteGame(context, game, downloaded: downloaded);
@@ -45,14 +46,14 @@ Future<void> deleteGameFromRomm(BuildContext context, WidgetRef ref, Game game, 
     case RomDeleteResult.notAllowed:
       await showNotice(
         nav.context,
-        title: "RomM didn't allow it",
-        body:
-            'Either this RomM user may not delete games, or this profile signed in before Gargosy asked RomM '
-            'for that. Sign in again under Settings → Profile → RomM account, then try again.',
+        title: tr('RomM didn\'t allow it'),
+        body: tr(
+          'Either this RomM user may not delete games, or this profile signed in before Gargosy asked RomM for that. Sign in again under Settings → Profile → RomM account, then try again.',
+        ),
       );
       return;
     case RomDeleteResult.failed:
-      showToast(nav.context, "Couldn't delete it on RomM. Try again later.");
+      showToast(nav.context, tr('Couldn\'t delete it on RomM. Try again later.'));
       return;
     case RomDeleteResult.deleted:
       break;
@@ -65,7 +66,7 @@ Future<void> deleteGameFromRomm(BuildContext context, WidgetRef ref, Game game, 
   container.invalidate(platformsProvider);
   container.invalidate(gameProvider(game.id));
   if (!nav.mounted) return;
-  showToast(nav.context, 'Deleted ${game.displayName} from RomM.');
+  showToast(nav.context, tr('Deleted {0} from RomM.', [game.displayName]));
   nav.maybePop();
 }
 
@@ -129,9 +130,9 @@ class _DeleteGameDialogState extends ConsumerState<_DeleteGameDialog> {
     final others = game.siblings.length;
     final mode = ref.watch(inputModeProvider);
     final hold = switch (mode) {
-      InputMode.gamepad => 'Hold A to delete.',
-      InputMode.keyboard => 'Hold Enter to delete.',
-      InputMode.mouse => 'Press and hold to delete.',
+      InputMode.gamepad => tr('Hold A to delete.'),
+      InputMode.keyboard => tr('Hold Enter to delete.'),
+      InputMode.mouse => tr('Press and hold to delete.'),
     };
     return Center(
       child: Material(
@@ -146,30 +147,35 @@ class _DeleteGameDialogState extends ConsumerState<_DeleteGameDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Delete ${game.displayName} from RomM?',
+                  tr('Delete {0} from RomM?', [game.displayName]),
                   style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: GSpace.s3),
                 Text(
-                  "This is permanent and can't be undone. The game leaves RomM's library for every player, "
-                  "and everyone's saves and states of it on RomM go with it."
-                  '${others == 0 ? '' : ' Only this version${game.fsName == null ? '' : ' (${game.fsName})'} goes; '
-                            'its ${others == 1 ? 'other version stays' : '$others other versions stay'}.'}',
+                  tr(
+                    'This is permanent and can\'t be undone. The game leaves RomM\'s library for every player, and everyone\'s saves and states of it on RomM go with it.{0}',
+                    [
+                      others == 0
+                          ? ''
+                          : ' Only this version${game.fsName == null ? '' : ' (${game.fsName})'} goes; '
+                                'its ${others == 1 ? 'other version stays' : '$others other versions stay'}.',
+                    ],
+                  ),
                   style: const TextStyle(color: GColors.fgSecondary),
                 ),
                 const SizedBox(height: GSpace.s4),
                 _check(
                   'delete-server-file',
-                  'Also delete the file on the server',
-                  "Without it, RomM's next scan adds the game back.",
+                  tr('Also delete the file on the server'),
+                  tr('Without it, RomM\'s next scan adds the game back.'),
                   _serverFile,
                   () => setState(() => _serverFile = !_serverFile),
                 ),
                 if (widget.downloaded)
                   _check(
                     'delete-this-pc',
-                    'Also delete it from this PC',
-                    'Your saves on this PC are kept.',
+                    tr('Also delete it from this PC'),
+                    tr('Your saves on this PC are kept.'),
                     _thisPc,
                     () => setState(() => _thisPc = !_thisPc),
                   ),
@@ -197,7 +203,7 @@ class _DeleteGameDialogState extends ConsumerState<_DeleteGameDialog> {
                           color: GColors.surface,
                           borderRadius: BorderRadius.circular(GRadius.pill),
                         ),
-                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+                        child: Text(tr('Cancel'), style: const TextStyle(fontWeight: FontWeight.w600)),
                       ),
                     ),
                     const SizedBox(width: GSpace.s2),
@@ -213,20 +219,20 @@ class _DeleteGameDialogState extends ConsumerState<_DeleteGameDialog> {
                           color: GColors.dangerFill,
                           borderRadius: BorderRadius.circular(GRadius.pill),
                         ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(fontWeight: FontWeight.w700, color: GColors.fg),
+                        child: Text(
+                          tr('Delete'),
+                          style: const TextStyle(fontWeight: FontWeight.w700, color: GColors.fg),
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: GSpace.s3),
-                const HintBar(
+                HintBar(
                   hints: [
-                    Hint(GameAction.confirm, 'Select'),
-                    Hint(GameAction.confirmHold, 'Delete'),
-                    Hint(GameAction.back, 'Cancel'),
+                    Hint(GameAction.confirm, tr('Select')),
+                    Hint(GameAction.confirmHold, tr('Delete')),
+                    Hint(GameAction.back, tr('Cancel')),
                   ],
                 ),
               ],

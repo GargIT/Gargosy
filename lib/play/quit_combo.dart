@@ -11,6 +11,7 @@ import '../core/platform/platform_info.dart';
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
 import '../providers/update_providers.dart';
+import '../l10n/tr.dart';
 
 /// The buttons held to quit a game (#141), this PC's choice in Settings →
 /// Controller. Select + Start alone is often taken (Game Bar, Steam, an
@@ -24,8 +25,11 @@ enum QuitButtons {
   /// Both sticks pressed in (#163): no emulator menu or Game Bar uses them.
   sticks('Both sticks in (L3 + R3)', {PadButton.l3, PadButton.r3});
 
-  const QuitButtons(this.label, this.buttons);
-  final String label;
+  const QuitButtons(this._label, this.buttons);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
   final Set<PadButton> buttons;
 
   static const fallback = QuitButtons.selectBumpers;
@@ -45,7 +49,7 @@ enum QuitButtons {
     return QuitButtons.values.where((b) => b.name == v).firstOrNull ?? fallback;
   }
 
-  static String labelOf(QuitButtons? b) => b?.label ?? 'Off';
+  static String labelOf(QuitButtons? b) => b?.label ?? tr('Off');
 }
 
 /// Quitting a game with the controller (#141): [buttons] held together for

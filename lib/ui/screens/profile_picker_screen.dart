@@ -15,6 +15,7 @@ import '../widgets/profile_badge.dart';
 import 'add_profile_screen.dart';
 import 'login_step.dart';
 import 'profile_options_dialog.dart';
+import '../../l10n/tr.dart';
 
 /// "Who is playing?": Plex-style badges, the last used one focused (spec §5).
 class ProfilePickerScreen extends ConsumerStatefulWidget {
@@ -41,15 +42,15 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     final gate = ref.read(pinGatesProvider).putIfAbsent(p.id, () => PinGate(pin));
     final ok = await showPinEntry(
       context,
-      title: 'PIN for ${p.name}',
+      title: tr('PIN for {0}', [p.name]),
       check: (entered) async {
         switch (await gate.attempt(entered)) {
           case PinResult.ok:
             return null;
           case PinResult.wrong:
-            return 'Wrong PIN';
+            return tr('Wrong PIN');
           case PinResult.locked:
-            return 'Too many tries. Wait ${gate.lockedFor?.inSeconds ?? 30} seconds.';
+            return tr('Too many tries. Wait {0} seconds.', [gate.lockedFor?.inSeconds ?? 30]);
         }
       },
     );
@@ -70,7 +71,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
           body: LoginStep(
             serverUrl: p.serverUrl,
             trustSelfSigned: p.trustSelfSigned,
-            deviceName: 'Gargosy on ${ref.read(pcIdentityProvider).machineName}',
+            deviceName: tr('Gargosy on {0}', [ref.read(pcIdentityProvider).machineName]),
             expectedUserId: p.rommUserId,
             expectedUsername: p.rommUsername,
             onBack: () => Navigator.of(routeContext).pop(),
@@ -114,7 +115,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       body: Backdrop(
         child: profiles.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Profiles could not be read: $e')),
+          error: (e, _) => Center(child: Text(tr('Profiles could not be read: {0}', [e]))),
           data: (list) {
             _loadLogins(list);
             final focusId = list.any((p) => p.id == lastUsed) ? lastUsed : (list.isEmpty ? null : list.first.id);
@@ -127,9 +128,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                       children: [
                         Image.asset('assets/branding/gargosy_logo.png', width: 180, height: 180),
                         const SizedBox(height: GSpace.s6),
-                        const Text(
-                          'Who is playing?',
-                          style: TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800),
+                        Text(
+                          tr('Who is playing?'),
+                          style: const TextStyle(fontSize: GFont.xxxxl, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: GSpace.s10),
                         Wrap(
@@ -149,9 +150,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                                     onDetail: () => _options(p),
                                   ),
                                   if (_hasLogin[p.id] == false)
-                                    const Text(
-                                      'Log in again',
-                                      style: TextStyle(fontSize: GFont.sm, color: GColors.accent),
+                                    Text(
+                                      tr('Log in again'),
+                                      style: const TextStyle(fontSize: GFont.sm, color: GColors.accent),
                                     ),
                                 ],
                               ),
@@ -175,9 +176,9 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                                 const SizedBox(height: GSpace.s3),
                                 GestureDetector(
                                   onTap: () => _add(list),
-                                  child: const Text(
-                                    'Add profile',
-                                    style: TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600),
+                                  child: Text(
+                                    tr('Add profile'),
+                                    style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w600),
                                   ),
                                 ),
                               ],
@@ -188,7 +189,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                     ),
                   ),
                 ),
-                const HintBar(hints: [Hint(GameAction.confirm, 'Play'), Hint(GameAction.detail, 'Options')]),
+                HintBar(hints: [Hint(GameAction.confirm, tr('Play')), Hint(GameAction.detail, tr('Options'))]),
               ],
             );
           },

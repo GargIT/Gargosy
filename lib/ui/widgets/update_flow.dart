@@ -18,6 +18,7 @@ import 'controller_dialogs.dart';
 import 'hint_bar.dart';
 import 'sync_wait.dart';
 import 'toast.dart';
+import '../../l10n/tr.dart';
 
 /// Update now (issue #16): refused while a game runs, waits for the saves,
 /// asks once, downloads with progress (B cancels), then hands over to
@@ -29,16 +30,16 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
     return;
   }
   if (ref.read(playControllerProvider).runningGameId != null) {
-    showToast(context, "Close the game first: Gargosy can't update while a game runs.");
+    showToast(context, tr('Close the game first: Gargosy can\'t update while a game runs.'));
     return;
   }
   if (ref.read(activeProfileProvider) != null && !await waitForSyncIdle(context, ref)) return;
   if (!context.mounted) return;
   final ok = await showConfirm(
     context,
-    title: 'Update to ${release.version}?',
-    body: 'Gargosy will close, update and start again. Your games, emulators and saves are not touched.',
-    yes: 'Update',
+    title: tr('Update to {0}?', [release.version]),
+    body: tr('Gargosy will close, update and start again. Your games, emulators and saves are not touched.'),
+    yes: tr('Update'),
   );
   if (!ok || !context.mounted) return;
 
@@ -51,7 +52,7 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
   // A game or a sync may have started while it downloaded (RomM came back
   // and the upload queue runs): Gargosy quits only once both are done.
   if (ref.read(playControllerProvider).runningGameId != null) {
-    showToast(context, "Close the game first: Gargosy can't update while a game runs.");
+    showToast(context, tr('Close the game first: Gargosy can\'t update while a game runs.'));
     return;
   }
   if (ref.read(activeProfileProvider) != null && !await waitForSyncIdle(context, ref)) return;
@@ -62,7 +63,7 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
   } on Object catch (e) {
     if (context.mounted) {
       Navigator.of(context).pop();
-      showToast(context, "The updater couldn't start: $e");
+      showToast(context, tr('The updater couldn\'t start: {0}', [e]));
     }
     return;
   }
@@ -75,7 +76,7 @@ Future<void> openReleaseNotes(BuildContext context, WidgetRef ref, ReleaseInfo r
   final guard = PathGuard(ref.read(appRootProvider));
   final file = io.File(guard.join(paths.dir, 'release-notes-${release.version}.md'));
   await file.parent.create(recursive: true);
-  final notes = release.notes.trim().isEmpty ? 'No notes for this release.' : release.notes;
+  final notes = release.notes.trim().isEmpty ? tr('No notes for this release.') : release.notes;
   await file.writeAsString('# Gargosy ${release.version}\n\n$notes\n\n[On GitHub](${release.htmlUrl})\n');
   if (context.mounted) await openDoc(context, file.path);
 }
@@ -119,7 +120,7 @@ class _DownloadDialogState extends ConsumerState<_DownloadDialog> {
       if (mounted) Navigator.of(context).pop(unpacked);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.cancel) return; // B already closed it
-      if (mounted) setState(() => _error = e.message ?? 'The download failed.');
+      if (mounted) setState(() => _error = e.message ?? tr('The download failed.'));
     } on Object catch (e) {
       if (mounted) setState(() => _error = '$e');
     }
@@ -149,7 +150,9 @@ class _DownloadDialogState extends ConsumerState<_DownloadDialog> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    _error == null ? 'Downloading Gargosy ${widget.release.version}…' : "The update can't be used",
+                    _error == null
+                        ? tr('Downloading Gargosy {0}…', [widget.release.version])
+                        : tr('The update can\'t be used'),
                     style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: GSpace.s4),
@@ -161,9 +164,9 @@ class _DownloadDialogState extends ConsumerState<_DownloadDialog> {
                       style: const TextStyle(color: GColors.fgMuted),
                     ),
                   ] else
-                    Text('$_error Nothing was changed.', style: const TextStyle(color: GColors.fgSecondary)),
+                    Text(tr('{0} Nothing was changed.', [_error]), style: const TextStyle(color: GColors.fgSecondary)),
                   const SizedBox(height: GSpace.s4),
-                  HintBar(hints: [Hint(GameAction.back, _error == null ? 'Cancel' : 'Close')]),
+                  HintBar(hints: [Hint(GameAction.back, _error == null ? tr('Cancel') : tr('Close'))]),
                 ],
               ),
             ),
@@ -178,20 +181,20 @@ class _Restarting extends StatelessWidget {
   const _Restarting();
 
   @override
-  Widget build(BuildContext context) => const PopScope(
+  Widget build(BuildContext context) => PopScope(
     canPop: false,
     child: Center(
       child: Material(
         color: GColors.panel,
-        borderRadius: BorderRadius.all(Radius.circular(GRadius.lg)),
+        borderRadius: const BorderRadius.all(Radius.circular(GRadius.lg)),
         child: Padding(
-          padding: EdgeInsets.all(GSpace.s6),
+          padding: const EdgeInsets.all(GSpace.s6),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3)),
-              SizedBox(width: GSpace.s4),
-              Text('Restarting…', style: TextStyle(fontSize: GFont.lg)),
+              const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3)),
+              const SizedBox(width: GSpace.s4),
+              Text(tr('Restarting…'), style: const TextStyle(fontSize: GFont.lg)),
             ],
           ),
         ),

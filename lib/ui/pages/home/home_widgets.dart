@@ -12,6 +12,7 @@ import '../../screens/game/open_game.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/g_focusable.dart';
+import '../../../l10n/tr.dart';
 
 /// Home's widgets (#139), those [shown]: Random pick (Y draws another) and
 /// On this day side by side under the header, or stacked beside it
@@ -158,15 +159,15 @@ class _RandomPick extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final game = ref.watch(randomGameProvider).valueOrNull;
-    if (game == null) return const _Card(label: 'RANDOM PICK', child: SizedBox.shrink());
+    if (game == null) return _Card(label: tr('RANDOM PICK'), child: const SizedBox.shrink());
     return _Card(
       key: const ValueKey('widget-random'),
-      label: 'RANDOM PICK',
+      label: tr('RANDOM PICK'),
       onOpen: () => openGame(context, game),
       leading: CoverImage(url: coverUrlFor(ref, game, small: true), title: game.displayName, width: 66, height: 88),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [_title(game.displayName), _line(_platformYear(game)), _line('Y: another')],
+        children: [_title(game.displayName), _line(_platformYear(game)), _line(tr('Y: another'))],
       ),
     );
   }
@@ -178,13 +179,13 @@ class _OnThisDay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final page = ref.watch(onThisDayProvider).valueOrNull;
-    final label = 'ON THIS DAY · ${DateFormat('d MMMM').format(DateTime.now()).toUpperCase()}';
+    final label = tr('ON THIS DAY · {0}', [DateFormat('d MMMM').format(DateTime.now()).toUpperCase()]);
     final game = page?.games.firstOrNull;
     if (game == null) {
       return _Card(
         key: const ValueKey('widget-on-this-day'),
         label: label,
-        child: _line(page == null ? '' : 'Nothing in your library came out on this day.'),
+        child: _line(page == null ? '' : tr('Nothing in your library came out on this day.')),
       );
     }
     final years = DateTime.now().year - DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!, isUtc: true).year;
@@ -198,8 +199,8 @@ class _OnThisDay extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _title(game.displayName),
-          _line('${game.platformDisplayName ?? ''} · ${years == 1 ? '1 year' : '$years years'} ago'),
-          if (more > 0) _line('and $more more from your library'),
+          _line(tr('{0} · {1} ago', [game.platformDisplayName ?? '', years == 1 ? '1 year' : '$years years'])),
+          if (more > 0) _line(tr('and {0} more from your library', [more])),
         ],
       ),
     );
@@ -246,19 +247,19 @@ class _Library extends ConsumerWidget {
         child: Row(
           spacing: GSpace.s8,
           children: [
-            const Text(
-              'YOUR LIBRARY',
-              style: TextStyle(
+            Text(
+              tr('YOUR LIBRARY'),
+              style: const TextStyle(
                 fontSize: GFont.xs,
                 letterSpacing: 1,
                 fontWeight: FontWeight.w700,
                 color: GColors.fgSecondary,
               ),
             ),
-            stat(n(games), 'games'),
-            stat(n(onPc), 'on this PC', color: GColors.gargosyTeal),
-            stat(n(platforms), 'platforms'),
-            stat(n(collections), 'collections'),
+            stat(n(games), tr('games')),
+            stat(n(onPc), tr('on this PC'), color: GColors.gargosyTeal),
+            stat(n(platforms), tr('platforms')),
+            stat(n(collections), tr('collections')),
           ],
         ),
       ),

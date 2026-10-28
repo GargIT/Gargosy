@@ -7,6 +7,7 @@ import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/g_focusable.dart';
+import '../../../l10n/tr.dart';
 
 /// Which achievements show, by RetroAchievements' type.
 enum AchievementType {
@@ -15,8 +16,11 @@ enum AchievementType {
   missable('Missable'),
   winCondition('Win condition');
 
-  const AchievementType(this.label);
-  final String label;
+  const AchievementType(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 
   /// RetroAchievements' name for it; null for [all].
   String? get raName => switch (this) {
@@ -73,10 +77,10 @@ class _AchievementsTabState extends ConsumerState<AchievementsTab> {
   @override
   Widget build(BuildContext context) {
     if (_game.raId == null || _game.raAchievements.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'RomM has no RetroAchievements for this game.',
-          style: TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
+          tr('RomM has no RetroAchievements for this game.'),
+          style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
         ),
       );
     }
@@ -111,13 +115,13 @@ class _AchievementsTabState extends ConsumerState<AchievementsTab> {
                   color: GColors.surfaceHover,
                 ),
                 _Filter(
-                  label: '✓ Earned',
+                  label: tr('✓ Earned'),
                   on: _status == AchievementStatus.earned,
                   tint: GColors.statusSuccess,
                   onPress: () => _toggle(AchievementStatus.earned),
                 ),
                 _Filter(
-                  label: '⊘ Locked',
+                  label: tr('⊘ Locked'),
                   on: _status == AchievementStatus.locked,
                   tint: GColors.statusDanger,
                   onPress: () => _toggle(AchievementStatus.locked),
@@ -126,11 +130,11 @@ class _AchievementsTabState extends ConsumerState<AchievementsTab> {
             ),
             const SizedBox(height: GSpace.s4),
             if (shown.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: GSpace.s6),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: GSpace.s6),
                 child: Text(
-                  'No achievements match these filters.',
-                  style: TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
+                  tr('No achievements match these filters.'),
+                  style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
                 ),
               ),
             for (var i = 0; i < shown.length; i += columns)
@@ -170,10 +174,10 @@ class _Summary extends StatelessWidget {
     final progression = list.where((a) => a.type == 'progression').length;
     final missable = list.where((a) => a.type == 'missable').length;
     final stats = [
-      (synced ? '${earned.length} / ${list.length}' : '${list.length}', 'Achievements', GColors.fg),
-      (synced ? '$earnedPoints / $points' : '$points', 'Points', GColors.fg),
-      if (progression > 0) ('$progression', 'Progression', GColors.fg),
-      if (missable > 0) ('$missable', 'Missable', GColors.warning),
+      (synced ? '${earned.length} / ${list.length}' : '${list.length}', tr('Achievements'), GColors.fg),
+      (synced ? '$earnedPoints / $points' : '$points', tr('Points'), GColors.fg),
+      if (progression > 0) ('$progression', tr('Progression'), GColors.fg),
+      if (missable > 0) ('$missable', tr('Missable'), GColors.warning),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,9 +226,9 @@ class _Summary extends StatelessWidget {
         ),
         if (!synced) ...[
           const SizedBox(height: GSpace.s2),
-          const Text(
-            'No progress synced to RomM yet.',
-            style: TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+          Text(
+            tr('No progress synced to RomM yet.'),
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
           ),
         ],
       ],
@@ -326,7 +330,7 @@ class _AchievementRow extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${a.points} pts',
+                    tr('{0} pts', [a.points]),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -354,9 +358,9 @@ class _TypeTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, base, text) = switch (type) {
-      'progression' => ('Progression', GColors.providerIgdb, GColors.providerIgdb),
-      'missable' => ('Missable', GColors.warning, GColors.warningFg),
-      'win_condition' => ('Win condition', GColors.statusSuccess, GColors.success),
+      'progression' => (tr('Progression'), GColors.providerIgdb, GColors.providerIgdb),
+      'missable' => (tr('Missable'), GColors.warning, GColors.warningFg),
+      'win_condition' => (tr('Win condition'), GColors.statusSuccess, GColors.success),
       _ => (type, GColors.fgSecondary, GColors.fgSecondary),
     };
     return Container(

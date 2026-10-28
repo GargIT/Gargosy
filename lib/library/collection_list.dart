@@ -1,4 +1,5 @@
 import '../core/romm/romm_library_api.dart';
+import '../l10n/tr.dart';
 
 /// The Collections tab's Kind (#121): which kinds of collection it shows.
 enum CollectionKindFilter {
@@ -7,8 +8,11 @@ enum CollectionKindFilter {
   smart('Smart'),
   virtual('Virtual');
 
-  const CollectionKindFilter(this.label);
-  final String label;
+  const CollectionKindFilter(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 
   bool shows(CollectionKind kind) => switch (this) {
     all => true,
@@ -20,12 +24,15 @@ enum CollectionKindFilter {
 
 /// Whose collections the tab shows. Virtual ones are no one's.
 enum CollectionWhose {
-  everyone("Everyone's"),
+  everyone('Everyone\'s'),
   mine('Mine'),
-  others("Others'");
+  others('Others\'');
 
-  const CollectionWhose(this.label);
-  final String label;
+  const CollectionWhose(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 }
 
 enum CollectionSort {
@@ -33,8 +40,11 @@ enum CollectionSort {
   games('Games'),
   updated('Recently updated');
 
-  const CollectionSort(this.label);
-  final String label;
+  const CollectionSort(this._label);
+  final String _label;
+
+  /// In the shown language (#191).
+  String get label => tr(_label);
 }
 
 /// The players' collections (regular and smart) the tab shows: the user's

@@ -7,6 +7,7 @@ import '../screens/settings/settings_pages.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/profile_badge.dart';
+import '../../l10n/tr.dart';
 
 /// The menu's own items, beside the settings sections.
 enum UserMenuAction { downloads, fullscreen, changelog, switchProfile }
@@ -168,14 +169,14 @@ Future<UserMenuChoice?> showUserMenu(
                       if (downloads != null)
                         item(
                           c,
-                          'Downloads',
+                          tr('Downloads'),
                           Icons.download,
                           const UserMenuChoice.action(UserMenuAction.downloads),
                           trailing: downloads == 0 ? null : _KeyChip('$downloads'),
                         ),
                       item(
                         c,
-                        'Fullscreen',
+                        tr('Fullscreen'),
                         Icons.fullscreen,
                         const UserMenuChoice.action(UserMenuAction.fullscreen),
                         trailing: const _KeyChip('F11'),
@@ -194,11 +195,11 @@ Future<UserMenuChoice?> showUserMenu(
                     ),
                   for (final page in SettingsPage.values.where((p) => p.group == SettingsGroup.gargosy))
                     item(c, page.label, page.icon, UserMenuChoice.settings(page)),
-                  item(c, 'Changelog', Icons.history, const UserMenuChoice.action(UserMenuAction.changelog)),
+                  item(c, tr('Changelog'), Icons.history, const UserMenuChoice.action(UserMenuAction.changelog)),
                   line,
                   item(
                     c,
-                    'Switch profile',
+                    tr('Switch profile'),
                     Icons.swap_horiz,
                     const UserMenuChoice.action(UserMenuAction.switchProfile),
                     color: GColors.danger,

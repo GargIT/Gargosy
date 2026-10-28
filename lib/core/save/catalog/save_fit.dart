@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../formats/save_format_registry.dart';
 import 'save_entry.dart';
 import 'save_maker.dart';
+import '../../../l10n/tr.dart';
 
 /// How a save fits the emulator it would be played in.
 enum SaveFitKind {
@@ -50,7 +51,7 @@ SaveFit fitFor(
   final maker = entry.maker;
   final target = picked ?? (maker != null && installed.contains(maker.emulatorId) ? maker : platformDefault);
   if (target == null) {
-    return const SaveFit(SaveFitKind.unusable, reason: 'No emulator for this platform is installed');
+    return SaveFit(SaveFitKind.unusable, reason: tr('No emulator for this platform is installed'));
   }
   if (maker == null) return SaveFit(SaveFitKind.unknownMaker, playsIn: target);
 
@@ -65,12 +66,12 @@ SaveFit fitFor(
       !coreUnknownBackup) {
     return SaveFit(
       SaveFitKind.unusable,
-      reason: 'This save belongs to the ${maker.coreId ?? 'default'} core; pick that core to play it',
+      reason: tr('This save belongs to the {0} core; pick that core to play it', [maker.coreId ?? 'default']),
     );
   }
   // A backup is restored as it was zipped, unconverted.
   if (entry.source == SaveSource.backup && maker.emulatorId != target.emulatorId) {
-    return SaveFit(SaveFitKind.unusable, reason: 'A backup goes back only into ${maker.emulatorId}');
+    return SaveFit(SaveFitKind.unusable, reason: tr('A backup goes back only into {0}', [maker.emulatorId]));
   }
 
   // RetroArch uploads a save under its bare core name, which for some cores
@@ -87,7 +88,7 @@ SaveFit fitFor(
   // A raw system lists the emulators verified to keep the same bytes; a save
   // from any other (e.g. DeSmuME's into melonDS) doesn't fit it.
   if (makerFormat == null && targetFormat != null && targetFormat.byTagOnly) {
-    return SaveFit(SaveFitKind.unusable, reason: "${maker.tag} saves can't be used by ${target.tag}");
+    return SaveFit(SaveFitKind.unusable, reason: tr('{0} saves can\'t be used by {1}', [maker.tag, target.tag]));
   }
 
   if (maker.emulatorId == target.emulatorId) {
@@ -98,5 +99,8 @@ SaveFit fitFor(
   if (targetFormat != null) {
     return SaveFit(makerFormat == targetFormat ? SaveFitKind.native : SaveFitKind.converted, playsIn: target);
   }
-  return SaveFit(SaveFitKind.unusable, reason: "${maker.emulatorId} saves can't be used by ${target.emulatorId}");
+  return SaveFit(
+    SaveFitKind.unusable,
+    reason: tr('{0} saves can\'t be used by {1}', [maker.emulatorId, target.emulatorId]),
+  );
 }

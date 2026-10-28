@@ -10,6 +10,7 @@ import '../screens/gallery_view.dart';
 import '../theme/tokens.dart';
 import '../widgets/gallery_bar.dart';
 import 'search_header.dart';
+import '../../l10n/tr.dart';
 
 /// Search (#132), like a collection's page: the header with the box, then the
 /// games under the filter and sort bar. Before anything is typed it's the
@@ -63,7 +64,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     ).length;
     final box = FilterField(
       key: _boxKey,
-      hint: 'Search your library',
+      hint: tr('Search your library'),
       text: _term ?? '',
       large: !_collapsed,
       autofocus: true,
@@ -105,7 +106,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
                 platforms: scope?.platforms,
                 barLeading: _collapsed ? SizedBox(width: 320, child: box) : null,
                 onOpened: (_) => _remember(),
-                emptyText: _term == null ? 'No games in your library yet.' : 'Nothing matches "$_term".',
+                emptyText: _term == null ? tr('No games in your library yet.') : tr('Nothing matches "{0}".', [_term]),
               ),
             ),
           ),

@@ -18,6 +18,7 @@ import '../../widgets/toast.dart';
 import '../storage_platform_screen.dart';
 import 'image_cache_section.dart';
 import 'settings_rows.dart';
+import '../../../l10n/tr.dart';
 
 /// What Gargosy's folders take, read again when Storage opens (#145).
 final storageUsageProvider = FutureProvider.autoDispose<StorageUsage>((ref) => readStorage(ref.watch(appRootProvider)));
@@ -49,7 +50,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
     if (ref.read(downloadsProvider.notifier).pending > 0 ||
         ref.read(playControllerProvider).runningGameId != null ||
         ref.read(syncActivityProvider)?.value != null) {
-      showToast(context, 'Not while a download, a game or a save sync runs.');
+      showToast(context, tr('Not while a download, a game or a save sync runs.'));
       return;
     }
     setState(() => _emptying = true);
@@ -78,23 +79,25 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
     final disk = ref.watch(diskUsageProvider)(root.root);
     final usage = ref.watch(storageUsageProvider);
     final counting = switch (usage) {
-      AsyncError() => "Couldn't be read",
-      _ => 'Counting…',
+      AsyncError() => tr('Couldn\'t be read'),
+      _ => tr('Counting…'),
     };
     final folders = usage.valueOrNull?.folders;
     final platforms = usage.valueOrNull?.platforms ?? const <PlatformUsage>[];
     return ListView(
       children: [
         SettingsCard(
-          title: 'Storage',
+          title: tr('Storage'),
           icon: Icons.storage,
-          note: "What takes space in the Gargosy folder on this PC. ROMs are shared by every profile; saves aren't in them.",
+          note: tr(
+            'What takes space in the Gargosy folder on this PC. ROMs are shared by every profile; saves aren\'t in them.',
+          ),
           children: [
             if (disk != null) ...[
               SettingsField(
                 key: const ValueKey('storage-drive'),
-                label: 'Drive ${driveOf(root.root)}',
-                value: '${formatBytes(disk.free)} free of ${formatBytes(disk.total)}',
+                label: tr('Drive {0}', [driveOf(root.root)]),
+                value: tr('{0} free of {1}', [formatBytes(disk.free), formatBytes(disk.total)]),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(GRadius.pill),
@@ -102,12 +105,12 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
               ),
             ],
             for (final label in folders?.keys ?? const ['ROMs'])
-              SettingsField(label: label, value: folders == null ? counting : formatBytes(folders[label]!)),
+              SettingsField(label: tr(label), value: folders == null ? counting : formatBytes(folders[label]!)),
             Align(
               alignment: Alignment.centerLeft,
               child: SettingsButton(
                 key: const ValueKey('storage-empty-temp'),
-                label: _emptying ? 'Emptying…' : 'Empty Temp',
+                label: _emptying ? tr('Emptying…') : tr('Empty Temp'),
                 icon: Icons.delete_sweep_outlined,
                 onActivate: _emptying ? null : _emptyTemp,
               ),
@@ -115,20 +118,20 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
           ],
         ),
         SettingsCard(
-          title: 'ROMs by platform',
+          title: tr('ROMs by platform'),
           icon: Icons.sports_esports_outlined,
-          note: 'Largest first. Open one to see its games and delete them from this PC.',
+          note: tr('Largest first. Open one to see its games and delete them from this PC.'),
           children: [
-            if (usage.isLoading) const Text('Counting…', style: TextStyle(color: GColors.fgMuted)),
+            if (usage.isLoading) Text(tr('Counting…'), style: const TextStyle(color: GColors.fgMuted)),
             if (!usage.isLoading && platforms.isEmpty)
-              const Text('No ROMs on this PC yet.', style: TextStyle(color: GColors.fgMuted)),
+              Text(tr('No ROMs on this PC yet.'), style: const TextStyle(color: GColors.fgMuted)),
             for (final (i, x) in platforms.indexed)
               SettingsField(
                 key: ValueKey('storage-platform-${x.folder}'),
                 autofocus: i == 0,
                 label: platformNameFor(ref, x.folder),
                 value: '${formatBytes(x.bytes)} · ${x.entries.length} ${x.entries.length == 1 ? 'game' : 'games'}',
-                action: 'Open',
+                action: tr('Open'),
                 onActivate: () async {
                   await Navigator.of(context)
                       .push(MaterialPageRoute<void>(builder: (_) => StoragePlatformScreen(folder: x.folder)));

@@ -10,6 +10,7 @@ import '../profiles/path_guard.dart';
 import 'disk_space.dart';
 import 'rom_files.dart';
 import 'xbox_disc.dart';
+import '../l10n/tr.dart';
 
 /// Unpacking or converting a ROM failed; the ROM is left as it was.
 class RomPrepareException implements Exception {
@@ -95,7 +96,7 @@ class RomPreparer {
     // goes, anything else in the way refuses.
     if (io.Directory(dest).existsSync()) io.Directory(guard.check(dest)).deleteSync();
     if (io.FileSystemEntity.typeSync(dest) != io.FileSystemEntityType.notFound) {
-      throw RomPrepareException('${p.basename(dest)} is already in the way in ${p.dirname(dest)}.');
+      throw RomPrepareException(tr('{0} is already in the way in {1}.', [p.basename(dest), p.dirname(dest)]));
     }
     final staging = guard.check(p.join(tempDir, 'unpack-${game.id}'));
     _remove(staging);
@@ -114,7 +115,7 @@ class RomPreparer {
         for (final e in entries)
           if (p.extension(e.name).toLowerCase() == '.iso') e,
       ];
-      final label = 'Unpacking ${game.displayName}';
+      final label = tr('Unpacking {0}', [game.displayName]);
       if (emulatorId == 'xemu' && isos.length == 1) {
         if (entries.length > 1) await _run(['-xf', zip, '-C', staging, '--exclude', '*.iso'], game);
         final name = RomFiles.safeName(p.basename(isos.single.name.replaceAll('\\', '/')));
@@ -129,7 +130,7 @@ class RomPreparer {
       }
       _checkInside(staging);
       if (io.FileSystemEntity.typeSync(dest) != io.FileSystemEntityType.notFound) {
-        throw RomPrepareException('${p.basename(dest)} is already in the way in ${p.dirname(dest)}.');
+        throw RomPrepareException(tr('{0} is already in the way in {1}.', [p.basename(dest), p.dirname(dest)]));
       }
       _move(staging, guard.check(dest));
       io.File(guard.check(zip)).deleteSync();
@@ -153,7 +154,9 @@ class RomPreparer {
         read += chunk.length;
         _report(
           onProgress,
-          writer.kind == XboxDisc.redump ? 'Converting ${game.displayName} for xemu' : 'Unpacking ${game.displayName}',
+          writer.kind == XboxDisc.redump
+              ? tr('Converting {0} for xemu', [game.displayName])
+              : tr('Unpacking {0}', [game.displayName]),
           read,
           size,
         );
@@ -168,7 +171,7 @@ class RomPreparer {
       out.closeSync();
     }
     if (await proc.exitCode != 0) {
-      throw RomPrepareException("Couldn't unpack ${game.displayName}: ${err.toString().trim()}");
+      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, err.toString().trim()]));
     }
   }
 
@@ -187,7 +190,8 @@ class RomPreparer {
             iso,
             tmp,
             gamePartition: gamePartition,
-            onProgress: (done, total) => _report(onProgress, 'Converting ${game.displayName} for xemu', done, total),
+            onProgress: (done, total) =>
+                _report(onProgress, tr('Converting {0} for xemu', [game.displayName]), done, total),
           );
           // Renaming over the original replaces it in one step (same drive).
           _moveFile(tmp, guard.check(iso));
@@ -211,7 +215,7 @@ class RomPreparer {
   Future<List<({String name, int size})>> _list(String zip, Game game) async {
     final r = await io.Process.run(_tar, ['-tvf', zip]);
     if (r.exitCode != 0) {
-      throw RomPrepareException("Couldn't open ${game.displayName}'s zip: ${(r.stderr as String).trim()}");
+      throw RomPrepareException(tr('Couldn\'t open {0}\'s zip: {1}', [game.displayName, (r.stderr as String).trim()]));
     }
     // -rw-rw-r--  0 0      0  7825162240 dec 24  1996 Name.iso (the month is localised)
     final line = RegExp(r'^(\S)\S*\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\S+\s+\d+\s+\S+\s(.*)$');
@@ -232,7 +236,9 @@ class RomPreparer {
     timer?.cancel();
     await errDone;
     await outDone;
-    if (code != 0) throw RomPrepareException("Couldn't unpack ${game.displayName}: ${err.toString().trim()}");
+    if (code != 0) {
+      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, err.toString().trim()]));
+    }
   }
 
   static bool _hasFiles(String dir) =>
@@ -251,7 +257,7 @@ class RomPreparer {
   static void _checkInside(String dir) {
     for (final e in io.Directory(dir).listSync(recursive: true, followLinks: false)) {
       if (e is io.Link || !p.isWithin(dir, p.normalize(e.absolute.path))) {
-        throw RomPrepareException('The zip holds ${p.basename(e.path)}, which points outside the game folder.');
+        throw RomPrepareException(tr('The zip holds {0}, which points outside the game folder.', [p.basename(e.path)]));
       }
     }
   }

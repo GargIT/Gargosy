@@ -11,6 +11,7 @@ import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import 'overview_facts.dart';
 import 'similar_games.dart';
+import '../../../l10n/tr.dart';
 
 /// The game page's Overview (#179), in RomM's order: the description and
 /// genres, the facts (last played, players, age rating), How long to beat,
@@ -54,9 +55,9 @@ class OverviewTab extends ConsumerWidget {
         if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s3), HltbStrip(hltb)],
         if (shots.isNotEmpty) ...[
           const SizedBox(height: GSpace.s6),
-          const Text(
-            'Screenshots',
-            style: TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
+          Text(
+            tr('Screenshots'),
+            style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: GSpace.s3),
           SizedBox(

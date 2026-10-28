@@ -4,6 +4,7 @@ import '../../core/input/gamepad_service.dart';
 import '../theme/tokens.dart';
 import 'g_focusable.dart';
 import 'hint_bar.dart';
+import '../../l10n/tr.dart';
 
 Widget _dialogButton(
   String label,
@@ -72,11 +73,13 @@ Future<bool> showConfirm(
       children: [
         Text(body, style: const TextStyle(color: GColors.fgSecondary)),
         const SizedBox(height: GSpace.s5),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        // Wraps when the labels are long (#191: Swedish ones are).
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: GSpace.s2,
+          runSpacing: GSpace.s2,
           children: [
-            _dialogButton(no, () => Navigator.of(c).pop(false), autofocus: !focusYes),
-            const SizedBox(width: GSpace.s2),
+            _dialogButton(tr(no), () => Navigator.of(c).pop(false), autofocus: !focusYes),
             _dialogButton(
               yes,
               () => Navigator.of(c).pop(true),
@@ -87,7 +90,7 @@ Future<bool> showConfirm(
           ],
         ),
         const SizedBox(height: GSpace.s3),
-        const HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Cancel')]),
+        HintBar(hints: [Hint(GameAction.confirm, tr('Select')), Hint(GameAction.back, tr('Cancel'))]),
       ],
     ),
   );
@@ -148,7 +151,7 @@ Future<int?> showChoice(BuildContext context, {required String title, required L
             ),
           ),
           const SizedBox(height: GSpace.s3),
-          const HintBar(hints: [Hint(GameAction.confirm, 'Select'), Hint(GameAction.back, 'Cancel')]),
+          HintBar(hints: [Hint(GameAction.confirm, tr('Select')), Hint(GameAction.back, tr('Cancel'))]),
         ],
       ),
     );
