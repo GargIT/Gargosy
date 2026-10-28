@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/romm/romm_library_api.dart';
+import '../../../core/romm/romm_models.dart';
 import '../../../library/collection_list.dart';
 import '../../../library/library_snapshot.dart';
+import '../../../library/smart_criteria.dart';
 import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
@@ -109,8 +111,14 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
         : c.userId == userId
         ? 'By you'
         : 'By ${c.ownerUsername ?? 'another player'}';
-    final about = c.kind == CollectionKind.smart && (c.filterSummary?.isNotEmpty ?? false)
-        ? c.filterSummary!
+    final names = {for (final p in ref.watch(platformsProvider).valueOrNull ?? const <Platform>[]) p.id: p.name};
+    final filters = c.kind == CollectionKind.smart ? describeCriteria(c.filterCriteria, platformNames: names) : '';
+    // RomM's filter_summary is its criteria as JSON; said in words when they read back.
+    final summary = c.filterSummary ?? '';
+    final about = filters.isNotEmpty
+        ? filters
+        : c.kind == CollectionKind.smart && summary.isNotEmpty && !summary.startsWith('{')
+        ? summary
         : c.description;
     return Padding(
       padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s5, GSpace.rowPad, GSpace.s4),

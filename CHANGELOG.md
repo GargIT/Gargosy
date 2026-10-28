@@ -13,6 +13,11 @@ What changed in each release of Gargosy. The format follows
   sort on RomM, asks a name and who sees it, and opens it. Your own smart
   collections can be renamed, shared and deleted from ⋯ on their page.
 
+### Fixed
+
+- A smart collection's page said its filters as RomM's raw JSON; now in
+  words (Search “girl” · Sorted by Name, A–Z).
+
 ## [0.5.0] - 2026-10-27
 
 Playing now on Home, a game's Overview and Achievements as RomM's, Home's

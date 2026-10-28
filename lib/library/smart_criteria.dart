@@ -28,3 +28,56 @@ SmartCriteria smartCriteriaOf(GalleryQuery q, {bool thisPc = false}) {
     ..removeWhere((k, _) => k == 'offset' || k == 'limit' || k.startsWith('with_') || k == 'smart_collection_id');
   return SmartCriteria(params, leftOut);
 }
+
+/// A smart collection's [criteria] in words, for its page: what it picks,
+/// then its order (`Search “mario” · SNES · Racing · Sorted by Name, A–Z`).
+/// [platformNames] by id; a key Gargosy doesn't know is said as RomM names it.
+String describeCriteria(Map<String, dynamic> criteria, {Map<int, String> platformNames = const {}}) {
+  String list(Object? v) => v is List ? v.join(', ') : '$v';
+  final parts = <String>[];
+  for (final e in criteria.entries) {
+    final key = e.key;
+    final value = e.value;
+    if (value == null || value == '' || (value is List && value.isEmpty)) continue;
+    switch (key) {
+      case 'order_by' || 'order_dir':
+        continue;
+      case 'search_term':
+        parts.add('Search “$value”');
+      case 'platform_ids' || 'platform_id':
+        parts.add(
+          [
+            for (final id in (value is List ? value : [value])) platformNames[id] ?? 'Platform $id',
+          ].join(', '),
+        );
+      case 'favorite' when value == true:
+        parts.add('♥ Favourites');
+      case 'collection_id':
+        parts.add('In collection $value');
+      case 'genres' || 'regions':
+        parts.add(list(value));
+      default:
+        final name = key.replaceAll('_', ' ');
+        final label = name.isEmpty ? name : name[0].toUpperCase() + name.substring(1);
+        parts.add(
+          value == true
+              ? label
+              : value == false
+              ? 'Not $name'
+              : '$label: ${list(value)}',
+        );
+    }
+  }
+  final by = criteria['order_by'];
+  if (by is String && by.isNotEmpty) {
+    final sort = GallerySort.values.firstWhere(
+      (s) => s.field == by && s.group != SortGroup.thisPc,
+      orElse: () => GallerySort.name,
+    );
+    final label = sort.field == by ? sort.label : by.replaceAll('_', ' ');
+    final desc = criteria['order_dir'] == 'desc';
+    final dir = by == 'name' ? (desc ? 'Z–A' : 'A–Z') : (desc ? 'descending' : 'ascending');
+    parts.add('Sorted by $label, $dir');
+  }
+  return parts.join(' · ');
+}

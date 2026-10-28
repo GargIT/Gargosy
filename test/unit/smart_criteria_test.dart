@@ -53,4 +53,45 @@ void main() {
     expect(canSaveAsSmart(const GalleryQuery(smartCollectionId: 2)), isFalse);
     expect(canSaveAsSmart(const GalleryQuery(platformId: 2)), isTrue);
   });
+
+  test('criteria in words: what it picks, then its order; unknown keys as RomM names them', () {
+    expect(
+      describeCriteria(
+        {
+          'order_by': 'first_release_date',
+          'order_dir': 'desc',
+          'search_term': 'mario',
+          'platform_ids': [4, 9],
+          'genres': ['Action', 'Racing'],
+          'favorite': true,
+          'statuses': ['finished'],
+          'matched': false,
+          'missing': true,
+        },
+        platformNames: {4: 'SNES'},
+      ),
+      'Search “mario” · SNES, Platform 9 · Action, Racing · ♥ Favourites · Statuses: finished · Not matched · '
+      'Missing · Sorted by Release date, descending',
+    );
+    expect(describeCriteria({'order_by': 'name', 'order_dir': 'desc'}), 'Sorted by Name, Z–A');
+    expect(describeCriteria({'order_by': 'fs_name'}), 'Sorted by fs name, ascending');
+    expect(describeCriteria({}), '');
+  });
+
+  test("RomM's collection reads its criteria, or its summary's JSON when they aren't sent", () {
+    final sent = RommCollection.fromJson(const {
+      'id': 1,
+      'filter_criteria': {'search_term': 'a'},
+      'filter_summary': 'x',
+    }, kind: CollectionKind.smart);
+    expect(sent.filterCriteria, {'search_term': 'a'});
+    final summary = RommCollection.fromJson(const {
+      'id': 1,
+      'filter_summary': '{"genres": ["RPG"]}',
+    }, kind: CollectionKind.smart);
+    expect(summary.filterCriteria, {
+      'genres': ['RPG'],
+    });
+    expect(RommCollection.fromJson(const {'id': 1, 'filter_summary': '{bad'}).filterCriteria, isEmpty);
+  });
 }

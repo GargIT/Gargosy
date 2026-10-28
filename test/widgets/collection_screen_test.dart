@@ -122,6 +122,18 @@ void main() {
     expect(find.text('Smart collection'), findsOneWidget);
     expect(find.text('Status: unfinished'), findsOneWidget);
     expect(find.text('By anna'), findsOneWidget);
+
+    // RomM's filter_summary is its criteria as JSON: said in words instead.
+    await pump(
+      tester,
+      RommCollection.fromJson(const {
+        'id': 5,
+        'name': 'Girls',
+        'filter_summary': '{"order_by": "name", "order_dir": "asc", "search_term": "girl"}',
+      }, kind: CollectionKind.smart),
+    );
+    expect(find.text('Search “girl” · Sorted by Name, A–Z'), findsOneWidget);
+    expect(find.textContaining('{'), findsNothing);
     expect(api.queries.first.$1.smartCollectionId, 4);
 
     await pump(

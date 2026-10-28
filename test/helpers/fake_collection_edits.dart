@@ -17,6 +17,7 @@ class FakeCollectionEdits implements CollectionEdits {
     id: c.id,
     kind: c.kind,
     filterSummary: c.filterSummary,
+    filterCriteria: c.filterCriteria,
     name: name ?? c.name,
     romIds: romIds ?? c.romIds,
     romCount: (romIds ?? c.romIds).length,
