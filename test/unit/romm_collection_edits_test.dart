@@ -54,11 +54,41 @@ void main() {
     expect(a.requests.single.method, 'PUT');
     expect(Map.fromEntries(form)['name'], 'New');
     expect(jsonDecode(form.firstWhere((f) => f.key == 'rom_ids').value), [1, 2]);
-    await edits(a).setShared(3, true);
+    await edits(a).setShared(const RommCollection(id: 3, name: 'New'), true);
     expect(a.requests.last.path, '/api/collections/3/visibility');
     expect(a.requests.last.data, {'is_public': true});
-    await edits(a).delete(3);
+    await edits(a).delete(const RommCollection(id: 3, name: 'New'));
     expect('${a.requests.last.method} ${a.requests.last.path}', 'DELETE /api/collections/3');
+  });
+
+  test('a smart collection (#188): made from criteria; renamed keeping them, shared, deleted', () async {
+    final a = FakeDioAdapter(
+      (r) => (status: 200, body: {...collection(6, 'Racing'), 'filter_summary': 'Genres: Racing'}),
+    );
+    final made = await edits(a).createSmart('Racing', {
+      'genres': ['Racing'],
+      'order_by': 'name',
+    }, shared: true);
+    expect(made.kind, CollectionKind.smart);
+    expect(made.filterSummary, 'Genres: Racing');
+    expect('${a.requests.single.method} ${a.requests.single.path}', 'POST /api/collections/smart');
+    expect(a.requests.single.queryParameters, {'is_public': true});
+    final form = Map.fromEntries((a.requests.single.data as FormData).fields);
+    expect(form['name'], 'Racing');
+    expect(jsonDecode(form['filter_criteria']!), {
+      'genres': ['Racing'],
+      'order_by': 'name',
+    });
+
+    final renamed = await edits(a).rename(made, 'Fast');
+    expect(renamed.kind, CollectionKind.smart);
+    expect('${a.requests.last.method} ${a.requests.last.path}', 'PUT /api/collections/smart/6');
+    final fields = Map.fromEntries((a.requests.last.data as FormData).fields);
+    expect(fields.keys, ['name'], reason: 'the stored filters are kept');
+    await edits(a).setShared(made, false);
+    expect(a.requests.last.path, '/api/collections/smart/6/visibility');
+    await edits(a).delete(made);
+    expect('${a.requests.last.method} ${a.requests.last.path}', 'DELETE /api/collections/smart/6');
   });
 
   test("RomM's reason is said; a refusal without one says who may", () async {
@@ -69,7 +99,7 @@ void main() {
     );
     final forbidden = FakeDioAdapter((r) => (status: 403, body: {}));
     await expectLater(
-      edits(forbidden).delete(3),
+      edits(forbidden).delete(const RommCollection(id: 3, name: 'X')),
       throwsA(isA<CollectionEditException>().having((e) => '$e', 'message', contains('owner'))),
     );
   });

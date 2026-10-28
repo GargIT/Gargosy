@@ -291,3 +291,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Home rows fit the window (#184)
 
 111. [x] On Home, every row (Continue playing, Recently added, Favourites, On this PC, Platforms, Collections, Playing now) ends inside the window: no card cut off at the right edge, and nothing scrolls sideways. A row with more than fit ends with See all, which opens that section; a short row shows all its games with See all after them. Make the window narrower and wider: rows show fewer and more. Go along a row with the D-pad to See all and press A.
+
+## A gallery saved as a smart collection (#188)
+
+112. [x] Open a platform's page, then Filters: pick a genre, then Save as smart collection…. Type a name with the on-screen keyboard, pick Only you: the new collection opens, marked Smart collection, with that platform's games of that genre, and RomM's web UI lists it under smart collections with the same games. Turn On this PC on and save again: Gargosy says On this PC can't be saved before asking a name. On the new collection's page, ⋯ renames it, shares it (Shared on RomM) and deletes it (after asking); its games stay. Do it once with the controller alone. Inside a smart collection, Filters has no Save button.

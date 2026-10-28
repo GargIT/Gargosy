@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/romm/romm_library_api.dart';
+import '../../../core/romm/romm_models.dart';
 import '../../../library/collection_list.dart';
 import '../../../library/library_snapshot.dart';
+import '../../../library/smart_criteria.dart';
 import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
@@ -53,8 +55,8 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     }
   }
 
-  /// ⋯ on the user's own collection (#144): Rename, Share or Stop sharing,
-  /// Delete (its games stay in RomM).
+  /// ⋯ on the user's own collection (#144), regular or smart (#188): Rename,
+  /// Share or Stop sharing, Delete (its games stay in RomM).
   Future<void> _more() async {
     final c = widget.collection;
     final edits = ref.read(collectionEditsProvider);
@@ -72,7 +74,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
           if (name == null || name.isEmpty || name == c.name) return;
           widget.onChanged?.call(await edits.rename(c, name));
         case 1:
-          widget.onChanged?.call(await edits.setShared(c.id, !c.isPublic));
+          widget.onChanged?.call(await edits.setShared(c, !c.isPublic));
         case 2:
           final ok = await showConfirm(
             context,
@@ -84,12 +86,14 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
             danger: true,
           );
           if (!ok) return;
-          await edits.delete(c.id);
+          await edits.delete(c);
           ref.invalidate(collectionsProvider);
+          ref.invalidate(smartCollectionsProvider);
           if (mounted) Navigator.of(context).pop();
           return;
       }
       ref.invalidate(collectionsProvider);
+      ref.invalidate(smartCollectionsProvider);
     } on Object catch (e) {
       if (mounted) showToast(context, "Couldn't change ${c.name}: $e");
     }
@@ -107,8 +111,14 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
         : c.userId == userId
         ? 'By you'
         : 'By ${c.ownerUsername ?? 'another player'}';
-    final about = c.kind == CollectionKind.smart && (c.filterSummary?.isNotEmpty ?? false)
-        ? c.filterSummary!
+    final names = {for (final p in ref.watch(platformsProvider).valueOrNull ?? const <Platform>[]) p.id: p.name};
+    final filters = c.kind == CollectionKind.smart ? describeCriteria(c.filterCriteria, platformNames: names) : '';
+    // RomM's filter_summary is its criteria as JSON; said in words when they read back.
+    final summary = c.filterSummary ?? '';
+    final about = filters.isNotEmpty
+        ? filters
+        : c.kind == CollectionKind.smart && summary.isNotEmpty && !summary.startsWith('{')
+        ? summary
         : c.description;
     return Padding(
       padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GSpace.s5, GSpace.rowPad, GSpace.s4),
@@ -190,7 +200,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
             ),
           ),
           const SizedBox(width: GSpace.s4),
-          if (c.kind == CollectionKind.regular && !c.isFavorite && c.userId != null && c.userId == userId) ...[
+          if (c.kind != CollectionKind.virtual && !c.isFavorite && c.userId != null && c.userId == userId) ...[
             GFocusable(
               key: const ValueKey('collection-more'),
               borderRadius: GRadius.pill,

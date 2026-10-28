@@ -94,6 +94,19 @@ void main() {
     expect(find.byKey(const ValueKey('collection-more')), findsNothing);
   });
 
+  testWidgets("⋯ on your own smart collection (#188): rename keeps it smart", (tester) async {
+    const mine = RommCollection(id: 4, name: 'Racing', kind: CollectionKind.smart, userId: 7);
+    final edits = FakeCollectionEdits([mine]);
+    await pump(tester, mine, edits: edits);
+    await tester.tap(find.byKey(const ValueKey('collection-more')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share with every player'));
+    await tester.pumpAndSettle();
+    expect(edits.calls, ['share 4 true']);
+    expect(find.text('Smart collection'), findsOneWidget);
+    expect(find.text('Shared on RomM'), findsOneWidget);
+  });
+
   testWidgets("a smart one says its filters and whose; a virtual one its type; Random picks within it", (tester) async {
     await pump(
       tester,
@@ -109,6 +122,18 @@ void main() {
     expect(find.text('Smart collection'), findsOneWidget);
     expect(find.text('Status: unfinished'), findsOneWidget);
     expect(find.text('By anna'), findsOneWidget);
+
+    // RomM's filter_summary is its criteria as JSON: said in words instead.
+    await pump(
+      tester,
+      RommCollection.fromJson(const {
+        'id': 5,
+        'name': 'Girls',
+        'filter_summary': '{"order_by": "name", "order_dir": "asc", "search_term": "girl"}',
+      }, kind: CollectionKind.smart),
+    );
+    expect(find.text('Search “girl” · Sorted by Name, A–Z'), findsOneWidget);
+    expect(find.textContaining('{'), findsNothing);
     expect(api.queries.first.$1.smartCollectionId, 4);
 
     await pump(

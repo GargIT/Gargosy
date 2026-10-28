@@ -8,6 +8,7 @@ import '../../core/romm/romm_models.dart';
 import '../../library/game_versions.dart';
 import '../../library/letter_index.dart';
 import '../../library/on_pc_scan.dart';
+import '../../library/smart_criteria.dart';
 import '../../library/library_snapshot.dart';
 import '../../library/local_gallery.dart';
 import '../../providers/download_providers.dart';
@@ -22,6 +23,7 @@ import '../widgets/g_focusable.dart';
 import '../widgets/gallery_bar.dart';
 import '../widgets/nothing_matches.dart';
 import '../widgets/toast.dart';
+import 'collection/save_smart_collection.dart';
 import 'filter_sheet.dart';
 import 'game/open_game.dart';
 import '../widgets/favourite.dart';
@@ -285,8 +287,11 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   }
 
   Future<void> _filters(FilterValues values) async {
-    final next = await showFilterSheet(context, query: _query, values: values);
-    if (next != null) _setQuery(next);
+    final offerSave = canSaveAsSmart(_query) && ref.read(collectionEditsProvider) != null;
+    final next = await showFilterSheet(context, query: _query, values: values, offerSave: offerSave);
+    if (next == null) return;
+    _setQuery(next.query);
+    if (next.saveAsSmart && mounted) await saveAsSmartCollection(context, ref, _query, thisPc: _thisPc);
   }
 
   /// Show all: the bar's filters off (On this PC, a platform picked, genres,
