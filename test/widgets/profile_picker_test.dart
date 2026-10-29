@@ -185,7 +185,7 @@ void main() {
     h.auth = FakeRommAuth(start: null);
     await h.pumpApp(tester);
     await h.send(tester, GameAction.confirm);
-    h.protector.failProtect = true;
+    h.secrets.failProtect = true;
     await tester.tap(find.text('Log in'));
     await h.settle(tester);
     expect(find.textContaining('could not be saved'), findsOneWidget);
