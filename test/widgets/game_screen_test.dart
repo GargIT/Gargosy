@@ -40,6 +40,7 @@ import '../unit/play_controller_test.dart' show FakeEngine;
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
+import '../helpers/fake_disk.dart';
 
 void main() {
   late AppRoot root;
@@ -166,9 +167,9 @@ void main() {
   });
 
   testWidgets("Download says the drive's free space when it is tight (#142)", (tester) async {
-    await pump(tester, extra: [freeSpaceProvider.overrideWithValue((_) => burnout.fileSize + spaceHeadroom)]);
+    await pump(tester, extra: [diskInfoProvider.overrideWithValue(FakeDisk((_) => burnout.fileSize + spaceHeadroom))]);
     expect(find.byKey(const ValueKey('free-space')), findsOneWidget);
-    await pump(tester, extra: [freeSpaceProvider.overrideWithValue((_) => 1 << 50)]);
+    await pump(tester, extra: [diskInfoProvider.overrideWithValue(FakeDisk((_) => 1 << 50))]);
     expect(find.byKey(const ValueKey('free-space')), findsNothing);
   });
 

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../library/disk_space.dart';
 import '../library/download_service.dart';
@@ -17,8 +18,8 @@ import '../l10n/tr.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
 
-/// The free space on a path's drive (#142); tests give their own.
-final freeSpaceProvider = Provider<FreeSpaceOf>((ref) => windowsFreeSpace);
+/// The volumes and their free space (#142, #201); tests give their own.
+final diskInfoProvider = Provider<DiskInfo>((ref) => diskInfoFor(PlatformInfo.current));
 
 /// Bumped after a download or a delete, so "downloaded?" is read again.
 final romFilesVersionProvider = StateProvider<int>((ref) => 0);
@@ -43,7 +44,7 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
     tempDir: p.join(root.appData, 'temp'),
     urlFor: romm.getDownloadUrl,
     detail: romm.getGame,
-    freeSpace: ref.watch(freeSpaceProvider),
+    disk: ref.watch(diskInfoProvider),
   );
 });
 
@@ -99,7 +100,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     // Room for it and for everything before it (#143): refused now, not
     // when its turn comes.
     try {
-      checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(freeSpaceProvider));
+      checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(diskInfoProvider));
     } on NotEnoughSpace catch (e) {
       _set(game.id, DownloadProgress(DownloadPhase.failed, error: tr('With the downloads before it: {0}', [e])));
       return Future.value();

@@ -257,7 +257,8 @@ class GameCoverColumn extends ConsumerWidget {
     } else {
       final size = game.fileSize > 0 ? ' (${formatBytes(game.fileSize)})' : '';
       final roms = ref.watch(appRootProvider).roms;
-      final free = ref.watch(freeSpaceProvider)(roms);
+      final disk = ref.watch(diskInfoProvider);
+      final free = disk.freeOf(roms);
       main = Column(
         children: [
           _wide(
@@ -270,7 +271,7 @@ class GameCoverColumn extends ConsumerWidget {
           if (spaceIsTight(game.fileSize, free) && progress?.phase != DownloadPhase.failed) ...[
             const SizedBox(height: GSpace.s2),
             Text(
-              tr('{0} free on {1}', [formatBytes(free!), driveOf(roms)]),
+              tr('{0} free on {1}', [formatBytes(free!), disk.volumeOf(roms)]),
               key: const ValueKey('free-space'),
               style: const TextStyle(color: GColors.gargosyGold, fontSize: GFont.sm),
             ),

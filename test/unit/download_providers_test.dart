@@ -14,6 +14,7 @@ import 'package:gargosy/providers/download_providers.dart';
 import '../helpers/fake_download_service.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_disk.dart';
 
 void main() {
   test('switching profile cancels the old profile\'s downloads and forgets their progress', () async {
@@ -77,7 +78,7 @@ void main() {
           appRootProvider.overrideWithValue(root),
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),
           downloadServiceProvider.overrideWithValue(fake),
-          freeSpaceProvider.overrideWithValue((_) => free),
+          diskInfoProvider.overrideWithValue(FakeDisk((_) => free)),
         ],
       );
       addTearDown(c.dispose);
