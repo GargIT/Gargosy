@@ -1,4 +1,5 @@
 import '../emulators/fullscreen.dart';
+import '../core/extraction/unpacker.dart';
 import '../core/platform/window_service.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../profiles/profile_providers.dart';
@@ -391,6 +392,7 @@ class GargosyPlayEngine implements PlayEngine {
       guard: PathGuard(root),
       tempDir: p.join(root.appData, 'temp'),
       freeSpace: windowsFreeSpace,
+      unpacker: _ref.read(unpackerProvider),
     );
     final unpacked = await preparer.ready(game, romPath, strategy.emulatorId, onProgress: onProgress);
     if (unpacked == null) return romPath;

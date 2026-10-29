@@ -50,7 +50,7 @@ XboxDisc detectXboxDisc(String path, {int gamePartition = xgd1GamePartition}) {
   }
 }
 
-/// Writes an Xbox disc image streamed through [add] (from `tar -xO`) to
+/// Writes an Xbox disc image streamed through [add] (from `Unpacker.open`) to
 /// [out] as an XISO: an XISO as it is, a Redump image without its video
 /// partition. Anything else throws [NotAnXboxDisc] as soon as that's
 /// known. Nothing is buffered beyond the first 64 KiB of each partition.
