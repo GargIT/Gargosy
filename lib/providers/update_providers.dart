@@ -11,6 +11,7 @@ import '../core/platform/platform_info.dart';
 import '../profiles/profile_providers.dart';
 import '../update/update_checker.dart';
 import '../update/update_downloader.dart';
+import '../update/app_updater.dart';
 import '../update/update_installer.dart';
 import '../update/update_version.dart';
 
@@ -47,6 +48,7 @@ final updateCheckerProvider = Provider<UpdateChecker>(
     dio: ref.watch(updateDioProvider),
     prefs: ref.watch(appPreferencesProvider),
     installed: ref.watch(installedVersionProvider),
+    assetVersion: ref.watch(appUpdaterProvider).versionOfAsset,
   ),
 );
 
@@ -54,13 +56,14 @@ final updateDownloaderProvider = Provider<UpdateDownloader>(
   (ref) => UpdateDownloader(dio: ref.watch(updateDioProvider), root: ref.watch(appRootProvider)),
 );
 
-final updateInstallerProvider = Provider<UpdateInstaller>(
-  (ref) => UpdateInstaller(
+/// The OS's updater (#203); tests give their own.
+final appUpdaterProvider = Provider<AppUpdater>(
+  (ref) => appUpdaterFor(
+    PlatformInfo.current,
     root: ref.watch(appRootProvider),
     pid: io.pid,
     args: ref.watch(launchArgsProvider),
     currentVersion: AppConstants.version,
-    platform: PlatformInfo.current,
   ),
 );
 
