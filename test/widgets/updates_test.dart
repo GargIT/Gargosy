@@ -122,7 +122,7 @@ void main() {
         appPreferencesProvider.overrideWithValue(prefs),
         updateDioProvider.overrideWithValue(Dio()..httpClientAdapter = github),
         installedVersionProvider.overrideWithValue(UpdateVersion.parse('0.1.0')!),
-        updateInstallerProvider.overrideWith(
+        appUpdaterProvider.overrideWith(
           (ref) => UpdateInstaller(
             root: root,
             pid: 77,

@@ -41,7 +41,7 @@ class _UpdatesBlockState extends ConsumerState<UpdatesBlock> {
     final installed = ref.watch(installedVersionProvider);
     final channel = checker.channel;
     final available = state.available?.release;
-    final installer = ref.watch(updateInstallerProvider);
+    final installer = ref.watch(appUpdaterProvider);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
