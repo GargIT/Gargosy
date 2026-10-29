@@ -1,9 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
 
+import '../core/extraction/unpacker.dart';
 import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../profiles/path_guard.dart';
@@ -27,8 +26,8 @@ class RomPrepareException implements Exception {
 /// - for xemu, an original Xbox disc becomes an XISO (xemu.app/docs/disc-images:
 ///   a Redump image loses its video partition).
 ///
-/// Windows' `tar.exe` unpacks (hundreds of MB/s). An Xbox disc streams out
-/// of it straight into its XISO, so it needs no room beyond the result.
+/// The OS's [Unpacker] unpacks (Windows' `tar.exe`). An Xbox disc streams
+/// out of it straight into its XISO, so it needs no room beyond the result.
 /// Work is staged in `userdata\app\temp`; `roms\` only gets the finished
 /// folder or file, and a failure leaves the ROM as it was.
 class RomPreparer {
@@ -38,12 +37,9 @@ class RomPreparer {
     required this.tempDir,
     this.gamePartition = xgd1GamePartition,
     this.freeSpace,
+    Unpacker? unpacker,
     PlatformInfo? platform,
-  }) : _tar = p.join(
-         (platform ?? PlatformInfo.current).environment['SystemRoot'] ?? r'C:\Windows',
-         'System32',
-         'tar.exe',
-       );
+  }) : _unpacker = unpacker ?? unpackerFor(platform ?? PlatformInfo.current);
 
   final RomFiles files;
   final PathGuard guard;
@@ -52,7 +48,7 @@ class RomPreparer {
 
   /// The free space on a path's drive (#142); null skips the check.
   final FreeSpaceOf? freeSpace;
-  final String _tar;
+  final Unpacker _unpacker;
 
   /// Emulators that open a zipped ROM themselves.
   static const zipReaders = {'retroarch', 'mame', 'ares', 'mgba', 'flycast'};
@@ -117,16 +113,12 @@ class RomPreparer {
       ];
       final label = tr('Unpacking {0}', [game.displayName]);
       if (emulatorId == 'xemu' && isos.length == 1) {
-        if (entries.length > 1) await _run(['-xf', zip, '-C', staging, '--exclude', '*.iso'], game);
+        if (entries.length > 1) await _run(zip, staging, game, exclude: const ['*.iso']);
         final name = RomFiles.safeName(p.basename(isos.single.name.replaceAll('\\', '/')));
         await _streamXiso(zip, p.join(staging, name), isos.single.size, game, onProgress);
       } else {
         final total = entries.fold<int>(0, (n, e) => n + e.size);
-        await _run(
-          ['-xf', zip, '-C', staging],
-          game,
-          progress: () => _report(onProgress, label, _sizeOf(staging), total),
-        );
+        await _run(zip, staging, game, progress: () => _report(onProgress, label, _sizeOf(staging), total));
       }
       _checkInside(staging);
       if (io.FileSystemEntity.typeSync(dest) != io.FileSystemEntityType.notFound) {
@@ -140,16 +132,13 @@ class RomPreparer {
     }
   }
 
-  /// Streams the zip's one `.iso` out of tar into [dst] as an XISO.
+  /// Streams the zip's one `.iso` out of the unpacker into [dst] as an XISO.
   Future<void> _streamXiso(String zip, String dst, int size, Game game, void Function(String)? onProgress) async {
     final out = io.File(guard.check(dst)).openSync(mode: io.FileMode.write);
     final writer = XisoWriter(out, name: game.displayName, gamePartition: gamePartition);
-    final proc = await io.Process.start(_tar, ['-xOf', zip, '*.iso']);
-    final err = StringBuffer();
-    final errDone = proc.stderr.transform(io.systemEncoding.decoder).forEach(err.write);
     var read = 0;
     try {
-      await for (final chunk in proc.stdout) {
+      await for (final chunk in _unpacker.open(zip, '*.iso')) {
         writer.add(chunk);
         read += chunk.length;
         _report(
@@ -162,16 +151,10 @@ class RomPreparer {
         );
       }
       writer.close();
-    } on Object {
-      proc.kill();
-      rethrow;
+    } on UnpackException catch (e) {
+      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, e.detail]));
     } finally {
-      await proc.exitCode;
-      await errDone;
       out.closeSync();
-    }
-    if (await proc.exitCode != 0) {
-      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, err.toString().trim()]));
     }
   }
 
@@ -211,33 +194,26 @@ class RomPreparer {
     onProgress('$label… $percent %');
   }
 
-  /// The zip's files and their sizes, from `tar -tvf`.
-  Future<List<({String name, int size})>> _list(String zip, Game game) async {
-    final r = await io.Process.run(_tar, ['-tvf', zip]);
-    if (r.exitCode != 0) {
-      throw RomPrepareException(tr('Couldn\'t open {0}\'s zip: {1}', [game.displayName, (r.stderr as String).trim()]));
+  /// The zip's files and their sizes.
+  Future<List<ZipEntry>> _list(String zip, Game game) async {
+    try {
+      return await _unpacker.list(zip);
+    } on UnpackException catch (e) {
+      throw RomPrepareException(tr('Couldn\'t open {0}\'s zip: {1}', [game.displayName, e.detail]));
     }
-    // -rw-rw-r--  0 0      0  7825162240 dec 24  1996 Name.iso (the month is localised)
-    final line = RegExp(r'^(\S)\S*\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\S+\s+\d+\s+\S+\s(.*)$');
-    return [
-      for (final l in const LineSplitter().convert(r.stdout as String))
-        if (line.firstMatch(l.trimRight()) case final m? when m.group(1) == '-')
-          (name: m.group(3)!, size: int.parse(m.group(2)!)),
-    ];
   }
 
-  Future<void> _run(List<String> args, Game game, {void Function()? progress}) async {
-    final proc = await io.Process.start(_tar, args);
-    final err = StringBuffer();
-    final errDone = proc.stderr.transform(io.systemEncoding.decoder).forEach(err.write);
-    final outDone = proc.stdout.drain<void>();
-    final timer = progress == null ? null : Timer.periodic(const Duration(milliseconds: 500), (_) => progress());
-    final code = await proc.exitCode;
-    timer?.cancel();
-    await errDone;
-    await outDone;
-    if (code != 0) {
-      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, err.toString().trim()]));
+  Future<void> _run(
+    String zip,
+    String into,
+    Game game, {
+    List<String> exclude = const [],
+    void Function()? progress,
+  }) async {
+    try {
+      await _unpacker.unpack(zip, into, exclude: exclude, tick: progress);
+    } on UnpackException catch (e) {
+      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, e.detail]));
     }
   }
 
@@ -252,7 +228,7 @@ class RomPreparer {
     return n;
   }
 
-  /// tar refuses `..` and absolute names; checked again so nothing lands
+  /// The unpacker refuses `..` and absolute names; checked again so nothing lands
   /// outside the game's folder.
   static void _checkInside(String dir) {
     for (final e in io.Directory(dir).listSync(recursive: true, followLinks: false)) {

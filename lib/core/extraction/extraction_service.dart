@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../storage/directory_service.dart';
 import '../platform/platform_info.dart';
+import 'unpacker.dart';
 
 Future<void> _extractZipIsolate(List<dynamic> args) async {
   final bytes = args[0] as Uint8List;
@@ -158,20 +159,11 @@ class ExtractionService {
       }
     } else if (_platform.isWindows) {
       try {
-        // Modern Windows 10/11 has tar built-in which handles ZIPs perfectly.
-        // Gargosy: Windows' own, by its path. A plain `tar` can find Git's GNU
-        // tar first, which reads `C:\...` as a remote host and fails.
-        final systemRoot = _platform.environment['SystemRoot'] ?? r'C:\Windows';
-        final windowsTar = p.join(systemRoot, 'System32', 'tar.exe');
-        final result = await Process.run(File(windowsTar).existsSync() ? windowsTar : 'tar', [
-          '-xf',
-          archivePath,
-          '-C',
-          destDir,
-        ]);
-        if (result.exitCode == 0) return;
-
-        debugPrint('tar failed with exit code ${result.exitCode} (${result.stderr}), falling back to archive package');
+        // Gargosy (#200): the OS's Unpacker (Windows' own tar.exe, by its path).
+        await unpackerFor(_platform).unpack(archivePath, destDir);
+        return;
+      } on UnpackException catch (e) {
+        debugPrint('tar failed (${e.detail}), falling back to archive package');
       } catch (e) {
         debugPrint('tar not found or failed: $e, falling back to archive package');
       }
