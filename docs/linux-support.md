@@ -150,7 +150,7 @@ Emulators total: **L.**
 - **Credentials:** the file stays per PC (`login.<PC>…`), with a different
   protector behind it (see `dpapi.dart` above). The PC name comes from
   `/etc/machine-id` instead of the Windows MachineGuid.
-- **`PathGuard` must compare case-sensitively on Linux.** Today
+- **`PathGuard` must compare case-sensitively on Linux** (done in #204). Today
   `path_guard.dart` lowercases both sides, which is right on Windows. On
   Linux, `roms/` and `ROMS/` are different folders, and the lowercased check
   would let a server path write into the wrong one. 19 files in `library/`,

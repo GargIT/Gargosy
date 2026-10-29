@@ -2,6 +2,7 @@
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/core/downloader/download_service.dart';
 import 'package:gargosy/core/emulator/strategies/eden_strategy.dart';
 import 'package:gargosy/core/emulator/emulator_download_service.dart';
@@ -89,6 +90,30 @@ void main() {
     point('aaa');
     expect(point('aaa').movedToTemplate, isNull);
     expect(isFolderLink(p.join(install('eden'), 'user')), isTrue);
+  });
+
+  test('a link to the profile in another case: the same on Windows, re-pointed where case counts (#204)', () {
+    final link = p.join(install('eden'), 'user');
+    final target = p.join(data('aaa', 'eden'), 'user');
+    final otherCase = target.replaceFirst(
+      '${p.separator}profiles${p.separator}',
+      '${p.separator}PROFILES${p.separator}',
+    );
+    expect(otherCase, isNot(target));
+    io.Directory(target).createSync(recursive: true);
+    io.Directory(install('eden')).createSync(recursive: true);
+    io.Link(link).createSync(otherCase);
+    point('aaa');
+    expect(io.Link(link).targetSync().toLowerCase(), target.toLowerCase());
+    expect(io.Link(link).targetSync(), isNot(target), reason: 'Windows: the same folder, left as it was');
+    pointFolderLink(
+      link: link,
+      target: target,
+      guard: PathGuard(root, activeProfileId: 'aaa', platform: const PlatformInfo('linux')),
+      templateDir: template('eden', 'user'),
+      setAsideDir: setAside('eden', 'user'),
+    );
+    expect(io.Link(link).targetSync(), target, reason: 'case counts: another folder, so re-pointed');
   });
 
   test("a real folder in the way becomes the profile's own when the profile has no files yet", () {

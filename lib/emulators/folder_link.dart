@@ -86,7 +86,7 @@ FolderLinkResult pointFolderLink({
   }
   switch (inTheWay) {
     case io.FileSystemEntityType.link:
-      if (_same(io.Link(linkPath).targetSync(), targetPath)) return const FolderLinkResult();
+      if (_same(io.Link(linkPath).targetSync(), targetPath, guard)) return const FolderLinkResult();
       io.Link(linkPath).deleteSync(); // the link only, never what it points at
     case io.FileSystemEntityType.directory:
       if (!_hasFiles(targetPath)) {
@@ -126,7 +126,7 @@ FolderLinkResult pointFolderLink({
 /// A folder that held one is remembered for the session.
 void _checkCanLink(String linkPath, String targetPath, PathGuard guard, LinkMaker makeLink) {
   final dir = p.dirname(linkPath);
-  if (_canLinkIn.contains(dir.toLowerCase())) return;
+  if (_canLinkIn.contains(guard.pathKey(dir))) return;
   final probe = guard.check(p.join(dir, '.gargosy-linktest'));
   removeFolderLink(probe); // left by a check that didn't finish
   if (io.FileSystemEntity.typeSync(probe, followLinks: false) != io.FileSystemEntityType.notFound) {
@@ -138,7 +138,7 @@ void _checkCanLink(String linkPath, String targetPath, PathGuard guard, LinkMake
     throw FolderLinkUnsupported(linkPath, e);
   }
   removeFolderLink(probe);
-  _canLinkIn.add(dir.toLowerCase());
+  _canLinkIn.add(guard.pathKey(dir));
 }
 
 /// Removes [path] when it's a folder link (the link, never its target).
@@ -169,11 +169,10 @@ int removeFolderLinksIn(String dir) {
   return n;
 }
 
-bool _same(String a, String b) {
-  String norm(String s) => p.normalize(p.absolute(s)).toLowerCase().replaceAll(RegExp(r'[\\/]+$'), '');
-  // Windows reports a junction's target with a \\?\ prefix.
-  return norm(a.replaceFirst(RegExp(r'^\\\\\?\\'), '')) == norm(b);
-}
+/// Whether a link's target [a] is [b], as the file system compares (#204).
+bool _same(String a, String b, PathGuard guard) =>
+    // Windows reports a junction's target with a \\?\ prefix.
+    guard.samePath(a.replaceFirst(RegExp(r'^\\\\\?\\'), ''), b);
 
 /// Moves the folder [from] to [to], or `<to> (2)`, `(3)` … when [to] is
 /// taken: nothing is overwritten.
