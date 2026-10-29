@@ -298,7 +298,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Achievements earned in a session (#189)
 
-113. [ ] With a RetroAchievements login in Settings → RetroAchievements and your RA username linked on your RomM profile, play a game RomM matched on RetroAchievements and earn one achievement (an easy first one: Sonic's rings, a first level). Quit: the save message comes first, then within a minute a second line says "1 achievement earned · N points (softcore)" (hardcore when that switch is on), and the Achievements tab shows it earned. Play again without earning one: no second line. A game without RetroAchievements, or a profile without an RA login: no second line, and nothing else changes.
+113. [ ] With a RetroAchievements login in Settings → RetroAchievements and your RA username linked on your RomM profile, play a game RomM matched on RetroAchievements and earn one achievement (an easy first one: Sonic's rings, a first level). Quit: the save message comes first, then within a minute a second line says "1 achievement earned · N points (softcore)" (hardcore when that switch is on), and the Achievements tab shows it earned. Start it once more with Home's Resume and earn another: the line shows on Home too. Play again without earning one: no second line. A game without RetroAchievements, or a profile without an RA login: no second line, and nothing else changes.
 
 ## Swedish (#191)
 

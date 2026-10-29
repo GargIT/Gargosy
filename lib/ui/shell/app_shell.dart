@@ -10,6 +10,7 @@ import '../../changelog/whats_new.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../library/upload_queue.dart';
+import '../../play/session_achievements.dart';
 import '../../providers/romm_providers.dart';
 import '../../profiles/profile_providers.dart';
 import '../input/gargosy_intents.dart';
@@ -132,6 +133,11 @@ class _AppShellState extends ConsumerState<AppShell> {
     // RomM is back: what waited goes up.
     ref.listen<bool>(rommOfflineProvider, (was, now) {
       if (was == true && !now) _upload();
+    });
+    // What a session earned (#189), once RomM has read it: said here, so it
+    // shows wherever the game was started (Home's Resume, the game page).
+    ref.listen(sessionAchievementsProvider, (prev, next) {
+      if (next != null && next != prev) showToast(context, next.line);
     });
     final pages = [
       HomePage(name: ctx.profile.name),
