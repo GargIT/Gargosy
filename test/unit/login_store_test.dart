@@ -7,24 +7,23 @@ import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
-import '../helpers/fake_protector.dart';
+import '../helpers/fake_secret_store.dart';
 import '../helpers/profile_test_env.dart';
 
 void main() {
   late AppRoot root;
   late ProfilePaths paths;
-  late FakeProtector protector;
+  late FakeSecretStore secrets;
   const pc = PcIdentity(machineName: 'LIVINGROOM', userName: 'henri', machineId: 'guid-1');
 
   setUp(() async {
     root = await tempAppRoot();
     paths = ProfilePaths(root, 'p1');
-    protector = FakeProtector();
+    secrets = FakeSecretStore();
   });
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  ProfileLoginStore store([PcIdentity id = pc]) =>
-      ProfileLoginStore(profileDir: paths.dir, protector: protector, pc: id);
+  ProfileLoginStore store([PcIdentity id = pc]) => ProfileLoginStore(profileDir: paths.dir, secrets: secrets, pc: id);
 
   test('the file is named per PC and Windows user, inside the profile', () {
     expect(p.dirname(store().filePath), paths.dir);
@@ -45,7 +44,7 @@ void main() {
   test('no file, or a file another PC wrote, reads as no login', () async {
     expect(await store().read(), isNull);
     await store().write(paths.guard, const ProfileLogin(token: 't', kind: 'client-token'));
-    protector.fail = true;
+    secrets.fail = true;
     expect(await store().read(), isNull);
   });
 

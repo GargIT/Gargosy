@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 import '../core/platform/platform_info.dart';
-import '../core/security/dpapi.dart';
+import '../core/security/secret_store.dart';
 
-/// This PC and Windows user. DPAPI only decrypts for the same user on the same
-/// PC, so each login file is named after both.
+/// This PC and its user. A [SecretStore] only decrypts for the same user on
+/// the same PC, so each login file is named after both.
 class PcIdentity {
   const PcIdentity({required this.machineName, required this.userName, required this.machineId});
 
@@ -14,13 +14,13 @@ class PcIdentity {
   final String userName;
   final String machineId;
 
-  static PcIdentity current() {
+  static PcIdentity current(SecretStore secrets) {
     final env = PlatformInfo.current.environment;
     final machine = env['COMPUTERNAME'] ?? 'PC';
     return PcIdentity(
       machineName: machine,
       userName: env['USERNAME'] ?? 'user',
-      machineId: readMachineGuid() ?? machine,
+      machineId: secrets.machineId() ?? machine,
     );
   }
 

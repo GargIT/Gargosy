@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/romm/romm_auth_client.dart';
-import '../core/security/dpapi.dart';
+import '../core/platform/platform_info.dart';
+import '../core/security/secret_store.dart';
 import '../core/storage/app_preferences.dart';
 import 'app_root.dart';
 import 'avatar_refresh.dart';
@@ -16,8 +17,8 @@ import 'profile_store.dart';
 
 final appRootProvider = Provider<AppRoot>((ref) => throw UnimplementedError('overridden in main'));
 final appPreferencesProvider = Provider<AppPreferences>((ref) => throw UnimplementedError('overridden in main'));
-final dataProtectorProvider = Provider<DataProtector>((ref) => DpapiDataProtector());
-final pcIdentityProvider = Provider<PcIdentity>((ref) => PcIdentity.current());
+final secretStoreProvider = Provider<SecretStore>((ref) => secretStoreFor(PlatformInfo.current));
+final pcIdentityProvider = Provider<PcIdentity>((ref) => PcIdentity.current(ref.watch(secretStoreProvider)));
 final rommAuthFactoryProvider = Provider<RommAuth Function(String baseUrl, bool trustSelfSigned)>(
   (ref) =>
       (url, trust) => RommAuthClient(url, trustSelfSigned: trust),
@@ -31,14 +32,14 @@ final profilesProvider = FutureProvider<List<Profile>>((ref) => ref.watch(profil
 /// PIN lockouts per profile, for as long as Gargosy runs.
 final pinGatesProvider = Provider<Map<String, PinGate>>((ref) => {});
 
-ProfileLoginStore _loginStore(AppRoot root, DataProtector protector, PcIdentity pc, Profile p) =>
-    ProfileLoginStore(profileDir: ProfilePaths(root, p.id).dir, protector: protector, pc: pc);
+ProfileLoginStore _loginStore(AppRoot root, SecretStore secrets, PcIdentity pc, Profile p) =>
+    ProfileLoginStore(profileDir: ProfilePaths(root, p.id).dir, secrets: secrets, pc: pc);
 
 ProfileLoginStore loginStoreFor(Ref ref, Profile p) =>
-    _loginStore(ref.read(appRootProvider), ref.read(dataProtectorProvider), ref.read(pcIdentityProvider), p);
+    _loginStore(ref.read(appRootProvider), ref.read(secretStoreProvider), ref.read(pcIdentityProvider), p);
 
 ProfileLoginStore loginStoreForWidget(WidgetRef ref, Profile p) =>
-    _loginStore(ref.read(appRootProvider), ref.read(dataProtectorProvider), ref.read(pcIdentityProvider), p);
+    _loginStore(ref.read(appRootProvider), ref.read(secretStoreProvider), ref.read(pcIdentityProvider), p);
 
 /// The profile in use: the only source of paths and of the RomM session (spec §4).
 class ProfileContext {

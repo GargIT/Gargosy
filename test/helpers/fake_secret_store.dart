@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
-import 'package:gargosy/core/security/dpapi.dart';
+import 'package:gargosy/core/security/secret_store.dart';
 
 /// Reversible "encryption" for tests; [fail] makes unprotect behave like
 /// DPAPI on another PC.
-class FakeProtector implements DataProtector {
+class FakeSecretStore implements SecretStore {
   bool fail = false;
 
   /// Makes [protect] throw, like a login file that can't be written.
@@ -14,6 +14,9 @@ class FakeProtector implements DataProtector {
     if (failProtect) throw StateError('The disk is full');
     return Uint8List.fromList([for (final b in data) b ^ 0x5A]);
   }
+
+  @override
+  String? machineId() => 'test-machine';
 
   @override
   Uint8List? unprotect(Uint8List data) => fail ? null : Uint8List.fromList([for (final b in data) b ^ 0x5A]);

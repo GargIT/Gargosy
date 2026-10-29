@@ -33,7 +33,7 @@ import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
 
-import '../helpers/fake_protector.dart';
+import '../helpers/fake_secret_store.dart';
 import '../helpers/fake_romm_auth.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
@@ -72,7 +72,7 @@ void main() {
         rommHeartbeatEnabledProvider.overrideWithValue(false),
         uploadQueueProvider.overrideWith((ref) async => queue),
         biosSyncProvider.overrideWithValue(bios),
-        dataProtectorProvider.overrideWithValue(FakeProtector()),
+        secretStoreProvider.overrideWithValue(FakeSecretStore()),
         pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
         rommAuthFactoryProvider.overrideWithValue((url, trust) => auth ?? FakeRommAuth()),
         platformsProvider.overrideWith((ref) async => [Platform(id: 1, name: 'PlayStation', slug: 'psx')]),
@@ -462,7 +462,7 @@ ProfileLoginStore loginStoreForWidgetless(ProviderContainer c) {
   final p = c.read(activeProfileProvider)!;
   return ProfileLoginStore(
     profileDir: p.paths.dir,
-    protector: c.read(dataProtectorProvider),
+    secrets: c.read(secretStoreProvider),
     pc: c.read(pcIdentityProvider),
   );
 }
