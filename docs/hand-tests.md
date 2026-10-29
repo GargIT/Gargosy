@@ -299,3 +299,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Swedish (#191)
 
 114. [x] Settings → Display → Language → Svenska: the whole of Gargosy is Swedish at once, the sidebar and the top bar too, without a restart. Go through Home, a platform's page, a game's page (every tab), the play screen, Downloads, Collections, Search and every Settings page with the controller: no English left in Gargosy's own text (names and descriptions from RomM stay as they are), nothing cut off or overlapping at 1080p. A save's date reads "28 sep." and a size "1,4 MB". Quit and start Gargosy: still Swedish, the profile picker too. Type å, ä and ö on the on-screen keyboard. Set System: Swedish when Windows is, English otherwise. Set English: all English again.
+
+## Unpacking behind one interface (#200)
+
+117. [ ] Play a zipped game in an emulator that can't open zips (PCSX2, Dolphin or DuckStation): it unpacks with a percentage once, the zip goes, and the game starts. Play a zipped original Xbox disc in xemu: it streams into an XISO and starts. Install or update an emulator whose download is a zip (Settings → Emulators): it installs as before.
