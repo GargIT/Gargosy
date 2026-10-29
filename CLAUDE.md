@@ -69,7 +69,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 
 ### Profiles (new)
 - `profiles/app_root.dart` — the layout on disk; `ensureLayout()` throws when the folder can't be written.
-- `profiles/path_guard.dart` — `PathGuard.check/join/forProfile`: the only writable places.
+- `profiles/path_guard.dart` — `PathGuard.check/join/forProfile`: the only writable places. Paths compare as the file system does (#204): any case on Windows and macOS, exactly elsewhere (`caseSensitive` from its `PlatformInfo`; `pathKey`, `samePath`, which `folder_link.dart` uses for a link's target and its link check). Matching names (ROMs, BIOS, extensions, exe names) may ignore case; deciding where a file is written, moved or deleted goes through the guard's comparison.
 - `profiles/json_file.dart` — `readJsonObject(Sync)`, `writeJsonObject`, `writeBytesAtomic` (tmp + rename, through the guard).
 - `profiles/pbkdf2.dart`, `pin.dart` — `PinHash` (PBKDF2-SHA256, 60 000 rounds, verify in an isolate), `PinGate` (5 tries, then 30 s).
 - `profiles/profile.dart`, `profile_paths.dart`, `profile_store.dart` — a profile, its paths, create (copies `templates\`) / list (sync reads) / save / delete / last used.
