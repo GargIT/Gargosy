@@ -318,4 +318,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Updates behind one interface (#203)
 120. [x] Settings → About → Updates → Check now: it finds the newest release as before (on a dev build, 0.5.0 is offered) and Update now is there; no need to press it. The release notes open.
 ## PathGuard on a case-sensitive file system (#204)
-121. [ ] On Windows nothing changes: download a game, play one in Eden, Azahar, Cemu or melonDS with one profile, switch profile and play it again (its own saves; the folder link is re-pointed), and update an emulator from Settings → Emulators.
+121. [x] On Windows nothing changes: download a game, play one in Eden, Azahar, Cemu or melonDS with one profile, switch profile and play it again (its own saves; the folder link is re-pointed), and update an emulator from Settings → Emulators.
