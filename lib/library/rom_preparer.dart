@@ -36,7 +36,7 @@ class RomPreparer {
     required this.guard,
     required this.tempDir,
     this.gamePartition = xgd1GamePartition,
-    this.freeSpace,
+    this.disk,
     Unpacker? unpacker,
     PlatformInfo? platform,
   }) : _unpacker = unpacker ?? unpackerFor(platform ?? PlatformInfo.current);
@@ -46,8 +46,8 @@ class RomPreparer {
   final String tempDir;
   final int gamePartition;
 
-  /// The free space on a path's drive (#142); null skips the check.
-  final FreeSpaceOf? freeSpace;
+  /// The free space on a path's volume (#142); null skips the check.
+  final DiskInfo? disk;
   final Unpacker _unpacker;
 
   /// Emulators that open a zipped ROM themselves.
@@ -99,13 +99,10 @@ class RomPreparer {
     io.Directory(staging).createSync(recursive: true);
     try {
       final entries = await _list(zip, game);
-      if (freeSpace case final free?) {
+      if (disk case final disk?) {
         final total = entries.fold<int>(0, (n, e) => n + e.size);
-        // Unpacked in temp, then moved into roms\ (copied when that's another drive).
-        checkSpace({
-          staging: total,
-          if (driveOf(dest).toUpperCase() != driveOf(staging).toUpperCase()) dest: total,
-        }, free);
+        // Unpacked in temp, then moved into roms\ (copied when that's another volume).
+        checkSpace({staging: total, if (disk.volumeOf(dest) != disk.volumeOf(staging)) dest: total}, disk);
       }
       final isos = [
         for (final e in entries)

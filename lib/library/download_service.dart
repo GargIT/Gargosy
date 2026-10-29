@@ -61,7 +61,7 @@ class DownloadService {
     required this.tempDir,
     required this.urlFor,
     this.detail,
-    this.freeSpace,
+    this.disk,
   });
 
   final Dio dio;
@@ -74,8 +74,8 @@ class DownloadService {
   /// The game with its file list (list pages leave it out).
   final Future<Game?> Function(String id)? detail;
 
-  /// The free space on a path's drive (#142); null skips the check.
-  final FreeSpaceOf? freeSpace;
+  /// The free space on a path's volume (#142); null skips the check.
+  final DiskInfo? disk;
 
   /// What [download] writes, by place: the download in temp, a zip's
   /// unpacked copy beside it, and the game in `roms\` when that's another
@@ -86,11 +86,8 @@ class DownloadService {
     required String part,
     required String staging,
     required String target,
-  }) => {
-    part: size,
-    if (zip) staging: size,
-    if (driveOf(target).toUpperCase() != driveOf(part).toUpperCase()) target: size,
-  };
+    required DiskInfo disk,
+  }) => {part: size, if (zip) staging: size, if (disk.volumeOf(target) != disk.volumeOf(part)) target: size};
 
   /// What RomM will send for [game], and the file's name when it sits in the
   /// game's folder.
@@ -112,10 +109,17 @@ class DownloadService {
     await io.Directory(guard.check(tempDir)).create(recursive: true);
     final part = guard.check(p.join(tempDir, 'download-${game.id}.part'));
     final staging = guard.check(p.join(tempDir, 'extract-${game.id}'));
-    if (freeSpace case final free?) {
+    if (disk case final disk?) {
       checkSpace(
-        spaceFor(size: game.fileSize, zip: shape == _Shape.zip, part: part, staging: staging, target: target),
-        free,
+        spaceFor(
+          size: game.fileSize,
+          zip: shape == _Shape.zip,
+          part: part,
+          staging: staging,
+          target: target,
+          disk: disk,
+        ),
+        disk,
       );
     }
     try {

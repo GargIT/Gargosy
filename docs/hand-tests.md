@@ -311,3 +311,5 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 116. [x] Start a game and hold the quit buttons (Settings → Controller → Hold to quit): the emulator closes as before, its state is kept where it keeps one on close (RetroArch, DuckStation, PCSX2), and Gargosy comes back to the front with the session's message. Nothing else looks different.
 ## Unpacking behind one interface (#200)
 117. [x] Play a zipped game in an emulator that can't open zips (PCSX2, Dolphin or DuckStation): it unpacks with a percentage once, the zip goes, and the game starts. Play a zipped original Xbox disc in xemu: it streams into an XISO and starts. Install or update an emulator whose download is a zip (Settings → Emulators): it installs as before.
+## Free space behind one interface (#201)
+118. [ ] Settings → Storage: the drive line says the Gargosy folder's drive with its free space and size, as before. A game page whose download is large for the free space says "… free on D:" under Download. A download bigger than the free space is refused with "Needs …, … free on D:." before anything is written.

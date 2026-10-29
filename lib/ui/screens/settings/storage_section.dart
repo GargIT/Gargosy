@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../library/disk_space.dart';
 import '../../../library/storage_usage.dart';
 import '../../../play/play_controller.dart';
 import '../../../profiles/path_guard.dart';
@@ -22,9 +21,6 @@ import '../../../l10n/tr.dart';
 
 /// What Gargosy's folders take, read again when Storage opens (#145).
 final storageUsageProvider = FutureProvider.autoDispose<StorageUsage>((ref) => readStorage(ref.watch(appRootProvider)));
-
-/// The drive of the Gargosy folder: free and size; tests give their own.
-final diskUsageProvider = Provider<({int free, int total})? Function(String path)>((ref) => windowsDiskUsage);
 
 /// A platform's name from its folder (RomM's slug).
 String platformNameFor(WidgetRef ref, String folder) {
@@ -76,7 +72,8 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
   @override
   Widget build(BuildContext context) {
     final root = ref.watch(appRootProvider);
-    final disk = ref.watch(diskUsageProvider)(root.root);
+    final volumes = ref.watch(diskInfoProvider);
+    final disk = volumes.usage(root.root);
     final usage = ref.watch(storageUsageProvider);
     final counting = switch (usage) {
       AsyncError() => tr('Couldn\'t be read'),
@@ -96,7 +93,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
             if (disk != null) ...[
               SettingsField(
                 key: const ValueKey('storage-drive'),
-                label: tr('Drive {0}', [driveOf(root.root)]),
+                label: tr('Drive {0}', [volumes.volumeOf(root.root)]),
                 value: tr('{0} free of {1}', [formatBytes(disk.free), formatBytes(disk.total)]),
               ),
               ClipRRect(
