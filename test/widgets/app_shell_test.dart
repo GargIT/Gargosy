@@ -12,6 +12,8 @@ import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/play/play_controller.dart';
+import 'package:gargosy/play/session_achievements.dart';
+import 'package:gargosy/core/retroachievements/retroachievements_game_models.dart';
 import 'package:gargosy/core/save/backup_entry.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/providers/library_providers.dart';
@@ -187,6 +189,15 @@ void main() {
   testWidgets('a banner shows while RomM is unreachable', (tester) async {
     await pump(tester, extra: [rommOfflineProvider.overrideWithValue(true)]);
     expect(find.textContaining("RomM can't be reached"), findsOneWidget);
+  });
+
+  testWidgets("a session's achievements are said on Home, where Resume started it (#189)", (tester) async {
+    await pump(tester);
+    c.read(sessionAchievementsProvider.notifier).state = const SessionAchievements('9', [
+      RetroAchievement(id: 1, title: 'First', description: '', points: 5, badgeName: 'b1'),
+    ], hardcore: false);
+    await tester.pump();
+    expect(find.text('1 achievement earned · 5 points (softcore)'), findsOneWidget);
   });
 
   testWidgets('saves waiting to upload go up when RomM is back', (tester) async {
