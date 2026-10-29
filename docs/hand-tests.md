@@ -314,4 +314,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Free space behind one interface (#201)
 118. [x] Settings → Storage: the drive line says the Gargosy folder's drive with its free space and size, as before. A game page whose download is large for the free space says "… free on D:" under Download. A download bigger than the free space is refused with "Needs …, … free on D:." before anything is written.
 ## Coming back to the front behind one interface (#202)
-119. [ ] Play a game in full screen with the controller alone and quit it from the emulator's own menu: Gargosy is in front again, ready for the controller, without touching the mouse or keyboard. Do the same with Settings → Emulators → Open and close the emulator.
+119. [x] Play a game in full screen with the controller alone and quit it from the emulator's own menu: Gargosy is in front again, ready for the controller, without touching the mouse or keyboard. Do the same with Settings → Emulators → Open and close the emulator.
