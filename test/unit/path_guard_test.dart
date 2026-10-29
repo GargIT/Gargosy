@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/path_guard.dart';
 
@@ -22,6 +23,48 @@ void main() {
 
   test('is case-insensitive, as Windows is', () {
     expect(guard.check(r'd:\gargosy\ROMS\x.iso'), r'd:\gargosy\ROMS\x.iso');
+    expect(PathGuard(root, platform: const PlatformInfo('windows')).caseSensitive, isFalse);
+  });
+
+  group('on a case-sensitive file system (#204)', () {
+    // The paths stay Windows' (the tests run there); only the comparison changes.
+    final exact = PathGuard(root, activeProfileId: 'aaa', platform: const PlatformInfo('linux'));
+
+    test('the allowed folders in their own case are writable', () {
+      expect(exact.caseSensitive, isTrue);
+      expect(exact.check(r'D:\Gargosy\roms\ps2\x.iso'), r'D:\Gargosy\roms\ps2\x.iso');
+      expect(exact.check(r'D:\Gargosy\userdata\settings.json'), r'D:\Gargosy\userdata\settings.json');
+      expect(exact.forProfile('aaa').check(r'D:\Gargosy\userdata\profiles\aaa\x'), isNotEmpty);
+    });
+
+    test('a folder that matches only when lowercased is another folder: refused', () {
+      for (final bad in [
+        r'D:\Gargosy\ROMS\x.iso',
+        r'D:\gargosy\roms\x.iso',
+        r'D:\Gargosy\userdata\Settings.json',
+        r'D:\Gargosy\userdata\profiles\AAA\x',
+        r'D:\Gargosy\userdata\App\temp\x',
+      ]) {
+        expect(() => exact.check(bad), throwsA(isA<PathGuardException>()), reason: bad);
+      }
+    });
+
+    test('a server name that differs only in case lands in its own folder, never an allowed one', () {
+      expect(() => exact.join(r'D:\Gargosy', 'ROMS'), throwsA(isA<PathGuardException>()));
+      expect(exact.join(r'D:\Gargosy\roms', 'PS2'), r'D:\Gargosy\roms\PS2');
+    });
+
+    test('the profile from forProfile compares the same way', () {
+      expect(exact.forProfile('aaa').caseSensitive, isTrue);
+    });
+  });
+
+  test('samePath compares as the file system does, ignoring a trailing separator', () {
+    final exact = PathGuard(root, platform: const PlatformInfo('linux'));
+    final any = PathGuard(root, platform: const PlatformInfo('windows'));
+    expect(any.samePath(r'D:\Gargosy\Profiles\aaa\', r'd:\gargosy\profiles\aaa'), isTrue);
+    expect(exact.samePath(r'D:\Gargosy\Profiles\aaa', r'D:\Gargosy\profiles\aaa'), isFalse);
+    expect(exact.samePath(r'D:\Gargosy\profiles\aaa\', r'D:\Gargosy\profiles\aaa'), isTrue);
   });
 
   test('rejects other profiles, userdata itself, outside folders and look-alike siblings', () {
