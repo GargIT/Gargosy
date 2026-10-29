@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/profiles/app_root.dart';
+import 'package:gargosy/update/app_updater.dart';
 import 'package:gargosy/update/update_installer.dart';
 import 'package:path/path.dart' as p;
 
@@ -26,6 +27,28 @@ void main() {
     platform: PlatformInfo('windows', environment: env),
     start: (exe, a) async => started.add((exe, a)),
   );
+
+  group('appUpdaterFor (#203)', () {
+    test('Windows gets GargosyUpdate.exe', () {
+      final u = appUpdaterFor(
+        const PlatformInfo('windows'),
+        root: root,
+        pid: 1,
+        args: const [],
+        currentVersion: '0.1.0',
+      );
+      expect(u, isA<UpdateInstaller>());
+      expect(u.versionOfAsset('Gargosy-0.6.0.zip').toString(), '0.6.0');
+      expect(u.versionOfAsset('Gargosy-0.6.0-linux-x64.tar.gz'), isNull);
+    });
+
+    test('an OS without an updater yet is refused', () {
+      expect(
+        () => appUpdaterFor(const PlatformInfo('linux'), root: root, pid: 1, args: const [], currentVersion: '0.1.0'),
+        throwsUnsupportedError,
+      );
+    });
+  });
 
   void shipUpdater() => io.File(p.join(root.root, 'GargosyUpdate.exe')).writeAsStringSync('MZ updater');
 

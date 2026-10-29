@@ -127,6 +127,7 @@ class UpdateChecker {
     required this.installed,
     DateTime Function()? clock,
     this.minInterval = const Duration(hours: 6),
+    this.assetVersion = UpdateVersion.fromAsset,
   }) : _clock = clock ?? DateTime.now;
 
   static const repo = 'GargIT/Gargosy';
@@ -138,6 +139,10 @@ class UpdateChecker {
   final DateTime Function() _clock;
   final Version installed;
   final Duration minInterval;
+
+  /// The version in a release asset's name for this OS, null for any other
+  /// asset (#203: `AppUpdater.versionOfAsset`).
+  final Version? Function(String name) assetVersion;
 
   UpdateChannel get channel => UpdateChannel.fromName(_prefs.getString(UpdatePrefs.channel));
   Future<void> setChannel(UpdateChannel c) => _prefs.setString(UpdatePrefs.channel, c.name);
@@ -241,7 +246,7 @@ class UpdateChecker {
   }
 
   /// The newest Gargosy among a page of releases, pre-release or not.
-  static ReleaseInfo? _newestOf(Object? body) {
+  ReleaseInfo? _newestOf(Object? body) {
     if (body is! List) throw const FormatException('not a list of releases');
     ReleaseInfo? best;
     for (final r in body) {
@@ -251,9 +256,9 @@ class UpdateChecker {
     return best;
   }
 
-  /// [release]'s `Gargosy-<version>.zip`, or null when it has none (or is a
+  /// [release]'s asset for this OS (`Gargosy-<version>.zip`), or null when it has none (or is a
   /// draft, or a pre-release where they aren't wanted).
-  static ReleaseInfo? _fromRelease(Object? release, {required bool allowPrerelease}) {
+  ReleaseInfo? _fromRelease(Object? release, {required bool allowPrerelease}) {
     if (release is! Map) throw const FormatException('not a release');
     if (release['draft'] == true) return null;
     final prerelease = release['prerelease'] == true;
@@ -265,7 +270,7 @@ class UpdateChecker {
       if (a is! Map) continue;
       final name = a['name'], url = a['browser_download_url'], size = a['size'];
       if (name is! String || url is! String || size is! int) continue;
-      final version = UpdateVersion.fromAsset(name);
+      final version = assetVersion(name);
       if (version == null || (best != null && version <= best.version)) continue;
       final digest = a['digest'];
       best = ReleaseInfo(

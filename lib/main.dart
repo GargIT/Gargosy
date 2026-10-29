@@ -26,7 +26,7 @@ import 'profiles/profile_providers.dart';
 import 'providers/update_providers.dart';
 import 'sigil/sigil_library.dart';
 import 'core/platform/platform_info.dart';
-import 'update/update_installer.dart';
+import 'update/app_updater.dart';
 import 'ui/screens/startup_error_app.dart';
 import 'l10n/tr.dart';
 
@@ -66,12 +66,12 @@ Future<void> main(List<String> args) async {
         .resolve(io.Platform.localeName.split(RegExp('[_-]')).first.toLowerCase()),
   );
   // Started by GargosyUpdate.exe: clean up after the update, or say why it failed.
-  final updateOutcome = await UpdateInstaller(
+  final updateOutcome = await appUpdaterFor(
+    PlatformInfo.current,
     root: root,
     pid: io.pid,
     args: args,
     currentVersion: AppConstants.version,
-    platform: PlatformInfo.current,
   ).afterStart(args);
   await WindowService.init(
     fullscreen: WindowService.shouldStartFullscreen(args, prefs.getBool(WindowService.launchFullscreenPrefKey)),

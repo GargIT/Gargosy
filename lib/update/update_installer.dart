@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 
 import '../core/platform/platform_info.dart';
 import '../profiles/app_root.dart';
 import '../profiles/path_guard.dart';
+import 'app_updater.dart';
 import 'update_paths.dart';
+import 'update_version.dart';
 import '../l10n/tr.dart';
 
 /// Starts a process that outlives Gargosy; tests pass a recorder.
@@ -36,8 +39,8 @@ class UpdateFailed extends UpdateOutcome {
 /// (issue #16). Gargosy can't replace its own exe, DLLs and `data\` while it
 /// runs: the updater waits for this process to exit, swaps the files listed
 /// in `app-files.txt` and starts Gargosy again with `--updated-from=<old>`
-/// (or the old one with `--update-failed`).
-class UpdateInstaller {
+/// (or the old one with `--update-failed`). Windows' [AppUpdater] (#203).
+class UpdateInstaller implements AppUpdater {
   UpdateInstaller({
     required this.root,
     required this.pid,
@@ -67,9 +70,11 @@ class UpdateInstaller {
   /// Gargosy.exe, and the folder isn't one Windows protects (Program Files,
   /// Windows), where it couldn't replace the files. Elsewhere a folder that
   /// can't be written makes the updater roll back and say so.
+  @override
   late final bool canInstall = io.File(paths.installedUpdater).existsSync() && !_inProtectedFolder;
 
   /// Why [canInstall] is false, for the UI.
+  @override
   late final String? whyNot = _whyNot();
 
   String? _whyNot() {
@@ -97,6 +102,10 @@ class UpdateInstaller {
     });
   }
 
+  /// A release's `Gargosy-<version>.zip`.
+  @override
+  Version? versionOfAsset(String name) => UpdateVersion.fromAsset(name);
+
   /// The updater's command line for [unpacked], version [newVersion].
   List<String> commandLine(String unpacked, String newVersion) => [
     '--pid',
@@ -117,6 +126,7 @@ class UpdateInstaller {
   /// (so the one beside Gargosy.exe can be replaced too). The caller then
   /// quits Gargosy the normal way, so settings are flushed: the
   /// updater waits for this process to end.
+  @override
   Future<void> start(String unpacked, String newVersion) async {
     if (!canInstall) throw StateError(whyNot ?? tr('Can\'t update'));
     final copy = _guard.check(paths.updaterCopy);
@@ -129,6 +139,7 @@ class UpdateInstaller {
 
   /// At start: what [args] say about the last update. After a good one, the
   /// old files, the zip, the unpacked folder and the updater's copy go.
+  @override
   Future<UpdateOutcome?> afterStart(List<String> args) async {
     final from = args.where((a) => a.startsWith(updatedFromArg)).firstOrNull;
     if (from != null) {
@@ -143,6 +154,7 @@ class UpdateInstaller {
   }
 
   /// The clean-up after an update, running in the background (tests wait for it).
+  @override
   Future<void> cleaning = Future.value();
 
   Future<void> _cleanUp() async {

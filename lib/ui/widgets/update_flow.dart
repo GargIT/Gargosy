@@ -24,7 +24,7 @@ import '../../l10n/tr.dart';
 /// asks once, downloads with progress (B cancels), then hands over to
 /// `GargosyUpdate.exe` and quits. Without the updater, the release page opens.
 Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release) async {
-  final installer = ref.read(updateInstallerProvider);
+  final installer = ref.read(appUpdaterProvider);
   if (!installer.canInstall) {
     ref.read(externalOpenerProvider)(release.htmlUrl);
     return;

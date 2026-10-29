@@ -52,6 +52,18 @@ void main() {
       github.handler = (r) => GitHubReply(200, githubRelease('0.1.0'));
       expect(await checker('0.1.0').check(), isA<UpToDate>());
     });
+
+    test("only the asset the OS's updater names counts (#203)", () async {
+      github.handler = (r) => GitHubReply(200, githubRelease('0.2.0'));
+      final other = UpdateChecker(
+        dio: Dio()..httpClientAdapter = github,
+        prefs: prefs,
+        installed: UpdateVersion.parse('0.1.0')!,
+        clock: () => now,
+        assetVersion: (name) => name.endsWith('.tar.gz') ? UpdateVersion.parse('9.9.9') : null,
+      );
+      expect(await other.check(), isA<UpToDate>(), reason: 'the release has only the Windows zip');
+    });
   });
 
   group('Preview', () {
