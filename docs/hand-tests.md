@@ -307,3 +307,5 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Secrets behind one interface (#198)
 
 115. [x] Install this build over the last one. Every profile opens without signing in again (with its PIN where it has one), and a game in RetroArch still signs in to RetroAchievements. Nothing else looks different.
+## Ending an emulator behind one interface (#199)
+116. [ ] Start a game and hold the quit buttons (Settings → Controller → Hold to quit): the emulator closes as before, its state is kept where it keeps one on close (RetroArch, DuckStation, PCSX2), and Gargosy comes back to the front with the session's message. Nothing else looks different.
