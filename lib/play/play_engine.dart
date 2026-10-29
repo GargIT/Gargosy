@@ -1,6 +1,6 @@
 import '../emulators/fullscreen.dart';
 import '../core/extraction/unpacker.dart';
-import '../core/platform/window_service.dart';
+import '../core/platform/window_focus.dart';
 import '../core/save/catalog/save_entry.dart';
 import '../profiles/profile_providers.dart';
 import '../profiles/path_guard.dart';
@@ -360,7 +360,7 @@ class GargosyPlayEngine implements PlayEngine {
     final process = await dirs.openEmulator(emulatorId, exePath);
     process.exitCode.whenComplete(() {
       onExit();
-      WindowService.bringToFront();
+      _ref.read(windowFocusProvider).bringToFront();
     });
   }
 
@@ -615,7 +615,7 @@ class GargosyPlayEngine implements PlayEngine {
     // after it has exited.
     dirs?.onGameStarted = (process) {
       onStarted?.call(() => _ref.read(processCloserProvider).close(process));
-      process.exitCode.whenComplete(WindowService.bringToFront);
+      process.exitCode.whenComplete(_ref.read(windowFocusProvider).bringToFront);
     };
     final GameSession session;
     try {
