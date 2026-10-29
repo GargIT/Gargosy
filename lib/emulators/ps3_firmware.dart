@@ -8,7 +8,7 @@ import '../profiles/app_root.dart';
 import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
 import 'bios_links.dart' show BiosFiles;
-import 'close_process.dart';
+import 'process_closer.dart';
 import 'profile_directories.dart';
 import 'rpcs3_config.dart';
 import '../l10n/tr.dart';
@@ -38,18 +38,17 @@ class Ps3Firmware {
     this.root,
     this.dirs, {
     FirmwareConfirm? confirm,
-    Future<void> Function(io.Process process)? close,
+    required this.closer,
     this.poll = const Duration(seconds: 1),
     this.timeout = const Duration(minutes: 10),
-  }) : confirm = confirm ?? confirmWithUiAutomation,
-       close = close ?? closeProcess;
+  }) : confirm = confirm ?? confirmWithUiAutomation;
 
   final AppRoot root;
   final ProfileLaunchDirectories dirs;
   final FirmwareConfirm confirm;
 
-  /// Closes RPCS3 once the firmware is in ([closeProcess]; tests pass their own).
-  final Future<void> Function(io.Process process) close;
+  /// Closes RPCS3 once the firmware is in.
+  final ProcessCloser closer;
   final Duration poll;
   final Duration timeout;
 
@@ -105,7 +104,7 @@ class Ps3Firmware {
         if (still >= 5) break;
       }
     } finally {
-      if (!exited) await close(run.process);
+      if (!exited) await closer.close(run.process);
       await run.finish();
     }
     if (!installed) throw Ps3FirmwareException(tr('RPCS3 couldn\'t install the firmware.'));
@@ -156,5 +155,5 @@ exit 1
 
 final ps3FirmwareProvider = Provider<Ps3Firmware?>((ref) {
   final dirs = ref.watch(launchDirectoriesProvider);
-  return dirs == null ? null : Ps3Firmware(ref.watch(appRootProvider), dirs);
+  return dirs == null ? null : Ps3Firmware(ref.watch(appRootProvider), dirs, closer: ref.watch(processCloserProvider));
 });

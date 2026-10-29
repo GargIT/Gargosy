@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/emulators/emulator_layout.dart';
 import 'package:gargosy/emulators/fullscreen.dart';
 import 'package:gargosy/emulators/profile_directories.dart';
+import 'package:gargosy/emulators/process_closer.dart';
 import 'package:gargosy/emulators/profile_launch_config.dart';
 import 'package:gargosy/emulators/ps3_firmware.dart';
 import 'package:gargosy/emulators/rpcs3_config.dart';
@@ -139,7 +140,7 @@ void main() {
       root,
       dirs,
       confirm: (pid) async => (confirmed..add(pid)).isNotEmpty,
-      close: (process) async => process.kill(),
+      closer: _KillCloser(),
       poll: const Duration(milliseconds: 1),
     );
 
@@ -212,4 +213,9 @@ void main() {
     expect(setYamlKeys('a: 1\nb: 2\n', {'b': '3', 'c': '4'}), 'a: 1\nb: 3\nc: 4\n');
     expect(setYamlKeys('', {'/dev_flash/': 'x/'}), '/dev_flash/: x/\n');
   });
+}
+
+class _KillCloser implements ProcessCloser {
+  @override
+  Future<void> close(io.Process process, {Duration wait = const Duration(seconds: 10)}) async => process.kill();
 }
