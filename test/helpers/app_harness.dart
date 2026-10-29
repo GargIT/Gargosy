@@ -16,21 +16,21 @@ import 'package:gargosy/profiles/profile.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 
-import 'fake_protector.dart';
+import 'fake_secret_store.dart';
 import 'fake_romm_auth.dart';
 import 'profile_test_env.dart';
 
 /// The login store [GargosyApp] uses for [p], for checks from a test.
 ProfileLoginStore loginStoreForWidgetless(AppHarness h, Profile p) => ProfileLoginStore(
   profileDir: ProfilePaths(h.root, p.id).dir,
-  protector: h.protector,
+  secrets: h.secrets,
   pc: h.container.read(pcIdentityProvider),
 );
 
 class AppHarness {
   late AppRoot root;
   late ProviderContainer container;
-  final protector = FakeProtector();
+  final secrets = FakeSecretStore();
   FakeRommAuth auth = FakeRommAuth();
   final prefs = MemoryPrefs();
 
@@ -44,7 +44,7 @@ class AppHarness {
       overrides: [
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(prefs),
-        dataProtectorProvider.overrideWithValue(protector),
+        secretStoreProvider.overrideWithValue(secrets),
         pcIdentityProvider.overrideWithValue(const PcIdentity(machineName: 'TEST', userName: 'u', machineId: 'm')),
         rommAuthFactoryProvider.overrideWithValue((url, trust) => auth),
         // No timers and no upload queue in app tests.

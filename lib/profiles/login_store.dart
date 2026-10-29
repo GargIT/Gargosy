@@ -4,7 +4,7 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
-import '../core/security/dpapi.dart';
+import '../core/security/secret_store.dart';
 import 'json_file.dart';
 import 'path_guard.dart';
 import 'pc_identity.dart';
@@ -32,10 +32,10 @@ class ProfileLogin {
 /// Windows user, DPAPI-encrypted, so the folder can move between PCs and each
 /// PC keeps its own login (spec §5).
 class ProfileLoginStore {
-  ProfileLoginStore({required this.profileDir, required this.protector, required this.pc});
+  ProfileLoginStore({required this.profileDir, required this.secrets, required this.pc});
 
   final String profileDir;
-  final DataProtector protector;
+  final SecretStore secrets;
   final PcIdentity pc;
 
   String get filePath => p.join(profileDir, 'login.${pc.loginFileTag}.dpapi');
@@ -44,7 +44,7 @@ class ProfileLoginStore {
   Future<ProfileLogin?> read() async {
     final file = io.File(filePath);
     if (!file.existsSync()) return null;
-    final plain = protector.unprotect(file.readAsBytesSync());
+    final plain = secrets.unprotect(file.readAsBytesSync());
     if (plain == null) {
       debugPrint('[Login] ${p.basename(filePath)} cannot be decrypted here; log in again');
       return null;
@@ -58,7 +58,7 @@ class ProfileLoginStore {
   }
 
   Future<void> write(PathGuard guard, ProfileLogin login) =>
-      writeBytesAtomic(guard, filePath, protector.protect(Uint8List.fromList(utf8.encode(jsonEncode(login.toJson())))));
+      writeBytesAtomic(guard, filePath, secrets.protect(Uint8List.fromList(utf8.encode(jsonEncode(login.toJson())))));
 
   Future<void> clear(PathGuard guard) async {
     final file = io.File(guard.check(filePath));

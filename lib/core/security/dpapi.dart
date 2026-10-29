@@ -5,18 +5,16 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:win32/win32.dart';
 
-/// Encrypts data so only the same Windows user can read it back.
-abstract class DataProtector {
-  Uint8List protect(Uint8List data);
-
-  /// Null when the data can't be decrypted (another user or PC, or damaged).
-  Uint8List? unprotect(Uint8List data);
-}
+import 'secret_store.dart';
 
 const _cryptProtectUiForbidden = 0x1;
 
-/// DPAPI in user scope, never showing UI.
-class DpapiDataProtector implements DataProtector {
+/// DPAPI in user scope, never showing UI: only the same Windows user on
+/// this PC reads it back. The PC is Windows' MachineGuid.
+class DpapiSecretStore implements SecretStore {
+  @override
+  String? machineId() => readMachineGuid();
+
   @override
   Uint8List protect(Uint8List data) => _run(data, protect: true)!;
 
