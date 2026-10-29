@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- After a game, Gargosy says which RetroAchievements you earned in it:
+  "2 achievements earned · 15 points (hardcore)", once RomM has read them,
+  and the game's Achievements tab shows them.
 - Gargosy in Swedish: Settings → Display → Language (System, English,
   Svenska). System follows Windows. Dates and decimals follow the language;
   names and descriptions from RomM stay as RomM has them. The on-screen

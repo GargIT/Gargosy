@@ -19,8 +19,30 @@ import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/play/play_menu.dart';
 import 'package:gargosy/play/quit_combo.dart';
+import 'package:gargosy/play/session_achievements.dart';
+import 'package:gargosy/providers/library_providers.dart';
+import 'package:gargosy/retroachievements/ra_account.dart';
+import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
+import 'package:gargosy/core/retroachievements/retroachievements_game_models.dart';
 
 import '../helpers/game_fixtures.dart';
+import '../helpers/profile_test_env.dart';
+
+/// RomM's RA progress: nothing earned before the session, one after.
+class _Progress implements AchievementProgress {
+  int reads = 0;
+  @override
+  Future<Map<int, Map<String, dynamic>>?> progression() async => {
+    if (reads++ > 0)
+      77: {
+        'earned_achievements': [
+          {'id': 'b1', 'date': '2026-10-27'},
+        ],
+      },
+  };
+  @override
+  Future<bool> refresh(int userId) async => true;
+}
 
 class _Strategy extends Fake implements EmulatorStrategy {
   _Strategy([this.emulatorId = 'pcsx2']);
@@ -313,6 +335,38 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(c.read(playControllerProvider).runningGameId, isNull);
     expect(c.read(playControllerProvider).message, 'Save synced');
+  });
+
+  test("after the session's message, what it earned on RetroAchievements (#189)", () async {
+    final progress = _Progress();
+    final prefs = MemoryPrefs()..values[kRaUsernameKey] = 'henrik';
+    final c = ProviderContainer(
+      overrides: [
+        playEngineProvider.overrideWithValue(engine),
+        achievementProgressProvider.overrideWithValue(progress),
+        rommUserIdProvider.overrideWithValue(7),
+        raAccountProvider.overrideWithValue(RaAccount(prefs, fetchToken: (u, p) async => (username: u, token: 't'))),
+      ],
+    );
+    addTearDown(c.dispose);
+    final sonic = Game.fromJson({
+      ...gameJson(9, 'Sonic'),
+      'ra_id': 77,
+      'merged_ra_metadata': {
+        'achievements': [
+          const RetroAchievement(id: 1, title: 'Rings', description: '', points: 5, badgeName: 'b1').toRommJson(),
+        ],
+      },
+    });
+    expect(await c.read(playControllerProvider.notifier).play(sonic), isNull);
+    expect(progress.reads, 1, reason: 'read before the emulator starts');
+    engine.running!.complete(const PlayResult('Save synced'));
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(playControllerProvider).message, 'Save synced', reason: 'the save message comes first');
+    for (var i = 0; i < 5; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(c.read(sessionAchievementsProvider)?.line, '1 achievement earned · 5 points (softcore)');
   });
 
   group('the quit buttons held (#141)', () {

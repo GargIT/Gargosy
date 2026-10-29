@@ -6,7 +6,12 @@ mixin _RommUsers on _RommBase {
   /// The current user's RetroAchievements progress as synced by RomM
   /// (`ra_progression` on /api/users/me), keyed by RA game ID. Empty when the
   /// server has no RA key or the user hasn't linked an RA username in RomM.
-  Future<Map<int, Map<String, dynamic>>> getRetroAchievementsProgression() async {
+  Future<Map<int, Map<String, dynamic>>> getRetroAchievementsProgression() async =>
+      await getRetroAchievementsProgressionOrNull() ?? {};
+
+  /// Gargosy (#189): like [getRetroAchievementsProgression], but null when
+  /// RomM couldn't be asked, so a session can tell that from no progress.
+  Future<Map<int, Map<String, dynamic>>?> getRetroAchievementsProgressionOrNull() async {
     try {
       final response = await _dio.get('/api/users/me', options: _authOptions);
       final data = response.data;
@@ -18,7 +23,7 @@ mixin _RommUsers on _RommBase {
           if (r['rom_ra_id'] is int) r['rom_ra_id'] as int: r,
       };
     } catch (_) {
-      return {};
+      return null;
     }
   }
 
@@ -47,11 +52,17 @@ mixin _RommUsers on _RommBase {
   /// (POST /api/users/{id}/ra/refresh). RomM fetches the whole history from
   /// RA, so this can take a while. Returns false if RomM refused or failed
   /// (e.g. an API token without the `me.write` scope).
-  Future<bool> refreshRetroAchievements(int userId) async {
+  Future<bool> refreshRetroAchievements(int userId) => _refreshRetroAchievements(userId, incremental: false);
+
+  /// Gargosy (#189): as [refreshRetroAchievements], reading only what's new
+  /// since RomM's last read (after a session).
+  Future<bool> refreshNewRetroAchievements(int userId) => _refreshRetroAchievements(userId, incremental: true);
+
+  Future<bool> _refreshRetroAchievements(int userId, {required bool incremental}) async {
     try {
       await _dio.post(
         '/api/users/$userId/ra/refresh',
-        data: {'incremental': false},
+        data: {'incremental': incremental},
         options: _authOptions.copyWith(contentType: 'application/json', receiveTimeout: const Duration(minutes: 3)),
       );
       return true;
