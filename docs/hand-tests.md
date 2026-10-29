@@ -306,4 +306,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Secrets behind one interface (#198)
 
-115. [ ] Install this build over the last one. Every profile opens without signing in again (with its PIN where it has one), and a game in RetroArch still signs in to RetroAchievements. Nothing else looks different.
+115. [x] Install this build over the last one. Every profile opens without signing in again (with its PIN where it has one), and a game in RetroArch still signs in to RetroAchievements. Nothing else looks different.
