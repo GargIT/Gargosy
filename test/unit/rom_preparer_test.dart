@@ -13,6 +13,7 @@ import 'package:path/path.dart' as p;
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_disk.dart';
 
 /// A small stand-in for the 387 MB video partition.
 const gp = 0x30000;
@@ -110,7 +111,7 @@ void main() {
       files: files,
       guard: PathGuard(root),
       tempDir: p.join(root.appData, 'temp'),
-      freeSpace: (_) => spaceHeadroom + 999,
+      disk: FakeDisk((_) => spaceHeadroom + 999),
     );
     await expectLater(tight.ready(ps2, path, 'pcsx2'), throwsA(isA<NotEnoughSpace>()));
     expect(io.File(path).existsSync(), isTrue);

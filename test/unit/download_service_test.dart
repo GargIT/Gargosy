@@ -15,6 +15,7 @@ import 'package:path/path.dart' as p;
 import '../helpers/fake_dio_adapter.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_disk.dart';
 
 List<int> zipOf(Map<String, String> files) {
   final a = Archive();
@@ -27,7 +28,7 @@ void main() {
   setUp(() async => root = await tempAppRoot());
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  DownloadService service(FakeDioAdapter a, {Game? detail, FreeSpaceOf? free}) => DownloadService(
+  DownloadService service(FakeDioAdapter a, {Game? detail, int? Function(String)? free}) => DownloadService(
     dio: fakeDio(a),
     auth: () => Options(headers: {'Authorization': 'Bearer t'}),
     files: RomFiles(root),
@@ -35,7 +36,7 @@ void main() {
     tempDir: p.join(root.appData, 'temp'),
     urlFor: (g) => '/api/roms/${g.id}/content/${g.fsName}',
     detail: (id) async => detail,
-    freeSpace: free,
+    disk: free == null ? null : FakeDisk(free),
   );
 
   Game withFiles(int id, String fsName, List<String> fullPaths) => Game.fromJson({
@@ -119,7 +120,11 @@ void main() {
       await expectLater(
         service(a, free: (_) => 2 * gb).download(big()),
         throwsA(
-          isA<NotEnoughSpace>().having((e) => '$e', 'message', 'Needs 4.0 GB, 2.0 GB free on ${driveOf(root.roms)}.'),
+          isA<NotEnoughSpace>().having(
+            (e) => '$e',
+            'message',
+            'Needs 4.0 GB, 2.0 GB free on ${FakeDisk.none.volumeOf(root.roms)}.',
+          ),
         ),
       );
       expect(a.requests, isEmpty);
@@ -132,8 +137,15 @@ void main() {
       expect(romsTree(), [p.join('ps2', 'Big.iso')]);
       expect(
         () => checkSpace(
-          DownloadService.spaceFor(size: 4 * gb, zip: true, part: r'D:\t\a.part', staging: r'D:\t\x', target: r'D:\r'),
-          (_) => 5 * gb,
+          DownloadService.spaceFor(
+            size: 4 * gb,
+            zip: true,
+            part: r'D:\t\a.part',
+            staging: r'D:\t\x',
+            target: r'D:\r',
+            disk: FakeDisk.none,
+          ),
+          FakeDisk((_) => 5 * gb),
         ),
         throwsA(isA<NotEnoughSpace>()),
       );
@@ -146,13 +158,14 @@ void main() {
         part: r'C:\G\temp\a.part',
         staging: r'C:\G\temp\x',
         target: r'E:\roms\ps2\a.iso',
+        disk: FakeDisk.none,
       );
       expect(writes.length, 2);
       expect(
-        () => checkSpace(writes, (path) => path.startsWith('E') ? gb : 10 * gb),
+        () => checkSpace(writes, FakeDisk((path) => path.startsWith('E') ? gb : 10 * gb)),
         throwsA(isA<NotEnoughSpace>().having((e) => e.drive, 'drive', 'E:')),
       );
-      checkSpace(writes, (_) => null); // can't be told: not checked
+      checkSpace(writes, FakeDisk.none); // can't be told: not checked
     });
 
     test('tight is less than twice the size', () {
