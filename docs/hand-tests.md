@@ -316,4 +316,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Coming back to the front behind one interface (#202)
 119. [x] Play a game in full screen with the controller alone and quit it from the emulator's own menu: Gargosy is in front again, ready for the controller, without touching the mouse or keyboard. Do the same with Settings → Emulators → Open and close the emulator.
 ## Updates behind one interface (#203)
-120. [ ] Settings → About → Updates → Check now: it finds the newest release as before (on a dev build, 0.5.0 is offered) and Update now is there; no need to press it. The release notes open.
+120. [x] Settings → About → Updates → Check now: it finds the newest release as before (on a dev build, 0.5.0 is offered) and Update now is there; no need to press it. The release notes open.
