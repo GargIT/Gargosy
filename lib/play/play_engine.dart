@@ -25,7 +25,7 @@ import '../core/save/catalog/play_request.dart';
 import '../core/save/catalog/save_catalog_sources.dart';
 import '../core/save/catalog/save_maker.dart';
 import '../core/save/resume_service.dart';
-import '../emulators/close_process.dart';
+import '../emulators/process_closer.dart';
 import '../emulators/emulator_layout.dart';
 import '../emulators/emulator_library.dart';
 import '../emulators/profile_launch_config.dart';
@@ -613,7 +613,7 @@ class GargosyPlayEngine implements PlayEngine {
     // Told as soon as the emulator starts: service.launch returns only
     // after it has exited.
     dirs?.onGameStarted = (process) {
-      onStarted?.call(() => closeProcess(process));
+      onStarted?.call(() => _ref.read(processCloserProvider).close(process));
       process.exitCode.whenComplete(WindowService.bringToFront);
     };
     final GameSession session;
