@@ -3,12 +3,14 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/platform/window_focus.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/save/catalog/save_catalog.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/play/outside_launch.dart';
 import 'package:gargosy/play/play_engine.dart';
+import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_menu.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
@@ -19,6 +21,7 @@ import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
 import 'package:gargosy/ui/screens/play/play_screen.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
+import 'package:gargosy/ui/shell/second_start.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 
@@ -27,13 +30,23 @@ import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../unit/play_controller_test.dart' show FakeEngine;
 
+class _Focus implements WindowFocus {
+  int calls = 0;
+  @override
+  Future<void> bringToFront() async => calls++;
+}
+
 void main() {
   late FakeEngine engine;
   late int quits;
+  late ProviderContainer c;
+  late WidgetRef shellRef;
+  late GlobalKey<NavigatorState> nav;
+  late _Focus focus;
 
   /// The shell of an open profile, started with [launch]; [found] is what
   /// RomM gives for the game.
-  Future<void> pump(WidgetTester tester, OutsideLaunch launch, {Game? found, bool downloaded = true}) async {
+  Future<void> pump(WidgetTester tester, OutsideLaunch? launch, {Game? found, bool downloaded = true}) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -47,7 +60,8 @@ void main() {
         platformDefault: SaveMaker('pcsx2'),
         catalog: SaveCatalog(thisPc: [], backups: [], romm: [], rommOffline: false),
       );
-    final c = ProviderContainer(
+    focus = _Focus();
+    c = ProviderContainer(
       overrides: [
         appRootProvider.overrideWithValue(root!),
         appPreferencesProvider.overrideWithValue(MemoryPrefs()),
@@ -70,6 +84,7 @@ void main() {
         uploadQueueProvider.overrideWith((ref) async => null),
         appQuitProvider.overrideWithValue(() async => quits++),
         outsideLaunchProvider.overrideWith((ref) => launch),
+        windowFocusProvider.overrideWithValue(focus),
       ],
     );
     addTearDown(c.dispose);
@@ -81,7 +96,7 @@ void main() {
     await tester.runAsync(
       () => c.read(activeProfileProvider.notifier).activate(anna!, const ProfileLogin(token: 't', kind: 'device')),
     );
-    final nav = GlobalKey<NavigatorState>();
+    nav = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: c,
@@ -89,7 +104,12 @@ void main() {
           navigatorKey: nav,
           theme: gargosyTheme(),
           builder: (context, child) => InputRouter(navigatorKey: nav, startGamepads: false, child: child!),
-          home: const AppShell(),
+          home: Consumer(
+            builder: (context, ref, _) {
+              shellRef = ref;
+              return const AppShell();
+            },
+          ),
         ),
       ),
     );
@@ -138,5 +158,45 @@ void main() {
     expect(engine.steps, isEmpty);
     expect(find.byType(PlayScreen), findsOneWidget);
     expect(quits, 0);
+  });
+
+  group('handed over by a later start (#223)', () {
+    testWidgets('comes to the front and plays in the open profile', (tester) async {
+      await pump(tester, null, found: game(1, 'G1'));
+      await onSecondStart(nav, shellRef, const ['--play=1']);
+      await tester.pumpAndSettle();
+      expect(focus.calls, 1);
+      expect(engine.steps, ['states', 'prepare', 'launch']);
+      engine.running!.complete(const PlayResult('Save synced', synced: true));
+      await tester.pumpAndSettle();
+      expect(quits, 1);
+    });
+
+    testWidgets('without --play it only comes to the front', (tester) async {
+      await pump(tester, null, found: game(1, 'G1'));
+      await onSecondStart(nav, shellRef, const []);
+      await tester.pumpAndSettle();
+      expect(focus.calls, 1);
+      expect(engine.steps, isEmpty);
+    });
+
+    testWidgets('refused while a game runs', (tester) async {
+      await pump(tester, null, found: game(1, 'G1'));
+      c.read(playControllerProvider.notifier).state = const PlayState(runningGameId: '5');
+      await onSecondStart(nav, shellRef, const ['--play=1']);
+      await tester.pump();
+      expect(find.text('A game is already running. Close it first.'), findsOneWidget);
+      expect(c.read(outsideLaunchProvider), isNull);
+      expect(engine.steps, isEmpty);
+    });
+
+    testWidgets('another named profile: this one closes, and the picker takes the launch', (tester) async {
+      await pump(tester, null, found: game(1, 'G1'));
+      await onSecondStart(nav, shellRef, const ['--play=1', '--profile=bbb']);
+      await tester.pump();
+      expect(c.read(activeProfileProvider), isNull);
+      expect(c.read(outsideLaunchProvider)?.profileId, 'bbb');
+      expect(engine.steps, isEmpty);
+    });
   });
 }

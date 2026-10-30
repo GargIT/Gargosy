@@ -27,6 +27,8 @@ import 'providers/update_providers.dart';
 import 'sigil/sigil_library.dart';
 import 'core/platform/platform_info.dart';
 import 'update/app_updater.dart';
+import 'core/platform/app_instance.dart';
+import 'play/outside_launch.dart';
 import 'ui/screens/startup_error_app.dart';
 import 'l10n/tr.dart';
 
@@ -43,6 +45,17 @@ Future<void> main(List<String> args) async {
     return;
   }
   startFileLog(root);
+  // One Gargosy per folder (#223): a later start (a shortcut's --play) hands
+  // its arguments to the one running and ends here.
+  // Something in the way (no loopback, a locked file) is logged, never a
+  // failed start.
+  AppInstance? instance;
+  try {
+    instance = await AppInstance.claim(root, args);
+    if (instance == null) io.exit(0);
+  } on Object catch (e, s) {
+    LoggerService().error(e, s, context: 'Instance');
+  }
   unawaited(removeOldImageCache(root));
   // Saves go through sigil only (#57): without it, Gargosy doesn't start.
   final sigil = SigilLibrary.problem();
@@ -82,6 +95,7 @@ Future<void> main(List<String> args) async {
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(SharedPreferencesAppPreferences(prefs)),
         launchArgsProvider.overrideWithValue(args),
+        instanceRequestsProvider.overrideWithValue(instance?.requests ?? const Stream.empty()),
         updateOutcomeProvider.overrideWithValue(updateOutcome),
       ],
       child: const GargosyApp(),

@@ -44,28 +44,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
   }
   switch (choice.action!) {
     case UserMenuAction.switchProfile:
-      // The game runs on this profile's emulator data; it must close first.
-      if (ref.read(playControllerProvider).runningGameId != null) {
-        showToast(context, tr('Close the game first: a profile can\'t change while a game runs.'));
-        return;
-      }
-      // Downloads belong to this profile: switching stops them (#143).
-      final pending = ref.read(downloadsProvider.notifier).pending;
-      if (pending > 0 &&
-          !await showConfirm(
-            context,
-            title: tr('Stop the downloads?'),
-            body: pending == 1
-                ? tr('A download is running. Switching profile stops it.')
-                : tr('{0} downloads are running or waiting. Switching profile stops them.', [pending]),
-            yes: tr('Switch profile'),
-            focusYes: false,
-          )) {
-        return;
-      }
-      if (!context.mounted) return;
-      // A sync still running belongs to this profile: it finishes first.
-      if (!await waitForSyncIdle(context, ref)) return;
+      if (!await readyToLeaveProfile(context, ref)) return;
       ref.read(activeProfileProvider.notifier).signOut();
     case UserMenuAction.downloads:
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const DownloadsScreen()));
@@ -74,4 +53,33 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     case UserMenuAction.changelog:
       await openDoc(context, ref.read(appRootProvider).changelog);
   }
+}
+
+/// Whether the open profile may close now (a switch, or `--play` for another
+/// profile, #223): no game runs, the player let its downloads stop, and its
+/// sync has finished. Says why not.
+Future<bool> readyToLeaveProfile(BuildContext context, WidgetRef ref) async {
+  // The game runs on this profile's emulator data; it must close first.
+  if (ref.read(playControllerProvider).runningGameId != null) {
+    showToast(context, tr('Close the game first: a profile can\'t change while a game runs.'));
+    return false;
+  }
+  // Downloads belong to this profile: switching stops them (#143).
+  final pending = ref.read(downloadsProvider.notifier).pending;
+  if (pending > 0 &&
+      !await showConfirm(
+        context,
+        title: tr('Stop the downloads?'),
+        body: pending == 1
+            ? tr('A download is running. Switching profile stops it.')
+            : tr('{0} downloads are running or waiting. Switching profile stops them.', [pending]),
+        yes: tr('Switch profile'),
+        focusYes: false,
+      )) {
+    return false;
+  }
+  if (!context.mounted) return false;
+  // A sync still running belongs to this profile: it finishes first.
+  if (!await waitForSyncIdle(context, ref)) return false;
+  return true;
 }

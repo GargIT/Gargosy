@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/storage/logger_service.dart';
+import 'play/outside_launch.dart';
 import 'profiles/profile_providers.dart';
 import 'providers/update_providers.dart';
 import 'update/update_installer.dart';
@@ -9,6 +12,7 @@ import 'ui/input/gargosy_intents.dart';
 import 'ui/input/input_router.dart';
 import 'ui/screens/profile_picker_screen.dart';
 import 'ui/shell/app_shell.dart';
+import 'ui/shell/second_start.dart';
 import 'ui/shell/user_menu.dart';
 import 'ui/theme/gargosy_theme.dart';
 import 'ui/widgets/controller_dialogs.dart';
@@ -25,10 +29,19 @@ class GargosyApp extends ConsumerStatefulWidget {
 
 class _GargosyAppState extends ConsumerState<GargosyApp> {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<List<String>>? _laterStarts;
+
+  @override
+  void dispose() {
+    _laterStarts?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    // Another start of Gargosy handed its arguments here (#223).
+    _laterStarts = ref.read(instanceRequestsProvider).listen((args) => onSecondStart(_navigatorKey, ref, args));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // One check per start (none within 6 h of the last); a find shows as a dot, never a popup.

@@ -234,6 +234,18 @@ void main() {
       expect(h.container.read(outsideLaunchProvider), isNull);
     });
 
+    testWidgets('handed over to the picker by a later start: the named profile opens', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      await addProfile(tester, 'Anna');
+      final bob = await addProfile(tester, 'Bob', userId: 8);
+      await h.pumpApp(tester);
+      expect(find.text('Who is playing?'), findsOneWidget);
+      h.container.read(outsideLaunchProvider.notifier).state = OutsideLaunch(romId: '1', profileId: bob.id);
+      await h.settle(tester, until: find.byType(AppShell));
+      expect(h.container.read(activeProfileProvider)!.profile.name, 'Bob');
+    });
+
     testWidgets('a PIN is asked first; Back stays at the picker and drops the launch', (tester) async {
       h = AppHarness();
       await h.setUp(tester);

@@ -160,6 +160,10 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(profilesProvider);
+    // A --play handed over by another start (#223).
+    ref.listen<OutsideLaunch?>(outsideLaunchProvider, (prev, next) {
+      if (prev == null && next != null) _openForLaunch();
+    });
     final lastUsed = ref.read(profileStoreProvider).lastUsedId;
     return Scaffold(
       backgroundColor: Colors.transparent,

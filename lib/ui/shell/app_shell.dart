@@ -25,6 +25,7 @@ import '../widgets/hint_bar.dart';
 import '../widgets/toast.dart';
 import 'backdrop.dart';
 import 'outside_play.dart';
+import 'second_start.dart';
 import 'screensaver.dart';
 import 'shell_menu.dart';
 import 'top_bar.dart';
@@ -136,6 +137,10 @@ class _AppShellState extends ConsumerState<AppShell> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && i < _tabNodes.length) _tabNodes[i].requestFocus();
       });
+    });
+    // A --play handed over by another start (#223) for this profile.
+    ref.listen<OutsideLaunch?>(outsideLaunchProvider, (prev, next) {
+      if (prev == null && next != null && launchIsFor(next, ctx.profile.id)) runOutsideLaunch(context, ref);
     });
     final offline = ref.watch(rommOfflineProvider);
     // RomM is back: what waited goes up.
