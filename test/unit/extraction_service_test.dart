@@ -79,9 +79,21 @@ void main() {
         await ExtractionService(
           _MinimalDirectoryService(),
           platform: const PlatformInfo('windows'),
-          unpacker: given,
+          unpacker: () => given,
         ).extract(zipPath, destDir.path);
         expect(given.unpacked, [(zipPath, destDir.path)]);
+      });
+
+      test('no unpacker is made where no Windows zip needs one', () async {
+        final destDir = Directory(p.join(tempDir.path, 'ext_none'))..createSync();
+        var made = 0;
+        final service = ExtractionService(
+          _MinimalDirectoryService(),
+          platform: const PlatformInfo('linux'),
+          unpacker: () => throw StateError('made ${++made}'),
+        );
+        await service.extract(p.join(tempDir.path, 'missing.tar.gz'), destDir.path).catchError((_) {});
+        expect(made, 0);
       });
 
       test('the fallback unpacker waits until every file is out', () async {
