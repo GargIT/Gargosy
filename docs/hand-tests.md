@@ -340,3 +340,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 125. [ ] `--play-stay`: Gargosy stays open on the game's page after the session, with the session's message.
 126. [ ] With Gargosy open on Home, open the shortcut: no second Gargosy starts; the open one comes to the front, plays the game, and stays open after it. With `--profile=` of another profile: it switches (asking about downloads, PIN where it has one) and plays it there. With a game running: "A game is already running" and nothing else. Open `Gargosy.exe` twice without arguments: the first comes to the front.
 127. [ ] A downloaded game's page → ⋯ → Create desktop shortcut: a shortcut named after the game, with its cover as the icon, is on the desktop and the toast says its name. Do it again: a second one, `(2)`, the first untouched. Open one with Gargosy closed: the game starts in this profile without asking who.
+
+## Age limit per profile (#224)
+
+128. [ ] Give a parent's profile a PIN. On a child's profile: Settings → Profile → Age limit → Up to 12 asks for the parent's PIN (a wrong one changes nothing). A game rated M or PEGI 16 then says "… is above this profile's age limit." at Play and Resume. Turn on Hide unrated games: an unrated game is refused too. Off, with the parent's PIN, plays everything again.

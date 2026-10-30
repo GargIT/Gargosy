@@ -19,6 +19,7 @@ import '../../widgets/profile_badge.dart';
 import '../../widgets/sync_wait.dart';
 import '../../widgets/toast.dart';
 import '../login_step.dart';
+import 'age_limit_card.dart';
 import 'settings_rows.dart';
 import '../../../l10n/tr.dart';
 
@@ -247,6 +248,7 @@ class ProfileSection extends ConsumerWidget {
             ),
           ],
         ),
+        AgeLimitCard(profile: p),
         SettingsCard(
           title: tr('Delete'),
           icon: Icons.delete,

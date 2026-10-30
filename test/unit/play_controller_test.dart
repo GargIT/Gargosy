@@ -15,6 +15,7 @@ import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/core/save/resume_service.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
+import 'package:gargosy/library/age_limit.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/play/play_menu.dart';
@@ -569,6 +570,28 @@ void main() {
     savedAt: DateTime(2026, 10, 9),
     where: ResumeWhere.thisPc,
   );
+
+  test('a game above the age limit (#224) is refused on Play and Resume, before anything runs', () async {
+    final limited = ProviderContainer(
+      overrides: [
+        playEngineProvider.overrideWithValue(engine),
+        ageLimitProvider.overrideWithValue(const AgeLimit(maxAge: 12)),
+      ],
+    );
+    addTearDown(limited.dispose);
+    final mature = Game.fromJson({
+      ...gameJson(1, 'G'),
+      'metadatum': {
+        'age_ratings': ['ESRB:M'],
+      },
+    });
+    final play = limited.read(playControllerProvider.notifier);
+    expect(await play.play(mature), contains('above this profile'));
+    expect(await play.resume(mature, auto), contains('above this profile'));
+    expect(engine.steps, isEmpty);
+    expect(limited.read(playControllerProvider).runningGameId, isNull);
+    expect(await play.play(game(2, 'Unrated')), isNull, reason: 'unrated plays unless hidden');
+  });
 
   test('resume pulls states, checks the chosen one, puts the save in place, then boots into the state', () async {
     expect(await c.read(playControllerProvider.notifier).resume(game(1, 'G'), auto), isNull);

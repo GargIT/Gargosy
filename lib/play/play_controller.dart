@@ -12,6 +12,7 @@ import '../core/save/catalog/play_request.dart';
 import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
 import '../providers/library_providers.dart';
+import '../library/age_limit.dart';
 import '../library/upload_queue.dart';
 import 'play_engine.dart';
 import 'play_menu.dart';
@@ -51,6 +52,7 @@ class PlayController extends StateNotifier<PlayState> {
   /// it the game plays in its emulator with the profile's RomM save.
   Future<String?> play(Game game, {PlayRequest? request, void Function(String)? onNotice}) async {
     if (state.runningGameId != null) return tr('A game is already running. Close it first.');
+    if (!_ref.read(ageLimitProvider).allows(game)) return aboveAgeLimit(game);
     // Taken before the first await: a second press, or a profile switch,
     // while this one is still starting is refused too.
     state = PlayState(runningGameId: game.id);
@@ -146,6 +148,7 @@ class PlayController extends StateNotifier<PlayState> {
     PlayRequest? remember,
   }) async {
     if (state.runningGameId != null) return tr('A game is already running. Close it first.');
+    if (!_ref.read(ageLimitProvider).allows(game)) return aboveAgeLimit(game);
     state = PlayState(runningGameId: game.id);
     String? refuse(String reason) {
       state = const PlayState();
@@ -391,3 +394,6 @@ final playStatesProvider = StreamProvider.autoDispose.family<List<ResumeEntry>, 
   final engine = ref.watch(playEngineProvider);
   return engine?.statesFor(key.game) ?? Stream.value(const []);
 });
+
+/// Why a game over the profile's age limit (#224) doesn't start.
+String aboveAgeLimit(Game game) => tr('{0} is above this profile\'s age limit.', [game.displayName]);
