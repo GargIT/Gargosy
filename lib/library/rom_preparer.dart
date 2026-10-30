@@ -158,7 +158,7 @@ class RomPreparer {
       }
       writer.close();
     } on UnpackException catch (e) {
-      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, e.detail]));
+      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, e.reason]));
     } finally {
       out.closeSync();
     }
@@ -205,7 +205,7 @@ class RomPreparer {
     try {
       return await _unpacker.list(zip);
     } on UnpackException catch (e) {
-      throw RomPrepareException(tr('Couldn\'t open {0}\'s zip: {1}', [game.displayName, e.detail]));
+      throw RomPrepareException(tr('Couldn\'t open {0}\'s zip: {1}', [game.displayName, e.reason]));
     }
   }
 
@@ -219,7 +219,7 @@ class RomPreparer {
     try {
       await _unpacker.unpack(zip, into, exclude: exclude, tick: progress);
     } on UnpackException catch (e) {
-      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, e.detail]));
+      throw RomPrepareException(tr('Couldn\'t unpack {0}: {1}', [game.displayName, e.reason]));
     }
   }
 

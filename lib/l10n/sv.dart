@@ -855,6 +855,7 @@ const svText = <String, String>{
   'streamed by RomM': 'strömmat av RomM',
   'sync save states': 'synka sparlägen',
   'take the save': 'ta sparfilen',
+  'tar stopped with code {0}': 'tar avslutades med kod {0}',
   'the backup is gone': 'säkerhetskopian är borta',
   'the download stopped before it finished': 'nedladdningen avbröts innan den blev klar',
   'the game is not on this PC': 'spelet finns inte på den här datorn',

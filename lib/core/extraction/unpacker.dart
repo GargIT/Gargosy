@@ -5,18 +5,37 @@ import 'dart:io' as io;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../l10n/tr.dart';
 import '../platform/platform_info.dart';
 
 /// A file in a zip and its unpacked size.
 typedef ZipEntry = ({String name, int size});
 
-/// The unpacker refused or failed; [detail] is what it said.
+/// The unpacker refused or failed; [detail] is what it said, [code] how it
+/// ended.
 class UnpackException implements Exception {
-  const UnpackException(this.detail);
-  final String detail;
+  const UnpackException(this.detail, {this.code});
 
+  /// tar ended with [code], having written [stderr].
+  UnpackException.tar(String stderr, int this.code) : detail = stderr.trim();
+
+  final String detail;
+  final int? code;
+
+  /// [code] as Windows writes it: a crash's NTSTATUS (negative here) in hex.
+  String? get _codeText => switch (code) {
+    null => null,
+    final c when c < 0 => '0x${(c & 0xFFFFFFFF).toRadixString(16).toUpperCase()}',
+    final c => '$c',
+  };
+
+  /// Why, for the player: what the unpacker said, else how it ended, never
+  /// nothing.
+  String get reason => detail.isEmpty && code != null ? tr('tar stopped with code {0}', [_codeText]) : detail;
+
+  /// Why, for the log (English).
   @override
-  String toString() => detail;
+  String toString() => detail.isEmpty && code != null ? 'tar stopped with code $_codeText' : detail;
 }
 
 /// Lists, unpacks and streams zips (#200): a ROM's zip before an emulator
@@ -61,7 +80,7 @@ class TarUnpacker implements Unpacker {
   @override
   Future<List<ZipEntry>> list(String zip) async {
     final r = await io.Process.run(tar, ['-tvf', zip]);
-    if (r.exitCode != 0) throw UnpackException((r.stderr as String).trim());
+    if (r.exitCode != 0) throw UnpackException.tar(r.stderr as String, r.exitCode);
     // -rw-rw-r--  0 0      0  7825162240 dec 24  1996 Name.iso (the month is localised)
     final line = RegExp(r'^(\S)\S*\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\S+\s+\d+\s+\S+\s(.*)$');
     return [
@@ -88,7 +107,7 @@ class TarUnpacker implements Unpacker {
     timer?.cancel();
     await errDone;
     await outDone;
-    if (code != 0) throw UnpackException(err.toString().trim());
+    if (code != 0) throw UnpackException.tar('$err', code);
   }
 
   @override
@@ -97,14 +116,15 @@ class TarUnpacker implements Unpacker {
     final err = StringBuffer();
     final errDone = proc.stderr.transform(io.systemEncoding.decoder).forEach(err.write);
     var finished = false;
+    final int code;
     try {
       yield* proc.stdout;
       finished = true;
     } finally {
       if (!finished) proc.kill();
-      await proc.exitCode;
+      code = await proc.exitCode;
       await errDone;
     }
-    if (await proc.exitCode != 0) throw UnpackException(err.toString().trim());
+    if (code != 0) throw UnpackException.tar('$err', code);
   }
 }

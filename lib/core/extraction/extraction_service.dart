@@ -171,7 +171,7 @@ class ExtractionService {
         await (_unpacker ??= _makeUnpacker?.call() ?? unpackerFor(_platform)).unpack(archivePath, destDir);
         return;
       } on UnpackException catch (e) {
-        debugPrint('tar failed (${e.detail}), falling back to archive package');
+        debugPrint('tar failed ($e), falling back to archive package');
       } catch (e) {
         debugPrint('tar not found or failed: $e, falling back to archive package');
       }

@@ -4,6 +4,7 @@ import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/extraction/unpacker.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
+import 'package:gargosy/l10n/tr.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -66,5 +67,19 @@ void main() {
     io.File(bad).writeAsStringSync('not a zip');
     await expectLater(unpacker.list(bad), throwsA(isA<UnpackException>()));
     await expectLater(unpacker.open(bad, 'Game.iso').drain<void>(), throwsA(isA<UnpackException>()));
+  });
+
+  test('a failure with nothing on stderr says how tar ended, not nothing', () {
+    expect(UnpackException.tar('', 2).reason, 'tar stopped with code 2');
+    expect(UnpackException.tar('  tar.exe: Damaged archive\n', 1).reason, 'tar.exe: Damaged archive');
+    // A crash's NTSTATUS, as Windows writes it.
+    expect(UnpackException.tar('', -1073741502).reason, 'tar stopped with code 0xC0000142');
+  });
+
+  test("the log gets the reason in English, whatever the player's language", () async {
+    addTearDown(() => showLanguage(AppLanguage.en));
+    await showLanguage(AppLanguage.sv);
+    expect(UnpackException.tar('', 2).reason, 'tar avslutades med kod 2');
+    expect('${UnpackException.tar('', 2)}', 'tar stopped with code 2');
   });
 }
