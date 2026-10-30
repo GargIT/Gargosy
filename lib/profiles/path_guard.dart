@@ -50,6 +50,10 @@ class PathGuard {
   /// Whether [a] and [b] are the same place, as the file system compares.
   bool samePath(String a, String b) => pathKey(a) == pathKey(b);
 
+  /// Whether [child] is inside [parent] (not [parent] itself), as the file
+  /// system compares: `p.isWithin` sees case on macOS, where this doesn't.
+  bool isWithin(String parent, String child) => pathKey(child).startsWith('${pathKey(parent)}${p.separator}');
+
   List<String> get _allowedDirs => [
     root.roms,
     root.emulators,
