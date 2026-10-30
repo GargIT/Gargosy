@@ -82,6 +82,17 @@ void main() {
     expect(io.File(p.join(folder, 'readme.txt')).readAsBytesSync(), [1, 2]);
   });
 
+  test('xemu: a disc named .ISO is found, streamed once and left out of the unpack', () async {
+    final zip = zipWith({
+      'Halo (USA).ISO': redump(xiso()),
+      'readme.txt': [1, 2],
+    });
+    final folder = await preparer.ready(halo, zip, 'xemu');
+    expect(io.File(p.join(folder!, 'Halo (USA).ISO')).readAsBytesSync(), xiso());
+    expect(io.File(p.join(folder, 'readme.txt')).readAsBytesSync(), [1, 2]);
+    expect(io.Directory(folder).listSync(), hasLength(2));
+  });
+
   test('an emulator that reads zips keeps the zip', () async {
     final snes = game(2, 'Mario', platform: 'snes', fsName: 'Mario.zip');
     final path = files.pathFor(snes);
