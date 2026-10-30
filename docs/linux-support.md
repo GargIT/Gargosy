@@ -34,7 +34,7 @@ Each place, what it does on Windows, what Linux would use, and a size.
 |---|---|---|---|
 | `core/security/dpapi.dart` | DPAPI encrypts the RomM token per Windows user (`login.<PC>.dpapi`) | libsecret (needs a keyring; Steam Deck desktop has KWallet, Gaming Mode may have none). Fallback: a key file with mode 0600 in the profile, which is family-lock level like the PIN. Already behind `DataProtector`. | M |
 | `core/input/xinput_pads.dart`, `hid_pads.dart`, `hid_buttons.dart` | The quit buttons are read while an emulator is in front, because GameInput sends nothing then | evdev (`/dev/input/event*`) is read the same whether Gargosy is in front or not. Desktop sessions get access through logind's `uaccess` for joysticks. One `BackgroundPads` (the interface exists) reading evdev replaces both. SDL's mapping DB still names the buttons. | M |
-| `core/platform/window_service.dart` | `bringToFront`: `windowManager.focus`, then an Alt tap through `SendInput` | X11: `window_manager` focus works. Wayland doesn't let an app take focus, so Gargosy can't come back to the front by itself after a game. Under gamescope (Steam Deck Gaming Mode) the last window wins anyway. | S (X11), not possible on Wayland |
+| `core/platform/window_focus.dart` | `WindowsWindowFocus`: `windowManager.focus`, then an Alt tap through `SendInput` | X11: `window_manager` focus works. Wayland doesn't let an app take focus, so Gargosy can't come back to the front by itself after a game. Under gamescope (Steam Deck Gaming Mode) the last window wins anyway. | S (X11), not possible on Wayland |
 | `library/disk_space.dart` | `GetDiskFreeSpaceExW` | `statvfs` through libc FFI, or `df --output` | S |
 | `profiles/portable_temp.dart` | Sets TMP/TEMP through FFI so temp files stay in `userdata\app\temp` | `setenv("TMPDIR")` through libc, before anything starts | S |
 | `emulators/bios_links.dart` | `CreateHardLinkW`; it already copies where that fails | `link()` through libc, or `ln`. A hard link fails across file systems, and the copy already covers that. | S |
@@ -45,7 +45,7 @@ Each place, what it does on Windows, what Linux would use, and a size.
 | Place | Windows | Linux | Size |
 |---|---|---|---|
 | `emulators/folder_link.dart` | Junctions through `io.Link`; a test link first; FAT32/exFAT refused | `io.Link` already makes a symlink, and no rights are needed. FAT32/exFAT has no symlinks there either, so the same check applies. For most emulators, `XDG_*` variables per launch may replace the link (see [2. Emulators](#2-emulators)). | S |
-| `emulators/close_process.dart` | `taskkill`, then `taskkill /F /T` after 10 s | SIGTERM, then SIGKILL to the process group after 10 s. Start the emulator in its own group. | S |
+| `emulators/process_closer.dart` | `TaskkillProcessCloser`: `taskkill`, then `taskkill /F /T` after 10 s | SIGTERM, then SIGKILL to the process group after 10 s. Start the emulator in its own group. | S |
 | `library/rom_preparer.dart`, `library/xbox_disc.dart` | `System32\tar.exe` (bsdtar) unpacks zips and streams an `.iso` out (`tar -xOf`) | GNU tar doesn't read zip. Use `bsdtar` (libarchive-tools, not always installed), `unzip -p`, or Dart's `archive` streaming (slower; the reason `tar.exe` was chosen). Bundling a static `bsdtar` is the safe option. | M |
 | `core/extraction/extraction_service.dart` | `tar.exe`, `thirdparty/7zr.exe` | It already has Linux branches (`unzip`, `tar`, `chmod`). The `.7z` downloads need `7zz` (7-Zip's own Linux build), bundled like `7zr.exe`. | S |
 | `library/storage_usage.dart` | Sizes; never follows junctions | `sizeOf` already never follows links; check it with symlinks | S |
@@ -187,6 +187,12 @@ What's missing is one interface for each OS concern, chosen once in
 
 Each is small and makes the Windows code easier to test (fakes instead of
 `kernel32`). They are the follow-ups worth doing even without Linux.
+
+**Done** (#198–#203): each interface above exists, chosen by `PlatformInfo`
+(`secretStoreFor`, `processCloserFor`, `unpackerFor`, `diskInfoFor`,
+`windowFocusFor`, `appUpdaterFor`). `closeProcess` and
+`WindowService.bringToFront` are gone; the table's "Today" column is how
+it was when this was written.
 
 ### 5. CI
 
