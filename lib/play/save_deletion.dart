@@ -95,7 +95,8 @@ Future<void> deleteLocalSave(
 }
 
 /// Every card and save folder [plan] changes, copied whole into
-/// `<profile>/backups/deleted/<time>/`, under its path in the profile.
+/// `<profile>/backups/deleted/<time>/`, under its path in the profile, or
+/// under `gargosy/` and its path in the Gargosy folder (a shared card).
 Future<void> _keepCopies(
   LocalSaveDeletion plan, {
   required PathGuard guard,
@@ -106,8 +107,16 @@ Future<void> _keepCopies(
   if (shared.isEmpty) return;
   final stamp = at.toIso8601String().replaceAll(RegExp(r'[^0-9T]'), '').substring(0, 15);
   final into = p.join(profileDir, 'backups', 'deleted', stamp);
-  String target(String path) =>
-      p.join(into, p.isWithin(profileDir, path) ? p.relative(path, from: profileDir) : p.basename(path));
+  // Placed as the guard compares (any case on Windows and macOS), never by
+  // the bare name, which would lay a folder's files flat over each other.
+  String target(String path) => p.join(
+    into,
+    guard.relativeWithin(profileDir, path) ??
+        switch (guard.relativeWithin(guard.root.root, path)) {
+          final inGargosy? => p.join('gargosy', inGargosy),
+          null => p.basename(path),
+        },
+  );
   for (final path in shared) {
     if (io.FileSystemEntity.isDirectorySync(path)) {
       await for (final e in io.Directory(path).list(recursive: true)) {

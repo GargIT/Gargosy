@@ -26,6 +26,20 @@ void main() {
     expect(PathGuard(root, platform: const PlatformInfo('windows')).caseSensitive, isFalse);
   });
 
+  test('relativeWithin: the part below a folder, part by part as the file system compares', () {
+    final any = PathGuard(root, platform: const PlatformInfo('windows'));
+    final exact = PathGuard(root, platform: const PlatformInfo('linux'));
+    expect(
+      any.relativeWithin(r'D:\Gargosy\userdata', r'd:\GARGOSY\userdata\profiles\Aaa\x.sav'),
+      r'profiles\Aaa\x.sav',
+    );
+    expect(exact.relativeWithin(r'D:\Gargosy\userdata', r'D:\Gargosy\USERDATA\x.sav'), isNull);
+    expect(exact.relativeWithin(r'D:\Gargosy\userdata', r'D:\Gargosy\userdata\x.sav'), 'x.sav');
+    expect(any.relativeWithin(r'D:\Gargosy\userdata', r'D:\Gargosy\userdata'), isNull, reason: 'not itself');
+    expect(any.relativeWithin(r'D:\Gargosy\userdata', r'D:\Gargosy\userdata2\x'), isNull, reason: 'a look-alike');
+    expect(any.relativeWithin(r'D:\Gargosy\userdata', r'D:\Gargosy\userdata\a\..\..\roms'), isNull);
+  });
+
   test('guards on one root share its keys but keep their own profile and case rule', () {
     final shared = AppRoot(r'E:\Gargosy');
     final any = PathGuard(shared, activeProfileId: 'aaa', platform: const PlatformInfo('windows'));
