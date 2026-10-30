@@ -16,9 +16,11 @@ import '../../widgets/controller_dialogs.dart';
 import '../../widgets/on_screen_keyboard.dart';
 import '../../widgets/pin_pad.dart';
 import '../../widgets/profile_badge.dart';
+import '../../widgets/profile_pin.dart';
 import '../../widgets/sync_wait.dart';
 import '../../widgets/toast.dart';
 import '../login_step.dart';
+import 'age_limit_card.dart';
 import 'settings_rows.dart';
 import '../../../l10n/tr.dart';
 
@@ -64,26 +66,8 @@ class ProfileSection extends ConsumerWidget {
     );
   }
 
-  Future<bool> _checkCurrent(BuildContext context, WidgetRef ref, Profile p) async {
-    final pin = p.pin;
-    if (pin == null) return true;
-    final gate = ref.read(pinGatesProvider).putIfAbsent(p.id, () => PinGate(pin));
-    final ok = await showPinEntry(
-      context,
-      title: tr('Current PIN'),
-      check: (entered) async {
-        switch (await gate.attempt(entered)) {
-          case PinResult.ok:
-            return null;
-          case PinResult.wrong:
-            return tr('Wrong PIN');
-          case PinResult.locked:
-            return tr('Too many tries. Wait {0} seconds.', [gate.lockedFor?.inSeconds ?? 30]);
-        }
-      },
-    );
-    return ok != null;
-  }
+  Future<bool> _checkCurrent(BuildContext context, WidgetRef ref, Profile p) =>
+      checkProfilePin(context, ref, p, title: tr('Current PIN'));
 
   Future<void> _choosePin(BuildContext context, WidgetRef ref, Profile p) async {
     if (!await _checkCurrent(context, ref, p) || !context.mounted) return;
@@ -247,6 +231,7 @@ class ProfileSection extends ConsumerWidget {
             ),
           ],
         ),
+        AgeLimitCard(profile: p),
         SettingsCard(
           title: tr('Delete'),
           icon: Icons.delete,

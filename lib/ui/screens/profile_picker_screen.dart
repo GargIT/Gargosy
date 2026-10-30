@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/input/gamepad_service.dart';
 import '../../play/outside_launch.dart';
-import '../../profiles/pin.dart';
 import '../../profiles/profile.dart';
 import '../../profiles/profile_paths.dart';
 import '../../profiles/profile_providers.dart';
@@ -11,7 +10,7 @@ import '../shell/backdrop.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
-import '../widgets/pin_pad.dart';
+import '../widgets/profile_pin.dart';
 import '../widgets/profile_badge.dart';
 import '../widgets/toast.dart';
 import 'add_profile_screen.dart';
@@ -87,26 +86,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     }
   }
 
-  Future<bool> _unlock(Profile p) async {
-    final pin = p.pin;
-    if (pin == null) return true;
-    final gate = ref.read(pinGatesProvider).putIfAbsent(p.id, () => PinGate(pin));
-    final ok = await showPinEntry(
-      context,
-      title: tr('PIN for {0}', [p.name]),
-      check: (entered) async {
-        switch (await gate.attempt(entered)) {
-          case PinResult.ok:
-            return null;
-          case PinResult.wrong:
-            return tr('Wrong PIN');
-          case PinResult.locked:
-            return tr('Too many tries. Wait {0} seconds.', [gate.lockedFor?.inSeconds ?? 30]);
-        }
-      },
-    );
-    return ok != null;
-  }
+  Future<bool> _unlock(Profile p) => checkProfilePin(context, ref, p);
 
   Future<void> _open(Profile p) async {
     if (!await _unlock(p) || !mounted) return;

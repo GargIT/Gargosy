@@ -18,6 +18,10 @@ What changed in each release of Gargosy. The format follows
   shortcut brings it to the front and plays the game there (switching
   profile first when another is named), and it stays open after; a second
   Gargosy never starts.
+- An age limit per profile: Settings → Profile → Age limit (Off, up to 3,
+  7, 12, 16 or 18, by PEGI's ages; ESRB, CERO, USK and the others are read
+  as ages too), and Hide unrated games. A game above it doesn't start.
+  Changing it asks for a parent's PIN (another profile without a limit).
 - Create desktop shortcut in a game's ⋯ menu: a shortcut with the game's
   cover as its icon that starts it in your profile (`--play`). It never
   replaces a file on the desktop.

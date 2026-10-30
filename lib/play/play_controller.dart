@@ -11,8 +11,9 @@ import '../core/romm/romm_models.dart';
 import '../core/save/catalog/play_request.dart';
 import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
-import '../providers/library_providers.dart';
 import '../library/upload_queue.dart';
+import '../profiles/profile_providers.dart';
+import '../providers/library_providers.dart';
 import 'play_engine.dart';
 import 'play_menu.dart';
 import 'quit_combo.dart';
@@ -58,6 +59,10 @@ class PlayController extends StateNotifier<PlayState> {
       state = const PlayState();
       return reason;
     }
+
+    // Above the profile's age limit (#224): claimed and let go, so whoever
+    // waits on the claim (`--play`) hears the refusal.
+    if (!_ref.read(ageLimitProvider).allows(game)) return refuse(aboveAgeLimit(game));
 
     try {
       final engine = _ref.read(playEngineProvider);
@@ -113,6 +118,8 @@ class PlayController extends StateNotifier<PlayState> {
   /// for its own settings (controllers). Returns why it couldn't, or null.
   Future<String?> openEmulator(String emulatorId, String name, String exePath) async {
     if (state.runningGameId != null) return tr('A game is running. Close it first.');
+    // On its own an emulator opens any ROM: not with an age limit (#224).
+    if (_ref.read(ageLimitProvider).isOn) return tr('An emulator can\'t be opened on its own with an age limit.');
     state = PlayState(runningGameId: openEmulatorId(emulatorId));
     try {
       final engine = _ref.read(playEngineProvider);
@@ -151,6 +158,8 @@ class PlayController extends StateNotifier<PlayState> {
       state = const PlayState();
       return reason;
     }
+
+    if (!_ref.read(ageLimitProvider).allows(game)) return refuse(aboveAgeLimit(game));
 
     try {
       final engine = _ref.read(playEngineProvider);
@@ -391,3 +400,6 @@ final playStatesProvider = StreamProvider.autoDispose.family<List<ResumeEntry>, 
   final engine = ref.watch(playEngineProvider);
   return engine?.statesFor(key.game) ?? Stream.value(const []);
 });
+
+/// Why a game over the profile's age limit (#224) doesn't start.
+String aboveAgeLimit(Game game) => tr('{0} is above this profile\'s age limit.', [game.displayName]);
