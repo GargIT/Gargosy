@@ -74,7 +74,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
   Widget build(BuildContext context) {
     final root = ref.watch(appRootProvider);
     final volumes = ref.watch(diskInfoProvider);
-    final disk = ref.watch(diskUsageProvider(root.root));
+    final disk = ref.watch(diskUsageProvider).usage(root.root);
     final usage = ref.watch(storageUsageProvider);
     final counting = switch (usage) {
       AsyncError() => tr('Couldn\'t be read'),

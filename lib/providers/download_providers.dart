@@ -24,12 +24,12 @@ final diskInfoProvider = Provider<DiskInfo>((ref) => diskInfoFor(PlatformInfo.cu
 /// Bumped after a download or a delete, so "downloaded?" is read again.
 final romFilesVersionProvider = StateProvider<int>((ref) => 0);
 
-/// The free space and size of a path's volume, read once (not on every
-/// build: a slow or network drive would stall the screen), and again after
-/// a download or a delete; null when it can't be told.
-final diskUsageProvider = Provider.autoDispose.family<({int free, int total})?, String>((ref, path) {
+/// The volumes' free space for screens (#7 of the 2026-10-30 review): read
+/// at most every [DiskUsageCache.refresh], not on every build, and afresh
+/// after a download or a delete.
+final diskUsageProvider = Provider<DiskUsageCache>((ref) {
   ref.watch(romFilesVersionProvider);
-  return ref.watch(diskInfoProvider).usage(path);
+  return DiskUsageCache(ref.watch(diskInfoProvider));
 });
 
 bool watchDownloaded(WidgetRef ref, Game g) {

@@ -173,7 +173,7 @@ void main() {
     expect(find.byKey(const ValueKey('free-space')), findsNothing);
   });
 
-  testWidgets('the free space is read once, not on every build, and again after a download or delete', (tester) async {
+  testWidgets('the free space is not read on every build, and again after a download or delete', (tester) async {
     var reads = 0;
     await pump(
       tester,
@@ -197,6 +197,23 @@ void main() {
     c.read(romFilesVersionProvider.notifier).state++;
     await tester.pump();
     expect(reads, greaterThan(before));
+  });
+
+  testWidgets('the free space follows the drive while the page is open (another download filling it)', (tester) async {
+    var free = 1 << 50;
+    var now = DateTime(2026, 10, 30, 12);
+    final disk = FakeDisk((_) => free);
+    await pump(tester, extra: [diskUsageProvider.overrideWithValue(DiskUsageCache(disk, now: () => now))]);
+    expect(find.byKey(const ValueKey('free-space')), findsNothing);
+    free = burnout.fileSize + spaceHeadroom;
+    // A download tick rebuilds the page: within the refresh the old value stands.
+    tester.element(find.byType(GameCoverColumn)).markNeedsBuild();
+    await tester.pump();
+    expect(find.byKey(const ValueKey('free-space')), findsNothing);
+    now = now.add(DiskUsageCache.refresh);
+    tester.element(find.byType(GameCoverColumn)).markNeedsBuild();
+    await tester.pump();
+    expect(find.byKey(const ValueKey('free-space')), findsOneWidget);
   });
 
   testWidgets('behind another download it is Queued, and can be taken out of the queue (#143)', (tester) async {
