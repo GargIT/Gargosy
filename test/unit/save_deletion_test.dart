@@ -174,7 +174,8 @@ void main() {
 
   test('a card named in another case is still copied under its place in the profile', () async {
     final card = file(saves, 'shared_card_1.mcd');
-    final cased = card.path.replaceFirst(r'\emulators', r'\EMULATORS');
+    final sep = p.separator;
+    final cased = card.path.replaceFirst('${sep}emulators$sep', '${sep}EMULATORS$sep');
     await delete(
       _Planned(
         saves,
@@ -188,6 +189,18 @@ void main() {
     final at = p.join(root.profiles, 'p1', 'backups', 'deleted', '20261022T180509');
     expect(File(p.join(at, 'EMULATORS', 'mgba', 'saves', 'shared_card_1.mcd')).existsSync(), isTrue);
     expect(File(p.join(at, 'shared_card_1.mcd')).existsSync(), isFalse);
+  }, skip: PathGuard(AppRoot('.')).caseSensitive ? 'needs a file system that ignores case' : false);
+
+  test(r"a save folder outside the profile keeps its place under gargosy\, not laid flat", () async {
+    final folder = Directory(p.join(root.emulators, 'pcsx2', 'memcards', 'Mcd001.ps2', 'BASLUS-20328SAVE'))
+      ..createSync(recursive: true);
+    file(folder.path, 'SAVE.DAT');
+    file(folder.path, 'icon.sys');
+    await delete(_Planned(saves, () => LocalSaveDeletion(folders: [folder])));
+    final at = p.join(root.profiles, 'p1', 'backups', 'deleted', '20261022T180509');
+    final kept = p.join(at, 'gargosy', 'emulators', 'pcsx2', 'memcards', 'Mcd001.ps2', 'BASLUS-20328SAVE');
+    expect(File(p.join(kept, 'SAVE.DAT')).existsSync(), isTrue);
+    expect(File(p.join(kept, 'icon.sys')).existsSync(), isTrue);
   });
 
   test("the game's save folder: copied first, then deleted with what's in it; the others stay", () async {

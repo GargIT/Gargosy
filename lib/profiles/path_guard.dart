@@ -59,6 +59,19 @@ class PathGuard {
   /// system compares: `p.isWithin` sees case on macOS, where this doesn't.
   bool isWithin(String parent, String child) => _keyWithin(pathKey(parent), pathKey(child));
 
+  /// [child]'s path below [parent] (as written in [child]), when it is inside
+  /// as the file system compares; null otherwise. Part by part, so a name
+  /// that differs only in case still matches (`p.relative` would go `..`).
+  String? relativeWithin(String parent, String child) {
+    final ps = p.split(p.normalize(p.absolute(parent)));
+    final cs = p.split(p.normalize(p.absolute(child)));
+    if (cs.length <= ps.length) return null;
+    for (var i = 0; i < ps.length; i++) {
+      if (_keyOf(ps[i]) != _keyOf(cs[i])) return null;
+    }
+    return p.joinAll(cs.skip(ps.length));
+  }
+
   static bool _keyWithin(String parent, String child) => child.startsWith('$parent${p.separator}');
 
   /// The shared places' keys (settings.json first), worked out once per
