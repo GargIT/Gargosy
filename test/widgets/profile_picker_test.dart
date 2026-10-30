@@ -246,6 +246,21 @@ void main() {
       expect(h.container.read(activeProfileProvider)!.profile.name, 'Bob');
     });
 
+    testWidgets('handed over while a PIN entry is open: dropped, the entry stays', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      await addProfile(tester, 'Anna', pin: '4711');
+      final bob = await addProfile(tester, 'Bob', userId: 8);
+      await h.pumpApp(tester);
+      await h.send(tester, GameAction.confirm);
+      expect(find.text('PIN for Anna'), findsOneWidget);
+      h.container.read(outsideLaunchProvider.notifier).state = OutsideLaunch(romId: '1', profileId: bob.id);
+      await tester.pump();
+      expect(h.container.read(outsideLaunchProvider), isNull);
+      expect(find.text('PIN for Anna'), findsOneWidget);
+      expect(h.container.read(activeProfileProvider), isNull);
+    });
+
     testWidgets('a PIN is asked first; Back stays at the picker and drops the launch', (tester) async {
       h = AppHarness();
       await h.setUp(tester);

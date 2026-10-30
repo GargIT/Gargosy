@@ -16,7 +16,8 @@ What changed in each release of Gargosy. The format follows
   starts and ends with the game. A save that didn't reach RomM is said
   first. `--play-stay` keeps Gargosy open. With Gargosy already open, the
   shortcut brings it to the front and plays the game there (switching
-  profile first when another is named); a second Gargosy never starts.
+  profile first when another is named), and it stays open after; a second
+  Gargosy never starts.
 - After a game, Gargosy says which RetroAchievements you earned in it:
   "2 achievements earned · 15 points (hardcore)", once RomM has read them,
   and the game's Achievements tab shows them.

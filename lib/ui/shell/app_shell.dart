@@ -140,7 +140,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     });
     // A --play handed over by another start (#223) for this profile.
     ref.listen<OutsideLaunch?>(outsideLaunchProvider, (prev, next) {
-      if (prev == null && next != null && launchIsFor(next, ctx.profile.id)) runOutsideLaunch(context, ref);
+      if (next != null && next != prev && launchIsFor(next, ctx.profile.id)) runOutsideLaunch(context, ref);
     });
     final offline = ref.watch(rommOfflineProvider);
     // RomM is back: what waited goes up.

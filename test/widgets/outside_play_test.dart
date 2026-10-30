@@ -161,7 +161,7 @@ void main() {
   });
 
   group('handed over by a later start (#223)', () {
-    testWidgets('comes to the front and plays in the open profile', (tester) async {
+    testWidgets('comes to the front, plays in the open profile, and stays open after', (tester) async {
       await pump(tester, null, found: game(1, 'G1'));
       await onSecondStart(nav, shellRef, const ['--play=1']);
       await tester.pumpAndSettle();
@@ -169,7 +169,7 @@ void main() {
       expect(engine.steps, ['states', 'prepare', 'launch']);
       engine.running!.complete(const PlayResult('Save synced', synced: true));
       await tester.pumpAndSettle();
-      expect(quits, 1);
+      expect(quits, 0, reason: 'the Gargosy the player was using stays open');
     });
 
     testWidgets('without --play it only comes to the front', (tester) async {

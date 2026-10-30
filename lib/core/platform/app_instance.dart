@@ -18,18 +18,33 @@ import '../../profiles/path_guard.dart';
 class AppInstance {
   AppInstance._(this._lock, this._server, this._requests);
 
-  final io.RandomAccessFile _lock;
-  final io.ServerSocket _server;
+  /// A start that holds nothing: the holder couldn't be reached, so this one
+  /// runs rather than end without a word.
+  AppInstance._unclaimed() : _lock = null, _server = null, _requests = StreamController<List<String>>();
+
+  final io.RandomAccessFile? _lock;
+  final io.ServerSocket? _server;
+
+  /// Single-subscription, so what a later start sends before Gargosy listens
+  /// (while it is still starting) waits for it.
   final StreamController<List<String>> _requests;
 
-  /// The arguments of each later start, as it was given them.
+  /// The arguments of each later start, as it was given them; listened to once.
   Stream<List<String>> get requests => _requests.stream;
+
+  /// Whether this start holds the folder.
+  bool get holds => _lock != null;
 
   static String lockPath(AppRoot root) => p.join(root.appData, 'instance.lock');
   static String infoPath(AppRoot root) => p.join(root.appData, 'instance.json');
 
+  /// How long a later start may take to send its arguments.
+  static const readTimeout = Duration(seconds: 5);
+
   /// This start's claim on [root], or null when another Gargosy holds it and
-  /// took [args] (or couldn't be reached): this one should exit.
+  /// took [args]: this one should exit. When the holder can't be reached, a
+  /// claim that holds nothing, and Gargosy starts. A claim that fails half
+  /// way lets the lock go before it throws.
   static Future<AppInstance?> claim(AppRoot root, List<String> args) async {
     final guard = PathGuard(root);
     final lock = await io.File(guard.check(lockPath(root))).open(mode: io.FileMode.append);
@@ -37,15 +52,26 @@ class AppInstance {
       await lock.lock(io.FileLock.exclusive);
     } on io.FileSystemException {
       await lock.close();
-      await handOver(root, args);
-      return null;
+      if (await handOver(root, args)) return null;
+      return AppInstance._unclaimed();
     }
-    final server = await io.ServerSocket.bind(io.InternetAddress.loopbackIPv4, 0);
-    final token = _token();
-    await writeJsonObject(guard, infoPath(root), {'port': server.port, 'token': token, 'pid': io.pid});
-    final requests = StreamController<List<String>>.broadcast();
-    server.listen((socket) => _read(socket, token, requests));
-    return AppInstance._(lock, server, requests);
+    io.ServerSocket? server;
+    try {
+      // A crashed holder's port is never read while this one starts.
+      final info = io.File(guard.check(infoPath(root)));
+      if (info.existsSync()) info.deleteSync();
+      server = await io.ServerSocket.bind(io.InternetAddress.loopbackIPv4, 0);
+      final token = _token();
+      await writeJsonObject(guard, infoPath(root), {'port': server.port, 'token': token, 'pid': io.pid});
+      final requests = StreamController<List<String>>();
+      server.listen((socket) => _read(socket, token, requests));
+      return AppInstance._(lock, server, requests);
+    } on Object {
+      await server?.close();
+      await lock.unlock();
+      await lock.close();
+      rethrow;
+    }
   }
 
   /// Sends [args] to the Gargosy holding [root], trying for a few seconds
@@ -68,31 +94,54 @@ class AppInstance {
         continue;
       }
     }
-    debugPrint('[Instance] another Gargosy holds the folder but could not be reached');
+    debugPrint('[Instance] another Gargosy holds the folder but could not be reached; starting anyway');
     return false;
   }
 
-  /// One line of JSON from a later start; anything else (no token, too long)
-  /// is dropped.
+  /// One line of JSON from a later start, read until its newline (or the
+  /// connection ends) within [readTimeout]; anything else (no token, too
+  /// long, too slow) is dropped.
   static void _read(io.Socket socket, String token, StreamController<List<String>> into) {
     final buf = <int>[];
+    var done = false;
+    late final Timer timer;
+    void finish() {
+      if (done) return;
+      done = true;
+      timer.cancel();
+      socket.destroy();
+      try {
+        final msg = jsonDecode(utf8.decode(buf, allowMalformed: true).trim());
+        if (msg is Map && msg['token'] == token && msg['args'] is List) {
+          into.add([for (final a in msg['args'] as List) '$a']);
+        }
+      } on FormatException {
+        return;
+      }
+    }
+
+    timer = Timer(readTimeout, () {
+      done = true;
+      socket.destroy();
+    });
     socket.listen(
       (data) {
+        if (done) return;
         buf.addAll(data);
-        if (buf.length > 64 * 1024) socket.destroy();
-      },
-      onDone: () {
-        socket.destroy();
-        try {
-          final msg = jsonDecode(utf8.decode(buf).trim());
-          if (msg is Map && msg['token'] == token && msg['args'] is List) {
-            into.add([for (final a in msg['args'] as List) '$a']);
-          }
-        } on FormatException {
-          return;
+        if (buf.length > 64 * 1024) {
+          done = true;
+          timer.cancel();
+          socket.destroy();
+        } else if (data.contains(10)) {
+          finish();
         }
       },
-      onError: (Object _) => socket.destroy(),
+      onDone: finish,
+      onError: (Object _) {
+        done = true;
+        timer.cancel();
+        socket.destroy();
+      },
       cancelOnError: true,
     );
   }
@@ -104,9 +153,10 @@ class AppInstance {
 
   /// Lets the folder go (tests; a normal exit lets it go by itself).
   Future<void> release() async {
-    await _server.close();
-    await _requests.close();
-    await _lock.unlock();
-    await _lock.close();
+    await _server?.close();
+    // Never listened, a single-subscription stream's close never completes.
+    unawaited(_requests.close());
+    await _lock?.unlock();
+    await _lock?.close();
   }
 }
