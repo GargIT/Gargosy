@@ -26,6 +26,21 @@ void main() {
     expect(PathGuard(root, platform: const PlatformInfo('windows')).caseSensitive, isFalse);
   });
 
+  test('guards on one root share its keys but keep their own profile and case rule', () {
+    final shared = AppRoot(r'E:\Gargosy');
+    final any = PathGuard(shared, activeProfileId: 'aaa', platform: const PlatformInfo('windows'));
+    final exact = PathGuard(shared, activeProfileId: 'aaa', platform: const PlatformInfo('linux'));
+    expect(any.check(r'E:\Gargosy\ROMS\x.iso'), r'E:\Gargosy\ROMS\x.iso');
+    expect(() => exact.check(r'E:\Gargosy\ROMS\x.iso'), throwsA(isA<PathGuardException>()));
+    expect(any.check(r'E:\Gargosy\userdata\SETTINGS.json'), r'E:\Gargosy\userdata\SETTINGS.json');
+    expect(() => exact.check(r'E:\Gargosy\userdata\SETTINGS.json'), throwsA(isA<PathGuardException>()));
+    final other = any.forProfile('bbb');
+    expect(other.check(r'E:\Gargosy\userdata\profiles\bbb\x'), r'E:\Gargosy\userdata\profiles\bbb\x');
+    expect(() => other.check(r'E:\Gargosy\userdata\profiles\aaa\x'), throwsA(isA<PathGuardException>()));
+    expect(any.check(r'E:\Gargosy\userdata\profiles\aaa\x'), r'E:\Gargosy\userdata\profiles\aaa\x');
+    expect(() => PathGuard(shared).check(r'E:\Gargosy\userdata\profiles\aaa\x'), throwsA(isA<PathGuardException>()));
+  });
+
   group('on a case-sensitive file system (#204)', () {
     // The paths stay Windows' (the tests run there); only the comparison changes.
     final exact = PathGuard(root, activeProfileId: 'aaa', platform: const PlatformInfo('linux'));
