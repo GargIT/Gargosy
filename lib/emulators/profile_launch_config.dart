@@ -3,11 +3,13 @@ import '../core/retroachievements/retroachievements_emulator_login.dart';
 import 'dart:convert';
 import 'dart:io' as io;
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/save/strategies/scummvm_save_strategy.dart';
 import '../core/storage/ini_file.dart';
 import '../profiles/path_guard.dart';
+import '../profiles/profile_paths.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
 import 'linked_emulators.dart';
@@ -556,17 +558,21 @@ class _Swap extends ProfileLaunchConfig {
       // The emulator's folder in the profile; the exe may sit in a subfolder
       // of its install, so it isn't the exe folder's name.
       final emulator = json['emulator'] as String? ?? p.basename(c.data);
-      final ownerData = p.join(c.profilesDir, owner, 'emulators', emulator);
+      // Both names come from a file in the shared emulators\ folder: checked
+      // before any path is built from them.
       final ownerGuard = c.guard.forProfile(owner);
-      if (io.Directory(p.join(c.profilesDir, owner)).existsSync()) {
+      final ownerPaths = ProfilePaths(ownerGuard.root, owner);
+      final ownerData = ownerPaths.emulatorDir(emulator);
+      if (io.Directory(ownerPaths.dir).existsSync()) {
         io.Directory(ownerGuard.check(ownerData)).createSync(recursive: true);
         for (final f in files) {
           final live = io.File(p.join(c.exeDir, f));
           if (live.existsSync()) live.copySync(ownerGuard.check(p.join(ownerData, f)));
         }
       }
-    } on Object {
+    } on Object catch (e) {
       // An unreadable marker: the files stay where they are and are replaced below.
+      debugPrint('[Launch] Swap marker in ${c.exeDir} not put back: $e');
     }
     mark.deleteSync();
   }
