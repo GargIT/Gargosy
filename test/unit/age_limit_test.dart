@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
-import 'package:gargosy/library/age_limit.dart';
+import 'package:gargosy/profiles/age_limit.dart';
 import 'package:gargosy/profiles/profile.dart';
 
 import '../helpers/game_fixtures.dart';
@@ -48,10 +48,13 @@ void main() {
     expect(const AgeLimit(maxAge: 12).ratingsAllowed(values), ['3', '7', '12', 'E']);
   });
 
-  test('kept in profile.json; an age it does not offer reads as off', () {
+  test('kept in profile.json; an age it does not offer holds at the nearest stricter one', () {
     const l = AgeLimit(maxAge: 7, hideUnrated: true);
     expect(AgeLimit.fromJson(l.toJson()), l);
-    expect(AgeLimit.fromJson({'max_age': 9}), AgeLimit.off);
+    expect(AgeLimit.fromJson({'max_age': 14}), const AgeLimit(maxAge: 12));
+    expect(AgeLimit.fromJson({'max_age': 1}), const AgeLimit(maxAge: 3));
+    expect(AgeLimit.fromJson({'max_age': 21}), const AgeLimit(maxAge: 18));
+    expect(AgeLimit.fromJson({'max_age': null}), AgeLimit.off);
     expect(AgeLimit.fromJson(null), AgeLimit.off);
   });
 

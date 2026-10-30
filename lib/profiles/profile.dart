@@ -1,4 +1,4 @@
-import '../library/age_limit.dart';
+import 'age_limit.dart';
 import 'pin.dart';
 
 /// One person on this PC: a RomM user on a server, plus a name, colour and PIN.

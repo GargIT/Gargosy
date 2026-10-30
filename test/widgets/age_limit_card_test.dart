@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gargosy/library/age_limit.dart';
+import 'package:gargosy/profiles/age_limit.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/pin.dart';
 import 'package:gargosy/profiles/profile.dart';
@@ -30,6 +30,8 @@ void main() {
         pin: pin == null ? null : PinHash.create(pin, random: Random(3), iterations: 1000),
       ),
     ))!;
+    // Made one after another, never in the same instant (guardians are older).
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 5)));
     if (!limit.isOn) return p;
     final limited = p.copyWith(ageLimit: limit);
     await tester.runAsync(() => store.save(limited));
@@ -89,7 +91,13 @@ void main() {
     expect(find.textContaining('Anyone can change it'), findsOneWidget);
     await choose(tester, 'Up to 12');
     expect(saved(), const AgeLimit(maxAge: 12));
-    expect(find.text('Hide unrated games'), findsOneWidget);
+    await tester.tap(find.text('Hide unrated games'));
+    await h.settle(tester);
+    expect(saved(), const AgeLimit(maxAge: 12, hideUnrated: true));
+    await choose(tester, 'Off');
+    expect(saved(), AgeLimit.off, reason: 'Off clears Hide unrated too');
+    await choose(tester, 'Up to 7');
+    expect(saved(), const AgeLimit(maxAge: 7));
   });
 
   testWidgets("a parent's PIN is asked: a wrong one keeps the limit, the right one changes it", (tester) async {
@@ -119,19 +127,20 @@ void main() {
   });
 
   test('guardians: other profiles without a limit that have a PIN', () {
-    Profile p(String id, {bool pin = false, AgeLimit limit = AgeLimit.off}) => Profile(
+    Profile p(String id, {bool pin = false, AgeLimit limit = AgeLimit.off, int month = 1}) => Profile(
       id: id,
       name: id,
       colorIndex: 0,
       serverUrl: 's',
       rommUserId: 1,
       rommUsername: id,
-      createdAt: DateTime(2026),
+      createdAt: DateTime(2026, month),
       pin: pin ? PinHash.create('1234', random: Random(1), iterations: 1) : null,
       ageLimit: limit,
     );
-    final kid = p('kid', pin: true, limit: const AgeLimit(maxAge: 7));
+    final kid = p('kid', pin: true, limit: const AgeLimit(maxAge: 7), month: 2);
     final mum = p('mum', pin: true), dad = p('dad'), sib = p('sib', pin: true, limit: const AgeLimit(maxAge: 12));
-    expect(guardiansOf([kid, mum, dad, sib], kid), [mum]);
+    final made = p('made-by-kid', pin: true, month: 3);
+    expect(guardiansOf([kid, mum, dad, sib, made], kid), [mum], reason: 'one made after the child never counts');
   });
 }

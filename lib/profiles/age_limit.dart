@@ -1,8 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../core/romm/game_overview.dart';
 import '../core/romm/romm_models.dart';
-import '../profiles/profile_providers.dart';
 
 /// #224: a profile's age limit. Games rated above [maxAge] are hidden from
 /// the profile and refused at Play; with [hideUnrated], so are games without
@@ -36,7 +33,7 @@ class AgeLimit {
   /// those a gallery leaves out with `age_ratings_logic=none`.
   List<String> ratingsAbove(Iterable<String> values) => [
     for (final v in values)
-      if (!allowsAge(ratingAgeOf(v)) && ratingAgeOf(v) != null) v,
+      if (ratingAgeOf(v) case final age? when !allowsAge(age)) v,
   ];
 
   /// Of [values], those a gallery keeps with `age_ratings_logic=any` (with
@@ -51,7 +48,11 @@ class AgeLimit {
   static AgeLimit fromJson(Object? json) {
     if (json is! Map) return off;
     final max = json['max_age'];
-    return AgeLimit(maxAge: max is int && ages.contains(max) ? max : null, hideUnrated: json['hide_unrated'] == true);
+    if (max is! int) return off;
+    // An age this build doesn't offer (a newer Gargosy's) holds at the
+    // nearest stricter one, never as no limit.
+    final held = ages.lastWhere((a) => a <= max, orElse: () => ages.first);
+    return AgeLimit(maxAge: held, hideUnrated: json['hide_unrated'] == true);
   }
 
   @override
@@ -90,8 +91,8 @@ int? ratingAgeOf(String value) {
 }
 
 int? _ageOf(String board, String rating) {
-  final r = rating.replaceAll(RegExp(r'^(PEGI|USK|ESRB|CERO|ACB|GRAC)[ _]?'), '').trim();
-  final number = RegExp(r'^(\d{1,2})\+?$').firstMatch(r);
+  final r = rating.replaceAll(_boardPrefix, '').trim();
+  final number = _number.firstMatch(r);
   // GRAC's 19 is adults only, as 18 elsewhere.
   if (number != null) return int.parse(number.group(1)!).clamp(0, 18);
   final byBoard = _letters[board];
@@ -105,6 +106,9 @@ int? _ageOf(String board, String rating) {
   return strictest;
 }
 
+final _boardPrefix = RegExp(r'^(PEGI|USK|ESRB|CERO|ACB|GRAC)[ _]?');
+final _number = RegExp(r'^(\d{1,2})\+?$');
+
 const _letters = {
   'ESRB': {'EC': 3, 'E': 6, 'E10': 10, 'E10+': 10, 'T': 13, 'M': 17, 'AO': 18},
   'CERO': {'A': 0, 'B': 12, 'C': 15, 'D': 17, 'Z': 18},
@@ -114,8 +118,3 @@ const _letters = {
   'PEGI': <String, int>{},
   'USK': <String, int>{},
 };
-
-/// The open profile's age limit; [AgeLimit.off] without one.
-final ageLimitProvider = Provider<AgeLimit>(
-  (ref) => ref.watch(activeProfileProvider.select((c) => c?.profile.ageLimit)) ?? AgeLimit.off,
-);

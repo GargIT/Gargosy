@@ -15,7 +15,8 @@ import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
 import 'package:gargosy/core/save/resume_service.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
-import 'package:gargosy/library/age_limit.dart';
+import 'package:gargosy/profiles/age_limit.dart';
+import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/play/play_menu.dart';
@@ -591,6 +592,21 @@ void main() {
     expect(engine.steps, isEmpty);
     expect(limited.read(playControllerProvider).runningGameId, isNull);
     expect(await play.play(game(2, 'Unrated')), isNull, reason: 'unrated plays unless hidden');
+  });
+
+  test('with an age limit an emulator is not opened on its own (it opens any ROM)', () async {
+    final limited = ProviderContainer(
+      overrides: [
+        playEngineProvider.overrideWithValue(engine),
+        ageLimitProvider.overrideWithValue(const AgeLimit(maxAge: 12)),
+      ],
+    );
+    addTearDown(limited.dispose);
+    expect(
+      await limited.read(playControllerProvider.notifier).openEmulator('retroarch', 'RetroArch', 'retroarch.exe'),
+      contains('age limit'),
+    );
+    expect(limited.read(playControllerProvider).runningGameId, isNull);
   });
 
   test('resume pulls states, checks the chosen one, puts the save in place, then boots into the state', () async {

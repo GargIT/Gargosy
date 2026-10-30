@@ -11,9 +11,9 @@ import '../core/romm/romm_models.dart';
 import '../core/save/catalog/play_request.dart';
 import '../core/save/resume_service.dart';
 import '../core/save/save_sync_service.dart';
-import '../providers/library_providers.dart';
-import '../library/age_limit.dart';
 import '../library/upload_queue.dart';
+import '../profiles/profile_providers.dart';
+import '../providers/library_providers.dart';
 import 'play_engine.dart';
 import 'play_menu.dart';
 import 'quit_combo.dart';
@@ -52,7 +52,6 @@ class PlayController extends StateNotifier<PlayState> {
   /// it the game plays in its emulator with the profile's RomM save.
   Future<String?> play(Game game, {PlayRequest? request, void Function(String)? onNotice}) async {
     if (state.runningGameId != null) return tr('A game is already running. Close it first.');
-    if (!_ref.read(ageLimitProvider).allows(game)) return aboveAgeLimit(game);
     // Taken before the first await: a second press, or a profile switch,
     // while this one is still starting is refused too.
     state = PlayState(runningGameId: game.id);
@@ -60,6 +59,10 @@ class PlayController extends StateNotifier<PlayState> {
       state = const PlayState();
       return reason;
     }
+
+    // Above the profile's age limit (#224): claimed and let go, so whoever
+    // waits on the claim (`--play`) hears the refusal.
+    if (!_ref.read(ageLimitProvider).allows(game)) return refuse(aboveAgeLimit(game));
 
     try {
       final engine = _ref.read(playEngineProvider);
@@ -115,6 +118,8 @@ class PlayController extends StateNotifier<PlayState> {
   /// for its own settings (controllers). Returns why it couldn't, or null.
   Future<String?> openEmulator(String emulatorId, String name, String exePath) async {
     if (state.runningGameId != null) return tr('A game is running. Close it first.');
+    // On its own an emulator opens any ROM: not with an age limit (#224).
+    if (_ref.read(ageLimitProvider).isOn) return tr('An emulator can\'t be opened on its own with an age limit.');
     state = PlayState(runningGameId: openEmulatorId(emulatorId));
     try {
       final engine = _ref.read(playEngineProvider);
@@ -148,12 +153,13 @@ class PlayController extends StateNotifier<PlayState> {
     PlayRequest? remember,
   }) async {
     if (state.runningGameId != null) return tr('A game is already running. Close it first.');
-    if (!_ref.read(ageLimitProvider).allows(game)) return aboveAgeLimit(game);
     state = PlayState(runningGameId: game.id);
     String? refuse(String reason) {
       state = const PlayState();
       return reason;
     }
+
+    if (!_ref.read(ageLimitProvider).allows(game)) return refuse(aboveAgeLimit(game));
 
     try {
       final engine = _ref.read(playEngineProvider);

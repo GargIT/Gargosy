@@ -38,7 +38,7 @@ const svText = <String, String>{
   'After {0} minutes': 'Efter {0} minuter',
   'Age limit': 'Åldersgräns',
   'Age limit: {0}': 'Åldersgräns: {0}',
-  'Age rating': 'Åldersgräns',
+  'Age rating': 'Åldersmärkning',
   'All': 'Alla',
   'All on this PC': 'Allt finns på den här datorn',
   'All styles': 'Alla spelstilar',
@@ -46,6 +46,8 @@ const svText = <String, String>{
   'Also delete it from this PC': 'Ta också bort det från den här datorn',
   'Also delete the file on the server': 'Ta också bort filen på servern',
   'Always for this game': 'Alltid för det här spelet',
+  'An emulator can\'t be opened on its own with an age limit.':
+      'En emulator kan inte öppnas på egen hand med en åldersgräns.',
   'Another': 'Ett till',
   'Anyone can change it: set a PIN on a parent\'s profile (one without an age limit) to lock it.':
       'Vem som helst kan ändra den: sätt en PIN-kod på en förälders profil (en utan åldersgräns) för att låsa den.',
@@ -247,7 +249,7 @@ const svText = <String, String>{
   'Game id': 'Spel-id',
   'Game page': 'Spelsidan',
   'Games': 'Spel',
-  'Games rated above the limit are hidden from this profile and can\'t be played. A rating\'s age is its board\'s (PEGI, ESRB …); a game with several counts at its highest.': 'Spel med en åldersgräns över den här döljs för profilen och kan inte spelas. En åldersmärkning gäller den ålder dess system anger (PEGI, ESRB …); ett spel med flera räknas efter den högsta.',
+  'Games rated above the limit can\'t be played in this profile, and an emulator can\'t be opened on its own. A rating\'s age is its board\'s (PEGI, ESRB …); a game with several counts at its highest.': 'Spel med en åldersmärkning över gränsen kan inte spelas i den här profilen, och en emulator kan inte öppnas på egen hand. En märknings ålder är den dess system anger (PEGI, ESRB …); ett spel med flera räknas efter den högsta.',
   'Games without a rating Gargosy can read are hidden too.':
       'Spel utan en åldersmärkning som Gargosy kan läsa döljs också.',
   'Gargosy can\'t load sigil.dll': 'Gargosy kan inte läsa in sigil.dll',
