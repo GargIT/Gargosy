@@ -43,34 +43,44 @@ class PathGuard {
   /// [path] absolute and normalized, without a trailing separator, in the
   /// case it compares in: two paths to one place give the same key.
   String pathKey(String path) {
-    final full = p.normalize(p.absolute(path)).replaceAll(RegExp(r'[\\/]+$'), '');
+    final full = p.normalize(p.absolute(path)).replaceAll(_trailingSeparators, '');
     return caseSensitive ? full : full.toLowerCase();
   }
+
+  static final _trailingSeparators = RegExp(r'[\\/]+$');
 
   /// Whether [a] and [b] are the same place, as the file system compares.
   bool samePath(String a, String b) => pathKey(a) == pathKey(b);
 
   /// Whether [child] is inside [parent] (not [parent] itself), as the file
   /// system compares: `p.isWithin` sees case on macOS, where this doesn't.
-  bool isWithin(String parent, String child) => pathKey(child).startsWith('${pathKey(parent)}${p.separator}');
+  bool isWithin(String parent, String child) => _keyWithin(pathKey(parent), pathKey(child));
 
-  List<String> get _allowedDirs => [
-    root.roms,
-    root.emulators,
-    root.bios,
-    root.templates,
-    root.appData,
-    if (activeProfileId != null) p.join(root.profiles, activeProfileId),
+  static bool _keyWithin(String parent, String child) => child.startsWith('$parent${p.separator}');
+
+  /// The writable places' keys, worked out once: [check] runs in tight loops
+  /// (template copies, zip entries, sigil's callbacks, backups). The root is
+  /// absolute, so they don't depend on the working folder.
+  late final String _settingsKey = pathKey(root.settingsFile);
+  late final List<String> _allowedKeys = [
+    for (final dir in [
+      root.roms,
+      root.emulators,
+      root.bios,
+      root.templates,
+      root.appData,
+      if (activeProfileId != null) p.join(root.profiles, activeProfileId),
+    ])
+      pathKey(dir),
   ];
 
   /// [path], absolute and normalized, if it may be written; throws otherwise.
   String check(String path) {
     final full = p.normalize(p.absolute(path));
     final key = pathKey(full);
-    if (key == pathKey(root.settingsFile)) return full;
-    for (final dir in _allowedDirs) {
-      final d = pathKey(dir);
-      if (key == d || key.startsWith('$d${p.separator}')) return full;
+    if (key == _settingsKey) return full;
+    for (final d in _allowedKeys) {
+      if (key == d || _keyWithin(d, key)) return full;
     }
     throw PathGuardException(full, "outside Gargosy's writable folders");
   }
