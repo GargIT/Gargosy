@@ -26,6 +26,28 @@ extension DiskFree on DiskInfo {
   int? freeOf(String path) => usage(path)?.free;
 }
 
+/// [DiskInfo.usage] for a screen: the game page rebuilds on each download
+/// tick, and a slow or network drive would stall it, so a path's volume is
+/// read again only once [refresh] has passed; a build after that sees what
+/// other writers (queued downloads, an unpack, the image cache) did.
+class DiskUsageCache {
+  DiskUsageCache(this._disk, {DateTime Function()? now}) : _now = now ?? DateTime.now;
+
+  static const refresh = Duration(seconds: 5);
+
+  final DiskInfo _disk;
+  final DateTime Function() _now;
+  final _read = <String, (DateTime, ({int free, int total})?)>{};
+
+  ({int free, int total})? usage(String path) {
+    final now = _now();
+    if (_read[path] case (final at, final usage) when now.difference(at) < refresh) return usage;
+    final usage = _disk.usage(path);
+    _read[path] = (now, usage);
+    return usage;
+  }
+}
+
 /// The [DiskInfo] of [platform]'s OS.
 DiskInfo diskInfoFor(PlatformInfo platform) {
   if (platform.isWindows) return const WindowsDiskInfo();

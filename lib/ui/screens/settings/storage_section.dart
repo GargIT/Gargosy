@@ -65,6 +65,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
       }
     } finally {
       ref.invalidate(storageUsageProvider);
+      ref.invalidate(diskUsageProvider);
       if (mounted) setState(() => _emptying = false);
     }
   }
@@ -73,7 +74,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
   Widget build(BuildContext context) {
     final root = ref.watch(appRootProvider);
     final volumes = ref.watch(diskInfoProvider);
-    final disk = volumes.usage(root.root);
+    final disk = ref.watch(diskUsageProvider).usage(root.root);
     final usage = ref.watch(storageUsageProvider);
     final counting = switch (usage) {
       AsyncError() => tr('Couldn\'t be read'),

@@ -24,6 +24,14 @@ final diskInfoProvider = Provider<DiskInfo>((ref) => diskInfoFor(PlatformInfo.cu
 /// Bumped after a download or a delete, so "downloaded?" is read again.
 final romFilesVersionProvider = StateProvider<int>((ref) => 0);
 
+/// The volumes' free space for screens (#7 of the 2026-10-30 review): read
+/// at most every [DiskUsageCache.refresh], not on every build, and afresh
+/// after a download or a delete.
+final diskUsageProvider = Provider<DiskUsageCache>((ref) {
+  ref.watch(romFilesVersionProvider);
+  return DiskUsageCache(ref.watch(diskInfoProvider));
+});
+
 bool watchDownloaded(WidgetRef ref, Game g) {
   ref.watch(romFilesVersionProvider);
   return ref.read(romFilesProvider).isDownloaded(g);
