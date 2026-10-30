@@ -18,6 +18,9 @@ import '../update/update_version.dart';
 /// Gargosy's own command line (main's `args`), passed on by an update.
 final launchArgsProvider = Provider<List<String>>((ref) => const []);
 
+/// This Gargosy's exe, which a desktop shortcut starts (#223); tests replace it.
+final appExecutableProvider = Provider<String>((ref) => io.Platform.resolvedExecutable);
+
 /// What the last update did, read from [launchArgsProvider] in main.
 final updateOutcomeProvider = Provider<UpdateOutcome?>((ref) => null);
 

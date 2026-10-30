@@ -144,6 +144,7 @@ const svText = <String, String>{
   'Counting…': 'Räknar…',
   'Covers and platform logos kept on this PC, so browsing doesn\'t ask RomM for them again. Grids use RomM\'s small covers, a game\'s page the large one. Past the limit, the ones looked at longest ago go. This PC\'s setting, for every profile.': 'Omslag och plattformslogotyper som sparas på den här datorn, så att bläddrandet inte ber RomM om dem igen. Rutnät använder RomM:s små omslag, ett spels sida det stora. Över gränsen försvinner de som tittades på för längst sedan. Den här datorns inställning, för alla profiler.',
   'Covers: {0}': 'Omslag: {0}',
+  'Create desktop shortcut': 'Skapa genväg på skrivbordet',
   'Current PIN': 'Nuvarande PIN-kod',
   'Customize Home': 'Anpassa Hem',
   'D-pad': 'Styrkors',
@@ -597,6 +598,7 @@ const svText = <String, String>{
   'Shared on RomM': 'Delad på RomM',
   'Shared on RomM: the other players there can see it and play from it.':
       'Delad på RomM: de andra spelarna där kan se den och spela från den.',
+  'Shortcut made on the desktop: {0}': 'Genväg skapad på skrivbordet: {0}',
   'Show all {0}': 'Visa alla {0}',
   'Sign in again': 'Logga in igen',
   'Signed in again as {0}.': 'Inloggad igen som {0}.',
@@ -676,6 +678,7 @@ const svText = <String, String>{
   'The save from {0} is on this PC now.': 'Sparfilen från {0} finns på den här datorn nu.',
   'The server could not be reached': 'Servern kunde inte nås',
   'The server does not support this': 'Servern stöder inte det här',
+  'The shortcut couldn\'t be made: {0}': 'Genvägen kunde inte skapas: {0}',
   'The update can\'t be used': 'Uppdateringen kan inte användas',
   'The update couldn\'t be installed': 'Uppdateringen kunde inte installeras',
   'The update couldn\'t be installed{0}': 'Uppdateringen kunde inte installeras{0}',

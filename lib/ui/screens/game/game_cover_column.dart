@@ -26,6 +26,7 @@ import '../../widgets/toast.dart';
 import '../play/play_screen.dart';
 import 'add_to_collection.dart';
 import 'delete_game_dialog.dart';
+import 'make_shortcut.dart';
 import '../../../l10n/tr.dart';
 
 /// Opens a folder in Windows' Explorer; tests replace it.
@@ -121,6 +122,8 @@ class GameCoverColumn extends ConsumerWidget {
             );
           },
         ),
+      if (downloaded)
+        (label: tr('Create desktop shortcut'), danger: false, run: () => makeGameShortcut(context, ref, game)),
       if (downloaded && (engine?.stateSyncAvailable(game) ?? false))
         (
           label: tr('Sync save states now'),
