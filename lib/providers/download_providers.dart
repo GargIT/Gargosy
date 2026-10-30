@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../library/disk_space.dart';
+import '../library/download_check.dart';
 import '../library/download_service.dart';
 import '../library/dsi_title.dart';
 import '../library/library_snapshot.dart';
@@ -53,6 +54,7 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
     urlFor: romm.getDownloadUrl,
     detail: romm.getGame,
     disk: ref.watch(diskInfoProvider),
+    checkHashes: () => DownloadCheck.of(ref.read(appPreferencesProvider)),
   );
 });
 

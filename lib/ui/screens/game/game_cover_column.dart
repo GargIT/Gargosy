@@ -239,10 +239,11 @@ class GameCoverColumn extends ConsumerWidget {
             child: LinearProgressIndicator(value: progress.fraction),
           ),
           const SizedBox(height: GSpace.s2),
-          Text(
-            progress.phase == DownloadPhase.extracting ? tr('Unpacking…') : tr('Downloading{0}', [pct]),
-            style: const TextStyle(color: GColors.fgSecondary),
-          ),
+          Text(switch (progress.phase) {
+            DownloadPhase.extracting => tr('Unpacking…'),
+            DownloadPhase.checking => tr('Checking…'),
+            _ => tr('Downloading{0}', [pct]),
+          }, style: const TextStyle(color: GColors.fgSecondary)),
           // Unpacking can't be stopped halfway, so Cancel goes away once it starts.
           if (progress.phase == DownloadPhase.downloading) ...[
             const SizedBox(height: GSpace.s3),

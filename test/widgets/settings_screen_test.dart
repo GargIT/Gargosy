@@ -266,6 +266,8 @@ void main() {
     expect(find.text('PlayStation'), findsWidgets, reason: "the platform's name, not its folder");
     await tester.scrollUntilVisible(find.text('Change'), 200, scrollable: find.byType(Scrollable).last);
     expect(find.text('10 000 images (about 1.1 GB)'), findsOneWidget);
+    await tester.ensureVisible(find.text('Change'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Change'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('25 000 images (about 2.9 GB)'));

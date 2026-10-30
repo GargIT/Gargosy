@@ -79,6 +79,7 @@ const svText = <String, String>{
       'Att ändra den kräver den här profilens PIN-kod. En förälders profil med PIN-kod låser den i stället.',
   'Channel': 'Kanal',
   'Check automatically': 'Sök automatiskt',
+  'Check downloads': 'Kontrollera nedladdningar',
   'Check now': 'Sök nu',
   'Checking RomM\'s states…': 'Kollar RomM:s sparlägen…',
   'Checking…': 'Söker…',
@@ -197,6 +198,7 @@ const svText = <String, String>{
   'Drive {0}': 'Enhet {0}',
   'Dropped': 'Övergivet',
   'EMULATORS FOR {0}': 'EMULATORER FÖR {0}',
+  'Each download is checked against RomM\'s hashes before it goes into roms, so a damaged one is never played. Off for a slow PC and large discs.': 'Varje nedladdning kontrolleras mot RomM:s kontrollsummor innan den hamnar i roms, så att en skadad aldrig spelas. Av för en långsam dator och stora skivor.',
   'Either this RomM user may not delete games, or this profile signed in before Gargosy asked RomM for that. Sign in again under Settings → Profile → RomM account, then try again.': 'Antingen får den här RomM-användaren inte ta bort spel, eller så loggade profilen in innan Gargosy bad RomM om det. Logga in igen under Inställningar → Profil → RomM-konto och försök igen.',
   'Empty Temp': 'Töm Temp',
   'Emptying…': 'Tömmer…',
@@ -673,6 +675,7 @@ const svText = <String, String>{
       'Nedladdningen stämmer inte med GitHubs kontrollsumma (SHA-256).',
   'The download failed.': 'Nedladdningen misslyckades.',
   'The download failed: {0}': 'Nedladdningen misslyckades: {0}',
+  'The download is damaged ({0}). Download it again.': 'Nedladdningen är skadad ({0}). Ladda ner den igen.',
   'The download is {0} bytes, but GitHub says {1}.': 'Nedladdningen är {0} byte, men GitHub säger {1}.',
   'The download isn\'t a zip that can be read.': 'Nedladdningen är ingen zip som kan läsas.',
   'The emulator\'s program is removed. Every profile\'s saves and settings for it stay.':

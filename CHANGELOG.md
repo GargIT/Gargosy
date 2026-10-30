@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Downloads are checked against RomM's hashes before they go into `roms\`:
+  a damaged one fails with Retry instead of being played. Settings →
+  Storage → Check downloads turns it off.
 - Start a game from outside Gargosy: `Gargosy.exe --play=<rom id>`, with
   `--profile=<profile id>` to name the profile (with several profiles and
   none named, Gargosy asks who is playing). The profile opens (its PIN
