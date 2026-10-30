@@ -11,6 +11,7 @@ import 'package:gargosy/profiles/profile.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
+import 'package:gargosy/providers/update_providers.dart';
 import 'package:gargosy/ui/screens/game/make_shortcut.dart';
 import 'package:path/path.dart' as p;
 

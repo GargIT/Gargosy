@@ -11,7 +11,8 @@ import '../profiles/json_file.dart';
 import '../profiles/profile_paths.dart';
 
 /// #223: the game page's Create shortcut. A link on the player's desktop to
-/// [exe] with `--play=<game> --profile=<profile>`, named after the game,
+/// [exe] with `--play=<game> --profile=<profile>` (and `--root=` when the
+/// Gargosy folder isn't the exe's), named after the game,
 /// with its cover as icon (kept in the profile's `cache\shortcuts\`).
 /// Returns the link's path.
 Future<String> createGameShortcut({
@@ -33,7 +34,12 @@ Future<String> createGameShortcut({
   await maker.make(
     linkPath: link,
     target: exe,
-    args: ['${OutsideLaunch.playArg}${game.id}', '${OutsideLaunch.profileArg}${profile.id}'],
+    args: [
+      '${OutsideLaunch.playArg}${game.id}',
+      '${OutsideLaunch.profileArg}${profile.id}',
+      // A Gargosy started on another folder (`flutter run --root=`) starts there again.
+      if (!profile.guard.samePath(profile.root.root, p.dirname(exe))) '--root="${profile.root.root}"',
+    ],
     workingDir: p.dirname(exe),
     iconPath: icon,
     description: game.displayName,
@@ -47,8 +53,12 @@ String shortcutName(String title) {
   var name = title.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1f]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
   if (name.length > 100) name = name.substring(0, 100);
   name = name.replaceAll(RegExp(r'[. ]+$'), '');
-  return name.isEmpty ? 'Game' : name;
+  if (name.isEmpty) return 'Game';
+  // A device name is no file name, even with an extension.
+  return _reserved.hasMatch(name) ? '$name (game)' : name;
 }
+
+final _reserved = RegExp(r'^(con|prn|aux|nul|com[0-9]|lpt[0-9])$', caseSensitive: false);
 
 /// `<dir>\<name><ext>`, or `<name> (2)<ext>` and on when that is taken: a
 /// link never replaces a file on the desktop.
@@ -82,10 +92,13 @@ List<int> _le32(int v) => [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >> 24
 /// [image] (a cover, any format Flutter decodes) fitted into a transparent
 /// 256 × 256 square, as PNG; null when it can't be decoded.
 Future<Uint8List?> squareIconPng(Uint8List image) async {
+  const size = 256;
+  ui.Codec? codec;
+  ui.Image? src, out;
+  ui.Picture? picture;
   try {
-    final codec = await ui.instantiateImageCodec(image);
-    final src = (await codec.getNextFrame()).image;
-    const size = 256.0;
+    codec = await ui.instantiateImageCodec(image, targetHeight: size);
+    src = (await codec.getNextFrame()).image;
     final scale = size / (src.width > src.height ? src.width : src.height);
     final w = src.width * scale, h = src.height * scale;
     final recorder = ui.PictureRecorder();
@@ -95,10 +108,16 @@ Future<Uint8List?> squareIconPng(Uint8List image) async {
       ui.Rect.fromLTWH((size - w) / 2, (size - h) / 2, w, h),
       ui.Paint()..filterQuality = ui.FilterQuality.high,
     );
-    final out = await recorder.endRecording().toImage(size.toInt(), size.toInt());
+    picture = recorder.endRecording();
+    out = await picture.toImage(size, size);
     final bytes = await out.toByteData(format: ui.ImageByteFormat.png);
     return bytes?.buffer.asUint8List();
   } on Object {
     return null;
+  } finally {
+    out?.dispose();
+    picture?.dispose();
+    src?.dispose();
+    codec?.dispose();
   }
 }

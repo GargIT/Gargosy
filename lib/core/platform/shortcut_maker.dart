@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:flutter/foundation.dart';
@@ -55,14 +56,21 @@ class WindowsShortcutMaker implements ShortcutMaker {
   @override
   String get extension => '.lnk';
 
-  Future<io.ProcessResult> _run(String script, [Map<String, String> env = const {}]) => io.Process.run(_powershell, [
-    '-NoProfile',
-    '-NonInteractive',
-    '-ExecutionPolicy',
-    'Bypass',
-    '-Command',
-    script,
-  ], environment: env);
+  Future<io.ProcessResult> _run(String script, [Map<String, String> env = const {}]) => io.Process.run(
+    _powershell,
+    [
+      '-NoProfile',
+      '-NonInteractive',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-Command',
+      // UTF-8 both ways: a desktop under C:\Users\Göran comes back whole.
+      '[Console]::OutputEncoding = [Text.Encoding]::UTF8\n$script',
+    ],
+    environment: env,
+    stdoutEncoding: utf8,
+    stderrEncoding: utf8,
+  );
 
   @override
   Future<String?> desktopDir() async {
@@ -82,6 +90,8 @@ class WindowsShortcutMaker implements ShortcutMaker {
   }) async {
     const script = r'''
 $ErrorActionPreference = 'Stop'
+# Never over a file that came meanwhile.
+if (Test-Path -LiteralPath $env:GARGOSY_LNK) { [Console]::Error.WriteLine('The name is taken'); exit 3 }
 $s = (New-Object -ComObject WScript.Shell).CreateShortcut($env:GARGOSY_LNK)
 $s.TargetPath = $env:GARGOSY_TARGET
 $s.Arguments = $env:GARGOSY_ARGS

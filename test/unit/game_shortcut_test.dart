@@ -58,6 +58,9 @@ void main() {
     expect(shortcutName('Dots...'), 'Dots');
     expect(shortcutName(':::'), 'Game');
     expect(shortcutName('x' * 150).length, 100);
+    expect(shortcutName('Con'), 'Con (game)');
+    expect(shortcutName('lpt1'), 'lpt1 (game)');
+    expect(shortcutName('Contra'), 'Contra');
   });
 
   test('a link never replaces a file on the desktop', () {
@@ -97,6 +100,12 @@ void main() {
     expect(io.File(m.icon!).lengthSync(), 22 + 3);
   });
 
+  test('a Gargosy on another folder than its exe passes it on with --root', () async {
+    final maker = _FakeMaker(desktop.path);
+    await createGameShortcut(game: game, profile: ProfilePaths(root, 'aaa'), maker: maker, exe: r'C:\dev\gargosy.exe');
+    expect(maker.made.single.args, ['--play=7564', '--profile=aaa', '--root="${root.root}"']);
+  });
+
   test('no cover: no icon; no desktop: refused', () async {
     final made = _FakeMaker(desktop.path);
     await createGameShortcut(game: game, profile: ProfilePaths(root, 'aaa'), maker: made, exe: 'G.exe');
@@ -117,5 +126,13 @@ void main() {
       workingDir: desktop.path,
     );
     expect(io.File(link).existsSync(), isTrue);
+    // A file there already is never written over.
+    final mine = p.join(desktop.path, 'Mine${maker.extension}');
+    io.File(mine).writeAsStringSync('mine');
+    await expectLater(
+      maker.make(linkPath: mine, target: io.Platform.resolvedExecutable, args: const [], workingDir: desktop.path),
+      throwsA(isA<io.FileSystemException>()),
+    );
+    expect(io.File(mine).readAsStringSync(), 'mine');
   }, skip: !io.Platform.isWindows);
 }
