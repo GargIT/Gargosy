@@ -22,7 +22,14 @@ class ExtractionService {
   final DirectoryService directoryService;
   final PlatformInfo _platform;
 
-  ExtractionService(this.directoryService, {PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
+  ExtractionService(this.directoryService, {PlatformInfo? platform, Unpacker? unpacker})
+    : _platform = platform ?? PlatformInfo.current,
+      _givenUnpacker = unpacker;
+
+  // Gargosy (#200): the OS's Unpacker, passed in (`unpackerProvider`); made
+  // only when a Windows zip needs it, since other OSes have none yet.
+  final Unpacker? _givenUnpacker;
+  late final Unpacker _unpacker = _givenUnpacker ?? unpackerFor(_platform);
 
   /// Unpacks the zip at [archivePath] into [destDir] with the archive package,
   /// in an isolate.
@@ -160,7 +167,7 @@ class ExtractionService {
     } else if (_platform.isWindows) {
       try {
         // Gargosy (#200): the OS's Unpacker (Windows' own tar.exe, by its path).
-        await unpackerFor(_platform).unpack(archivePath, destDir);
+        await _unpacker.unpack(archivePath, destDir);
         return;
       } on UnpackException catch (e) {
         debugPrint('tar failed (${e.detail}), falling back to archive package');

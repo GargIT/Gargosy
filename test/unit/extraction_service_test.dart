@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:archive/archive_io.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/extraction/extraction_service.dart';
+import 'package:gargosy/core/extraction/unpacker.dart';
 import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -69,6 +70,18 @@ void main() {
         for (final name in many.keys) {
           expect(File(p.join(destDir.path, name)).readAsStringSync(), many[name], reason: name);
         }
+      });
+
+      test("a Windows zip goes to the Unpacker it's given (#200)", () async {
+        final zipPath = await createZip({'test.txt': 'Hello!'});
+        final destDir = Directory(p.join(tempDir.path, 'ext_given'))..createSync();
+        final given = _NotingUnpacker();
+        await ExtractionService(
+          _MinimalDirectoryService(),
+          platform: const PlatformInfo('windows'),
+          unpacker: given,
+        ).extract(zipPath, destDir.path);
+        expect(given.unpacked, [(zipPath, destDir.path)]);
       });
 
       test('the fallback unpacker waits until every file is out', () async {
@@ -138,4 +151,19 @@ void main() {
 class _MinimalDirectoryService extends Fake implements DirectoryService {
   @override
   Future<String?> resolveSevenZipPath() async => null;
+}
+
+/// Notes what it's asked to unpack, and unpacks nothing.
+class _NotingUnpacker implements Unpacker {
+  final unpacked = <(String, String)>[];
+
+  @override
+  Future<List<ZipEntry>> list(String zip) async => [];
+
+  @override
+  Future<void> unpack(String zip, String into, {List<String> exclude = const [], void Function()? tick}) async =>
+      unpacked.add((zip, into));
+
+  @override
+  Stream<List<int>> open(String zip, String name) => const Stream.empty();
 }
