@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -258,6 +259,27 @@ void main() {
           : '',
       isNot(contains('anna=1')),
     );
+  });
+
+  test('a swap marker whose profile or emulator is not one plain name writes nothing', () async {
+    final cfg = ProfileLaunchConfig.of('mgba')!;
+    for (final bad in [
+      {'profile': '..'},
+      {'emulator': r'..\..\..\..\roms\x'},
+    ]) {
+      final a = ctx('mgba', profile: 'aaa');
+      await cfg.prepare(a);
+      final mark = io.File(p.join(a.exeDir, '.gargosy-swap'));
+      final json = jsonDecode(mark.readAsStringSync()) as Map<String, dynamic>;
+      mark.writeAsStringSync(jsonEncode({...json, ...bad}));
+      final b = ctx('mgba', profile: 'bbb');
+      await cfg.prepare(b);
+      expect(io.Directory(p.join(a.profilesDir, '..', 'emulators')).existsSync(), isFalse, reason: '$bad');
+      expect(io.Directory(p.join(root.roms, 'x')).existsSync(), isFalse, reason: '$bad');
+      // The launch goes on: the marker is the new profile's.
+      expect(jsonDecode(mark.readAsStringSync()), containsPair('profile', 'bbb'), reason: '$bad');
+      await cfg.finish(b);
+    }
   });
 
   test('a crash with the exe in a subfolder still puts the settings back in the right emulator folder', () async {

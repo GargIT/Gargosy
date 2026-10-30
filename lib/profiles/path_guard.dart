@@ -21,7 +21,15 @@ class PathGuardException implements Exception {
 /// and a server path that matches an allowed folder only when lowercased
 /// is refused.
 class PathGuard {
-  PathGuard(this.root, {this.activeProfileId, PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current;
+  PathGuard(this.root, {this.activeProfileId, PlatformInfo? platform}) : _platform = platform ?? PlatformInfo.current {
+    final id = activeProfileId;
+    if (id != null && !isProfileId(id)) throw ArgumentError.value(id, 'activeProfileId', 'not a profile id');
+  }
+
+  /// A profile's id names its folder under `profiles\`: one plain name, never
+  /// `..` or a path, wherever it was read from (a profile.json, a swap marker).
+  static bool isProfileId(String id) => _profileId.hasMatch(id);
+  static final _profileId = RegExp(r'^[a-z0-9-]{1,64}$');
 
   final AppRoot root;
   final String? activeProfileId;
