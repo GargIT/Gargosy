@@ -110,9 +110,10 @@ class RomPreparer {
       ];
       final label = tr('Unpacking {0}', [game.displayName]);
       if (emulatorId == 'xemu' && isos.length == 1) {
-        if (entries.length > 1) await _run(zip, staging, game, exclude: const ['*.iso']);
-        final name = RomFiles.safeName(p.basename(isos.single.name.replaceAll('\\', '/')));
-        await _streamXiso(zip, p.join(staging, name), isos.single.size, game, onProgress);
+        final iso = isos.single;
+        if (entries.length > 1) await _run(zip, staging, game, exclude: [iso.name]);
+        final name = RomFiles.safeName(p.basename(iso.name.replaceAll('\\', '/')));
+        await _streamXiso(zip, iso.name, p.join(staging, name), iso.size, game, onProgress);
       } else {
         final total = entries.fold<int>(0, (n, e) => n + e.size);
         await _run(zip, staging, game, progress: () => _report(onProgress, label, _sizeOf(staging), total));
@@ -129,13 +130,21 @@ class RomPreparer {
     }
   }
 
-  /// Streams the zip's one `.iso` out of the unpacker into [dst] as an XISO.
-  Future<void> _streamXiso(String zip, String dst, int size, Game game, void Function(String)? onProgress) async {
+  /// Streams the zip's one `.iso`, [entry] as the unpacker lists it, into
+  /// [dst] as an XISO.
+  Future<void> _streamXiso(
+    String zip,
+    String entry,
+    String dst,
+    int size,
+    Game game,
+    void Function(String)? onProgress,
+  ) async {
     final out = io.File(guard.check(dst)).openSync(mode: io.FileMode.write);
     final writer = XisoWriter(out, name: game.displayName, gamePartition: gamePartition);
     var read = 0;
     try {
-      await for (final chunk in _unpacker.open(zip, '*.iso')) {
+      await for (final chunk in _unpacker.open(zip, entry)) {
         writer.add(chunk);
         read += chunk.length;
         _report(

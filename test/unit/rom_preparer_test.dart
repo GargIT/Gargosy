@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/extraction/unpacker.dart';
+import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/rom_preparer.dart';
@@ -80,6 +82,26 @@ void main() {
     final folder = await preparer.ready(halo, zip, 'xemu');
     expect(io.File(p.join(folder!, 'Halo (USA).iso')).readAsBytesSync(), xiso());
     expect(io.File(p.join(folder, 'readme.txt')).readAsBytesSync(), [1, 2]);
+  });
+
+  test('xemu: a disc named .ISO is found, streamed once and left out of the unpack', () async {
+    final seen = _SeenUnpacker();
+    final preparer = RomPreparer(
+      files: files,
+      guard: PathGuard(root),
+      tempDir: p.join(root.appData, 'temp'),
+      gamePartition: gp,
+      unpacker: seen,
+    );
+    final zip = zipWith({
+      'Halo (USA) [!].ISO': redump(xiso()),
+      'readme.txt': [1, 2],
+    });
+    final folder = await preparer.ready(halo, zip, 'xemu');
+    expect(seen.unpacked, ['readme.txt'], reason: 'the disc is never unpacked whole');
+    expect(io.File(p.join(folder!, RomFiles.safeName('Halo (USA) [!].ISO'))).readAsBytesSync(), xiso());
+    expect(io.File(p.join(folder, 'readme.txt')).readAsBytesSync(), [1, 2]);
+    expect(io.Directory(folder).listSync(), hasLength(2));
   });
 
   test('an emulator that reads zips keeps the zip', () async {
@@ -211,4 +233,25 @@ void main() {
     // Not downloaded at all: the download still goes to the zip's name.
     expect(files.pathFor(halo), p.join(root.roms, 'xbox', 'Halo (USA).zip'));
   });
+}
+
+/// The OS's unpacker, noting what each [unpack] left in its folder.
+class _SeenUnpacker implements Unpacker {
+  final _real = unpackerFor(PlatformInfo.current);
+  final unpacked = <String>[];
+
+  @override
+  Future<List<ZipEntry>> list(String zip) => _real.list(zip);
+
+  @override
+  Future<void> unpack(String zip, String into, {List<String> exclude = const [], void Function()? tick}) async {
+    await _real.unpack(zip, into, exclude: exclude, tick: tick);
+    unpacked.addAll([
+      for (final f in io.Directory(into).listSync(recursive: true))
+        if (f is io.File) p.relative(f.path, from: into),
+    ]);
+  }
+
+  @override
+  Stream<List<int>> open(String zip, String name) => _real.open(zip, name);
 }

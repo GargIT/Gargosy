@@ -39,20 +39,32 @@ void main() {
 
   test('unpacks into a folder, leaving out what is excluded', () async {
     final into = io.Directory(p.join(dir.path, 'out'))..createSync();
-    await unpacker.unpack(zip, into.path, exclude: const ['*.iso']);
+    await unpacker.unpack(zip, into.path, exclude: const ['Game.iso']);
     expect(io.File(p.join(into.path, 'extra', 'readme.txt')).readAsStringSync(), 'hi');
     expect(io.File(p.join(into.path, 'Game.iso')).existsSync(), isFalse);
   });
 
   test("streams one file's bytes", () async {
-    final bytes = [await for (final chunk in unpacker.open(zip, '*.iso')) ...chunk];
+    final bytes = [await for (final chunk in unpacker.open(zip, 'Game.iso')) ...chunk];
     expect(bytes, List.filled(3000, 7));
+  });
+
+  test('a name is only itself, never a pattern: `[`, `*` and `?` too', () async {
+    final archive = Archive()
+      ..addFile(ArchiveFile.bytes('Halo [!] (a*b?).ISO', [1]))
+      ..addFile(ArchiveFile.bytes('Halo x (aab).ISO', [2]));
+    final odd = p.join(dir.path, 'odd.zip');
+    io.File(odd).writeAsBytesSync(ZipEncoder().encodeBytes(archive));
+    expect([await for (final chunk in unpacker.open(odd, 'Halo [!] (a*b?).ISO')) ...chunk], [1]);
+    final into = io.Directory(p.join(dir.path, 'odd'))..createSync();
+    await unpacker.unpack(odd, into.path, exclude: const ['Halo [!] (a*b?).ISO']);
+    expect(into.listSync().map((e) => p.basename(e.path)), ['Halo x (aab).ISO']);
   });
 
   test('a zip that is not one fails with what the unpacker said', () async {
     final bad = p.join(dir.path, 'bad.zip');
     io.File(bad).writeAsStringSync('not a zip');
     await expectLater(unpacker.list(bad), throwsA(isA<UnpackException>()));
-    await expectLater(unpacker.open(bad, '*.iso').drain<void>(), throwsA(isA<UnpackException>()));
+    await expectLater(unpacker.open(bad, 'Game.iso').drain<void>(), throwsA(isA<UnpackException>()));
   });
 }
