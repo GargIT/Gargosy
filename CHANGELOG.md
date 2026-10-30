@@ -18,6 +18,9 @@ What changed in each release of Gargosy. The format follows
   shortcut brings it to the front and plays the game there (switching
   profile first when another is named), and it stays open after; a second
   Gargosy never starts.
+- Create desktop shortcut in a game's ⋯ menu: a shortcut with the game's
+  cover as its icon that starts it in your profile (`--play`). It never
+  replaces a file on the desktop.
 - After a game, Gargosy says which RetroAchievements you earned in it:
   "2 achievements earned · 15 points (hardcore)", once RomM has read them,
   and the game's Achievements tab shows them.
