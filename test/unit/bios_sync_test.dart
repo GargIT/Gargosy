@@ -15,6 +15,7 @@ import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_secret_store.dart';
 
 class _Romm extends Fake implements RommService {
   _Romm(this.platforms);
@@ -36,7 +37,12 @@ void main() {
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
   FirmwareService service(List<Firmware> ps2) {
-    final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     final registry = StrategyRegistry(dirs, MemoryPrefs());
     return FirmwareService(_Romm([Platform(id: 1, name: 'PlayStation 2', slug: 'ps2', firmware: ps2)]), dirs, registry);
   }

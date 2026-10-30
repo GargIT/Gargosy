@@ -15,6 +15,7 @@ import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_secret_store.dart';
 
 /// A process that has ended.
 class _Ended implements io.Process {
@@ -133,6 +134,7 @@ void main() {
     final folder = io.Directory(p.join(root.roms, 'scummvm', 'Monkey Island'))..createSync(recursive: true);
     final started = <List<String>>[];
     final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
       root: root,
       paths: ProfilePaths(root, 'aaa'),
       prefs: MemoryPrefs(),

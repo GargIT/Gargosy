@@ -18,6 +18,7 @@ import 'package:path/path.dart' as p;
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_secret_store.dart';
 
 /// A process that has ended with [code].
 class _Ended implements io.Process {
@@ -152,6 +153,7 @@ void main() {
       exe = p.join(root.emulators, 'rpcs3', 'rpcs3.exe');
       io.File(exe).createSync(recursive: true);
       dirs = ProfileLaunchDirectories(
+        secrets: FakeSecretStore(),
         root: root,
         paths: ProfilePaths(root, 'aaa'),
         prefs: MemoryPrefs(),

@@ -7,6 +7,7 @@ import 'package:gargosy/retroachievements/ra_account.dart';
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_secret_store.dart';
 
 const _all = [
   RetroAchievement(id: 1, title: 'First', description: '', points: 5, badgeName: 'b1'),
@@ -51,7 +52,7 @@ RaAccount _account({bool connected = true, bool hardcore = false}) {
   final prefs = MemoryPrefs();
   if (connected) prefs.values[kRaUsernameKey] = 'henrik';
   prefs.values[kRaHardcoreKey] = hardcore;
-  return RaAccount(prefs, fetchToken: (u, p) async => (username: u, token: 't'));
+  return RaAccount(prefs, secrets: FakeSecretStore(), fetchToken: (u, p) async => (username: u, token: 't'));
 }
 
 void main() {

@@ -27,6 +27,7 @@ import 'package:gargosy/core/retroachievements/retroachievements_game_models.dar
 
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
+import '../helpers/fake_secret_store.dart';
 
 /// RomM's RA progress: nothing earned before the session, one after.
 class _Progress implements AchievementProgress {
@@ -345,7 +346,9 @@ void main() {
         playEngineProvider.overrideWithValue(engine),
         achievementProgressProvider.overrideWithValue(progress),
         rommUserIdProvider.overrideWithValue(7),
-        raAccountProvider.overrideWithValue(RaAccount(prefs, fetchToken: (u, p) async => (username: u, token: 't'))),
+        raAccountProvider.overrideWithValue(
+          RaAccount(prefs, secrets: FakeSecretStore(), fetchToken: (u, p) async => (username: u, token: 't')),
+        ),
       ],
     );
     addTearDown(c.dispose);

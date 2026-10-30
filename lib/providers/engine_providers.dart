@@ -49,7 +49,12 @@ final launchDirectoriesProvider = Provider<ProfileLaunchDirectories?>((ref) {
   final paths = ref.watch(_profilePathsProvider);
   final prefs = ref.watch(profilePrefsProvider);
   if (paths == null || prefs == null) return null;
-  return ProfileLaunchDirectories(root: ref.watch(appRootProvider), paths: paths, prefs: prefs);
+  return ProfileLaunchDirectories(
+    root: ref.watch(appRootProvider),
+    paths: paths,
+    prefs: prefs,
+    secrets: ref.watch(secretStoreProvider),
+  );
 });
 
 /// The emulator strategies, seeing the profile's folders as Windows' user
