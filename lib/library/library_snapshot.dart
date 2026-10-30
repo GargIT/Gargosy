@@ -74,13 +74,15 @@ final librarySnapshotProvider = Provider<LibrarySnapshot?>((ref) {
 });
 
 /// The profile's games that are downloaded on this PC (from the snapshot),
-/// newest download first; Home's Installed games shelf.
+/// newest download first; Home's Installed games shelf. Without those above
+/// the profile's age limit (#224), which RomM's own lists leave out too.
 final gamesOnThisPcProvider = Provider<List<Game>>((ref) {
   ref.watch(romFilesVersionProvider);
   final snap = ref.watch(librarySnapshotProvider);
   if (snap == null) return const [];
   final files = ref.watch(romFilesProvider);
-  return installedNewestFirst(snap.read(), files.installedAt);
+  final limit = ref.watch(ageLimitProvider);
+  return installedNewestFirst(snap.read(), files.installedAt).where(limit.allows).toList();
 });
 
 /// [games] that are on this PC ([installedAt] not null), newest first; the

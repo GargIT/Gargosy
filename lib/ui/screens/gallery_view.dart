@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profiles/profile_providers.dart';
 import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
 import '../../library/game_versions.dart';
@@ -229,7 +230,14 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   /// into the first of them: RomM's `group_by_meta_id` groups by one
   /// metadata id, so versions matched by different ids (a patched copy
   /// without IGDB's) still come apart, though `sibling_roms` links them.
-  List<Game> get _shown => foldVersions(_games);
+  /// What the grid shows: versions folded, and, from a RomM without the age
+  /// filter (#224), nothing above the profile's age limit. Paging stays on
+  /// RomM's raw positions.
+  List<Game> get _shown {
+    final limit = ref.read(ageLimitProvider);
+    final folded = foldVersions(_games);
+    return limit.isOn ? folded.where(limit.allows).toList() : folded;
+  }
 
   /// The shown game at or after RomM's position [raw] (-1 when none).
   int _shownIndexOfRaw(int raw) {

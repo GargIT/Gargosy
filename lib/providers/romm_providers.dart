@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/romm/age_filter.dart';
 import '../core/romm/romm_activity.dart';
 import '../core/romm/romm_collection_edits.dart';
 import '../core/romm/romm_library_api.dart';
@@ -35,7 +36,11 @@ final rommServiceProvider = Provider<RommService?>((ref) {
 /// Gallery, collections and favourites for the active profile.
 final libraryApiProvider = Provider<LibraryApi?>((ref) {
   final romm = ref.watch(rommServiceProvider);
-  return romm == null ? null : RommLibraryApi(romm.dio, () => romm.authOptions);
+  if (romm == null) return null;
+  // A profile's age limit (#224): RomM leaves those games out of its lists.
+  final limit = ref.watch(ageLimitProvider);
+  final api = RommLibraryApi(ageFilteredDio(romm.dio, limit, () => romm.authOptions), () => romm.authOptions);
+  return limit.isOn ? AgeLimitedLibraryApi(api, limit) : api;
 });
 
 /// The user's own collections changed on RomM (#144).
