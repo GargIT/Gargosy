@@ -11,21 +11,31 @@ import '../platform/platform_info.dart';
 /// A file in a zip and its unpacked size.
 typedef ZipEntry = ({String name, int size});
 
-/// The unpacker refused or failed; [detail] is what it said.
+/// The unpacker refused or failed; [detail] is what it said, [code] how it
+/// ended.
 class UnpackException implements Exception {
-  const UnpackException(this.detail);
+  const UnpackException(this.detail, {this.code});
 
-  /// tar ended with [code]: what it wrote to stderr, else that code, so the
-  /// player never sees an empty reason.
-  factory UnpackException.tar(String stderr, int code) {
-    final said = stderr.trim();
-    return UnpackException(said.isEmpty ? tr('tar stopped with code {0}', [code]) : said);
-  }
+  /// tar ended with [code], having written [stderr].
+  UnpackException.tar(String stderr, int this.code) : detail = stderr.trim();
 
   final String detail;
+  final int? code;
 
+  /// [code] as Windows writes it: a crash's NTSTATUS (negative here) in hex.
+  String? get _codeText => switch (code) {
+    null => null,
+    final c when c < 0 => '0x${(c & 0xFFFFFFFF).toRadixString(16).toUpperCase()}',
+    final c => '$c',
+  };
+
+  /// Why, for the player: what the unpacker said, else how it ended, never
+  /// nothing.
+  String get reason => detail.isEmpty && code != null ? tr('tar stopped with code {0}', [_codeText]) : detail;
+
+  /// Why, for the log (English).
   @override
-  String toString() => detail;
+  String toString() => detail.isEmpty && code != null ? 'tar stopped with code $_codeText' : detail;
 }
 
 /// Lists, unpacks and streams zips (#200): a ROM's zip before an emulator
@@ -106,15 +116,15 @@ class TarUnpacker implements Unpacker {
     final err = StringBuffer();
     final errDone = proc.stderr.transform(io.systemEncoding.decoder).forEach(err.write);
     var finished = false;
+    final int code;
     try {
       yield* proc.stdout;
       finished = true;
     } finally {
       if (!finished) proc.kill();
-      await proc.exitCode;
+      code = await proc.exitCode;
       await errDone;
     }
-    final code = await proc.exitCode;
     if (code != 0) throw UnpackException.tar('$err', code);
   }
 }
