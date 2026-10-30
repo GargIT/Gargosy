@@ -14,8 +14,8 @@ import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
-import '../helpers/profile_test_env.dart';
 import '../helpers/fake_secret_store.dart';
+import '../helpers/profile_test_env.dart';
 
 class _Romm extends Fake implements RommService {
   _Romm(this.platforms);

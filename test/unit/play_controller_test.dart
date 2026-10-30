@@ -25,9 +25,9 @@ import 'package:gargosy/retroachievements/ra_account.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_game_models.dart';
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
-import '../helpers/fake_secret_store.dart';
 
 /// RomM's RA progress: nothing earned before the session, one after.
 class _Progress implements AchievementProgress {

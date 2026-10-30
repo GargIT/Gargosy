@@ -13,9 +13,9 @@ import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
-import '../helpers/fake_secret_store.dart';
 
 void main() {
   late AppRoot root;

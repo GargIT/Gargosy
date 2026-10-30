@@ -61,7 +61,8 @@ final raAccountProvider = Provider<RaAccount?>((ref) {
   final dirs = ref.watch(launchDirectoriesProvider);
   return RaAccount(
     prefs,
-    secrets: ref.watch(secretStoreProvider),
+    // The store the launch reads the token with.
+    secrets: dirs?.secrets ?? ref.watch(secretStoreProvider),
     fetchToken: (u, p) => RetroAchievementsService().fetchConnectToken(u, p),
     signOutEmulators: dirs == null ? null : () async => dirs.signOutRetroAchievements(),
   );

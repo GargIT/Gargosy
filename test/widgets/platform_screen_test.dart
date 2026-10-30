@@ -22,10 +22,10 @@ import 'package:gargosy/ui/widgets/game_card.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/fake_library_api.dart';
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
-import '../helpers/fake_secret_store.dart';
 
 class _Bios implements BiosSync {
   final platforms = <String>[];

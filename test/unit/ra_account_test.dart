@@ -3,8 +3,8 @@ import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.
 import 'package:gargosy/core/retroachievements/retroachievements_models.dart';
 import 'package:gargosy/retroachievements/ra_account.dart';
 
-import '../helpers/profile_test_env.dart';
 import '../helpers/fake_secret_store.dart';
+import '../helpers/profile_test_env.dart';
 
 void main() {
   late MemoryPrefs prefs;

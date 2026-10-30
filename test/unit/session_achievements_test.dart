@@ -5,9 +5,9 @@ import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/play/session_achievements.dart';
 import 'package:gargosy/retroachievements/ra_account.dart';
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
-import '../helpers/fake_secret_store.dart';
 
 const _all = [
   RetroAchievement(id: 1, title: 'First', description: '', points: 5, badgeName: 'b1'),

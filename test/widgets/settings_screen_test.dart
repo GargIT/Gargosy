@@ -33,8 +33,8 @@ import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
 
-import '../helpers/fake_secret_store.dart';
 import '../helpers/fake_romm_auth.dart';
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
