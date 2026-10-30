@@ -45,8 +45,12 @@ import '../l10n/tr.dart';
 
 /// What a finished session says ("Save synced", …).
 class PlayResult {
-  const PlayResult(this.message, {this.synced = false});
+  const PlayResult(this.message, {this.synced = false, this.saveProblem = false});
   final String message;
+
+  /// The session's save didn't reach RomM though there was one (a conflict,
+  /// sync blocked): the player must hear it, even when Gargosy closes after.
+  final bool saveProblem;
 
   /// RomM has this PC's save now (it took it, or it already had it).
   final bool synced;
@@ -667,9 +671,12 @@ class GargosyPlayEngine implements PlayEngine {
     if (r.saveConflict != null) {
       return PlayResult(
         tr('RomM has a newer save from another device. It stays on RomM; yours is backed up on this PC.'),
+        saveProblem: true,
       );
     }
-    if (r.saveSyncBlocked != null) return PlayResult(tr('Saves not synced: {0}', [r.saveSyncBlocked]));
+    if (r.saveSyncBlocked != null) {
+      return PlayResult(tr('Saves not synced: {0}', [r.saveSyncBlocked]), saveProblem: true);
+    }
     if (r.saveUnchanged) return PlayResult(tr('Save unchanged.'), synced: true);
     if (r.syncOk) return PlayResult(tr('Save synced to RomM.'), synced: true);
     return PlayResult(tr('No save to upload.'));

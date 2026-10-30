@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/input/gamepad_service.dart';
+import '../../play/outside_launch.dart';
 import '../../profiles/pin.dart';
 import '../../profiles/profile.dart';
 import '../../profiles/profile_paths.dart';
@@ -12,6 +13,7 @@ import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
 import '../widgets/pin_pad.dart';
 import '../widgets/profile_badge.dart';
+import '../widgets/toast.dart';
 import 'add_profile_screen.dart';
 import 'login_step.dart';
 import 'profile_options_dialog.dart';
@@ -27,6 +29,55 @@ class ProfilePickerScreen extends ConsumerStatefulWidget {
 
 class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   final Map<String, bool> _hasLogin = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openForLaunch());
+  }
+
+  /// Started with `--play` (#223). A named profile, or the only one, opens
+  /// as if chosen, PIN and all; a named profile that isn't here, a wrong PIN
+  /// or Back drops the launch, so the game never starts behind the picker's
+  /// back. With several profiles and none named, the picker asks who is
+  /// playing, and the one picked plays it.
+  Future<void> _openForLaunch() async {
+    final launch = ref.read(outsideLaunchProvider);
+    if (launch == null) return;
+    final List<Profile> profiles;
+    try {
+      profiles = await ref.read(profilesProvider.future);
+    } on Object {
+      ref.read(outsideLaunchProvider.notifier).state = null;
+      return;
+    }
+    // A badge picked meanwhile took over.
+    if (!mounted || ref.read(outsideLaunchProvider) != launch) return;
+    final p = launch.profileIn(profiles);
+    if (p == null) {
+      if (launch.profileId != null) ref.read(outsideLaunchProvider.notifier).state = null;
+      showToast(
+        context,
+        launch.profileId != null
+            ? tr('Choose who is playing, then start the game again.')
+            : tr('Choose who is playing.'),
+      );
+      return;
+    }
+    try {
+      await _open(p);
+    } finally {
+      // Opened, the shell has replaced this page and takes the launch.
+      if (mounted && ref.read(activeProfileProvider) == null) ref.read(outsideLaunchProvider.notifier).state = null;
+    }
+  }
+
+  /// A badge picked by hand: a launch for another named profile is dropped.
+  Future<void> _pick(Profile p) {
+    final launch = ref.read(outsideLaunchProvider);
+    if (launch?.profileId case final id? when id != p.id) ref.read(outsideLaunchProvider.notifier).state = null;
+    return _open(p);
+  }
 
   Future<void> _loadLogins(List<Profile> profiles) async {
     for (final p in profiles) {
@@ -146,7 +197,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                                     profile: p,
                                     avatarPath: ProfilePaths(ref.read(appRootProvider), p.id).avatarFile,
                                     autofocus: p.id == focusId,
-                                    onActivate: () => _open(p),
+                                    onActivate: () => _pick(p),
                                     onDetail: () => _options(p),
                                   ),
                                   if (_hasLogin[p.id] == false)

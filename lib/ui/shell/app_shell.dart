@@ -10,6 +10,7 @@ import '../../changelog/whats_new.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../library/upload_queue.dart';
+import '../../play/outside_launch.dart';
 import '../../play/session_achievements.dart';
 import '../../providers/romm_providers.dart';
 import '../../profiles/profile_providers.dart';
@@ -23,6 +24,7 @@ import '../theme/tokens.dart';
 import '../widgets/hint_bar.dart';
 import '../widgets/toast.dart';
 import 'backdrop.dart';
+import 'outside_play.dart';
 import 'screensaver.dart';
 import 'shell_menu.dart';
 import 'top_bar.dart';
@@ -65,7 +67,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     // Saves left waiting by an earlier session go up when the profile opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _upload();
-      _whatsNew();
+      // A game started from outside (#223) comes first; What's new waits
+      // for a start without one.
+      if (ref.read(outsideLaunchProvider) != null) {
+        unawaited(runOutsideLaunch(context, ref));
+      } else {
+        _whatsNew();
+      }
       unawaited(registerRommDevice(ref));
     });
   }

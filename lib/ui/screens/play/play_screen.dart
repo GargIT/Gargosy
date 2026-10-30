@@ -40,8 +40,15 @@ import '../../../l10n/tr.dart';
 /// (one row above the list in narrow windows). The newest save or state is
 /// chosen already; A on the main button plays it.
 class PlayScreen extends ConsumerStatefulWidget {
-  const PlayScreen({super.key, required this.game, this.onNotice});
+  const PlayScreen({super.key, required this.game, this.onNotice, this.autoStart = false, this.onStarted});
   final Game game;
+
+  /// Starts at once with what is preselected, once RomM's saves and states
+  /// are read (`--play`, #223); its prompts are still asked.
+  final bool autoStart;
+
+  /// Hears that the game is running (it started, even after Back).
+  final VoidCallback? onStarted;
 
   /// Hears what the player should know once the screen has closed (a save
   /// that couldn't be pulled).
@@ -67,6 +74,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   bool _showAll = false;
   PlayItem? _chosen;
   bool _starting = false;
+  bool _autoStarted = false;
 
   /// Where the emulator and core lists open, and which one is open.
   final _emulatorField = GlobalKey();
@@ -255,6 +263,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     setState(() => _starting = true);
     try {
       final reason = await start();
+      if (reason == null) widget.onStarted?.call();
       if (!mounted) return;
       if (reason != null) {
         showToast(context, reason);
@@ -405,6 +414,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     final statesAsync = ref.watch(playStatesProvider(_key));
     final states = statesAsync.valueOrNull ?? const <ResumeEntry>[];
     final view = _view(menu, states);
+    if (widget.autoStart && !_autoStarted && fresh && !statesAsync.isLoading) {
+      _autoStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _start(menu, view);
+      });
+    }
     final chosen = _chosen ?? view.preselected;
     final tab = _tab ?? (chosen is StatePlay ? 1 : 0);
     final picked = _picked;

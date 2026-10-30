@@ -77,6 +77,8 @@ const svText = <String, String>{
   'Choose': 'Välj',
   'Choose / Play': 'Välj / Spela',
   'Choose a PIN': 'Välj en PIN-kod',
+  'Choose who is playing.': 'Välj vem som spelar.',
+  'Choose who is playing, then start the game again.': 'Välj vem som spelar och starta spelet igen.',
   'Clear filters': 'Rensa filter',
   'Clear the cache': 'Rensa cachen',
   'Clearing…': 'Rensar…',
@@ -241,6 +243,7 @@ const svText = <String, String>{
   'Gargosy can\'t point these at a profile\'s own folder yet, so it doesn\'t run them.':
       'Gargosy kan inte peka dessa mot en profils egen mapp än, så den kör dem inte.',
   'Gargosy can\'t write to its folder': 'Gargosy kan inte skriva i sin mapp',
+  'Gargosy couldn\'t find the game {0}.': 'Gargosy hittade inte spelet {0}.',
   'Gargosy has no emulator for this platform.': 'Gargosy har ingen emulator för den här plattformen.',
   'Gargosy is in a folder Windows protects, so it can\'t update itself there.':
       'Gargosy ligger i en mapp som Windows skyddar, så den kan inte uppdatera sig själv där.',
@@ -774,6 +777,7 @@ const svText = <String, String>{
   'Your library': 'Ditt bibliotek',
   'Your profile': 'Din profil',
   'Your rating': 'Ditt betyg',
+  'Your save didn\'t reach RomM': 'Din sparfil kom inte fram till RomM',
   'Your save on this PC isn\'t on RomM': 'Din sparfil på den här datorn finns inte på RomM',
   'Your saves on this PC are kept.': 'Dina sparfiler på den här datorn behålls.',
   'Your {0} save on this PC changed since its last upload (played offline?). Playing {1}{2} from {3} replaces it.\n\nA backup of it is kept on this PC.': 'Din {0}-sparfil på den här datorn har ändrats sedan den senaste uppladdningen (spelat offline?). Att spela {1}{2} från {3} ersätter den.\n\nEn säkerhetskopia av den sparas på den här datorn.',

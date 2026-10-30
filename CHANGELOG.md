@@ -8,6 +8,13 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Start a game from outside Gargosy: `Gargosy.exe --play=<rom id>`, with
+  `--profile=<profile id>` to name the profile (with several profiles and
+  none named, Gargosy asks who is playing). The profile opens (its PIN
+  asked), the game starts with its newest save, and Gargosy closes once its
+  saves are synced, so a desktop shortcut or a non-Steam game in Steam
+  starts and ends with the game. A save that didn't reach RomM is said
+  first. `--play-stay` keeps Gargosy open.
 - After a game, Gargosy says which RetroAchievements you earned in it:
   "2 achievements earned · 15 points (hardcore)", once RomM has read them,
   and the game's Achievements tab shows them.
