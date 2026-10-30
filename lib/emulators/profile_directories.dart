@@ -11,6 +11,7 @@ import 'package:path/path.dart' as p;
 
 import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
+import '../core/security/secret_store.dart';
 import '../core/storage/app_preferences.dart';
 import '../core/storage/directory_service.dart';
 import '../core/storage/profile_rooted.dart';
@@ -140,11 +141,15 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     required this.root,
     required this.paths,
     required AppPreferences prefs,
+    required this.secrets,
     ProcessStarter? start,
   }) : _start = start ?? _defaultStart,
        super(prefs, platform: const PlatformInfo('windows'));
 
   final ProcessStarter _start;
+
+  /// Decrypts the profile's RetroAchievements token for a launch.
+  final SecretStore secrets;
 
   /// Makes [emulatorId]'s folders in this profile ([EmulatorLayout.ensureFolders])
   /// when it is installed ([exeName] is found): what a launch does first, done
@@ -167,7 +172,7 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     final c = _context(
       emulatorId,
       p.dirname(exePath),
-      raLogin: await RetroAchievementsEmulatorLogin.load(prefs),
+      raLogin: await RetroAchievementsEmulatorLogin.load(prefs, secrets),
       resumeAutoState: args.contains(EmulatorStrategy.resumeAutoStateArg),
     );
     args = [
@@ -203,7 +208,11 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
   Future<io.Process> openEmulator(String emulatorId, String exePath) async {
     final config = ProfileLaunchConfig.of(emulatorId);
     if (config == null) throw UnsupportedEmulatorException(emulatorId);
-    final c = _context(emulatorId, p.dirname(exePath), raLogin: await RetroAchievementsEmulatorLogin.load(prefs));
+    final c = _context(
+      emulatorId,
+      p.dirname(exePath),
+      raLogin: await RetroAchievementsEmulatorLogin.load(prefs, secrets),
+    );
     final pre = await config.prepare(c);
     final io.Process process;
     try {

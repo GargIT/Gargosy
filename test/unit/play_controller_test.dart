@@ -25,6 +25,7 @@ import 'package:gargosy/retroachievements/ra_account.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_game_models.dart';
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -345,7 +346,9 @@ void main() {
         playEngineProvider.overrideWithValue(engine),
         achievementProgressProvider.overrideWithValue(progress),
         rommUserIdProvider.overrideWithValue(7),
-        raAccountProvider.overrideWithValue(RaAccount(prefs, fetchToken: (u, p) async => (username: u, token: 't'))),
+        raAccountProvider.overrideWithValue(
+          RaAccount(prefs, secrets: FakeSecretStore(), fetchToken: (u, p) async => (username: u, token: 't')),
+        ),
       ],
     );
     addTearDown(c.dispose);

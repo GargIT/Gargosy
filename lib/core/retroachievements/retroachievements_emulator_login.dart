@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:gargosy/core/security/secret_store.dart';
 import 'package:gargosy/core/storage/app_preferences.dart';
 import 'package:gargosy/core/storage/secure_storage_service.dart';
 
@@ -34,11 +35,12 @@ class RetroAchievementsEmulatorLogin {
 
   /// Null when no account is connected or it was connected without a
   /// password (Web-API-only), in which case emulators are left untouched.
-  static Future<RetroAchievementsEmulatorLogin?> load(AppPreferences prefs) async {
+  /// The token is decrypted with [secrets].
+  static Future<RetroAchievementsEmulatorLogin?> load(AppPreferences prefs, SecretStore secrets) async {
     final username = prefs.getString(kRaUsernameKey) ?? '';
     // Checked first so launches without an RA account never touch the keychain.
     if (username.isEmpty) return null;
-    final token = await SecureStorageService.read(kRaConnectTokenSecureKey, prefs) ?? '';
+    final token = await SecureStorageService(secrets).read(kRaConnectTokenSecureKey, prefs) ?? '';
     if (token.isEmpty) return null;
     return RetroAchievementsEmulatorLogin(username: username, token: token, hardcore: prefs.getBool(kRaHardcoreKey));
   }

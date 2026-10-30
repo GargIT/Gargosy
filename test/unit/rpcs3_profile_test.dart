@@ -16,6 +16,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -152,6 +153,7 @@ void main() {
       exe = p.join(root.emulators, 'rpcs3', 'rpcs3.exe');
       io.File(exe).createSync(recursive: true);
       dirs = ProfileLaunchDirectories(
+        secrets: FakeSecretStore(),
         root: root,
         paths: ProfilePaths(root, 'aaa'),
         prefs: MemoryPrefs(),

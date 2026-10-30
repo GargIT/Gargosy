@@ -17,6 +17,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/profile_test_env.dart';
 
 /// An update that unpacks a release with its own user\ folder into the install.
@@ -294,7 +295,14 @@ void main() {
 
   group('what must never follow the link', () {
     EmulatorLibrary edenLibrary() => EmulatorLibrary(root, [
-      EdenStrategy(ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs())),
+      EdenStrategy(
+        ProfileLaunchDirectories(
+          secrets: FakeSecretStore(),
+          root: root,
+          paths: ProfilePaths(root, 'aaa'),
+          prefs: MemoryPrefs(),
+        ),
+      ),
     ]);
 
     setUp(() {
@@ -349,7 +357,12 @@ void main() {
     test('finding the exe never walks into the profile through the link', () async {
       write(p.join(data('aaa', 'eden'), 'user', 'eden.exe'), 'not the program');
       io.File(p.join(install('eden'), 'eden.exe')).deleteSync();
-      final launch = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+      final launch = ProfileLaunchDirectories(
+        secrets: FakeSecretStore(),
+        root: root,
+        paths: ProfilePaths(root, 'aaa'),
+        prefs: MemoryPrefs(),
+      );
       expect(
         await launch.findEmulatorExecutable('eden', 'eden.exe'),
         isNull,

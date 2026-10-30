@@ -14,6 +14,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -45,7 +46,12 @@ void main() {
           ..createSync(recursive: true)
           ..writeAsStringSync('[General]\n');
       }
-      final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+      final dirs = ProfileLaunchDirectories(
+        secrets: FakeSecretStore(),
+        root: root,
+        paths: ProfilePaths(root, 'aaa'),
+        prefs: MemoryPrefs(),
+      );
       final platform = PlatformInfo('windows', environment: env);
       final g = game(1, 'G');
       await Pcsx2Strategy(dirs, platform: platform, raLoginLoader: () async => login).preLaunch(g, 'x.chd');
@@ -116,13 +122,23 @@ void main() {
   });
 
   test("in a profile, RetroArch gets no separate login file with the token", () async {
-    final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     final ra = RetroArchStrategy(dirs, platform: const PlatformInfo('windows'), raLoginLoader: () async => login);
     expect(await ra.retroAchievementsLaunchArgs(), isEmpty);
   });
 
   test("disconnecting takes the login out of the profile's RetroArch and PCSX2 settings", () async {
-    final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     final cfg = io.File(p.join(dirs.dataDir('retroarch'), 'retroarch.cfg'))
       ..createSync(recursive: true)
       ..writeAsStringSync('cheevos_enable = "true"\ncheevos_username = "anna"\ncheevos_token = "tok"\n');

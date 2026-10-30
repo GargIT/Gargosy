@@ -21,6 +21,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -170,7 +171,12 @@ void main() {
 
   group('a profile that never ran the emulator', () {
     test("listing states makes an installed emulator's folders first, as its launch would", () async {
-      final launch = ProfileLaunchDirectories(root: root, paths: paths, prefs: MemoryPrefs());
+      final launch = ProfileLaunchDirectories(
+        secrets: FakeSecretStore(),
+        root: root,
+        paths: paths,
+        prefs: MemoryPrefs(),
+      );
       final strategy = Pcsx2SaveStrategy(dirs, dirs.prefs, platform: sandboxedPlatform(paths));
       await expectLater(strategy.stateDirectory(ps2, r'D:\roms\ps2\Ico (USA).chd'), throwsException);
 

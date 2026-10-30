@@ -22,6 +22,7 @@ import 'package:gargosy/ui/widgets/game_card.dart';
 import 'package:path/path.dart' as p;
 
 import '../helpers/fake_library_api.dart';
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
@@ -69,7 +70,12 @@ void main() {
     root = (await tester.runAsync(tempAppRoot))!;
     addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
     io.File(p.join(root.bios, 'scph-70012.bin')).writeAsBytesSync([1]);
-    final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     registry = StrategyRegistry(dirs, MemoryPrefs());
     bios = _Bios();
     await tester.pumpWidget(

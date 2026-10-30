@@ -161,7 +161,8 @@ class DolphinStrategy extends EmulatorStrategy {
       // Gargosy: a profile's login goes into the profile's own settings
       // (ProfileLaunchConfig); from here it would reach the shared install.
       if (_directoryService is ProfileRootedDirectories) return;
-      final login = await (_raLoginLoader ?? () => RetroAchievementsEmulatorLogin.load(_directoryService.prefs))();
+      // Gargosy: no loader, no login (the token needs the profile's SecretStore).
+      final login = await _raLoginLoader?.call();
       if (login != null) await applyRetroAchievementsLogin(login);
     } catch (e) {
       debugPrint('[Dolphin] Skipping RetroAchievements login: $e');

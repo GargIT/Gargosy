@@ -10,6 +10,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -312,6 +313,7 @@ void main() {
     final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin.exe'))..createSync(recursive: true);
     final started = <List<String>>[];
     final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
@@ -338,6 +340,7 @@ void main() {
     final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin.exe'))..createSync(recursive: true);
     final started = <List<String>>[];
     final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
@@ -358,6 +361,7 @@ void main() {
       final exe = io.File(p.join(root.emulators, 'mame', 'mame.exe'))..createSync(recursive: true);
       final started = <List<String>>[];
       final dirs = ProfileLaunchDirectories(
+        secrets: FakeSecretStore(),
         root: root,
         paths: paths,
         prefs: MemoryPrefs(),
@@ -382,6 +386,7 @@ void main() {
     final exe = io.File(p.join(root.emulators, 'retroarch', 'retroarch.exe'))..createSync(recursive: true);
     final started = <List<String>>[];
     final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
       root: root,
       paths: paths,
       prefs: MemoryPrefs(),
@@ -418,7 +423,12 @@ void main() {
   });
 
   test('an emulator Gargosy can\'t point at a profile is refused', () async {
-    final dirs = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final dirs = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     expect(
       () => dirs.launchGameWithHandle(game(1, 'G'), 'x', 'not_an_emulator', r'C:\x\x.exe'),
       throwsA(isA<UnsupportedEmulatorException>()),

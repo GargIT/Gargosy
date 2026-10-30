@@ -49,12 +49,11 @@ void main() {
   test('SecureStorageService encrypts with the store it is given', () async {
     final store = FakeSecretStore();
     final prefs = MemoryPrefs();
-    SecureStorageService.configure(secrets: store);
-    addTearDown(() => SecureStorageService.configure(platform: PlatformInfo.current));
-    await SecureStorageService.write('k', 'token', prefs);
+    final secure = SecureStorageService(store);
+    await secure.write('k', 'token', prefs);
     expect(prefs.getString('secure.k'), isNot(contains('token')));
-    expect(await SecureStorageService.read('k', prefs), 'token');
+    expect(await secure.read('k', prefs), 'token');
     store.fail = true;
-    expect(await SecureStorageService.read('k', prefs), isNull);
+    expect(await secure.read('k', prefs), isNull);
   });
 }

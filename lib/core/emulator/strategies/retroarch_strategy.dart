@@ -289,7 +289,8 @@ class RetroArchStrategy extends EmulatorStrategy {
     // Gargosy: a profile's login is in its own retroarch.cfg (ProfileLaunchConfig).
     if (_directoryService is ProfileRootedDirectories) return const [];
     try {
-      final login = await (_raLoginLoader ?? () => RetroAchievementsEmulatorLogin.load(_directoryService.prefs))();
+      // Gargosy: no loader, no login (the token needs the profile's SecretStore).
+      final login = await _raLoginLoader?.call();
       if (login == null) return const [];
       final dir = await getApplicationSupportDirectory();
       final file = io.File(p.join(dir.path, kRetroArchAchievementsConfigFileName));

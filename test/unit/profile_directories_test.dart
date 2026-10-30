@@ -13,6 +13,7 @@ import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -110,7 +111,12 @@ void main() {
 
   test('the launch view finds the real exe under emulators\\<id>', () async {
     final exe = io.File(p.join(root.emulators, 'dolphin', 'Dolphin-x64', 'Dolphin.exe'))..createSync(recursive: true);
-    final l = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final l = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     expect(await l.findEmulatorExecutable('dolphin', 'Dolphin.exe'), exe.path);
     expect(await l.findEmulatorExecutable('pcsx2', 'pcsx2-qt.exe'), isNull);
   });
@@ -122,7 +128,12 @@ void main() {
   });
 
   test('repoint before a pull rewrites the profile config, also with no install yet', () async {
-    final l = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final l = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     final ini = io.File(p.join(l.dataDir('duckstation'), 'settings.ini'))
       ..createSync(recursive: true)
       ..writeAsStringSync('[MemoryCards]\nDirectory = E:\\Old\\memcards\n');
@@ -135,7 +146,12 @@ void main() {
     for (final d in ['ps2', 'psx', 'snes']) {
       io.Directory(p.join(root.roms, d)).createSync(recursive: true);
     }
-    final l = ProfileLaunchDirectories(root: root, paths: ProfilePaths(root, 'aaa'), prefs: MemoryPrefs());
+    final l = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: ProfilePaths(root, 'aaa'),
+      prefs: MemoryPrefs(),
+    );
     expect(l.gameFoldersFor('pcsx2'), [p.join(root.roms, 'ps2')]);
     expect(l.gameFoldersFor('duckstation'), [p.join(root.roms, 'psx')]);
     expect(l.gameFoldersFor('dolphin'), isEmpty);

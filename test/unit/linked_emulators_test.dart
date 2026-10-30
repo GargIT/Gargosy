@@ -19,6 +19,7 @@ import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_secret_store.dart';
 import '../helpers/profile_test_env.dart';
 
 void main() {
@@ -328,6 +329,7 @@ void main() {
         io.File(p.join(root.roms, 'nds', 'Game.srm')).writeAsStringSync('a Freegosy save');
         final started = <List<String>>[];
         final dirs = ProfileLaunchDirectories(
+          secrets: FakeSecretStore(),
           root: root,
           paths: paths,
           prefs: MemoryPrefs(),
