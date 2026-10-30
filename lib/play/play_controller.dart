@@ -20,13 +20,16 @@ import '../l10n/tr.dart';
 import 'session_achievements.dart';
 
 class PlayState {
-  const PlayState({this.runningGameId, this.message, this.preparing});
+  const PlayState({this.runningGameId, this.message, this.preparing, this.saveProblem = false});
 
   /// The game being played right now (one at a time, spec §6).
   final String? runningGameId;
 
   /// What the last session said when it ended.
   final String? message;
+
+  /// The last session's save didn't reach RomM ([PlayResult.saveProblem]).
+  final bool saveProblem;
 
   /// While the game's ROM is readied before launch (a zip unpacked, an
   /// Xbox disc converted): what's happening, with a percentage.
@@ -307,8 +310,8 @@ class PlayController extends StateNotifier<PlayState> {
   void _running(Game game, PlaySession session, SessionAchievementsWatch? watch) {
     session.finished
         .then(
-          (result) => _ended(game, result.message, synced: result.synced),
-          onError: (Object e) => _ended(game, tr('Saves not synced: {0}', [e])),
+          (result) => _ended(game, result.message, synced: result.synced, saveProblem: result.saveProblem),
+          onError: (Object e) => _ended(game, tr('Saves not synced: {0}', [e]), saveProblem: true),
         )
         .then((_) => watch?.finish())
         .then((earned) {
@@ -328,7 +331,12 @@ class PlayController extends StateNotifier<PlayState> {
     return true;
   }
 
-  void _ended(Game game, String message, {bool synced = false}) {
+  /// What the last session's end still does after [PlayState] says it
+  /// ended (the upload queue settled for the game); `--play` waits for it
+  /// before Gargosy closes.
+  Future<void> sessionSettled = Future.value();
+
+  void _ended(Game game, String message, {bool synced = false, bool saveProblem = false}) {
     _quitCombo?.cancel();
     _quitCombo = null;
     for (final pads in _pads) {
@@ -338,8 +346,10 @@ class PlayController extends StateNotifier<PlayState> {
     _close = null;
     if (!mounted) return;
     // What waited to upload for this game is older than what RomM has now.
-    if (synced) _ref.read(uploadQueueProvider.future).then((q) => q?.settle(game.id)).catchError((Object _) {});
-    state = PlayState(message: message);
+    sessionSettled = synced
+        ? _ref.read(uploadQueueProvider.future).then((q) => q?.settle(game.id)).catchError((Object _) {})
+        : Future.value();
+    state = PlayState(message: message, saveProblem: saveProblem);
     _ref.invalidate(romSavesProvider(game.id));
     _ref.invalidate(romStatesProvider(game.id));
     _ref.read(uploadQueueVersionProvider.notifier).state++;

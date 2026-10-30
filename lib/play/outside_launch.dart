@@ -19,7 +19,7 @@ class OutsideLaunch {
   /// RomM's id of the game.
   final String romId;
 
-  /// The profile to play in; null: the one used last.
+  /// The profile to play in; null: the only one, else the one picked.
   final String? profileId;
 
   /// Gargosy stays open after the session.
@@ -44,19 +44,12 @@ class OutsideLaunch {
 
   static final _romId = RegExp(r'^[0-9]{1,18}$');
 
-  /// The profile to open among [profiles]: the one named, else [lastUsedId]'s,
-  /// else the only one. Null when it isn't there.
-  Profile? profileIn(List<Profile> profiles, String? lastUsedId) {
-    Profile? byId(String? id) {
-      for (final p in profiles) {
-        if (p.id == id) return p;
-      }
-      return null;
-    }
-
-    if (profileId != null) return byId(profileId);
-    return byId(lastUsedId) ?? (profiles.length == 1 ? profiles.single : null);
-  }
+  /// The profile to open among [profiles] without asking: the one named,
+  /// else the only one. Null when it isn't there, or when the player must
+  /// say who is playing (several profiles, none named: a shortcut shared by
+  /// a family never plays as whoever was last).
+  Profile? profileIn(List<Profile> profiles) =>
+      profileId == null ? profiles.singleOrNull : profiles.where((p) => p.id == profileId).firstOrNull;
 }
 
 /// The launch still to run: set from the arguments at start, taken (set to

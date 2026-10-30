@@ -36,9 +36,11 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _openForLaunch());
   }
 
-  /// Started with `--play` (#223): its profile opens as if chosen, PIN and
-  /// all. A profile that isn't there, a wrong PIN or Back ends here, and the
-  /// launch is dropped: the game never starts behind the picker's back.
+  /// Started with `--play` (#223). A named profile, or the only one, opens
+  /// as if chosen, PIN and all; a named profile that isn't here, a wrong PIN
+  /// or Back drops the launch, so the game never starts behind the picker's
+  /// back. With several profiles and none named, the picker asks who is
+  /// playing, and the one picked plays it.
   Future<void> _openForLaunch() async {
     final launch = ref.read(outsideLaunchProvider);
     if (launch == null) return;
@@ -49,16 +51,32 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
       ref.read(outsideLaunchProvider.notifier).state = null;
       return;
     }
-    if (!mounted) return;
-    final p = launch.profileIn(profiles, ref.read(profileStoreProvider).lastUsedId);
+    // A badge picked meanwhile took over.
+    if (!mounted || ref.read(outsideLaunchProvider) != launch) return;
+    final p = launch.profileIn(profiles);
     if (p == null) {
-      ref.read(outsideLaunchProvider.notifier).state = null;
-      showToast(context, tr('Choose who is playing, then start the game again.'));
+      if (launch.profileId != null) ref.read(outsideLaunchProvider.notifier).state = null;
+      showToast(
+        context,
+        launch.profileId != null
+            ? tr('Choose who is playing, then start the game again.')
+            : tr('Choose who is playing.'),
+      );
       return;
     }
-    await _open(p);
-    // Opened, the shell has replaced this page and takes the launch.
-    if (mounted && ref.read(activeProfileProvider) == null) ref.read(outsideLaunchProvider.notifier).state = null;
+    try {
+      await _open(p);
+    } finally {
+      // Opened, the shell has replaced this page and takes the launch.
+      if (mounted && ref.read(activeProfileProvider) == null) ref.read(outsideLaunchProvider.notifier).state = null;
+    }
+  }
+
+  /// A badge picked by hand: a launch for another named profile is dropped.
+  Future<void> _pick(Profile p) {
+    final launch = ref.read(outsideLaunchProvider);
+    if (launch?.profileId case final id? when id != p.id) ref.read(outsideLaunchProvider.notifier).state = null;
+    return _open(p);
   }
 
   Future<void> _loadLogins(List<Profile> profiles) async {
@@ -179,7 +197,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
                                     profile: p,
                                     avatarPath: ProfilePaths(ref.read(appRootProvider), p.id).avatarFile,
                                     autofocus: p.id == focusId,
-                                    onActivate: () => _open(p),
+                                    onActivate: () => _pick(p),
                                     onDetail: () => _options(p),
                                   ),
                                   if (_hasLogin[p.id] == false)

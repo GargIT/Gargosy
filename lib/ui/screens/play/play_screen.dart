@@ -40,12 +40,15 @@ import '../../../l10n/tr.dart';
 /// (one row above the list in narrow windows). The newest save or state is
 /// chosen already; A on the main button plays it.
 class PlayScreen extends ConsumerStatefulWidget {
-  const PlayScreen({super.key, required this.game, this.onNotice, this.autoStart = false});
+  const PlayScreen({super.key, required this.game, this.onNotice, this.autoStart = false, this.onStarted});
   final Game game;
 
   /// Starts at once with what is preselected, once RomM's saves and states
   /// are read (`--play`, #223); its prompts are still asked.
   final bool autoStart;
+
+  /// Hears that the game is running (it started, even after Back).
+  final VoidCallback? onStarted;
 
   /// Hears what the player should know once the screen has closed (a save
   /// that couldn't be pulled).
@@ -260,6 +263,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     setState(() => _starting = true);
     try {
       final reason = await start();
+      if (reason == null) widget.onStarted?.call();
       if (!mounted) return;
       if (reason != null) {
         showToast(context, reason);

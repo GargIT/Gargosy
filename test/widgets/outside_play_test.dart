@@ -107,6 +107,18 @@ void main() {
     expect(quits, 1);
   });
 
+  testWidgets('a save that did not reach RomM is said before Gargosy closes', (tester) async {
+    await pump(tester, const OutsideLaunch(romId: '1'), found: game(1, 'G1'));
+    engine.running!.complete(const PlayResult('Saves not synced: offline', saveProblem: true));
+    await tester.pumpAndSettle();
+    expect(find.text("Your save didn't reach RomM"), findsOneWidget);
+    expect(find.text('Saves not synced: offline'), findsWidgets);
+    expect(quits, 0);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(quits, 1);
+  });
+
   testWidgets('--play-stay keeps Gargosy open after the session', (tester) async {
     await pump(tester, const OutsideLaunch(romId: '1', stay: true), found: game(1, 'G1'));
     engine.running!.complete(const PlayResult('Save synced', synced: true));

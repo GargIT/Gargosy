@@ -206,6 +206,34 @@ void main() {
       expect(h.container.read(outsideLaunchProvider), isNull);
     });
 
+    testWidgets('several profiles and none named: the picker asks, and the one picked plays it', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      await addProfile(tester, 'Anna');
+      final bob = await addProfile(tester, 'Bob', userId: 8);
+      await tester.runAsync(() => h.container.read(profileStoreProvider).setLastUsed(bob.id));
+      h.container.read(outsideLaunchProvider.notifier).state = const OutsideLaunch(romId: '1');
+      await h.pumpApp(tester);
+      expect(find.text('Who is playing?'), findsOneWidget, reason: 'never the last used on its own');
+      expect(h.container.read(outsideLaunchProvider), isNotNull);
+      await h.send(tester, GameAction.confirm);
+      await h.settle(tester, until: find.byType(AppShell));
+      expect(h.container.read(activeProfileProvider)!.profile.name, 'Bob');
+      expect(h.container.read(outsideLaunchProvider), isNull, reason: 'the shell took it');
+    });
+
+    testWidgets('a badge picked by hand for another profile than the named one drops the launch', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      final anna = await addProfile(tester, 'Anna', pin: '4711');
+      await addProfile(tester, 'Bob', userId: 8);
+      h.container.read(outsideLaunchProvider.notifier).state = OutsideLaunch(romId: '1', profileId: anna.id);
+      await h.pumpApp(tester);
+      expect(find.text('PIN for Anna'), findsOneWidget);
+      await h.send(tester, GameAction.back);
+      expect(h.container.read(outsideLaunchProvider), isNull);
+    });
+
     testWidgets('a PIN is asked first; Back stays at the picker and drops the launch', (tester) async {
       h = AppHarness();
       await h.setUp(tester);

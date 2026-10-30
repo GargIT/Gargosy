@@ -37,12 +37,11 @@ void main() {
     }
   });
 
-  test('the profile: the one named, else the last used, else the only one', () {
+  test('the profile: the one named, else the only one; several and none named: the player picks', () {
     final a = _p('aaa'), b = _p('bbb');
-    expect(const OutsideLaunch(romId: '1', profileId: 'bbb').profileIn([a, b], 'aaa'), b);
-    expect(const OutsideLaunch(romId: '1', profileId: 'ccc').profileIn([a, b], 'aaa'), isNull);
-    expect(const OutsideLaunch(romId: '1').profileIn([a, b], 'bbb'), b);
-    expect(const OutsideLaunch(romId: '1').profileIn([a, b], null), isNull);
-    expect(const OutsideLaunch(romId: '1').profileIn([a], null), a);
+    expect(const OutsideLaunch(romId: '1', profileId: 'bbb').profileIn([a, b]), b);
+    expect(const OutsideLaunch(romId: '1', profileId: 'ccc').profileIn([a, b]), isNull);
+    expect(const OutsideLaunch(romId: '1').profileIn([a]), a);
+    expect(const OutsideLaunch(romId: '1').profileIn([a, b]), isNull);
   });
 }
