@@ -56,3 +56,7 @@ class OutsideLaunch {
 /// null) by the profile picker when it can't open the profile, and by the
 /// shell when it starts the game.
 final outsideLaunchProvider = StateProvider<OutsideLaunch?>((ref) => OutsideLaunch.parse(ref.read(launchArgsProvider)));
+
+/// The arguments of each later start of Gargosy, handed over to this one
+/// (`AppInstance.requests`, from `main.dart`); none in tests.
+final instanceRequestsProvider = Provider<Stream<List<String>>>((ref) => const Stream.empty());

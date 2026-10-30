@@ -216,6 +216,7 @@ const svText = <String, String>{
   'Filters': 'Filter',
   'Filters · {0}': 'Filter · {0}',
   'Filter…': 'Filtrera…',
+  'Finish here first, then start the game again.': 'Gör klart här först och starta sedan spelet igen.',
   'Finished': 'Klart',
   'Firmware / BIOS': 'Firmware / BIOS',
   'First in the queue': 'Först i kön',

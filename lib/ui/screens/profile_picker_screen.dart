@@ -160,6 +160,18 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(profilesProvider);
+    // A --play handed over by another start (#223).
+    // Not over a PIN entry or a page the player has open: that one is
+    // dropped, and said.
+    ref.listen<OutsideLaunch?>(outsideLaunchProvider, (prev, next) {
+      if (next == null || next == prev) return;
+      if (ModalRoute.of(context)?.isCurrent ?? true) {
+        _openForLaunch();
+      } else {
+        ref.read(outsideLaunchProvider.notifier).state = null;
+        showToast(context, tr('Finish here first, then start the game again.'));
+      }
+    });
     final lastUsed = ref.read(profileStoreProvider).lastUsedId;
     return Scaffold(
       backgroundColor: Colors.transparent,
