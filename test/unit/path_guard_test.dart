@@ -96,4 +96,12 @@ void main() {
       expect(() => guard.join(r'D:\Gargosy\roms\ps2', bad), throwsA(isA<PathGuardException>()), reason: bad);
     }
   });
+
+  test('refuses a profile id that is not one plain name', () {
+    for (final bad in ['..', r'..\..', '../x', '.', '', r'a\b', 'A', 'x:y']) {
+      expect(() => PathGuard(root, activeProfileId: bad), throwsArgumentError, reason: bad);
+      expect(() => guard.forProfile(bad), throwsArgumentError, reason: bad);
+    }
+    expect(PathGuard.isProfileId('0f8e-4b2a'), isTrue);
+  });
 }
