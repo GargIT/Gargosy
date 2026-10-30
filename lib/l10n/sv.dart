@@ -198,7 +198,7 @@ const svText = <String, String>{
   'Drive {0}': 'Enhet {0}',
   'Dropped': 'Övergivet',
   'EMULATORS FOR {0}': 'EMULATORER FÖR {0}',
-  'Each download is checked against RomM\'s hashes before it goes into roms, so a damaged one is never played. Off for a slow PC and large discs.': 'Varje nedladdning kontrolleras mot RomM:s kontrollsummor innan den hamnar i roms, så att en skadad aldrig spelas. Av för en långsam dator och stora skivor.',
+  'Each download is checked against RomM\'s hashes before it goes into roms\\, so a damaged one is never played. Off, downloads go in unchecked: quicker with large discs on a slow PC.': 'Varje nedladdning kontrolleras mot RomM:s kontrollsummor innan den hamnar i roms\\, så att en skadad aldrig spelas. Av går nedladdningar in okontrollerade: snabbare med stora skivor på en långsam dator.',
   'Either this RomM user may not delete games, or this profile signed in before Gargosy asked RomM for that. Sign in again under Settings → Profile → RomM account, then try again.': 'Antingen får den här RomM-användaren inte ta bort spel, eller så loggade profilen in innan Gargosy bad RomM om det. Logga in igen under Inställningar → Profil → RomM-konto och försök igen.',
   'Empty Temp': 'Töm Temp',
   'Emptying…': 'Tömmer…',

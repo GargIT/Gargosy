@@ -112,4 +112,49 @@ void main() {
     await service(zipOf({'B (Disc 1).chd': good, 'B (Disc 2).chd': good})).download(game);
     expect(io.Directory(p.join(root.roms, 'ps2', 'B')).listSync(), hasLength(2));
   });
+
+  test("a ROM that is an archive (an arcade set) isn't checked: RomM hashes what's inside", () async {
+    final game = Game.fromJson({
+      ...gameJson(3, 'sf2', fsName: 'sf2.zip'),
+      'files': [
+        {
+          'file_name': 'sf2.zip',
+          'sha1_hash': sha1Of([1, 2, 3]),
+        },
+      ],
+    });
+    await service(good).download(game);
+    expect(io.File(p.join(root.roms, 'ps2', 'sf2.zip')).existsSync(), isTrue);
+  });
+
+  test('files of one name in two folders are each checked at their own path', () async {
+    final two = [...good]..[0] = 9;
+    final game = Game.fromJson({
+      ...gameJson(4, 'C', fsName: 'C', multi: true),
+      'files': [
+        {'file_name': 'track01.bin', 'full_path': 'ps2/C/Disc 1/track01.bin', 'sha1_hash': sha1Of(good)},
+        {'file_name': 'track01.bin', 'full_path': 'ps2/C/Disc 2/track01.bin', 'sha1_hash': sha1Of(two)},
+      ],
+    });
+    await service(zipOf({'Disc 1/track01.bin': good, 'Disc 2/track01.bin': two})).download(game);
+    expect(io.Directory(p.join(root.roms, 'ps2', 'C')).listSync(recursive: true).whereType<io.File>(), hasLength(2));
+  });
+
+  test("a file RomM lists that didn't come is damaged too", () async {
+    final game = Game.fromJson({
+      ...gameJson(5, 'D', fsName: 'D', multi: true),
+      'files': [
+        {'file_name': 'D (Disc 1).chd', 'sha1_hash': sha1Of(good)},
+        {'file_name': 'D (Disc 2).chd', 'sha1_hash': sha1Of(good)},
+      ],
+    });
+    await expectLater(
+      service(zipOf({'D (Disc 1).chd': good})).download(game),
+      throwsA(isA<DownloadDamaged>().having((e) => e.files, 'files', ['D (Disc 2).chd'])),
+    );
+  });
+
+  test('a game being checked is an active download (never queued twice)', () {
+    expect(DownloadPhase.checking.active, isTrue);
+  });
 }

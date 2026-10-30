@@ -25,7 +25,7 @@ enum DownloadPhase {
   cancelled;
 
   /// Waiting or running: not yet on this PC, and not to be started again.
-  bool get active => this == queued || this == downloading || this == extracting;
+  bool get active => this == queued || this == downloading || this == checking || this == extracting;
 }
 
 class DownloadProgress {
@@ -105,7 +105,7 @@ class DownloadService {
   Future<({_Shape shape, String? fileName, List<RomFileHashes> hashes})> _shapeOf(Game game) async {
     var list = game.files;
     if (list.isEmpty && detail != null) list = (await detail!(game.id))?.files ?? const [];
-    final hashes = [for (final f in list) ?RomFileHashes.fromJson(f)];
+    final hashes = [for (final f in list) ?RomFileHashes.fromJson(f, folder: game.fsName)];
     if (list.isEmpty) return (shape: game.isMultiFile ? _Shape.zip : _Shape.file, fileName: null, hashes: hashes);
     if (list.length > 1) return (shape: _Shape.zip, fileName: null, hashes: hashes);
     final name = list.single['file_name']?.toString();
@@ -147,8 +147,13 @@ class DownloadService {
         ),
       );
       // One file: checked before anything moves (#225).
-      if (check && shape != _Shape.zip && hashes.length == 1) {
-        onProgress?.call(const DownloadProgress(DownloadPhase.checking));
+      // A ROM that is an archive RomM hashed by what's inside: not checked.
+      final archive = archiveExtensions.contains(p.extension(fileName ?? game.fsName ?? '').toLowerCase());
+      // Checking: all of it is here already, so the space math counts none still to come.
+      final size = io.File(part).lengthSync();
+      final checking = DownloadProgress(DownloadPhase.checking, received: size, total: size);
+      if (check && shape != _Shape.zip && hashes.length == 1 && !archive) {
+        onProgress?.call(checking);
         if (!await fileMatches(part, hashes.single)) throw DownloadDamaged([hashes.single.name]);
       }
       await io.Directory(guard.check(p.dirname(target))).create(recursive: true);
@@ -159,7 +164,7 @@ class DownloadService {
           await _unzipOffIsolate(part, staging, guard);
           // Several files: each checked once unpacked, before the folder moves.
           if (check) {
-            onProgress?.call(const DownloadProgress(DownloadPhase.checking));
+            onProgress?.call(checking);
             final damaged = await damagedIn(staging, hashes);
             if (damaged.isNotEmpty) throw DownloadDamaged(damaged);
           }

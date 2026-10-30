@@ -146,7 +146,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
             SettingsToggle(
               label: tr('Check downloads'),
               note: tr(
-                'Each download is checked against RomM\'s hashes before it goes into roms, so a damaged one is never played. Off for a slow PC and large discs.',
+                'Each download is checked against RomM\'s hashes before it goes into roms\\, so a damaged one is never played. Off, downloads go in unchecked: quicker with large discs on a slow PC.',
               ),
               on: DownloadCheck.of(ref.watch(appPreferencesProvider)),
               onChanged: (on) async {
