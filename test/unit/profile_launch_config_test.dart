@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -258,6 +259,17 @@ void main() {
           : '',
       isNot(contains('anna=1')),
     );
+  });
+
+  test('a swap marker naming a profile that is not one plain name writes nothing', () async {
+    final cfg = ProfileLaunchConfig.of('mgba')!;
+    final a = ctx('mgba', profile: 'aaa');
+    await cfg.prepare(a);
+    final mark = io.File(p.join(a.exeDir, '.gargosy-swap'));
+    final json = jsonDecode(mark.readAsStringSync()) as Map<String, dynamic>;
+    mark.writeAsStringSync(jsonEncode({...json, 'profile': '..'}));
+    await cfg.prepare(ctx('mgba', profile: 'bbb'));
+    expect(io.Directory(p.join(a.profilesDir, '..', 'emulators')).existsSync(), isFalse);
   });
 
   test('a crash with the exe in a subfolder still puts the settings back in the right emulator folder', () async {

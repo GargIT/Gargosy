@@ -557,7 +557,7 @@ class _Swap extends ProfileLaunchConfig {
       // of its install, so it isn't the exe folder's name.
       final emulator = json['emulator'] as String? ?? p.basename(c.data);
       final ownerData = p.join(c.profilesDir, owner, 'emulators', emulator);
-      final ownerGuard = PathGuard(c.guard.root, activeProfileId: owner);
+      final ownerGuard = c.guard.forProfile(owner);
       if (io.Directory(p.join(c.profilesDir, owner)).existsSync()) {
         io.Directory(ownerGuard.check(ownerData)).createSync(recursive: true);
         for (final f in files) {
