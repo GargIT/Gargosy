@@ -106,8 +106,14 @@ Future<void> _keepCopies(
   if (shared.isEmpty) return;
   final stamp = at.toIso8601String().replaceAll(RegExp(r'[^0-9T]'), '').substring(0, 15);
   final into = p.join(profileDir, 'backups', 'deleted', stamp);
-  String target(String path) =>
-      p.join(into, p.isWithin(profileDir, path) ? p.relative(path, from: profileDir) : p.basename(path));
+  // Inside the profile as the guard compares (any case on Windows and macOS):
+  // the part after the profile's folder, which p.relative would get wrong
+  // when only the case differs.
+  final profile = p.normalize(p.absolute(profileDir));
+  String target(String path) => p.join(
+    into,
+    guard.isWithin(profile, path) ? p.normalize(p.absolute(path)).substring(profile.length + 1) : p.basename(path),
+  );
   for (final path in shared) {
     if (io.FileSystemEntity.isDirectorySync(path)) {
       await for (final e in io.Directory(path).list(recursive: true)) {

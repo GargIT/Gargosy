@@ -172,6 +172,24 @@ void main() {
     expect(log, contains('backup mgba'));
   });
 
+  test('a card named in another case is still copied under its place in the profile', () async {
+    final card = file(saves, 'shared_card_1.mcd');
+    final cased = card.path.replaceFirst(r'\emulators', r'\EMULATORS');
+    await delete(
+      _Planned(
+        saves,
+        () => LocalSaveDeletion(
+          cards: {
+            cased: Uint8List.fromList([1, 2, 3]),
+          },
+        ),
+      ),
+    );
+    final at = p.join(root.profiles, 'p1', 'backups', 'deleted', '20261022T180509');
+    expect(File(p.join(at, 'EMULATORS', 'mgba', 'saves', 'shared_card_1.mcd')).existsSync(), isTrue);
+    expect(File(p.join(at, 'shared_card_1.mcd')).existsSync(), isFalse);
+  });
+
   test("the game's save folder: copied first, then deleted with what's in it; the others stay", () async {
     final folder = Directory(p.join(saves, 'Mcd001.ps2', 'BASLUS-20328SAVE'))..createSync(recursive: true);
     file(folder.path, 'SAVE.DAT');
