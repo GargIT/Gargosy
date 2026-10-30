@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/emulator/emulator_download_service.dart';
 import '../core/extraction/extraction_service.dart';
+import '../core/extraction/unpacker.dart';
 import '../providers/engine_providers.dart';
 import 'emulator_library.dart';
 import '../l10n/tr.dart';
@@ -69,5 +70,8 @@ final emulatorInstallerProvider = Provider<EmulatorInstaller?>((ref) {
   final registry = ref.watch(strategyRegistryProvider);
   final library = ref.watch(emulatorLibraryProvider);
   if (dirs == null || registry == null || library == null) return null;
-  return GargosyEmulatorInstaller(EmulatorDownloadService(Dio(), dirs, ExtractionService(dirs), registry), library);
+  return GargosyEmulatorInstaller(
+    EmulatorDownloadService(Dio(), dirs, ExtractionService(dirs, unpacker: () => ref.read(unpackerProvider)), registry),
+    library,
+  );
 });
