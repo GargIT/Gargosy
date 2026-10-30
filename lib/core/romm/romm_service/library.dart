@@ -13,6 +13,23 @@ mixin _RommLibrary on _RommBase {
     }
   }
 
+  /// Gargosy (#224): the age ratings across the library, as RomM's
+  /// `age_ratings` filter takes them (`filter_values.age_ratings`), in one
+  /// small request. Throws when RomM can't be read.
+  Future<List<String>> getLibraryAgeRatings() async {
+    final r = await _dio.get(
+      '/api/roms',
+      queryParameters: {'limit': 1, 'with_filter_values': true},
+      options: _authOptions,
+    );
+    final data = r.data;
+    final values = data is Map && data['filter_values'] is Map ? (data['filter_values'] as Map)['age_ratings'] : null;
+    return [
+      for (final v in values is List ? values : const [])
+        if (v is String && v.trim().isNotEmpty) v,
+    ];
+  }
+
   Future<List<Platform>> getPlatforms() async {
     final response = await _dio.get('/api/platforms', options: _authOptions);
     if (response.statusCode == 200) {

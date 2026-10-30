@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profiles/age_limit.dart';
 import '../../profiles/profile_providers.dart';
 import '../../core/romm/romm_library_api.dart';
 import '../../core/romm/romm_models.dart';
@@ -167,6 +168,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         foldVersions: true,
       );
       if (!mounted || gen != _generation) return;
+      final shownBefore = _shown.length;
       setState(() {
         _games.addAll(page.games);
         _total = page.total;
@@ -174,6 +176,11 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
         if (page.charIndex != null) _rail = railIndexOf(page.charIndex!);
         _loading = false;
       });
+      // A page the age limit hid all of (#224) brings no new card, so the
+      // grid never asks for the next one: ask now.
+      if (_shown.length == shownBefore && _total != null && _games.length < _total!) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _loadMore());
+      }
     } on Object catch (e) {
       if (!mounted || gen != _generation) return;
       setState(() {
@@ -227,17 +234,23 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
   }
 
   /// RomM's games ([_games], in its order) with each game's versions folded
-  /// into the first of them: RomM's `group_by_meta_id` groups by one
-  /// metadata id, so versions matched by different ids (a patched copy
-  /// without IGDB's) still come apart, though `sibling_roms` links them.
-  /// What the grid shows: versions folded, and, from a RomM without the age
-  /// filter (#224), nothing above the profile's age limit. Paging stays on
-  /// RomM's raw positions.
+  /// into the first of them (RomM's `group_by_meta_id` groups by one
+  /// metadata id, so versions matched by different ids, a patched copy
+  /// without IGDB's, still come apart though `sibling_roms` links them),
+  /// without what the profile's age limit hides (#224: unrated games with
+  /// Hide unrated, and anything a RomM without the filter sent). Paging
+  /// stays on RomM's raw positions. Worked out once per change.
   List<Game> get _shown {
     final limit = ref.read(ageLimitProvider);
+    final cached = _shownCache;
+    if (cached != null && cached.count == _games.length && cached.limit == limit) return cached.games;
     final folded = foldVersions(_games);
-    return limit.isOn ? folded.where(limit.allows).toList() : folded;
+    final games = limit.isOn ? folded.where(limit.allows).toList() : folded;
+    _shownCache = (count: _games.length, limit: limit, games: games);
+    return games;
   }
+
+  ({int count, AgeLimit limit, List<Game> games})? _shownCache;
 
   /// The shown game at or after RomM's position [raw] (-1 when none).
   int _shownIndexOfRaw(int raw) {
@@ -331,13 +344,15 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     final favs = ref.watch(favouriteIdsProvider);
     final ids = collectionOf(ref, _query)?.romIds ?? const <int>{};
     return [
-      for (final g in ref.watch(gamesOnThisPcProvider))
+      for (final g in ref.watch(shownGamesOnThisPcProvider))
         if (inGalleryScope(g, _query, collectionRomIds: ids, favouriteIds: favs)) g,
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    // A limit changed with the gallery open (#224): read again with it.
+    ref.listen(ageLimitProvider, (_, _) => _reload());
     final favIds = ref.watch(favouriteIdsProvider);
     final deleted = ref.watch(deletedGameIdsProvider);
     List<Game> games = _shown;

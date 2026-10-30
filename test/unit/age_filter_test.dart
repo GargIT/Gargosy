@@ -9,79 +9,81 @@ import '../helpers/game_fixtures.dart';
 
 void main() {
   late FakeDioAdapter server;
-  late Dio base;
+  late int reads;
+  late DateTime now;
+  const ratings = ['3', '7', '12', '16', '18', 'E', 'T', 'M', 'RP'];
 
   setUp(() {
-    server = FakeDioAdapter((r) {
-      if (r.queryParameters['with_filter_values'] == true && r.queryParameters['limit'] == 1) {
-        return (
-          status: 200,
-          body: {
-            'items': [],
-            'total': 0,
-            'filter_values': {
-              'age_ratings': ['3', '7', '12', '16', '18', 'E', 'T', 'M', 'RP'],
-            },
-          },
-        );
-      }
-      return (
+    reads = 0;
+    now = DateTime(2026, 10, 31, 12);
+    server = FakeDioAdapter(
+      (r) => (
         status: 200,
         body: {
           'items': [gameJson(1, 'G')],
           'total': 1,
         },
-      );
-    });
-    base = Dio(BaseOptions(baseUrl: 'https://romm.example'))..httpClientAdapter = server;
+      ),
+    );
   });
 
-  RommLibraryApi api(AgeLimit limit) => RommLibraryApi(ageFilteredDio(base, limit, Options.new), Options.new);
+  /// RomM's library API through the filter for [limit]; [read] gives RomM's
+  /// ratings.
+  RommLibraryApi api(AgeLimit limit, {Future<List<String>> Function()? read}) {
+    final dio = fakeDio(server)
+      ..interceptors.add(
+        AgeFilterInterceptor(
+          limit,
+          read ??
+              () async {
+                reads++;
+                return ratings;
+              },
+          now: () => now,
+        ),
+      );
+    return RommLibraryApi(dio, Options.new);
+  }
 
-  Map<String, dynamic> lastGallery() => server.requests.last.queryParameters;
+  Map<String, dynamic> lastAsked() => server.requests.last.queryParameters;
 
-  test('no limit: the requests go as they were, nothing more is asked', () async {
-    expect(ageFilteredDio(base, AgeLimit.off, Options.new), same(base));
+  test('no limit: the requests go as they were, nothing is read', () async {
     await api(AgeLimit.off).page(const GalleryQuery());
-    expect(server.requests, hasLength(1));
-    expect(lastGallery().containsKey('age_ratings'), isFalse);
+    expect(reads, 0);
+    expect(lastAsked().containsKey('age_ratings'), isFalse);
   });
 
   test("a limit: RomM's ratings read once, those above it left out with none", () async {
     final a = api(const AgeLimit(maxAge: 12));
     await a.page(const GalleryQuery());
     await a.page(const GalleryQuery(), offset: 48);
-    expect(server.requests, hasLength(3), reason: 'the ratings once, then two pages');
-    expect(lastGallery()['age_ratings'], ['16', '18', 'T', 'M']);
-    expect(lastGallery()['age_ratings_logic'], 'none');
-    expect(lastGallery()['offset'], 48);
+    expect(reads, 1);
+    expect(lastAsked()['age_ratings'], ['16', '18', 'T', 'M']);
+    expect(lastAsked()['age_ratings_logic'], 'none');
+    expect(lastAsked()['offset'], 48);
   });
 
-  test('Hide unrated: only the allowed ratings, with any', () async {
+  test('the ratings are read again after a while: a game scanned since may bring one', () async {
+    final a = api(const AgeLimit(maxAge: 12));
+    await a.page(const GalleryQuery());
+    now = now.add(AgeFilterInterceptor.refresh + const Duration(seconds: 1));
+    await a.page(const GalleryQuery());
+    expect(reads, 2);
+  });
+
+  test('Hide unrated still sends none with the ratings above: a game with one above is out on RomM', () async {
     await api(const AgeLimit(maxAge: 7, hideUnrated: true)).page(const GalleryQuery());
-    expect(lastGallery()['age_ratings'], ['3', '7', 'E']);
-    expect(lastGallery()['age_ratings_logic'], 'any');
+    expect(lastAsked()['age_ratings'], ['12', '16', '18', 'T', 'M']);
+    expect(lastAsked()['age_ratings_logic'], 'none');
   });
 
-  test("RomM's ratings unreadable: the page still comes, unfiltered, to be checked game by game", () async {
-    server = FakeDioAdapter(
-      (r) => r.queryParameters['with_filter_values'] == true
-          ? (status: 500, body: 'no')
-          : (
-              status: 200,
-              body: {
-                'items': [gameJson(1, 'G')],
-                'total': 1,
-              },
-            ),
-    );
-    base.httpClientAdapter = server;
-    final page = await api(const AgeLimit(maxAge: 12)).page(const GalleryQuery());
-    expect(page.games, hasLength(1));
-    expect(lastGallery().containsKey('age_ratings'), isFalse);
+  test("RomM's ratings unreadable: the list fails, never unfiltered", () async {
+    final a = api(const AgeLimit(maxAge: 12), read: () async => throw DioException(requestOptions: RequestOptions()));
+    await expectLater(a.page(const GalleryQuery()), throwsA(isA<DioException>()));
+    expect(server.requests, isEmpty);
   });
 
-  test('For you and Similar games are checked game by game; Random draws again', () async {
+  test('For you, Similar games and On this day are checked game by game; Random draws again', () async {
     final mature = {
       ...gameJson(2, 'M'),
       'metadatum': {
@@ -99,16 +101,6 @@ void main() {
           ],
         );
       }
-      if (r.queryParameters['with_filter_values'] == true && r.queryParameters['limit'] == 1) {
-        return (
-          status: 200,
-          body: {
-            'items': [],
-            'total': 0,
-            'filter_values': {'age_ratings': []},
-          },
-        );
-      }
       draws++;
       return (
         status: 200,
@@ -118,8 +110,8 @@ void main() {
         },
       );
     });
-    base.httpClientAdapter = server;
-    final a = AgeLimitedLibraryApi(api(const AgeLimit(maxAge: 12)), const AgeLimit(maxAge: 12));
+    const limit = AgeLimit(maxAge: 12);
+    final a = AgeLimitedLibraryApi(api(limit), limit);
     expect([for (final g in await a.recommended()) g.id], ['1']);
     expect([for (final g in await a.similar('9')) g.id], ['1']);
     expect((await a.randomGame())?.id, '1');

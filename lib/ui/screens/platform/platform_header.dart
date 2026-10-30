@@ -49,7 +49,7 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
   @override
   Widget build(BuildContext context) {
     final p = widget.platform;
-    final onPc = ref.watch(gamesOnThisPcProvider).where((g) => g.platformId == p.id).length;
+    final onPc = ref.watch(shownGamesOnThisPcProvider).where((g) => g.platformId == p.id).length;
     final chips = [
       ?p.category,
       ?p.familyName,

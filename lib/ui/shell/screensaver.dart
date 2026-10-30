@@ -169,7 +169,7 @@ class _ScreensaverScreenState extends ConsumerState<ScreensaverScreen> {
       }
     }
     if (game == null) {
-      final here = ref.read(gamesOnThisPcProvider);
+      final here = ref.read(shownGamesOnThisPcProvider);
       if (here.isNotEmpty) game = here[_random.nextInt(here.length)];
     }
     if (mounted && game != null) {

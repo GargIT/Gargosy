@@ -60,7 +60,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     final scopeQuery = GalleryQuery(search: _term);
     final scope = ref.watch(galleryScopeProvider(scopeQuery)).valueOrNull;
     final onPc = foldVersions(
-      localGallery(ref.watch(gamesOnThisPcProvider), scopeQuery, inScope: (_) => true, installedAt: (_) => null),
+      localGallery(ref.watch(shownGamesOnThisPcProvider), scopeQuery, inScope: (_) => true, installedAt: (_) => null),
     ).length;
     final box = FilterField(
       key: _boxKey,

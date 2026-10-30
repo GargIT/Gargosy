@@ -38,9 +38,7 @@ final libraryApiProvider = Provider<LibraryApi?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   if (romm == null) return null;
   // A profile's age limit (#224): RomM leaves those games out of its lists.
-  final limit = ref.watch(ageLimitProvider);
-  final api = RommLibraryApi(ageFilteredDio(romm.dio, limit, () => romm.authOptions), () => romm.authOptions);
-  return limit.isOn ? AgeLimitedLibraryApi(api, limit) : api;
+  return libraryApiFor(romm, ref.watch(ageLimitProvider));
 });
 
 /// The user's own collections changed on RomM (#144).

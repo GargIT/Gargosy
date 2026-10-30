@@ -21,6 +21,9 @@ class AgeLimit {
   /// Whether [game] may be shown and played.
   bool allows(Game game) => allowsAge(gameAge(game));
 
+  /// Of [games], those it allows (all of them without a limit).
+  List<Game> only(Iterable<Game> games) => isOn ? games.where(allows).toList() : games.toList();
+
   /// Whether a game rated for [age] (null: no rating read) may be shown.
   bool allowsAge(int? age) {
     final max = maxAge;
