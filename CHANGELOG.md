@@ -26,6 +26,8 @@ What changed in each release of Gargosy. The format follows
   words (Search “girl” · Sorted by Name, A–Z).
 - A zipped Xbox game whose disc ends in `.ISO` in capitals now plays in
   xemu; it failed with "Couldn't unpack" after unpacking the whole disc.
+- "Couldn't unpack" no longer ends in nothing when the unpacker gives no
+  reason; it says the code it stopped with.
 
 ## [0.5.0] - 2026-10-27
 

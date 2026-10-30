@@ -5,6 +5,7 @@ import 'dart:io' as io;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../l10n/tr.dart';
 import '../platform/platform_info.dart';
 
 /// A file in a zip and its unpacked size.
@@ -13,6 +14,14 @@ typedef ZipEntry = ({String name, int size});
 /// The unpacker refused or failed; [detail] is what it said.
 class UnpackException implements Exception {
   const UnpackException(this.detail);
+
+  /// tar ended with [code]: what it wrote to stderr, else that code, so the
+  /// player never sees an empty reason.
+  factory UnpackException.tar(String stderr, int code) {
+    final said = stderr.trim();
+    return UnpackException(said.isEmpty ? tr('tar stopped with code {0}', [code]) : said);
+  }
+
   final String detail;
 
   @override
@@ -61,7 +70,7 @@ class TarUnpacker implements Unpacker {
   @override
   Future<List<ZipEntry>> list(String zip) async {
     final r = await io.Process.run(tar, ['-tvf', zip]);
-    if (r.exitCode != 0) throw UnpackException((r.stderr as String).trim());
+    if (r.exitCode != 0) throw UnpackException.tar(r.stderr as String, r.exitCode);
     // -rw-rw-r--  0 0      0  7825162240 dec 24  1996 Name.iso (the month is localised)
     final line = RegExp(r'^(\S)\S*\s+\d+\s+\S+\s+\S+\s+(\d+)\s+\S+\s+\d+\s+\S+\s(.*)$');
     return [
@@ -88,7 +97,7 @@ class TarUnpacker implements Unpacker {
     timer?.cancel();
     await errDone;
     await outDone;
-    if (code != 0) throw UnpackException(err.toString().trim());
+    if (code != 0) throw UnpackException.tar('$err', code);
   }
 
   @override
@@ -105,6 +114,7 @@ class TarUnpacker implements Unpacker {
       await proc.exitCode;
       await errDone;
     }
-    if (await proc.exitCode != 0) throw UnpackException(err.toString().trim());
+    final code = await proc.exitCode;
+    if (code != 0) throw UnpackException.tar('$err', code);
   }
 }

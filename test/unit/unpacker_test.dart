@@ -67,4 +67,9 @@ void main() {
     await expectLater(unpacker.list(bad), throwsA(isA<UnpackException>()));
     await expectLater(unpacker.open(bad, 'Game.iso').drain<void>(), throwsA(isA<UnpackException>()));
   });
+
+  test('a failure with nothing on stderr says how tar ended, not nothing', () {
+    expect(UnpackException.tar('', 2).detail, 'tar stopped with code 2');
+    expect(UnpackException.tar('  tar.exe: Damaged archive\n', 1).detail, 'tar.exe: Damaged archive');
+  });
 }
