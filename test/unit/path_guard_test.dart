@@ -104,4 +104,14 @@ void main() {
     }
     expect(PathGuard.isProfileId('0f8e-4b2a'), isTrue);
   });
+
+  test('isWithin compares as the file system does, and a folder is not within itself', () {
+    expect(guard.isWithin(r'D:\Gargosy\emulators', r'd:\gargosy\EMULATORS\dolphin\User'), isTrue);
+    expect(guard.isWithin(r'D:\Gargosy\emulators', r'D:\Gargosy\emulators'), isFalse);
+    expect(guard.isWithin(r'D:\Gargosy\emulators', r'D:\Gargosy\emulators-old\x'), isFalse);
+    expect(guard.isWithin(r'D:\Gargosy\emulators', r'D:\Gargosy\emulators\..\roms\x'), isFalse);
+    final exact = PathGuard(root, platform: const PlatformInfo('linux'));
+    expect(exact.isWithin(r'D:\Gargosy\emulators', r'D:\Gargosy\Emulators\dolphin'), isFalse);
+    expect(exact.isWithin(r'D:\Gargosy\emulators', r'D:\Gargosy\emulators\dolphin'), isTrue);
+  });
 }

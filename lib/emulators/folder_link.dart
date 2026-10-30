@@ -68,11 +68,11 @@ FolderLinkResult pointFolderLink({
   final linkPath = guard.check(link);
   final targetPath = guard.check(target);
   final root = guard.root;
-  if (!p.isWithin(root.emulators, linkPath)) {
+  if (!guard.isWithin(root.emulators, linkPath)) {
     throw PathGuardException(linkPath, 'a folder link goes only in emulators\\');
   }
   final profile = guard.activeProfileId;
-  if (profile == null || !p.isWithin(p.join(root.profiles, profile), targetPath)) {
+  if (profile == null || !guard.isWithin(p.join(root.profiles, profile), targetPath)) {
     throw PathGuardException(targetPath, "a folder link points only into the active profile's folder");
   }
   io.Directory(targetPath).createSync(recursive: true);
