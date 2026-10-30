@@ -173,6 +173,32 @@ void main() {
     expect(find.byKey(const ValueKey('free-space')), findsNothing);
   });
 
+  testWidgets('the free space is read once, not on every build, and again after a download or delete', (tester) async {
+    var reads = 0;
+    await pump(
+      tester,
+      extra: [
+        diskInfoProvider.overrideWithValue(
+          FakeDisk((_) {
+            reads++;
+            return 1 << 50;
+          }),
+        ),
+      ],
+    );
+    final before = reads;
+    expect(before, greaterThan(0));
+    for (var i = 0; i < 5; i++) {
+      tester.element(find.byType(GameCoverColumn)).markNeedsBuild();
+      await tester.pump();
+    }
+    expect(reads, before);
+    final c = ProviderScope.containerOf(tester.element(find.byType(GameScreen)));
+    c.read(romFilesVersionProvider.notifier).state++;
+    await tester.pump();
+    expect(reads, greaterThan(before));
+  });
+
   testWidgets('behind another download it is Queued, and can be taken out of the queue (#143)', (tester) async {
     await pump(tester);
     downloads.holds['1'] = Completer<void>();

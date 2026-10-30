@@ -258,7 +258,7 @@ class GameCoverColumn extends ConsumerWidget {
       final size = game.fileSize > 0 ? ' (${formatBytes(game.fileSize)})' : '';
       final roms = ref.watch(appRootProvider).roms;
       final disk = ref.watch(diskInfoProvider);
-      final free = disk.freeOf(roms);
+      final free = ref.watch(diskUsageProvider(roms))?.free;
       main = Column(
         children: [
           _wide(
