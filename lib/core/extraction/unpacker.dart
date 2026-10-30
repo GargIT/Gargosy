@@ -27,14 +27,14 @@ abstract class Unpacker {
   /// The zip's files (not its folders), with their sizes.
   Future<List<ZipEntry>> list(String zip);
 
-  /// Unpacks [zip] into [into], leaving out names matching [exclude]
-  /// (globs). [tick] is called now and then while it runs.
+  /// Unpacks [zip] into [into], leaving out the files named in [exclude]
+  /// (names as [list] gives them). [tick] is called now and then while it runs.
   Future<void> unpack(String zip, String into, {List<String> exclude = const [], void Function()? tick});
 
-  /// The bytes of the zip's file matching [pattern] (a glob), streamed;
+  /// The bytes of the zip's file [name] (as [list] gives it), streamed;
   /// cancelling the stream stops the unpacker. Ends with an
   /// [UnpackException] when it fails.
-  Stream<List<int>> open(String zip, String pattern);
+  Stream<List<int>> open(String zip, String name);
 }
 
 /// The [Unpacker] of [platform]'s OS.
@@ -53,6 +53,10 @@ class TarUnpacker implements Unpacker {
     : tar = p.join(platform.environment['SystemRoot'] ?? r'C:\Windows', 'System32', 'tar.exe');
 
   final String tar;
+
+  /// [name] as a tar pattern that matches only itself: `Halo [!].iso`'s
+  /// `[` would start a set, `*` and `?` match anything.
+  static String literal(String name) => name.replaceAllMapped(RegExp(r'[\[*?]'), (m) => '[${m[0]}]');
 
   @override
   Future<List<ZipEntry>> list(String zip) async {
@@ -74,7 +78,7 @@ class TarUnpacker implements Unpacker {
       zip,
       '-C',
       into,
-      for (final e in exclude) ...['--exclude', e],
+      for (final e in exclude) ...['--exclude', literal(e)],
     ]);
     final err = StringBuffer();
     final errDone = proc.stderr.transform(io.systemEncoding.decoder).forEach(err.write);
@@ -88,8 +92,8 @@ class TarUnpacker implements Unpacker {
   }
 
   @override
-  Stream<List<int>> open(String zip, String pattern) async* {
-    final proc = await io.Process.start(tar, ['-xOf', zip, pattern]);
+  Stream<List<int>> open(String zip, String name) async* {
+    final proc = await io.Process.start(tar, ['-xOf', zip, literal(name)]);
     final err = StringBuffer();
     final errDone = proc.stderr.transform(io.systemEncoding.decoder).forEach(err.write);
     var finished = false;
