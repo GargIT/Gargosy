@@ -72,6 +72,7 @@ void main() {
     double width = 1920,
     SaveMaker? remembered,
     void Function()? beforeOpen,
+    bool autoStart = false,
   }) async {
     tester.view.physicalSize = Size(width, 1080);
     tester.view.devicePixelRatio = 1;
@@ -96,8 +97,11 @@ void main() {
             ref.watch(playMenuProvider(PlayMenuKey(burnout)));
             return Center(
               child: TextButton(
-                onPressed: () =>
-                    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PlayScreen(game: burnout))),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => PlayScreen(game: burnout, autoStart: autoStart),
+                  ),
+                ),
                 child: const Text('open'),
               ),
             );
@@ -192,6 +196,22 @@ void main() {
     expect(engine.request!.emulator, _pcsx2);
     expect(engine.request!.save?.fileName, 'burnout.ps2');
     expect(find.byType(PlayScreen), findsNothing, reason: 'the play screen closes once the game started');
+  });
+
+  testWidgets('started from outside (#223), it plays the preselected save without a press', (tester) async {
+    await open(
+      tester,
+      autoStart: true,
+      catalog: SaveCatalog(
+        thisPc: [_local(_day(2, 9), onRomm: '1')],
+        backups: const [],
+        romm: [_g(_romm('burnout.ps2', _day(0, 21)))],
+        rommOffline: false,
+      ),
+    );
+    expect(engine.steps, ['states', 'prepare', 'launch']);
+    expect(engine.request!.save?.fileName, 'burnout.ps2');
+    expect(find.byType(PlayScreen), findsNothing);
   });
 
   testWidgets('an older save asks first, and No keeps the screen open', (tester) async {

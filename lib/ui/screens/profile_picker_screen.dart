@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/input/gamepad_service.dart';
+import '../../play/outside_launch.dart';
 import '../../profiles/pin.dart';
 import '../../profiles/profile.dart';
 import '../../profiles/profile_paths.dart';
@@ -12,6 +13,7 @@ import '../widgets/g_focusable.dart';
 import '../widgets/hint_bar.dart';
 import '../widgets/pin_pad.dart';
 import '../widgets/profile_badge.dart';
+import '../widgets/toast.dart';
 import 'add_profile_screen.dart';
 import 'login_step.dart';
 import 'profile_options_dialog.dart';
@@ -27,6 +29,37 @@ class ProfilePickerScreen extends ConsumerStatefulWidget {
 
 class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
   final Map<String, bool> _hasLogin = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openForLaunch());
+  }
+
+  /// Started with `--play` (#223): its profile opens as if chosen, PIN and
+  /// all. A profile that isn't there, a wrong PIN or Back ends here, and the
+  /// launch is dropped: the game never starts behind the picker's back.
+  Future<void> _openForLaunch() async {
+    final launch = ref.read(outsideLaunchProvider);
+    if (launch == null) return;
+    final List<Profile> profiles;
+    try {
+      profiles = await ref.read(profilesProvider.future);
+    } on Object {
+      ref.read(outsideLaunchProvider.notifier).state = null;
+      return;
+    }
+    if (!mounted) return;
+    final p = launch.profileIn(profiles, ref.read(profileStoreProvider).lastUsedId);
+    if (p == null) {
+      ref.read(outsideLaunchProvider.notifier).state = null;
+      showToast(context, tr('Choose who is playing, then start the game again.'));
+      return;
+    }
+    await _open(p);
+    // Opened, the shell has replaced this page and takes the launch.
+    if (mounted && ref.read(activeProfileProvider) == null) ref.read(outsideLaunchProvider.notifier).state = null;
+  }
 
   Future<void> _loadLogins(List<Profile> profiles) async {
     for (final p in profiles) {

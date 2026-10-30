@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/romm/romm_auth_client.dart';
+import 'package:gargosy/play/outside_launch.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/pin.dart';
 import 'package:gargosy/profiles/profile.dart';
@@ -190,5 +191,43 @@ void main() {
     await h.settle(tester);
     expect(find.textContaining('could not be saved'), findsOneWidget);
     expect(h.container.read(activeProfileProvider), isNull);
+  });
+
+  group('started with --play (#223)', () {
+    testWidgets('the named profile opens without a press, and the shell takes the launch', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      await addProfile(tester, 'Anna');
+      final bob = await addProfile(tester, 'Bob', userId: 8);
+      h.container.read(outsideLaunchProvider.notifier).state = OutsideLaunch(romId: '1', profileId: bob.id);
+      await h.pumpApp(tester);
+      await h.settle(tester, until: find.byType(AppShell));
+      expect(h.container.read(activeProfileProvider)!.profile.name, 'Bob');
+      expect(h.container.read(outsideLaunchProvider), isNull);
+    });
+
+    testWidgets('a PIN is asked first; Back stays at the picker and drops the launch', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      await addProfile(tester, 'Anna', pin: '4711');
+      h.container.read(outsideLaunchProvider.notifier).state = const OutsideLaunch(romId: '1');
+      await h.pumpApp(tester);
+      expect(find.text('PIN for Anna'), findsOneWidget);
+      await h.send(tester, GameAction.back);
+      expect(find.text('Who is playing?'), findsOneWidget);
+      expect(h.container.read(activeProfileProvider), isNull);
+      expect(h.container.read(outsideLaunchProvider), isNull);
+    });
+
+    testWidgets('a profile that is not here: nothing opens, the launch is dropped', (tester) async {
+      h = AppHarness();
+      await h.setUp(tester);
+      await addProfile(tester, 'Anna');
+      await addProfile(tester, 'Bob', userId: 8);
+      h.container.read(outsideLaunchProvider.notifier).state = const OutsideLaunch(romId: '1', profileId: 'gone');
+      await h.pumpApp(tester);
+      expect(h.container.read(activeProfileProvider), isNull);
+      expect(h.container.read(outsideLaunchProvider), isNull);
+    });
   });
 }

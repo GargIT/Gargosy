@@ -331,3 +331,10 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## PathGuard on a case-sensitive file system (#204)
 
 121. [x] On Windows nothing changes: download a game, play one in Eden, Azahar, Cemu or melonDS with one profile, switch profile and play it again (its own saves; the folder link is re-pointed), and update an emulator from Settings → Emulators.
+
+## Starting a game from outside Gargosy (#223)
+
+122. [ ] Make a desktop shortcut to `Gargosy.exe --play=<rom id>` (the id from the game's RomM address) for a downloaded game. With Gargosy closed, open it: the last used profile opens (its PIN asked when it has one), the game starts without a press, and when you quit the game its saves sync and Gargosy closes.
+123. [ ] The same with `--profile=<profile id>` of another profile (its folder's name under `userdata\profiles\`): that profile opens. With a wrong PIN or Back, the picker stays and no game starts.
+124. [ ] Add `Gargosy.exe` to Steam as a non-Steam game with `--play=<rom id>` as its launch options, start it from Big Picture with a controller: the game runs, and Steam sees it end when Gargosy closes after the sync.
+125. [ ] `--play-stay`: Gargosy stays open on the game's page after the session, with the session's message.
