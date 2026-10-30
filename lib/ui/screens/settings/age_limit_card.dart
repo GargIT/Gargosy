@@ -57,7 +57,7 @@ class AgeLimitCard extends ConsumerWidget {
       title: tr('Age limit'),
       icon: Icons.family_restroom,
       note: tr(
-        'Games rated above the limit can\'t be played in this profile, and an emulator can\'t be opened on its own. A rating\'s age is its board\'s (PEGI, ESRB …); a game with several counts at its highest.',
+        'Games rated above the limit are hidden from this profile and can\'t be played, and an emulator can\'t be opened on its own. A rating\'s age is its board\'s (PEGI, ESRB …); a game with several counts at its highest.',
       ),
       children: [
         SettingsField(

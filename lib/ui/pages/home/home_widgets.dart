@@ -214,7 +214,7 @@ class _Library extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final games = ref.watch(galleryScopeProvider(const GalleryQuery())).valueOrNull?.total;
-    final onPc = foldVersions(ref.watch(gamesOnThisPcProvider)).length;
+    final onPc = foldVersions(ref.watch(shownGamesOnThisPcProvider)).length;
     final platforms = ref.watch(platformsProvider).valueOrNull?.length;
     final collections = ref.watch(collectionsProvider).valueOrNull?.length;
     String n(int? v) => v == null ? '–' : NumberFormat.decimalPattern().format(v);

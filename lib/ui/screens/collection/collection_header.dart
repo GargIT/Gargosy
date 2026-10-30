@@ -112,7 +112,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
   Widget build(BuildContext context) {
     final c = widget.collection;
     final userId = ref.watch(rommUserIdProvider);
-    final downloaded = {for (final g in ref.watch(gamesOnThisPcProvider)) ?int.tryParse(g.id)};
+    final downloaded = {for (final g in ref.watch(shownGamesOnThisPcProvider)) ?int.tryParse(g.id)};
     final platforms = ref.watch(galleryScopeProvider(c.query)).valueOrNull?.platforms;
     final virtual = c.kind == CollectionKind.virtual;
     final whose = virtual || c.userId == null

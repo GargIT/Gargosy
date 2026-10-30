@@ -55,7 +55,7 @@ class HomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(homeLayoutProvider);
     final offline = ref.watch(rommOfflineProvider);
-    final installed = ref.watch(gamesOnThisPcProvider);
+    final installed = ref.watch(shownGamesOnThisPcProvider);
     final played = ref.watch(recentlyPlayedProvider);
     final favIds = ref.watch(favouriteIdsProvider);
     final userId = ref.watch(rommUserIdProvider);

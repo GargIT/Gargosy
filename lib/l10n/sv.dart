@@ -249,7 +249,7 @@ const svText = <String, String>{
   'Game id': 'Spel-id',
   'Game page': 'Spelsidan',
   'Games': 'Spel',
-  'Games rated above the limit can\'t be played in this profile, and an emulator can\'t be opened on its own. A rating\'s age is its board\'s (PEGI, ESRB …); a game with several counts at its highest.': 'Spel med en åldersmärkning över gränsen kan inte spelas i den här profilen, och en emulator kan inte öppnas på egen hand. En märknings ålder är den dess system anger (PEGI, ESRB …); ett spel med flera räknas efter den högsta.',
+  'Games rated above the limit are hidden from this profile and can\'t be played, and an emulator can\'t be opened on its own. A rating\'s age is its board\'s (PEGI, ESRB …); a game with several counts at its highest.': 'Spel med en åldersmärkning över gränsen döljs för den här profilen och kan inte spelas, och en emulator kan inte öppnas på egen hand. En märknings ålder är den dess system anger (PEGI, ESRB …); ett spel med flera räknas efter den högsta.',
   'Games without a rating Gargosy can read are hidden too.':
       'Spel utan en åldersmärkning som Gargosy kan läsa döljs också.',
   'Gargosy can\'t load sigil.dll': 'Gargosy kan inte läsa in sigil.dll',

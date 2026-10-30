@@ -119,13 +119,16 @@ final recentlyPlayedProvider = FutureProvider<List<Game>>((ref) async {
     const GalleryQuery(lastPlayedOnly: true, sort: GallerySort.lastPlayed, descending: true),
     limit: 20,
   );
-  return page.games;
+  // Unrated games with Hide unrated (#224): RomM's filter leaves out only
+  // the rated ones above the limit.
+  return ref.watch(ageLimitProvider).only(page.games);
 });
 
 final recentlyAddedProvider = FutureProvider<List<Game>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   if (api == null) return const [];
-  return (await api.page(const GalleryQuery(sort: GallerySort.recentlyAdded, descending: true), limit: 20)).games;
+  final page = await api.page(const GalleryQuery(sort: GallerySort.recentlyAdded, descending: true), limit: 20);
+  return ref.watch(ageLimitProvider).only(page.games);
 });
 
 final favouriteGamesProvider = FutureProvider<List<Game>>((ref) async {
@@ -135,7 +138,7 @@ final favouriteGamesProvider = FutureProvider<List<Game>>((ref) async {
     const GalleryQuery(favourites: true, sort: GallerySort.lastPlayed, descending: true),
     limit: 20,
   );
-  return page.games;
+  return ref.watch(ageLimitProvider).only(page.games);
 });
 
 final randomGameProvider = FutureProvider<Game?>((ref) async => ref.watch(libraryApiProvider)?.randomGame());
