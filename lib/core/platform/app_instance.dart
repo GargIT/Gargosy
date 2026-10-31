@@ -58,10 +58,10 @@ class AppInstance {
   /// took [args]: this one should exit. When the holder can't be reached, a
   /// claim that holds nothing, and Gargosy starts. A claim that fails half
   /// way lets the lock go before it throws.
-  static Future<AppInstance?> claim(AppRoot root, List<String> args, {PlatformInfo? platform}) async {
+  static Future<AppInstance?> claim(AppRoot root, List<String> args, {required PlatformInfo platform}) async {
     final guard = PathGuard(root);
     final Future<void> Function() letGo;
-    if ((platform ?? PlatformInfo.current).isWindows) {
+    if (platform.isWindows) {
       final mutex = InstanceMutex.claim(root.root);
       if (mutex == null) {
         if (await handOver(root, args)) return null;

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ffi';
+import 'dart:io' as io;
 
 import 'package:crypto/crypto.dart';
 import 'package:ffi/ffi.dart';
@@ -17,15 +18,23 @@ class InstanceMutex {
 
   final int _handle;
 
-  /// This process's mutex, held until it ends: never collected or closed.
-  static InstanceMutex? _held;
+  /// The mutex's name for the Gargosy folder [root]: for every Windows
+  /// session (`Global\`, so another user signed in on the PC finds it too),
+  /// the folder as Windows resolves it (a junction, a `subst` drive) made
+  /// one case and hashed.
+  static String nameFor(String root) => 'Global\\Gargosy-${sha1.convert(utf8.encode(_resolved(root).toLowerCase()))}';
 
-  /// The mutex's name for the Gargosy folder [root]: per Windows session
-  /// (`Local\`), its path made one case and hashed.
-  static String nameFor(String root) =>
-      'Local\\Gargosy-${sha1.convert(utf8.encode(p.normalize(p.absolute(root)).toLowerCase()))}';
+  static String _resolved(String root) {
+    final path = p.normalize(p.absolute(root));
+    try {
+      return p.normalize(io.Directory(path).resolveSymbolicLinksSync());
+    } on io.FileSystemException {
+      return path;
+    }
+  }
 
-  /// The mutex for [root], or null when another process holds it.
+  /// The mutex for [root], or null when another process holds it (one this
+  /// process may not open, another user's or an elevated one's, included).
   static InstanceMutex? claim(String root) {
     // GetLastError resolved before the call it reads after, so Dart's
     // runtime doesn't clobber it in between (as win32 does).
@@ -34,22 +43,22 @@ class InstanceMutex {
     try {
       final handle = _createMutex(nullptr, 0, name);
       final error = GetLastError();
-      if (handle == 0) throw WindowsException(error.toHRESULT(), message: 'CreateMutexW failed');
+      if (handle == 0) {
+        if (error == ERROR_ACCESS_DENIED) return null;
+        throw WindowsException(error, message: 'CreateMutexW failed');
+      }
       if (error == ERROR_ALREADY_EXISTS) {
-        CloseHandle(HANDLE(Pointer.fromAddress(handle)));
+        CloseHandle(handle);
         return null;
       }
-      return _held = InstanceMutex._(handle);
+      return InstanceMutex._(handle);
     } finally {
       calloc.free(name);
     }
   }
 
   /// Lets the folder go (tests; the process's end lets it go by itself).
-  void release() {
-    if (identical(_held, this)) _held = null;
-    CloseHandle(HANDLE(Pointer.fromAddress(_handle)));
-  }
+  void release() => CloseHandle(_handle);
 }
 
 final _createMutex = DynamicLibrary.open('kernel32.dll')
