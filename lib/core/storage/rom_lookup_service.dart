@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
+import '../../library/disc_playlist.dart';
 import '../romm/romm_models.dart';
 import '../romm/rom_constants.dart';
 import 'file_system_index.dart';
@@ -181,6 +182,13 @@ class RomLookupService {
     final m3uPath = await _findM3uInFolder(folderPath);
     if (m3uPath != null) {
       return p.absolute(m3uPath);
+    }
+
+    // Gargosy (#230): numbered discs without a playlist start on disc 1,
+    // not on the largest file (often a later disc).
+    final discs = DiscPlaylist.discsIn(folderPath);
+    if (discs.isNotEmpty && discs.every((d) => DiscPlaylist.discNumber(p.basename(d)) != null)) {
+      return p.absolute(discs.first);
     }
 
     io.File? largestFile;

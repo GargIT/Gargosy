@@ -33,6 +33,7 @@ import '../emulators/profile_launch_config.dart';
 import '../providers/download_providers.dart';
 import '../providers/engine_providers.dart';
 import '../providers/romm_providers.dart';
+import '../library/disc_playlist.dart';
 import '../library/rom_preparer.dart';
 import '../ui/play/emulator_choices.dart';
 import 'dsiware_limits.dart';
@@ -621,9 +622,26 @@ class GargosyPlayEngine implements PlayEngine {
       onStarted?.call(() => _ref.read(processCloserProvider).close(process));
       process.exitCode.whenComplete(_ref.read(windowFocusProvider).bringToFront);
     };
+    // A multi-disc folder without its own playlist (#230): the emulator
+    // starts on one in temp, named after disc 1, so it can switch discs;
+    // the saves still sync against [romPath].
+    final root = _ref.read(appRootProvider);
+    final playlist = DiscPlaylist.writeFor(
+      romPath,
+      emulatorId: strategy.emulatorId,
+      gameId: game.id,
+      root: root,
+      guard: PathGuard(root),
+    );
     final GameSession session;
     try {
-      session = await service.launch(game, romPath, strategy, overrideCoreId: coreOverride, loadStatePath: statePath);
+      session = await service.launch(
+        game,
+        playlist ?? romPath,
+        strategy,
+        overrideCoreId: coreOverride,
+        loadStatePath: statePath,
+      );
     } finally {
       dirs?.onGameStarted = null;
     }
@@ -637,6 +655,7 @@ class GargosyPlayEngine implements PlayEngine {
           // The copies made for this session: this PC's ROM path, another
           // player's state (#92).
           for (final copy in {
+            ?playlist,
             if (statePath != loadStatePath) statePath,
             if (loadStatePath != null && p.isWithin(temp, loadStatePath)) loadStatePath,
           }) {
