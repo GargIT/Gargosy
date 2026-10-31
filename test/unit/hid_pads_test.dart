@@ -9,15 +9,22 @@ import 'package:gargosy/core/input/hid_pads.dart';
 import '../helpers/profile_test_env.dart';
 
 void main() {
-  test("Windows' own HID listing and opening run (win32 6's typed handles, #261)", () async {
+  test("Windows' own HID listing runs (win32 6's typed handles, #261)", () async {
+    // A controller to open isn't on a CI runner: the listing (SetupDi) is
+    // what this reaches there; opening and reading are hand test 150's.
     final held = StreamController<HeldButtons>.broadcast();
-    final listed = <int>[];
-    final pads = HidPads(held, database: () async => '', onDevices: (devices, _) => listed.add(devices.length));
+    final listed = Completer<int>();
+    final pads = HidPads(
+      held,
+      database: () async => '',
+      onDevices: (devices, _) {
+        if (!listed.isCompleted) listed.complete(devices.length);
+      },
+    );
     pads.start();
-    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(await listed.future.timeout(const Duration(seconds: 20)), greaterThanOrEqualTo(0));
     pads.stop();
     await held.close();
-    expect(listed, isNotEmpty, reason: 'it listed the HID devices at least once');
   }, testOn: 'windows');
 
   const db = '''

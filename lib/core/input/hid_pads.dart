@@ -241,8 +241,8 @@ List<String> _hidPaths() {
   try {
     _getHidGuid(guid);
     final set = SetupDiGetClassDevs(guid, null, null, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE).value;
-    // INVALID_HANDLE_VALUE, as a number.
-    if (set == -1) return paths;
+    // HDEVINFO is a number: INVALID_HANDLE_VALUE's address.
+    if (set == INVALID_HANDLE_VALUE.address) return paths;
     try {
       for (var i = 0; SetupDiEnumDeviceInterfaces(set, null, guid, i, data).value; i++) {
         SetupDiGetDeviceInterfaceDetail(set, data, null, 0, need, null);
@@ -313,7 +313,7 @@ class _HidPad implements HidDevice {
     ).value;
     calloc.free(name);
     // Keyboards and mice Windows keeps to itself.
-    if (handle.address == INVALID_HANDLE_VALUE.address) return null;
+    if (handle == INVALID_HANDLE_VALUE) return null;
     // hid.dll's functions below take the handle as a number.
     final h = handle.address;
     final attributes = calloc<Uint8>(12);
@@ -354,8 +354,9 @@ class _HidPad implements HidDevice {
     if (gone) return null;
     final was = _held;
     // A few reports at most between polls; the last one counts. A read's
-    // outcome is its OVERLAPPED's status (NTSTATUS): GetLastError isn't
-    // kept between Dart's native calls, so it can't tell a pending read.
+    // outcome is its OVERLAPPED's status (NTSTATUS), one place for a read
+    // that finished at once, one still pending and one that ended between
+    // polls.
     for (var n = 0; n < 64; n++) {
       if (_pending) {
         final status = _status;

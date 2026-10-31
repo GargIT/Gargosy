@@ -26,6 +26,8 @@ dependencies:
   package_info_plus: ^10.2.2
   pub_semver: ^2.1.4
   qr_flutter: ^4.1.0
+  # Exact, with flutter_cache_manager: the image cache (romm_images.dart) is
+  # built on its JSON repo and file system; a new release is chosen and tried.
   cached_network_image: 4.0.6
   file: ^7.0.1
   # Exact: save zips and RomM's content hashes are built with it, so a new
