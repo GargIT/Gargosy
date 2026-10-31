@@ -122,7 +122,34 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     return done.future;
   }
 
+  /// Queues [games] together (Download all, #226): one space check for all
+  /// of them with everything before, one state change. Those waiting or
+  /// running already are left as they are. Throws [NotEnoughSpace] (nothing
+  /// queued) when they don't fit.
+  void startAll(List<Game> games) {
+    if (_ref.read(downloadServiceProvider) == null) return;
+    final fresh = [
+      for (final g in games)
+        if (!(state[g.id]?.phase.active ?? false)) g,
+    ];
+    if (fresh.isEmpty) return;
+    checkSpace({
+      _ref.read(appRootProvider).roms: fresh.fold(stillToCome(), (n, g) => n + g.fileSize),
+    }, _ref.read(diskInfoProvider));
+    final next = Map<String, DownloadProgress>.from(state);
+    for (final g in fresh) {
+      _games[g.id] = g;
+      _queue.add(g);
+      _waiting[g.id] = Completer<void>();
+      next[g.id] = const DownloadProgress(DownloadPhase.queued);
+    }
+    state = next;
+    _next();
+  }
+
   /// What the queue and the running download will still write.
+  int stillToCome() => _stillToCome();
+
   int _stillToCome() {
     final running = _current == null ? 0 : _current!.fileSize - (state[_current!.id]?.received ?? 0);
     return _queue.fold(running.clamp(0, 1 << 62), (n, g) => n + g.fileSize);
@@ -191,6 +218,18 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     if (i <= 0) return;
     _queue.insert(0, _queue.removeAt(i));
     state = Map.of(state); // the order changed: listeners read it again
+  }
+
+  /// The queue emptied; the running download goes on (Downloads' Cancel
+  /// all, #226).
+  void cancelQueued() {
+    final next = Map<String, DownloadProgress>.from(state);
+    for (final g in _queue) {
+      _waiting.remove(g.id)?.complete();
+      next.remove(g.id);
+    }
+    _queue.clear();
+    state = next;
   }
 
   /// The queue emptied and the running download stopped (a profile switch).

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/romm/romm_library_api.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../library/library_snapshot.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/download_all_button.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
@@ -97,6 +99,8 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
             ),
           ),
           const SizedBox(width: GSpace.s4),
+          DownloadAllButton(query: GalleryQuery(platformId: widget.platform.id)),
+          const SizedBox(width: GSpace.s2),
           GFocusable(
             key: const ValueKey('platform-random'),
             borderRadius: GRadius.pill,

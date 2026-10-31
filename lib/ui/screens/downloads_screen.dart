@@ -168,6 +168,23 @@ class DownloadsScreen extends ConsumerWidget {
                             onX: () => downloads.cancel(g.id),
                             onY: () => downloads.moveToFront(g.id),
                           ),
+                        // Under the queue: the D-pad meets the games first.
+                        if (queue.length > 1)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: GFocusable(
+                              key: const ValueKey('cancel-queued'),
+                              borderRadius: GRadius.pill,
+                              onActivate: downloads.cancelQueued,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: GSpace.s3, vertical: GSpace.s2),
+                                child: Text(
+                                  tr('Cancel all'),
+                                  style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                       if (failed.isNotEmpty) ...[
                         heading(tr('FAILED')),

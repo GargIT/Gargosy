@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Download all on a collection's and a platform's page: every game of it
+  not on this PC yet, its size checked against the free space first, then
+  queued. Downloads has Cancel all for the queue.
 - Downloads are checked against RomM's hashes before they go into `roms\`:
   a damaged one fails with Retry instead of being played. Settings →
   Storage → Check downloads turns it off.
