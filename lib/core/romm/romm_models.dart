@@ -52,8 +52,12 @@ class Game {
   final int? hltbMainStory; // HowLongToBeat's main story, in seconds
   final List<GameVersion> siblings; // RomM's other versions of this game (regions, revisions)
   final GameOverview overview; // age ratings, HowLongToBeat, IGDB's related games (#179)
+  final String? pathManual; // the manual in RomM's resources, e.g. roms/4/123/manual/123.pdf (#232)
 
   bool get isMultiFile => hasMultipleFiles;
+
+  /// RomM has a manual for the game that Gargosy can show: a PDF (#232).
+  bool get hasManual => pathManual != null && pathManual!.toLowerCase().endsWith('.pdf');
 
   String get displayName {
     String cleaned = name;
@@ -121,6 +125,7 @@ class Game {
     this.hltbMainStory,
     this.siblings = const [],
     this.overview = GameOverview.empty,
+    this.pathManual,
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -175,6 +180,9 @@ class Game {
       saveTarget: json['save_target'] is String ? json['save_target'] as String : null,
       saveTargetLayout: SaveTargetLayout.fromJson(json['save_target_layout']),
       createdAt: json['created_at'] is String ? DateTime.tryParse(json['created_at'] as String) : null,
+      pathManual: json['path_manual'] is String && (json['path_manual'] as String).isNotEmpty
+          ? json['path_manual'] as String
+          : null,
       hltbMainStory: json['hltb_metadata'] is Map && json['hltb_metadata']['main_story'] is int
           ? json['hltb_metadata']['main_story'] as int
           : null,
@@ -244,6 +252,7 @@ class Game {
       'save_target_layout': saveTargetLayout?.toJson(),
       'created_at': createdAt?.toIso8601String(),
       'hltb_metadata': {'main_story': hltbMainStory},
+      'path_manual': pathManual,
       'sibling_roms': [for (final v in siblings) v.toJson()],
       'gargosy_overview': overview.toJson(),
     };

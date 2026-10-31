@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Manuals: a game whose manual RomM has gets a Manual button by ♥ on its
+  page. It opens a page at a time; LB/RB turn the page, A zooms, the
+  D-pad moves a zoomed page. The manual is kept on this PC once opened, so
+  it opens offline too.
 - About → Report a bug opens GitHub's bug form with the versions filled
   in, and the last two logs (redacted) ready to drag in beside it.
 - Multi-disc games without a playlist can switch discs in RetroArch and
