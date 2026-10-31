@@ -24,6 +24,10 @@ Copyright (c) 2023 Blue Fire, under the MIT License, patched so Gargosy doesn't 
 patched source and its licence are in this repository's `third_party/gamepads_windows` (`GARGOSY.md` lists the
 changes).
 
+`pdfium.dll` is PDFium (chromium/8125, BSD-3-Clause, from https://github.com/bblanchon/pdfium-binaries, MIT),
+used unchanged through pdfrx (MIT) to show game manuals. Its licences and those of the libraries it bundles
+are in [LICENSES/PDFium.txt](LICENSES/PDFium.txt).
+
 Gargosy's look follows the design token values of RomM's v2 web UI (https://github.com/rommapp/romm).
 No RomM code, stylesheets, icons or logos are included.
 

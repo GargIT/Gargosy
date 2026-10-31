@@ -373,3 +373,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Report a bug with the log (#231)
 
 136. [ ] About → Report a bug: the browser opens GitHub's bug form with Gargosy's, Windows' and RomM's versions filled in, and Explorer opens `userdata\app\temp\bug-report\` with `gargosy-log-for-bug.txt` (the last two logs; no token or password in it), ready to drag into the form's Log field. On Windows 11 the form says Windows 11. Other links in About (GitHub, a document's web link) still open.
+
+## Manuals from RomM (#232)
+
+137. [ ] A game whose manual RomM has (its Manual tab in RomM's web UI shows a PDF): the game page has a Manual button between ♥ and ⋯; a game without one has none. With a controller alone: A on Manual opens the first page fitted to the screen with "Page 1 of N"; RB / LB and D-pad right / left turn the page, not past the first or last; A zooms in (1.5×, 2×, 3×, then the whole page again), the D-pad moves the zoomed page without leaving it, X shows the whole page, B goes back. With the mouse the wheel zooms and a drag moves the page; with the keyboard PgUp / PgDn, the arrows, + / −, Home / End and Esc.
+138. [ ] Download a game with a manual, then go offline (stop RomM or pull the network): its Manual still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A game whose manual was never opened or downloaded says the manual isn't on this PC and RomM can't be reached.

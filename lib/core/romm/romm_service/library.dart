@@ -13,6 +13,21 @@ mixin _RommLibrary on _RommBase {
     }
   }
 
+  /// Gargosy (#232): the game's manual, [pathManual] (`Game.pathManual`)
+  /// under RomM's resources. Throws when RomM can't give it.
+  Future<Uint8List> downloadManual(String pathManual) async {
+    final path = pathManual.startsWith('/') ? pathManual.substring(1) : pathManual;
+    final response = await _dio.get<List<int>>(
+      '/assets/romm/resources/$path',
+      options: _authOptions.copyWith(responseType: ResponseType.bytes, receiveTimeout: const Duration(minutes: 2)),
+    );
+    final data = response.data;
+    if (response.statusCode != 200 || data == null || data.isEmpty) {
+      throw StateError('RomM sent no manual (${response.statusCode}).');
+    }
+    return Uint8List.fromList(data);
+  }
+
   /// Gargosy (#224): the age ratings across the library, as RomM's
   /// `age_ratings` filter takes them (`filter_values.age_ratings`), in one
   /// small request. Throws when RomM can't be read.

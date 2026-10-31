@@ -111,12 +111,12 @@ when a token exists.
 
 | Button | Everywhere | Where it differs |
 |---|---|---|
-| D-pad / stick | Moves focus to the nearest item in that direction | A–Z rail: left jumps |
-| A | Open, activate | Hold A: delete or forget (saves, recent searches, games) |
+| D-pad / stick | Moves focus to the nearest item in that direction | A–Z rail: left jumps; manual: left/right turn the page, a zoomed page pans |
+| A | Open, activate | Hold A: delete or forget (saves, recent searches, games); manual: zoom in (after 3×, the whole page) |
 | B | Back | In a filled text box: clears it first |
-| X | Options for the focused item | Gallery: the A–Z rail; profile picker: profile options |
+| X | Options for the focused item | Gallery: the A–Z rail; profile picker: profile options; manual: the whole page |
 | Y | Favourite the focused game | Home: another random pick; game page: resume the newest state; Saves tab: share |
-| LB / RB | Previous / next tab | |
+| LB / RB | Previous / next tab | Manual: previous / next page |
 | Start | The user menu | |
 | Hold the quit buttons (Select + LB + RB by default) | Quits the running game | Set in Settings → Controller |
 
@@ -151,7 +151,8 @@ when a token exists.
 | Screen | Order, top to bottom | Decided in |
 |---|---|---|
 | Home | Header (last played, Resume / Play, Game page; ≥ 1600 px the widgets beside it); widgets (Random pick, On this day); Your library; rows in the profile's order, Playing now first | #139, #180, #184 |
-| Game page | Cover column (Play, ♥, ⋯); title, pills (status, rating, completion); tabs Overview, Saves, Achievements, Notes, Details | #95 |
+| Game page | Cover column (Play; ♥, Manual when RomM has one, ⋯); title, pills (status, rating, completion); tabs Overview, Saves, Achievements, Notes, Details | #95, #232 |
+| Manual | The game's name and Page N of M; one page fitted to the screen; hints | #232 |
 | Overview tab | Description and genres; facts (Last played, Players, Age rating); How long to beat; screenshots; similar games in your library | #179 |
 | Achievements tab | Summary; filters by type and earned / locked; badges in 1–4 columns (380 px each) | #174 |
 | Play screen | Cover + Play / Resume + what A does; Saves \| States; Plays in (emulator, core, full screen) | |
@@ -204,3 +205,4 @@ Mockups are linked from each issue.
 | 2026-10-27 | Home rows show only what fits, See all last; nothing scrolls sideways | #184 |
 | 2026-10-27 | Swedish beside English, the English text as the key (`tr()`); app-wide, System follows Windows | #191 |
 | 2026-10-27 | A gallery is saved as a smart collection from its Filters; what RomM can't run is said, not saved | #188 |
+| 2026-10-31 | A game's manual is a page of its own from a button by ♥, not a tab: a page at a time, A zooms (the controller has no second stick in Gargosy's input) | #232 |

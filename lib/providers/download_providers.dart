@@ -11,6 +11,7 @@ import '../library/download_check.dart';
 import '../library/download_schedule.dart';
 import '../library/download_service.dart';
 import '../library/dsi_title.dart';
+import '../library/game_manual.dart';
 import '../library/library_snapshot.dart';
 import '../library/rom_files.dart';
 import '../library/throttled_download.dart';
@@ -242,6 +243,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
       await _ref.read(librarySnapshotProvider)?.remember(game);
+      unawaited(_ref.read(gameManualsProvider)?.keep(game));
     } on DioException catch (e) {
       if (!mounted) return;
       _set(game.id, CancelToken.isCancel(e) ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
@@ -341,4 +343,18 @@ final downloadsProvider = StateNotifierProvider<DownloadsNotifier, Map<String, D
   final notifier = DownloadsNotifier(ref);
   ref.onDispose(notifier.cancelAll);
   return notifier;
+});
+
+/// #232: the active profile's manuals (`cache\manuals\`); RomM's copies only
+/// while RomM can be reached. A game's download keeps its manual too.
+final gameManualsProvider = Provider<GameManuals?>((ref) {
+  final profile = ref.watch(activeProfileProvider);
+  if (profile == null) return null;
+  final romm = ref.watch(rommServiceProvider);
+  final offline = ref.watch(rommOfflineProvider);
+  return GameManuals(
+    guard: profile.guard,
+    dir: p.join(profile.paths.cache, 'manuals'),
+    download: romm == null || offline ? null : romm.downloadManual,
+  );
 });

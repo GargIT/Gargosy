@@ -29,6 +29,8 @@ import 'package:gargosy/ui/screens/play/play_screen.dart';
 import 'package:gargosy/ui/screens/game/game_screen.dart';
 import 'package:gargosy/ui/screens/game/overview_tab.dart';
 import 'package:gargosy/ui/screens/game/game_cover_column.dart';
+import 'package:gargosy/ui/screens/manual/manual_screen.dart';
+import 'package:gargosy/library/game_manual.dart';
 import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/core/save/resume_service.dart';
 import 'package:gargosy/core/save/catalog/save_entry.dart';
@@ -298,6 +300,7 @@ void main() {
     expect(tester.getSize(find.byKey(const ValueKey('game-cover'))), const Size(240, 324));
     expect(find.text('Play'), findsOneWidget);
     expect(find.byKey(const ValueKey('game-fav')), findsOneWidget);
+    expect(find.byKey(const ValueKey('game-manual')), findsNothing, reason: 'RomM has no manual for it');
     await tester.tap(find.byKey(const ValueKey('game-more')));
     await tester.pumpAndSettle();
     final items = ["Open the game's folder", 'Sync save states now', 'Delete from this PC…'];
@@ -311,6 +314,22 @@ void main() {
     await tester.tap(find.text("Open the game's folder"));
     await tester.pumpAndSettle();
     expect(opened.single, contains('ps2'));
+  });
+
+  testWidgets("Manual by ♥ and ⋯ only when RomM has one; it opens the reader (#232)", (tester) async {
+    fresh = Game.fromJson({...burnout.toJson(), 'path_manual': 'roms/2/7564/manual/7564.pdf'});
+    addTearDown(() => fresh = null);
+    await pump(
+      tester,
+      extra: [
+        gameManualsProvider.overrideWithValue(
+          GameManuals(guard: PathGuard(root), dir: r'C:\nowhere', download: (_) async => throw StateError('offline')),
+        ),
+      ],
+    );
+    await tester.tap(find.byKey(const ValueKey('game-manual')));
+    await tester.pumpAndSettle();
+    expect(find.byType(ManualScreen), findsOneWidget);
   });
 
   group('Delete from RomM', () {

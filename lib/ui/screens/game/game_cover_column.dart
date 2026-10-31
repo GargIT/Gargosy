@@ -24,6 +24,7 @@ import '../../widgets/favourite.dart';
 import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/toast.dart';
+import '../manual/manual_screen.dart';
 import '../play/play_screen.dart';
 import 'add_to_collection.dart';
 import 'delete_game_dialog.dart';
@@ -39,7 +40,8 @@ final folderOpenerProvider = Provider<void Function(String path)>(
 
 /// The game page's left column (spec Part 1): the cover; ▶ Play (Download,
 /// the progress, Playing… as they apply); under it ♥ and ⋯. The cover is the
-/// play screen's size, so it doesn't jump between the two.
+/// play screen's size, so it doesn't jump between the two. A game with a
+/// manual on RomM gets a Manual button between them (#232).
 class GameCoverColumn extends ConsumerWidget {
   const GameCoverColumn({super.key, required this.game});
 
@@ -317,6 +319,14 @@ class GameCoverColumn extends ConsumerWidget {
                 Icon(isFavourite ? Icons.favorite : Icons.favorite_border, color: GColors.fav),
                 () => favourite(context, ref, game),
               ),
+              if (game.hasManual) ...[
+                const SizedBox(width: GSpace.s2),
+                _small(
+                  const ValueKey('game-manual'),
+                  Tooltip(message: tr('Manual'), child: const Icon(Icons.menu_book_outlined)),
+                  () => openManual(context, game),
+                ),
+              ],
               const SizedBox(width: GSpace.s2),
               _small(const ValueKey('game-more'), const Icon(Icons.more_horiz), () => _more(context, ref, downloaded)),
             ],
