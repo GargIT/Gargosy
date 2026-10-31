@@ -2,11 +2,23 @@ import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/platform/app_instance.dart';
+import 'package:gargosy/core/platform/instance_mutex.dart';
+import 'package:gargosy/core/platform/platform_info.dart';
 import 'package:gargosy/profiles/app_root.dart';
 
 import '../helpers/profile_test_env.dart';
 
 void main() {
+  test('the claim stays referenced for the process, so its lock file is never collected and closed', () async {
+    final root = await tempAppRoot();
+    addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
+    final claim = (await AppInstance.claim(root, const []))!;
+    expect(claim.holds, isTrue);
+    expect(identical(AppInstance.held, claim), isTrue);
+    await claim.release();
+    expect(AppInstance.held, isNull);
+  });
+
   late AppRoot root;
 
   setUp(() async {
@@ -51,17 +63,36 @@ void main() {
     await first.release();
   });
 
-  test('a folder held by a start that never answers: this start runs, holding nothing', () async {
+  test('a folder held by a start that never answers: this start runs, holding nothing (Windows: the mutex)', () async {
+    final holder = InstanceMutex.claim(root.root)!;
+    io.File(AppInstance.infoPath(root)).writeAsStringSync('{"port": 1, "token": "x"}');
+    final start = await AppInstance.claim(root, const ['--play=1'], platform: const PlatformInfo('windows'));
+    expect(start, isNotNull);
+    expect(start!.holds, isFalse);
+    await start.release();
+    holder.release();
+  }, timeout: const Timeout(Duration(seconds: 20)));
+
+  test('elsewhere the lock file holds the folder', () async {
     final holder = await io.File(AppInstance.lockPath(root)).open(mode: io.FileMode.append);
     await holder.lock(io.FileLock.exclusive);
     io.File(AppInstance.infoPath(root)).writeAsStringSync('{"port": 1, "token": "x"}');
-    final start = await AppInstance.claim(root, const ['--play=1']);
-    expect(start, isNotNull);
+    final start = await AppInstance.claim(root, const ['--play=1'], platform: const PlatformInfo('linux'));
     expect(start!.holds, isFalse);
     await start.release();
     await holder.unlock();
     await holder.close();
   }, timeout: const Timeout(Duration(seconds: 20)));
+
+  test('the mutex is per folder: another Gargosy folder starts on its own', () async {
+    final mine = InstanceMutex.claim(root.root)!;
+    expect(InstanceMutex.claim(root.root), isNull, reason: 'the same folder, any case');
+    expect(InstanceMutex.claim(root.root.toUpperCase()), isNull);
+    final other = InstanceMutex.claim('${root.root}-other')!;
+    other.release();
+    mine.release();
+    InstanceMutex.claim(root.root)!.release();
+  });
 
   test('the instance.json of a crashed holder is gone once the folder is claimed again', () async {
     io.File(AppInstance.infoPath(root)).writeAsStringSync('{"port": 1, "token": "old"}');
