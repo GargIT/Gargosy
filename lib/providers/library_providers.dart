@@ -201,7 +201,7 @@ final romSavesProvider = FutureProvider.family<List<Map<String, dynamic>>, Strin
 final continueElsewhereProvider = FutureProvider.autoDispose.family<ElsewhereSave?, String>((ref, id) async {
   final romm = ref.watch(rommServiceProvider);
   final device = ref.watch(activeProfileProvider.select((c) => c?.login.deviceId));
-  if (romm == null || device == null || ref.watch(rommOfflineProvider)) return null;
+  if (romm == null || device == null || device.isEmpty || ref.watch(rommOfflineProvider)) return null;
   final saves = await romm.getSavesListOrNull(id, deviceId: device);
   return saves == null ? null : newestElsewhere(saves, device, now: DateTime.now());
 });

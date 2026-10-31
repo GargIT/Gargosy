@@ -70,4 +70,26 @@ void main() {
       isNull,
     );
   });
+
+  test("only each slot's newest save counts: an old version this PC skipped says nothing", () {
+    final hint = newestElsewhere(
+      [
+        {
+          ..._save([_sync('me', '2026-10-30T12:00:00Z', current: true)]),
+          'id': 11,
+          'slot': 'main',
+          'updated_at': '2026-10-30T12:00:00Z',
+        },
+        {
+          ..._save([_sync('tv', '2026-10-29T12:00:00Z', name: 'TV')]),
+          'id': 10,
+          'slot': 'main',
+          'updated_at': '2026-10-29T12:00:00Z',
+        },
+      ],
+      'me',
+      now: now,
+    );
+    expect(hint, isNull);
+  });
 }

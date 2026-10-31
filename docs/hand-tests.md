@@ -364,4 +364,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Continue from another PC (#229)
 
-134. [ ] Play a game with a save on PC A and quit (it syncs). On PC B with the same profile's RomM user, open Gargosy: Home's header says "CONTINUE WHERE YOU LEFT OFF ON <PC A's name>" for that game, with Resume or Play. Play it on B: back on Home, it says LAST PLAYED again.
+134. [ ] Play a game with a save on PC A and quit (it syncs). On PC B with the same profile's RomM user, open Gargosy: Home's header says "CONTINUE WHERE YOU LEFT OFF ON <PC A's name>" for that game, Play focused. Play it on B: back on Home, it says LAST PLAYED again.

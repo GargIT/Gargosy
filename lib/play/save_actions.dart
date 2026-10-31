@@ -40,6 +40,7 @@ class SaveActions {
       _ref.invalidate(playMenuProvider(key));
       _ref.invalidate(playStatesProvider(key));
       _ref.invalidate(romSavesProvider(game.id));
+      _ref.invalidate(continueElsewhereProvider(game.id));
       _ref.invalidate(romStatesProvider(game.id));
       _ref.invalidate(unclaimedSavesProvider(key));
     }
@@ -87,6 +88,7 @@ class SaveActions {
       _ref.invalidate(playMenuProvider(key));
       _ref.invalidate(playStatesProvider(key));
       _ref.invalidate(romSavesProvider(game.id));
+      _ref.invalidate(continueElsewhereProvider(game.id));
       _ref.invalidate(romStatesProvider(game.id));
     }
   }

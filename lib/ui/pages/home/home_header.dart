@@ -121,13 +121,15 @@ class HomeHeader extends ConsumerWidget {
 
     final downloading = progress != null && progress.phase != DownloadPhase.failed;
     final buttons = <Widget>[
+      // Saved on another PC since (#229): this PC's state may be older, so
+      // Play (which takes RomM's save) comes first, not Resume.
       if (state != null)
         _button(
           tr('Resume'),
           Icons.play_arrow,
           playing ? null : () => resumeNewest(context, ref, game),
-          primary: true,
-          autofocus: autofocus,
+          primary: elsewhere == null || !downloaded,
+          autofocus: autofocus && (elsewhere == null || !downloaded),
           key: const ValueKey('home-resume'),
         ),
       if (downloaded)
@@ -146,8 +148,8 @@ class HomeHeader extends ConsumerWidget {
                     ),
                   ),
                 ),
-          primary: state == null,
-          autofocus: autofocus && state == null,
+          primary: state == null || elsewhere != null,
+          autofocus: autofocus && (state == null || elsewhere != null),
           key: const ValueKey('home-play'),
         )
       else
