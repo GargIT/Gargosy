@@ -54,11 +54,16 @@ void main() {
     expect(focused(), const ValueKey('stats-game-2'));
     await press(tester, GameAction.down);
     expect(focused(), const ValueKey('stats-game-1'));
+    // Game 9 can't be opened: the D-pad goes on to the platforms.
+    await press(tester, GameAction.down);
+    expect('${focused()}', contains('stats-platform-'));
   });
 
   testWidgets("offline: this PC's play, said; what RomM knows shows a dash", (tester) async {
     await pump(tester, StatsView(stats: ProfileStats.of(sessions, now), games: const {}, thisPcOnly: true));
     expect(find.byKey(const ValueKey('stats-this-pc')), findsOneWidget);
+    expect(focused(), const ValueKey('stat-week'), reason: 'no game to open: the first number');
+    expect(find.text('Open'), findsNothing);
     expect(find.text('–'), findsNWidgets(2));
   });
 }

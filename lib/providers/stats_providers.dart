@@ -4,6 +4,7 @@ import '../library/library_snapshot.dart';
 import '../library/profile_stats.dart';
 import '../play/play_limits.dart';
 import '../play/play_time.dart';
+import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
 
 /// The Stats page's numbers for the active profile (#236): this PC's
@@ -14,10 +15,15 @@ final profileStatsProvider = FutureProvider.autoDispose<StatsView>((ref) async {
   final romm = ref.watch(rommServiceProvider);
   final online = romm != null && !ref.watch(rommOfflineProvider);
   final mine = {for (final g in ref.watch(gamesOnThisPcProvider)) g.id: g};
+  final limit = ref.watch(ageLimitProvider);
   return loadStatsView(
     local: [for (final s in log?.all ?? const []) (gameId: s.gameId, start: s.start.toLocal(), end: s.end.toLocal())],
     now: ref.read(playClockProvider)(),
-    gameOf: (id) async => mine[id] ?? (online ? await romm.getGame(id) : null),
+    // A game above the profile's age limit isn't named (#224).
+    gameOf: (id) async {
+      final game = mine[id] ?? (online ? await romm.getGame(id) : null);
+      return game == null || !limit.allows(game) ? null : game;
+    },
     remote: online && api != null
         ? () async {
             final list = await api.sessionsSince(DateTime(2000));
@@ -29,9 +35,7 @@ final profileStatsProvider = FutureProvider.autoDispose<StatsView>((ref) async {
                   ];
           }
         : null,
-    finished: online
-        ? () async => (await romm.getGamesPage(limit: 1, statuses: const ['finished', 'completed_100'])).total
-        : null,
+    finished: online ? () => romm.countGamesWithStatuses(const ['finished', 'completed_100']) : null,
     progression: online ? romm.getRetroAchievementsProgressionOrNull : null,
   );
 });

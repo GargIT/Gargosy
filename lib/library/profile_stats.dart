@@ -12,11 +12,18 @@ bool sameSession(StatSession a, StatSession b) =>
 
 /// This PC's sessions with RomM's from every device, each once: RomM's copy
 /// of one of this PC's is left out.
-List<StatSession> mergeSessions(List<StatSession> local, List<StatSession> remote) => [
-  ...local,
-  for (final r in remote)
-    if (!local.any((l) => sameSession(l, r))) r,
-];
+List<StatSession> mergeSessions(List<StatSession> local, List<StatSession> remote) {
+  // By game: each of RomM's is held against this PC's of the same game only.
+  final mine = <String, List<StatSession>>{};
+  for (final l in local) {
+    mine.putIfAbsent(l.gameId, () => []).add(l);
+  }
+  return [
+    ...local,
+    for (final r in remote)
+      if (!(mine[r.gameId]?.any((l) => sameSession(l, r)) ?? false)) r,
+  ];
+}
 
 /// #236: what a profile's play adds up to, from its sessions.
 class ProfileStats {
@@ -71,13 +78,23 @@ class ProfileStats {
     StatSession? longest;
     final days = <DateTime>{};
     var all = Duration.zero;
+    var counted = 0;
     for (final s in sessions) {
       final length = s.end.difference(s.start);
+      // A record that ends before it starts (a clock off) counts nowhere.
       if (length.isNegative) continue;
       all += length;
       perGame[s.gameId] = (perGame[s.gameId] ?? Duration.zero) + length;
       if (longest == null || length > longest.end.difference(longest.start)) longest = s;
-      days.add(DateTime(s.start.year, s.start.month, s.start.day));
+      // Every day it touched: one over midnight plays on both.
+      for (
+        var d = DateTime(s.start.year, s.start.month, s.start.day);
+        d.isBefore(s.end);
+        d = DateTime(d.year, d.month, d.day + 1)
+      ) {
+        days.add(d);
+      }
+      counted++;
     }
     var day = days.contains(today) ? today : DateTime(today.year, today.month, today.day - 1);
     var streak = 0;
@@ -91,7 +108,7 @@ class ProfileStats {
       week: since(monday),
       month: since(first),
       all: all,
-      sessions: sessions.length,
+      sessions: counted,
       mostPlayed: most,
       longest: longest,
       daysInARow: streak,
@@ -111,7 +128,8 @@ class ProfileStats {
 }
 
 /// The RetroAchievements earned since [from], from RomM's `ra_progression`
-/// (by game): each counted once, by its hardcore or softcore unlock date.
+/// (by game): each counted once, by when it was first unlocked (softcore
+/// or hardcore, whichever came first).
 int achievementsEarnedSince(Map<int, Map<String, dynamic>> progression, DateTime from) {
   var n = 0;
   for (final game in progression.values) {
@@ -119,7 +137,9 @@ int achievementsEarnedSince(Map<int, Map<String, dynamic>> progression, DateTime
       final dates = [
         for (final key in const ['date', 'date_hardcore']) ?_raDate(e[key]),
       ];
-      if (dates.any((d) => !d.isBefore(from))) n++;
+      if (dates.isEmpty) continue;
+      final first = dates.reduce((a, b) => a.isBefore(b) ? a : b);
+      if (!first.isBefore(from)) n++;
     }
   }
   return n;
@@ -158,7 +178,7 @@ class StatsView {
 }
 
 /// How many of the most played games are looked up by name and platform.
-const statsGamesNamed = 30;
+const statsGamesNamed = 100;
 
 /// Gathers [StatsView] from this PC's [local] sessions and, when RomM can be
 /// asked ([remote] etc. not null), its sessions from every device, the
@@ -184,16 +204,25 @@ Future<StatsView> loadStatsView({
 
   final fromRomm = await ask(remote);
   final stats = ProfileStats.of(fromRomm == null ? local : mergeSessions(local, fromRomm), now);
+  // All at once: the games a few at a time, the finished count and the
+  // achievements beside them.
+  final finishedCount = ask(finished);
+  final raProgress = ask(progression);
   final games = <String, Game>{};
-  for (final g in stats.mostPlayed.take(statsGamesNamed)) {
-    if (await ask(() => gameOf(g.gameId)) case final game?) games[g.gameId] = game;
+  final ids = [for (final g in stats.mostPlayed.take(statsGamesNamed)) g.gameId];
+  for (var i = 0; i < ids.length; i += 8) {
+    final batch = ids.skip(i).take(8).toList();
+    final named = await Future.wait([for (final id in batch) ask(() => gameOf(id))]);
+    for (var k = 0; k < batch.length; k++) {
+      if (named[k] case final game?) games[batch[k]] = game;
+    }
   }
-  final ra = await ask(progression);
+  final ra = await raProgress;
   return StatsView(
     stats: stats,
     games: games,
     thisPcOnly: fromRomm == null,
-    finished: await ask(finished),
+    finished: await finishedCount,
     achievementsThisMonth: ra == null ? null : achievementsEarnedSince(ra, DateTime(now.year, now.month)),
   );
 }

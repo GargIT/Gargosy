@@ -30,7 +30,8 @@ class UserMenuChoice {
 /// The user menu (Start, or the profile badge), as RomM v2's: the profile
 /// with Gargosy's version beside its name, every section of Settings in its
 /// group (one item each, from [SettingsPage]), Fullscreen, About and the
-/// changelog, and Switch profile at the bottom; Stats (#236) under PROFILE (RomM's Logout). [update]
+/// changelog, and Switch profile at the bottom (RomM's Logout); Stats (#236)
+/// under PROFILE. [update]
 /// ("Update available: 0.2.0") is an item of its own that opens About;
 /// Downloads (#143), only when there's something to see: [downloads],
 /// those waiting or running (null: none, and none failed or done).

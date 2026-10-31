@@ -48,7 +48,13 @@ class StatsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            HintBar(hints: [Hint(GameAction.confirm, tr('Open')), Hint(GameAction.back, tr('Back'))]),
+            HintBar(
+              hints: [
+                if (view.valueOrNull?.games.isNotEmpty ?? false) Hint(GameAction.confirm, tr('Open')),
+                Hint(GameAction.verticalAxis, tr('Scroll')),
+                Hint(GameAction.back, tr('Back')),
+              ],
+            ),
           ],
         ),
       ),
@@ -74,28 +80,33 @@ class _Body extends ConsumerWidget {
     ),
   );
 
-  Widget _tile(String key, String label, String value) => Container(
+  /// A number; focusable, so the D-pad walks the whole page.
+  Widget _tile(String key, String label, String value, {bool autofocus = false}) => GFocusable(
     key: ValueKey('stat-$key'),
-    width: 220,
-    padding: const EdgeInsets.all(GSpace.s4),
-    decoration: BoxDecoration(
-      color: GColors.card,
-      borderRadius: BorderRadius.circular(GRadius.card),
-      border: Border.all(color: GColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
-        ),
-        const SizedBox(height: GSpace.s2),
-        Text(
-          value,
-          style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
-        ),
-      ],
+    autofocus: autofocus,
+    borderRadius: GRadius.card,
+    child: Container(
+      width: 220,
+      padding: const EdgeInsets.all(GSpace.s4),
+      decoration: BoxDecoration(
+        color: GColors.card,
+        borderRadius: BorderRadius.circular(GRadius.card),
+        border: Border.all(color: GColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
+          ),
+          const SizedBox(height: GSpace.s2),
+          Text(
+            value,
+            style: const TextStyle(fontSize: GFont.xxl, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
     ),
   );
 
@@ -106,6 +117,8 @@ class _Body extends ConsumerWidget {
     final most = s.mostPlayed.take(StatsScreen.mostShown).toList();
     final platforms = s.byPlatform((id) => view.games[id]?.platformDisplayName, tr('Other'));
     final top = platforms.isEmpty ? Duration.zero : platforms.first.time;
+    // Focus starts on the first game that opens, else on the first number.
+    final firstOpen = most.indexWhere((g) => view.games.containsKey(g.gameId));
     return ListView(
       key: const Key('page-Stats'),
       padding: const EdgeInsets.symmetric(horizontal: GSpace.s8, vertical: GSpace.s6),
@@ -128,7 +141,7 @@ class _Body extends ConsumerWidget {
           spacing: GSpace.s3,
           runSpacing: GSpace.s3,
           children: [
-            _tile('week', tr('This week'), formatPlayTime(s.week)),
+            _tile('week', tr('This week'), formatPlayTime(s.week), autofocus: firstOpen < 0),
             _tile('month', tr('This month'), formatPlayTime(s.month)),
             _tile('all', tr('All time'), formatPlayTime(s.all)),
             _tile(
@@ -152,32 +165,43 @@ class _Body extends ConsumerWidget {
           for (var i = 0; i < most.length; i++)
             Padding(
               padding: const EdgeInsets.only(bottom: GSpace.s2),
-              child: _GameRow(rank: i + 1, time: most[i].time, gameId: most[i].gameId, view: view, autofocus: i == 0),
+              child: _GameRow(
+                rank: i + 1,
+                time: most[i].time,
+                gameId: most[i].gameId,
+                view: view,
+                autofocus: i == firstOpen,
+              ),
             ),
         if (platforms.isNotEmpty) ...[
           _heading(tr('BY PLATFORM')),
           for (final p in platforms)
             Padding(
               padding: const EdgeInsets.only(bottom: GSpace.s2),
-              child: Row(
-                children: [
-                  SizedBox(width: 220, child: Text(p.platform, overflow: TextOverflow.ellipsis)),
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: top == Duration.zero ? 0 : p.time.inSeconds / top.inSeconds,
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(GRadius.pill),
+              // Focusable, so the D-pad reaches the bottom of the page.
+              child: GFocusable(
+                key: ValueKey('stats-platform-${p.platform}'),
+                borderRadius: GRadius.chip,
+                child: Row(
+                  children: [
+                    SizedBox(width: 220, child: Text(p.platform, overflow: TextOverflow.ellipsis)),
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: top == Duration.zero ? 0 : p.time.inSeconds / top.inSeconds,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(GRadius.pill),
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 110,
-                    child: Text(
-                      formatPlayTime(p.time),
-                      textAlign: TextAlign.end,
-                      style: const TextStyle(color: GColors.fgSecondary),
+                    SizedBox(
+                      width: 110,
+                      child: Text(
+                        formatPlayTime(p.time),
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: GColors.fgSecondary),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -187,7 +211,8 @@ class _Body extends ConsumerWidget {
 }
 
 /// One of the most played games: rank, cover, name, platform and time; A
-/// opens its page (a game RomM can't name isn't focusable).
+/// opens its page. A game nobody can name (gone from RomM, or above the
+/// age limit) is shown by its number and isn't focusable.
 class _GameRow extends ConsumerWidget {
   const _GameRow({
     required this.rank,
@@ -251,11 +276,12 @@ class _GameRow extends ConsumerWidget {
         ],
       ),
     );
+    if (game == null) return KeyedSubtree(key: ValueKey('stats-game-$gameId'), child: row);
     return GFocusable(
       key: ValueKey('stats-game-$gameId'),
       autofocus: autofocus,
       borderRadius: GRadius.card,
-      onActivate: game == null ? null : () => openGame(context, game),
+      onActivate: () => openGame(context, game),
       child: row,
     );
   }

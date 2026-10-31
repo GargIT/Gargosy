@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/core/romm/romm_service.dart';
 import 'package:gargosy/library/profile_stats.dart';
 
+import '../helpers/fake_dio_adapter.dart';
 import '../helpers/game_fixtures.dart';
 
 void main() {
@@ -34,6 +37,10 @@ void main() {
     expect(ProfileStats.of(sessions.skip(1).toList(), now).daysInARow, 2, reason: 'none today yet: up to yesterday');
     expect(ProfileStats.of([s('1', DateTime(2026, 10, 28), 10)], now).daysInARow, 0);
     expect(ProfileStats.of(const [], now).all, Duration.zero);
+    // A session over midnight plays on both days.
+    expect(ProfileStats.of([s('1', DateTime(2026, 10, 30, 23, 30), 120)], now).daysInARow, 2);
+    // One that ends before it starts counts nowhere.
+    expect(ProfileStats.of([(gameId: '1', start: now, end: now.subtract(const Duration(hours: 1)))], now).sessions, 0);
   });
 
   test('by platform, an unknown game under Other', () {
@@ -53,7 +60,7 @@ void main() {
     expect(mergeSessions(local, remote).length, 2);
   });
 
-  test('achievements earned since the 1st, each once, by either unlock date', () {
+  test('achievements earned since the 1st, each once, by when it was first unlocked', () {
     final progression = <int, Map<String, dynamic>>{
       10: {
         'earned_achievements': [
@@ -68,7 +75,8 @@ void main() {
         ],
       },
     };
-    expect(achievementsEarnedSince(progression, DateTime(2026, 10)), 3);
+    // b: softcore in September, hardcore in October: September's.
+    expect(achievementsEarnedSince(progression, DateTime(2026, 10)), 2);
   });
 
   test("RomM away or failing: this PC's play, said; the games named that can be", () async {
@@ -94,5 +102,16 @@ void main() {
     expect(online.finished, 7);
     expect(online.achievementsThisMonth, isNull);
     expect(online.games, isEmpty);
+  });
+
+  test("games finished: RomM's statuses filter, a game's versions once, its total", () async {
+    final server = FakeDioAdapter((r) => (status: 200, body: {'items': [], 'total': 7}));
+    final romm = RommService(RomMConfig(baseUrl: 'http://romm', username: '', password: ''))
+      ..dio.httpClientAdapter = server;
+    expect(await romm.countGamesWithStatuses(const ['finished', 'completed_100']), 7);
+    final q = server.requests.single.queryParameters;
+    expect(q['statuses'], ['finished', 'completed_100']);
+    expect(q['group_by_meta_id'], true);
+    expect(q['with_total'], true);
   });
 }

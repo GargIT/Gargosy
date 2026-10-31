@@ -28,6 +28,27 @@ mixin _RommLibrary on _RommBase {
     return data is Uint8List ? data : Uint8List.fromList(data);
   }
 
+  /// Gargosy (#236): how many games the player marked with one of
+  /// [statuses] (RomM 5.4's `statuses` filter), a game's versions (regions,
+  /// revisions) counted once, as the gallery shows them. Throws when RomM
+  /// can't say.
+  Future<int> countGamesWithStatuses(List<String> statuses) async {
+    final r = await _dio.get(
+      '/api/roms',
+      queryParameters: {
+        'statuses': statuses,
+        'statuses_logic': 'any',
+        'group_by_meta_id': true,
+        'limit': 1,
+        'with_total': true,
+      },
+      options: _authOptions,
+    );
+    final total = r.data is Map ? (r.data as Map)['total'] : null;
+    if (total is! int) throw StateError('RomM sent no total');
+    return total;
+  }
+
   /// Gargosy (#224): the age ratings across the library, as RomM's
   /// `age_ratings` filter takes them (`filter_values.age_ratings`), in one
   /// small request. Throws when RomM can't be read.
