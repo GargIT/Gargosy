@@ -101,7 +101,13 @@ class _OwnScreenshot extends ConsumerWidget {
         height: 180,
         child: bytes == null
             ? const ColoredBox(color: GColors.surface)
-            : Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true),
+            // Decoded at the strip's size, not the screenshot's.
+            : Image.memory(
+                bytes,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: (320 * MediaQuery.devicePixelRatioOf(context)).round(),
+              ),
       ),
     );
   }

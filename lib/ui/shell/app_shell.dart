@@ -12,6 +12,7 @@ import '../../core/input/gamepad_service.dart';
 import '../../library/upload_queue.dart';
 import '../../play/outside_launch.dart';
 import '../../play/screenshot_uploads.dart';
+import '../../providers/library_providers.dart';
 import '../../play/session_achievements.dart';
 import '../../providers/romm_providers.dart';
 import '../../profiles/profile_providers.dart';
@@ -115,7 +116,14 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   Future<void> _upload() async {
     // Screenshots that didn't reach RomM before (#233), quietly.
-    unawaited(ref.read(screenshotUploadsProvider)?.sendWaiting());
+    unawaited(
+      ref.read(screenshotUploadsProvider)?.sendWaiting().then((games) {
+        if (!mounted) return;
+        for (final id in games) {
+          ref.invalidate(gameProvider(id));
+        }
+      }),
+    );
     final queue = await ref.read(uploadQueueProvider.future);
     if (queue == null || !mounted) return;
     final n = await queue.run();

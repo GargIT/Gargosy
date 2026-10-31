@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../core/romm/romm_service.dart';
 import '../emulators/emulator_layout.dart';
 import '../profiles/profile_preferences.dart';
+import '../profiles/profile_providers.dart';
 import '../providers/engine_providers.dart';
 import '../providers/romm_providers.dart';
 
@@ -49,14 +50,18 @@ typedef WaitingScreenshot = ({String gameId, String path});
 /// has them and tried again after the next game or when the profile opens.
 /// Turned off by Settings → Emulator settings → Upload screenshots.
 class ScreenshotUploads {
-  ScreenshotUploads(this._prefs, {this.upload});
+  ScreenshotUploads(this._prefs, {this.upload, this.owner = ''});
 
   final ProfilePreferences _prefs;
 
   /// RomM's upload; null without RomM.
   final Future<void> Function(String gameId, String path)? upload;
 
+  /// The profile it belongs to: one send at a time per profile.
+  final String owner;
+
   static const key = 'screenshots.waiting';
+  static const sentKey = 'screenshots.sent';
   static const enabledKey = 'screenshots.upload';
 
   /// The newest kept: a long time without RomM never grows it past this.
@@ -65,17 +70,25 @@ class ScreenshotUploads {
   bool get enabled => _prefs.getBool(enabledKey) ?? true;
   Future<void> setEnabled(bool on) => _prefs.setBool(enabledKey, on);
 
-  List<WaitingScreenshot> get waiting {
-    final raw = _prefs.getString(key);
+  List<WaitingScreenshot> get waiting => [
+    for (final e in _list(key))
+      if (e is Map && e['game'] is String && e['path'] is String)
+        (gameId: e['game'] as String, path: e['path'] as String),
+  ];
+
+  /// The files RomM already has (newest [keep]): a later session whose time
+  /// overlaps never sends one again.
+  Set<String> get _sent => {
+    for (final e in _list(sentKey))
+      if (e is String) e,
+  };
+
+  List<Object?> _list(String k) {
+    final raw = _prefs.getString(k);
     if (raw == null) return const [];
     try {
       final list = jsonDecode(raw);
-      return [
-        if (list is List)
-          for (final e in list)
-            if (e is Map && e['game'] is String && e['path'] is String)
-              (gameId: e['game'] as String, path: e['path'] as String),
-      ];
+      return list is List ? list : const [];
     } on FormatException {
       return const [];
     }
@@ -91,49 +104,65 @@ class ScreenshotUploads {
     );
   }
 
-  /// [paths], taken in [gameId], wait to be sent; nothing while turned off.
-  Future<void> add(String gameId, List<String> paths) async {
-    if (!enabled || paths.isEmpty) return;
-    final have = {for (final s in waiting) s.path};
-    await _save([
-      ...waiting,
-      for (final path in paths)
-        if (!have.contains(path)) (gameId: gameId, path: path),
-    ]);
+  Future<void> _remember(String path) {
+    final list = [..._sent.where((s) => s != path), path];
+    return _prefs.setString(sentKey, jsonEncode(list.length > keep ? list.sublist(list.length - keep) : list));
   }
 
-  /// Sends what's waiting, oldest first, and says how many went. A file gone
-  /// or one RomM refuses ([ScreenshotRefused]) is dropped; any other failure
-  /// stops, keeping the rest for next time. Never throws.
-  Future<int> sendWaiting() => _sending ??= _send().whenComplete(() {
-    _sending = null;
+  /// [paths], taken in [gameId], wait to be sent; nothing while turned off,
+  /// and never a file waiting already or sent before.
+  Future<void> add(String gameId, List<String> paths) async {
+    if (!enabled || paths.isEmpty) return;
+    final now = waiting;
+    final skip = {for (final s in now) s.path, ..._sent};
+    final more = [
+      for (final path in paths)
+        if (!skip.contains(path)) (gameId: gameId, path: path),
+    ];
+    if (more.isNotEmpty) await _save([...now, ...more]);
+  }
+
+  /// Sends what's waiting, oldest first, and gives the games whose
+  /// screenshots went. A file gone, or one RomM refuses for good
+  /// ([ScreenshotRefused]), is dropped; any other failure stops, keeping the
+  /// rest for next time. Never throws.
+  Future<Set<String>> sendWaiting() => _sending[owner] ??= _send().whenComplete(() {
+    _sending.remove(owner);
   });
 
-  /// One send at a time for every [ScreenshotUploads] (after a game and when
-  /// the profile opens may meet): a screenshot is never sent twice.
-  static Future<int>? _sending;
+  /// One send at a time per profile (after a game and when the profile
+  /// opens may meet): a screenshot is never sent twice.
+  static final _sending = <String, Future<Set<String>>>{};
 
-  Future<int> _send() async {
+  Future<Set<String>> _send() async {
+    final games = <String>{};
     final send = upload;
-    if (send == null || !enabled) return 0;
-    var sent = 0;
-    while (true) {
-      final list = waiting;
-      if (list.isEmpty) return sent;
-      final next = list.first;
-      try {
-        if (io.File(next.path).existsSync()) {
+    if (send == null || !enabled) return games;
+    try {
+      var list = waiting;
+      while (list.isNotEmpty) {
+        final next = list.first;
+        try {
+          if (!io.File(next.path).existsSync()) throw io.FileSystemException('deleted', next.path);
           await send(next.gameId, next.path);
-          sent++;
+          games.add(next.gameId);
+          await _remember(next.path);
+        } on ScreenshotRefused catch (e) {
+          debugPrint('[Screenshots] ${p.basename(next.path)} dropped: $e');
+        } on io.FileSystemException catch (e) {
+          debugPrint('[Screenshots] ${p.basename(next.path)} is gone: ${e.message}');
+        } on Object catch (e) {
+          debugPrint('[Screenshots] not sent, tried again later: $e');
+          return games;
         }
-      } on ScreenshotRefused catch (e) {
-        debugPrint('[Screenshots] ${p.basename(next.path)} dropped: $e');
-      } on Object catch (e) {
-        debugPrint('[Screenshots] not sent, tried again later: $e');
-        return sent;
+        // Read again: a game may have added to it meanwhile.
+        list = waiting.where((s) => s != next).toList();
+        await _save(list);
       }
-      await _save(waiting.where((s) => s != next).toList());
+    } on Object catch (e) {
+      debugPrint('[Screenshots] the list not kept: $e');
     }
+    return games;
   }
 }
 
@@ -142,5 +171,6 @@ final screenshotUploadsProvider = Provider<ScreenshotUploads?>((ref) {
   final prefs = ref.watch(profilePrefsProvider);
   if (prefs == null) return null;
   final romm = ref.watch(rommServiceProvider);
-  return ScreenshotUploads(prefs, upload: romm?.uploadScreenshot);
+  final owner = ref.watch(activeProfileProvider.select((c) => c?.profile.id)) ?? '';
+  return ScreenshotUploads(prefs, upload: romm?.uploadScreenshot, owner: owner);
 });

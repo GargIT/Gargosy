@@ -613,6 +613,10 @@ class GargosyPlayEngine implements PlayEngine {
     String? loadStatePath,
     void Function(CloseGame close)? onStarted,
   }) async {
+    // The profile the game is played in, for its screenshots after (#233):
+    // read now, as the profile may change once the session is over.
+    final shots = _ref.read(screenshotUploadsProvider);
+    final shotsDir = _ref.read(activeProfileProvider)?.paths.emulatorDir(strategy.emulatorId);
     final service = await _launch();
     final dirs = _ref.read(launchDirectoriesProvider);
     // A game folder of numbered discs without its own playlist (#230): the
@@ -651,15 +655,18 @@ class GargosyPlayEngine implements PlayEngine {
     final started = session.sessionStart;
     unawaited(
       session.process?.exitCode.then((_) async {
-        final ended = DateTime.now();
-        await _played(game, started, ended);
-        await _screenshots(game, strategy.emulatorId, started, ended);
+        await _played(game, started, DateTime.now());
       }),
     );
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
         .whenComplete(() async {
+          // Queued before the session counts as over, so a `--play` that
+          // quits Gargosy after it doesn't lose them; sent in the background.
+          if (shots != null && shotsDir != null) {
+            await _queueScreenshots(shots, shotsDir, game, strategy.emulatorId, started, DateTime.now());
+          }
           final temp = resumeTempDir(_ref.read(appRootProvider));
           // The copies made for this session: this PC's ROM path, another
           // player's state (#92).
@@ -694,24 +701,36 @@ class GargosyPlayEngine implements PlayEngine {
     _ref.invalidate(playTimeProvider(game.id));
   }
 
-  /// The screenshots taken in [game]'s session (#233) wait for RomM, then
-  /// go with any that waited before. Never throws.
-  Future<void> _screenshots(Game game, String emulatorId, DateTime start, DateTime end) async {
-    final uploads = _ref.read(screenshotUploadsProvider);
-    final profile = _ref.read(activeProfileProvider);
-    if (uploads == null || profile == null || !uploads.enabled) return;
+  /// The screenshots taken in [game]'s session (#233), in the profile's
+  /// [dataDir] for the emulator, wait for RomM; then everything waiting
+  /// goes in the background, and the games it went for are read again so
+  /// their pages show them. Never throws.
+  Future<void> _queueScreenshots(
+    ScreenshotUploads uploads,
+    String dataDir,
+    Game game,
+    String emulatorId,
+    DateTime start,
+    DateTime end,
+  ) async {
+    if (!uploads.enabled) return;
     try {
       final layout = EmulatorLayout.of(emulatorId);
       if (layout.screenshots.isNotEmpty) {
-        final taken = screenshotsTaken(profile.paths.emulatorDir(emulatorId), layout, start, end);
+        final taken = screenshotsTaken(dataDir, layout, start, end);
         debugPrint('[Screenshots] ${game.id}: ${taken.length} taken in $emulatorId');
         await uploads.add(game.id, taken);
       }
-      // The game page shows them once RomM has them.
-      if (await uploads.sendWaiting() > 0) _ref.invalidate(gameProvider(game.id));
     } on Object catch (e) {
       debugPrint('[Screenshots] not kept: $e');
     }
+    unawaited(
+      uploads.sendWaiting().then((games) {
+        for (final id in games) {
+          _ref.invalidate(gameProvider(id));
+        }
+      }),
+    );
   }
 
   static PlayResult _describe(LaunchResult? r) {

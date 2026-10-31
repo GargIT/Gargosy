@@ -5,7 +5,7 @@ mixin _RommScreenshots on _RommBase {
   /// Sends the image at [path] as one of [romId]'s screenshots
   /// (`POST /api/screenshots`, RomM 5.4: the player's own, private until
   /// shared). Throws when RomM doesn't take it; [ScreenshotRefused] when it
-  /// never will (an older RomM, a game gone, a file it refuses).
+  /// never will (a file it refuses: bad, too large, not an image).
   Future<void> uploadScreenshot(String romId, String path) async {
     try {
       await _dio.post<dynamic>(
@@ -16,7 +16,9 @@ mixin _RommScreenshots on _RommBase {
       );
     } on DioException catch (e) {
       final status = e.response?.statusCode;
-      if (status != null && status >= 400 && status < 500 && status != 401 && status != 408 && status != 429) {
+      // Only what the file itself is refused for: a 403 or 404 (an older
+      // RomM, a login without assets.write, a proxy) may pass, so it waits.
+      if (status != null && const {400, 413, 415, 422}.contains(status)) {
         throw ScreenshotRefused(status);
       }
       rethrow;

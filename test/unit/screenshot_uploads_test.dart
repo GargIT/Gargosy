@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
@@ -128,8 +129,11 @@ void main() {
       await q.add('7', [a, b]);
       await q.add('7', [a]);
       expect(q.waiting.length, 2, reason: 'the same file once');
-      expect(await q.sendWaiting(), 2);
+      expect(await q.sendWaiting(), {'7'});
       expect(sent, ['7:a.png', '7:b.png']);
+      expect(q.waiting, isEmpty);
+      // A later session whose time overlaps finds them again: not sent twice.
+      await q.add('8', [a, b]);
       expect(q.waiting, isEmpty);
     });
 
@@ -140,14 +144,14 @@ void main() {
       final gone = p.join(paths.emulatorDir('retroarch'), 'screenshots', 'gone.png');
       await uploads(prefs, null).add('7', [gone, a, b]);
       var calls = 0;
-      expect(await uploads(prefs, (_, _) async => throw StateError('offline ${calls++}')).sendWaiting(), 0);
+      expect(await uploads(prefs, (_, _) async => throw StateError('offline ${calls++}')).sendWaiting(), isEmpty);
       expect(uploads(prefs, null).waiting.map((s) => p.basename(s.path)), ['a.png', 'b.png']);
       final ok = <String>[];
       final q = uploads(prefs, (_, path) async {
         if (path == a) throw const ScreenshotRefused(400);
         ok.add(path);
       });
-      expect(await q.sendWaiting(), 1);
+      expect(await q.sendWaiting(), {'7'});
       expect(ok, [b]);
       expect(q.waiting, isEmpty);
     });
@@ -159,8 +163,23 @@ void main() {
       await q.setEnabled(false);
       await q.add('7', [shot('retroarch', r'screenshots\a.png', start)]);
       expect(q.waiting, isEmpty);
-      expect(await q.sendWaiting(), 0);
+      expect(await q.sendWaiting(), isEmpty);
     });
+  });
+
+  test("one send at a time per profile: another profile's isn't held up", () async {
+    final gate = Completer<void>();
+    final a = ScreenshotUploads(ProfilePreferences.open(paths), owner: 'aaa', upload: (_, _) => gate.future);
+    final other = ProfilePaths(root, 'bbb');
+    final b = ScreenshotUploads(ProfilePreferences.open(other), owner: 'bbb', upload: (_, _) async {});
+    final file = shot('retroarch', r'screenshots\a.png', start);
+    await a.add('1', [file]);
+    await b.add('2', [file]);
+    final first = a.sendWaiting();
+    expect(identical(a.sendWaiting(), first), isTrue, reason: 'the same send');
+    expect(await b.sendWaiting(), {'2'});
+    gate.complete();
+    expect(await first, {'1'});
   });
 
   group('RomM', () {
@@ -177,6 +196,14 @@ void main() {
       expect(r.uri.queryParameters['rom_id'], '7');
       status = 400;
       await expectLater(romm.uploadScreenshot('7', file), throwsA(isA<ScreenshotRefused>()));
+      for (final s in [403, 404, 503]) {
+        status = s;
+        await expectLater(
+          romm.uploadScreenshot('7', file),
+          throwsA(isNot(isA<ScreenshotRefused>())),
+          reason: '$s may pass: it waits',
+        );
+      }
       status = 503;
       await expectLater(romm.uploadScreenshot('7', file), throwsA(isNot(isA<ScreenshotRefused>())));
     });
