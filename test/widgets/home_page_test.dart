@@ -9,6 +9,7 @@ import 'package:gargosy/core/save/save_state_info.dart';
 import 'package:gargosy/library/home_layout.dart';
 import 'package:gargosy/library/library_snapshot.dart';
 import 'package:gargosy/play/play_controller.dart';
+import 'package:gargosy/library/continue_elsewhere.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/providers/ui_provider.dart';
@@ -66,6 +67,19 @@ void main() {
   }
 
   double y(WidgetTester tester, String row) => tester.getTopLeft(find.byKey(ValueKey('home-$row'))).dy;
+
+  testWidgets('saved on another PC since (#229): the header says where the player left off', (tester) async {
+    await pump(tester, [
+      ...overrides(states: [state]),
+      continueElsewhereProvider.overrideWith((ref, id) async => ElsewhereSave('Gargosy on LIVINGROOM', DateTime(2026))),
+    ]);
+    final header = find.byKey(const ValueKey('home-header'));
+    expect(
+      find.descendant(of: header, matching: find.text('CONTINUE WHERE YOU LEFT OFF ON GARGOSY ON LIVINGROOM')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('home-resume')), findsOneWidget);
+  });
 
   testWidgets('the header is the game played last, with Resume (focused) when it has a state', (tester) async {
     await pump(tester, overrides(states: [state]));

@@ -360,6 +360,7 @@ class PlayController extends StateNotifier<PlayState> {
         : Future.value();
     state = PlayState(message: message, saveProblem: saveProblem);
     _ref.invalidate(romSavesProvider(game.id));
+    _ref.invalidate(continueElsewhereProvider(game.id)); // played here: this PC has it now (#229)
     _ref.invalidate(romStatesProvider(game.id));
     _ref.read(uploadQueueVersionProvider.notifier).state++;
   }

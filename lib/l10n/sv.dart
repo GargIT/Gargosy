@@ -71,6 +71,7 @@ const svText = <String, String>{
   'By you': 'Av dig',
   'By {0}': 'Av {0}',
   'COLLECTIONS': 'SAMLINGAR',
+  'CONTINUE WHERE YOU LEFT OFF ON {0}': 'FORTSÄTT DÄR DU SLUTADE PÅ {0}',
   'Can\'t reach RomM.': 'Når inte RomM.',
   'Can\'t reach RomM. Check your network.': 'Når inte RomM. Kontrollera nätverket.',
   'Can\'t reach {0}. Check the address and your network.': 'Når inte {0}. Kontrollera adressen och nätverket.',
@@ -825,6 +826,7 @@ const svText = <String, String>{
   '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
       '\n\n{0} nått RomM än ({1}) och {2} förlorade med profilen.',
   'and {0} more from your library': 'och {0} till från ditt bibliotek',
+  'another PC': 'en annan dator',
   'another player\'s save isn\'t yours to delete': 'en annan spelares sparfil är inte din att ta bort',
   'another player\'s state isn\'t yours to delete': 'en annan spelares sparläge är inte ditt att ta bort',
   'any region': 'alla regioner',
