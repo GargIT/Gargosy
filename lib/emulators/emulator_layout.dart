@@ -16,6 +16,7 @@ class EmulatorLayout {
     this.markers = const [],
     this.ps2Cards = const [],
     this.pcsx2FolderCards = const [],
+    this.screenshots = const [],
   });
 
   final String id;
@@ -50,6 +51,13 @@ class EmulatorLayout {
   /// it, so PCSX2 doesn't see an unformatted card. A file card stays.
   final List<String> pcsx2FolderCards;
 
+  /// Where the emulator puts the screenshots taken in a game, relative to
+  /// the profile's data folder, each looked through with its subfolders
+  /// (#233). The launch config points the emulator there where its own
+  /// default isn't in the profile (RetroArch, mGBA, PCSX2). None: its
+  /// screenshots aren't sent to RomM.
+  final List<String> screenshots;
+
   /// Creates [seed], [markers] and [ps2Cards] under [dataDir]. What's there stays.
   void ensureFolders(String dataDir) {
     for (final s in seed) {
@@ -71,20 +79,41 @@ class EmulatorLayout {
   }
 
   static const _table = {
-    'dolphin': EmulatorLayout('dolphin', saveView: '_view', seed: ['GC', 'Wii', 'StateSaves']),
+    'dolphin': EmulatorLayout(
+      'dolphin',
+      saveView: '_view',
+      seed: ['GC', 'Wii', 'StateSaves'],
+      screenshots: ['ScreenShots'],
+    ),
     'pcsx2': EmulatorLayout(
       'pcsx2',
       saveView: 'PCSX2',
       appSupport: 'PCSX2',
       seed: ['PCSX2/memcards', 'PCSX2/sstates'],
       pcsx2FolderCards: ['PCSX2/memcards/Mcd001.ps2'],
+      screenshots: ['PCSX2/snaps'],
     ),
-    'duckstation': EmulatorLayout('duckstation', seed: ['memcards', 'savestates'], markers: ['portable.txt']),
-    'ppsspp': EmulatorLayout('ppsspp', saveView: '_view', seed: ['PSP/SAVEDATA', 'PSP/PPSSPP_STATE', 'PSP/SYSTEM']),
-    'retroarch': EmulatorLayout('retroarch', seed: ['saves', 'states'], ps2Cards: ['system/pcsx2/memcards/Mcd001.ps2']),
+    'duckstation': EmulatorLayout(
+      'duckstation',
+      seed: ['memcards', 'savestates'],
+      markers: ['portable.txt'],
+      screenshots: ['screenshots'],
+    ),
+    'ppsspp': EmulatorLayout(
+      'ppsspp',
+      saveView: '_view',
+      seed: ['PSP/SAVEDATA', 'PSP/PPSSPP_STATE', 'PSP/SYSTEM'],
+      screenshots: ['PSP/SCREENSHOT'],
+    ),
+    'retroarch': EmulatorLayout(
+      'retroarch',
+      seed: ['saves', 'states'],
+      ps2Cards: ['system/pcsx2/memcards/Mcd001.ps2'],
+      screenshots: ['screenshots'],
+    ),
     'xenia_canary': EmulatorLayout('xenia_canary', seed: ['content']),
     'ares': EmulatorLayout('ares', seed: ['saves']),
-    'mgba': EmulatorLayout('mgba', saveView: '_view', seed: ['saves', 'states']),
+    'mgba': EmulatorLayout('mgba', saveView: '_view', seed: ['saves', 'states'], screenshots: ['screenshots']),
     'flycast': EmulatorLayout('flycast', seed: ['saves', 'vmu', 'states']),
     // A folder link next to the exe points at <data>\user or <data>\portable
     // (issue #8): the save code's "install" is <data>, where that folder is.
@@ -98,7 +127,9 @@ class EmulatorLayout {
     // save code's <install>\dev_hdd0 is the profile's.
     'rpcs3': EmulatorLayout('rpcs3', seed: ['dev_hdd0/home/00000001/savedata']),
     // --config and --savepath into the profile (issue #11).
-    'scummvm': EmulatorLayout('scummvm', seed: ['saves', 'screenshots']),
+    'scummvm': EmulatorLayout('scummvm', seed: ['saves', 'screenshots'], screenshots: ['screenshots']),
+    // -snapshot_directory into the profile (snap\<driver>\).
+    'mame': EmulatorLayout('mame', screenshots: ['snap']),
   };
 
   static EmulatorLayout of(String id) => _table[id] ?? EmulatorLayout(id);

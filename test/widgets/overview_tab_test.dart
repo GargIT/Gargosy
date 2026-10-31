@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/providers/library_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/screens/game/overview_tab.dart';
 
@@ -54,5 +56,32 @@ void main() {
     expect(find.text('PLAYERS'), findsNothing);
     expect(find.text('HOW LONG TO BEAT'), findsNothing);
     expect(find.text('SIMILAR GAMES IN YOUR LIBRARY'), findsNothing);
+  });
+
+  testWidgets("the player's own screenshots (#233) come first in the strip, before RomM's", (tester) async {
+    await setDesktopSize(tester);
+    final g = Game.fromJson({
+      ...gameJson(1, 'Okami'),
+      'merged_screenshots': ['http://romm/assets/romm/resources/roms/1/1/screenshots/0.jpg'],
+      'user_screenshots': [
+        {'download_path': '/api/raw/assets/users/1/screenshots/mine.png'},
+      ],
+    });
+    await tester.pumpWidget(
+      testApp(
+        OverviewTab(game: g),
+        overrides: [
+          libraryApiProvider.overrideWithValue(FakeLibraryApi(const [])),
+          userScreenshotProvider.overrideWith((ref, path) async => null),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Screenshots'), findsOneWidget);
+    final own = find.byKey(const ValueKey('own-shot:/api/raw/assets/users/1/screenshots/mine.png'));
+    expect(own, findsOneWidget);
+    final romm = find.byWidgetPredicate((w) => w.key is ValueKey && '${(w.key! as ValueKey).value}'.contains('0.jpg'));
+    expect(romm, findsOneWidget);
+    expect(tester.getTopLeft(own).dx, lessThan(tester.getTopLeft(romm).dx));
   });
 }

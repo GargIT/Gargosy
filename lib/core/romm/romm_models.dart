@@ -3,6 +3,7 @@ import 'game_overview.dart';
 import '../retroachievements/retroachievements_game_models.dart';
 import 'save_target_layout.dart';
 
+export 'romm_config.dart';
 export 'save_target_layout.dart';
 
 class Game {
@@ -53,6 +54,7 @@ class Game {
   final List<GameVersion> siblings; // RomM's other versions of this game (regions, revisions)
   final GameOverview overview; // age ratings, HowLongToBeat, IGDB's related games (#179)
   final String? pathManual; // the manual in RomM's resources, e.g. roms/4/123/manual/123.pdf (#232)
+  final List<String> userScreenshots; // the player's own on RomM (user_screenshots' download_path, #233)
 
   bool get isMultiFile => hasMultipleFiles;
 
@@ -126,6 +128,7 @@ class Game {
     this.siblings = const [],
     this.overview = GameOverview.empty,
     this.pathManual,
+    this.userScreenshots = const [],
   });
 
   factory Game.fromJson(Map<String, dynamic> json) {
@@ -180,6 +183,11 @@ class Game {
       saveTarget: json['save_target'] is String ? json['save_target'] as String : null,
       saveTargetLayout: SaveTargetLayout.fromJson(json['save_target_layout']),
       createdAt: json['created_at'] is String ? DateTime.tryParse(json['created_at'] as String) : null,
+      userScreenshots: [
+        if (json['user_screenshots'] is List)
+          for (final s in json['user_screenshots'] as List)
+            if (s is Map && s['download_path'] is String && s['missing_from_fs'] != true) s['download_path'] as String,
+      ],
       pathManual: json['path_manual'] is String && (json['path_manual'] as String).isNotEmpty
           ? json['path_manual'] as String
           : null,
@@ -253,6 +261,9 @@ class Game {
       'created_at': createdAt?.toIso8601String(),
       'hltb_metadata': {'main_story': hltbMainStory},
       'path_manual': pathManual,
+      'user_screenshots': [
+        for (final s in userScreenshots) {'download_path': s},
+      ],
       'sibling_roms': [for (final v in siblings) v.toJson()],
       'gargosy_overview': overview.toJson(),
     };
@@ -534,62 +545,4 @@ class RommCapabilities {
 
   @override
   String toString() => 'RommCapabilities(v$version, deviceSync=$hasDeviceSaveSync)';
-}
-
-class RomMConfig {
-  final String baseUrl;
-  final String username;
-  final String password;
-  final String? token;
-  final String apiKey;
-  final bool trustSelfSigned;
-
-  RomMConfig({
-    required this.baseUrl,
-    required this.username,
-    required this.password,
-    this.token,
-    this.apiKey = '',
-    this.trustSelfSigned = false,
-  });
-
-  factory RomMConfig.fromJson(Map<String, dynamic> json) {
-    return RomMConfig(
-      baseUrl: json['baseUrl']?.toString() ?? '',
-      username: json['username']?.toString() ?? '',
-      password: json['password']?.toString() ?? '',
-      token: json['token']?.toString(),
-      apiKey: json['apiKey']?.toString() ?? '',
-      trustSelfSigned: json['trustSelfSigned'] == true,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'baseUrl': baseUrl,
-      'username': username,
-      'password': password,
-      if (token != null) 'token': token,
-      'apiKey': apiKey,
-      'trustSelfSigned': trustSelfSigned,
-    };
-  }
-
-  RomMConfig copyWith({
-    String? baseUrl,
-    String? username,
-    String? password,
-    String? token,
-    String? apiKey,
-    bool? trustSelfSigned,
-  }) {
-    return RomMConfig(
-      baseUrl: baseUrl ?? this.baseUrl,
-      username: username ?? this.username,
-      password: password ?? this.password,
-      token: token ?? this.token,
-      apiKey: apiKey ?? this.apiKey,
-      trustSelfSigned: trustSelfSigned ?? this.trustSelfSigned,
-    );
-  }
 }

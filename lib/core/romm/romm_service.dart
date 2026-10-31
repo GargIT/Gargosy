@@ -21,6 +21,7 @@ part 'romm_service/states.dart';
 part 'romm_service/sharing.dart';
 part 'romm_service/play.dart';
 part 'romm_service/firmware.dart';
+part 'romm_service/screenshots.dart';
 
 /// Gargosy: what deleting a game on RomM came to. [notAllowed]: RomM
 /// refused (the user may not delete, or the profile's sign-in predates Gargosy
@@ -40,7 +41,7 @@ abstract class _RommBase {
 /// area, each a mixin on [_RommBase]; this file keeps the client, its auth
 /// and connectivity, capabilities and device registration.
 class RommService extends _RommBase
-    with _RommLibrary, _RommUsers, _RommSaves, _RommStates, _RommSharing, _RommPlay, _RommFirmware
+    with _RommLibrary, _RommUsers, _RommSaves, _RommStates, _RommSharing, _RommPlay, _RommFirmware, _RommScreenshots
     implements RommStatesApi {
   @override
   RomMConfig _config;

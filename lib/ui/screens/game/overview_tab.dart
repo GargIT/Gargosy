@@ -25,6 +25,9 @@ class OverviewTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final time = ref.watch(playTimeProvider(game.id)).valueOrNull;
     final shots = [for (final s in game.mergedScreenshots) assetUrl(ref, s)].whereType<String>().toList();
+    // The player's own first (#233), then RomM's scraped ones.
+    final own = game.userScreenshots;
+    final count = own.length + shots.length;
     final played = [if (game.lastPlayed case final last?) formatSaveTime(last), if (time != null) playTimeLine(time)];
     final summary = game.summary?.trim() ?? '';
     return ListView(
@@ -53,7 +56,7 @@ class OverviewTab extends ConsumerWidget {
         const SizedBox(height: GSpace.s6),
         OverviewFacts(game: game, played: played.isEmpty ? null : played.join(' · ')),
         if (game.overview.hltb case final hltb?) ...[const SizedBox(height: GSpace.s3), HltbStrip(hltb)],
-        if (shots.isNotEmpty) ...[
+        if (count > 0) ...[
           const SizedBox(height: GSpace.s6),
           Text(
             tr('Screenshots'),
@@ -64,17 +67,48 @@ class OverviewTab extends ConsumerWidget {
             height: 180,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: shots.length,
+              itemCount: count,
               separatorBuilder: (_, _) => const SizedBox(width: GSpace.s3),
               itemBuilder: (context, i) => GFocusable(
                 borderRadius: GRadius.md,
-                child: CoverImage(url: shots[i], width: 320, height: 180, radius: GRadius.md),
+                child: i < own.length
+                    ? _OwnScreenshot(own[i])
+                    : CoverImage(url: shots[i - own.length], width: 320, height: 180, radius: GRadius.md),
               ),
             ),
           ),
         ],
         SimilarGames(game: game),
       ],
+    );
+  }
+}
+
+/// One of the player's own screenshots: private on RomM, read with the token.
+class _OwnScreenshot extends ConsumerWidget {
+  const _OwnScreenshot(this.path);
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bytes = ref.watch(userScreenshotProvider(path)).valueOrNull;
+    return ClipRRect(
+      key: ValueKey('own-shot:$path'),
+      borderRadius: BorderRadius.circular(GRadius.md),
+      child: SizedBox(
+        width: 320,
+        height: 180,
+        child: bytes == null
+            ? const ColoredBox(color: GColors.surface)
+            // Decoded at the strip's size, not the screenshot's.
+            : Image.memory(
+                bytes,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: (320 * MediaQuery.devicePixelRatioOf(context)).round(),
+              ),
+      ),
     );
   }
 }

@@ -155,7 +155,16 @@ abstract class ProfileLaunchConfig {
     'mgba': _Swap(
       const ['config.ini', 'qt.ini'],
       marker: 'portable.ini',
-      args: (c) => ['-C', 'savegamePath=${p.join(c.data, 'saves')}', '-C', 'savestatePath=${p.join(c.data, 'states')}'],
+      // Screenshots in the profile too (#233): mGBA's own default is beside
+      // the ROM, and roms\ holds only ROMs.
+      args: (c) => [
+        '-C',
+        'savegamePath=${p.join(c.data, 'saves')}',
+        '-C',
+        'savestatePath=${p.join(c.data, 'states')}',
+        '-C',
+        'screenshotPath=${p.join(c.data, 'screenshots')}',
+      ],
     ),
     // Ryujinx (Switch, issue #9): its whole data folder by argument (Ryubing's
     // CommandLineState: -r / --root-data-dir), and the keys from bios\.
@@ -202,6 +211,8 @@ void _pcsx2Settings(LaunchContext c) {
   final settings = IniFile(ini.existsSync() ? ini.readAsStringSync() : '');
   if (!ini.existsSync()) settings.set('UI', 'SettingsVersion', '1');
   settings.set('Folders', 'Bios', c.bios);
+  // Its screenshots where Gargosy looks for them after the game (#233).
+  settings.set('Folders', 'Snapshots', p.join(c.data, 'PCSX2', 'snaps'));
   // Closed by the quit buttons (#141), it shuts down at once instead of
   // asking first (the question takes it out of full screen, and waits).
   settings.set('UI', 'ConfirmShutdown', 'false');
@@ -392,6 +403,10 @@ class _RetroArch extends ProfileLaunchConfig {
         'savefiles_in_content_dir': 'false',
         'savestates_in_content_dir': 'false',
         'savestate_directory': p.join(c.data, 'states'),
+        // Screenshots in the profile, not beside the exe (shared) or the ROM
+        // (#233): Gargosy sends them to RomM after the game.
+        'screenshot_directory': p.join(c.data, 'screenshots'),
+        'screenshots_in_content_dir': 'false',
         // States sorted by core, as RetroArch does by default and the save code
         // assumes: pinned before its first exit writes them (state-sync plan
         // S0.2); a choice already in the profile's config stays.

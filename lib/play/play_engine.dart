@@ -28,6 +28,8 @@ import '../core/save/catalog/save_maker.dart';
 import '../core/save/resume_service.dart';
 import '../emulators/process_closer.dart';
 import '../emulators/emulator_layout.dart';
+import 'screenshot_uploads.dart';
+import '../providers/library_providers.dart';
 import '../emulators/emulator_library.dart';
 import '../emulators/profile_launch_config.dart';
 import '../providers/download_providers.dart';
@@ -611,6 +613,10 @@ class GargosyPlayEngine implements PlayEngine {
     String? loadStatePath,
     void Function(CloseGame close)? onStarted,
   }) async {
+    // The profile the game is played in, for its screenshots after (#233):
+    // read now, as the profile may change once the session is over.
+    final shots = _ref.read(screenshotUploadsProvider);
+    final shotsDir = _ref.read(activeProfileProvider)?.paths.emulatorDir(strategy.emulatorId);
     final service = await _launch();
     final dirs = _ref.read(launchDirectoriesProvider);
     // A game folder of numbered discs without its own playlist (#230): the
@@ -647,11 +653,20 @@ class GargosyPlayEngine implements PlayEngine {
       dirs?.onGameStarted = null;
     }
     final started = session.sessionStart;
-    unawaited(session.process?.exitCode.then((_) => _played(game, started, DateTime.now())));
+    unawaited(
+      session.process?.exitCode.then((_) async {
+        await _played(game, started, DateTime.now());
+      }),
+    );
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
         .whenComplete(() async {
+          // Queued before the session counts as over, so a `--play` that
+          // quits Gargosy after it doesn't lose them; sent in the background.
+          if (shots != null && shotsDir != null) {
+            await _queueScreenshots(shots, shotsDir, game, strategy.emulatorId, started, DateTime.now());
+          }
           final temp = resumeTempDir(_ref.read(appRootProvider));
           // The copies made for this session: this PC's ROM path, another
           // player's state (#92).
@@ -684,6 +699,38 @@ class GargosyPlayEngine implements PlayEngine {
       debugPrint('[PlayTime] not kept: $e');
     }
     _ref.invalidate(playTimeProvider(game.id));
+  }
+
+  /// The screenshots taken in [game]'s session (#233), in the profile's
+  /// [dataDir] for the emulator, wait for RomM; then everything waiting
+  /// goes in the background, and the games it went for are read again so
+  /// their pages show them. Never throws.
+  Future<void> _queueScreenshots(
+    ScreenshotUploads uploads,
+    String dataDir,
+    Game game,
+    String emulatorId,
+    DateTime start,
+    DateTime end,
+  ) async {
+    if (!uploads.enabled) return;
+    try {
+      final layout = EmulatorLayout.of(emulatorId);
+      if (layout.screenshots.isNotEmpty) {
+        final taken = screenshotsTaken(dataDir, layout, start, end);
+        debugPrint('[Screenshots] ${game.id}: ${taken.length} taken in $emulatorId');
+        await uploads.add(game.id, taken);
+      }
+    } on Object catch (e) {
+      debugPrint('[Screenshots] not kept: $e');
+    }
+    unawaited(
+      uploads.sendWaiting().then((games) {
+        for (final id in games) {
+          _ref.invalidate(gameProvider(id));
+        }
+      }),
+    );
   }
 
   static PlayResult _describe(LaunchResult? r) {

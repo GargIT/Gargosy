@@ -303,3 +303,15 @@ final platformCoversProvider = FutureProvider.family<List<Game>, PlatformCoversK
     return const [];
   }
 });
+
+/// #233: one of the player's own screenshots on RomM, by its download path;
+/// null when RomM can't give it.
+final userScreenshotProvider = FutureProvider.autoDispose.family<Uint8List?, String>((ref, path) async {
+  final romm = ref.watch(rommServiceProvider);
+  if (romm == null) return null;
+  try {
+    return await romm.screenshotBytes(path);
+  } on Object catch (_) {
+    return null;
+  }
+});

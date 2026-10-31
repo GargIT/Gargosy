@@ -8,6 +8,12 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Screenshots to RomM: screenshots taken in a game (RetroArch, Dolphin,
+  PCSX2, DuckStation, PPSSPP, mGBA, MAME, ScummVM) go to RomM after it,
+  as yours, and show first on the game's Overview. Ones that couldn't go
+  wait and are sent later. Settings → Emulator settings → Upload
+  screenshots turns it off. mGBA's screenshots no longer land beside the
+  ROM.
 - Manuals: a game whose manual RomM has gets a Manual button by ♥ on its
   page. It opens a page at a time; LB/RB turn the page, A zooms, the
   D-pad moves a zoomed page. The manual is kept on this PC once opened, so
