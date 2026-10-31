@@ -745,6 +745,7 @@ const svText = <String, String>{
       'Sparfilen hör till kärnan {0}; välj den kärnan för att spela den.',
   'This state is from {0}, but your save is from {1}. Resuming may roll your save back.':
       'Sparläget är från {0}, men din sparfil är från {1}. Att fortsätta kan ta din sparfil tillbaka i tiden.',
+  'Tick more: they don\'t free enough yet.': 'Markera fler: de frigör inte tillräckligt än.',
   'Too many tries. Wait {0} seconds.': 'För många försök. Vänta {0} sekunder.',
   'Top rated': 'Högst betyg',
   'UPDATES': 'UPPDATERINGAR',
@@ -834,6 +835,7 @@ const svText = <String, String>{
   'delete the save': 'ta bort sparfilen',
   'delete the state': 'ta bort sparläget',
   'descending': 'fallande',
+  'downloaded {0}, not played': 'nedladdat {0}, inte spelat',
   'every {0} state slot of yours is in use': 'alla dina {0}-platser för sparlägen används',
   'first while RomM is offline': 'först medan RomM är offline',
   'for {0} h': 'i {0} h',
@@ -912,8 +914,9 @@ const svText = <String, String>{
   '{0}  ·  This is this game\'s save': '{0}  ·  Det här är spelets sparfil',
   '{0} % done': '{0} % klart',
   '{0} ({1}) is deleted on RomM, for every device.': '{0} ({1}) tas bort på RomM, för alla enheter.',
-  '{0} Delete games from this PC to make room: they stay on RomM.':
-      '{0} Ta bort spel från den här datorn för att göra plats: de finns kvar på RomM.',
+  '{0} Close the game first: nothing is deleted while one runs.':
+      '{0} Stäng spelet först: inget tas bort medan ett körs.',
+  '{0} Delete games from this PC to make room: they stay on RomM. Another profile that has one of them here loses it too.': '{0} Ta bort spel från den här datorn för att göra plats: de finns kvar på RomM. En annan profil som har något av dem här förlorar det också.',
   '{0} Nothing was changed.': '{0} Inget ändrades.',
   '{0} PLAYS IN': '{0} SPELAS I',
   '{0} achievements earned': '{0} prestationer upplåsta',
@@ -925,6 +928,7 @@ const svText = <String, String>{
   '{0} collections · {1} virtual': '{0} samlingar · {1} virtuella',
   '{0} controllers': '{0} handkontroller',
   '{0} couldn\'t be deleted (in use?).': '{0} kunde inte tas bort (används?).',
+  '{0} couldn\'t be deleted, so nothing is downloaded: {1}': '{0} kunde inte tas bort, så inget laddas ner: {1}',
   '{0} does not look like a RomM server. Check the address.':
       '{0} ser inte ut som en RomM-server. Kontrollera adressen.',
   '{0} down, {1} up': '{0} ner, {1} upp',

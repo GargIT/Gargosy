@@ -356,4 +356,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Make room (#227)
 
-132. [ ] On a nearly full drive (or a game bigger than what's free), Download: "Make room?" lists the games on this PC, the ones not played for longest first, with sizes and last plays; enough of them are ticked to fit. A tick toggles with A; with too little ticked, Delete and download is greyed. Confirm: they're deleted and the download starts. Cancel deletes nothing. A game whose save is waiting to upload says so and isn't ticked.
+132. [ ] On a nearly full drive (or a game bigger than what's free), Download: "Make room?" lists the games on this PC, the ones not played for longest first, with sizes and last plays; enough of them are ticked to fit. A tick toggles with A; with too little ticked, Delete and download is greyed and says why. While a game runs it refuses. Confirm: they're deleted and the download starts. Cancel deletes nothing. A game whose save is waiting to upload says so and isn't ticked.

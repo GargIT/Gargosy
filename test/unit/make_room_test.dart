@@ -13,8 +13,20 @@ Game _g(int id, int size, {String? played}) => Game.fromJson({
 void main() {
   final installed = <String, DateTime>{'4': DateTime(2026, 1, 1)};
 
-  List<RoomCandidate> candidates(List<Game> games, {Set<String> unsynced = const {}}) =>
-      roomCandidates(games, except: '9', installedAt: (g) => installed[g.id], unsynced: (g) => unsynced.contains(g.id));
+  List<RoomCandidate> candidates(
+    List<Game> games, {
+    Set<String> unsynced = const {},
+    Map<String, DateTime> here = const {},
+    String? running,
+  }) => roomCandidates(
+    games,
+    except: '9',
+    running: running,
+    installedAt: (g) => installed[g.id],
+    playedHere: (g) => here[g.id],
+    sizeOnDisk: (g) => g.fileSize,
+    unsynced: (g) => unsynced.contains(g.id),
+  );
 
   test('never played first, then played longest ago; the largest first among equals; the one to download left out', () {
     final list = candidates([
@@ -27,6 +39,17 @@ void main() {
     ]);
     expect([for (final c in list) c.game.id], ['3', '2', '5', '4', '1']);
     expect(list[3].lastPlayed, DateTime(2026, 1, 1), reason: 'not played: its download time');
+    expect(list[3].played, isFalse);
+    expect(list.last.played, isTrue);
+  });
+
+  test("this PC's own last play counts when newer than RomM's; a running game is never offered", () {
+    final list = candidates(
+      [_g(1, 100, played: '2020-01-01T00:00:00Z'), _g(5, 100, played: '2025-01-01T00:00:00Z'), _g(6, 100)],
+      here: {'1': DateTime(2026, 10, 30)},
+      running: '6',
+    );
+    expect([for (final c in list) c.game.id], ['5', '1']);
   });
 
   test('ticked until enough is freed, never one whose saves wait to upload', () {

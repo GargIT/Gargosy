@@ -29,10 +29,11 @@ Widget _dialogButton(
   ),
 );
 
-/// A dialog's button as the others here draw it; [onPress] null greys it.
-Widget dialogButton(String label, VoidCallback? onPress, {bool primary = false}) => Opacity(
-  opacity: onPress == null ? 0.5 : 1,
-  child: _dialogButton(label, onPress ?? () {}, primary: primary),
+/// A dialog's button as the others here draw it; [greyed] dims it (it still
+/// takes A, so it can say why).
+Widget dialogButton(String label, VoidCallback onPress, {bool primary = false, bool greyed = false}) => Opacity(
+  opacity: greyed ? 0.5 : 1,
+  child: _dialogButton(label, onPress, primary: primary),
 );
 
 Widget _panel({required String title, required List<Widget> children, double width = 480}) => Center(

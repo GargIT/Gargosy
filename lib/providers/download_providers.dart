@@ -109,9 +109,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     _games[game.id] = game;
     // Room for it and for everything before it (#143): refused now, not
     // when its turn comes.
-    try {
-      checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(diskInfoProvider));
-    } on NotEnoughSpace catch (e) {
+    if (spaceFor(game) case final e?) {
       _set(game.id, DownloadProgress(DownloadPhase.failed, error: tr('With the downloads before it: {0}', [e])));
       return Future.value();
     }
@@ -151,7 +149,10 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
   /// offers to free it); null when it fits, or isn't checked.
   NotEnoughSpace? spaceFor(Game game) {
     try {
-      checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(diskInfoProvider));
+      // A multi-file game is a zip unpacked beside itself in the Gargosy
+      // folder: twice its size for a while.
+      final size = game.isMultiFile ? game.fileSize * 2 : game.fileSize;
+      checkSpace({_ref.read(appRootProvider).roms: size + _stillToCome()}, _ref.read(diskInfoProvider));
       return null;
     } on NotEnoughSpace catch (e) {
       return e;

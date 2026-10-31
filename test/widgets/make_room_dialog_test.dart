@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/library_snapshot.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/library/upload_queue.dart';
@@ -21,17 +22,16 @@ import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
 void main() {
-  const mb = 1024 * 1024;
   late AppRoot root;
   late FakeDownloadService fake;
   int? free;
-  final wanted = Game.fromJson(gameJson(9, 'Wanted', size: 500 * mb));
+  final wanted = Game.fromJson(gameJson(9, 'Wanted', size: 300));
   final old = Game.fromJson({
-    ...gameJson(1, 'Old', size: 400 * mb),
+    ...gameJson(1, 'Old', size: 250),
     'rom_user': {'last_played': '2020-01-01T00:00:00Z'},
   });
   final recent = Game.fromJson({
-    ...gameJson(2, 'Recent', size: 400 * mb),
+    ...gameJson(2, 'Recent', size: 250),
     'rom_user': {'last_played': '2026-10-30T00:00:00Z'},
   });
 
@@ -43,9 +43,10 @@ void main() {
     for (final g in [old, recent]) {
       io.File(RomFiles(root).pathFor(g))
         ..createSync(recursive: true)
-        ..writeAsStringSync('rom');
+        ..writeAsBytesSync(List<int>.filled(250, 1));
     }
-    free = 300 * mb;
+    // 100 bytes over the headroom: 300 to download leaves 200 short.
+    free = spaceHeadroom + 100;
     await tester.pumpWidget(
       testApp(
         Consumer(
@@ -70,8 +71,8 @@ void main() {
     await pump(tester);
     expect(find.text('Make room?'), findsOneWidget);
     expect(find.byIcon(Icons.check_box), findsOneWidget);
-    expect(find.textContaining('Frees 400 MB'), findsOneWidget);
-    free = 2000 * mb; // what the delete frees
+    expect(find.textContaining('Frees 250 B'), findsOneWidget);
+    free = spaceHeadroom + 1000; // what the delete frees
     await tester.tap(find.text('Delete and download'));
     for (var i = 0; i < 20 && fake.started.isEmpty; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
