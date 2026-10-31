@@ -93,6 +93,28 @@ class RetroArchStrategy extends EmulatorStrategy {
   @override
   bool get loadsStateFromPath => false;
 
+  /// Gargosy (#230): RetroArch's CD cores switch discs through an `.m3u`
+  /// (Disc Control); only on the platforms whose cores take one.
+  @override
+  bool takesDiscPlaylist(String? platformSlug) => _playlistPlatforms.contains(platformSlug?.toLowerCase());
+
+  static const _playlistPlatforms = {
+    'psx',
+    'ps',
+    'saturn',
+    'segacd',
+    'sega-cd',
+    'dc',
+    'dreamcast',
+    'pc-engine-cd',
+    'turbografx-cd',
+    'tg16cd',
+    'pcfx',
+    'neo-geo-cd',
+    'neogeocd',
+    '3do',
+  };
+
   @override
   List<String> stateLoadArgs(String statePath) {
     final name = p.basename(statePath);

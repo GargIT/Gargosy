@@ -49,6 +49,11 @@ abstract class EmulatorStrategy {
   /// for an emulator that loads a slot of its own folder by number.
   bool get loadsStateFromPath => true;
 
+  /// Gargosy (#230): whether a multi-disc game of [platformSlug] without its
+  /// own `.m3u` starts on one Gargosy writes, so the emulator can switch
+  /// discs. False by default: the emulator switches from its own menu.
+  bool takesDiscPlaylist(String? platformSlug) => false;
+
   /// Whether the state file named [fileName] can be loaded with
   /// [stateLoadArgs]. A state this says no to is not offered by Resume Game
   /// (RetroArch's command line can load numbered slots but not its auto slot).

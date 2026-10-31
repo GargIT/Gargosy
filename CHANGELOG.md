@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Multi-disc games without a playlist can switch discs in RetroArch and
+  DuckStation: Gargosy starts a folder of numbered discs on a playlist it
+  makes (outside `roms\`), from disc 1.
 - Home's header says "Continue where you left off on <PC>" when the game
   you played last was saved on another PC since this one had it.
 - A download speed limit and a time to download in: Settings → Storage →

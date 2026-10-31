@@ -365,3 +365,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Continue from another PC (#229)
 
 134. [ ] Play a game with a save on PC A and quit (it syncs). On PC B with the same profile's RomM user, open Gargosy: Home's header says "CONTINUE WHERE YOU LEFT OFF ON <PC A's name>" for that game, Play focused. Play it on B: back on Home, it says LAST PLAYED again.
+
+## Multi-disc games without an .m3u (#230)
+
+135. [ ] A PS1 game of two discs in one folder without an `.m3u` (for example "Game (Disc 1).chd", "Game (Disc 2).chd"): Play in RetroArch starts disc 1, and RetroArch's Disc Control lists both discs. The same in DuckStation (its Change Disc lists both). A save made there syncs as before, and Resume of a state made on disc 2 comes back on disc 2. No `.m3u` appears in `roms\`.
