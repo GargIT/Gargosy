@@ -30,13 +30,7 @@ import 'add_to_collection.dart';
 import 'delete_game_dialog.dart';
 import 'make_shortcut.dart';
 import '../../../l10n/tr.dart';
-
-/// Opens a folder in Windows' Explorer; tests replace it.
-final folderOpenerProvider = Provider<void Function(String path)>(
-  (ref) => (path) {
-    io.Process.start('explorer.exe', [path]);
-  },
-);
+import '../../../providers/about_providers.dart';
 
 /// The game page's left column (spec Part 1): the cover; ▶ Play (Download,
 /// the progress, Playing… as they apply); under it ♥ and ⋯. The cover is the
@@ -120,7 +114,7 @@ class GameCoverColumn extends ConsumerWidget {
           danger: false,
           run: () async {
             final path = ref.read(romFilesProvider).pathFor(game);
-            ref.read(folderOpenerProvider)(
+            ref.read(externalOpenerProvider)(
               io.FileSystemEntity.isDirectorySync(path) ? path : io.File(path).parent.path,
             );
           },
