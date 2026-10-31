@@ -372,12 +372,12 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Report a bug with the log (#231)
 
-136. [ ] About → Report a bug: the browser opens GitHub's bug form with Gargosy's, Windows' and RomM's versions filled in, and Explorer opens `userdata\app\temp\bug-report\` with `gargosy-log-for-bug.txt` (the last two logs; no token or password in it), ready to drag into the form's Log field. On Windows 11 the form says Windows 11. Other links in About (GitHub, a document's web link) still open.
+136. [x] About → Report a bug: the browser opens GitHub's bug form with Gargosy's, Windows' and RomM's versions filled in, and Explorer opens `userdata\app\temp\bug-report\` with `gargosy-log-for-bug.txt` (the last two logs; no token or password in it), ready to drag into the form's Log field. On Windows 11 the form says Windows 11. Other links in About (GitHub, a document's web link) still open.
 
 ## Manuals from RomM (#232)
 
 137. [x] A game whose manual RomM has (its Manual tab in RomM's web UI shows a PDF): the game page has a Manual button between ♥ and ⋯; a game without one has none. With a controller alone: A on Manual opens the first page fitted to the screen with "Page 1 of N"; RB / LB and D-pad right / left turn the page, not past the first or last; A zooms in (1.5×, 2×, 3×, then the whole page again), the D-pad moves the zoomed page without leaving it, X shows the whole page, B goes back. With the mouse the wheel zooms and a drag moves the page; with the keyboard PgUp / PgDn, the arrows, + / −, Home / End and Esc.
-138. [ ] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
+138. [x] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
 
 ## Screenshots to RomM (#233)
 
@@ -388,14 +388,14 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Settings per game (#234)
 
 142. [x] A PS2 game in PCSX2: Play → Game settings → Widescreen On (with a controller alone). The game starts in widescreen (16:9); another PS2 game without the setting starts as PCSX2 had it before. The play screen's line says "Game settings: widescreen".
-143. [ ] A GameCube game in Dolphin with Widescreen On starts with Dolphin's widescreen hack; a game in DuckStation with Widescreen On starts 16:9.
+143. [x] A GameCube game in Dolphin with Widescreen On starts with Dolphin's widescreen hack; a game in DuckStation with Widescreen On starts 16:9.
 144. [x] A game in RetroArch: Game settings → Shader → a CRT preset. The game starts with that shader; another game doesn't. Extra arguments `--verbose` (on-screen keyboard) reach RetroArch (its log is longer). Reset this game's settings… clears them, and the game starts as before.
 
 ## Play time limits (#235)
 
-145. [ ] A child's profile, with a parent's profile (made before it, with a PIN): Settings → Profile → Play time → Play time a day → 30 min asks for the parent's PIN; a wrong one changes nothing. Set it to 30 min.
+145. [x] A child's profile, with a parent's profile (made before it, with a PIN): Settings → Profile → Play time → Play time a day → 30 min asks for the parent's PIN; a wrong one changes nothing. Set it to 30 min.
 146. [ ] Play a game as the child for 25 minutes: Windows' alert sound plays once over the game. At 30 minutes the game closes by itself (RetroArch, DuckStation and PCSX2 keep a state), its save syncs, and the message starts "Play time is up for now." Play again says the time is used up and is back at 00:00 tomorrow.
-147. [ ] Play between 15:00–20:00 with the clock outside it: Play says when it's back, and Settings → Emulators → Open is refused. A session played on another PC with the same RomM user today counts toward the minutes here.
+147. [x] Play between 15:00–20:00 with the clock outside it: Play says when it's back, and Settings → Emulators → Open is refused. A session played on another PC with the same RomM user today counts toward the minutes here.
 
 ## Stats (#236)
 
