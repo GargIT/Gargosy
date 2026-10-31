@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Settings per game: the play screen's Game settings sets, for one game
+  in one emulator, extra command-line arguments, a RetroArch shader, and
+  widescreen in PCSX2, Dolphin, DuckStation and Flycast. Reset puts the
+  game back to the emulator's own settings.
 - Screenshots to RomM: screenshots taken in a game (RetroArch, Dolphin,
   PCSX2, DuckStation, PPSSPP, mGBA, MAME, ScummVM) go to RomM after it,
   as yours, and show first on the game's Overview. Ones that couldn't go

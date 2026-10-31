@@ -54,6 +54,8 @@ final launchDirectoriesProvider = Provider<ProfileLaunchDirectories?>((ref) {
     paths: paths,
     prefs: prefs,
     secrets: ref.watch(secretStoreProvider),
+    // A profile under an age limit gets no extra arguments (#234).
+    extraArgsAllowed: () => !ref.read(ageLimitProvider).isOn,
   );
 });
 

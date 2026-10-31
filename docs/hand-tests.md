@@ -384,3 +384,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 139. [ ] Play a game in RetroArch, take two screenshots (F8), quit. In RomM's web UI the game's screenshots (yours) show both, and Gargosy's Overview shows them first in its Screenshots strip (open the page again). They are in `userdata\profiles\<id>\emulators\retroarch\screenshots\`, not in `emulators\retroarch\screenshots\` or `roms\`.
 140. [ ] The same with one standalone emulator (DuckStation F10, PCSX2 F8, Dolphin F9 or mGBA F12): its screenshot reaches RomM after the game. With mGBA, nothing new appears beside the ROM in `roms\`.
 141. [ ] With RomM stopped, take a screenshot and quit: nothing is lost. Start RomM again (or restart Gargosy): the screenshot reaches RomM. Settings → Emulator settings → Upload screenshots off: a new screenshot stays on this PC only.
+
+## Settings per game (#234)
+
+142. [ ] A PS2 game in PCSX2: Play → Game settings → Widescreen On (with a controller alone). The game starts in widescreen (16:9); another PS2 game without the setting starts as PCSX2 had it before. The play screen's line says "Game settings: widescreen".
+143. [ ] A GameCube game in Dolphin with Widescreen On starts with Dolphin's widescreen hack; a game in DuckStation with Widescreen On starts 16:9.
+144. [ ] A game in RetroArch: Game settings → Shader → a CRT preset. The game starts with that shader; another game doesn't. Extra arguments `--verbose` (on-screen keyboard) reach RetroArch (its log is longer). Reset this game's settings… clears them, and the game starts as before.

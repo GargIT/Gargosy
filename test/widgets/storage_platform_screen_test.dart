@@ -55,7 +55,11 @@ void main() {
     expect(find.text('Delete 2 games from this PC?'), findsOneWidget);
     expect(find.textContaining('another profile may have downloaded it'), findsOneWidget);
     await tester.tap(find.text('Delete'));
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    // Real file work: given time until it's done (a slow CI runner needs more than a moment).
+    for (var i = 0; i < 40 && io.File(p.join(root.roms, 'psx', 'Other.chd')).existsSync(); i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump();
+    }
     await tester.pumpAndSettle();
     expect(RomFiles(root).isDownloaded(crash), isFalse);
     expect(io.File(p.join(root.roms, 'psx', 'Other.chd')).existsSync(), isFalse);

@@ -155,7 +155,7 @@ when a token exists.
 | Manual | The game's name and Page N of M; one page fitted to the screen; hints | #232 |
 | Overview tab | Description and genres; facts (Last played, Players, Age rating); How long to beat; screenshots; similar games in your library | #179 |
 | Achievements tab | Summary; filters by type and earned / locked; badges in 1–4 columns (380 px each) | #174 |
-| Play screen | Cover + Play / Resume + what A does; Saves \| States; Plays in (emulator, core, full screen) | |
+| Play screen | Cover + Play / Resume + what A does; Saves \| States; Plays in (emulator, core, full screen, game settings) | #234 |
 | Platform page | Header (logo, facts, Random); tabs Library, Firmware, BIOS, Emulator | #95 |
 | Gallery | Filter bar (search, Filters, On this PC, Sort); grid; A–Z rail when sorted by name. Filters ends with Clear, Save as smart collection…, Apply | #95, #188 |
 | Collections | Heading, filter bar, Kind and Whose; the players' collections; RomM's virtual ones by type | #121 |

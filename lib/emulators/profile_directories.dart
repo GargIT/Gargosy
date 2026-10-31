@@ -7,6 +7,7 @@ import '../core/retroachievements/retroachievements_emulator_login.dart';
 
 import 'dart:io' as io;
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:path/path.dart' as p;
 
 import '../core/platform/platform_info.dart';
@@ -20,6 +21,7 @@ import '../profiles/app_root.dart';
 import '../profiles/profile_paths.dart';
 import 'emulator_layout.dart';
 import 'fullscreen.dart';
+import 'game_settings.dart';
 import 'profile_launch_config.dart';
 
 /// Starts a process; tests pass a recorder.
@@ -143,10 +145,16 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     required AppPreferences prefs,
     required this.secrets,
     ProcessStarter? start,
-  }) : _start = start ?? _defaultStart,
+    bool Function()? extraArgsAllowed,
+  }) : _extraArgsAllowed = extraArgsAllowed ?? (() => true),
+       _start = start ?? _defaultStart,
        super(prefs, platform: const PlatformInfo('windows'));
 
   final ProcessStarter _start;
+
+  /// Whether the player's extra arguments for a game go on its command line
+  /// (not under an age limit, #234).
+  final bool Function() _extraArgsAllowed;
 
   /// Decrypts the profile's RetroAchievements token for a launch.
   final SecretStore secrets;
@@ -180,19 +188,49 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
         if (a != EmulatorStrategy.resumeAutoStateArg) a,
     ];
     final pre = await config.prepare(c);
-    final process = await _start(
-      exePath,
-      [
-        ...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]),
-        ...config.gameArgs(c, romPath),
-      ],
-      workingDirectory: c.exeDir,
-      environment: config.environment(c),
-    );
+    // The play screen's settings for this game (#234): keys in the
+    // emulator's settings for this session, and arguments after the
+    // profile's, before the strategy's (Dolphin's end in `-e`, which takes
+    // the game).
+    var settings = GameSettingsStore(prefs).read(game.id, emulatorId);
+    if (!_extraArgsAllowed()) settings = settings.copyWith(args: '');
+    void restore() {
+      try {
+        restoreGameSettingKeys(emulatorId, c.data, c.exeDir, c.guard);
+      } on Object catch (e) {
+        debugPrint('[GameSettings] $emulatorId: not put back: $e');
+      }
+    }
+
+    final io.Process process;
+    try {
+      applyGameSettingKeys(emulatorId, settings, c.data, c.exeDir, c.guard);
+      process = await _start(
+        exePath,
+        [
+          ...Fullscreen.apply(emulatorId, c.fullscreen, [
+            ...pre,
+            ...gameSettingArgs(emulatorId, settings, c.exeDir),
+            ...args,
+          ]),
+          ...config.gameArgs(c, romPath),
+        ],
+        workingDirectory: c.exeDir,
+        environment: config.environment(c),
+      );
+    } catch (_) {
+      restore();
+      await config.finish(c);
+      rethrow;
+    }
     // Drained, as Freegosy does: a full pipe would freeze the emulator.
     process.stdout.drain<void>();
     process.stderr.drain<void>();
-    process.exitCode.then((_) => config.finish(c));
+    // The game's own settings come out before the profile's files go back.
+    process.exitCode.then((_) {
+      restore();
+      return config.finish(c);
+    });
     onGameStarted?.call(process);
     return process;
   }
