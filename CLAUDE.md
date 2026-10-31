@@ -52,6 +52,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 
 ### Entry points
 - `lib/l10n/` (#191) — `tr.dart`: `tr(english, [args])` (the English text is the key; text without a translation stays English), `fillPlaceholders`, `decimal` (the language's decimal mark), `AppLanguage` (System, English, Svenska; app-wide pref `ui.language`, System is Windows' language when Gargosy has it), `showLanguage` (from `main.dart` before the first frame; sets `Intl.defaultLocale` for dates and numbers), `languageProvider`, `changeLanguage` (Settings → Display → Language: saved, shown, every widget built again). An enum's shown text is a private English field read through a getter (`String get label => tr(_label)`); a const default stays English and is passed through `tr` where it's shown. `sv.dart` — `svText`, the Swedish by English text, edited by hand. The on-screen keyboard has å, ä, ö.
+- `providers/retry.dart` (#261) — `noRetry`: Riverpod 3 tries a failing provider again by default; off at the root `ProviderScope` and in tests' containers, so a failure shows with its own Retry. StateNotifier, StateProvider and StateController come from `flutter_riverpod/legacy.dart`, `Override` from `misc.dart`.
 - `lib/main.dart` — finds the root (`AppRoot.fromArgs`; `--root=<dir>` for `flutter run`), checks it can be written (else `StartupErrorApp`) and that `sigil.dll` loads (else `StartupErrorApp.sigil`, #57: no save code without sigil), points `path_provider`, `shared_preferences` and TMP/TEMP (`profiles/portable_temp.dart`) into `userdata\`, starts the window, runs `GargosyApp`.
 - `lib/app.dart` — `GargosyApp`: theme, `InputRouter`, F11; the profile picker when no profile is active, else `AppShell`. A profile switch pops every pushed page.
 
@@ -205,6 +206,7 @@ Update this section as files are created. Milestone A (log in) is in; B (browse)
 ## Testing
 - `flutter_test` + `mockito` (`@GenerateMocks` + `build_runner`) + `fake_async`. HTTP is faked with `test/helpers/fake_dio_adapter.dart`.
 - `test/helpers/widget_env.dart`: `testApp()` frames a widget (theme, input, covers as boxes, a Gargosy folder that doesn't exist unless `root:` is given) and `press()` sends a controller button (the D-pad moves focus like GamepadService). Fakes: `fake_library_api.dart`, `fake_download_service.dart`, `game_fixtures.dart`.
+- `test/helpers/overrides.dart`: `lastWins` (Riverpod 3 refuses a provider overridden twice in one container: the test's own override replaces a helper's default; `testApp` uses it).
 - `test/helpers/app_harness.dart` builds the whole app with fakes (protector, PC identity, RomM auth); its `settle()` lets file IO and timers finish (one round per sequential async step).
 - `test/unit/` holds logic; `test/widgets/` holds widgets, including focus and controller navigation.
 - Required tests:
