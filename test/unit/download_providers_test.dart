@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
+import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/download_service.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/profiles/login_store.dart';
@@ -124,6 +125,21 @@ void main() {
       expect(downloads.failed, isEmpty, reason: 'stopped is not failed');
       fake.holds['3']!.complete();
       await last;
+      expect(downloads.pending, 0);
+    });
+
+    test('startAll (#226): queued together in order, those running or waiting left as they are', () async {
+      unawaited(downloads.start(a));
+      await tick();
+      downloads.startAll([a, b, d]);
+      await tick();
+      expect(fake.started, ['1']);
+      expect(downloads.queue.map((g) => g.id), ['2', '3']);
+    });
+
+    test('startAll that does not fit queues none of them', () async {
+      free = 1500;
+      expect(() => downloads.startAll([a, b, d]), throwsA(isA<NotEnoughSpace>()));
       expect(downloads.pending, 0);
     });
 

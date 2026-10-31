@@ -15,6 +15,20 @@ void main() {
     expect(api.folded, everyElement(isTrue), reason: 'versions folded, as the gallery shows them');
   });
 
+  test('a game with another version on this PC or queued is left out; versions fold', () async {
+    Game withSibling(int id, int other) => Game.fromJson({
+      ...gameJson(id, 'G$id'),
+      'sibling_roms': [
+        {'id': other, 'name': 'G$other', 'fs_name_no_ext': 'G$other (Rev 1)'},
+      ],
+    });
+    final api = FakeLibraryApi([withSibling(1, 2), withSibling(2, 1), game(3, 'G3')]);
+    final got = await gamesToDownload(api, const GalleryQuery(), skip: (_) => false, have: {'2'});
+    expect([for (final g in got) g.id], ['3']);
+    final all = await gamesToDownload(api, const GalleryQuery(), skip: (_) => false);
+    expect([for (final g in all) g.id], ['1', '3'], reason: 'one card per game, as the gallery shows');
+  });
+
   test('the size is RomM\'s sizes added up', () {
     Game sized(int id, int bytes) => Game.fromJson(gameJson(id, 'G$id', size: bytes));
     expect(sizeOf([sized(1, 10), sized(2, 32)]), 42);

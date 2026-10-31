@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,31 +35,41 @@ class _DownloadAllButtonState extends ConsumerState<DownloadAllButton> {
   Future<void> _run() async {
     final api = ref.read(libraryApiProvider);
     if (api == null || _reading) return;
-    final onPc = {for (final g in ref.read(gamesOnThisPcProvider)) g.id};
+    final files = ref.read(romFilesProvider);
     final downloads = ref.read(downloadsProvider);
+    // On this PC from any profile (roms\ is shared), or waiting already.
+    final have = {
+      for (final g in ref.read(gamesOnThisPcProvider)) g.id,
+      for (final MapEntry(:key, :value) in downloads.entries)
+        if (value.phase.active) key,
+    };
     setState(() => _reading = true);
     final List<Game> games;
     try {
       final found = await gamesToDownload(
         api,
         widget.query,
-        skip: (g) => onPc.contains(g.id) || (downloads[g.id]?.phase.active ?? false),
+        skip: (g) => have.contains(g.id) || files.isDownloaded(g),
+        have: have,
       );
       games = ref.read(ageLimitProvider).only(found);
     } on Object catch (e) {
-      if (mounted) showToast(context, tr('RomM\'s games couldn\'t be read: {0}', [e]));
+      debugPrint('[Downloads] Download all: $e');
+      if (mounted) showToast(context, tr('RomM\'s games couldn\'t be read.'));
       return;
     } finally {
       if (mounted) setState(() => _reading = false);
     }
     if (!mounted) return;
     if (games.isEmpty) {
-      showToast(context, tr('Every game here is on this PC already.'));
+      showToast(context, tr('Nothing here to download: every game is on this PC or waiting.'));
       return;
     }
     final size = sizeOf(games);
+    final notifier = ref.read(downloadsProvider.notifier);
     try {
-      checkSpace({ref.read(appRootProvider).roms: size}, ref.read(diskInfoProvider));
+      // With what is queued or running already, as each download is checked.
+      checkSpace({ref.read(appRootProvider).roms: size + notifier.stillToCome()}, ref.read(diskInfoProvider));
     } on NotEnoughSpace catch (e) {
       showToast(context, '$e');
       return;
@@ -73,14 +81,21 @@ class _DownloadAllButtonState extends ConsumerState<DownloadAllButton> {
       yes: tr('Download all'),
     );
     if (!ok || !mounted) return;
-    final notifier = ref.read(downloadsProvider.notifier);
-    for (final g in games) {
-      unawaited(notifier.start(g));
+    try {
+      notifier.startAll(games);
+    } on NotEnoughSpace catch (e) {
+      if (mounted) showToast(context, '$e');
     }
   }
 
   @override
-  Widget build(BuildContext context) => GFocusable(
+  Widget build(BuildContext context) {
+    // Nothing to ask without RomM.
+    if (ref.watch(libraryApiProvider) == null) return const SizedBox.shrink();
+    return _button();
+  }
+
+  Widget _button() => GFocusable(
     key: const ValueKey('download-all'),
     borderRadius: GRadius.pill,
     onActivate: _run,

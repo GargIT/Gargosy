@@ -208,8 +208,9 @@ void main() {
     expect(random, findsOneWidget);
     bool focused(Finder f) =>
         Focus.of(tester.element(find.descendant(of: f, matching: find.byType(Container)).first)).hasFocus;
-    // Download all (#226) sits beside Random: Up may land there, Right goes on.
-    if (focused(find.byKey(const ValueKey('download-all')))) await press(tester, GameAction.right);
+    // Download all (#226) sits left of Random: Up lands on it, Right goes on.
+    expect(focused(find.byKey(const ValueKey('download-all'))), isTrue);
+    await press(tester, GameAction.right);
     expect(focused(random), isTrue);
     // And back down: tabs, bar, the covers.
     for (var i = 0; i < 6 && focusedCard() == null; i++) {
