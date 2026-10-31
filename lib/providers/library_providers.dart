@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../library/continue_elsewhere.dart';
 import '../library/library_snapshot.dart';
@@ -88,9 +89,9 @@ Future<List<RommCollection>> _orNoneIfMissing(Future<List<RommCollection>> call)
 RommCollection? collectionOf(WidgetRef ref, GalleryQuery q) {
   if (!q.inCollection) return null;
   final all = [
-    ...?ref.watch(collectionsProvider).valueOrNull,
-    ...?ref.watch(smartCollectionsProvider).valueOrNull,
-    for (final type in virtualCollectionTypes.keys) ...?ref.watch(virtualCollectionsProvider(type)).valueOrNull,
+    ...?ref.watch(collectionsProvider).value,
+    ...?ref.watch(smartCollectionsProvider).value,
+    for (final type in virtualCollectionTypes.keys) ...?ref.watch(virtualCollectionsProvider(type)).value,
   ];
   return all.where((c) => c.query == q.scopeOnly).firstOrNull;
 }
@@ -103,7 +104,7 @@ final rommUserIdProvider = Provider<int?>(
 /// Ids of the games in the user's own favourites.
 final favouriteIdsProvider = Provider<Set<String>>((ref) {
   final userId = ref.watch(rommUserIdProvider);
-  final collections = ref.watch(collectionsProvider).valueOrNull ?? const [];
+  final collections = ref.watch(collectionsProvider).value ?? const [];
   return {
     for (final c in collections)
       if (c.isFavorite && c.userId == userId)

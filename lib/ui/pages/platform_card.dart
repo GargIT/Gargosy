@@ -73,7 +73,7 @@ class PlatformCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final choice = ref.watch(platformCoversChoiceProvider);
-    final covers = ref.watch(platformCoversProvider(PlatformCoversKey(platform, choice))).valueOrNull ?? const <Game>[];
+    final covers = ref.watch(platformCoversProvider(PlatformCoversKey(platform, choice))).value ?? const <Game>[];
     return GFocusable(
       key: ValueKey('platform-card-${platform.id}'),
       autofocus: autofocus,

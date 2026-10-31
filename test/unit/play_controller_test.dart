@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
 import 'package:gargosy/core/emulator/strategies/retroarch_strategy.dart';
 import 'package:gargosy/core/input/held_combo.dart';
@@ -333,7 +334,7 @@ void main() {
   late ProviderContainer c;
   setUp(() {
     engine = FakeEngine();
-    c = ProviderContainer(overrides: [playEngineProvider.overrideWithValue(engine)]);
+    c = ProviderContainer(retry: noRetry, overrides: [playEngineProvider.overrideWithValue(engine)]);
   });
   tearDown(() => c.dispose());
 
@@ -351,6 +352,7 @@ void main() {
     final progress = _Progress();
     final prefs = MemoryPrefs()..values[kRaUsernameKey] = 'henrik';
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [
         playEngineProvider.overrideWithValue(engine),
         achievementProgressProvider.overrideWithValue(progress),
@@ -393,6 +395,7 @@ void main() {
     test('for 1 second closes the emulator; the session ends as usual', () {
       fakeAsync((async) {
         final c = ProviderContainer(
+          retry: noRetry,
           overrides: [
             playEngineProvider.overrideWithValue(engine),
             quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
@@ -414,6 +417,7 @@ void main() {
       fakeAsync((async) {
         engine.returnsAfterExit = true;
         final c = ProviderContainer(
+          retry: noRetry,
           overrides: [
             playEngineProvider.overrideWithValue(engine),
             quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
@@ -432,6 +436,7 @@ void main() {
     test('let go too soon, or turned off in Settings: nothing closes', () {
       fakeAsync((async) {
         final c = ProviderContainer(
+          retry: noRetry,
           overrides: [
             playEngineProvider.overrideWithValue(engine),
             quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
@@ -448,6 +453,7 @@ void main() {
       engine = FakeEngine();
       fakeAsync((async) {
         final c = ProviderContainer(
+          retry: noRetry,
           overrides: [playEngineProvider.overrideWithValue(engine), quitButtonsProvider.overrideWithValue(null)],
         );
         playing(async, c);
@@ -461,6 +467,7 @@ void main() {
     test('after the game ended, held does nothing', () {
       fakeAsync((async) {
         final c = ProviderContainer(
+          retry: noRetry,
           overrides: [
             playEngineProvider.overrideWithValue(engine),
             quitButtonsProvider.overrideWithValue(QuitButtons.selectBumpers),
@@ -581,6 +588,7 @@ void main() {
 
   test('a game above the age limit (#224) is refused on Play and Resume, before anything runs', () async {
     final limited = ProviderContainer(
+      retry: noRetry,
       overrides: [
         playEngineProvider.overrideWithValue(engine),
         ageLimitProvider.overrideWithValue(const AgeLimit(maxAge: 12)),
@@ -603,6 +611,7 @@ void main() {
 
   test('with an age limit an emulator is not opened on its own (it opens any ROM)', () async {
     final limited = ProviderContainer(
+      retry: noRetry,
       overrides: [
         playEngineProvider.overrideWithValue(engine),
         ageLimitProvider.overrideWithValue(const AgeLimit(maxAge: 12)),
@@ -751,6 +760,7 @@ void main() {
       push: (_, _, _) async => false,
     );
     final c2 = ProviderContainer(
+      retry: noRetry,
       overrides: [playEngineProvider.overrideWithValue(engine), uploadQueueProvider.overrideWith((ref) async => queue)],
     );
     addTearDown(c2.dispose);

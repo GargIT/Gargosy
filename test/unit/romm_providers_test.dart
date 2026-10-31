@@ -2,6 +2,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/romm_providers.dart';
@@ -13,6 +14,7 @@ void main() {
     final root = await tempAppRoot();
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [appRootProvider.overrideWithValue(root), appPreferencesProvider.overrideWithValue(MemoryPrefs())],
     );
     addTearDown(c.dispose);

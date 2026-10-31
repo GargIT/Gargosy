@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/providers/ui_provider.dart';
 import 'package:gargosy/ui/widgets/hint_bar.dart';
 
 void main() {
   testWidgets('hints show for controller and keyboard, not mouse', (tester) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(retry: noRetry);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

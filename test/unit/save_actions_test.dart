@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/save/catalog/save_catalog.dart';
 import 'package:gargosy/core/save/catalog/save_entry.dart';
 import 'package:gargosy/core/save/catalog/save_maker.dart';
@@ -31,7 +32,7 @@ void main() {
         platformDefault: pcsx2,
         catalog: SaveCatalog(thisPc: [], backups: [], romm: [], rommOffline: false),
       );
-    c = ProviderContainer(overrides: [playEngineProvider.overrideWithValue(engine)]);
+    c = ProviderContainer(retry: noRetry, overrides: [playEngineProvider.overrideWithValue(engine)]);
   });
   tearDown(() => c.dispose());
 

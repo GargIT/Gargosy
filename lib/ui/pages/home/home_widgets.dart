@@ -158,7 +158,7 @@ class _RandomPick extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final game = ref.watch(randomGameProvider).valueOrNull;
+    final game = ref.watch(randomGameProvider).value;
     if (game == null) return _Card(label: tr('RANDOM PICK'), child: const SizedBox.shrink());
     return _Card(
       key: const ValueKey('widget-random'),
@@ -178,7 +178,7 @@ class _OnThisDay extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final page = ref.watch(onThisDayProvider).valueOrNull;
+    final page = ref.watch(onThisDayProvider).value;
     final label = tr('ON THIS DAY · {0}', [DateFormat('d MMMM').format(DateTime.now()).toUpperCase()]);
     final game = page?.games.firstOrNull;
     if (game == null) {
@@ -213,10 +213,10 @@ class _Library extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final games = ref.watch(galleryScopeProvider(const GalleryQuery())).valueOrNull?.total;
+    final games = ref.watch(galleryScopeProvider(const GalleryQuery())).value?.total;
     final onPc = foldVersions(ref.watch(shownGamesOnThisPcProvider)).length;
-    final platforms = ref.watch(platformsProvider).valueOrNull?.length;
-    final collections = ref.watch(collectionsProvider).valueOrNull?.length;
+    final platforms = ref.watch(platformsProvider).value?.length;
+    final collections = ref.watch(collectionsProvider).value?.length;
     String n(int? v) => v == null ? '–' : NumberFormat.decimalPattern().format(v);
     Widget stat(String value, String label, {Color? color}) => Text.rich(
       TextSpan(

@@ -2,7 +2,10 @@ import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/profiles/app_root.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/changelog/whats_new.dart';
@@ -28,6 +31,7 @@ import 'package:gargosy/ui/shell/user_menu.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 
+import '../helpers/overrides.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 
@@ -47,7 +51,8 @@ void main() {
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
     before?.call(root!);
     c = ProviderContainer(
-      overrides: [
+      retry: noRetry,
+      overrides: lastWins([
         appRootProvider.overrideWithValue(root!),
         appPreferencesProvider.overrideWithValue(prefs ?? MemoryPrefs()),
         // The real pages, with a library that never touches RomM.
@@ -62,7 +67,7 @@ void main() {
         rommHeartbeatEnabledProvider.overrideWithValue(false),
         uploadQueueProvider.overrideWith((ref) async => null),
         ...extra,
-      ],
+      ]),
     );
     addTearDown(c.dispose);
     final anna = await tester.runAsync(

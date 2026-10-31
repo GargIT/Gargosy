@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/constants/app_constants.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
@@ -48,6 +49,7 @@ void main() {
     final nav = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       ProviderScope(
+        retry: noRetry,
         overrides: [
           appRootProvider.overrideWithValue(AppRoot(root.path)),
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),

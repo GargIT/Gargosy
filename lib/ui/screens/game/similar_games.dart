@@ -18,7 +18,7 @@ class SimilarGames extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final similar = ref.watch(similarGamesProvider(game.id)).valueOrNull ?? const <Game>[];
+    final similar = ref.watch(similarGamesProvider(game.id)).value ?? const <Game>[];
     if (similar.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: GSpace.s6),

@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/romm/romm_play_sessions.dart';
 import 'package:gargosy/play/play_time.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
@@ -69,6 +70,7 @@ void main() {
     final api = _FakeApi()..remote = const PlayTime(Duration(hours: 2), 3);
     await log.add(s('1', 30));
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [playTimeLogProvider.overrideWithValue(log), playSessionsApiProvider.overrideWithValue(api)],
     );
     addTearDown(c.dispose);

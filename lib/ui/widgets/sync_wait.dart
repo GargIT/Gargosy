@@ -19,7 +19,7 @@ String? syncBusyWith(ValueListenable<String?>? activity, UploadQueue? queue) =>
 /// the player stays (B).
 Future<bool> waitForSyncIdle(BuildContext context, WidgetRef ref) async {
   final activity = ref.read(syncActivityProvider);
-  final queue = ref.read(uploadQueueProvider).valueOrNull;
+  final queue = ref.read(uploadQueueProvider).value;
   if (syncBusyWith(activity, queue) == null) return true;
   final done = await showDialog<bool>(
     context: context,

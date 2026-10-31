@@ -61,10 +61,10 @@ class HomePage extends ConsumerWidget {
     final userId = ref.watch(rommUserIdProvider);
     final showRows = offline ? const [HomeRow.onThisPc, HomeRow.continuePlaying] : layout.shown;
     final random = layout.top == HomeTop.randomPick || layout.widgets.contains(HomeWidget.randomPick)
-        ? ref.watch(randomGameProvider).valueOrNull
+        ? ref.watch(randomGameProvider).value
         : null;
 
-    final playedList = offline ? playedHere(installed) : played.valueOrNull ?? const <Game>[];
+    final playedList = offline ? playedHere(installed) : played.value ?? const <Game>[];
     final last = playedList.firstOrNull;
     final (Game? headerGame, bool headerRandom) = switch (layout.top) {
       HomeTop.nothing => (null, false),
@@ -149,14 +149,14 @@ class HomePage extends ConsumerWidget {
         case HomeRow.recentlyAdded:
           return gameShelf(
             row,
-            ref.watch(recentlyAddedProvider).valueOrNull ?? const [],
+            ref.watch(recentlyAddedProvider).value ?? const [],
             onSeeAll: () =>
                 gallery(tr('Recently added'), const GalleryQuery(sort: GallerySort.recentlyAdded, descending: true)),
           );
         case HomeRow.favourites:
           return gameShelf(
             row,
-            ref.watch(favouriteGamesProvider).valueOrNull ?? const [],
+            ref.watch(favouriteGamesProvider).value ?? const [],
             count: favIds.length,
             onSeeAll: () => gallery(tr('Favourites'), const GalleryQuery(favourites: true)),
           );
@@ -168,9 +168,9 @@ class HomePage extends ConsumerWidget {
             onSeeAll: offline ? null : () => gallery(tr('On this PC'), const GalleryQuery(), thisPc: true),
           );
         case HomeRow.forYou:
-          return gameShelf(row, ref.watch(recommendedGamesProvider).valueOrNull ?? const []);
+          return gameShelf(row, ref.watch(recommendedGamesProvider).value ?? const []);
         case HomeRow.platforms:
-          final list = ref.watch(platformsProvider).valueOrNull ?? const <Platform>[];
+          final list = ref.watch(platformsProvider).value ?? const <Platform>[];
           return Shelf(
             key: ValueKey('home-${row.name}'),
             title: row.label,
@@ -191,12 +191,12 @@ class HomePage extends ConsumerWidget {
             ),
           );
         case HomeRow.collections:
-          final regular = ref.watch(collectionsProvider).valueOrNull ?? const <RommCollection>[];
+          final regular = ref.watch(collectionsProvider).value ?? const <RommCollection>[];
           return collectionShelf(row, curatedCollections(regular, const [], userId: userId));
         case HomeRow.smartCollections:
-          return collectionShelf(row, ref.watch(smartCollectionsProvider).valueOrNull ?? const []);
+          return collectionShelf(row, ref.watch(smartCollectionsProvider).value ?? const []);
         case HomeRow.virtualCollections:
-          return collectionShelf(row, ref.watch(virtualCollectionsProvider('collection')).valueOrNull ?? const []);
+          return collectionShelf(row, ref.watch(virtualCollectionsProvider('collection')).value ?? const []);
       }
     }
 
@@ -208,7 +208,7 @@ class HomePage extends ConsumerWidget {
         error == null &&
         headerGame == null &&
         installed.isEmpty &&
-        (added.valueOrNull?.isEmpty ?? true) &&
+        (added.value?.isEmpty ?? true) &&
         layout.top != HomeTop.nothing;
 
     // The random pick isn't shown twice.

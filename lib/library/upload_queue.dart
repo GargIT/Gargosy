@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/romm/romm_models.dart';
 import '../core/save/backup_entry.dart';
@@ -120,7 +121,7 @@ final uploadQueueProvider = FutureProvider<UploadQueue?>((ref) async {
 /// What waits to upload for a game (shown on its Save Data tab).
 final uploadsWaitingProvider = Provider.family<List<BackupEntry>, String>((ref, gameId) {
   ref.watch(uploadQueueVersionProvider);
-  return ref.watch(uploadQueueProvider).valueOrNull?.waitingFor(gameId) ?? const [];
+  return ref.watch(uploadQueueProvider).value?.waitingFor(gameId) ?? const [];
 });
 
 /// Bumped after a run or a session, so the waiting lists are read again.

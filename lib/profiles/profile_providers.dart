@@ -3,6 +3,7 @@ import 'play_limit.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/romm/romm_auth_client.dart';
 import '../core/platform/platform_info.dart';

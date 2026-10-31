@@ -3,6 +3,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/download_schedule.dart';
@@ -24,6 +25,7 @@ void main() {
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final fake = FakeDownloadService(RomFiles(root), PathGuard(root))..hold = Completer<void>();
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(MemoryPrefs()),
@@ -76,6 +78,7 @@ void main() {
         fake.holds[g.id] = Completer<void>();
       }
       c = ProviderContainer(
+        retry: noRetry,
         overrides: [
           appRootProvider.overrideWithValue(root),
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),
@@ -148,6 +151,7 @@ void main() {
       final prefs = MemoryPrefs();
       await prefs.setString(DownloadLimits.windowKey, '22:00-07:00');
       final timed = ProviderContainer(
+        retry: noRetry,
         overrides: [
           appRootProvider.overrideWithValue(c.read(appRootProvider)),
           appPreferencesProvider.overrideWithValue(prefs),

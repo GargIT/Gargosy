@@ -4,6 +4,7 @@ import 'dart:io' as io;
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:pub_semver/pub_semver.dart';
 
 import '../core/constants/app_constants.dart';

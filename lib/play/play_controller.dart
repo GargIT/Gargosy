@@ -5,6 +5,7 @@ import 'dart:io' as io;
 
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/input/held_combo.dart';
 import '../core/romm/romm_models.dart';

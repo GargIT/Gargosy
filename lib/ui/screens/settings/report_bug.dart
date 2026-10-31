@@ -24,7 +24,7 @@ import '../../../l10n/tr.dart';
 Future<void> reportBug(BuildContext context, WidgetRef ref, {required String windows}) async {
   final root = ref.read(appRootProvider);
   final open = ref.read(externalOpenerProvider);
-  final romm = ref.read(rommServerVersionProvider).valueOrNull;
+  final romm = ref.read(rommServerVersionProvider).value;
   open(bugFormUrl(version: AppConstants.version, windows: windowsName(windows), romm: romm).toString());
   try {
     final copy = await copyLogsForBug(root);

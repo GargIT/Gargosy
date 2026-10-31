@@ -260,9 +260,9 @@ class _SavesTabState extends ConsumerState<SavesTab> {
   Widget build(BuildContext context) {
     final menuAsync = ref.watch(playMenuProvider(_key));
     final statesAsync = ref.watch(playStatesProvider(_key));
-    final states = statesAsync.valueOrNull ?? const <ResumeEntry>[];
+    final states = statesAsync.value ?? const <ResumeEntry>[];
     final waiting = ref.watch(uploadsWaitingProvider(_game.id));
-    final unclaimed = ref.watch(unclaimedSavesProvider(_key)).valueOrNull ?? const <String>[];
+    final unclaimed = ref.watch(unclaimedSavesProvider(_key)).value ?? const <String>[];
     return menuAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => ErrorRetry(message: describeLoadError(e), onRetry: () => ref.invalidate(playMenuProvider(_key))),

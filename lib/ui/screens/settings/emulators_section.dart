@@ -41,10 +41,10 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
     final registry = ref.watch(strategyRegistryProvider);
     final prefs = ref.watch(profilePrefsProvider);
     final installed = {
-      for (final e in ref.watch(emulatorsProvider).valueOrNull ?? const <EmulatorInfo>[])
+      for (final e in ref.watch(emulatorsProvider).value ?? const <EmulatorInfo>[])
         if (e.supported && e.installedExe != null) e.id: e.name,
     };
-    final platforms = ref.watch(platformsProvider).valueOrNull ?? const [];
+    final platforms = ref.watch(platformsProvider).value ?? const [];
     final rows = <Widget>[];
     if (registry != null) {
       for (final pl in platforms) {

@@ -58,7 +58,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final scopeQuery = GalleryQuery(search: _term);
-    final scope = ref.watch(galleryScopeProvider(scopeQuery)).valueOrNull;
+    final scope = ref.watch(galleryScopeProvider(scopeQuery)).value;
     final onPc = foldVersions(
       localGallery(ref.watch(shownGamesOnThisPcProvider), scopeQuery, inScope: (_) => true, installedAt: (_) => null),
     ).length;

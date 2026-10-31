@@ -23,7 +23,7 @@ class OverviewTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final time = ref.watch(playTimeProvider(game.id)).valueOrNull;
+    final time = ref.watch(playTimeProvider(game.id)).value;
     final shots = [for (final s in game.mergedScreenshots) assetUrl(ref, s)].whereType<String>().toList();
     // The player's own first (#233), then RomM's scraped ones.
     final own = game.userScreenshots;
@@ -92,7 +92,7 @@ class _OwnScreenshot extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bytes = ref.watch(userScreenshotProvider(path)).valueOrNull;
+    final bytes = ref.watch(userScreenshotProvider(path)).value;
     return ClipRRect(
       key: ValueKey('own-shot:$path'),
       borderRadius: BorderRadius.circular(GRadius.md),

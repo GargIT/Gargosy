@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:path/path.dart' as p;
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/retroachievements/retroachievements_emulator_login.dart';
@@ -65,6 +66,7 @@ void main() {
     final root = await tester.runAsync(tempAppRoot);
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
     c = ProviderContainer(
+      retry: noRetry,
       overrides: [
         appRootProvider.overrideWithValue(root!),
         appPreferencesProvider.overrideWithValue(MemoryPrefs()),

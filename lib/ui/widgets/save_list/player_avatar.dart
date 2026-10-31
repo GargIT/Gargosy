@@ -18,7 +18,7 @@ class PlayerAvatar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final name = owner.username.trim();
     const colors = GColors.profileColors;
-    final picture = owner.avatarPath == null ? null : ref.watch(userAvatarProvider(owner.userId)).valueOrNull;
+    final picture = owner.avatarPath == null ? null : ref.watch(userAvatarProvider(owner.userId)).value;
     return Container(
       width: size,
       height: size,

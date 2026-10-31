@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 
@@ -15,6 +16,7 @@ void main() {
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final prefs = MemoryPrefs();
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [appRootProvider.overrideWithValue(root), appPreferencesProvider.overrideWithValue(prefs)],
     );
     addTearDown(c.dispose);
@@ -43,6 +45,7 @@ void main() {
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final png = Uint8List.fromList([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1]);
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(MemoryPrefs()),
@@ -66,6 +69,7 @@ void main() {
     final root = await tempAppRoot();
     addTearDown(() => io.Directory(root.root).delete(recursive: true));
     final c = ProviderContainer(
+      retry: noRetry,
       overrides: [appRootProvider.overrideWithValue(root), appPreferencesProvider.overrideWithValue(MemoryPrefs())],
     );
     addTearDown(c.dispose);

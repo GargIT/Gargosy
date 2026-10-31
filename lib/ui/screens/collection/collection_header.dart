@@ -114,14 +114,14 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
     final c = widget.collection;
     final userId = ref.watch(rommUserIdProvider);
     final downloaded = {for (final g in ref.watch(shownGamesOnThisPcProvider)) ?int.tryParse(g.id)};
-    final platforms = ref.watch(galleryScopeProvider(c.query)).valueOrNull?.platforms;
+    final platforms = ref.watch(galleryScopeProvider(c.query)).value?.platforms;
     final virtual = c.kind == CollectionKind.virtual;
     final whose = virtual || c.userId == null
         ? null
         : c.userId == userId
         ? tr('By you')
         : tr('By {0}', [c.ownerUsername ?? 'another player']);
-    final names = {for (final p in ref.watch(platformsProvider).valueOrNull ?? const <Platform>[]) p.id: p.name};
+    final names = {for (final p in ref.watch(platformsProvider).value ?? const <Platform>[]) p.id: p.name};
     final filters = c.kind == CollectionKind.smart ? describeCriteria(c.filterCriteria, platformNames: names) : '';
     // RomM's filter_summary is its criteria as JSON; said in words when they read back.
     final summary = c.filterSummary ?? '';

@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gamepads_platform_interface/api/gamepad_controller.dart';
@@ -40,7 +41,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     fake.pads = [];
-    container = ProviderContainer();
+    container = ProviderContainer(retry: noRetry);
     service = container.read(gamepadServiceProvider);
     await service.ready;
     await pumpEventQueue(); // the start-up scan

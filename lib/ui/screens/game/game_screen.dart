@@ -102,7 +102,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   Map<int, String> _badges(Game game) {
     final badges = <int, String>{};
-    final catalog = ref.watch(playMenuProvider(_key)).valueOrNull?.catalog;
+    final catalog = ref.watch(playMenuProvider(_key)).value?.catalog;
     if (catalog != null) {
       // Different saves, not copies: one save on this PC, on RomM and in a
       // backup is 1.
@@ -110,7 +110,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       if (n > 0) badges[1] = '$n';
     }
     if (game.raId != null && game.raAchievements.isNotEmpty) {
-      final progression = ref.watch(raProgressionProvider).valueOrNull?[game.raId];
+      final progression = ref.watch(raProgressionProvider).value?[game.raId];
       if (progression != null) {
         final p = RetroAchievementsGameProgress.fromRomm(
           gameId: game.raId!,
@@ -122,14 +122,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         badges[2] = '${game.raAchievements.length}';
       }
     }
-    final notes = ref.watch(romNotesProvider(game.id)).valueOrNull?.length ?? 0;
+    final notes = ref.watch(romNotesProvider(game.id)).value?.length ?? 0;
     if (notes > 0) badges[3] = '$notes';
     return badges;
   }
 
   @override
   Widget build(BuildContext context) {
-    final game = ref.watch(gameProvider(widget.game.id)).valueOrNull ?? widget.game;
+    final game = ref.watch(gameProvider(widget.game.id)).value ?? widget.game;
     ref.watch(playStatesProvider(_key)); // Y needs the states ready
     final hasStates = _newestState() != null;
     return Actions(

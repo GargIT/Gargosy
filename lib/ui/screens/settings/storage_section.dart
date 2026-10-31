@@ -26,7 +26,7 @@ final storageUsageProvider = FutureProvider.autoDispose<StorageUsage>((ref) => r
 
 /// A platform's name from its folder (RomM's slug).
 String platformNameFor(WidgetRef ref, String folder) {
-  final platforms = ref.watch(platformsProvider).valueOrNull ?? const [];
+  final platforms = ref.watch(platformsProvider).value ?? const [];
   return platforms.where((x) => x.slug == folder).firstOrNull?.name ?? folder;
 }
 
@@ -82,8 +82,8 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
       AsyncError() => tr('Couldn\'t be read'),
       _ => tr('Counting…'),
     };
-    final folders = usage.valueOrNull?.folders;
-    final platforms = usage.valueOrNull?.platforms ?? const <PlatformUsage>[];
+    final folders = usage.value?.folders;
+    final platforms = usage.value?.platforms ?? const <PlatformUsage>[];
     return ListView(
       children: [
         SettingsCard(
