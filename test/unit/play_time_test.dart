@@ -25,6 +25,9 @@ class _FakeApi implements PlaySessionsApi {
 
   @override
   Future<PlayTime?> timeFor(String gameId) async => remote;
+
+  @override
+  Future<List<RemoteSession>?> sessionsSince(DateTime since) async => null;
 }
 
 void main() {

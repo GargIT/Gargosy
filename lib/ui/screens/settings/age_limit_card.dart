@@ -88,12 +88,12 @@ class AgeLimitCard extends ConsumerWidget {
   }
 }
 
-/// The profiles whose PIN may change [p]'s age limit: the others made
-/// before it, without a limit, that have a PIN. One made later (by the
-/// child, for the purpose) never counts.
+/// The profiles whose PIN may change [p]'s age or play time limit: the
+/// others made before it, without either limit, that have a PIN. One made
+/// later (by the child, for the purpose) never counts.
 List<Profile> guardiansOf(List<Profile> all, Profile p) => [
   for (final o in all)
-    if (o.id != p.id && o.createdAt.isBefore(p.createdAt) && !o.ageLimit.isOn && o.pin != null) o,
+    if (o.id != p.id && o.createdAt.isBefore(p.createdAt) && !o.ageLimit.isOn && !o.playLimit.isOn && o.pin != null) o,
 ];
 
 /// Asks for a parent's PIN before [p]'s age limit changes (which parent,

@@ -49,6 +49,8 @@ const svText = <String, String>{
   'Also delete it from this PC': 'Ta också bort det från den här datorn',
   'Also delete the file on the server': 'Ta också bort filen på servern',
   'Always for this game': 'Alltid för det här spelet',
+  'An emulator can\'t be opened on its own with a play time limit.':
+      'En emulator kan inte öppnas på egen hand med en speltidsgräns.',
   'An emulator can\'t be opened on its own with an age limit.':
       'En emulator kan inte öppnas på egen hand med en åldersgräns.',
   'Another': 'Ett till',
@@ -499,7 +501,13 @@ const svText = <String, String>{
   'Platforms': 'Plattformar',
   'Play': 'Spela',
   'Play an older save?': 'Spela en äldre sparfil?',
+  'Play between': 'Spela mellan',
   'Play mode': 'Spelläge',
+  'Play time': 'Speltid',
+  'Play time a day': 'Speltid per dag',
+  'Play time a day counts every PC this profile plays on. Five minutes before the time is up Windows plays its alert sound; then the game is closed (emulators that keep a state on close keep one) and its saves sync. An emulator can\'t be opened on its own while a limit is on.': 'Speltid per dag räknar alla datorer profilen spelar på. Fem minuter innan tiden är slut spelar Windows sitt varningsljud; sedan stängs spelet (emulatorer som sparar ett läge när de stängs gör det) och dess sparfiler synkas. En emulator kan inte öppnas på egen hand medan en gräns är på.',
+  'Play time changed.': 'Speltiden ändrad.',
+  'Play time is up for now.': 'Speltiden är slut för nu.',
   'Play {0} in': 'Spela {0} i',
   'Play {0}\'s save?': 'Spela {0}s sparfil?',
   'Played {0} · {1} {2}{3}': 'Spelat {0} · {1} {2}{3}',
@@ -769,6 +777,7 @@ const svText = <String, String>{
   'This is a different RomM user ({0}). Log in as {1}.{2}':
       'Det här är en annan RomM-användare ({0}). Logga in som {1}.{2}',
   'This is permanent and can\'t be undone. The game leaves RomM\'s library for every player, and everyone\'s saves and states of it on RomM go with it.{0}': 'Det här är permanent och kan inte ångras. Spelet försvinner ur RomM:s bibliotek för alla spelare, och allas sparfiler och sparlägen för det på RomM följer med.{0}',
+  'This profile plays {0}. Back at {1}.': 'Den här profilen spelar {0}. Tillbaka {1}.',
   'This profile\'s Home only. Changes show at once.': 'Bara den här profilens Hem. Ändringar syns direkt.',
   'This removes the profile and its saves, states and emulator settings from this PC. Nothing on the RomM server is deleted.': 'Det här tar bort profilen och dess sparfiler, sparlägen och emulatorinställningar från den här datorn. Inget på RomM-servern tas bort.',
   'This removes the profile and its saves, states and emulator settings from this PC. Nothing on the RomM server is deleted.{0}': 'Det här tar bort profilen och dess sparfiler, sparlägen och emulatorinställningar från den här datorn. Inget på RomM-servern tas bort.{0}',
@@ -783,6 +792,7 @@ const svText = <String, String>{
   'This state is from {0}, but your save is from {1}. Resuming may roll your save back.':
       'Sparläget är från {0}, men din sparfil är från {1}. Att fortsätta kan ta din sparfil tillbaka i tiden.',
   'Tick more: they don\'t free enough yet.': 'Markera fler: de frigör inte tillräckligt än.',
+  'Today\'s play time is used up. Back at {0}.': 'Dagens speltid är slut. Tillbaka {0}.',
   'Too many tries. Wait {0} seconds.': 'För många försök. Vänta {0} sekunder.',
   'Top rated': 'Högst betyg',
   'UPDATES': 'UPPDATERINGAR',
@@ -986,6 +996,7 @@ const svText = <String, String>{
   '{0} free on {1}': '{0} ledigt på {1}',
   '{0} games': '{0} spel',
   '{0} h': '{0} h',
+  '{0} h a day': '{0} h om dagen',
   '{0} h {1} min': '{0} h {1} min',
   '{0} has no cores': '{0} har inga kärnor',
   '{0} images (about {1})': '{0} bilder (cirka {1})',
@@ -1008,6 +1019,7 @@ const svText = <String, String>{
       '{0} sparar i spelets mapp, som bara innehåller spel. Välj dess sparmapp först.',
   '{0} lists {1}, but the zip has no such file.': '{0} listar {1}, men zipen har ingen sådan fil.',
   '{0} min': '{0} min',
+  '{0} min a day': '{0} min om dagen',
   '{0} min left': '{0} min kvar',
   '{0} of {1}': '{0} av {1}',
   '{0} on PC': '{0} på datorn',
@@ -1022,6 +1034,7 @@ const svText = <String, String>{
   '{0} s left': '{0} s kvar',
   '{0} saves can\'t be used by {1}': '{0}-sparfiler kan inte användas av {1}',
   '{0} states': '{0} sparlägen',
+  '{0} tomorrow': '{0} i morgon',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} gjordes av {1} {2}; du har {3}. Det kanske inte laddas, eller så beter sig spelet konstigt.',
   '{0} was not found in {1}': '{0} hittades inte i {1}',

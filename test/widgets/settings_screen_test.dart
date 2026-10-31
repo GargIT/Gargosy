@@ -400,6 +400,7 @@ void main() {
       push: (_, _, _) async => false,
     );
     await pump(tester, queue: queue);
+    await tester.scrollUntilVisible(find.text('Delete profile'), 200, scrollable: find.byType(Scrollable).last);
     await tester.tap(find.text('Delete profile'));
     await tester.pumpAndSettle();
     expect(find.textContaining("1 save hasn't reached RomM"), findsOneWidget);
@@ -419,6 +420,7 @@ void main() {
   testWidgets('deleting the profile is refused while a game runs', (tester) async {
     await pump(tester);
     c.read(playControllerProvider.notifier).state = const PlayState(runningGameId: '1');
+    await tester.scrollUntilVisible(find.text('Delete profile'), 200, scrollable: find.byType(Scrollable).last);
     await tester.tap(find.text('Delete profile'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Close the game first'), findsOneWidget);
