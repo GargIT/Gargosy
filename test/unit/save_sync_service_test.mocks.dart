@@ -5,8 +5,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
 import 'dart:async' as _i11;
-import 'dart:io' as _i12;
-import 'dart:typed_data' as _i13;
+import 'dart:io' as _i13;
+import 'dart:typed_data' as _i12;
 
 import 'package:dio/dio.dart' as _i4;
 import 'package:flutter/foundation.dart' as _i2;
@@ -157,29 +157,22 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
           as _i11.Future<_i3.Game?>);
 
   @override
-  _i11.Future<Map<int, Map<String, dynamic>>> getRetroAchievementsProgression() => (super.noSuchMethod(
-    Invocation.method(#getRetroAchievementsProgression, []),
-    returnValue: _i11.Future<Map<int, Map<String, dynamic>>>.value(<int, Map<String, dynamic>>{}),
-  ) as _i11.Future<Map<int, Map<String, dynamic>>>);
+  _i11.Future<_i12.Uint8List> downloadManual(String? pathManual) => (super.noSuchMethod(
+    Invocation.method(#downloadManual, [pathManual]),
+    returnValue: _i11.Future<_i12.Uint8List>.value(_i12.Uint8List(0)),
+  ) as _i11.Future<_i12.Uint8List>);
 
   @override
-  _i11.Future<({int id, String? raUsername})?> getRetroAchievementsLink() => (super.noSuchMethod(
-    Invocation.method(#getRetroAchievementsLink, []),
-    returnValue: _i11.Future<({int id, String? raUsername})?>.value(),
-  ) as _i11.Future<({int id, String? raUsername})?>);
+  _i11.Future<int> countGamesWithStatuses(List<String>? statuses) => (super.noSuchMethod(
+    Invocation.method(#countGamesWithStatuses, [statuses]),
+    returnValue: _i11.Future<int>.value(0),
+  ) as _i11.Future<int>);
 
   @override
-  _i11.Future<void> setRetroAchievementsUsername(int? userId, String? raUsername) => (super.noSuchMethod(
-    Invocation.method(#setRetroAchievementsUsername, [userId, raUsername]),
-    returnValue: _i11.Future<void>.value(),
-    returnValueForMissingStub: _i11.Future<void>.value(),
-  ) as _i11.Future<void>);
-
-  @override
-  _i11.Future<bool> refreshRetroAchievements(int? userId) => (super.noSuchMethod(
-    Invocation.method(#refreshRetroAchievements, [userId]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
+  _i11.Future<List<String>> getLibraryAgeRatings() => (super.noSuchMethod(
+    Invocation.method(#getLibraryAgeRatings, []),
+    returnValue: _i11.Future<List<String>>.value(<String>[]),
+  ) as _i11.Future<List<String>>);
 
   @override
   _i11.Future<List<_i3.Platform>> getPlatforms() => (super.noSuchMethod(
@@ -266,28 +259,116 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
           as _i11.Future<_i3.Game?>);
 
   @override
-  _i11.Future<List<_i3.SaveFile>> getSaves(String? gameId) => (super.noSuchMethod(
-    Invocation.method(#getSaves, [gameId]),
-    returnValue: _i11.Future<List<_i3.SaveFile>>.value(<_i3.SaveFile>[]),
-  ) as _i11.Future<List<_i3.SaveFile>>);
-
-  @override
   String getDownloadUrl(_i3.Game? game) => (super.noSuchMethod(
     Invocation.method(#getDownloadUrl, [game]),
     returnValue: _i10.dummyValue<String>(this, Invocation.method(#getDownloadUrl, [game])),
   ) as String);
 
   @override
+  _i11.Future<_i9.RomDeleteResult> deleteGame(int? romId, {required bool? fromServerDisk}) => (super.noSuchMethod(
+    Invocation.method(#deleteGame, [romId], {#fromServerDisk: fromServerDisk}),
+    returnValue: _i11.Future<_i9.RomDeleteResult>.value(_i9.RomDeleteResult.deleted),
+  ) as _i11.Future<_i9.RomDeleteResult>);
+
+  @override
+  _i11.Future<bool> updateRomProps(
+    String? romId, {
+    bool? backlogged,
+    bool? nowPlaying,
+    int? rating,
+    String? status,
+    int? completion,
+  }) => (super.noSuchMethod(
+    Invocation.method(
+      #updateRomProps,
+      [romId],
+      {#backlogged: backlogged, #nowPlaying: nowPlaying, #rating: rating, #status: status, #completion: completion},
+    ),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<List<_i3.RomNote>> getRomNotes(String? romId) => (super.noSuchMethod(
+    Invocation.method(#getRomNotes, [romId]),
+    returnValue: _i11.Future<List<_i3.RomNote>>.value(<_i3.RomNote>[]),
+  ) as _i11.Future<List<_i3.RomNote>>);
+
+  @override
+  _i11.Future<bool> createRomNote(String? romId, String? title, String? content) => (super.noSuchMethod(
+    Invocation.method(#createRomNote, [romId, title, content]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<bool> deleteRomNote(String? romId, int? noteId) => (super.noSuchMethod(
+    Invocation.method(#deleteRomNote, [romId, noteId]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<Map<int, Map<String, dynamic>>> getRetroAchievementsProgression() => (super.noSuchMethod(
+    Invocation.method(#getRetroAchievementsProgression, []),
+    returnValue: _i11.Future<Map<int, Map<String, dynamic>>>.value(<int, Map<String, dynamic>>{}),
+  ) as _i11.Future<Map<int, Map<String, dynamic>>>);
+
+  @override
+  _i11.Future<Map<int, Map<String, dynamic>>?> getRetroAchievementsProgressionOrNull() => (super.noSuchMethod(
+    Invocation.method(#getRetroAchievementsProgressionOrNull, []),
+    returnValue: _i11.Future<Map<int, Map<String, dynamic>>?>.value(),
+  ) as _i11.Future<Map<int, Map<String, dynamic>>?>);
+
+  @override
+  _i11.Future<({int id, String? raUsername})?> getRetroAchievementsLink() => (super.noSuchMethod(
+    Invocation.method(#getRetroAchievementsLink, []),
+    returnValue: _i11.Future<({int id, String? raUsername})?>.value(),
+  ) as _i11.Future<({int id, String? raUsername})?>);
+
+  @override
+  _i11.Future<void> setRetroAchievementsUsername(int? userId, String? raUsername) => (super.noSuchMethod(
+    Invocation.method(#setRetroAchievementsUsername, [userId, raUsername]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
+
+  @override
+  _i11.Future<bool> refreshRetroAchievements(int? userId) => (super.noSuchMethod(
+    Invocation.method(#refreshRetroAchievements, [userId]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<bool> refreshNewRetroAchievements(int? userId) => (super.noSuchMethod(
+    Invocation.method(#refreshNewRetroAchievements, [userId]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<_i12.Uint8List?> userAvatar(int? userId) =>
+      (super.noSuchMethod(Invocation.method(#userAvatar, [userId]), returnValue: _i11.Future<_i12.Uint8List?>.value())
+          as _i11.Future<_i12.Uint8List?>);
+
+  @override
+  _i11.Future<bool> canDeleteGames() =>
+      (super.noSuchMethod(Invocation.method(#canDeleteGames, []), returnValue: _i11.Future<bool>.value(false))
+          as _i11.Future<bool>);
+
+  @override
+  _i11.Future<List<_i3.SaveFile>> getSaves(String? gameId) => (super.noSuchMethod(
+    Invocation.method(#getSaves, [gameId]),
+    returnValue: _i11.Future<List<_i3.SaveFile>>.value(<_i3.SaveFile>[]),
+  ) as _i11.Future<List<_i3.SaveFile>>);
+
+  @override
   _i11.Future<({Map<String, dynamic>? conflict, bool ok, Map<String, dynamic>? saved})> uploadSave(
     String? gameId,
-    _i12.File? saveFile, {
+    _i13.File? saveFile, {
     String? emulator,
     String? slot,
     String? deviceId,
     bool? autocleanup = false,
     int? autocleanupLimit = 5,
     bool? overwrite = false,
-    _i12.File? screenshotFile,
+    _i13.File? screenshotFile,
     String? overrideFilename,
   }) => (super.noSuchMethod(
     Invocation.method(
@@ -318,11 +399,6 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<bool>);
 
   @override
-  _i11.Future<bool> deleteStates(List<int>? stateIds) =>
-      (super.noSuchMethod(Invocation.method(#deleteStates, [stateIds]), returnValue: _i11.Future<bool>.value(false))
-          as _i11.Future<bool>);
-
-  @override
   _i11.Future<bool> deleteSaves(List<int>? saveIds) =>
       (super.noSuchMethod(Invocation.method(#deleteSaves, [saveIds]), returnValue: _i11.Future<bool>.value(false))
           as _i11.Future<bool>);
@@ -333,43 +409,6 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     returnValue: _i11.Future<void>.value(),
     returnValueForMissingStub: _i11.Future<void>.value(),
   ) as _i11.Future<void>);
-
-  @override
-  _i11.Future<List<Map<String, dynamic>>?> getSharedSavesOrNull(String? gameId, {required int? exceptUserId}) =>
-      (super.noSuchMethod(
-        Invocation.method(#getSharedSavesOrNull, [gameId], {#exceptUserId: exceptUserId}),
-        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
-      ) as _i11.Future<List<Map<String, dynamic>>?>);
-
-  @override
-  _i11.Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String? gameId, {required int? exceptUserId}) =>
-      (super.noSuchMethod(
-        Invocation.method(#getSharedStatesOrNull, [gameId], {#exceptUserId: exceptUserId}),
-        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
-      ) as _i11.Future<List<Map<String, dynamic>>?>);
-
-  @override
-  _i11.Future<bool> canDeleteGames() =>
-      (super.noSuchMethod(Invocation.method(#canDeleteGames, []), returnValue: _i11.Future<bool>.value(false))
-          as _i11.Future<bool>);
-
-  @override
-  _i11.Future<_i9.RomDeleteResult> deleteGame(int? romId, {required bool? fromServerDisk}) => (super.noSuchMethod(
-    Invocation.method(#deleteGame, [romId], {#fromServerDisk: fromServerDisk}),
-    returnValue: _i11.Future<_i9.RomDeleteResult>.value(_i9.RomDeleteResult.deleted),
-  ) as _i11.Future<_i9.RomDeleteResult>);
-
-  @override
-  _i11.Future<bool> setSaveShared(int? saveId, bool? shared) => (super.noSuchMethod(
-    Invocation.method(#setSaveShared, [saveId, shared]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
-
-  @override
-  _i11.Future<bool> setStateShared(int? stateId, bool? shared) => (super.noSuchMethod(
-    Invocation.method(#setStateShared, [stateId, shared]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
 
   @override
   _i11.Future<List<Map<String, dynamic>>> getSavesList(String? gameId, {String? deviceId, String? slot}) =>
@@ -392,10 +431,15 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<Map<String, dynamic>?>);
 
   @override
-  _i11.Future<_i13.Uint8List?> downloadSave(String? saveUrl, {String? deviceId}) => (super.noSuchMethod(
+  _i11.Future<_i12.Uint8List?> downloadSave(String? saveUrl, {String? deviceId}) => (super.noSuchMethod(
     Invocation.method(#downloadSave, [saveUrl], {#deviceId: deviceId}),
-    returnValue: _i11.Future<_i13.Uint8List?>.value(),
-  ) as _i11.Future<_i13.Uint8List?>);
+    returnValue: _i11.Future<_i12.Uint8List?>.value(),
+  ) as _i11.Future<_i12.Uint8List?>);
+
+  @override
+  _i11.Future<bool> deleteStates(List<int>? stateIds) =>
+      (super.noSuchMethod(Invocation.method(#deleteStates, [stateIds]), returnValue: _i11.Future<bool>.value(false))
+          as _i11.Future<bool>);
 
   @override
   _i11.Future<List<_i5.RommState>> listStates(String? romId) => (super.noSuchMethod(
@@ -406,10 +450,10 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   @override
   _i11.Future<_i5.RommState> uploadState(
     String? romId,
-    _i12.File? file, {
+    _i13.File? file, {
     required String? fileName,
     String? emulator,
-    _i13.Uint8List? screenshot,
+    _i12.Uint8List? screenshot,
   }) => (super.noSuchMethod(
     Invocation.method(#uploadState, [romId, file], {#fileName: fileName, #emulator: emulator, #screenshot: screenshot}),
     returnValue: _i11.Future<_i5.RommState>.value(
@@ -427,9 +471,9 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   @override
   _i11.Future<_i5.RommState> updateState(
     int? stateId,
-    _i12.File? file, {
+    _i13.File? file, {
     required String? fileName,
-    _i13.Uint8List? screenshot,
+    _i12.Uint8List? screenshot,
   }) => (super.noSuchMethod(
     Invocation.method(#updateState, [stateId, file], {#fileName: fileName, #screenshot: screenshot}),
     returnValue: _i11.Future<_i5.RommState>.value(
@@ -449,16 +493,42 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<_i5.RommState>);
 
   @override
-  _i11.Future<_i13.Uint8List> downloadState(int? stateId) => (super.noSuchMethod(
+  _i11.Future<_i12.Uint8List> downloadState(int? stateId) => (super.noSuchMethod(
     Invocation.method(#downloadState, [stateId]),
-    returnValue: _i11.Future<_i13.Uint8List>.value(_i13.Uint8List(0)),
-  ) as _i11.Future<_i13.Uint8List>);
+    returnValue: _i11.Future<_i12.Uint8List>.value(_i12.Uint8List(0)),
+  ) as _i11.Future<_i12.Uint8List>);
 
   @override
-  _i11.Future<_i13.Uint8List> downloadStateScreenshot(String? url) => (super.noSuchMethod(
+  _i11.Future<_i12.Uint8List> downloadStateScreenshot(String? url) => (super.noSuchMethod(
     Invocation.method(#downloadStateScreenshot, [url]),
-    returnValue: _i11.Future<_i13.Uint8List>.value(_i13.Uint8List(0)),
-  ) as _i11.Future<_i13.Uint8List>);
+    returnValue: _i11.Future<_i12.Uint8List>.value(_i12.Uint8List(0)),
+  ) as _i11.Future<_i12.Uint8List>);
+
+  @override
+  _i11.Future<List<Map<String, dynamic>>?> getSharedSavesOrNull(String? gameId, {required int? exceptUserId}) =>
+      (super.noSuchMethod(
+        Invocation.method(#getSharedSavesOrNull, [gameId], {#exceptUserId: exceptUserId}),
+        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
+      ) as _i11.Future<List<Map<String, dynamic>>?>);
+
+  @override
+  _i11.Future<List<Map<String, dynamic>>?> getSharedStatesOrNull(String? gameId, {required int? exceptUserId}) =>
+      (super.noSuchMethod(
+        Invocation.method(#getSharedStatesOrNull, [gameId], {#exceptUserId: exceptUserId}),
+        returnValue: _i11.Future<List<Map<String, dynamic>>?>.value(),
+      ) as _i11.Future<List<Map<String, dynamic>>?>);
+
+  @override
+  _i11.Future<bool> setSaveShared(int? saveId, bool? shared) => (super.noSuchMethod(
+    Invocation.method(#setSaveShared, [saveId, shared]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<bool> setStateShared(int? stateId, bool? shared) => (super.noSuchMethod(
+    Invocation.method(#setStateShared, [stateId, shared]),
+    returnValue: _i11.Future<bool>.value(false),
+  ) as _i11.Future<bool>);
 
   @override
   _i11.Future<void> recordPlaySession({
@@ -504,46 +574,24 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as String);
 
   @override
-  _i11.Future<_i13.Uint8List?> downloadFirmware(_i3.Firmware? firmware, {void Function(int, int)? onProgress}) =>
+  _i11.Future<_i12.Uint8List?> downloadFirmware(_i3.Firmware? firmware, {void Function(int, int)? onProgress}) =>
       (super.noSuchMethod(
         Invocation.method(#downloadFirmware, [firmware], {#onProgress: onProgress}),
-        returnValue: _i11.Future<_i13.Uint8List?>.value(),
-      ) as _i11.Future<_i13.Uint8List?>);
+        returnValue: _i11.Future<_i12.Uint8List?>.value(),
+      ) as _i11.Future<_i12.Uint8List?>);
 
   @override
-  _i11.Future<bool> updateRomProps(
-    String? romId, {
-    bool? backlogged,
-    bool? nowPlaying,
-    int? rating,
-    String? status,
-    int? completion,
-  }) => (super.noSuchMethod(
-    Invocation.method(
-      #updateRomProps,
-      [romId],
-      {#backlogged: backlogged, #nowPlaying: nowPlaying, #rating: rating, #status: status, #completion: completion},
-    ),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
+  _i11.Future<void> uploadScreenshot(String? romId, String? path) => (super.noSuchMethod(
+    Invocation.method(#uploadScreenshot, [romId, path]),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 
   @override
-  _i11.Future<List<_i3.RomNote>> getRomNotes(String? romId) => (super.noSuchMethod(
-    Invocation.method(#getRomNotes, [romId]),
-    returnValue: _i11.Future<List<_i3.RomNote>>.value(<_i3.RomNote>[]),
-  ) as _i11.Future<List<_i3.RomNote>>);
-
-  @override
-  _i11.Future<bool> createRomNote(String? romId, String? title, String? content) => (super.noSuchMethod(
-    Invocation.method(#createRomNote, [romId, title, content]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
-
-  @override
-  _i11.Future<bool> deleteRomNote(String? romId, int? noteId) => (super.noSuchMethod(
-    Invocation.method(#deleteRomNote, [romId, noteId]),
-    returnValue: _i11.Future<bool>.value(false),
-  ) as _i11.Future<bool>);
+  _i11.Future<_i12.Uint8List> screenshotBytes(String? downloadPath) => (super.noSuchMethod(
+    Invocation.method(#screenshotBytes, [downloadPath]),
+    returnValue: _i11.Future<_i12.Uint8List>.value(_i12.Uint8List(0)),
+  ) as _i11.Future<_i12.Uint8List>);
 }
 
 /// A class which mocks [DirectoryService].
@@ -850,7 +898,7 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
   ) as _i11.Future<void>);
 
   @override
-  _i11.Future<_i12.Process?> launchGameWithHandle(
+  _i11.Future<_i13.Process?> launchGameWithHandle(
     _i3.Game? game,
     String? romPath,
     String? emulatorId,
@@ -858,8 +906,8 @@ class MockDirectoryService extends _i1.Mock implements _i14.DirectoryService {
     List<String>? args = const [],
   }) => (super.noSuchMethod(
     Invocation.method(#launchGameWithHandle, [game, romPath, emulatorId, exePath], {#args: args}),
-    returnValue: _i11.Future<_i12.Process?>.value(),
-  ) as _i11.Future<_i12.Process?>);
+    returnValue: _i11.Future<_i13.Process?>.value(),
+  ) as _i11.Future<_i13.Process?>);
 
   @override
   _i11.Future<void> launchStandalone(String? emulatorId, String? exePath, {List<String>? args = const []}) =>

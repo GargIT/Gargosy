@@ -240,17 +240,18 @@ List<String> _hidPaths() {
   final need = calloc<Uint32>();
   try {
     _getHidGuid(guid);
-    final set = SetupDiGetClassDevs(guid, nullptr, 0, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-    if (set == INVALID_HANDLE_VALUE) return paths;
+    final set = SetupDiGetClassDevs(guid, null, null, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE).value;
+    // INVALID_HANDLE_VALUE, as a number.
+    if (set == -1) return paths;
     try {
-      for (var i = 0; SetupDiEnumDeviceInterfaces(set, nullptr, guid, i, data) != 0; i++) {
-        SetupDiGetDeviceInterfaceDetail(set, data, nullptr, 0, need, nullptr);
+      for (var i = 0; SetupDiEnumDeviceInterfaces(set, null, guid, i, data).value; i++) {
+        SetupDiGetDeviceInterfaceDetail(set, data, null, 0, need, null);
         if (need.value < 8) continue;
         final detail = calloc<Uint8>(need.value);
         try {
           // SP_DEVICE_INTERFACE_DETAIL_DATA's cbSize on x64; the path follows it.
           detail.cast<Uint32>().value = 8;
-          if (SetupDiGetDeviceInterfaceDetail(set, data, detail.cast(), need.value, nullptr, nullptr) != 0) {
+          if (SetupDiGetDeviceInterfaceDetail(set, data, detail.cast(), need.value, null, null).value) {
             paths.add(Pointer<Utf16>.fromAddress(detail.address + 4).toDartString());
           }
         } finally {
@@ -277,7 +278,7 @@ class _HidPad implements HidDevice {
       _usages = calloc<Uint16>(_maxUsages),
       _count = calloc<Uint32>();
 
-  final int _handle;
+  final HANDLE _handle;
   final int _preparsed;
   final int _length;
   @override
@@ -302,24 +303,26 @@ class _HidPad implements HidDevice {
     if (_isXInput(path)) return null;
     final name = path.toNativeUtf16();
     final handle = CreateFile(
-      name,
+      PCWSTR(name),
       GENERIC_READ,
       FILE_SHARE_READ | FILE_SHARE_WRITE,
-      nullptr,
+      null,
       OPEN_EXISTING,
       FILE_FLAG_OVERLAPPED,
-      0,
-    );
+      null,
+    ).value;
     calloc.free(name);
     // Keyboards and mice Windows keeps to itself.
-    if (handle == INVALID_HANDLE_VALUE) return null;
+    if (handle.address == INVALID_HANDLE_VALUE.address) return null;
+    // hid.dll's functions below take the handle as a number.
+    final h = handle.address;
     final attributes = calloc<Uint8>(12);
     final preparsed = calloc<IntPtr>();
     final caps = calloc<Uint16>(32);
     final product = calloc<Uint16>(128);
     try {
       attributes.cast<Uint32>().value = 12;
-      if (_getPreparsed(handle, preparsed) == 0) {
+      if (_getPreparsed(h, preparsed) == 0) {
         CloseHandle(handle);
         return null;
       }
@@ -328,7 +331,7 @@ class _HidPad implements HidDevice {
           : (0, 0, 0);
       // Generic desktop: a joystick or a gamepad.
       final isPad = page == 0x01 && (usage == 0x04 || usage == 0x05) && length > 0;
-      final ids = _getAttributes(handle, attributes) != 0
+      final ids = _getAttributes(h, attributes) != 0
           ? (attributes.cast<Uint16>()[2], attributes.cast<Uint16>()[3])
           : null;
       if (!isPad || ids == null) {
@@ -336,7 +339,7 @@ class _HidPad implements HidDevice {
         CloseHandle(handle);
         return null;
       }
-      final label = _getProduct(handle, product, 256) != 0 ? product.cast<Utf16>().toDartString() : '';
+      final label = _getProduct(h, product, 256) != 0 ? product.cast<Utf16>().toDartString() : '';
       return _HidPad._(handle, preparsed.value, length, ids.$1, ids.$2, label.isEmpty ? 'controller' : label);
     } finally {
       calloc.free(attributes);
@@ -367,8 +370,8 @@ class _HidPad implements HidDevice {
       _overlapped.ref
         ..Internal = _notStarted
         ..InternalHigh = 0
-        ..hEvent = 0;
-      if (ReadFile(_handle, _report, _length, nullptr, _overlapped) != 0) {
+        ..hEvent = HANDLE(nullptr);
+      if (ReadFile(_handle, _report, _length, null, _overlapped).value) {
         _parse();
         continue;
       }
@@ -408,7 +411,7 @@ class _HidPad implements HidDevice {
   void close() {
     if (_pending) {
       CancelIoEx(_handle, _overlapped);
-      GetOverlappedResult(_handle, _overlapped, _read, TRUE);
+      GetOverlappedResult(_handle, _overlapped, _read, true);
     }
     _freePreparsed(_preparsed);
     CloseHandle(_handle);

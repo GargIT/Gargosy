@@ -70,8 +70,8 @@ class WindowsDiskInfo implements DiskInfo {
     return using((arena) {
       final free = arena<Uint64>();
       final total = arena<Uint64>();
-      final ok = GetDiskFreeSpaceEx(dir.toNativeUtf16(allocator: arena), free, total, nullptr);
-      return ok == 0 ? null : (free: free.value, total: total.value);
+      final ok = GetDiskFreeSpaceEx(PCWSTR(dir.toNativeUtf16(allocator: arena)), free, total, null);
+      return ok.value ? (free: free.value, total: total.value) : null;
     });
   }
 
