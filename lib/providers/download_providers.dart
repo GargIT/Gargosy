@@ -8,16 +8,21 @@ import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../library/disk_space.dart';
 import '../library/download_check.dart';
+import '../library/download_schedule.dart';
 import '../library/download_service.dart';
 import '../library/dsi_title.dart';
 import '../library/library_snapshot.dart';
 import '../library/rom_files.dart';
+import '../library/throttled_download.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
 import '../l10n/tr.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
+
+/// The time the download window is checked against (#228); tests set it.
+final downloadClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 /// The volumes and their free space (#142, #201); tests give their own.
 final diskInfoProvider = Provider<DiskInfo>((ref) => diskInfoFor(PlatformInfo.current));
@@ -46,7 +51,8 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
   if (romm == null) return null;
   final root = ref.watch(appRootProvider);
   return DownloadService(
-    dio: romm.dio,
+    // Paced to Settings' speed limit (#228), read for each chunk.
+    dio: throttledDio(romm.dio, () => DownloadLimits.speedOf(ref.read(appPreferencesProvider))),
     auth: () => romm.authOptions,
     files: ref.watch(romFilesProvider),
     guard: PathGuard(root), // roms\ and userdata\app\ are shared, not per profile
@@ -167,9 +173,46 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     return _queue.fold(running.clamp(0, 1 << 62), (n, g) => n + g.fileSize);
   }
 
+  /// When the queue starts again, while Only download keeps it waiting
+  /// (#228); null when it isn't waiting.
+  DateTime? get waitsUntil => _waitsUntil;
+  DateTime? _waitsUntil;
+  Timer? _wake;
+
+  /// Games the player said to download now, outside the window.
+  final _now = <String>{};
+
+  /// Download now (#228): [gameId] first, and started even outside the
+  /// window.
+  void startNow(String gameId) {
+    _now.add(gameId);
+    moveToFront(gameId);
+    _next();
+  }
+
+  /// The window or speed changed in Settings: the queue looks again.
+  void limitsChanged() => _next();
+
   void _next() {
     if (_current != null || _queue.isEmpty || !mounted) return;
+    final window = DownloadLimits.of(_ref.read(appPreferencesProvider)).window;
+    final now = _ref.read(downloadClockProvider)();
+    if (window != null && !window.allows(now) && !_now.contains(_queue.first.id)) {
+      final at = window.opensAt(now);
+      _wake?.cancel();
+      // Looked at again every minute, not once at the opening: a PC asleep
+      // in between, or a changed clock, would miss it.
+      final left = at.difference(now);
+      _wake = Timer(left < const Duration(minutes: 1) ? left : const Duration(minutes: 1), _next);
+      _waitsUntil = at;
+      state = Map.of(state); // listeners read waitsUntil
+      return;
+    }
+    _wake?.cancel();
+    _wake = null;
+    _waitsUntil = null;
     final game = _current = _queue.removeAt(0);
+    _now.remove(game.id);
     _run(game).whenComplete(() {
       _current = null;
       _waiting.remove(game.id)?.complete();
@@ -214,14 +257,24 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
 
   /// Stops [gameId]'s download, or takes it out of the queue.
   void cancel(String gameId) {
+    _now.remove(gameId);
     final i = _queue.indexWhere((g) => g.id == gameId);
     if (i >= 0) {
       _queue.removeAt(i);
       _waiting.remove(gameId)?.complete();
+      _stopWaitingWhenEmpty();
       _set(gameId, null);
       return;
     }
     _cancels[gameId]?.cancel();
+  }
+
+  /// Nothing queued: no wait for the window, nothing to say until when.
+  void _stopWaitingWhenEmpty() {
+    if (_queue.isNotEmpty) return;
+    _wake?.cancel();
+    _wake = null;
+    _waitsUntil = null;
   }
 
   /// Puts a waiting [gameId] first in the queue.
@@ -240,8 +293,16 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
       _waiting.remove(g.id)?.complete();
       next.remove(g.id);
     }
+    _now.removeAll([for (final g in _queue) g.id]);
     _queue.clear();
+    _stopWaitingWhenEmpty();
     state = next;
+  }
+
+  @override
+  void dispose() {
+    _wake?.cancel();
+    super.dispose();
   }
 
   /// The queue emptied and the running download stopped (a profile switch).
@@ -250,6 +311,8 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
       _waiting.remove(g.id)?.complete();
     }
     _queue.clear();
+    _now.clear();
+    _stopWaitingWhenEmpty();
     for (final c in _cancels.values) {
       c.cancel();
     }

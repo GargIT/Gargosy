@@ -264,11 +264,12 @@ void main() {
     expect(find.byKey(const ValueKey('storage-platform-psx')), findsOneWidget);
     expect(find.text('2.0 KB · 1 game'), findsOneWidget);
     expect(find.text('PlayStation'), findsWidgets, reason: "the platform's name, not its folder");
-    await tester.scrollUntilVisible(find.text('Change'), 200, scrollable: find.byType(Scrollable).last);
+    // The image cache's Change is the last on the page (Downloads has two).
+    await tester.scrollUntilVisible(find.text('Clear the cache'), 200, scrollable: find.byType(Scrollable).last);
     expect(find.text('10 000 images (about 1.1 GB)'), findsOneWidget);
-    await tester.ensureVisible(find.text('Change'));
+    await tester.ensureVisible(find.text('Change').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Change'));
+    await tester.tap(find.text('Change').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('25 000 images (about 2.9 GB)'));
     await tester.pumpAndSettle();

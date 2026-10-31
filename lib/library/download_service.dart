@@ -136,15 +136,17 @@ class DownloadService {
       );
     }
     try {
+      void progress(int received, int total) => onProgress?.call(
+        DownloadProgress(DownloadPhase.downloading, received: received, total: total > 0 ? total : game.fileSize),
+      );
+      // Paced by the Dio's adapter when a speed limit is set (#228).
       await dio.download(
         urlFor(game),
         part,
         options: auth(),
         cancelToken: cancel,
         deleteOnError: true,
-        onReceiveProgress: (received, total) => onProgress?.call(
-          DownloadProgress(DownloadPhase.downloading, received: received, total: total > 0 ? total : game.fileSize),
-        ),
+        onReceiveProgress: progress,
       );
       // One file: checked before anything moves (#225).
       // A ROM that is an archive RomM hashed by what's inside: not checked.

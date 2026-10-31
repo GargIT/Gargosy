@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- A download speed limit and a time to download in: Settings → Storage →
+  Downloads → Speed limit (2–50 MB/s) and Only download (for example
+  22:00–07:00). Outside it the queue waits and says until when; A on a
+  waiting game downloads it now.
 - Make room: when a download doesn't fit, Gargosy offers to delete games
   from this PC you haven't played for longest (they stay on RomM), the
   ones that free enough ticked, never one whose saves haven't reached

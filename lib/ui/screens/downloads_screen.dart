@@ -164,7 +164,13 @@ class DownloadsScreen extends ConsumerWidget {
                         for (final g in queue)
                           row(
                             g,
-                            g.fileSize > 0 ? tr('Queued · {0}', [formatBytes(g.fileSize)]) : tr('Queued'),
+                            // Outside Only download's window (#228): when it goes on; A starts it now.
+                            [
+                              g.fileSize > 0 ? tr('Queued · {0}', [formatBytes(g.fileSize)]) : tr('Queued'),
+                              if (downloads.waitsUntil case final at?)
+                                tr('waits until {0} · A downloads it now', [formatTime(at)]),
+                            ].join(' · '),
+                            onA: downloads.waitsUntil == null ? null : () => downloads.startNow(g.id),
                             onX: () => downloads.cancel(g.id),
                             onY: () => downloads.moveToFront(g.id),
                           ),

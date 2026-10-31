@@ -13,6 +13,12 @@ String formatBytes(int bytes) {
   return '${value >= 10 || unit == 0 ? value.toStringAsFixed(0) : decimal(value, 1)} ${units[unit]}';
 }
 
+/// 14:05 (local time).
+String formatTime(DateTime d) {
+  final l = d.toLocal();
+  return '${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
+}
+
 /// 2026-10-09 14:05 (local time).
 String formatDate(DateTime d) {
   final l = d.toLocal();
