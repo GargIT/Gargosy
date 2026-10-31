@@ -15,7 +15,7 @@ void usePortableTemp(String dir) {
     final n = name.toNativeUtf16();
     final v = dir.toNativeUtf16();
     try {
-      SetEnvironmentVariable(n, v);
+      SetEnvironmentVariable(PCWSTR(n), PCWSTR(v));
     } finally {
       calloc.free(n);
       calloc.free(v);

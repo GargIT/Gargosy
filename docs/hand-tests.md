@@ -401,3 +401,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 148. [ ] Start → Stats (under PROFILE): the tiles show this week, this month, all time, the longest session and days in a row; Games finished matches RomM's games marked Finished or Completed 100%; achievements this month matches RomM's RetroAchievements page. With a controller alone the D-pad walks Most played and A opens a game's page; B goes back.
 149. [ ] A game played on another PC with the same RomM user counts here (its time and platform). With RomM stopped, Stats says it's this PC's play only and the RomM tiles show a dash.
+
+## Major package upgrades (#261)
+
+150. [ ] The dev build after win32 6 and the other majors: sign in to a profile with a PIN and restart Gargosy (its login is read back: DPAPI); covers and platform logos show (cached_network_image); Settings → Emulators → Import opens the folder picker (file_picker); About shows the version (package_info_plus); in a game, a non-XInput controller (a DualShock 4 or Switch Pro over USB) closes it with the quit buttons (the HID reading); Settings → Storage shows the drive's free space.

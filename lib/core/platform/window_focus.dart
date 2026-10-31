@@ -50,7 +50,7 @@ class WindowsWindowFocus implements WindowFocus {
       for (var i = 0; i < 2; i++) {
         inputs[i].type = INPUT_KEYBOARD;
         inputs[i].ki.wVk = VK_MENU;
-        inputs[i].ki.dwFlags = i == 0 ? 0 : KEYEVENTF_KEYUP;
+        inputs[i].ki.dwFlags = i == 0 ? const KEYBD_EVENT_FLAGS(0) : KEYEVENTF_KEYUP;
       }
       SendInput(2, inputs, sizeOf<INPUT>());
     } finally {

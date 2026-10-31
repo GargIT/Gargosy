@@ -29,29 +29,28 @@ class DpapiSecretStore implements SecretStore {
         ..ref.cbData = data.length
         ..ref.pbData = input;
       final outBlob = arena<CRYPT_INTEGER_BLOB>();
-      final ok = protect
-          ? CryptProtectData(inBlob, nullptr, nullptr, nullptr, nullptr, _cryptProtectUiForbidden, outBlob)
-          : CryptUnprotectData(inBlob, nullptr, nullptr, nullptr, nullptr, _cryptProtectUiForbidden, outBlob);
-      if (ok == 0) {
-        if (protect) throw WindowsException(GetLastError(), message: 'CryptProtectData failed');
+      final result = protect
+          ? CryptProtectData(inBlob, null, null, null, _cryptProtectUiForbidden, outBlob)
+          : CryptUnprotectData(inBlob, null, null, null, _cryptProtectUiForbidden, outBlob);
+      if (!result.value) {
+        if (protect) throw WindowsException(result.error.toHRESULT(), message: 'CryptProtectData failed');
         return null;
       }
       final out = outBlob.ref.pbData;
       if (out.address == 0) {
-        if (protect) throw WindowsException(ERROR_OUTOFMEMORY, message: 'CryptProtectData returned no data');
+        if (protect) {
+          throw WindowsException(ERROR_OUTOFMEMORY.toHRESULT(), message: 'CryptProtectData returned no data');
+        }
         return null;
       }
       try {
         return Uint8List.fromList(out.asTypedList(outBlob.ref.cbData));
       } finally {
-        LocalFree(out);
+        LocalFree(HLOCAL(out));
       }
     });
   }
 }
-
-const _rrfRtRegSz = 0x00000002;
-const _rrfSubkeyWow6464Key = 0x00010000;
 
 /// Windows' per-install machine id, or null if it can't be read.
 String? readMachineGuid() {
@@ -62,10 +61,10 @@ String? readMachineGuid() {
     final buffer = arena<Uint8>(256);
     final result = RegGetValue(
       HKEY_LOCAL_MACHINE,
-      subKey,
-      value,
-      _rrfRtRegSz | _rrfSubkeyWow6464Key,
-      nullptr,
+      PCWSTR(subKey),
+      PCWSTR(value),
+      RRF_RT_REG_SZ | RRF_SUBKEY_WOW6464KEY,
+      null,
       buffer,
       size,
     );
