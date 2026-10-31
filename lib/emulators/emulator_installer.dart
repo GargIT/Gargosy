@@ -69,9 +69,10 @@ final emulatorInstallerProvider = Provider<EmulatorInstaller?>((ref) {
   final dirs = ref.watch(launchDirectoriesProvider);
   final registry = ref.watch(strategyRegistryProvider);
   final library = ref.watch(emulatorLibraryProvider);
+  final unpacker = ref.watch(unpackerProvider);
   if (dirs == null || registry == null || library == null) return null;
   return GargosyEmulatorInstaller(
-    EmulatorDownloadService(Dio(), dirs, ExtractionService(dirs, unpacker: () => ref.read(unpackerProvider)), registry),
+    EmulatorDownloadService(Dio(), dirs, ExtractionService(dirs, unpacker: () => unpacker), registry),
     library,
   );
 });

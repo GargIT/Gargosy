@@ -98,10 +98,11 @@ class UploadQueue {
 
 /// The active profile's queue; null without a profile.
 final uploadQueueProvider = FutureProvider<UploadQueue?>((ref) async {
-  final repo = await ref.watch(backupRepositoryProvider.future);
+  // Every dependency watched before the first wait (Riverpod 3).
   final sync = ref.watch(saveSyncServiceProvider);
   final romm = ref.watch(rommServiceProvider);
   final engine = ref.watch(playEngineProvider);
+  final repo = await ref.watch(backupRepositoryProvider.future);
   if (repo == null || sync == null || romm == null || engine == null) return null;
   return UploadQueue(
     isOffline: () => romm.isOffline.value,

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/retroachievements/retroachievements_game_models.dart';
 import '../core/romm/romm_models.dart';
+import '../core/romm/romm_service.dart';
 import '../providers/library_providers.dart';
 import '../providers/romm_providers.dart';
 import '../retroachievements/ra_account.dart';
@@ -117,23 +118,23 @@ class SessionAchievementsWatch {
   }
 }
 
+/// Held for a whole session: it keeps the RomM client it was made with,
+/// never a provider's ref (Riverpod 3's is dead once it builds again).
 class _RommAchievementProgress implements AchievementProgress {
-  _RommAchievementProgress(this._ref);
-  final Ref _ref;
+  _RommAchievementProgress(this._romm);
+  final RommService _romm;
 
   @override
-  Future<Map<int, Map<String, dynamic>>?> progression() async =>
-      _ref.read(rommServiceProvider)?.getRetroAchievementsProgressionOrNull();
+  Future<Map<int, Map<String, dynamic>>?> progression() => _romm.getRetroAchievementsProgressionOrNull();
 
   @override
-  Future<bool> refresh(int userId) async =>
-      await _ref.read(rommServiceProvider)?.refreshNewRetroAchievements(userId) ?? false;
+  Future<bool> refresh(int userId) => _romm.refreshNewRetroAchievements(userId);
 }
 
 /// RomM's progress for sessions; null offline.
 final achievementProgressProvider = Provider<AchievementProgress?>((ref) {
-  if (ref.watch(rommServiceProvider) == null) return null;
-  return _RommAchievementProgress(ref);
+  final romm = ref.watch(rommServiceProvider);
+  return romm == null ? null : _RommAchievementProgress(romm);
 });
 
 /// The last session's achievements (#189), for the game page to say; the

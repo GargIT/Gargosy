@@ -117,30 +117,34 @@ final favouriteIdsProvider = Provider<Set<String>>((ref) {
 final recentlyPlayedProvider = FutureProvider<List<Game>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   if (api == null) return const [];
+  // Every dependency watched before the first wait (Riverpod 3).
+  final limit = ref.watch(ageLimitProvider);
   final page = await api.page(
     const GalleryQuery(lastPlayedOnly: true, sort: GallerySort.lastPlayed, descending: true),
     limit: 20,
   );
   // Unrated games with Hide unrated (#224): RomM's filter leaves out only
   // the rated ones above the limit.
-  return ref.watch(ageLimitProvider).only(page.games);
+  return limit.only(page.games);
 });
 
 final recentlyAddedProvider = FutureProvider<List<Game>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   if (api == null) return const [];
+  final limit = ref.watch(ageLimitProvider);
   final page = await api.page(const GalleryQuery(sort: GallerySort.recentlyAdded, descending: true), limit: 20);
-  return ref.watch(ageLimitProvider).only(page.games);
+  return limit.only(page.games);
 });
 
 final favouriteGamesProvider = FutureProvider<List<Game>>((ref) async {
   final api = ref.watch(libraryApiProvider);
   if (api == null) return const [];
+  final limit = ref.watch(ageLimitProvider);
   final page = await api.page(
     const GalleryQuery(favourites: true, sort: GallerySort.lastPlayed, descending: true),
     limit: 20,
   );
-  return ref.watch(ageLimitProvider).only(page.games);
+  return limit.only(page.games);
 });
 
 final randomGameProvider = FutureProvider<Game?>((ref) async => ref.watch(libraryApiProvider)?.randomGame());
@@ -176,14 +180,16 @@ final homeLayoutProvider = StateNotifierProvider<HomeLayoutNotifier, HomeLayout>
 
 final gameProvider = FutureProvider.family<Game?, String>((ref, id) async {
   final snap = ref.watch(librarySnapshotProvider);
+  final romm = ref.watch(rommServiceProvider);
+  final files = ref.read(romFilesProvider);
   Game? game;
   try {
-    game = await ref.watch(rommServiceProvider)?.getGame(id);
+    game = await romm?.getGame(id);
   } on Object {
     game = null;
   }
   if (game == null) return snap?.find(id); // RomM unreachable: as it was when downloaded
-  if (snap != null && ref.read(romFilesProvider).isDownloaded(game)) await snap.remember(game);
+  if (snap != null && files.isDownloaded(game)) await snap.remember(game);
   return game;
 });
 
@@ -295,7 +301,9 @@ final platformCoversProvider = FutureProvider.family<List<Game>, PlatformCoversK
   if (api == null) return const [];
   var failed = false;
   ref.listen<bool>(rommOfflineProvider, (was, now) {
-    if (failed && was == true && !now) ref.invalidateSelf();
+    // A build replaced meanwhile keeps its listener until the new one is
+    // done: only a live ref asks again (Riverpod 3).
+    if (failed && was == true && !now && ref.mounted) ref.invalidateSelf();
   });
   try {
     return await coversFor(api, key.platform, key.choice, _coversRandom);
