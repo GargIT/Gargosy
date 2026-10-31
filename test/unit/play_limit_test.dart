@@ -79,6 +79,17 @@ void main() {
       );
       // Used up with a window: back when tomorrow's window opens.
       expect((allowanceFor(both, const Duration(minutes: 30), now) as PlayRefused).backAt, DateTime(2026, 11, 1, 15));
+      // Less than a minute left is used up: a start that would last seconds is never logged.
+      expect(allowanceFor(both, const Duration(minutes: 29, seconds: 30), now), isA<PlayRefused>());
+    });
+
+    test('a window over midnight: its minutes count from when it opened, not from 00:00', () {
+      const limit = PlayLimit(minutesPerDay: 60, window: DownloadWindow(20 * 60, 2 * 60));
+      expect(playDayStart(limit, DateTime(2026, 10, 31, 23)), DateTime(2026, 10, 31, 20));
+      expect(playDayStart(limit, DateTime(2026, 11, 1, 1)), DateTime(2026, 10, 31, 20));
+      expect(playDayStart(const PlayLimit(minutesPerDay: 60), DateTime(2026, 11, 1, 1)), DateTime(2026, 11, 1));
+      final used = allowanceFor(limit, const Duration(hours: 1), DateTime(2026, 11, 1, 0, 30)) as PlayRefused;
+      expect(used.backAt, DateTime(2026, 11, 1, 20), reason: "back when tonight's window opens");
     });
 
     test('a session over midnight counts only its part of the day', () {
@@ -122,11 +133,21 @@ void main() {
         (deviceId: 'this', start: DateTime(2026, 10, 31, 10), end: DateTime(2026, 10, 31, 10, 30)),
       ]);
       Future<Duration> used(PlaySessionsApi? api, String? device) =>
-          playedToday(log: _Log(log), api: api, deviceId: device, now: now);
+          playedSince(DateTime(2026, 10, 31), log: _Log(log), api: api, deviceId: device, now: now);
       expect(await used(remote, 'this'), const Duration(minutes: 50));
-      expect(remote.askedSince, DateTime(2026, 10, 30), reason: 'from yesterday: a session may run past midnight');
-      expect(await used(remote, null), const Duration(minutes: 30), reason: 'not known as a device: this PC only');
+      expect(remote.askedSince, DateTime(2026, 10, 30), reason: 'from a day before: a session may run past midnight');
+      expect(
+        await used(remote, null),
+        const Duration(minutes: 50),
+        reason: 'not known as a device: this PC\'s own matched by its times',
+      );
+      final moved = _Remote([
+        // The folder came from another PC: its sessions are in this log and on RomM under that PC.
+        (deviceId: 'pc-a', start: DateTime(2026, 10, 31, 10, 0, 1), end: DateTime(2026, 10, 31, 10, 30, 1)),
+      ]);
+      expect(await used(moved, 'this'), const Duration(minutes: 30));
       expect(await used(_Remote(const [], fails: true), 'this'), const Duration(minutes: 30));
+      expect(await used(null, 'this'), const Duration(minutes: 30), reason: 'offline: this PC only');
     });
   });
 
@@ -187,6 +208,39 @@ void main() {
         async.elapse(Duration.zero);
         expect(c.read(playControllerProvider).runningGameId, isNull);
         expect(c.read(playControllerProvider).message, startsWith('Play time is up for now.'));
+        c.dispose();
+      });
+    });
+
+    test("a close that didn't work is tried again; a limit shortened during the game counts", () {
+      fakeAsync((async) {
+        var limit = const PlayLimit(minutesPerDay: 60);
+        final c = ProviderContainer(
+          overrides: [
+            playEngineProvider.overrideWithValue(engine),
+            quitButtonsProvider.overrideWithValue(null),
+            playLimitProvider.overrideWith((ref) => limit),
+            playClockProvider.overrideWithValue(() => now.add(async.elapsed)),
+            playTimeLogProvider.overrideWithValue(null),
+            playSessionsApiProvider.overrideWithValue(null),
+            playLimitWarningProvider.overrideWithValue(() => warnings++),
+          ],
+        );
+        engine.closeFails = 2;
+        c.read(playControllerProvider.notifier).play(game(1, 'G'));
+        async.elapse(const Duration(minutes: 10));
+        expect(engine.closes, 0);
+        limit = const PlayLimit(minutesPerDay: 20);
+        c.invalidate(playLimitProvider);
+        async.elapse(const Duration(minutes: 10, seconds: 5));
+        expect(warnings, 1);
+        expect(engine.closes, 1, reason: 'at 20 minutes, the new limit');
+        async.elapse(const Duration(seconds: 30));
+        expect(engine.closes, 3, reason: 'tried again until it closes');
+        async.elapse(Duration.zero);
+        expect(c.read(playControllerProvider).runningGameId, isNull);
+        async.elapse(const Duration(minutes: 5));
+        expect(engine.closes, 3);
         c.dispose();
       });
     });

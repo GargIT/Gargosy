@@ -125,7 +125,7 @@ class RommPlaySessions implements PlaySessionsApi {
     try {
       r = await dio.get(
         '/api/play-sessions',
-        queryParameters: {'start_after': since.toUtc().toIso8601String()},
+        queryParameters: {'start_after': since.toUtc().toIso8601String(), 'limit': 10000},
         options: auth(),
       );
     } on DioException catch (e) {

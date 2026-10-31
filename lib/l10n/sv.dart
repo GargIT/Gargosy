@@ -507,6 +507,7 @@ const svText = <String, String>{
   'Play time a day': 'Speltid per dag',
   'Play time a day counts every PC this profile plays on. Five minutes before the time is up Windows plays its alert sound; then the game is closed (emulators that keep a state on close keep one) and its saves sync. An emulator can\'t be opened on its own while a limit is on.': 'Speltid per dag räknar alla datorer profilen spelar på. Fem minuter innan tiden är slut spelar Windows sitt varningsljud; sedan stängs spelet (emulatorer som sparar ett läge när de stängs gör det) och dess sparfiler synkas. En emulator kan inte öppnas på egen hand medan en gräns är på.',
   'Play time changed.': 'Speltiden ändrad.',
+  'Play time couldn\'t be counted: {0}': 'Speltiden kunde inte räknas: {0}',
   'Play time is up for now.': 'Speltiden är slut för nu.',
   'Play {0} in': 'Spela {0} i',
   'Play {0}\'s save?': 'Spela {0}s sparfil?',

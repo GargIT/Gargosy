@@ -79,14 +79,25 @@ class PlayRefused extends PlayAllowance {
   final DateTime backAt;
 }
 
-/// Midnight starting [t]'s day, and the next, on the calendar (a day with a
-/// clock change has 23 or 25 hours).
+/// Midnight starting [t]'s day, on the calendar (a day with a clock change
+/// has 23 or 25 hours).
 DateTime startOfDay(DateTime t) => DateTime(t.year, t.month, t.day);
 DateTime _nextDay(DateTime t) => DateTime(t.year, t.month, t.day + 1);
+DateTime _at(DateTime day, int minutes) => DateTime(day.year, day.month, day.day, minutes ~/ 60, minutes % 60);
 
-/// The time [sessions] (start, end) spent on [day], each cut to the day.
-Duration playedOn(DateTime day, Iterable<(DateTime, DateTime)> sessions) {
-  final from = startOfDay(day), to = _nextDay(day);
+/// When the day [limit]'s minutes count from began, at [now]: midnight, or
+/// with a window over midnight, when it last opened (an evening's play
+/// isn't given fresh minutes at 00:00).
+DateTime playDayStart(PlayLimit limit, DateTime now) {
+  final w = limit.window;
+  final midnight = startOfDay(now);
+  if (w == null || w.from < w.to) return midnight;
+  final opened = _at(midnight, w.from);
+  return now.isBefore(opened) ? _at(DateTime(now.year, now.month, now.day - 1), w.from) : opened;
+}
+
+/// The time [sessions] (start, end) spent from [from] to [to], each cut to it.
+Duration playedBetween(DateTime from, DateTime to, Iterable<(DateTime, DateTime)> sessions) {
   var total = Duration.zero;
   for (final (start, end) in sessions) {
     final s = start.isBefore(from) ? from : start;
@@ -96,15 +107,24 @@ Duration playedOn(DateTime day, Iterable<(DateTime, DateTime)> sessions) {
   return total;
 }
 
+/// The time [sessions] spent on [day].
+Duration playedOn(DateTime day, Iterable<(DateTime, DateTime)> sessions) =>
+    playedBetween(startOfDay(day), _nextDay(day), sessions);
+
 /// When [w], open at [now], closes.
-DateTime _closesAt(DownloadWindow w, DateTime now) {
-  final today = DateTime(now.year, now.month, now.day, w.to ~/ 60, w.to % 60);
-  return today.isAfter(now) ? today : DateTime(now.year, now.month, now.day + 1, w.to ~/ 60, w.to % 60);
+DateTime windowClosesAt(DownloadWindow w, DateTime now) {
+  final today = _at(now, w.to);
+  return today.isAfter(now) ? today : _at(_nextDay(now), w.to);
 }
 
-/// Whether [limit] lets a game start at [now], with [usedToday] already
-/// played today, and until when.
-PlayAllowance allowanceFor(PlayLimit limit, Duration usedToday, DateTime now) {
+/// Less than this left counts as used up: a start that could only run for
+/// seconds would never be logged (sessions under 5 s aren't), so the time
+/// would never run out.
+const _leastLeft = Duration(minutes: 1);
+
+/// Whether [limit] lets a game start at [now], with [used] already played
+/// in this play day ([playDayStart]), and until when.
+PlayAllowance allowanceFor(PlayLimit limit, Duration used, DateTime now) {
   if (!limit.isOn) return const PlayAllowed(null);
   String at(DateTime t) {
     final hm = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -119,16 +139,15 @@ PlayAllowance allowanceFor(PlayLimit limit, Duration usedToday, DateTime now) {
   final minutes = limit.minutesPerDay;
   DateTime? until;
   if (minutes != null) {
-    final left = Duration(minutes: minutes) - usedToday;
-    if (left <= Duration.zero) {
-      final tomorrow = _nextDay(now);
-      final back = window == null ? tomorrow : window.opensAt(tomorrow);
+    final left = Duration(minutes: minutes) - used;
+    if (left < _leastLeft) {
+      final back = window == null ? _nextDay(now) : window.opensAt(windowClosesAt(window, now));
       return PlayRefused(tr('Today\'s play time is used up. Back at {0}.', [at(back)]), back);
     }
     until = now.add(left);
   }
   if (window != null) {
-    final closes = _closesAt(window, now);
+    final closes = windowClosesAt(window, now);
     if (until == null || closes.isBefore(until)) until = closes;
   }
   return PlayAllowed(until);

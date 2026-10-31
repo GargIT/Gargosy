@@ -66,7 +66,8 @@ class PlayController extends StateNotifier<PlayState> {
     // waits on the claim (`--play`) hears the refusal.
     if (!_ref.read(ageLimitProvider).allows(game)) return refuse(aboveAgeLimit(game));
     // Its play time used up, or outside its hours (#235).
-    if (await _timeLeft() case final reason?) return refuse(reason);
+    final time = await checkPlayTime(_ref);
+    if (time.allowance case PlayRefused(:final reason)) return refuse(reason);
 
     try {
       final engine = _ref.read(playEngineProvider);
@@ -94,7 +95,15 @@ class PlayController extends StateNotifier<PlayState> {
       await engine.pullStates(game, romPath, emulator, coreOverride: coreOverride, onProblem: onNotice);
       await engine.prepare(game, romPath, emulator, request: request, coreOverride: coreOverride, onProblem: onNotice);
       final watch = watchSessionAchievements(_ref, game);
-      final session = await _launch(engine, game, romPath, emulator, coreOverride: coreOverride, onNotice: onNotice);
+      final session = await _launch(
+        engine,
+        game,
+        romPath,
+        emulator,
+        coreOverride: coreOverride,
+        onNotice: onNotice,
+        time: time,
+      );
       _running(game, session, watch);
       return null;
     } on SaveChoiceException catch (e) {
@@ -168,7 +177,8 @@ class PlayController extends StateNotifier<PlayState> {
     }
 
     if (!_ref.read(ageLimitProvider).allows(game)) return refuse(aboveAgeLimit(game));
-    if (await _timeLeft() case final reason?) return refuse(reason);
+    final time = await checkPlayTime(_ref);
+    if (time.allowance case PlayRefused(:final reason)) return refuse(reason);
 
     try {
       final engine = _ref.read(playEngineProvider);
@@ -233,6 +243,7 @@ class PlayController extends StateNotifier<PlayState> {
         coreOverride: coreOverride,
         loadStatePath: loadPath,
         onNotice: onNotice,
+        time: time,
       );
       _running(game, session, watch);
       return null;
@@ -243,29 +254,9 @@ class PlayController extends StateNotifier<PlayState> {
 
   static String _reason(Object e) => e is StateError ? e.message : '$e';
 
-  /// When the starting game's time is up (#235); null: no limit.
-  DateTime? _until;
+  /// The running game's play time limit (#235), and whether it closed it.
   PlayLimitTimer? _limit;
   var _closedByLimit = false;
-
-  /// Why the profile can't play now, or null, with [_until] set for the
-  /// game about to start.
-  Future<String?> _timeLeft() async {
-    _until = null;
-    try {
-      switch (await playAllowance(_ref)) {
-        case PlayRefused(:final reason):
-          return reason;
-        case PlayAllowed(:final until):
-          _until = until;
-          return null;
-      }
-    } on Object catch (e) {
-      // A limit that can't be counted holds: this PC's sessions are local.
-      debugPrint('[PlayLimit] not counted: $e');
-      return null;
-    }
-  }
 
   /// [engine.readyRom] with its progress in [PlayState.preparing], cleared after.
   Future<String> _ready(PlayEngine engine, Game game, String romPath, EmulatorStrategy emulator) async {
@@ -291,8 +282,9 @@ class PlayController extends StateNotifier<PlayState> {
     String? coreOverride,
     String? loadStatePath,
     void Function(String)? onNotice,
+    PlayCheck? time,
   }) async {
-    void started(CloseGame close) => _started(game, close);
+    void started(CloseGame close) => _started(game, close, time);
     try {
       return await engine.launch(
         game,
@@ -331,25 +323,27 @@ class PlayController extends StateNotifier<PlayState> {
   Future<void> Function()? _close;
 
   /// The emulator of [game] started: this PC's quit buttons held close it
-  /// (#141), unless they're off.
-  void _started(Game game, CloseGame close) {
+  /// (#141), unless they're off; under a play time limit ([time], #235), the
+  /// limit does at its end.
+  void _started(Game game, CloseGame close, [PlayCheck? time]) {
     _close = close;
     _limit?.cancel();
+    _limit = null;
     _closedByLimit = false;
-    if (_until case final until?) {
-      debugPrint('[PlayLimit] ${game.displayName} may play until $until');
+    final clock = _ref.read(playClockProvider);
+    if (time != null && _ref.read(playLimitProvider).isOn) {
+      debugPrint(
+        '[PlayLimit] ${game.displayName} may play until ${time.untilAt(_ref.read(playLimitProvider), clock())}',
+      );
       _limit = PlayLimitTimer(
-        until,
-        _ref.read(playClockProvider)(),
+        // Asked again each time: a limit changed during the game counts.
+        until: () => time.untilAt(_ref.read(playLimitProvider), clock()),
+        clock: clock,
         onWarn: () {
           debugPrint('[PlayLimit] ${PlayLimit.warnBefore.inMinutes} minutes left');
           _ref.read(playLimitWarningProvider)();
         },
-        onEnd: () {
-          debugPrint('[PlayLimit] time is up: closing ${game.displayName}');
-          _closedByLimit = true;
-          quitGame();
-        },
+        onEnd: () => _timeUp(game),
       );
     }
     _quitCombo?.cancel();
@@ -382,6 +376,17 @@ class PlayController extends StateNotifier<PlayState> {
         });
   }
 
+  /// The play time is up (#235): the emulator is closed, again at each look
+  /// of the limit until the session has ended (a close that didn't work);
+  /// nothing when the player is already closing it.
+  void _timeUp(Game game) {
+    final close = _close;
+    if (close == null) return;
+    debugPrint('[PlayLimit] time is up: closing ${game.displayName}');
+    _closedByLimit = true;
+    close().catchError((Object e) => debugPrint('[PlayLimit] close failed, tried again: $e'));
+  }
+
   /// Closes the running game's emulator, as its close button does; the
   /// session ends as usual (saves synced). False when no game can be closed.
   Future<bool> quitGame() async {
@@ -400,7 +405,6 @@ class PlayController extends StateNotifier<PlayState> {
   void _ended(Game game, String message, {bool synced = false, bool saveProblem = false}) {
     _limit?.cancel();
     _limit = null;
-    _until = null;
     if (_closedByLimit) message = '${tr('Play time is up for now.')} $message';
     _closedByLimit = false;
     _quitCombo?.cancel();

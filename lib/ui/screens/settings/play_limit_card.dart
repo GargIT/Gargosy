@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../profiles/play_limit.dart';
 import '../../../profiles/profile.dart';
 import '../../../profiles/profile_providers.dart';
+import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
 import 'age_limit_card.dart';
@@ -19,14 +20,19 @@ class PlayLimitCard extends ConsumerWidget {
   final Profile profile;
 
   Future<void> _pickMinutes(BuildContext context, WidgetRef ref) async {
-    final options = <int?>[null, ...PlayLimit.minuteChoices];
+    final now = profile.playLimit.minutesPerDay;
+    final options = <int?>[
+      null,
+      ...PlayLimit.minuteChoices,
+      if (now != null && !PlayLimit.minuteChoices.contains(now)) now,
+    ];
     final i = await showChoice(
       context,
       title: tr('Play time a day'),
       labels: [for (final m in options) PlayLimit.minutesLabel(m)],
-      current: options.indexOf(profile.playLimit.minutesPerDay),
+      current: options.indexOf(now),
     );
-    if (i == null || !context.mounted || options[i] == profile.playLimit.minutesPerDay) return;
+    if (i == null || !context.mounted || options[i] == now) return;
     await _save(context, ref, profile.playLimit.copyWith(minutesPerDay: () => options[i]));
   }
 
@@ -52,6 +58,9 @@ class PlayLimitCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final limit = profile.playLimit;
+    final all = ref.watch(profilesProvider).valueOrNull;
+    // Said only once the profiles are read: never "unlocked" while loading.
+    final unlocked = all != null && guardiansOf(all, profile).isEmpty;
     return SettingsCard(
       title: tr('Play time'),
       icon: Icons.timer_outlined,
@@ -77,6 +86,13 @@ class PlayLimitCard extends ConsumerWidget {
           actionIcon: Icons.edit_outlined,
           onActivate: () => _pickWindow(context, ref),
         ),
+        if (unlocked)
+          Text(
+            profile.pin == null
+                ? tr("Anyone can change it: set a PIN on a parent's profile (one without an age limit) to lock it.")
+                : tr("Changing it asks for this profile's PIN. A parent's profile with a PIN locks it instead."),
+            style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
+          ),
       ],
     );
   }
