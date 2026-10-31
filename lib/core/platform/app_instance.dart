@@ -9,20 +9,33 @@ import 'package:path/path.dart' as p;
 import '../../profiles/app_root.dart';
 import '../../profiles/json_file.dart';
 import '../../profiles/path_guard.dart';
+import 'instance_mutex.dart';
+import 'platform_info.dart';
 
-/// #223: one Gargosy per Gargosy folder. The first start holds
-/// `userdata\app\instance.lock` and listens on a loopback port (in
+/// #223: one Gargosy per Gargosy folder. The first start holds the folder
+/// (on Windows a named mutex, [InstanceMutex]; elsewhere
+/// `userdata\app\instance.lock`) and listens on a loopback port (in
 /// `instance.json`, with a token); a second start (a shortcut's `--play`,
 /// Steam) hands its arguments to it and exits, so two never run emulators
-/// on the same profiles. The lock goes with the process, also after a crash.
+/// on the same profiles. The hold goes with the process, also after a crash.
 class AppInstance {
-  AppInstance._(this._lock, this._server, this._requests);
+  AppInstance._(this._letGo, this._server, this._requests) {
+    // Held for the process's life: nothing is collected while it runs.
+    _held = this;
+  }
+
+  /// The claim this process holds.
+  static AppInstance? _held;
+
+  @visibleForTesting
+  static AppInstance? get held => _held;
 
   /// A start that holds nothing: the holder couldn't be reached, so this one
   /// runs rather than end without a word.
-  AppInstance._unclaimed() : _lock = null, _server = null, _requests = StreamController<List<String>>();
+  AppInstance._unclaimed() : _letGo = null, _server = null, _requests = StreamController<List<String>>();
 
-  final io.RandomAccessFile? _lock;
+  /// Lets the folder go: the mutex's or the lock file's.
+  final Future<void> Function()? _letGo;
   final io.ServerSocket? _server;
 
   /// Single-subscription, so what a later start sends before Gargosy listens
@@ -33,7 +46,7 @@ class AppInstance {
   Stream<List<String>> get requests => _requests.stream;
 
   /// Whether this start holds the folder.
-  bool get holds => _lock != null;
+  bool get holds => _letGo != null;
 
   static String lockPath(AppRoot root) => p.join(root.appData, 'instance.lock');
   static String infoPath(AppRoot root) => p.join(root.appData, 'instance.json');
@@ -45,15 +58,29 @@ class AppInstance {
   /// took [args]: this one should exit. When the holder can't be reached, a
   /// claim that holds nothing, and Gargosy starts. A claim that fails half
   /// way lets the lock go before it throws.
-  static Future<AppInstance?> claim(AppRoot root, List<String> args) async {
+  static Future<AppInstance?> claim(AppRoot root, List<String> args, {required PlatformInfo platform}) async {
     final guard = PathGuard(root);
-    final lock = await io.File(guard.check(lockPath(root))).open(mode: io.FileMode.append);
-    try {
-      await lock.lock(io.FileLock.exclusive);
-    } on io.FileSystemException {
-      await lock.close();
-      if (await handOver(root, args)) return null;
-      return AppInstance._unclaimed();
+    final Future<void> Function() letGo;
+    if (platform.isWindows) {
+      final mutex = InstanceMutex.claim(root.root);
+      if (mutex == null) {
+        if (await handOver(root, args)) return null;
+        return AppInstance._unclaimed();
+      }
+      letGo = () async => mutex.release();
+    } else {
+      final lock = await io.File(guard.check(lockPath(root))).open(mode: io.FileMode.append);
+      try {
+        await lock.lock(io.FileLock.exclusive);
+      } on io.FileSystemException {
+        await lock.close();
+        if (await handOver(root, args)) return null;
+        return AppInstance._unclaimed();
+      }
+      letGo = () async {
+        await lock.unlock();
+        await lock.close();
+      };
     }
     io.ServerSocket? server;
     try {
@@ -65,11 +92,10 @@ class AppInstance {
       await writeJsonObject(guard, infoPath(root), {'port': server.port, 'token': token, 'pid': io.pid});
       final requests = StreamController<List<String>>();
       server.listen((socket) => _read(socket, token, requests));
-      return AppInstance._(lock, server, requests);
+      return AppInstance._(letGo, server, requests);
     } on Object {
       await server?.close();
-      await lock.unlock();
-      await lock.close();
+      await letGo();
       rethrow;
     }
   }
@@ -153,10 +179,10 @@ class AppInstance {
 
   /// Lets the folder go (tests; a normal exit lets it go by itself).
   Future<void> release() async {
+    if (identical(_held, this)) _held = null;
     await _server?.close();
     // Never listened, a single-subscription stream's close never completes.
     unawaited(_requests.close());
-    await _lock?.unlock();
-    await _lock?.close();
+    await _letGo?.call();
   }
 }
