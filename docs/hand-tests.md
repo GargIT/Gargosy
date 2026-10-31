@@ -369,3 +369,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Multi-disc games without an .m3u (#230)
 
 135. [ ] A PS1 game of two discs in one folder without an `.m3u` (for example "Game (Disc 1).chd", "Game (Disc 2).chd"): Play in RetroArch starts disc 1, and RetroArch's Disc Control lists both discs. The same in DuckStation (its Change Disc lists both). A save made there syncs as before, and Resume of a state made on disc 2 comes back on disc 2. No `.m3u` appears in `roms\`.
+
+## Report a bug with the log (#231)
+
+136. [ ] About → Report a bug: the browser opens GitHub's bug form with Gargosy's, Windows' and RomM's versions filled in, and Explorer opens `userdata\app\` with `gargosy-log-for-bug.txt` (the newest log; no token or password in it), ready to drag into the form's Log field.

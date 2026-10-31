@@ -296,6 +296,7 @@ const svText = <String, String>{
   'GitHub\'s answer couldn\'t be read.': 'GitHubs svar kunde inte läsas.',
   'GitHub\'s limit for update checks was reached. Try again in an hour.':
       'GitHubs gräns för uppdateringssökningar nåddes. Försök igen om en timme.',
+  'GitHub, with the log ready to attach': 'GitHub, med loggen redo att bifoga',
   'Got 1 BIOS file from RomM.': 'Hämtade 1 BIOS-fil från RomM.',
   'Got {0} BIOS files from RomM.': 'Hämtade {0} BIOS-filer från RomM.',
   'Got {0} from RomM.': 'Hämtade {0} från RomM.',
@@ -545,6 +546,7 @@ const svText = <String, String>{
   'Rename {0}': 'Byt namn på {0}',
   'Rename…': 'Byt namn…',
   'Replace and play': 'Ersätt och spela',
+  'Report a bug': 'Rapportera ett fel',
   'Reset to the default': 'Återställ standard',
   'Restarting…': 'Startar om…',
   'Resume': 'Fortsätt',
@@ -724,6 +726,7 @@ const svText = <String, String>{
   'The zip isn\'t a Gargosy release ({0}).': 'Zipen är ingen Gargosy-utgåva ({0}).',
   'The {0} core couldn\'t be downloaded': 'Kärnan {0} kunde inte laddas ner',
   'The {0} save on this PC ({1}) is deleted. A backup is kept here first. RomM\'s copy stays, and comes back the next time you play.': '{0}-sparfilen på den här datorn ({1}) tas bort. En säkerhetskopia sparas här först. RomM:s kopia finns kvar och kommer tillbaka nästa gång du spelar.',
+  'There is no log to attach yet.': 'Det finns ingen logg att bifoga än.',
   'There is no {0} in bios\\. Get BIOS files from RomM first (RomM keeps the PS3 firmware with the platform\'s firmware).': 'Det finns ingen {0} i bios\\. Hämta BIOS-filer från RomM först (RomM har PS3-firmwaren bland plattformens firmware).',
   'This Gargosy has no {0}: update it by hand from the release page this once.':
       'Den här Gargosy har ingen {0}: uppdatera den för hand från utgåvans sida den här gången.',
