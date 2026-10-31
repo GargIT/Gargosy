@@ -18,6 +18,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/game_transition.dart';
+import '../../widgets/make_room_dialog.dart';
 import '../../widgets/outlined_back_button.dart';
 import '../../widgets/favourite.dart';
 import '../../widgets/format.dart';
@@ -265,12 +266,7 @@ class GameCoverColumn extends ConsumerWidget {
       final free = ref.watch(diskUsageProvider).usage(roms)?.free;
       main = Column(
         children: [
-          _wide(
-            tr('Download{0}', [size]),
-            Icons.download,
-            () => ref.read(downloadsProvider.notifier).start(game),
-            primary: true,
-          ),
+          _wide(tr('Download{0}', [size]), Icons.download, () => downloadOrMakeRoom(context, ref, game), primary: true),
           // Said before it's pressed when the drive is nearly full (#142).
           if (spaceIsTight(game.fileSize, free) && progress?.phase != DownloadPhase.failed) ...[
             const SizedBox(height: GSpace.s2),

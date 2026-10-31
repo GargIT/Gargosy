@@ -11,6 +11,7 @@ import '../../screens/game/open_game.dart';
 import '../../screens/game/resume_newest.dart';
 import '../../screens/play/play_screen.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/make_room_dialog.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/format.dart';
 import '../../widgets/g_focusable.dart';
@@ -146,7 +147,7 @@ class HomeHeader extends ConsumerWidget {
         _button(
           downloading ? (progress.phase == DownloadPhase.queued ? tr('Queued') : tr('Downloading…')) : tr('Download'),
           Icons.download,
-          downloading ? null : () => ref.read(downloadsProvider.notifier).start(game),
+          downloading ? null : () => downloadOrMakeRoom(context, ref, game),
           primary: true,
           autofocus: autofocus,
           key: const ValueKey('home-download'),

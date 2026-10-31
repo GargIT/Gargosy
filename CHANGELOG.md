@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Make room: when a download doesn't fit, Gargosy offers to delete games
+  from this PC you haven't played for longest (they stay on RomM), the
+  ones that free enough ticked, never one whose saves haven't reached
+  RomM yet.
 - Download all on a collection's and a platform's page: every game of it
   not on this PC yet, its size checked against the free space first, then
   queued. Downloads has Cancel all for the queue.
