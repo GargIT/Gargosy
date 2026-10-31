@@ -8,6 +8,7 @@ import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../library/disk_space.dart';
 import '../library/download_check.dart';
+import '../library/download_schedule.dart';
 import '../library/download_service.dart';
 import '../library/dsi_title.dart';
 import '../library/library_snapshot.dart';
@@ -18,6 +19,9 @@ import 'romm_providers.dart';
 import '../l10n/tr.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
+
+/// The time the download window is checked against (#228); tests set it.
+final downloadClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 /// The volumes and their free space (#142, #201); tests give their own.
 final diskInfoProvider = Provider<DiskInfo>((ref) => diskInfoFor(PlatformInfo.current));
@@ -55,6 +59,7 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
     detail: romm.getGame,
     disk: ref.watch(diskInfoProvider),
     checkHashes: () => DownloadCheck.of(ref.read(appPreferencesProvider)),
+    bytesPerSecond: () => DownloadLimits.of(ref.read(appPreferencesProvider)).bytesPerSecond,
   );
 });
 
@@ -167,9 +172,43 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     return _queue.fold(running.clamp(0, 1 << 62), (n, g) => n + g.fileSize);
   }
 
+  /// When the queue starts again, while Only download keeps it waiting
+  /// (#228); null when it isn't waiting.
+  DateTime? get waitsUntil => _waitsUntil;
+  DateTime? _waitsUntil;
+  Timer? _wake;
+
+  /// Games the player said to download now, outside the window.
+  final _now = <String>{};
+
+  /// Download now (#228): [gameId] first, and started even outside the
+  /// window.
+  void startNow(String gameId) {
+    _now.add(gameId);
+    moveToFront(gameId);
+    _next();
+  }
+
+  /// The window or speed changed in Settings: the queue looks again.
+  void limitsChanged() => _next();
+
   void _next() {
     if (_current != null || _queue.isEmpty || !mounted) return;
+    final window = DownloadLimits.of(_ref.read(appPreferencesProvider)).window;
+    final now = _ref.read(downloadClockProvider)();
+    if (window != null && !window.allows(now) && !_now.contains(_queue.first.id)) {
+      final at = window.opensAt(now);
+      _wake?.cancel();
+      _wake = Timer(at.difference(now), _next);
+      _waitsUntil = at;
+      state = Map.of(state); // listeners read waitsUntil
+      return;
+    }
+    _wake?.cancel();
+    _wake = null;
+    _waitsUntil = null;
     final game = _current = _queue.removeAt(0);
+    _now.remove(game.id);
     _run(game).whenComplete(() {
       _current = null;
       _waiting.remove(game.id)?.complete();
@@ -242,6 +281,12 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     }
     _queue.clear();
     state = next;
+  }
+
+  @override
+  void dispose() {
+    _wake?.cancel();
+    super.dispose();
   }
 
   /// The queue emptied and the running download stopped (a profile switch).

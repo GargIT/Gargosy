@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/disk_space.dart';
+import 'package:gargosy/library/download_schedule.dart';
 import 'package:gargosy/library/download_service.dart';
 import 'package:gargosy/library/rom_files.dart';
 import 'package:gargosy/profiles/login_store.dart';
@@ -141,6 +142,33 @@ void main() {
       free = 1500;
       expect(() => downloads.startAll([a, b, d]), throwsA(isA<NotEnoughSpace>()));
       expect(downloads.pending, 0);
+    });
+
+    test('outside Only download (#228) the queue waits and says until when; Download now starts one', () async {
+      final prefs = MemoryPrefs();
+      await prefs.setString(DownloadLimits.windowKey, '22:00-07:00');
+      final timed = ProviderContainer(
+        overrides: [
+          appRootProvider.overrideWithValue(c.read(appRootProvider)),
+          appPreferencesProvider.overrideWithValue(prefs),
+          downloadServiceProvider.overrideWithValue(fake),
+          diskInfoProvider.overrideWithValue(FakeDisk((_) => null)),
+          downloadClockProvider.overrideWithValue(() => DateTime(2026, 10, 31, 12)),
+        ],
+      );
+      addTearDown(timed.dispose);
+      timed.listen(downloadsProvider, (_, _) {});
+      final q = timed.read(downloadsProvider.notifier);
+      unawaited(q.start(a));
+      unawaited(q.start(b));
+      await tick();
+      expect(fake.started, isEmpty);
+      expect(q.waitsUntil, DateTime(2026, 10, 31, 22));
+      q.startNow('2');
+      await tick();
+      expect(fake.started, ['2']);
+      expect(q.waitsUntil, isNull);
+      expect(q.queue.map((g) => g.id), ['1'], reason: 'the rest still wait');
     });
 
     test('Cancel all (#226) empties the queue; the running one goes on', () async {

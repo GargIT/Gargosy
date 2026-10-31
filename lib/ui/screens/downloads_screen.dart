@@ -164,7 +164,15 @@ class DownloadsScreen extends ConsumerWidget {
                         for (final g in queue)
                           row(
                             g,
-                            g.fileSize > 0 ? tr('Queued · {0}', [formatBytes(g.fileSize)]) : tr('Queued'),
+                            // Outside Only download's window (#228): when it goes on; A starts it now.
+                            [
+                              g.fileSize > 0 ? tr('Queued · {0}', [formatBytes(g.fileSize)]) : tr('Queued'),
+                              if (downloads.waitsUntil case final at?)
+                                tr('waits until {0}', [
+                                  '${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}',
+                                ]),
+                            ].join(' · '),
+                            onA: downloads.waitsUntil == null ? null : () => downloads.startNow(g.id),
                             onX: () => downloads.cancel(g.id),
                             onY: () => downloads.moveToFront(g.id),
                           ),
@@ -208,7 +216,10 @@ class DownloadsScreen extends ConsumerWidget {
             ),
             HintBar(
               hints: [
-                Hint(GameAction.confirm, tr('Open · Retry')),
+                Hint(
+                  GameAction.confirm,
+                  downloads.waitsUntil == null ? tr('Open · Retry') : tr('Download now · Retry'),
+                ),
                 Hint(GameAction.detail, tr('Stop · Remove')),
                 Hint(GameAction.favorite, tr('First in the queue')),
                 Hint(GameAction.back, tr('Back')),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../library/download_check.dart';
+import 'download_limit_fields.dart';
 import '../../../library/storage_usage.dart';
 import '../../../play/play_controller.dart';
 import '../../../profiles/path_guard.dart';
@@ -154,6 +155,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                 if (mounted) setState(() {});
               },
             ),
+            ...downloadLimitFields(context, ref, () => setState(() {})),
           ],
         ),
         const ImageCacheCard(),

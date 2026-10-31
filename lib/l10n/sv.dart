@@ -51,6 +51,7 @@ const svText = <String, String>{
   'An emulator can\'t be opened on its own with an age limit.':
       'En emulator kan inte öppnas på egen hand med en åldersgräns.',
   'Another': 'Ett till',
+  'Any time': 'När som helst',
   'Anyone can change it: set a PIN on a parent\'s profile (one without an age limit) to lock it.':
       'Vem som helst kan ändra den: sätt en PIN-kod på en förälders profil (en utan åldersgräns) för att låsa den.',
   'Apply': 'Använd',
@@ -65,6 +66,7 @@ const svText = <String, String>{
   'Backlog': 'Att spela',
   'Backlog ✓': 'Att spela ✓',
   'Best match': 'Bästa träff',
+  'Between {0}': 'Mellan {0}',
   'Both sticks in (L3 + R3)': 'Båda spakarna intryckta (L3 + R3)',
   'By you': 'Av dig',
   'By {0}': 'Av {0}',
@@ -191,6 +193,7 @@ const svText = <String, String>{
   'Download': 'Ladda ner',
   'Download 1 game?': 'Ladda ner 1 spel?',
   'Download all': 'Ladda ner alla',
+  'Download now · Retry': 'Ladda ner nu · Försök igen',
   'Download off: Ryubing\'s server can\'t be reached': 'Nedladdning av: Ryubings server kan inte nås',
   'Download the game first.': 'Ladda ner spelet först.',
   'Download {0} games?': 'Ladda ner {0} spel?',
@@ -395,6 +398,7 @@ const svText = <String, String>{
   'No games in your library yet.': 'Inga spel i ditt bibliotek än.',
   'No games yet. Add some to RomM and they show up here.': 'Inga spel än. Lägg till några i RomM så syns de här.',
   'No installed emulator syncs save states yet.': 'Ingen installerad emulator synkar sparlägen än.',
+  'No limit': 'Ingen gräns',
   'No new BIOS files on RomM.': 'Inga nya BIOS-filer på RomM.',
   'No notes for this release.': 'Inga noteringar för den här utgåvan.',
   'No notes yet.': 'Inga anteckningar än.',
@@ -452,6 +456,7 @@ const svText = <String, String>{
   'One RomM user per profile. Its saves and emulator settings are its own.':
       'En RomM-användare per profil. Dess sparfiler och emulatorinställningar är dess egna.',
   'Only Xbox (XInput) controllers are connected, and they need no teaching. An 8BitDo in X mode is one: switch it to D mode to teach it.': 'Bara Xbox-kontroller (XInput) är anslutna, och de behöver ingen inlärning. En 8BitDo i X-läge är en sådan: byt till D-läge för att lära in den.',
+  'Only download': 'Ladda bara ner',
   'Only on this PC': 'Bara på den här datorn',
   'Only one emulator per platform is installed.': 'Bara en emulator per plattform är installerad.',
   'Only you': 'Bara du',
@@ -638,6 +643,7 @@ const svText = <String, String>{
   'Sort by: {0}': 'Sortera: {0}',
   'Sorted by {0}, {1}': 'Sorterad efter {0}, {1}',
   'Space': 'Blanksteg',
+  'Speed limit': 'Hastighetsgräns',
   'Start (Menu, Options or +)': 'Start (Menu, Options eller +)',
   'Start the game, then load it from {0}\'s menu: {1} can\'t start in a state.':
       'Starta spelet och ladda det sedan från {0}s meny: {1} kan inte starta i ett sparläge.',
@@ -907,6 +913,7 @@ const svText = <String, String>{
   'today {0}': 'i dag {0}',
   'under a minute': 'under en minut',
   'upload the save': 'ladda upp sparfilen',
+  'waits until {0}': 'väntar till {0}',
   'who plays what on RomM': 'vem som spelar vad på RomM',
   'yesterday {0}': 'i går {0}',
   'your ♥ games': 'dina ♥-spel',
@@ -917,6 +924,7 @@ const svText = <String, String>{
   '{0} Close the game first: nothing is deleted while one runs.':
       '{0} Stäng spelet först: inget tas bort medan ett körs.',
   '{0} Delete games from this PC to make room: they stay on RomM. Another profile that has one of them here loses it too.': '{0} Ta bort spel från den här datorn för att göra plats: de finns kvar på RomM. En annan profil som har något av dem här förlorar det också.',
+  '{0} MB/s': '{0} MB/s',
   '{0} Nothing was changed.': '{0} Inget ändrades.',
   '{0} PLAYS IN': '{0} SPELAS I',
   '{0} achievements earned': '{0} prestationer upplåsta',
