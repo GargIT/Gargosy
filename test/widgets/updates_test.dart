@@ -135,7 +135,10 @@ void main() {
           ),
         ),
         appQuitProvider.overrideWithValue(() async => quits++),
-        externalOpenerProvider.overrideWithValue(opened.add),
+        externalOpenerProvider.overrideWithValue((t) async {
+          opened.add(t);
+          return true;
+        }),
         rommServerVersionProvider.overrideWith((ref) async => null),
       ],
     );

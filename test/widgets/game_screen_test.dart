@@ -45,6 +45,8 @@ import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 import '../helpers/fake_disk.dart';
 
+import 'package:gargosy/providers/about_providers.dart';
+
 void main() {
   late AppRoot root;
   late FakeDownloadService downloads;
@@ -106,7 +108,10 @@ void main() {
           favouriteIdsProvider.overrideWithValue(favourites),
           downloadServiceProvider.overrideWithValue(downloads),
           playEngineProvider.overrideWithValue(engine),
-          folderOpenerProvider.overrideWithValue(opened.add),
+          externalOpenerProvider.overrideWithValue((t) async {
+            opened.add(t);
+            return true;
+          }),
           romSavesProvider.overrideWith(
             (ref, id) async => [
               {'id': 1, 'file_name': 'burnout.ps2', 'emulator': 'pcsx2'},

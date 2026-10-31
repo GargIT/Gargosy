@@ -731,6 +731,7 @@ const svText = <String, String>{
   'The backup from {0} couldn\'t be restored.': 'Säkerhetskopian från {0} kunde inte återställas.',
   'The backup from {0} is deleted from this PC.': 'Säkerhetskopian från {0} tas bort från den här datorn.',
   'The backup from {0} isn\'t on this PC any more.': 'Säkerhetskopian från {0} finns inte på den här datorn längre.',
+  'The bug form couldn\'t be opened.': 'Felrapportens formulär kunde inte öppnas.',
   'The code expired. Go back and try again.': 'Koden gick ut. Gå tillbaka och försök igen.',
   'The collection goes from RomM for every player. Its games stay in the library.':
       'Samlingen försvinner från RomM för alla spelare. Spelen finns kvar i biblioteket.',
