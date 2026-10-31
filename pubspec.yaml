@@ -13,7 +13,6 @@ dependencies:
   dio: ^5.4.0
   path: ^1.9.0
   crypto: ^3.0.3
-  synchronized: ^3.1.0+1
   uuid: ^4.5.1
   intl: ^0.20.2
   gamepads: ^0.1.10+5
@@ -29,7 +28,9 @@ dependencies:
   qr_flutter: ^4.1.0
   cached_network_image: 3.3.1
   file: ^7.0.1
-  archive: ^4.5.2
+  # Exact: save zips and RomM's content hashes are built with it, so a new
+  # release is chosen and tested, never picked up by a pub upgrade.
+  archive: 4.5.2
   zstandard: ^1.5.0
   http: ^1.6.0
   file_picker: ^11.0.3
