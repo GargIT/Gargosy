@@ -31,6 +31,7 @@ import '../../widgets/save_list/save_labels.dart';
 import '../../widgets/save_list/save_list.dart';
 import '../../widgets/save_list/state_list.dart';
 import '../../widgets/toast.dart';
+import 'game_settings_dialog.dart';
 import 'play_settings_panel.dart';
 import '../../../l10n/tr.dart';
 
@@ -160,6 +161,23 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   bool? _fullscreenOf(PlayMenu menu, SaveMaker picked) {
     final saved = menu.optionOf(picked)?.fullscreen;
     return saved == null ? null : _fullscreen[picked.emulatorId] ?? saved;
+  }
+
+  /// The game's settings in [emulatorId], in a line (#234).
+  String? _gameSettingsOf(String emulatorId) {
+    final store = ref.read(gameSettingsStoreProvider);
+    return store == null ? null : gameSettingsSummary(store.read(widget.game.id, emulatorId));
+  }
+
+  Future<void> _openGameSettings(PlayMenu menu, SaveMaker picked) async {
+    final changed = await showGameSettings(
+      context,
+      ref,
+      game: widget.game,
+      emulatorId: picked.emulatorId,
+      emulatorName: menu.nameOf(picked),
+    );
+    if (changed && mounted) setState(() {});
   }
 
   Future<void> _setFullscreen(String emulatorId, bool on) async {
@@ -450,6 +468,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             openField: _openField,
             fullscreen: _fullscreenOf(menu, picked),
             onFullscreen: (on) => _setFullscreen(picked.emulatorId, on),
+            gameSettings: _gameSettingsOf(picked.emulatorId),
+            onGameSettings: () => _openGameSettings(menu, picked),
           );
     final middle = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

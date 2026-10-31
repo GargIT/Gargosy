@@ -20,6 +20,7 @@ import '../profiles/app_root.dart';
 import '../profiles/profile_paths.dart';
 import 'emulator_layout.dart';
 import 'fullscreen.dart';
+import 'game_settings.dart';
 import 'profile_launch_config.dart';
 
 /// Starts a process; tests pass a recorder.
@@ -180,10 +181,20 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
         if (a != EmulatorStrategy.resumeAutoStateArg) a,
     ];
     final pre = await config.prepare(c);
+    // The play screen's settings for this game (#234): keys in the
+    // emulator's settings (put back for a game without them), and arguments
+    // after the profile's, before the strategy's (Dolphin's end in `-e`,
+    // which takes the game).
+    final settings = GameSettingsStore(prefs).read(game.id, emulatorId);
+    applyGameSettingKeys(emulatorId, settings, c.data, c.exeDir, c.guard);
     final process = await _start(
       exePath,
       [
-        ...Fullscreen.apply(emulatorId, c.fullscreen, [...pre, ...args]),
+        ...Fullscreen.apply(emulatorId, c.fullscreen, [
+          ...pre,
+          ...gameSettingArgs(emulatorId, settings, c.exeDir),
+          ...args,
+        ]),
         ...config.gameArgs(c, romPath),
       ],
       workingDirectory: c.exeDir,

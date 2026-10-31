@@ -9,7 +9,7 @@ import '../../../l10n/tr.dart';
 
 /// The play screen's "⚙ Plays in" (spec Part 4), as RomM's settings: the
 /// emulator and RetroArch's core as dropdowns, Full screen, Always for this
-/// game, and how many saves the emulator can't use with Show all.
+/// game, this game's settings (#234), and how many saves the emulator can't use with Show all.
 /// [compact]: one row above the list (narrow windows).
 class PlaySettingsPanel extends StatelessWidget {
   const PlaySettingsPanel({
@@ -24,9 +24,11 @@ class PlaySettingsPanel extends StatelessWidget {
     required this.onRemember,
     required this.onShowAll,
     required this.onFullscreen,
+    required this.onGameSettings,
     required this.emulatorField,
     required this.coreField,
     this.fullscreen,
+    this.gameSettings,
     this.openField,
     this.compact = false,
   });
@@ -41,6 +43,12 @@ class PlaySettingsPanel extends StatelessWidget {
   final ValueChanged<bool> onRemember;
   final VoidCallback onShowAll;
   final ValueChanged<bool> onFullscreen;
+
+  /// Opens this game's settings in the picked emulator (#234).
+  final VoidCallback onGameSettings;
+
+  /// What they are, in a line; null when the game has none.
+  final String? gameSettings;
 
   /// Where the dropdowns open their lists.
   final GlobalKey emulatorField;
@@ -119,6 +127,29 @@ class PlaySettingsPanel extends StatelessWidget {
     );
   }
 
+  Widget _gameSettings() => GFocusable(
+    key: const ValueKey('play-game-settings'),
+    borderRadius: GRadius.pill,
+    onActivate: onGameSettings,
+    child: Padding(
+      padding: const EdgeInsets.all(GSpace.s2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.tune, size: 20, color: GColors.fgSecondary),
+          const SizedBox(width: GSpace.s2),
+          Flexible(
+            child: Text(
+              gameSettings == null ? tr('Game settings') : tr('Game settings: {0}', [gameSettings]),
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: gameSettings == null ? GColors.fgSecondary : GColors.primaryHover),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final option = menu.optionOf(picked);
@@ -171,7 +202,7 @@ class PlaySettingsPanel extends StatelessWidget {
         spacing: GSpace.s2,
         runSpacing: GSpace.s2,
         crossAxisAlignment: WrapCrossAlignment.center,
-        children: [emulator, if (hasCores) core, _fullscreen(), _always(), ?hiddenNote],
+        children: [emulator, if (hasCores) core, _fullscreen(), _gameSettings(), _always(), ?hiddenNote],
       );
     }
     return Container(
@@ -203,6 +234,7 @@ class PlaySettingsPanel extends StatelessWidget {
           core,
           const SizedBox(height: GSpace.s3),
           Align(alignment: Alignment.centerLeft, child: _fullscreen()),
+          Align(alignment: Alignment.centerLeft, child: _gameSettings()),
           Align(alignment: Alignment.centerLeft, child: _always()),
           if (hiddenNote != null) ...[const SizedBox(height: GSpace.s2), hiddenNote],
         ],
