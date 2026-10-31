@@ -6,6 +6,11 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-31
+
+Start a game from a desktop shortcut or Steam, an age limit per profile,
+the achievements earned in a session, and Gargosy in Swedish.
+
 ### Added
 
 - Start a game from outside Gargosy: `Gargosy.exe --play=<rom id>`, with
@@ -542,7 +547,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.5.0
 [0.4.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.4.0
 [0.3.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.3.0
