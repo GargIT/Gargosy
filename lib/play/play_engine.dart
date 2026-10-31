@@ -28,6 +28,8 @@ import '../core/save/catalog/save_maker.dart';
 import '../core/save/resume_service.dart';
 import '../emulators/process_closer.dart';
 import '../emulators/emulator_layout.dart';
+import 'screenshot_uploads.dart';
+import '../providers/library_providers.dart';
 import '../emulators/emulator_library.dart';
 import '../emulators/profile_launch_config.dart';
 import '../providers/download_providers.dart';
@@ -647,7 +649,13 @@ class GargosyPlayEngine implements PlayEngine {
       dirs?.onGameStarted = null;
     }
     final started = session.sessionStart;
-    unawaited(session.process?.exitCode.then((_) => _played(game, started, DateTime.now())));
+    unawaited(
+      session.process?.exitCode.then((_) async {
+        final ended = DateTime.now();
+        await _played(game, started, ended);
+        await _screenshots(game, strategy.emulatorId, started, ended);
+      }),
+    );
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
@@ -684,6 +692,26 @@ class GargosyPlayEngine implements PlayEngine {
       debugPrint('[PlayTime] not kept: $e');
     }
     _ref.invalidate(playTimeProvider(game.id));
+  }
+
+  /// The screenshots taken in [game]'s session (#233) wait for RomM, then
+  /// go with any that waited before. Never throws.
+  Future<void> _screenshots(Game game, String emulatorId, DateTime start, DateTime end) async {
+    final uploads = _ref.read(screenshotUploadsProvider);
+    final profile = _ref.read(activeProfileProvider);
+    if (uploads == null || profile == null || !uploads.enabled) return;
+    try {
+      final layout = EmulatorLayout.of(emulatorId);
+      if (layout.screenshots.isNotEmpty) {
+        final taken = screenshotsTaken(profile.paths.emulatorDir(emulatorId), layout, start, end);
+        debugPrint('[Screenshots] ${game.id}: ${taken.length} taken in $emulatorId');
+        await uploads.add(game.id, taken);
+      }
+      // The game page shows them once RomM has them.
+      if (await uploads.sendWaiting() > 0) _ref.invalidate(gameProvider(game.id));
+    } on Object catch (e) {
+      debugPrint('[Screenshots] not kept: $e');
+    }
   }
 
   static PlayResult _describe(LaunchResult? r) {

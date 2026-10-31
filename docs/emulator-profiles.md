@@ -77,6 +77,23 @@ Where each emulator writes its states in a profile, and how far each is checked.
 
 On close, three of them keep a state of where the game was (#141 follow-up): RetroArch `savestate_auto_save = "true"` (the auto slot, `<content>.state.auto`), DuckStation `[Main] SaveStateOnExit = true` (`<SERIAL>_resume.sav`), PCSX2 `[EmuCore] SaveStateOnShutdown = true` (`<SERIAL> (<CRC>).resume.p2s`). Flycast's `Dreamcast.AutoSaveState` is left off: it writes into the current slot (0), over a state the player saved there. Dolphin, PPSSPP, mGBA, ares, melonDS and Azahar have no such setting; MAME's `-autosave` also loads it at every start.
 
+## Screenshots (#233)
+
+Where each emulator writes the screenshots taken in a game, in a profile (`EmulatorLayout.screenshots`). After the game, the images written there during the session go to RomM (`play/screenshot_uploads.dart`). `test/unit/screenshot_uploads_test.dart` checks the folder each is told to use.
+
+| Emulator | Screenshots in the profile | Told by |
+|---|---|---|
+| retroarch | `<data>\screenshots\` | `screenshot_directory`, `screenshots_in_content_dir = "false"` (its default is the exe's folder, shared) |
+| dolphin | `<data>\ScreenShots\<GameID>\` | `--user=<data>` |
+| pcsx2 | `<data>\PCSX2\snaps\` | `[Folders] Snapshots` in `PCSX2.ini` |
+| duckstation | `<data>\screenshots\` | `[Folders] Screenshots` in the swapped `settings.ini` |
+| ppsspp | `<data>\PSP\SCREENSHOT\` | `installed.txt` (the memory stick) |
+| mgba | `<data>\screenshots\` | `-C screenshotPath=` (its default is beside the ROM, in `roms\`) |
+| mame | `<data>\snap\<driver>\` | `-snapshot_directory` |
+| scummvm | `<data>\screenshots\` | `[scummvm] screenshotpath` |
+
+Not yet: Flycast, ares, xemu, Xenia, Cemu, Eden, Azahar, melonDS, RPCS3, Ryujinx (their screenshot folders aren't pointed at the profile or looked through).
+
 ## Not supported in v1
 
 None so far. Every installed emulator passed with one of the two mechanisms.

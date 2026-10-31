@@ -5,6 +5,7 @@ import '../../../core/emulator/emulator_strategy.dart';
 import '../../../core/emulator/platform_slugs.dart';
 import '../../../core/save/state_sync_service.dart';
 import '../../../emulators/emulator_library.dart';
+import '../../../play/screenshot_uploads.dart';
 import '../../../providers/engine_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../theme/tokens.dart';
@@ -129,6 +130,27 @@ class _EmulatorsSectionState extends ConsumerState<EmulatorsSection> {
                 },
               ),
             if (prefs != null) _StateSyncCoverage(syncing: syncing, localOnly: localOnly, fromMenu: fromMenu),
+          ],
+        ),
+        SettingsCard(
+          title: tr('Screenshots on RomM'),
+          icon: Icons.photo_camera,
+          note: tr(
+            'Screenshots taken in a game go to RomM after it, as yours (shared only if you share them). RetroArch, Dolphin, PCSX2, DuckStation, PPSSPP, mGBA, MAME and ScummVM. On by default.',
+          ),
+          children: [
+            if (ref.watch(screenshotUploadsProvider) case final shots?)
+              SettingsToggle(
+                key: const ValueKey('screenshot-upload'),
+                label: tr('Upload screenshots'),
+                on: shots.enabled,
+                onChanged: (on) async {
+                  await shots.setEnabled(on);
+                  if (mounted) setState(() {});
+                },
+              )
+            else
+              Text(tr('Open a profile to change this.'), style: const TextStyle(color: GColors.fgSecondary)),
           ],
         ),
       ],

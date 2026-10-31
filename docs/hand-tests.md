@@ -378,3 +378,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 137. [ ] A game whose manual RomM has (its Manual tab in RomM's web UI shows a PDF): the game page has a Manual button between ♥ and ⋯; a game without one has none. With a controller alone: A on Manual opens the first page fitted to the screen with "Page 1 of N"; RB / LB and D-pad right / left turn the page, not past the first or last; A zooms in (1.5×, 2×, 3×, then the whole page again), the D-pad moves the zoomed page without leaving it, X shows the whole page, B goes back. With the mouse the wheel zooms and a drag moves the page; with the keyboard PgUp / PgDn, the arrows, + / −, Home / End and Esc.
 138. [ ] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
+
+## Screenshots to RomM (#233)
+
+139. [ ] Play a game in RetroArch, take two screenshots (F8), quit. In RomM's web UI the game's screenshots (yours) show both, and Gargosy's Overview shows them first in its Screenshots strip (open the page again). They are in `userdata\profiles\<id>\emulators\retroarch\screenshots\`, not in `emulators\retroarch\screenshots\` or `roms\`.
+140. [ ] The same with one standalone emulator (DuckStation F10, PCSX2 F8, Dolphin F9 or mGBA F12): its screenshot reaches RomM after the game. With mGBA, nothing new appears beside the ROM in `roms\`.
+141. [ ] With RomM stopped, take a screenshot and quit: nothing is lost. Start RomM again (or restart Gargosy): the screenshot reaches RomM. Settings → Emulator settings → Upload screenshots off: a new screenshot stays on this PC only.

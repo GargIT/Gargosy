@@ -299,6 +299,8 @@ void main() {
       'savegamePath=${p.join(m.data, 'saves')}',
       '-C',
       'savestatePath=${p.join(m.data, 'states')}',
+      '-C',
+      'screenshotPath=${p.join(m.data, 'screenshots')}',
     ]);
     expect(io.File(p.join(m.exeDir, 'portable.ini')).existsSync(), isTrue);
     final f = ctx('flycast');
