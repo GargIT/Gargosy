@@ -136,6 +136,10 @@ String? unpackUpdate(String zip, String dir, PathGuard guard) {
       final output = OutputFileStream(out);
       try {
         entry.writeContent(output);
+      } on FormatException {
+        // archive 4.5+: an entry that doesn't decode to its listed size
+        // (ArchiveException is a FormatException).
+        return tr('The download isn\'t a zip that can be read.');
       } finally {
         output.closeSync();
       }
