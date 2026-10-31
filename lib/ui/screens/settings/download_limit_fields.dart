@@ -29,7 +29,12 @@ List<Widget> downloadLimitFields(BuildContext context, WidgetRef ref, VoidCallba
   }
 
   Future<void> pickWindow() async {
-    final windows = <DownloadWindow?>[null, ...DownloadWindow.presets];
+    // A saved window that isn't a preset (written by hand) is offered too.
+    final windows = <DownloadWindow?>[
+      null,
+      ...DownloadWindow.presets,
+      if (limits.window case final w? when !DownloadWindow.presets.contains(w)) w,
+    ];
     final i = await showChoice(
       context,
       title: tr('Only download'),

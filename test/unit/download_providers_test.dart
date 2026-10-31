@@ -169,6 +169,8 @@ void main() {
       expect(fake.started, ['2']);
       expect(q.waitsUntil, isNull);
       expect(q.queue.map((g) => g.id), ['1'], reason: 'the rest still wait');
+      q.cancel('1');
+      expect(q.waitsUntil, isNull, reason: 'nothing left to wait');
     });
 
     test('Cancel all (#226) empties the queue; the running one goes on', () async {

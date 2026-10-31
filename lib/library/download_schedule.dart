@@ -20,6 +20,12 @@ class DownloadLimits {
 
   int get bytesPerSecond => megabytesPerSecond * 1024 * 1024;
 
+  /// Only the speed, in bytes per second: read for each chunk of a download.
+  static int speedOf(AppPreferences prefs) {
+    final mbps = int.tryParse(prefs.getString(speedKey) ?? '') ?? 0;
+    return speeds.contains(mbps) ? mbps * 1024 * 1024 : 0;
+  }
+
   static DownloadLimits of(AppPreferences prefs) {
     final speed = int.tryParse(prefs.getString(speedKey) ?? '') ?? 0;
     return DownloadLimits(
@@ -75,8 +81,9 @@ class DownloadWindow {
   /// When the window next opens after [t] ([t] itself when it's open).
   DateTime opensAt(DateTime t) {
     if (allows(t)) return t;
-    final today = DateTime(t.year, t.month, t.day).add(Duration(minutes: from));
-    return today.isAfter(t) ? today : today.add(const Duration(days: 1));
+    // On the calendar, not by adding hours: a day with a clock change has 23 or 25.
+    final today = DateTime(t.year, t.month, t.day, from ~/ 60, from % 60);
+    return today.isAfter(t) ? today : DateTime(t.year, t.month, t.day + 1, from ~/ 60, from % 60);
   }
 
   @override

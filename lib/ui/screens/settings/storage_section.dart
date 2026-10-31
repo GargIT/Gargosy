@@ -155,7 +155,9 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                 if (mounted) setState(() {});
               },
             ),
-            ...downloadLimitFields(context, ref, () => setState(() {})),
+            ...downloadLimitFields(context, ref, () {
+              if (mounted) setState(() {});
+            }),
           ],
         ),
         const ImageCacheCard(),

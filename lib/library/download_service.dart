@@ -10,7 +10,6 @@ import '../profiles/path_guard.dart';
 import 'disk_space.dart';
 import 'download_check.dart';
 import 'rom_files.dart';
-import 'throttled_download.dart';
 import '../l10n/tr.dart';
 
 enum DownloadPhase {
@@ -68,11 +67,9 @@ class DownloadService {
     this.detail,
     this.disk,
     this.checkHashes = _always,
-    this.bytesPerSecond = _unlimited,
   });
 
   static bool _always() => true;
-  static int _unlimited() => 0;
 
   final Dio dio;
   final Options Function() auth;
@@ -90,10 +87,6 @@ class DownloadService {
   /// Whether a download is checked against RomM's hashes before it moves
   /// into `roms\` (#225; Settings → Storage → Check downloads).
   final bool Function() checkHashes;
-
-  /// The speed limit (#228; Settings → Storage → Downloads), read as it
-  /// downloads; 0 is none.
-  final int Function() bytesPerSecond;
 
   /// What [download] writes, by place: the download in temp, a zip's
   /// unpacked copy beside it, and the game in `roms\` when that's another
@@ -146,26 +139,15 @@ class DownloadService {
       void progress(int received, int total) => onProgress?.call(
         DownloadProgress(DownloadPhase.downloading, received: received, total: total > 0 ? total : game.fileSize),
       );
-      if (bytesPerSecond() > 0) {
-        await downloadThrottled(
-          dio,
-          urlFor(game),
-          part,
-          options: auth(),
-          bytesPerSecond: bytesPerSecond,
-          cancel: cancel,
-          onProgress: progress,
-        );
-      } else {
-        await dio.download(
-          urlFor(game),
-          part,
-          options: auth(),
-          cancelToken: cancel,
-          deleteOnError: true,
-          onReceiveProgress: progress,
-        );
-      }
+      // Paced by the Dio's adapter when a speed limit is set (#228).
+      await dio.download(
+        urlFor(game),
+        part,
+        options: auth(),
+        cancelToken: cancel,
+        deleteOnError: true,
+        onReceiveProgress: progress,
+      );
       // One file: checked before anything moves (#225).
       // A ROM that is an archive RomM hashed by what's inside: not checked.
       final archive = archiveExtensions.contains(p.extension(fileName ?? game.fsName ?? '').toLowerCase());
