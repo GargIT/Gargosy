@@ -52,7 +52,7 @@ Future<void> main(List<String> args) async {
   // failed start.
   AppInstance? instance;
   try {
-    instance = await AppInstance.claim(root, args);
+    instance = await AppInstance.claim(root, args, platform: PlatformInfo.current);
     if (instance == null) io.exit(0);
   } on Object catch (e, s) {
     LoggerService().error(e, s, context: 'Instance');

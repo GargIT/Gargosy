@@ -338,7 +338,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 123. [x] The same with `--profile=<profile id>` (its folder's name under `userdata\profiles\`): that profile opens without asking who. With a wrong PIN or Back, the picker stays and no game starts. With RomM unreachable, quit the game: Gargosy says the save didn't reach RomM before it closes.
 124. [x] Add `Gargosy.exe` to Steam as a non-Steam game with `--play=<rom id>` as its launch options, start it from Big Picture with a controller: the game runs, and Steam sees it end when Gargosy closes after the sync.
 125. [x] `--play-stay`: Gargosy stays open on the game's page after the session, with the session's message.
-126. [ ] With Gargosy open on Home, open the shortcut: no second Gargosy starts; the open one comes to the front, plays the game, and stays open after it. With `--profile=` of another profile: it switches (asking about downloads, PIN where it has one) and plays it there. With a game running: "A game is already running" and nothing else. Open `Gargosy.exe` twice without arguments: the first comes to the front.
+126. [x] With Gargosy open on Home, open the shortcut: no second Gargosy starts; the open one comes to the front, plays the game, and stays open after it. With `--profile=` of another profile: it switches (asking about downloads, PIN where it has one) and plays it there. With a game running: "A game is already running" and nothing else. Open `Gargosy.exe` twice without arguments: the first comes to the front.
 127. [x] A downloaded game's page → ⋯ → Create desktop shortcut: a shortcut named after the game, with its cover as the icon, is on the desktop and the toast says its name. Do it again: a second one, `(2)`, the first untouched. Open one with Gargosy closed: the game starts in this profile without asking who.
 
 ## Age limit per profile (#224)
@@ -377,7 +377,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Manuals from RomM (#232)
 
 137. [x] A game whose manual RomM has (its Manual tab in RomM's web UI shows a PDF): the game page has a Manual button between ♥ and ⋯; a game without one has none. With a controller alone: A on Manual opens the first page fitted to the screen with "Page 1 of N"; RB / LB and D-pad right / left turn the page, not past the first or last; A zooms in (1.5×, 2×, 3×, then the whole page again), the D-pad moves the zoomed page without leaving it, X shows the whole page, B goes back. With the mouse the wheel zooms and a drag moves the page; with the keyboard PgUp / PgDn, the arrows, + / −, Home / End and Esc.
-138. [x] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
+138. [ ] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
 
 ## Screenshots to RomM (#233)
 
@@ -387,9 +387,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Settings per game (#234)
 
-142. [ ] A PS2 game in PCSX2: Play → Game settings → Widescreen On (with a controller alone). The game starts in widescreen (16:9); another PS2 game without the setting starts as PCSX2 had it before. The play screen's line says "Game settings: widescreen".
+142. [x] A PS2 game in PCSX2: Play → Game settings → Widescreen On (with a controller alone). The game starts in widescreen (16:9); another PS2 game without the setting starts as PCSX2 had it before. The play screen's line says "Game settings: widescreen".
 143. [ ] A GameCube game in Dolphin with Widescreen On starts with Dolphin's widescreen hack; a game in DuckStation with Widescreen On starts 16:9.
-144. [ ] A game in RetroArch: Game settings → Shader → a CRT preset. The game starts with that shader; another game doesn't. Extra arguments `--verbose` (on-screen keyboard) reach RetroArch (its log is longer). Reset this game's settings… clears them, and the game starts as before.
+144. [x] A game in RetroArch: Game settings → Shader → a CRT preset. The game starts with that shader; another game doesn't. Extra arguments `--verbose` (on-screen keyboard) reach RetroArch (its log is longer). Reset this game's settings… clears them, and the game starts as before.
 
 ## Play time limits (#235)
 
@@ -399,9 +399,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Stats (#236)
 
-148. [ ] Start → Stats (under PROFILE): the tiles show this week, this month, all time, the longest session and days in a row; Games finished matches RomM's games marked Finished or Completed 100%; achievements this month matches RomM's RetroAchievements page. With a controller alone the D-pad walks Most played and A opens a game's page; B goes back.
+148. [x] Start → Stats (under PROFILE): the tiles show this week, this month, all time, the longest session and days in a row; Games finished matches RomM's games marked Finished or Completed 100%; achievements this month matches RomM's RetroAchievements page. With a controller alone the D-pad walks Most played and A opens a game's page; B goes back.
 149. [ ] A game played on another PC with the same RomM user counts here (its time and platform). With RomM stopped, Stats says it's this PC's play only and the RomM tiles show a dash.
 
 ## Major package upgrades (#261)
 
-150. [ ] The dev build after win32 6 and the other majors: sign in to a profile with a PIN and restart Gargosy (its login is read back: DPAPI); covers and platform logos show (cached_network_image); Settings → Emulators → Import opens the folder picker (file_picker); About shows the version (package_info_plus); in a game, a non-XInput controller (a DualShock 4 or Switch Pro over USB) closes it with the quit buttons (the HID reading); Settings → Storage shows the drive's free space.
+150. [x] The dev build after win32 6 and the other majors: sign in to a profile with a PIN and restart Gargosy (its login is read back: DPAPI); covers and platform logos show (cached_network_image); Settings → Emulators → Import opens the folder picker (file_picker); About shows the version (package_info_plus); in a game, a non-XInput controller (a DualShock 4 or Switch Pro over USB) closes it with the quit buttons (the HID reading); Settings → Storage shows the drive's free space.
