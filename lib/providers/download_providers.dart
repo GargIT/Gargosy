@@ -147,6 +147,17 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     _next();
   }
 
+  /// Why [game] wouldn't fit with everything before it (#227: Make room
+  /// offers to free it); null when it fits, or isn't checked.
+  NotEnoughSpace? spaceFor(Game game) {
+    try {
+      checkSpace({_ref.read(appRootProvider).roms: game.fileSize + _stillToCome()}, _ref.read(diskInfoProvider));
+      return null;
+    } on NotEnoughSpace catch (e) {
+      return e;
+    }
+  }
+
   /// What the queue and the running download will still write.
   int stillToCome() => _stillToCome();
 

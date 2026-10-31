@@ -29,6 +29,12 @@ Widget _dialogButton(
   ),
 );
 
+/// A dialog's button as the others here draw it; [onPress] null greys it.
+Widget dialogButton(String label, VoidCallback? onPress, {bool primary = false}) => Opacity(
+  opacity: onPress == null ? 0.5 : 1,
+  child: _dialogButton(label, onPress ?? () {}, primary: primary),
+);
+
 Widget _panel({required String title, required List<Widget> children, double width = 480}) => Center(
   child: Material(
     color: GColors.panel,
