@@ -129,8 +129,8 @@ void main() {
         PlaySessionRecord(gameId: '1', start: DateTime(2026, 10, 31, 10), end: DateTime(2026, 10, 31, 10, 30)),
       ];
       final remote = _Remote([
-        (deviceId: 'other', start: DateTime(2026, 10, 31, 12), end: DateTime(2026, 10, 31, 12, 20)),
-        (deviceId: 'this', start: DateTime(2026, 10, 31, 10), end: DateTime(2026, 10, 31, 10, 30)),
+        (gameId: '1', deviceId: 'other', start: DateTime(2026, 10, 31, 12), end: DateTime(2026, 10, 31, 12, 20)),
+        (gameId: '1', deviceId: 'this', start: DateTime(2026, 10, 31, 10), end: DateTime(2026, 10, 31, 10, 30)),
       ]);
       Future<Duration> used(PlaySessionsApi? api, String? device) =>
           playedSince(DateTime(2026, 10, 31), log: _Log(log), api: api, deviceId: device, now: now);
@@ -143,7 +143,12 @@ void main() {
       );
       final moved = _Remote([
         // The folder came from another PC: its sessions are in this log and on RomM under that PC.
-        (deviceId: 'pc-a', start: DateTime(2026, 10, 31, 10, 0, 1), end: DateTime(2026, 10, 31, 10, 30, 1)),
+        (
+          gameId: '1',
+          deviceId: 'pc-a',
+          start: DateTime(2026, 10, 31, 10, 0, 1),
+          end: DateTime(2026, 10, 31, 10, 30, 1),
+        ),
       ]);
       expect(await used(moved, 'this'), const Duration(minutes: 30));
       expect(await used(_Remote(const [], fails: true), 'this'), const Duration(minutes: 30));

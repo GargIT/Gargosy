@@ -69,7 +69,7 @@ DateTime? _utc(Object? v) {
 }
 
 /// One of the player's sessions on RomM: on which device, from when to when.
-typedef RemoteSession = ({String? deviceId, DateTime start, DateTime end});
+typedef RemoteSession = ({String? gameId, String? deviceId, DateTime start, DateTime end});
 
 class RommPlaySessions implements PlaySessionsApi {
   RommPlaySessions(this.dio, this.auth, {this.deviceId});
@@ -139,6 +139,7 @@ class RommPlaySessions implements PlaySessionsApi {
         if (s is Map)
           if ((_utc(s['start_time']), _utc(s['end_time'])) case (final start?, final end?))
             (
+              gameId: s['rom_id'] == null ? null : '${s['rom_id']}',
               deviceId: s['device_id'] is String ? s['device_id'] as String : null,
               start: start.toLocal(),
               end: end.toLocal(),
