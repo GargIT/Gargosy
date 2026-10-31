@@ -70,6 +70,9 @@ class FakeEngine implements PlayEngine {
   /// Whether the session can be closed (#141), and how often it was.
   bool closable = false;
   int closes = 0;
+
+  /// How many closes fail before one works (#235's retry).
+  int closeFails = 0;
   bool returnsAfterExit = false;
 
   @override
@@ -297,6 +300,10 @@ class FakeEngine implements PlayEngine {
     if (closable) {
       onStarted?.call(() async {
         closes++;
+        if (closeFails > 0) {
+          closeFails--;
+          throw StateError('the emulator went on');
+        }
         running!.complete(const PlayResult('The game ended.'));
       });
     }

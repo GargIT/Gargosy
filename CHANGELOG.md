@@ -8,6 +8,11 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Play time limits: Settings → Profile → Play time sets minutes a day
+  (counted on every PC the profile plays on) and the hours it may play,
+  changed with a parent's PIN. Five minutes before the end Windows plays
+  its alert sound; at the end the game is closed and its saves sync.
+  Play says when the time is back.
 - Settings per game: the play screen's Game settings sets, for one game
   in one emulator, extra command-line arguments, a RetroArch shader, and
   widescreen in PCSX2, Dolphin, DuckStation and Flycast. Reset puts the

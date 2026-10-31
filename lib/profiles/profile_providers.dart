@@ -1,4 +1,5 @@
 import 'age_limit.dart';
+import 'play_limit.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -118,6 +119,11 @@ class ActiveProfileNotifier extends StateNotifier<ProfileContext?> {
 
 final activeProfileProvider = StateNotifierProvider<ActiveProfileNotifier, ProfileContext?>(
   (ref) => ActiveProfileNotifier(ref),
+);
+
+/// The open profile's play time limit (#235); [PlayLimit.off] without one.
+final playLimitProvider = Provider<PlayLimit>(
+  (ref) => ref.watch(activeProfileProvider.select((c) => c?.profile.playLimit)) ?? PlayLimit.off,
 );
 
 /// The open profile's age limit (#224); [AgeLimit.off] without one.

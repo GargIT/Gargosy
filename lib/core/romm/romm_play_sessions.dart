@@ -53,8 +53,23 @@ abstract class PlaySessionsApi {
   /// has no play sessions.
   Future<PlayTime?> timeFor(String gameId);
 
+  /// The player's sessions on every device that started after [since]
+  /// (#235: today's play from other PCs); null when this RomM has no play
+  /// sessions or doesn't let them be read.
+  Future<List<RemoteSession>?> sessionsSince(DateTime since);
+
   static const batch = 100;
 }
+
+/// RomM's time, in UTC even when it comes without a zone.
+DateTime? _utc(Object? v) {
+  if (v is! String) return null;
+  final zoned = RegExp(r'(Z|[+-]\d\d:?\d\d)$').hasMatch(v);
+  return DateTime.tryParse(zoned ? v : '${v}Z');
+}
+
+/// One of the player's sessions on RomM: on which device, from when to when.
+typedef RemoteSession = ({String? deviceId, DateTime start, DateTime end});
 
 class RommPlaySessions implements PlaySessionsApi {
   RommPlaySessions(this.dio, this.auth, {this.deviceId});
@@ -102,5 +117,32 @@ class RommPlaySessions implements PlaySessionsApi {
       if (s is Map && s['duration_ms'] is int) ms += s['duration_ms'] as int;
     }
     return PlayTime(Duration(milliseconds: ms), list.length);
+  }
+
+  @override
+  Future<List<RemoteSession>?> sessionsSince(DateTime since) async {
+    final Response<dynamic> r;
+    try {
+      r = await dio.get(
+        '/api/play-sessions',
+        queryParameters: {'start_after': since.toUtc().toIso8601String(), 'limit': 10000},
+        options: auth(),
+      );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 404 || status == 403) return null;
+      rethrow;
+    }
+    final list = r.data is List ? r.data as List : const [];
+    return [
+      for (final s in list)
+        if (s is Map)
+          if ((_utc(s['start_time']), _utc(s['end_time'])) case (final start?, final end?))
+            (
+              deviceId: s['device_id'] is String ? s['device_id'] as String : null,
+              start: start.toLocal(),
+              end: end.toLocal(),
+            ),
+    ];
   }
 }

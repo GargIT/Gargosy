@@ -1,5 +1,6 @@
 import 'age_limit.dart';
 import 'pin.dart';
+import 'play_limit.dart';
 
 /// One person on this PC: a RomM user on a server, plus a name, colour and PIN.
 class Profile {
@@ -15,6 +16,7 @@ class Profile {
     this.pin,
     this.trustSelfSigned = false,
     this.ageLimit = AgeLimit.off,
+    this.playLimit = PlayLimit.off,
   });
 
   final String id;
@@ -32,6 +34,9 @@ class Profile {
   /// it holds on every PC the folder goes to.
   final AgeLimit ageLimit;
 
+  /// How long and when this profile may play (#235), kept beside it.
+  final PlayLimit playLimit;
+
   Profile copyWith({
     String? name,
     int? colorIndex,
@@ -39,6 +44,7 @@ class Profile {
     PinHash? pin,
     bool clearPin = false,
     AgeLimit? ageLimit,
+    PlayLimit? playLimit,
   }) => Profile(
     id: id,
     name: name ?? this.name,
@@ -51,6 +57,7 @@ class Profile {
     pin: clearPin ? null : (pin ?? this.pin),
     trustSelfSigned: trustSelfSigned,
     ageLimit: ageLimit ?? this.ageLimit,
+    playLimit: playLimit ?? this.playLimit,
   );
 
   Map<String, dynamic> toJson() => {
@@ -65,6 +72,7 @@ class Profile {
     if (pin != null) 'pin': pin!.toJson(),
     'trustSelfSigned': trustSelfSigned,
     if (ageLimit.isOn) 'ageLimit': ageLimit.toJson(),
+    if (playLimit.isOn) 'playLimit': playLimit.toJson(),
   };
 
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
@@ -79,5 +87,6 @@ class Profile {
     pin: json['pin'] is Map<String, dynamic> ? PinHash.fromJson(json['pin'] as Map<String, dynamic>) : null,
     trustSelfSigned: json['trustSelfSigned'] == true,
     ageLimit: AgeLimit.fromJson(json['ageLimit']),
+    playLimit: PlayLimit.fromJson(json['playLimit']),
   );
 }
