@@ -81,7 +81,7 @@ const svText = <String, String>{
   'Check automatically': 'Sök automatiskt',
   'Check now': 'Sök nu',
   'Checking RomM\'s states…': 'Kollar RomM:s sparlägen…',
-  'Checking…': 'Söker…',
+  'Checking…': 'Kontrollerar…',
   'Choose': 'Välj',
   'Choose / Play': 'Välj / Spela',
   'Choose a PIN': 'Välj en PIN-kod',
