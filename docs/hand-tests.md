@@ -372,4 +372,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Report a bug with the log (#231)
 
-136. [ ] About → Report a bug: the browser opens GitHub's bug form with Gargosy's, Windows' and RomM's versions filled in, and Explorer opens `userdata\app\` with `gargosy-log-for-bug.txt` (the newest log; no token or password in it), ready to drag into the form's Log field.
+136. [ ] About → Report a bug: the browser opens GitHub's bug form with Gargosy's, Windows' and RomM's versions filled in, and Explorer opens `userdata\app\temp\bug-report\` with `gargosy-log-for-bug.txt` (the last two logs; no token or password in it), ready to drag into the form's Log field. On Windows 11 the form says Windows 11. Other links in About (GitHub, a document's web link) still open.

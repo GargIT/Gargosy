@@ -7,8 +7,9 @@ import 'romm_providers.dart';
 /// Opens a web address or a file with Windows' default program; tests replace it.
 final externalOpenerProvider = Provider<void Function(String target)>(
   (ref) => (target) {
-    // cmd reads & as "and then": a web address's query (#231) is escaped.
-    io.Process.start('cmd', ['/c', 'start', '', target.startsWith('http') ? target.replaceAll('&', '^&') : target]);
+    // Explorer, not cmd: nothing in an address or a path (&, %, |) is read
+    // as a command (#231).
+    io.Process.start('explorer.exe', [target]);
   },
 );
 

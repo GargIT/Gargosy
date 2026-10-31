@@ -702,6 +702,7 @@ const svText = <String, String>{
       'Emulatorns program tas bort. Alla profilers sparfiler och inställningar för den finns kvar.',
   'The folder {0} is installed in': 'Mappen {0} är installerad i',
   'The game ended.': 'Spelet avslutades.',
+  'The log couldn\'t be copied: {0}': 'Loggen kunde inte kopieras: {0}',
   'The login could not be saved on this PC ({0}).': 'Inloggningen kunde inte sparas på den här datorn ({0}).',
   'The login was refused in RomM.': 'Inloggningen nekades i RomM.',
   'The note is deleted from RomM.': 'Anteckningen tas bort från RomM.',
