@@ -361,3 +361,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Download speed limit and schedule (#228)
 
 133. [ ] Settings → Storage → Downloads → Speed limit 2 MB/s: a large download's speed in Downloads stays near 2 MB/s; No limit again: it speeds up from the next download. Only download → a window that is closed now: queued games say "waits until …" and nothing starts; A on one downloads it now, the rest wait. Any time: the queue goes on at once.
+
+## Continue from another PC (#229)
+
+134. [ ] Play a game with a save on PC A and quit (it syncs). On PC B with the same profile's RomM user, open Gargosy: Home's header says "CONTINUE WHERE YOU LEFT OFF ON <PC A's name>" for that game, with Resume or Play. Play it on B: back on Home, it says LAST PLAYED again.

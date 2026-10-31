@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../library/continue_elsewhere.dart';
 import '../library/library_snapshot.dart';
 import '../library/home_layout.dart';
 import '../library/platform_covers.dart';
@@ -192,6 +193,17 @@ final romSavesProvider = FutureProvider.family<List<Map<String, dynamic>>, Strin
   final list = await romm.getSavesListOrNull(id);
   if (list == null) throw StateError(tr('RomM did not answer'));
   return list;
+});
+
+/// #229: the game's newest save from another PC that this one isn't current
+/// with (RomM's `device_syncs`); null offline, without this PC's device id,
+/// or when this PC has the newest.
+final continueElsewhereProvider = FutureProvider.autoDispose.family<ElsewhereSave?, String>((ref, id) async {
+  final romm = ref.watch(rommServiceProvider);
+  final device = ref.watch(activeProfileProvider.select((c) => c?.login.deviceId));
+  if (romm == null || device == null || ref.watch(rommOfflineProvider)) return null;
+  final saves = await romm.getSavesListOrNull(id, deviceId: device);
+  return saves == null ? null : newestElsewhere(saves, device, now: DateTime.now());
 });
 
 final romStatesProvider = FutureProvider.family<List<RommState>, String>((ref, id) async {

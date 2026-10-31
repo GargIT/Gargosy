@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Home's header says "Continue where you left off on <PC>" when the game
+  you played last was saved on another PC since this one had it.
 - A download speed limit and a time to download in: Settings → Storage →
   Downloads → Speed limit (2–50 MB/s) and Only download (for example
   22:00–07:00). Outside it the queue waits and says until when; A on a
