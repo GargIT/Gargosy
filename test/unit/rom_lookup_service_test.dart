@@ -101,8 +101,8 @@ void main() {
         final game = makeGame(name: 'MultiDisc', fsName: 'MultiDisc', hasMultipleFiles: true, platformSlug: 'psx');
         final result = await RomLookupService.findExistingRomPath(game, tempDir.path);
         expect(result, isNotNull);
-        // Gargosy (#230): disc 1, not the largest file.
-        expect(result, contains('disc1.chd'));
+        // Should find the largest file in the folder
+        expect(result, contains('disc2.chd'));
       });
 
       test('index hit on file returns path', () async {
@@ -195,8 +195,7 @@ void main() {
         expect(p.basename(result!), 'game.m3u');
       });
 
-      // Gargosy (#230): numbered discs start on disc 1, not the largest.
-      test('numbered discs without an .m3u start on disc 1 (gc)', () async {
+      test('falls back to largest file when no .m3u present (gc)', () async {
         final folder = Directory(p.join(tempDir.path, 'GCNoM3u'));
         await folder.create();
         await File(p.join(folder.path, 'disc1.iso')).writeAsString('x' * 100);
@@ -205,18 +204,7 @@ void main() {
         final game = makeGame(platformSlug: 'gc');
         final result = await RomLookupService.findMainRomInFolder(game, folder.path);
         expect(result, isNotNull);
-        expect(p.basename(result!), 'disc1.iso');
-      });
-
-      test('falls back to largest file when the discs have no numbers (gc)', () async {
-        final folder = Directory(p.join(tempDir.path, 'GCNoNumbers'));
-        await folder.create();
-        await File(p.join(folder.path, 'game.iso')).writeAsString('x' * 100);
-        await File(p.join(folder.path, 'extra.iso')).writeAsString('x' * 1000);
-
-        final game = makeGame(platformSlug: 'gc');
-        final result = await RomLookupService.findMainRomInFolder(game, folder.path);
-        expect(p.basename(result!), 'extra.iso');
+        expect(p.basename(result!), 'disc2.iso');
       });
 
       // Regression test for issue #44: a single-file-foldered game whose

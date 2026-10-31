@@ -613,26 +613,24 @@ class GargosyPlayEngine implements PlayEngine {
   }) async {
     final service = await _launch();
     final dirs = _ref.read(launchDirectoriesProvider);
+    // A game folder of numbered discs without its own playlist (#230): the
+    // emulator starts on one in temp, named after [romPath]'s disc, so it can
+    // switch discs; the saves still sync against [romPath].
+    final root = _ref.read(appRootProvider);
+    final playlist = strategy.takesDiscPlaylist(game.platformSlug)
+        ? DiscPlaylist.writeFor(romPath, gameId: game.id, root: root, guard: PathGuard(root))
+        : null;
+    // A state resumes against what the game is started on (DuckStation
+    // records the media path): the playlist when there is one.
     final statePath = loadStatePath == null
         ? null
-        : await stateForThisPc(strategy, loadStatePath, romPath, _ref.read(appRootProvider));
+        : await stateForThisPc(strategy, loadStatePath, playlist ?? romPath, root);
     // Told as soon as the emulator starts: service.launch returns only
     // after it has exited.
     dirs?.onGameStarted = (process) {
       onStarted?.call(() => _ref.read(processCloserProvider).close(process));
       process.exitCode.whenComplete(_ref.read(windowFocusProvider).bringToFront);
     };
-    // A multi-disc folder without its own playlist (#230): the emulator
-    // starts on one in temp, named after disc 1, so it can switch discs;
-    // the saves still sync against [romPath].
-    final root = _ref.read(appRootProvider);
-    final playlist = DiscPlaylist.writeFor(
-      romPath,
-      emulatorId: strategy.emulatorId,
-      gameId: game.id,
-      root: root,
-      guard: PathGuard(root),
-    );
     final GameSession session;
     try {
       session = await service.launch(
@@ -642,6 +640,9 @@ class GargosyPlayEngine implements PlayEngine {
         overrideCoreId: coreOverride,
         loadStatePath: statePath,
       );
+    } on Object {
+      if (playlist != null) DiscPlaylist.remove(playlist);
+      rethrow;
     } finally {
       dirs?.onGameStarted = null;
     }
@@ -654,8 +655,8 @@ class GargosyPlayEngine implements PlayEngine {
           final temp = resumeTempDir(_ref.read(appRootProvider));
           // The copies made for this session: this PC's ROM path, another
           // player's state (#92).
+          if (playlist != null) DiscPlaylist.remove(playlist);
           for (final copy in {
-            ?playlist,
             if (statePath != loadStatePath) statePath,
             if (loadStatePath != null && p.isWithin(temp, loadStatePath)) loadStatePath,
           }) {

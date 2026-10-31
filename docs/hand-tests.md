@@ -368,4 +368,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Multi-disc games without an .m3u (#230)
 
-135. [ ] A PS1 game of two discs in one folder without an `.m3u` (for example "Game (Disc 1).chd", "Game (Disc 2).chd"): Play in RetroArch starts disc 1, and RetroArch's Disc Control lists both discs. The same in DuckStation (its Change Disc lists both). A save made on disc 1 syncs as before. No `.m3u` appears in `roms\`.
+135. [ ] A PS1 game of two discs in one folder without an `.m3u` (for example "Game (Disc 1).chd", "Game (Disc 2).chd"): Play in RetroArch starts disc 1, and RetroArch's Disc Control lists both discs. The same in DuckStation (its Change Disc lists both). A save made there syncs as before, and Resume of a state made on disc 2 comes back on disc 2. No `.m3u` appears in `roms\`.

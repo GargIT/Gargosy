@@ -9,6 +9,10 @@ import 'package:gargosy/core/storage/directory_service.dart';
 import 'package:path/path.dart' as p;
 
 class DuckstationStrategy extends EmulatorStrategy {
+  /// Gargosy (#230): DuckStation switches discs through an `.m3u`.
+  @override
+  bool takesDiscPlaylist(String? platformSlug) => true;
+
   final DirectoryService _directoryService;
 
   DuckstationStrategy(this._directoryService, {super.platform});
