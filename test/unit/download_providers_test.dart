@@ -127,6 +127,19 @@ void main() {
       expect(downloads.pending, 0);
     });
 
+    test('Cancel all (#226) empties the queue; the running one goes on', () async {
+      unawaited(downloads.start(a));
+      final waitingB = downloads.start(b);
+      final waitingD = downloads.start(d);
+      await tick();
+      downloads.cancelQueued();
+      await waitingB;
+      await waitingD;
+      expect(downloads.queue, isEmpty);
+      expect(downloads.current?.id, '1');
+      expect(c.read(downloadsProvider).keys, ['1']);
+    });
+
     test('queued only when it fits with everything before it', () async {
       const gb = 1 << 30;
       Game sized(int id) => Game.fromJson({...gameJson(id, 'G$id'), 'file_size_bytes': 2 * gb});

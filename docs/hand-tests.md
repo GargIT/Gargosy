@@ -349,3 +349,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Checking a download (#225)
 
 130. [ ] Download a one-file game and a multi-disc game: each says Checking… after downloading, then lands as before. Settings → Storage → Check downloads off: no Checking…. (A damaged download is hard to make by hand: the unit tests cover it; if one ever fails with "The download is damaged", Retry gets it again.)
+
+## Download all (#226)
+
+131. [ ] A collection with a few games, some on this PC: Download all says how many and about how big (only those not on this PC), and queues them in the collection's order; Downloads lists them. Cancel all empties the queue while the first goes on. A platform's page does the same. With too little room it says "Needs …" and queues nothing.

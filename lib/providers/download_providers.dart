@@ -193,6 +193,14 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
     state = Map.of(state); // the order changed: listeners read it again
   }
 
+  /// The queue emptied; the running download goes on (Downloads' Cancel
+  /// all, #226).
+  void cancelQueued() {
+    for (final g in List.of(_queue)) {
+      cancel(g.id);
+    }
+  }
+
   /// The queue emptied and the running download stopped (a profile switch).
   void cancelAll() {
     for (final g in _queue) {

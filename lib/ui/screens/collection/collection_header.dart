@@ -9,6 +9,7 @@ import '../../../library/smart_criteria.dart';
 import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/download_all_button.dart';
 import '../../widgets/collection_tile.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/error_retry.dart';
@@ -231,6 +232,8 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
             ),
             const SizedBox(width: GSpace.s2),
           ],
+          DownloadAllButton(query: widget.collection.query),
+          const SizedBox(width: GSpace.s2),
           GFocusable(
             key: const ValueKey('collection-random'),
             borderRadius: GRadius.pill,
