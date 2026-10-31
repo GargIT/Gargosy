@@ -80,13 +80,9 @@ class PlayTimeLog {
 /// RomM's play sessions for the active profile; null with no RomM.
 final playSessionsApiProvider = Provider<PlaySessionsApi?>((ref) {
   final romm = ref.watch(rommServiceProvider);
-  return romm == null
-      ? null
-      : RommPlaySessions(
-          romm.dio,
-          () => romm.authOptions,
-          deviceId: () => ref.read(activeProfileProvider)?.login.deviceId,
-        );
+  // Watched: built again once this PC gets its device id.
+  final device = ref.watch(activeProfileProvider.select((c) => c?.login.deviceId));
+  return romm == null ? null : RommPlaySessions(romm.dio, () => romm.authOptions, deviceId: () => device);
 });
 
 final playTimeLogProvider = Provider<PlayTimeLog?>((ref) {

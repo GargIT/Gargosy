@@ -23,6 +23,7 @@ import 'profiles/app_root.dart';
 import 'profiles/path_guard.dart';
 import 'profiles/portable_temp.dart';
 import 'profiles/profile_providers.dart';
+import 'providers/retry.dart';
 import 'providers/update_providers.dart';
 import 'sigil/sigil_library.dart';
 import 'core/platform/platform_info.dart';
@@ -91,6 +92,7 @@ Future<void> main(List<String> args) async {
   );
   runApp(
     ProviderScope(
+      retry: noRetry,
       overrides: [
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(SharedPreferencesAppPreferences(prefs)),

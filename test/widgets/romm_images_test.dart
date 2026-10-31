@@ -11,6 +11,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 import 'package:gargosy/ui/widgets/platform_logo.dart';
@@ -62,7 +63,7 @@ void main() {
 
   test('covers load through the RomM image cache (the server\'s certificate setting, kept on disk)', () {
     final cache = _FakeCache();
-    final c = ProviderContainer(overrides: [rommImageCacheProvider.overrideWithValue(cache)]);
+    final c = ProviderContainer(retry: noRetry, overrides: [rommImageCacheProvider.overrideWithValue(cache)]);
     addTearDown(c.dispose);
     final cover = c.read(coverImageBuilderProvider)('https://romm.home:8443/assets/romm/resources/1/cover.png');
     expect(cover, isA<CachedNetworkImage>());
@@ -105,7 +106,7 @@ void main() {
           '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8"/></svg>',
         );
       final cache = _FakeCache(svg);
-      final c = ProviderContainer(overrides: [rommImageCacheProvider.overrideWithValue(cache)]);
+      final c = ProviderContainer(retry: noRetry, overrides: [rommImageCacheProvider.overrideWithValue(cache)]);
       addTearDown(c.dispose);
       await pumpLogo(tester, c, 'ps2');
       expect(cache.asked, ['https://romm.home/assets/platforms/ps2.svg']);
@@ -118,7 +119,10 @@ void main() {
           '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><defs><style>.cls-1 { fill: #ff0000; }'
           '</style></defs><rect class="cls-1" width="8" height="8"/></svg>',
         );
-      final c = ProviderContainer(overrides: [rommImageCacheProvider.overrideWithValue(_FakeCache(svg))]);
+      final c = ProviderContainer(
+        retry: noRetry,
+        overrides: [rommImageCacheProvider.overrideWithValue(_FakeCache(svg))],
+      );
       addTearDown(c.dispose);
       final boundary = GlobalKey();
       await tester.pumpWidget(
@@ -158,6 +162,7 @@ void main() {
     testWidgets("RomM has only an .ico (C64, DOS, …): that one's picture, in its colours", (tester) async {
       final ico = io.File(p.join(tmp.path, 'c64.ico'))..writeAsBytesSync(await _redIco(tester));
       final c = ProviderContainer(
+        retry: noRetry,
         overrides: [
           rommImageCacheProvider.overrideWithValue(
             _FakeCache(null, {'https://romm.home/assets/platforms/c64.ico': ico}),
@@ -202,7 +207,7 @@ void main() {
 
     testWidgets("one RomM doesn't have shows the badge and isn't asked for again this session", (tester) async {
       final cache = _FakeCache();
-      final c = ProviderContainer(overrides: [rommImageCacheProvider.overrideWithValue(cache)]);
+      final c = ProviderContainer(retry: noRetry, overrides: [rommImageCacheProvider.overrideWithValue(cache)]);
       addTearDown(c.dispose);
       await pumpLogo(tester, c, 'my-homebrew');
       expect(find.byKey(const ValueKey('platform-badge')), findsOneWidget);

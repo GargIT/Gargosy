@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../core/romm/romm_models.dart';
 import '../core/save/backup_entry.dart';
@@ -97,10 +98,11 @@ class UploadQueue {
 
 /// The active profile's queue; null without a profile.
 final uploadQueueProvider = FutureProvider<UploadQueue?>((ref) async {
-  final repo = await ref.watch(backupRepositoryProvider.future);
+  // Every dependency watched before the first wait (Riverpod 3).
   final sync = ref.watch(saveSyncServiceProvider);
   final romm = ref.watch(rommServiceProvider);
   final engine = ref.watch(playEngineProvider);
+  final repo = await ref.watch(backupRepositoryProvider.future);
   if (repo == null || sync == null || romm == null || engine == null) return null;
   return UploadQueue(
     isOffline: () => romm.isOffline.value,
@@ -120,7 +122,7 @@ final uploadQueueProvider = FutureProvider<UploadQueue?>((ref) async {
 /// What waits to upload for a game (shown on its Save Data tab).
 final uploadsWaitingProvider = Provider.family<List<BackupEntry>, String>((ref, gameId) {
   ref.watch(uploadQueueVersionProvider);
-  return ref.watch(uploadQueueProvider).valueOrNull?.waitingFor(gameId) ?? const [];
+  return ref.watch(uploadQueueProvider).value?.waitingFor(gameId) ?? const [];
 });
 
 /// Bumped after a run or a session, so the waiting lists are read again.

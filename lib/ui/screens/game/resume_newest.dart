@@ -13,7 +13,7 @@ import '../../../l10n/tr.dart';
 
 /// The game's newest save state this PC can start in (Resume), or null.
 ResumeEntry? newestState(WidgetRef ref, Game game) {
-  final states = ref.read(playStatesProvider(PlayMenuKey(game))).valueOrNull ?? const <ResumeEntry>[];
+  final states = ref.read(playStatesProvider(PlayMenuKey(game))).value ?? const <ResumeEntry>[];
   ResumeEntry? newest;
   for (final s in states) {
     if (!s.resumable) continue; // loaded from the emulator's own menu
@@ -29,11 +29,11 @@ Future<void> resumeNewest(BuildContext context, WidgetRef ref, Game game) async 
   final entry = newestState(ref, game);
   if (entry == null) return;
   // As on the play screen: a state older than the newest save may roll it back.
-  final menu = ref.read(playMenuProvider(key)).valueOrNull;
+  final menu = ref.read(playMenuProvider(key)).value;
   if (menu != null) {
     final view = buildPlayView(
       catalog: menu.catalog,
-      states: ref.read(playStatesProvider(key)).valueOrNull ?? const [],
+      states: ref.read(playStatesProvider(key)).value ?? const [],
       platformSlug: game.platformSlug ?? '',
       picked: menu.forThisGame,
       platformDefault: menu.platformDefault,

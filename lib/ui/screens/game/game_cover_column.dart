@@ -109,7 +109,7 @@ class GameCoverColumn extends ConsumerWidget {
 
   Future<void> _more(BuildContext context, WidgetRef ref, bool downloaded) async {
     final engine = ref.read(playEngineProvider);
-    final menu = ref.read(playMenuProvider(PlayMenuKey(game))).valueOrNull;
+    final menu = ref.read(playMenuProvider(PlayMenuKey(game))).value;
     final remembered = menu?.remembered;
     final items = <({String label, bool danger, Future<void> Function() run})>[
       if (ref.read(collectionEditsProvider) != null)
@@ -162,7 +162,7 @@ class GameCoverColumn extends ConsumerWidget {
             if (ok) await ref.read(downloadsProvider.notifier).delete(game);
           },
         ),
-      if (ref.read(canDeleteGamesProvider).valueOrNull ?? false)
+      if (ref.read(canDeleteGamesProvider).value ?? false)
         (
           label: tr('Delete from RomM…'),
           danger: true,

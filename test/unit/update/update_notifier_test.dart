@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/providers/update_providers.dart';
 import 'package:gargosy/update/update_checker.dart';
 import 'package:pub_semver/pub_semver.dart';
@@ -29,7 +30,7 @@ void main() {
   late ProviderContainer container;
   setUp(() {
     checker = _Checker();
-    container = ProviderContainer(overrides: [updateCheckerProvider.overrideWithValue(checker)]);
+    container = ProviderContainer(retry: noRetry, overrides: [updateCheckerProvider.overrideWithValue(checker)]);
   });
   tearDown(() => container.dispose());
 

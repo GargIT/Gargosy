@@ -432,7 +432,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   Widget _body(PlayMenu menu, bool wide, {required bool fresh}) {
     _readPick(menu, fresh: fresh);
     final statesAsync = ref.watch(playStatesProvider(_key));
-    final states = statesAsync.valueOrNull ?? const <ResumeEntry>[];
+    final states = statesAsync.value ?? const <ResumeEntry>[];
     final view = _view(menu, states);
     if (widget.autoStart && !_autoStarted && fresh && !statesAsync.isLoading) {
       _autoStarted = true;

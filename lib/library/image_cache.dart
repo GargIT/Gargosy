@@ -5,6 +5,7 @@ import 'package:file/file.dart' as fs;
 import 'package:file/local.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/storage/app_preferences.dart';

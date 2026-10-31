@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/providers/ui_provider.dart';
 import 'package:gargosy/ui/input/gargosy_intents.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
@@ -9,7 +10,7 @@ void main() {
   late ProviderContainer container;
 
   Future<void> pump(WidgetTester tester, Widget child) async {
-    container = ProviderContainer();
+    container = ProviderContainer(retry: noRetry);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

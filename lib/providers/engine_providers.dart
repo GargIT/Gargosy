@@ -49,13 +49,14 @@ final launchDirectoriesProvider = Provider<ProfileLaunchDirectories?>((ref) {
   final paths = ref.watch(_profilePathsProvider);
   final prefs = ref.watch(profilePrefsProvider);
   if (paths == null || prefs == null) return null;
+  final limited = ref.watch(ageLimitProvider.select((l) => l.isOn));
   return ProfileLaunchDirectories(
     root: ref.watch(appRootProvider),
     paths: paths,
     prefs: prefs,
     secrets: ref.watch(secretStoreProvider),
     // A profile under an age limit gets no extra arguments (#234).
-    extraArgsAllowed: () => !ref.read(ageLimitProvider).isOn,
+    extraArgsAllowed: () => !limited,
   );
 });
 
@@ -109,13 +110,14 @@ final stateSyncServiceProvider = Provider<StateSyncService?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   final sync = ref.watch(saveSyncServiceProvider);
   final prefs = ref.watch(profilePrefsProvider);
+  final registry = ref.watch(strategyRegistryProvider);
   if (romm == null || sync == null || prefs == null) return null;
   return StateSyncService(
     romm,
     prefs,
     sync.stateStrategyForGame,
     exclusive: <T>(Future<T> Function() body) => sync.exclusive(body, doing: tr('Syncing save states')),
-    emulatorSyncs: (id) => ref.read(strategyRegistryProvider)?.getStrategyById(id)?.supportsStateSync ?? false,
+    emulatorSyncs: (id) => registry?.getStrategyById(id)?.supportsStateSync ?? false,
   );
 });
 
@@ -146,6 +148,9 @@ final gameLaunchServiceProvider = FutureProvider<GameLaunchService?>((ref) async
   final sync = ref.watch(saveSyncServiceProvider);
   final backups = ref.watch(backupServiceProvider);
   final prefs = ref.watch(profilePrefsProvider);
+  // Every dependency watched before the first wait (Riverpod 3).
+  final romm = ref.watch(rommServiceProvider);
+  final stateSync = ref.watch(stateSyncServiceProvider);
   final repo = await ref.watch(backupRepositoryProvider.future);
   if (dirs == null || registry == null || sync == null || backups == null || prefs == null || repo == null) return null;
   return GameLaunchService(
@@ -155,8 +160,8 @@ final gameLaunchServiceProvider = FutureProvider<GameLaunchService?>((ref) async
     backupService: backups,
     backupRepository: repo,
     prefs: prefs,
-    rommService: ref.watch(rommServiceProvider),
-    stateSyncService: ref.watch(stateSyncServiceProvider),
+    rommService: romm,
+    stateSyncService: stateSync,
     // Gargosy's own play-time log sends the sessions (`play_time.dart`).
     recordPlaySessions: false,
   );

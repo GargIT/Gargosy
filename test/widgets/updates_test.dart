@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/constants/app_constants.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
@@ -117,6 +118,7 @@ void main() {
     opened = [];
     AppConstants.version = '0.1.0';
     c = ProviderContainer(
+      retry: noRetry,
       overrides: [
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(prefs),
@@ -318,6 +320,7 @@ void main() {
     UserMenuChoice? picked;
     await tester.pumpWidget(
       ProviderScope(
+        retry: noRetry,
         child: MaterialApp(
           theme: gargosyTheme(),
           home: Builder(

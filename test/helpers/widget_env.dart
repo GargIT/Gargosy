@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
+
+import 'overrides.dart';
+
 import 'package:gargosy/ui/widgets/platform_logo.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
@@ -22,12 +27,13 @@ Widget testApp(
 }) {
   final nav = navigatorKey ?? GlobalKey<NavigatorState>();
   return ProviderScope(
-    overrides: [
+    retry: noRetry,
+    overrides: lastWins([
       coverImageBuilderProvider.overrideWithValue((url) => ColoredBox(key: ValueKey('cover:$url'), color: Colors.grey)),
       platformLogoBuilderProvider.overrideWithValue((url, size, fallback) => fallback),
       appRootProvider.overrideWithValue(root ?? AppRoot(r'C:\gargosy-tests-nowhere')),
       ...overrides,
-    ],
+    ]),
     child: MaterialApp(
       navigatorKey: nav,
       theme: gargosyTheme(),

@@ -3,6 +3,7 @@ import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/library/upload_queue.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/providers/update_providers.dart';
@@ -41,6 +42,7 @@ class AppHarness {
     root = (await tester.runAsync(tempAppRoot))!;
     addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
     container = ProviderContainer(
+      retry: noRetry,
       overrides: [
         appRootProvider.overrideWithValue(root),
         appPreferencesProvider.overrideWithValue(prefs),

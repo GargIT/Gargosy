@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
 import 'package:gargosy/core/input/input_action_bus.dart';
 import 'package:gargosy/providers/ui_provider.dart';
@@ -15,7 +16,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester, Widget home) async {
     nav = GlobalKey<NavigatorState>();
-    container = ProviderContainer();
+    container = ProviderContainer(retry: noRetry);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

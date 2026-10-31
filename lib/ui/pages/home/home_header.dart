@@ -99,7 +99,7 @@ class HomeHeader extends ConsumerWidget {
     // The states only for the game played last: Resume needs them.
     if (!random) ref.watch(playStatesProvider(PlayMenuKey(game)));
     final state = random ? null : newestState(ref, game);
-    final played = random ? null : ref.watch(playTimeProvider(game.id)).valueOrNull;
+    final played = random ? null : ref.watch(playTimeProvider(game.id)).value;
     final released = game.firstReleaseDate == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(game.firstReleaseDate!).year;
@@ -110,7 +110,7 @@ class HomeHeader extends ConsumerWidget {
     ].whereType<String>().join(' · ');
     final when = game.lastPlayed == null ? null : formatSaveTime(game.lastPlayed!);
     // Saved on another PC since this one had it (#229): said where.
-    final elsewhere = random || label != null ? null : ref.watch(continueElsewhereProvider(game.id)).valueOrNull;
+    final elsewhere = random || label != null ? null : ref.watch(continueElsewhereProvider(game.id)).value;
     final top =
         label ??
         (random

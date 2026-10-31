@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/core/romm/romm_play_sessions.dart';
 import 'package:gargosy/library/download_schedule.dart';
 import 'package:gargosy/play/play_controller.dart';
@@ -186,6 +187,7 @@ void main() {
     });
 
     ProviderContainer container(FakeAsync async, PlayLimit limit) => ProviderContainer(
+      retry: noRetry,
       overrides: [
         playEngineProvider.overrideWithValue(engine),
         quitButtonsProvider.overrideWithValue(null),
@@ -221,6 +223,7 @@ void main() {
       fakeAsync((async) {
         var limit = const PlayLimit(minutesPerDay: 60);
         final c = ProviderContainer(
+          retry: noRetry,
           overrides: [
             playEngineProvider.overrideWithValue(engine),
             quitButtonsProvider.overrideWithValue(null),

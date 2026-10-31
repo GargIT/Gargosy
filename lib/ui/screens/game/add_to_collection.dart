@@ -83,7 +83,7 @@ class _AddToCollectionState extends ConsumerState<_AddToCollection> {
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(rommUserIdProvider);
-    final all = ref.watch(collectionsProvider).valueOrNull ?? const <RommCollection>[];
+    final all = ref.watch(collectionsProvider).value ?? const <RommCollection>[];
     final own = [
       for (final c in all)
         if (c.userId == userId && c.kind == CollectionKind.regular) c,

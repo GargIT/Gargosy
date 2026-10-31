@@ -58,7 +58,7 @@ class PlayLimitCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final limit = profile.playLimit;
-    final all = ref.watch(profilesProvider).valueOrNull;
+    final all = ref.watch(profilesProvider).value;
     // Said only once the profiles are read: never "unlocked" while loading.
     final unlocked = all != null && guardiansOf(all, profile).isEmpty;
     return SettingsCard(

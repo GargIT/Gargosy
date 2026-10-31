@@ -18,7 +18,7 @@ class DetailsTab extends ConsumerWidget {
   DsiTitle? _dsi(WidgetRef ref) {
     if (canonicalPlatformSlug(game.platformSlug?.toLowerCase() ?? '') != 'nds') return null;
     if (!watchDownloaded(ref, game)) return null;
-    return ref.watch(dsiTitleProvider(ref.read(romFilesProvider).pathFor(game))).valueOrNull;
+    return ref.watch(dsiTitleProvider(ref.read(romFilesProvider).pathFor(game))).value;
   }
 
   @override

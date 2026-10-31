@@ -337,22 +337,22 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 122. [x] Make a desktop shortcut to `Gargosy.exe --play=<rom id>` (the id from the game's RomM address) for a downloaded game. With Gargosy closed, open it: with one profile it opens (its PIN asked when it has one), with several the picker asks who is playing and the one picked plays; the game starts without a press, and when you quit the game its saves sync and Gargosy closes.
 123. [x] The same with `--profile=<profile id>` (its folder's name under `userdata\profiles\`): that profile opens without asking who. With a wrong PIN or Back, the picker stays and no game starts. With RomM unreachable, quit the game: Gargosy says the save didn't reach RomM before it closes.
 124. [x] Add `Gargosy.exe` to Steam as a non-Steam game with `--play=<rom id>` as its launch options, start it from Big Picture with a controller: the game runs, and Steam sees it end when Gargosy closes after the sync.
-125. [ ] `--play-stay`: Gargosy stays open on the game's page after the session, with the session's message.
+125. [x] `--play-stay`: Gargosy stays open on the game's page after the session, with the session's message.
 126. [ ] With Gargosy open on Home, open the shortcut: no second Gargosy starts; the open one comes to the front, plays the game, and stays open after it. With `--profile=` of another profile: it switches (asking about downloads, PIN where it has one) and plays it there. With a game running: "A game is already running" and nothing else. Open `Gargosy.exe` twice without arguments: the first comes to the front.
 127. [x] A downloaded game's page → ⋯ → Create desktop shortcut: a shortcut named after the game, with its cover as the icon, is on the desktop and the toast says its name. Do it again: a second one, `(2)`, the first untouched. Open one with Gargosy closed: the game starts in this profile without asking who.
 
 ## Age limit per profile (#224)
 
 128. [x] Give a parent's profile a PIN. On a child's profile: Settings → Profile → Age limit → Up to 12 asks for the parent's PIN (a wrong one changes nothing). A game rated M or PEGI 16 then says "… is above this profile's age limit." at Play and Resume. Turn on Hide unrated games: an unrated game is refused too. Settings → Emulators → Open is refused while the limit is on. Off, with the parent's PIN, plays everything again. A profile made after the child's (with a PIN, no limit) is never asked for as the parent's.
-129. [ ] On a child's profile with Up to 12: a platform's page, Search, a collection, Home's rows (not Playing now), For you, Similar games and the screensaver show no game rated above 12 (an M or PEGI 16 game you know of isn't there); the A–Z rail and the GAMES count leave them out too. Hide unrated games: unrated ones go as well. On a profile without a limit everything is there.
+129. [x] On a child's profile with Up to 12: a platform's page, Search, a collection, Home's rows (not Playing now), For you, Similar games and the screensaver show no game rated above 12 (an M or PEGI 16 game you know of isn't there); the A–Z rail and the GAMES count leave them out too. Hide unrated games: unrated ones go as well. On a profile without a limit everything is there.
 
 ## Checking a download (#225)
 
-130. [ ] Download a one-file game and a multi-disc game: each says Checking… after downloading, then lands as before. Settings → Storage → Check downloads off: no Checking…. (A damaged download is hard to make by hand: the unit tests cover it; if one ever fails with "The download is damaged", Retry gets it again.)
+130. [x] Download a one-file game and a multi-disc game: each says Checking… after downloading, then lands as before. Settings → Storage → Check downloads off: no Checking…. (A damaged download is hard to make by hand: the unit tests cover it; if one ever fails with "The download is damaged", Retry gets it again.)
 
 ## Download all (#226)
 
-131. [ ] A collection with a few games, some on this PC: Download all says how many and about how big (only those not on this PC), and queues them in the collection's order; Downloads lists them. Cancel all empties the queue while the first goes on. A platform's page does the same. With too little room it says "Needs …" and queues nothing.
+131. [x] A collection with a few games, some on this PC: Download all says how many and about how big (only those not on this PC), and queues them in the collection's order; Downloads lists them. Cancel all empties the queue while the first goes on. A platform's page does the same. With too little room it says "Needs …" and queues nothing.
 
 ## Make room (#227)
 
@@ -376,14 +376,14 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Manuals from RomM (#232)
 
-137. [ ] A game whose manual RomM has (its Manual tab in RomM's web UI shows a PDF): the game page has a Manual button between ♥ and ⋯; a game without one has none. With a controller alone: A on Manual opens the first page fitted to the screen with "Page 1 of N"; RB / LB and D-pad right / left turn the page, not past the first or last; A zooms in (1.5×, 2×, 3×, then the whole page again), the D-pad moves the zoomed page without leaving it, X shows the whole page, B goes back. With the mouse the wheel zooms and a drag moves the page; with the keyboard PgUp / PgDn, the arrows, + / −, Home / End and Esc.
-138. [ ] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
+137. [x] A game whose manual RomM has (its Manual tab in RomM's web UI shows a PDF): the game page has a Manual button between ♥ and ⋯; a game without one has none. With a controller alone: A on Manual opens the first page fitted to the screen with "Page 1 of N"; RB / LB and D-pad right / left turn the page, not past the first or last; A zooms in (1.5×, 2×, 3×, then the whole page again), the D-pad moves the zoomed page without leaving it, X shows the whole page, B goes back. With the mouse the wheel zooms and a drag moves the page; with the keyboard PgUp / PgDn, the arrows, + / −, Home / End and Esc.
+138. [x] Open a game's manual once, then go offline (stop RomM or pull the network): it still opens (`userdata\profiles\<id>\cache\manuals\<rom id>.pdf`). A manual never opened says it isn't on this PC and RomM can't be reached. Delete from this PC removes the game's kept manual. A portrait page zoomed to 1.5× still turns with D-pad left / right and pans with up / down.
 
 ## Screenshots to RomM (#233)
 
-139. [ ] Play a game in RetroArch, take two screenshots (F8), quit. In RomM's web UI the game's screenshots (yours) show both, and Gargosy's Overview shows them first in its Screenshots strip (open the page again). They are in `userdata\profiles\<id>\emulators\retroarch\screenshots\`, not in `emulators\retroarch\screenshots\` or `roms\`.
-140. [ ] The same with one standalone emulator (DuckStation F10, PCSX2 F8, Dolphin F9 or mGBA F12): its screenshot reaches RomM after the game. With mGBA, nothing new appears beside the ROM in `roms\`.
-141. [ ] With RomM stopped, take a screenshot and quit: nothing is lost. Start RomM again (or restart Gargosy): the screenshot reaches RomM. Settings → Emulator settings → Upload screenshots off: a new screenshot stays on this PC only.
+139. [x] Play a game in RetroArch, take two screenshots (F8), quit. In RomM's web UI the game's screenshots (yours) show both, and Gargosy's Overview shows them first in its Screenshots strip (open the page again). They are in `userdata\profiles\<id>\emulators\retroarch\screenshots\`, not in `emulators\retroarch\screenshots\` or `roms\`.
+140. [x] The same with one standalone emulator (DuckStation F10, PCSX2 F8, Dolphin F9 or mGBA F12): its screenshot reaches RomM after the game. With mGBA, nothing new appears beside the ROM in `roms\`.
+141. [x] With RomM stopped, take a screenshot and quit: nothing is lost. Start RomM again (or restart Gargosy): the screenshot reaches RomM. Settings → Emulator settings → Upload screenshots off: a new screenshot stays on this PC only.
 
 ## Settings per game (#234)
 

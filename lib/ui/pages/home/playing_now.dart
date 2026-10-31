@@ -23,7 +23,7 @@ class PlayingNowRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries = ref.watch(playingNowProvider).valueOrNull ?? const <ActivityEntry>[];
+    final entries = ref.watch(playingNowProvider).value ?? const <ActivityEntry>[];
     return Shelf(
       key: const ValueKey('home-playingNow'),
       title: HomeRow.playingNow.label,

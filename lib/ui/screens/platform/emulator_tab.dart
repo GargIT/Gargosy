@@ -56,7 +56,7 @@ class _EmulatorTabState extends ConsumerState<EmulatorTab> {
     final p = widget.platform;
     final registry = ref.watch(strategyRegistryProvider);
     final infos = {
-      for (final e in ref.watch(emulatorsProvider).valueOrNull ?? const <EmulatorInfo>[])
+      for (final e in ref.watch(emulatorsProvider).value ?? const <EmulatorInfo>[])
         if (e.supported) e.id: e,
     };
     final ids = <String>[];

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/platform/platform_info.dart';
@@ -51,9 +52,12 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   if (romm == null) return null;
   final root = ref.watch(appRootProvider);
+  // Captured, not read through ref: a download already running keeps its
+  // service after this provider builds again (Riverpod 3's old ref is dead).
+  final prefs = ref.watch(appPreferencesProvider);
   return DownloadService(
     // Paced to Settings' speed limit (#228), read for each chunk.
-    dio: throttledDio(romm.dio, () => DownloadLimits.speedOf(ref.read(appPreferencesProvider))),
+    dio: throttledDio(romm.dio, () => DownloadLimits.speedOf(prefs)),
     auth: () => romm.authOptions,
     files: ref.watch(romFilesProvider),
     guard: PathGuard(root), // roms\ and userdata\app\ are shared, not per profile
@@ -61,7 +65,7 @@ final downloadServiceProvider = Provider<DownloadService?>((ref) {
     urlFor: romm.getDownloadUrl,
     detail: romm.getGame,
     disk: ref.watch(diskInfoProvider),
-    checkHashes: () => DownloadCheck.of(ref.read(appPreferencesProvider)),
+    checkHashes: () => DownloadCheck.of(prefs),
   );
 });
 
@@ -328,10 +332,16 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
   void dismiss(String gameId) => _set(gameId, null);
 
   Future<void> delete(Game game) async {
-    await _ref.read(romFilesProvider).delete(game, PathGuard(_ref.read(appRootProvider)));
-    await _ref.read(librarySnapshotProvider)?.forget(game.id);
-    await _ref.read(gameManualsProvider)?.forget(game);
-    _ref.read(romFilesVersionProvider.notifier).state++;
+    // Everything read before the first wait: the profile may change while
+    // the files go (Riverpod 3's old ref is dead once this builds again).
+    final files = _ref.read(romFilesProvider);
+    final guard = PathGuard(_ref.read(appRootProvider));
+    final snapshot = _ref.read(librarySnapshotProvider);
+    final manuals = _ref.read(gameManualsProvider);
+    await files.delete(game, guard);
+    await snapshot?.forget(game.id);
+    await manuals?.forget(game);
+    if (mounted) _ref.read(romFilesVersionProvider.notifier).state++;
   }
 }
 

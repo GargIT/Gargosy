@@ -1,9 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/providers/library_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:gargosy/core/romm/romm_library_api.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/platform_covers.dart';
@@ -98,6 +100,7 @@ void main() {
     setUp(() {
       api = FakeLibraryApi(games);
       c = ProviderContainer(
+        retry: noRetry,
         overrides: [
           libraryApiProvider.overrideWithValue(api),
           rommOfflineProvider.overrideWith((ref) => ref.watch(offline)),

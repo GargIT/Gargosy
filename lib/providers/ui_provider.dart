@@ -1,5 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 enum InputMode { mouse, gamepad, keyboard }
 

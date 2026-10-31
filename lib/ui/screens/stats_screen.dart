@@ -50,7 +50,7 @@ class StatsScreen extends ConsumerWidget {
             ),
             HintBar(
               hints: [
-                if (view.valueOrNull?.games.isNotEmpty ?? false) Hint(GameAction.confirm, tr('Open')),
+                if (view.value?.games.isNotEmpty ?? false) Hint(GameAction.confirm, tr('Open')),
                 Hint(GameAction.verticalAxis, tr('Scroll')),
                 Hint(GameAction.back, tr('Back')),
               ],

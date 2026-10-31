@@ -84,7 +84,7 @@ class _AchievementsTabState extends ConsumerState<AchievementsTab> {
         ),
       );
     }
-    final progression = ref.watch(raProgressionProvider).valueOrNull?[_game.raId];
+    final progression = ref.watch(raProgressionProvider).value?[_game.raId];
     final list = progression == null
         ? _game.raAchievements
         : RetroAchievementsGameProgress.fromRomm(

@@ -82,10 +82,10 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
 
   Widget _body(List<RommCollection> regular) {
     final userId = ref.watch(rommUserIdProvider);
-    final smart = ref.watch(smartCollectionsProvider).valueOrNull ?? const [];
+    final smart = ref.watch(smartCollectionsProvider).value ?? const [];
     final virtual = {
       for (final type in virtualCollectionTypes.keys)
-        type: ref.watch(virtualCollectionsProvider(type)).valueOrNull ?? const <RommCollection>[],
+        type: ref.watch(virtualCollectionsProvider(type)).value ?? const <RommCollection>[],
     };
     final onPc = {for (final g in ref.watch(gamesOnThisPcProvider)) ?int.tryParse(g.id)};
     final curated = curatedCollections(

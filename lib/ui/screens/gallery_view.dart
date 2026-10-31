@@ -334,7 +334,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     final hidden = hiddenBy(_query, widget.query, thisPc: _thisPc, platforms: widget.platforms);
     if (hidden.isEmpty) return null;
     final scope = ref.watch(galleryScopeProvider(widget.query.copyWith(search: _query.search)));
-    final count = scope.valueOrNull?.total;
+    final count = scope.value?.total;
     if (count == 0) return null;
     return NothingMatches(term: _query.search, hidden: hidden, count: count, onShowAll: _showAll);
   }
