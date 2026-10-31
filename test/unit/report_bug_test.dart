@@ -72,7 +72,10 @@ void main() {
         root: root,
         overrides: [
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-          externalOpenerProvider.overrideWithValue(opened.add),
+          externalOpenerProvider.overrideWithValue((t) async {
+            opened.add(t);
+            return true;
+          }),
           rommServerVersionProvider.overrideWith((ref) async => '5.4.0'),
         ],
       ),

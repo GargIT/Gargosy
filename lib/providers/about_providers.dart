@@ -5,7 +5,7 @@ import '../core/platform/platform_info.dart';
 
 import 'romm_providers.dart';
 
-/// Opens a web address or a file with Windows' default program; tests replace it.
+/// Opens a web address or a folder outside Gargosy ([externalOpenerFor]); tests replace it.
 final externalOpenerProvider = Provider<ExternalOpener>((ref) => externalOpenerFor(PlatformInfo.current));
 
 /// The active profile's RomM version, or null when the server can't be asked.

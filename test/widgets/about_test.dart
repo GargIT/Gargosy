@@ -51,7 +51,10 @@ void main() {
         overrides: [
           appRootProvider.overrideWithValue(AppRoot(root.path)),
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),
-          externalOpenerProvider.overrideWithValue(opened.add),
+          externalOpenerProvider.overrideWithValue((t) async {
+            opened.add(t);
+            return true;
+          }),
           rommServerVersionProvider.overrideWith((ref) async => rommVersion),
         ],
         child: MaterialApp(
