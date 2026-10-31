@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io' as io;
+import 'dart:isolate';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/storage/app_preferences.dart';
@@ -95,9 +97,6 @@ class GameSettingsStore {
   Future<void> reset(String gameId) => _prefs.remove(key(gameId));
 }
 
-/// The emulators whose own widescreen switch Gargosy sets per game.
-const widescreenEmulators = {'pcsx2', 'dolphin', 'duckstation', 'flycast'};
-
 /// [text] as command-line arguments: split at spaces, a "quoted part" kept
 /// whole, quotes taken off.
 List<String> splitArgs(String text) {
@@ -122,102 +121,195 @@ List<String> splitArgs(String text) {
   return out;
 }
 
+/// What Gargosy sets per game in one emulator (#234), in one place: its
+/// widescreen (by argument for this launch, or by keys in the settings file
+/// it reads while it runs), whether it takes a shader, and the arguments
+/// that point it at the profile or name its game, which extra arguments may
+/// never repeat.
+class GameSettingsSupport {
+  const GameSettingsSupport({
+    this.widescreenArgs,
+    this.widescreenKeys,
+    this.settingsFile,
+    this.shaders = false,
+    this.reserved = const {},
+  });
+
+  final List<String> Function(bool on)? widescreenArgs;
+  final Map<(String, String), String> Function(bool on)? widescreenKeys;
+
+  /// Where the settings file is while the emulator runs (after the launch
+  /// config's `prepare`), from the profile's data folder and the exe's.
+  final String Function(String data, String exeDir)? settingsFile;
+  final bool shaders;
+
+  /// Lower case; a `--name=value` form counts too.
+  final Set<String> reserved;
+
+  bool get widescreen => widescreenArgs != null || widescreenKeys != null;
+
+  static const none = GameSettingsSupport();
+
+  static final _table = <String, GameSettingsSupport>{
+    'retroarch': const GameSettingsSupport(
+      shaders: true,
+      reserved: {'-c', '--config', '--appendconfig', '-l', '--libretro', '-s', '--save', '--savestate'},
+    ),
+    // GFX.ini [Settings] wideScreenHack, for this launch only.
+    'dolphin': GameSettingsSupport(
+      widescreenArgs: (on) => ['-C', 'GFX.Settings.wideScreenHack=${on ? 'True' : 'False'}'],
+      reserved: const {'-u', '--user', '-e', '--exec', '-b', '--batch', '-n', '--nand_title'},
+    ),
+    'flycast': GameSettingsSupport(widescreenArgs: (on) => ['-config', 'config:rend.WideScreen=${on ? 'yes' : 'no'}']),
+    'pcsx2': GameSettingsSupport(
+      widescreenKeys: (on) => {('EmuCore', 'EnableWideScreenPatches'): '$on'},
+      settingsFile: (data, _) => p.join(data, 'PCSX2', 'inis', 'PCSX2.ini'),
+      reserved: const {'-datapath', '-portable', '-elf', '-disc', '-bios'},
+    ),
+    'duckstation': GameSettingsSupport(
+      widescreenKeys: (on) => {('GPU', 'WidescreenHack'): '$on', ('Display', 'AspectRatio'): on ? '16:9' : '4:3'},
+      // Swapped in beside the exe for the session.
+      settingsFile: (_, exeDir) => p.join(exeDir, 'settings.ini'),
+      reserved: const {'-portable', '-settings', '-bios'},
+    ),
+    'mame': const GameSettingsSupport(
+      reserved: {
+        '-inipath',
+        '-homepath',
+        '-rompath',
+        '-cfg_directory',
+        '-nvram_directory',
+        '-state_directory',
+        '-snapshot_directory',
+        '-diff_directory',
+        '-comment_directory',
+        '-input_directory',
+      },
+    ),
+    'scummvm': const GameSettingsSupport(reserved: {'--config', '--savepath', '--path', '--logfile'}),
+    'ryujinx': const GameSettingsSupport(reserved: {'-r', '--root-data-dir'}),
+    'xenia_canary': const GameSettingsSupport(
+      reserved: {'--content_root', '--storage_root', '--cache_root', '--log_file'},
+    ),
+    'ares': const GameSettingsSupport(reserved: {'--settings-file', '--setting'}),
+    'mgba': const GameSettingsSupport(reserved: {'-c', '--config'}),
+  };
+
+  static GameSettingsSupport of(String emulatorId) => _table[emulatorId] ?? none;
+}
+
+/// The player's extra arguments for [emulatorId] that may go on its command
+/// line: never one the profile's launch uses ([GameSettingsSupport.reserved])
+/// and never a file or folder (a path would let a game reach outside its
+/// profile or start another game).
+List<String> allowedExtraArgs(String emulatorId, String text) {
+  final reserved = GameSettingsSupport.of(emulatorId).reserved;
+  final out = <String>[];
+  for (final a in splitArgs(text)) {
+    final name = a.split('=').first.toLowerCase();
+    final pathLike = a.contains(':') || a.contains(r'\') || a.contains('/') || a.contains('..');
+    if (reserved.contains(name) || pathLike) {
+      debugPrint('[GameSettings] $emulatorId: extra argument left out: $a');
+      continue;
+    }
+    out.add(a);
+  }
+  return out;
+}
+
 /// RetroArch's shader folder beside its exe.
 String retroArchShaderDir(String exeDir) => p.join(exeDir, 'shaders');
 
 /// The shader presets RetroArch has (`.slangp`, `.glslp`, `.cgp`), relative
-/// to [shaderDir], sorted; none when it has no folder.
-List<String> retroArchShaders(String shaderDir) {
+/// to [shaderDir] with `/`, sorted; none when it has no folder. Read in
+/// another isolate: RetroArch ships thousands of files there.
+Future<List<String>> retroArchShaders(String shaderDir) => Isolate.run(() {
   final dir = io.Directory(shaderDir);
-  if (!dir.existsSync()) return const [];
+  if (!dir.existsSync()) return const <String>[];
   return [
     for (final e in dir.listSync(recursive: true, followLinks: false))
       if (e is io.File && const {'.slangp', '.glslp', '.cgp'}.contains(p.extension(e.path).toLowerCase()))
-        p.relative(e.path, from: shaderDir),
+        p.relative(e.path, from: shaderDir).replaceAll(r'\', '/'),
   ]..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-}
+});
 
-/// The arguments [s] adds for [emulatorId], before the game's: RetroArch's
-/// `--set-shader`, Dolphin's and Flycast's widescreen for this launch only,
-/// then the player's own.
+/// The arguments [s] adds for [emulatorId], before the strategy's:
+/// RetroArch's `--set-shader` (only when the preset is there), widescreen
+/// for this launch where the emulator takes it as an argument, then the
+/// player's own that are allowed.
 List<String> gameSettingArgs(String emulatorId, GameSettings s, String exeDir) {
-  final on = s.widescreen == Widescreen.on;
-  final shader = emulatorId == 'retroarch' ? s.shader : null;
+  final support = GameSettingsSupport.of(emulatorId);
+  final shader = support.shaders ? s.shader : null;
+  final shaderFile = shader == null ? null : p.joinAll([retroArchShaderDir(exeDir), ...shader.split(RegExp(r'[\\/]'))]);
   return [
-    if (shader != null) ...['--set-shader', p.join(retroArchShaderDir(exeDir), shader)],
-    if (s.widescreen != Widescreen.emulator)
-      ...switch (emulatorId) {
-        // GFX.ini [Settings] wideScreenHack, for this launch only.
-        'dolphin' => ['-C', 'GFX.Settings.wideScreenHack=${on ? 'True' : 'False'}'],
-        'flycast' => ['-config', 'config:rend.WideScreen=${on ? 'yes' : 'no'}'],
-        _ => const <String>[],
-      },
-    ...splitArgs(s.args),
+    if (shaderFile != null && io.File(shaderFile).existsSync()) ...['--set-shader', shaderFile],
+    if (s.widescreen != Widescreen.emulator && support.widescreenArgs != null)
+      ...support.widescreenArgs!(s.widescreen == Widescreen.on),
+    ...allowedExtraArgs(emulatorId, s.args),
   ];
 }
 
-/// The keys a game's widescreen sets in an emulator's own settings file
-/// (PCSX2, DuckStation: neither takes it on the command line).
-Map<(String, String), String>? _widescreenKeys(String emulatorId, bool on) => switch (emulatorId) {
-  'pcsx2' => {('EmuCore', 'EnableWideScreenPatches'): '$on'},
-  'duckstation' => {('GPU', 'WidescreenHack'): '$on', ('Display', 'AspectRatio'): on ? '16:9' : '4:3'},
-  _ => null,
-};
+String _marker(String data) => p.join(data, '.gargosy-game-settings.json');
 
-/// Where the emulator's settings file is while it runs (after the launch
-/// config's `prepare`): PCSX2's in the profile, DuckStation's swapped in
-/// beside its exe.
-String? _settingsFile(String emulatorId, String data, String exeDir) => switch (emulatorId) {
-  'pcsx2' => p.join(data, 'PCSX2', 'inis', 'PCSX2.ini'),
-  'duckstation' => p.join(exeDir, 'settings.ini'),
-  _ => null,
-};
-
-/// Sets the game's widescreen in PCSX2's or DuckStation's own settings for
-/// this game, run after the launch config's `prepare`. The value the player
-/// had before is kept in `<data>\.gargosy-game-settings.json` and put back
-/// at the next launch of a game that leaves widescreen to the emulator.
+/// Sets the game's widescreen in the emulator's own settings file for this
+/// session (PCSX2, DuckStation: neither takes it on the command line), run
+/// after the launch config's `prepare`. The player's own values are kept in
+/// `<data>\.gargosy-game-settings.json`, put back by [restoreGameSettingKeys]
+/// when the game ends (or at the next launch after a crash).
 void applyGameSettingKeys(String emulatorId, GameSettings s, String data, String exeDir, PathGuard guard) {
-  final path = _settingsFile(emulatorId, data, exeDir);
-  final keys = _widescreenKeys(emulatorId, s.widescreen == Widescreen.on);
-  if (path == null || keys == null) return;
-  final marker = io.File(guard.check(p.join(data, '.gargosy-game-settings.json')));
-  Map<String, Object?> kept = {};
-  if (marker.existsSync()) {
-    try {
-      kept = Map<String, Object?>.from(jsonDecode(marker.readAsStringSync()) as Map);
-    } on Object {
-      kept = {};
-    }
-  }
-  final file = io.File(guard.check(path));
-  if (!file.existsSync() && s.widescreen == Widescreen.emulator) return;
+  final support = GameSettingsSupport.of(emulatorId);
+  final keysOf = support.widescreenKeys;
+  final fileOf = support.settingsFile;
+  if (keysOf == null || fileOf == null) return;
+  // Whatever an earlier session left (Gargosy closed before the game did).
+  restoreGameSettingKeys(emulatorId, data, exeDir, guard);
+  if (s.widescreen == Widescreen.emulator) return;
+  final file = io.File(guard.check(fileOf(data, exeDir)));
   final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '');
-  if (s.widescreen == Widescreen.emulator) {
-    if (kept.isEmpty) return;
-    for (final k in keys.keys) {
-      final name = '${k.$1}.${k.$2}';
-      if (!kept.containsKey(name)) continue;
-      final was = kept[name];
+  final kept = <String, Object?>{};
+  for (final e in keysOf(s.widescreen == Widescreen.on).entries) {
+    kept['${e.key.$1}.${e.key.$2}'] = ini.get(e.key.$1, e.key.$2);
+    ini.set(e.key.$1, e.key.$2, e.value);
+  }
+  final marker = io.File(guard.check(_marker(data)));
+  marker.parent.createSync(recursive: true);
+  marker.writeAsStringSync(jsonEncode(kept));
+  file.parent.createSync(recursive: true);
+  file.writeAsStringSync(ini.toText());
+}
+
+/// Puts back the values [applyGameSettingKeys] changed, if any: when the
+/// game ends (before the launch config's `finish` takes the file back to
+/// the profile), and before the next launch. A file gone takes the record
+/// with it.
+void restoreGameSettingKeys(String emulatorId, String data, String exeDir, PathGuard guard) {
+  final fileOf = GameSettingsSupport.of(emulatorId).settingsFile;
+  final marker = io.File(guard.check(_marker(data)));
+  if (fileOf == null || !marker.existsSync()) return;
+  Map<String, Object?> kept;
+  try {
+    kept = Map<String, Object?>.from(jsonDecode(marker.readAsStringSync()) as Map);
+  } on Object {
+    kept = {};
+  }
+  final file = io.File(guard.check(fileOf(data, exeDir)));
+  if (file.existsSync() && kept.isNotEmpty) {
+    final ini = IniFile(file.readAsStringSync());
+    for (final e in kept.entries) {
+      final dot = e.key.indexOf('.');
+      if (dot <= 0) continue;
+      final section = e.key.substring(0, dot);
+      final key = e.key.substring(dot + 1);
+      final was = e.value;
       if (was is String) {
-        ini.set(k.$1, k.$2, was);
+        ini.set(section, key, was);
       } else {
-        ini.remove(k.$1, k.$2);
+        ini.remove(section, key);
       }
     }
     file.writeAsStringSync(ini.toText());
-    marker.deleteSync();
-    return;
   }
-  for (final e in keys.entries) {
-    final name = '${e.key.$1}.${e.key.$2}';
-    if (!kept.containsKey(name)) kept[name] = ini.get(e.key.$1, e.key.$2);
-    ini.set(e.key.$1, e.key.$2, e.value);
-  }
-  file.parent.createSync(recursive: true);
-  file.writeAsStringSync(ini.toText());
-  marker.parent.createSync(recursive: true);
-  marker.writeAsStringSync(jsonEncode(kept));
+  marker.deleteSync();
 }
 
 /// RetroArch's shader folder under its install [installDir]

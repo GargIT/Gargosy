@@ -11,6 +11,7 @@ const svText = <String, String>{
   ' on this PC, in ': ' på den här datorn, i ',
   ' {0} aren\'t in this profile\'s library: another profile may have downloaded them, and loses them too.':
       ' {0} finns inte i den här profilens bibliotek: en annan profil kan ha laddat ner dem och förlorar dem också.',
+  '(top)': '(översta)',
   '1 achievement earned': '1 prestation upplåst',
   '1 controller': '1 handkontroll',
   '1 game': '1 spel',
@@ -958,6 +959,7 @@ const svText = <String, String>{
   'yours and shared': 'dina och delade',
   '{0}  ·  This is this game\'s save': '{0}  ·  Det här är spelets sparfil',
   '{0} % done': '{0} % klart',
+  '{0} (missing)': '{0} (saknas)',
   '{0} ({1}) is deleted on RomM, for every device.': '{0} ({1}) tas bort på RomM, för alla enheter.',
   '{0} Close the game first: nothing is deleted while one runs.':
       '{0} Stäng spelet först: inget tas bort medan ett körs.',

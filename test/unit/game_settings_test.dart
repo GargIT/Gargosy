@@ -46,14 +46,21 @@ void main() {
   });
 
   group('the arguments each emulator gets', () {
-    test("RetroArch: --set-shader from its shaders folder; another emulator never gets it", () {
-      const s = GameSettings(shader: r'crt\crt-geom.slangp', args: '--verbose');
-      expect(gameSettingArgs('retroarch', s, r'C:\G\emulators\retroarch'), [
-        '--set-shader',
-        r'C:\G\emulators\retroarch\shaders\crt\crt-geom.slangp',
-        '--verbose',
-      ]);
-      expect(gameSettingArgs('pcsx2', s, r'C:\x'), ['--verbose']);
+    test("RetroArch: --set-shader from its shaders folder, only when it's there; never for another emulator", () {
+      final exeDir = io.Directory.systemTemp.createTempSync('ra').path;
+      addTearDown(() => io.Directory(exeDir).deleteSync(recursive: true));
+      const s = GameSettings(shader: 'crt/crt-geom.slangp', args: '--verbose');
+      expect(gameSettingArgs('retroarch', s, exeDir), ['--verbose'], reason: 'the preset is gone');
+      final preset = io.File(p.join(exeDir, 'shaders', 'crt', 'crt-geom.slangp'))..createSync(recursive: true);
+      expect(gameSettingArgs('retroarch', s, exeDir), ['--set-shader', preset.path, '--verbose']);
+      expect(gameSettingArgs('pcsx2', s, exeDir), ['--verbose']);
+    });
+
+    test('extra arguments never repeat what points the emulator at the profile, nor name a path', () {
+      expect(allowedExtraArgs('dolphin', r'--user=C:\other -e x.iso --debugger -b'), ['x.iso', '--debugger']);
+      expect(allowedExtraArgs('pcsx2', '-datapath x -fastboot'), ['x', '-fastboot']);
+      expect(allowedExtraArgs('retroarch', '--config=a.cfg -L core --verbose ../x'), ['core', '--verbose']);
+      expect(allowedExtraArgs('mame', '-rompath roms -nothrottle'), ['roms', '-nothrottle']);
     });
 
     test('Dolphin and Flycast: widescreen for this launch only; left to the emulator, nothing', () {
@@ -113,6 +120,22 @@ void main() {
       expect(settings.get('Display', 'AspectRatio'), 'Auto (Game Native)');
     });
 
+    test("the game's value goes when the session ends; a settings file gone takes the record with it", () {
+      io.File(ini())
+        ..createSync(recursive: true)
+        ..writeAsStringSync('[EmuCore]\nEnableWideScreenPatches = false\n');
+      final marker = io.File(p.join(data, '.gargosy-game-settings.json'));
+      applyGameSettingKeys('pcsx2', const GameSettings(widescreen: Widescreen.on), data, exeDir, guard);
+      expect(marker.existsSync(), isTrue);
+      restoreGameSettingKeys('pcsx2', data, exeDir, guard);
+      expect(IniFile(io.File(ini()).readAsStringSync()).get('EmuCore', 'EnableWideScreenPatches'), 'false');
+      expect(marker.existsSync(), isFalse);
+      applyGameSettingKeys('pcsx2', const GameSettings(widescreen: Widescreen.on), data, exeDir, guard);
+      io.File(ini()).deleteSync();
+      restoreGameSettingKeys('pcsx2', data, exeDir, guard);
+      expect(marker.existsSync(), isFalse);
+    });
+
     test('nothing set and nothing kept: the file is left as it is', () {
       applyGameSettingKeys('pcsx2', GameSettings.none, data, exeDir, guard);
       expect(io.File(ini()).existsSync(), isFalse);
@@ -153,5 +176,21 @@ void main() {
       r'D:\roms\gc\g.iso',
     ]);
     expect(started.last, isNot(contains('--debugger')), reason: 'that game only');
+
+    // Under an age limit the extra arguments stay off; widescreen still goes.
+    final limited = ProfileLaunchDirectories(
+      secrets: FakeSecretStore(),
+      root: root,
+      paths: paths,
+      prefs: prefs,
+      extraArgsAllowed: () => false,
+      start: (exePath, args, {workingDirectory, environment}) async {
+        started.add([exePath, ...args]);
+        return io.Process.start('cmd.exe', ['/c', 'exit', '0']);
+      },
+    );
+    await limited.launchGameWithHandle(game(1, 'G'), r'D:\roms\gc\g.iso', 'dolphin', exe.path, args: ['-b', '-e']);
+    expect(started.last, isNot(contains('--debugger')));
+    expect(started.last, contains('GFX.Settings.wideScreenHack=True'));
   });
 }

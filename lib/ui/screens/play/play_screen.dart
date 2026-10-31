@@ -163,11 +163,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     return saved == null ? null : _fullscreen[picked.emulatorId] ?? saved;
   }
 
-  /// The game's settings in [emulatorId], in a line (#234).
-  String? _gameSettingsOf(String emulatorId) {
+  /// The game's settings in [emulatorId], in a line (#234): read once per
+  /// emulator, again after the dialog changes them.
+  String? _gameSettingsOf(String emulatorId) => _gameSettingsLines.putIfAbsent(emulatorId, () {
     final store = ref.read(gameSettingsStoreProvider);
     return store == null ? null : gameSettingsSummary(store.read(widget.game.id, emulatorId));
-  }
+  });
+  final _gameSettingsLines = <String, String?>{};
 
   Future<void> _openGameSettings(PlayMenu menu, SaveMaker picked) async {
     final changed = await showGameSettings(
@@ -177,7 +179,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       emulatorId: picked.emulatorId,
       emulatorName: menu.nameOf(picked),
     );
-    if (changed && mounted) setState(() {});
+    if (changed && mounted) setState(_gameSettingsLines.clear);
   }
 
   Future<void> _setFullscreen(String emulatorId, bool on) async {

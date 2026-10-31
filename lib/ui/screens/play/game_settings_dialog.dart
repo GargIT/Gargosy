@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -13,8 +15,10 @@ import '../../widgets/on_screen_keyboard.dart';
 import '../../../l10n/tr.dart';
 
 /// The shader folder of the RetroArch under `emulators\retroarch\` (beside
-/// its exe, which may sit a folder down); tests replace it.
-final retroArchShaderDirProvider = Provider<String?>((ref) {
+/// its exe, which may sit a folder down), looked for again each time the
+/// dialog opens (an install or the Online Updater may add it); tests
+/// replace it.
+final retroArchShaderDirProvider = Provider.autoDispose<String?>((ref) {
   final root = ref.watch(appRootProvider);
   return findRetroArchShaderDir(p.join(root.emulators, 'retroarch'));
 });
@@ -38,7 +42,9 @@ Future<bool> showGameSettings(
 }) async {
   final store = ref.read(gameSettingsStoreProvider);
   if (store == null) return false;
-  final shaderDir = emulatorId == 'retroarch' ? ref.read(retroArchShaderDirProvider) : null;
+  final shaderDir = GameSettingsSupport.of(emulatorId).shaders ? ref.read(retroArchShaderDirProvider) : null;
+  // A child's profile can't reach past its limits through the command line.
+  final argsAllowed = !ref.read(ageLimitProvider).isOn;
   final changed = await showDialog<bool>(
     context: context,
     builder: (_) => _GameSettingsDialog(
@@ -47,6 +53,7 @@ Future<bool> showGameSettings(
       emulatorName: emulatorName,
       store: store,
       shaderDir: shaderDir,
+      argsAllowed: argsAllowed,
     ),
   );
   return changed ?? false;
@@ -71,6 +78,7 @@ class _GameSettingsDialog extends StatefulWidget {
     required this.emulatorName,
     required this.store,
     required this.shaderDir,
+    required this.argsAllowed,
   });
 
   final Game game;
@@ -78,6 +86,7 @@ class _GameSettingsDialog extends StatefulWidget {
   final String emulatorName;
   final GameSettingsStore store;
   final String? shaderDir;
+  final bool argsAllowed;
 
   @override
   State<_GameSettingsDialog> createState() => _GameSettingsDialogState();
@@ -113,15 +122,45 @@ class _GameSettingsDialogState extends State<_GameSettingsDialog> {
     if (i != null) await _save(_s.copyWith(widescreen: Widescreen.values[i]));
   }
 
+  /// The folder first (RetroArch has hundreds of presets), then the preset.
   Future<void> _pickShader() async {
-    final shaders = retroArchShaders(widget.shaderDir!);
-    final i = await showChoice(
+    final shaders = await retroArchShaders(widget.shaderDir!);
+    if (!mounted) return;
+    final groups = <String, List<String>>{};
+    for (final s in shaders) {
+      groups.putIfAbsent(p.posix.dirname(s), () => []).add(s);
+    }
+    final names = groups.keys.toList();
+    final current = _s.shader == null ? null : p.posix.dirname(_s.shader!);
+    final g = await showChoice(
       context,
       title: tr('Shader'),
-      labels: [tr('None'), ...shaders],
-      current: _s.shader == null ? 0 : shaders.indexOf(_s.shader!) + 1,
+      labels: [tr('None'), for (final n in names) n == '.' ? tr('(top)') : n],
+      current: current == null ? 0 : names.indexOf(current) + 1,
     );
-    if (i != null) await _save(_s.copyWith(shader: () => i == 0 ? null : shaders[i - 1]));
+    if (g == null || !mounted) return;
+    if (g == 0) {
+      await _save(_s.copyWith(shader: () => null));
+      return;
+    }
+    final presets = groups[names[g - 1]]!;
+    final i = await showChoice(
+      context,
+      title: names[g - 1],
+      labels: [for (final s in presets) p.posix.basenameWithoutExtension(s)],
+      current: _s.shader == null ? null : presets.indexOf(_s.shader!),
+    );
+    if (i != null && i >= 0) await _save(_s.copyWith(shader: () => presets[i]));
+  }
+
+  /// The shader's name, said missing when the preset isn't there any more
+  /// (it isn't passed to RetroArch then).
+  String _shaderLabel() {
+    final shader = _s.shader;
+    if (shader == null) return tr('None');
+    final name = p.posix.basenameWithoutExtension(shader.replaceAll(r'\', '/'));
+    final there = io.File(p.joinAll([widget.shaderDir!, ...shader.split(RegExp(r'[\\/]'))])).existsSync();
+    return there ? name : tr('{0} (missing)', [name]);
   }
 
   Future<void> _editArgs() async {
@@ -177,7 +216,7 @@ class _GameSettingsDialogState extends State<_GameSettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final widescreen = widescreenEmulators.contains(widget.emulatorId);
+    final widescreen = GameSettingsSupport.of(widget.emulatorId).widescreen;
     final shaders = widget.shaderDir != null;
     return PopScope(
       canPop: false,
@@ -217,18 +256,19 @@ class _GameSettingsDialogState extends State<_GameSettingsDialog> {
                       'game-shader',
                       Icons.blur_on,
                       tr('Shader'),
-                      _s.shader == null ? tr('None') : p.basenameWithoutExtension(_s.shader!),
+                      _shaderLabel(),
                       _pickShader,
                       autofocus: !widescreen,
                     ),
-                  _row(
-                    'game-args',
-                    Icons.terminal,
-                    tr('Extra arguments'),
-                    _s.args.trim().isEmpty ? tr('None') : _s.args,
-                    _editArgs,
-                    autofocus: !widescreen && !shaders,
-                  ),
+                  if (widget.argsAllowed)
+                    _row(
+                      'game-args',
+                      Icons.terminal,
+                      tr('Extra arguments'),
+                      _s.args.trim().isEmpty ? tr('None') : _s.args,
+                      _editArgs,
+                      autofocus: !widescreen && !shaders,
+                    ),
                   const Divider(color: GColors.borderStrong, height: GSpace.s4),
                   GFocusable(
                     key: const ValueKey('game-settings-reset'),
