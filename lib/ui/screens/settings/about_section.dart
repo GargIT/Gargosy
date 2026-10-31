@@ -13,6 +13,7 @@ import '../../../providers/update_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/hint_bar.dart';
 import '../doc_reader_screen.dart';
+import 'report_bug.dart';
 import 'settings_rows.dart';
 import 'updates_block.dart';
 import '../../../l10n/tr.dart';
@@ -125,6 +126,13 @@ class AboutSection extends ConsumerWidget {
           label: tr('Dart and Flutter packages'),
           onActivate: () =>
               showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$version'),
+        ),
+        SettingsLinkRow(
+          key: const ValueKey('report-bug'),
+          icon: Icons.bug_report_outlined,
+          label: tr('Report a bug'),
+          value: tr('GitHub, with the log ready to attach'),
+          onActivate: () => reportBug(context, ref, windows: io.Platform.operatingSystemVersion),
         ),
         SettingsLinkRow(
           icon: Icons.folder_open_outlined,

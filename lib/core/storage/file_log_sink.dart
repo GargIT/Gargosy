@@ -55,11 +55,20 @@ class FileLogSink {
     return '${t.year}${two(t.month)}${two(t.day)}-${two(t.hour)}${two(t.minute)}${two(t.second)}';
   }
 
+  /// The logs in [dir], oldest first (a second start in the same second
+  /// after the first); none when it can't be read.
+  static List<io.File> logsIn(String dir) {
+    try {
+      return io.Directory(dir).listSync().whereType<io.File>().where((f) => _name.hasMatch(p.basename(f.path))).toList()
+        ..sort((a, b) => _order(p.basename(a.path)).compareTo(_order(p.basename(b.path))));
+    } on io.FileSystemException {
+      return const [];
+    }
+  }
+
   /// Deletes the oldest logs so [keep] remain (names sort by time).
   static void _prune(String dir, int keep) {
-    final logs =
-        io.Directory(dir).listSync().whereType<io.File>().where((f) => _name.hasMatch(p.basename(f.path))).toList()
-          ..sort((a, b) => _order(p.basename(a.path)).compareTo(_order(p.basename(b.path))));
+    final logs = logsIn(dir);
     for (final old in logs.take(math.max(0, logs.length - keep))) {
       try {
         old.deleteSync();

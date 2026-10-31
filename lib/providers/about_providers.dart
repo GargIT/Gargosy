@@ -7,7 +7,9 @@ import 'romm_providers.dart';
 /// Opens a web address or a file with Windows' default program; tests replace it.
 final externalOpenerProvider = Provider<void Function(String target)>(
   (ref) => (target) {
-    io.Process.start('cmd', ['/c', 'start', '', target]);
+    // Explorer, not cmd: nothing in an address or a path (&, %, |) is read
+    // as a command (#231).
+    io.Process.start('explorer.exe', [target]);
   },
 );
 

@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- About → Report a bug opens GitHub's bug form with the versions filled
+  in, and the last two logs (redacted) ready to drag in beside it.
 - Multi-disc games without a playlist can switch discs in RetroArch and
   DuckStation: Gargosy starts a folder of numbered discs on a playlist it
   makes (outside `roms\`), from disc 1.
