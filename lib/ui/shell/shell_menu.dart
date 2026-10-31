@@ -7,6 +7,7 @@ import '../../providers/download_providers.dart';
 import '../../providers/update_providers.dart';
 import '../screens/doc_reader_screen.dart';
 import '../screens/downloads_screen.dart';
+import '../screens/stats_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../widgets/controller_dialogs.dart';
 import '../widgets/sync_wait.dart';
@@ -46,6 +47,8 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     case UserMenuAction.switchProfile:
       if (!await readyToLeaveProfile(context, ref)) return;
       ref.read(activeProfileProvider.notifier).signOut();
+    case UserMenuAction.stats:
+      await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const StatsScreen()));
     case UserMenuAction.downloads:
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const DownloadsScreen()));
     case UserMenuAction.fullscreen:

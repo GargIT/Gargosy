@@ -10,7 +10,7 @@ import '../widgets/profile_badge.dart';
 import '../../l10n/tr.dart';
 
 /// The menu's own items, beside the settings sections.
-enum UserMenuAction { downloads, fullscreen, changelog, switchProfile }
+enum UserMenuAction { stats, downloads, fullscreen, changelog, switchProfile }
 
 /// What the user menu picked: a section of Settings, or one of its actions.
 class UserMenuChoice {
@@ -30,7 +30,8 @@ class UserMenuChoice {
 /// The user menu (Start, or the profile badge), as RomM v2's: the profile
 /// with Gargosy's version beside its name, every section of Settings in its
 /// group (one item each, from [SettingsPage]), Fullscreen, About and the
-/// changelog, and Switch profile at the bottom (RomM's Logout). [update]
+/// changelog, and Switch profile at the bottom (RomM's Logout); Stats (#236)
+/// under PROFILE. [update]
 /// ("Update available: 0.2.0") is an item of its own that opens About;
 /// Downloads (#143), only when there's something to see: [downloads],
 /// those waiting or running (null: none, and none failed or done).
@@ -57,7 +58,7 @@ Future<UserMenuChoice?> showUserMenu(
     borderRadius: GRadius.chip,
     onActivate: () => Navigator.of(c).pop(choice),
     child: SizedBox(
-      height: 37,
+      height: 35,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: GSpace.s3),
         child: Row(
@@ -78,7 +79,7 @@ Future<UserMenuChoice?> showUserMenu(
     ),
   );
   Widget heading(String text) => Padding(
-    padding: const EdgeInsets.fromLTRB(GSpace.s3, 14, GSpace.s3, 6),
+    padding: const EdgeInsets.fromLTRB(GSpace.s3, 10, GSpace.s3, 6),
     child: Text(
       text,
       style: const TextStyle(
@@ -165,6 +166,9 @@ Future<UserMenuChoice?> showUserMenu(
                         UserMenuChoice.settings(page),
                         autofocus: page == SettingsPage.values.first,
                       ),
+                    // The profile's play in numbers (#236).
+                    if (group == SettingsGroup.profile)
+                      item(c, tr('Stats'), Icons.insights, const UserMenuChoice.action(UserMenuAction.stats)),
                     if (group == SettingsGroup.thisPc) ...[
                       if (downloads != null)
                         item(

@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Stats in the user menu: time played this week, this month and in all,
+  the longest session, days in a row, games finished and achievements
+  this month, the most played games and time by platform, across every
+  PC (this PC's only while RomM can't be reached).
 - Play time limits: Settings → Profile → Play time sets minutes a day
   (counted on every PC the profile plays on) and the hours it may play,
   changed with a parent's PIN. Five minutes before the end Windows plays

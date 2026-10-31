@@ -160,6 +160,7 @@ when a token exists.
 | Gallery | Filter bar (search, Filters, On this PC, Sort); grid; A–Z rail when sorted by name. Filters ends with Clear, Save as smart collection…, Apply | #95, #188 |
 | Collections | Heading, filter bar, Kind and Whose; the players' collections; RomM's virtual ones by type | #121 |
 | Search | Header with the search box (moves onto the bar on scroll), counts, recent searches; the library by best match | #132 |
+| Stats | Heading (this PC only, when offline); tiles: this week, this month, all time, longest session, days in a row, games finished, achievements this month; MOST PLAYED (ten, A opens); BY PLATFORM bars | #236 |
 | Settings | RomM v2's profile page: grouped sidebar (Profile, Library, This PC, Gargosy), cards on the right | #6 |
 
 Mockups are linked from each issue.
@@ -206,3 +207,5 @@ Mockups are linked from each issue.
 | 2026-10-27 | Swedish beside English, the English text as the key (`tr()`); app-wide, System follows Windows | #191 |
 | 2026-10-27 | A gallery is saved as a smart collection from its Filters; what RomM can't run is said, not saved | #188 |
 | 2026-10-31 | A game's manual is a page of its own from a button by ♥, not a tab: a page at a time, A zooms (the controller has no second stick in Gargosy's input) | #232 |
+| 2026-10-31 | Stats is a page of its own from the user menu (under PROFILE), not a Settings section: numbers to read, nothing to change | #236 |
+| 2026-10-31 | The user menu's rows are 35 px and its group headings closer, so it still fits at 1280×720 with Stats | #236 |
