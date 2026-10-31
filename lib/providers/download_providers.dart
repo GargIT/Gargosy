@@ -243,7 +243,6 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
       await _ref.read(librarySnapshotProvider)?.remember(game);
-      unawaited(_ref.read(gameManualsProvider)?.keep(game));
     } on DioException catch (e) {
       if (!mounted) return;
       _set(game.id, CancelToken.isCancel(e) ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
@@ -331,6 +330,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
   Future<void> delete(Game game) async {
     await _ref.read(romFilesProvider).delete(game, PathGuard(_ref.read(appRootProvider)));
     await _ref.read(librarySnapshotProvider)?.forget(game.id);
+    await _ref.read(gameManualsProvider)?.forget(game);
     _ref.read(romFilesVersionProvider.notifier).state++;
   }
 }
@@ -346,7 +346,7 @@ final downloadsProvider = StateNotifierProvider<DownloadsNotifier, Map<String, D
 });
 
 /// #232: the active profile's manuals (`cache\manuals\`); RomM's copies only
-/// while RomM can be reached. A game's download keeps its manual too.
+/// while RomM can be reached. Deleting a game from this PC removes its manual.
 final gameManualsProvider = Provider<GameManuals?>((ref) {
   final profile = ref.watch(activeProfileProvider);
   if (profile == null) return null;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,10 +17,14 @@ import '../helpers/game_fixtures.dart';
 import '../helpers/widget_env.dart';
 
 class _Doc implements ManualDocument {
-  _Doc(this.pageCount);
+  _Doc(this.pageCount, {this.shape = const Size(1600, 900)});
   @override
   final int pageCount;
+  final Size shape;
   var disposed = false;
+
+  @override
+  Size pageSize(int index) => shape;
 
   @override
   Widget page(int index) => ColoredBox(key: ValueKey('fake-page-$index'), color: Colors.white);
@@ -28,21 +34,41 @@ class _Doc implements ManualDocument {
 }
 
 class _Manuals extends GameManuals {
-  _Manuals({this.problem}) : super(guard: PathGuard(AppRoot(r'C:\nowhere')), dir: r'C:\nowhere\manuals');
+  _Manuals({this.problem, this.kept = false})
+    : super(guard: PathGuard(AppRoot(r'C:\nowhere')), dir: r'C:\nowhere\manuals');
   final String? problem;
+  bool kept;
+  var forgotten = 0;
+
+  @override
+  bool isKept(Game game) => kept;
 
   @override
   Future<String> open(Game game) async {
     if (problem != null) throw ManualUnavailable(problem!);
+    kept = true;
     return r'C:\nowhere\manuals\1.pdf';
+  }
+
+  @override
+  Future<void> forget(Game game) async {
+    forgotten++;
+    kept = false;
   }
 }
 
 void main() {
   final game = Game.fromJson({...gameJson(1, 'Chrono Trigger'), 'path_manual': 'roms/1/manual/1.pdf'});
 
-  Future<_Doc> show(WidgetTester tester, {int pages = 3, String? problem}) async {
-    final doc = _Doc(pages);
+  Future<_Doc> show(
+    WidgetTester tester, {
+    int pages = 3,
+    String? problem,
+    Size shape = const Size(1600, 900),
+    _Manuals? manuals,
+    Future<ManualDocument> Function(String path)? opener,
+  }) async {
+    final doc = _Doc(pages, shape: shape);
     tester.view.physicalSize = const Size(1600, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -50,8 +76,8 @@ void main() {
       testApp(
         ManualScreen(game: game),
         overrides: [
-          gameManualsProvider.overrideWithValue(_Manuals(problem: problem)),
-          manualOpenerProvider.overrideWithValue((_) async => doc),
+          gameManualsProvider.overrideWithValue(manuals ?? _Manuals(problem: problem)),
+          manualOpenerProvider.overrideWithValue(opener ?? (_) async => doc),
         ],
       ),
     );
@@ -123,6 +149,64 @@ void main() {
     await press(tester, GameAction.detail);
     await tester.pump();
     expect(view(tester).getMaxScaleOnAxis(), 1.0);
+  });
+
+  testWidgets('a zoomed page narrower than the screen stays centred: left/right still turn, up/down pan', (
+    tester,
+  ) async {
+    await show(tester, shape: const Size(600, 800));
+    await press(tester, GameAction.confirm);
+    await tester.pump();
+    final centred = view(tester).getTranslation().x;
+    await dpad(tester, GameAction.right);
+    expect(find.text('Page 2 of 3'), findsOneWidget);
+    expect(view(tester).getMaxScaleOnAxis(), 1.0, reason: 'a new page starts whole');
+    await press(tester, GameAction.confirm);
+    await tester.pump();
+    expect(view(tester).getTranslation().x, centred);
+    final y = view(tester).getTranslation().y;
+    await dpad(tester, GameAction.down);
+    expect(view(tester).getTranslation().y, lessThan(y));
+    expect(view(tester).getTranslation().x, centred);
+  });
+
+  testWidgets('A while the manual is still coming does nothing to the page it opens on', (tester) async {
+    final coming = Completer<ManualDocument>();
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      testApp(
+        ManualScreen(game: game),
+        overrides: [
+          gameManualsProvider.overrideWithValue(_Manuals()),
+          manualOpenerProvider.overrideWithValue((_) => coming.future),
+        ],
+      ),
+    );
+    await tester.pump();
+    // The spinner never settles: A goes straight onto the bus.
+    inputActionBus.add(GameAction.confirm);
+    await tester.pump();
+    await tester.pump();
+    coming.complete(_Doc(3));
+    await tester.pumpAndSettle();
+    expect(view(tester).getMaxScaleOnAxis(), 1.0);
+  });
+
+  testWidgets("a kept copy PDFium can't open is fetched again, once", (tester) async {
+    final manuals = _Manuals(kept: true);
+    var tries = 0;
+    await show(
+      tester,
+      manuals: manuals,
+      opener: (_) async {
+        if (tries++ == 0) throw StateError('damaged');
+        return _Doc(2);
+      },
+    );
+    expect(manuals.forgotten, 1);
+    expect(find.text('Page 1 of 2'), findsOneWidget);
   });
 
   testWidgets("why a manual can't be shown is said", (tester) async {

@@ -25,7 +25,7 @@ mixin _RommLibrary on _RommBase {
     if (response.statusCode != 200 || data == null || data.isEmpty) {
       throw StateError('RomM sent no manual (${response.statusCode}).');
     }
-    return Uint8List.fromList(data);
+    return data is Uint8List ? data : Uint8List.fromList(data);
   }
 
   /// Gargosy (#224): the age ratings across the library, as RomM's

@@ -10,6 +10,9 @@ abstract class ManualDocument {
   /// Page [index] (from 0), filling the box it's given, its shape kept.
   Widget page(int index);
 
+  /// Page [index]'s shape (any unit): where it sits once fitted.
+  Size pageSize(int index);
+
   Future<void> dispose();
 }
 
@@ -22,9 +25,10 @@ class PdfManual implements ManualDocument {
 
   final PdfDocument _doc;
 
-  /// Pages are drawn this many times their size in points (about 216 dpi),
-  /// then fitted to the screen, so a zoomed page stays sharp.
-  static const _detail = 3.0;
+  /// Pages are drawn twice their size in points (about 144 dpi, PDFium
+  /// capped at 200), then fitted to the screen: a zoomed page stays sharp
+  /// enough without a 40 MB bitmap a page.
+  static const _detail = 2.0;
 
   static Future<ManualDocument> open(String path) async {
     await pdfrxFlutterInitialize();
@@ -41,10 +45,13 @@ class PdfManual implements ManualDocument {
       child: SizedBox(
         width: page.width * _detail,
         height: page.height * _detail,
-        child: PdfPageView(document: _doc, pageNumber: index + 1, backgroundColor: Colors.white),
+        child: PdfPageView(document: _doc, pageNumber: index + 1, maximumDpi: 200, backgroundColor: Colors.white),
       ),
     );
   }
+
+  @override
+  Size pageSize(int index) => Size(_doc.pages[index].width, _doc.pages[index].height);
 
   @override
   Future<void> dispose() => _doc.dispose();

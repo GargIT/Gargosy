@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:typed_data';
@@ -71,9 +72,28 @@ void main() {
     await expectLater(failing.open(game), throwsA(isA<ManualUnavailable>()));
     await expectLater(GameManuals(guard: guard, dir: dir).open(game), throwsA(isA<ManualUnavailable>()));
     await expectLater(GameManuals(guard: guard, dir: dir).open(withManual(9, null)), throwsA(isA<ManualUnavailable>()));
-    // keep() with the download only logs.
-    await failing.keep(game);
-    expect(failing.isKept(game), isFalse);
+  });
+
+  test('two opens at once fetch once and write once; forget removes the copy', () async {
+    final asked = Completer<Uint8List>();
+    var fetches = 0;
+    final manuals = GameManuals(
+      guard: guard,
+      dir: dir,
+      download: (_) {
+        fetches++;
+        return asked.future;
+      },
+    );
+    final game = withManual(5, 'roms/4/5/manual/5.pdf');
+    final a = manuals.open(game);
+    final b = GameManuals(guard: guard, dir: dir, download: (_) async => throw StateError('second')).open(game);
+    asked.complete(pdf);
+    expect(await a, await b);
+    expect(fetches, 1);
+    await manuals.forget(game);
+    expect(manuals.isKept(game), isFalse);
+    await manuals.forget(game);
   });
 
   test('written only through the guard: never outside the profile', () async {

@@ -70,8 +70,18 @@ class _ManualScreenState extends ConsumerState<ManualScreen> {
     final opener = ref.read(manualOpenerProvider);
     try {
       if (manuals == null) throw ManualUnavailable(tr('RomM has no manual for this game.'));
+      final wasKept = manuals.isKept(widget.game);
       final path = await manuals.open(widget.game);
-      final doc = await opener(path);
+      ManualDocument doc;
+      try {
+        doc = await opener(path);
+      } on Object catch (e) {
+        if (!wasKept) rethrow;
+        // A kept copy PDFium can't read: fetched again, once.
+        debugPrint('[Manual] ${widget.game.id}: the kept copy doesn\'t open ($e), fetched again');
+        await manuals.forget(widget.game);
+        doc = await opener(await manuals.open(widget.game));
+      }
       if (!mounted) {
         unawaited(doc.dispose());
         return;
@@ -112,12 +122,26 @@ class _ManualScreenState extends ConsumerState<ManualScreen> {
     });
   }
 
-  /// A D-pad step: pans a zoomed page, else left/right turn the page.
+  /// The page where it sits on the screen, fitted and centred.
+  Rect get _pageRect {
+    final doc = _doc;
+    if (doc == null || _viewport.isEmpty) return Offset.zero & _viewport;
+    final page = doc.pageSize(_page);
+    if (page.isEmpty) return Offset.zero & _viewport;
+    final fit = applyBoxFit(BoxFit.contain, page, _viewport).destination;
+    return Alignment.center.inscribe(fit, Offset.zero & _viewport);
+  }
+
+  /// A D-pad step: pans along a way the zoomed page is larger than the
+  /// screen; left/right turn the page where it still fits across.
   void _move(int dx, int dy) {
-    if (_zoomed) {
-      _pan(-dx * _panStep, -dy * _panStep);
-    } else if (dx != 0) {
+    final r = _pageRect;
+    final wider = _zoomed && r.width * _scale > _viewport.width + 0.5;
+    final taller = _zoomed && r.height * _scale > _viewport.height + 0.5;
+    if (dx != 0 && !wider) {
       _turn(dx);
+    } else if ((dx != 0 && wider) || (dy != 0 && taller)) {
+      _pan(-dx * _panStep, -dy * _panStep);
     }
   }
 
@@ -127,6 +151,7 @@ class _ManualScreenState extends ConsumerState<ManualScreen> {
 
   /// To [scale] around the middle of the screen.
   void _zoomTo(double scale) {
+    if (_doc == null || _viewport.isEmpty) return;
     final c = _viewport.center(Offset.zero);
     final by = scale / _scale;
     final m = Matrix4.translationValues(c.dx, c.dy, 0)
@@ -147,13 +172,17 @@ class _ManualScreenState extends ConsumerState<ManualScreen> {
     _zoomTo(prev);
   }
 
-  /// Keeps the page covering the screen: no pan past its edges.
+  /// Keeps the page on the screen: no pan past its edges, and centred
+  /// along a way it still fits.
   Matrix4 _clamped(Matrix4 m) {
     final s = m.getMaxScaleOnAxis();
     if (s <= 1.0) return Matrix4.identity();
+    final r = _pageRect;
+    double along(double t, double lo, double hi, double view) =>
+        (hi - lo) * s <= view ? view / 2 - s * (lo + hi) / 2 : t.clamp(view - s * hi, -s * lo).toDouble();
     final t = m.getTranslation();
-    final x = t.x.clamp(_viewport.width * (1 - s), 0.0);
-    final y = t.y.clamp(_viewport.height * (1 - s), 0.0);
+    final x = along(t.x, r.left, r.right, _viewport.width);
+    final y = along(t.y, r.top, r.bottom, _viewport.height);
     return m.clone()..setTranslationRaw(x, y, 0);
   }
 
@@ -201,6 +230,8 @@ class _ManualScreenState extends ConsumerState<ManualScreen> {
         _viewport = box.biggest;
         return ClipRect(
           child: InteractiveViewer(
+            // A new viewer a page: a mouse fling still running stops with the turn.
+            key: ValueKey('manual-view-$_page'),
             transformationController: _view,
             minScale: 1,
             maxScale: zooms.last,

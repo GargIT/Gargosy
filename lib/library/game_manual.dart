@@ -17,9 +17,8 @@ class ManualUnavailable implements Exception {
 }
 
 /// #232: a game's manual from RomM (`Game.pathManual`, a PDF), kept in the
-/// profile's `cache\manuals\<rom id>.pdf` for offline play: fetched when
-/// first opened, or with the game's download. Written through the profile's
-/// [guard].
+/// profile's `cache\manuals\<rom id>.pdf` once opened, so it opens offline
+/// too. Written through the profile's [guard].
 class GameManuals {
   GameManuals({required this.guard, required this.dir, this.download});
 
@@ -31,6 +30,11 @@ class GameManuals {
   /// RomM's copy of a manual by its path; null without RomM.
   final Future<Uint8List> Function(String pathManual)? download;
 
+  /// Fetches under way, by file: a second open waits for the first instead
+  /// of writing the same file. Shared by every [GameManuals] (the provider
+  /// builds a new one when RomM comes and goes).
+  static final _fetching = <String, Future<String>>{};
+
   /// Where [game]'s manual is kept.
   String fileFor(Game game) => p.join(dir, '${game.id.replaceAll(RegExp(r'[^0-9A-Za-z_-]'), '_')}.pdf');
 
@@ -39,9 +43,16 @@ class GameManuals {
 
   /// [game]'s manual on this PC, fetched from RomM when it isn't yet.
   /// Throws [ManualUnavailable] with why not.
-  Future<String> open(Game game) async {
+  Future<String> open(Game game) {
     final file = fileFor(game);
-    if (io.File(file).existsSync()) return file;
+    if (io.File(file).existsSync()) return Future.value(file);
+    final key = guard.pathKey(file);
+    return _fetching[key] ??= _fetch(game, file).whenComplete(() {
+      _fetching.remove(key);
+    });
+  }
+
+  Future<String> _fetch(Game game, String file) async {
     final path = game.pathManual;
     if (!game.hasManual || path == null) throw ManualUnavailable(tr('RomM has no manual for this game.'));
     final fetch = download;
@@ -61,14 +72,14 @@ class GameManuals {
     return file;
   }
 
-  /// Fetches [game]'s manual when RomM has one and it isn't kept yet; a
-  /// failure is only logged (a downloaded game plays without it).
-  Future<void> keep(Game game) async {
-    if (!game.hasManual || isKept(game)) return;
+  /// Removes [game]'s kept manual: a copy PDFium can't open (fetched again
+  /// next time), or the game leaving this PC. Nothing kept is fine.
+  Future<void> forget(Game game) async {
+    final file = io.File(guard.check(fileFor(game)));
     try {
-      await open(game);
-    } on Object catch (e) {
-      debugPrint('[Manual] not kept for ${game.id}: $e');
+      if (file.existsSync()) await file.delete();
+    } on io.FileSystemException catch (e) {
+      debugPrint('[Manual] ${game.id} not removed: $e');
     }
   }
 }
