@@ -25,6 +25,7 @@ class DownloadsScreen extends ConsumerWidget {
   /// "1.2 GB of 4.3 GB · 12 MB/s · 4 min left" while downloading.
   static String progressLine(DownloadProgress p, Duration elapsed) {
     if (p.phase == DownloadPhase.extracting) return tr('Unpacking…');
+    if (p.phase == DownloadPhase.checking) return tr('Checking…');
     final parts = <String>[
       p.total > 0 ? tr('{0} of {1}', [formatBytes(p.received), formatBytes(p.total)]) : formatBytes(p.received),
     ];

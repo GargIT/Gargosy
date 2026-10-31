@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../core/romm/romm_models.dart';
 import '../profiles/path_guard.dart';
 import 'disk_space.dart';
+import 'download_check.dart';
 import 'rom_files.dart';
 import '../l10n/tr.dart';
 
@@ -15,13 +16,16 @@ enum DownloadPhase {
   /// Waiting for the downloads before it (#143).
   queued,
   downloading,
+
+  /// Checked against RomM's hashes (#225).
+  checking,
   extracting,
   done,
   failed,
   cancelled;
 
   /// Waiting or running: not yet on this PC, and not to be started again.
-  bool get active => this == queued || this == downloading || this == extracting;
+  bool get active => this == queued || this == downloading || this == checking || this == extracting;
 }
 
 class DownloadProgress {
@@ -62,7 +66,10 @@ class DownloadService {
     required this.urlFor,
     this.detail,
     this.disk,
+    this.checkHashes = _always,
   });
+
+  static bool _always() => true;
 
   final Dio dio;
   final Options Function() auth;
@@ -76,6 +83,10 @@ class DownloadService {
 
   /// The free space on a path's volume (#142); null skips the check.
   final DiskInfo? disk;
+
+  /// Whether a download is checked against RomM's hashes before it moves
+  /// into `roms\` (#225; Settings → Storage → Check downloads).
+  final bool Function() checkHashes;
 
   /// What [download] writes, by place: the download in temp, a zip's
   /// unpacked copy beside it, and the game in `roms\` when that's another
@@ -91,21 +102,23 @@ class DownloadService {
 
   /// What RomM will send for [game], and the file's name when it sits in the
   /// game's folder.
-  Future<({_Shape shape, String? fileName})> _shapeOf(Game game) async {
+  Future<({_Shape shape, String? fileName, List<RomFileHashes> hashes})> _shapeOf(Game game) async {
     var list = game.files;
     if (list.isEmpty && detail != null) list = (await detail!(game.id))?.files ?? const [];
-    if (list.isEmpty) return (shape: game.isMultiFile ? _Shape.zip : _Shape.file, fileName: null);
-    if (list.length > 1) return (shape: _Shape.zip, fileName: null);
+    final hashes = [for (final f in list) ?RomFileHashes.fromJson(f, folder: game.fsName)];
+    if (list.isEmpty) return (shape: game.isMultiFile ? _Shape.zip : _Shape.file, fileName: null, hashes: hashes);
+    if (list.length > 1) return (shape: _Shape.zip, fileName: null, hashes: hashes);
     final name = list.single['file_name']?.toString();
     if (name != null && name.isNotEmpty && name != game.fsName) {
-      return (shape: _Shape.fileInFolder, fileName: RomFiles.safeName(name));
+      return (shape: _Shape.fileInFolder, fileName: RomFiles.safeName(name), hashes: hashes);
     }
-    return (shape: _Shape.file, fileName: null);
+    return (shape: _Shape.file, fileName: null, hashes: hashes);
   }
 
   Future<void> download(Game game, {void Function(DownloadProgress)? onProgress, CancelToken? cancel}) async {
     final target = guard.check(files.pathFor(game));
-    final (:shape, :fileName) = await _shapeOf(game);
+    final (:shape, :fileName, :hashes) = await _shapeOf(game);
+    final check = checkHashes() && hashes.any((h) => h.hasAny);
     await io.Directory(guard.check(tempDir)).create(recursive: true);
     final part = guard.check(p.join(tempDir, 'download-${game.id}.part'));
     final staging = guard.check(p.join(tempDir, 'extract-${game.id}'));
@@ -133,12 +146,28 @@ class DownloadService {
           DownloadProgress(DownloadPhase.downloading, received: received, total: total > 0 ? total : game.fileSize),
         ),
       );
+      // One file: checked before anything moves (#225).
+      // A ROM that is an archive RomM hashed by what's inside: not checked.
+      final archive = archiveExtensions.contains(p.extension(fileName ?? game.fsName ?? '').toLowerCase());
+      // Checking: all of it is here already, so the space math counts none still to come.
+      final size = io.File(part).lengthSync();
+      final checking = DownloadProgress(DownloadPhase.checking, received: size, total: size);
+      if (check && shape != _Shape.zip && hashes.length == 1 && !archive) {
+        onProgress?.call(checking);
+        if (!await fileMatches(part, hashes.single)) throw DownloadDamaged([hashes.single.name]);
+      }
       await io.Directory(guard.check(p.dirname(target))).create(recursive: true);
       switch (shape) {
         case _Shape.zip:
           onProgress?.call(const DownloadProgress(DownloadPhase.extracting));
           // Multi-GB discs: unpacked off the UI isolate so the app keeps responding.
           await _unzipOffIsolate(part, staging, guard);
+          // Several files: each checked once unpacked, before the folder moves.
+          if (check) {
+            onProgress?.call(checking);
+            final damaged = await damagedIn(staging, hashes);
+            if (damaged.isNotEmpty) throw DownloadDamaged(damaged);
+          }
           _replace(target);
           io.Directory(staging).renameSync(target);
         case _Shape.fileInFolder:

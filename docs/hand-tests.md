@@ -345,3 +345,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 128. [x] Give a parent's profile a PIN. On a child's profile: Settings → Profile → Age limit → Up to 12 asks for the parent's PIN (a wrong one changes nothing). A game rated M or PEGI 16 then says "… is above this profile's age limit." at Play and Resume. Turn on Hide unrated games: an unrated game is refused too. Settings → Emulators → Open is refused while the limit is on. Off, with the parent's PIN, plays everything again. A profile made after the child's (with a PIN, no limit) is never asked for as the parent's.
 129. [ ] On a child's profile with Up to 12: a platform's page, Search, a collection, Home's rows (not Playing now), For you, Similar games and the screensaver show no game rated above 12 (an M or PEGI 16 game you know of isn't there); the A–Z rail and the GAMES count leave them out too. Hide unrated games: unrated ones go as well. On a profile without a limit everything is there.
+
+## Checking a download (#225)
+
+130. [ ] Download a one-file game and a multi-disc game: each says Checking… after downloading, then lands as before. Settings → Storage → Check downloads off: no Checking…. (A damaged download is hard to make by hand: the unit tests cover it; if one ever fails with "The download is damaged", Retry gets it again.)

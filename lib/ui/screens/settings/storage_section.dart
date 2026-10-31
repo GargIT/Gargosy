@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../library/download_check.dart';
 import '../../../library/storage_usage.dart';
 import '../../../play/play_controller.dart';
 import '../../../profiles/path_guard.dart';
@@ -136,6 +137,23 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
                   ref.invalidate(storageUsageProvider);
                 },
               ),
+          ],
+        ),
+        SettingsCard(
+          title: tr('Downloads'),
+          icon: Icons.download,
+          children: [
+            SettingsToggle(
+              label: tr('Check downloads'),
+              note: tr(
+                'Each download is checked against RomM\'s hashes before it goes into roms\\, so a damaged one is never played. Off, downloads go in unchecked: quicker with large discs on a slow PC.',
+              ),
+              on: DownloadCheck.of(ref.watch(appPreferencesProvider)),
+              onChanged: (on) async {
+                await ref.read(appPreferencesProvider).setBool(DownloadCheck.key, on);
+                if (mounted) setState(() {});
+              },
+            ),
           ],
         ),
         const ImageCacheCard(),
