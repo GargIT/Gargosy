@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/audio/ui_sound_service.dart';
@@ -73,11 +72,16 @@ void main() {
     ),
   );
 
-  testWidgets('A, B and RB play their sounds; a tab nobody takes stays quiet', (tester) async {
+  testWidgets('A, B and RB play their sounds when something takes them', (tester) async {
     await pump(tester, buttons());
     await press(tester, GameAction.confirm);
     await press(tester, GameAction.back);
     await press(tester, GameAction.r1);
+    expect(heard.played, [UiSound.open], reason: 'no page to close, no tabs');
+
+    Navigator.of(tester.element(find.text('one'))).push(MaterialPageRoute<void>(builder: (_) => buttons()));
+    await tester.pumpAndSettle();
+    await press(tester, GameAction.back);
     expect(heard.played, [UiSound.open, UiSound.back]);
 
     var tabs = 0;
@@ -87,15 +91,42 @@ void main() {
     expect(heard.played, [UiSound.tab]);
   });
 
-  testWidgets('a focus moved with the controller is heard, one moved by the mouse is not', (tester) async {
+  testWidgets('a move the D-pad or an arrow key made is heard; a focus a page gives itself is not', (tester) async {
     await pump(tester, buttons());
-    container.read(inputModeProvider.notifier).state = InputMode.gamepad;
     await press(tester, GameAction.down);
     expect(heard.played, [UiSound.move]);
 
-    container.read(inputModeProvider.notifier).state = InputMode.mouse;
-    await press(tester, GameAction.up);
-    expect(heard.played, [UiSound.move]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+    expect(heard.played, [UiSound.move, UiSound.move]);
+
+    // Already at the top: the key moves nothing, so nothing is heard.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+    expect(heard.played, hasLength(2));
+
+    final node = Focus.of(tester.element(find.text('two')));
+    node.requestFocus();
+    await tester.pump();
+    expect(heard.played, hasLength(2));
+  });
+
+  testWidgets('keys sound only when they do something, and never while typing', (tester) async {
+    await pump(tester, const TextField(autofocus: true));
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect(heard.played, isEmpty, reason: 'typing');
+
+    await pump(tester, buttons());
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.sendKeyEvent(LogicalKeyboardKey.pageDown);
+    await tester.pump();
+    expect(heard.played, isEmpty, reason: 'no page to close, no tabs');
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(heard.played, [UiSound.open]);
   });
 
   testWidgets('off: nothing is heard', (tester) async {

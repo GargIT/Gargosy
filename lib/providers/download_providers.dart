@@ -248,14 +248,17 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
         ..removeWhere((g) => g.id == game.id)
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
-      _ref.read(uiSoundsProvider).play(UiSound.done);
       await _ref.read(librarySnapshotProvider)?.remember(game);
+      if (mounted) _ref.read(uiSoundsProvider).play(UiSound.done);
     } on DioException catch (e) {
       if (!mounted) return;
-      _set(game.id, CancelToken.isCancel(e) ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
+      final cancelled = CancelToken.isCancel(e);
+      _set(game.id, cancelled ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
+      if (!cancelled) _ref.read(uiSoundsProvider).play(UiSound.error);
     } on Object catch (e) {
       if (!mounted) return;
       _set(game.id, DownloadProgress(DownloadPhase.failed, error: '$e'));
+      _ref.read(uiSoundsProvider).play(UiSound.error);
     } finally {
       _cancels.remove(game.id);
       _startedAt.remove(game.id);

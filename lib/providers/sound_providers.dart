@@ -12,9 +12,10 @@ final soundPlayerProvider = Provider<SoundPlayer>((ref) => soundPlayerFor(Platfo
 final soundsOnProvider = Provider<bool>((ref) {
   try {
     return SoundSettings.on(ref.watch(appPreferencesProvider));
-  } on Object {
+  } on Object catch (e) {
     // No preferences given (a test's frame without them): no sounds.
-    return false;
+    if ('$e'.contains('overridden in main')) return false;
+    rethrow;
   }
 });
 

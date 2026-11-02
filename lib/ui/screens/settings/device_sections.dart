@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/audio/ui_sound_service.dart';
 import '../../../core/input/deadzone_config.dart';
 import '../../../core/input/hid_buttons.dart';
 import '../../../core/platform/window_service.dart';
 import '../../../play/quit_combo.dart';
 import '../../../profiles/profile_providers.dart';
-import '../../shell/screensaver.dart';
-import '../../../core/audio/ui_sound_service.dart';
 import '../../../providers/sound_providers.dart';
+import '../../shell/screensaver.dart';
 import '../../shell/user_menu.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../theme/tokens.dart';

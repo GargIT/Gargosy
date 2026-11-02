@@ -44,11 +44,17 @@ final Map<UiSound, List<_Tone>> _tones = {
 };
 
 /// [sound] as a 16-bit mono WAV at [volume] (0–1): each tone a sine with a
-/// soft start and end, so nothing clicks.
-Uint8List uiSoundWav(UiSound sound, double volume) {
+/// soft start and end, so nothing clicks. Made once per sound and volume,
+/// and the same bytes given back after (the player keeps one copy of each).
+Uint8List uiSoundWav(UiSound sound, double volume) =>
+    _made.putIfAbsent((sound, volume.clamp(0.0, 1.0)), () => _make(sound, volume.clamp(0.0, 1.0)));
+
+final _made = <(UiSound, double), Uint8List>{};
+
+Uint8List _make(UiSound sound, double volume) {
   final tones = _tones[sound]!;
   final samples = <int>[];
-  final peak = 32767 * _quiet * volume.clamp(0, 1);
+  final peak = 32767 * _quiet * volume;
   for (final tone in tones) {
     final n = _rate * tone.ms ~/ 1000;
     final fade = min(n ~/ 4, _rate * 6 ~/ 1000);

@@ -60,7 +60,7 @@ Future<void> press(WidgetTester tester, GameAction a) async {
   };
   final dir = directions[a];
   if (dir != null) {
-    FocusManager.instance.primaryFocus?.focusInDirection(dir);
+    if (FocusManager.instance.primaryFocus?.focusInDirection(dir) ?? false) focusMovedBus.add(null);
   } else {
     inputActionBus.add(a);
   }

@@ -410,4 +410,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 151. [ ] Settings → Display → Sounds on: a sound plays. With a controller, moving, A, B and LB/RB each have their own; the mouse makes none when it moves focus. Holding the D-pad down a long list gives quick, even ticks, and opening a page makes one sound, not two. Volume 25 % is quieter than 100 %, and 100 % isn't loud. Off: nothing.
 
-152. [ ] With sounds on, start a download and go to another page: when it finishes, the download sound plays. Something refused (Delete from RomM while offline, a download that doesn't fit while a game runs) plays the error sound. Start a game with a download running: nothing is heard over the emulator.
+152. [ ] With sounds on, start a download and go to another page: when it finishes, the download sound plays. A failed download, or something refused (Delete from RomM while offline, a download that doesn't fit), plays the error sound. Start a game with a download running: nothing is heard over the emulator. Typing in a search box makes no sound; with the keyboard, the arrows, Enter, Escape and PgUp/PgDn sound only when they do something.

@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/providers/retry.dart';
+import 'package:gargosy/core/audio/ui_sound_service.dart';
+import 'package:gargosy/core/platform/sound_player.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/download_schedule.dart';
@@ -13,17 +16,12 @@ import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/download_providers.dart';
+import 'package:gargosy/providers/sound_providers.dart';
 
 import '../helpers/fake_download_service.dart';
 import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/fake_disk.dart';
-
-import 'dart:typed_data';
-
-import 'package:gargosy/core/audio/ui_sound_service.dart';
-import 'package:gargosy/core/platform/sound_player.dart';
-import 'package:gargosy/providers/sound_providers.dart';
 
 void main() {
   test('switching profile cancels the old profile\'s downloads and forgets their progress', () async {
@@ -109,6 +107,15 @@ void main() {
       expect(heard.count, 0);
       fake.holds['1']!.complete();
       await first;
+      expect(heard.count, 1);
+    });
+
+    test('a failed download plays the error sound (#237)', () async {
+      final first = downloads.start(a);
+      await tick();
+      fake.holds['1']!.completeError(StateError('the disk went away'));
+      await first;
+      expect(c.read(downloadsProvider)['1']!.phase, DownloadPhase.failed);
       expect(heard.count, 1);
     });
 

@@ -24,8 +24,8 @@ class SilentPlayer implements SoundPlayer {
 }
 
 /// `PlaySound` from memory, asynchronously. Windows reads the bytes while
-/// the sound plays, so each sound's copy stays allocated, one per distinct
-/// sound, for the process.
+/// the sound plays, so each sound's copy stays allocated for the process,
+/// one per sound and volume (`uiSoundWav` gives the same bytes back).
 class WindowsSoundPlayer implements SoundPlayer {
   final _copies = Expando<Pointer<Uint8>>();
 

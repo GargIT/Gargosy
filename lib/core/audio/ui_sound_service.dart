@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import '../platform/sound_player.dart';
 import '../storage/app_preferences.dart';
@@ -23,7 +23,8 @@ class SoundSettings {
 }
 
 /// Plays Gargosy's sounds when they're on and no game runs (the emulator
-/// is in front then; a download finishing mustn't be heard over it).
+/// is in front then; a download finishing mustn't be heard over it). A
+/// sound that can't play is logged, never thrown: nothing waits on one.
 class UiSoundService {
   UiSoundService(
     this._player, {
@@ -45,8 +46,6 @@ class UiSoundService {
   /// gives itself: not one the player made.
   static const moveQuietAfter = Duration(milliseconds: 150);
 
-  final _wavs = <UiSound, Uint8List>{};
-
   /// When a sound other than a move last played.
   DateTime? _lastOther;
 
@@ -59,6 +58,10 @@ class UiSoundService {
     } else {
       _lastOther = now;
     }
-    _player.play(_wavs[sound] ??= uiSoundWav(sound, volume / 100));
+    try {
+      _player.play(uiSoundWav(sound, volume / 100));
+    } on Object catch (e) {
+      debugPrint('[Sound] $sound: $e');
+    }
   }
 }
