@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/library/notifications.dart';
-import 'package:gargosy/providers/notification_providers.dart';
 
 import '../helpers/profile_test_env.dart';
 
@@ -65,15 +64,62 @@ void main() {
   });
 
   test('NoticeQueue: in order, taken one at a time; nothing kept while off', () {
-    var on = true;
-    final q = NoticeQueue(() => on);
-    q.post(const Notice('a'));
-    q.post(const Notice('b'));
-    on = false;
-    q.post(const Notice('c'));
+    final q = NoticeQueue(on: true)
+      ..post(const Notice('a'))
+      ..post(const Notice('b'));
     expect(q.take()?.text, 'a');
     expect(q.take()?.text, 'b');
     expect(q.take(), isNull);
+    final off = NoticeQueue(on: false)..post(const Notice('c'));
+    expect(off.state, isEmpty);
+  });
+
+  test('NoticeQueue: finished downloads next to each other become one notice; at most 20 wait', () {
+    final q = NoticeQueue(on: true)
+      ..post(Notice.downloaded('1', 'Okami'))
+      ..post(Notice.downloaded('2', 'Ico'))
+      ..post(Notice.downloaded('3', 'Rez'))
+      ..post(Notice.uploaded(1))
+      ..post(Notice.downloaded('4', 'Gish'));
+    expect(q.state.map((n) => n.text), [
+      '3 downloads finished.',
+      'Uploaded 1 save that was waiting.',
+      'Gish is downloaded.',
+    ]);
+    for (var i = 0; i < 30; i++) {
+      q.post(Notice('n$i'));
+    }
+    expect(q.state, hasLength(NoticeQueue.cap));
+    expect(q.state.last.text, 'n29');
+  });
+
+  test('nextRound: every game in turn, going round', () {
+    final ids = ['a', 'b', 'c', 'd', 'e'];
+    var (picked, cursor) = nextRound(ids, 0, 2);
+    expect(picked, ['a', 'b']);
+    (picked, cursor) = nextRound(ids, cursor, 2);
+    expect(picked, ['c', 'd']);
+    (picked, cursor) = nextRound(ids, cursor, 2);
+    expect(picked, ['e', 'a']);
+    expect(nextRound(['a'], 7, 20).$1, ['a']);
+    expect(nextRound(const [], 3, 20).$1, isEmpty);
+  });
+
+  test('SharedSeen: one game with many shares never pushes out what another has seen', () async {
+    final seen = SharedSeen(MemoryPrefs());
+    await seen.news('1', SharedItem.of('1', [_share(1, 'Anna')], states: false));
+    await seen.news('2', SharedItem.of('2', [for (var i = 10; i < 1500; i++) _share(i, 'Bo')], states: false));
+    final news = await seen.news('1', SharedItem.of('1', [_share(1, 'Anna'), _share(2, 'Anna')], states: false));
+    expect(news.map((i) => i.key), ['save:2'], reason: 'game 1 is still remembered: its new share is news');
+  });
+
+  test('a name that is not text is still a name', () {
+    expect(
+      SharedItem.of('1', [
+        {'id': 1, 'username': 42},
+      ], states: false).single.username,
+      '42',
+    );
   });
 
   test('ShareWatch: each game read once, its new shares said with the game\'s name', () async {

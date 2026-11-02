@@ -7,20 +7,20 @@ import '../theme/tokens.dart';
 
 /// A short message at the bottom of the screen (a failed favourite, a note
 /// that wasn't saved). [error]: something failed or was refused, and the
-/// error sound plays (#237).
-void showToast(BuildContext context, String message, {bool error = false}) {
+/// error sound plays (#237). [queued]: after the one showing, not instead
+/// of it (#241's notices).
+void showToast(BuildContext context, String message, {bool error = false, bool queued = false}) {
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
   if (error) _errorSound(context);
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(color: GColors.fg)),
-        backgroundColor: GColors.panel,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  if (!queued) messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(message, style: const TextStyle(color: GColors.fg)),
+      backgroundColor: GColors.panel,
+      behavior: SnackBarBehavior.floating,
+    ),
+  );
 }
 
 void _errorSound(BuildContext context) {

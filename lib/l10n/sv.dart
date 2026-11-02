@@ -1017,6 +1017,7 @@ const svText = <String, String>{
   '{0} down, {1} up': '{0} ner, {1} upp',
   '{0} downloads are running or waiting. Switching profile stops them.':
       '{0} nedladdningar pågår eller väntar. Att byta profil stoppar dem.',
+  '{0} downloads finished.': '{0} nedladdningar är klara.',
   '{0} free of {1}': '{0} ledigt av {1}',
   '{0} free on {1}': '{0} ledigt på {1}',
   '{0} games': '{0} spel',

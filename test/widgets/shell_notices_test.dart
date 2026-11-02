@@ -38,8 +38,11 @@ void main() {
     await tester.pump();
     expect(find.text('Okami is downloaded.'), findsOneWidget);
     expect(find.text('Uploaded 1 save that was waiting.'), findsNothing);
+    // Queued behind the first toast: it shows once that one has gone.
     await tester.pump(ShellNotices.spacing);
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
     expect(find.text('Uploaded 1 save that was waiting.'), findsOneWidget);
     await tester.pump(ShellNotices.spacing);
     await tester.pumpAndSettle(const Duration(seconds: 5));

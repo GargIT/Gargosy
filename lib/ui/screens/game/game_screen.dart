@@ -90,7 +90,7 @@ final _openPages = <_GameScreenState>{};
 /// Whether [gameId]'s page is the one in front: a notice about it isn't said
 /// there (#241).
 bool gamePageInFront(String gameId) =>
-    _openPages.any((p) => p.mounted && p.widget.game.id == gameId && (ModalRoute.of(p.context)?.isCurrent ?? false));
+    _openPages.any((p) => p.mounted && p.widget.game.id == gameId && (p._route?.isCurrent ?? false));
 
 class _GameScreenState extends ConsumerState<GameScreen> {
   int _tab = 0;
@@ -100,6 +100,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void initState() {
     super.initState();
     _openPages.add(this);
+  }
+
+  /// This page's route, for [gamePageInFront].
+  ModalRoute<Object?>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _route = ModalRoute.of(context);
   }
 
   @override

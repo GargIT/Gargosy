@@ -418,8 +418,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Notifications (#241)
 
-154. [ ] With a game on this PC that another RomM user can play: open Gargosy once (nothing is said about shares made before). That user plays it, saves, shares the save (RomM's web UI or their Gargosy) and quits. Within a minute of their session ending (or at the next start of this profile), a toast says "<name> shared a save of <game>."; a shared state says "save state". Each is said once, not again at the next start.
+154. [ ] With a game on this PC that another RomM user can play: open Gargosy once (nothing is said about shares made before). That user plays it, saves, shares the save (RomM's web UI or their Gargosy) and quits. Within 5 minutes (sooner with few games on this PC; or at the next start of this profile), a toast says "<name> shared a save of <game>."; a shared state says "save state". Each is said once, not again at the next start.
 
-155. [ ] Start a download and go to Home: when it finishes, "<game> is downloaded." shows there. Stay on the game's own page for another download: no toast (its button says it). With RomM stopped, play a game so its save waits, start RomM: "Uploaded 1 save that was waiting." Several at once come one after another.
+155. [ ] Start a download and go to Home: when it finishes, "<game> is downloaded." shows there. Stay on the game's own page for another download: no toast (its button says it). With RomM stopped, play a game so its save waits, start RomM: "Uploaded 1 save that was waiting." Several at once come one after another; several downloads finishing in a row are one toast ("3 downloads finished.").
 
 156. [ ] While a game runs, let a download finish: nothing shows over the emulator; when the game ends, the toast comes. Settings → Display → Notifications off: none of these show.

@@ -7,7 +7,7 @@ import 'engine_providers.dart';
 import 'library_providers.dart';
 import 'romm_providers.dart';
 
-export '../library/notifications.dart' show Notice;
+export '../library/notifications.dart' show Notice, NoticeQueue, nextRound;
 
 /// Settings → Display → Notifications (#241); off without preferences.
 final notificationsOnProvider = Provider<bool>((ref) {
@@ -15,40 +15,23 @@ final notificationsOnProvider = Provider<bool>((ref) {
   return prefs != null && NotificationSettings.on(prefs);
 });
 
-/// What waits to be said (#241): `AppShell` says it, one at a time, once
-/// no game runs. Nothing is kept while notifications are off.
-class NoticeQueue extends StateNotifier<List<Notice>> {
-  NoticeQueue(this._on) : super(const []);
-
-  final bool Function() _on;
-
-  void post(Notice notice) {
-    if (_on()) state = [...state, notice];
-  }
-
-  /// The first waiting, taken off the queue.
-  Notice? take() {
-    if (state.isEmpty) return null;
-    final first = state.first;
-    state = state.sublist(1);
-    return first;
-  }
-}
-
-/// Emptied when the profile changes: one profile's news isn't another's.
+/// What waits to be said (#241). A new queue, empty, for another profile and
+/// when notifications are turned on or off.
 final noticesProvider = StateNotifierProvider<NoticeQueue, List<Notice>>((ref) {
   ref.watch(activeProfileProvider.select((c) => c?.profile.id));
-  return NoticeQueue(() => ref.read(notificationsOnProvider));
+  return NoticeQueue(on: ref.watch(notificationsOnProvider));
 });
 
 /// The active profile's watch for other players' shares; null without RomM.
+/// It posts to this profile's queue only, even after a switch.
 final shareWatchProvider = Provider<ShareWatch?>((ref) {
   final romm = ref.watch(rommServiceProvider);
   final me = ref.watch(rommUserIdProvider);
   if (romm == null || me == null) return null;
+  final queue = ref.watch(noticesProvider.notifier);
   return ShareWatch(
     seen: SharedSeen(ref.watch(profilePrefsProvider)),
     shared: (id) => romm.getSharedOrNull(id, exceptUserId: me),
-    post: (n) => ref.read(noticesProvider.notifier).post(n),
+    post: queue.post,
   );
 });
