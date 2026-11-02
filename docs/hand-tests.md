@@ -411,3 +411,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 151. [ ] Settings → Display → Sounds on: a sound plays. With a controller, moving, A, B and LB/RB each have their own; the mouse makes none when it moves focus. Holding the D-pad down a long list gives quick, even ticks, and opening a page makes one sound, not two. Volume 25 % is quieter than 100 %, and 100 % isn't loud. Off: nothing.
 
 152. [ ] With sounds on, start a download and go to another page: when it finishes, the download sound plays. A failed download, or something refused (Delete from RomM while offline, a download that doesn't fit), plays the error sound. Start a game with a download running: nothing is heard over the emulator. Typing in a search box makes no sound; with the keyboard, the arrows, Enter, Escape and PgUp/PgDn sound only when they do something.
+
+## Text size (#240)
+
+153. [ ] At 1280 × 720 (or Windows' display at that size), Settings → Display → Text size 150 %: every text is larger at once. Walk Home (header, Random pick and On this day, Playing now, the rows), a platform's gallery, Collections, Search, a game page and its tabs, the play screen's three panels, Settings' sections (Emulators' buttons go onto a second line) and a dialog (Delete from RomM): no text is cut off or overlaps, and the controller still reaches everything. 125 % the same; 100 % as before.

@@ -536,7 +536,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: middle),
-                      if (wide) ...[const SizedBox(width: GSpace.s6), SizedBox(width: 260, child: panel)],
+                      if (wide) ...[
+                        const SizedBox(width: GSpace.s6),
+                        SizedBox(width: 260, child: SingleChildScrollView(child: panel)),
+                      ],
                     ],
                   ),
                 ),

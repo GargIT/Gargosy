@@ -5,6 +5,7 @@ import '../../library/game_versions.dart';
 import '../theme/tokens.dart';
 import 'cover_image.dart';
 import 'g_focusable.dart';
+import '../theme/text_size.dart';
 
 /// v2's game card: the cover (158×213), the name and the platform under it,
 /// and marks on the cover: how many versions it folds (top left), on this PC
@@ -24,7 +25,9 @@ class GameCard extends StatelessWidget {
 
   static const width = 158.0;
   static const coverHeight = 213.0;
-  static const height = coverHeight + 52;
+
+  /// The cover and the two lines under it, as tall as the text size makes them (#240).
+  static double heightIn(BuildContext context) => coverHeight + GSpace.s2 + scaledText(context, 44);
 
   final Game game;
   final String? coverUrl;
@@ -43,7 +46,7 @@ class GameCard extends StatelessWidget {
     final regions = regionBadges(game.regions);
     return SizedBox(
       width: width,
-      height: height,
+      height: heightIn(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -95,9 +95,9 @@ class CoverGridState extends State<CoverGrid> {
     for (final e in _nodes.entries) {
       if (!e.value.hasPrimaryFocus || e.value.context == null || e.key >= widget.games.length) continue;
       final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
-      final top = header + GSpace.s4 + (e.key ~/ _columns) * (GameCard.height + CoverGrid.gap);
+      final top = header + GSpace.s4 + (e.key ~/ _columns) * (GameCard.heightIn(context) + CoverGrid.gap);
       final pos = _scroll.position;
-      final shown = top + GameCard.height > pos.pixels && top < pos.pixels + pos.viewportDimension;
+      final shown = top + GameCard.heightIn(context) > pos.pixels && top < pos.pixels + pos.viewportDimension;
       return shown ? e.key : null;
     }
     return null;
@@ -129,7 +129,9 @@ class CoverGridState extends State<CoverGrid> {
     final into = _scroll.position.pixels - header - GSpace.s4;
     if (into <= 0) return 0;
     // A row more than half scrolled away doesn't count as shown.
-    final row = ((into + (GameCard.height + CoverGrid.gap) / 2) / (GameCard.height + CoverGrid.gap)).floor();
+    final row =
+        ((into + (GameCard.heightIn(context) + CoverGrid.gap) / 2) / (GameCard.heightIn(context) + CoverGrid.gap))
+            .floor();
     return (row * _columns).clamp(0, widget.games.length - 1);
   }
 
@@ -141,7 +143,7 @@ class CoverGridState extends State<CoverGrid> {
     if (!mounted || index < 0 || index >= widget.games.length || !_scroll.hasClients) return;
     final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
     final row = index ~/ _columns;
-    final target = header + GSpace.s4 + row * (GameCard.height + CoverGrid.gap);
+    final target = header + GSpace.s4 + row * (GameCard.heightIn(context) + CoverGrid.gap);
     _scroll.jumpTo(target.clamp(0.0, _scroll.position.maxScrollExtent));
     final node = _nodes[index];
     if (node != null && node.context != null && _scroll.position.pixels >= target - 1) {
@@ -193,7 +195,7 @@ class CoverGridState extends State<CoverGrid> {
                       crossAxisCount: columns,
                       mainAxisSpacing: CoverGrid.gap,
                       crossAxisSpacing: CoverGrid.gap,
-                      mainAxisExtent: GameCard.height,
+                      mainAxisExtent: GameCard.heightIn(context),
                     ),
                     delegate: SliverChildBuilderDelegate((context, i) {
                       if (w.onEndReached != null &&

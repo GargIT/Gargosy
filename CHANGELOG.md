@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Text size for a TV: Settings → Display → Text size 100, 125 or 150 %,
+  everywhere in Gargosy. Cards, Home's boxes and dialogs make room for
+  the larger text instead of cutting it off.
 - Sounds: Settings → Display → Sounds (off by default) and their volume.
   Moving with the controller, A, B, LB/RB, an error and a finished
   download each have a short sound of Gargosy's own. Never while a game

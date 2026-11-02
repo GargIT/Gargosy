@@ -724,6 +724,7 @@ const svText = <String, String>{
   'Teach quit buttons': 'Lär in avslutningsknappar',
   'Teaching {0} ({1}).': 'Lär in {0} ({1}).',
   'Temp': 'Temp',
+  'Text size': 'Textstorlek',
   'That button is already {0}.': 'Den knappen är redan {0}.',
   'The PIN is removed.': 'PIN-koden är borttagen.',
   'The PIN is set.': 'PIN-koden är satt.',

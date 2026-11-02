@@ -210,28 +210,31 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         ),
         if (busy == null && e.supported) ...[
           const SizedBox(width: GSpace.s4),
-          if (installed) ...[
-            SettingsButton(label: tr('Open'), icon: Icons.open_in_new, onActivate: () => _open(e)),
-            const SizedBox(width: GSpace.s2),
-          ],
-          SettingsButton(
-            label: tr('Import from folder'),
-            icon: Icons.folder_open_outlined,
-            onActivate: () => _import(e),
-          ),
-          if (e.downloadOff == null) ...[
-            const SizedBox(width: GSpace.s2),
-            SettingsButton(
-              label: installed ? tr('Update') : tr('Download'),
-              icon: installed ? Icons.update : Icons.download_outlined,
-              kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
-              onActivate: () => _download(e),
+          // #240: with larger text the buttons go onto a second line.
+          Flexible(
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              spacing: GSpace.s2,
+              runSpacing: GSpace.s2,
+              children: [
+                if (installed) SettingsButton(label: tr('Open'), icon: Icons.open_in_new, onActivate: () => _open(e)),
+                SettingsButton(
+                  label: tr('Import from folder'),
+                  icon: Icons.folder_open_outlined,
+                  onActivate: () => _import(e),
+                ),
+                if (e.downloadOff == null)
+                  SettingsButton(
+                    label: installed ? tr('Update') : tr('Download'),
+                    icon: installed ? Icons.update : Icons.download_outlined,
+                    kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
+                    onActivate: () => _download(e),
+                  ),
+                if (installed)
+                  SettingsButton(label: tr('Remove'), icon: Icons.delete_outline, onActivate: () => _remove(e)),
+              ],
             ),
-          ],
-          if (installed) ...[
-            const SizedBox(width: GSpace.s2),
-            SettingsButton(label: tr('Remove'), icon: Icons.delete_outline, onActivate: () => _remove(e)),
-          ],
+          ),
         ],
       ],
     );

@@ -8,6 +8,7 @@ import 'play/outside_launch.dart';
 import 'profiles/profile_providers.dart';
 import 'providers/update_providers.dart';
 import 'update/update_installer.dart';
+import 'ui/theme/text_size.dart';
 import 'ui/input/gargosy_intents.dart';
 import 'ui/input/input_router.dart';
 import 'ui/screens/profile_picker_screen.dart';
@@ -88,7 +89,8 @@ class _GargosyAppState extends ConsumerState<GargosyApp> {
               onInvoke: (_) => toggleFullscreenAndRemember(ref.read(appPreferencesProvider).setBool),
             ),
           },
-          child: child!,
+          // #240: Settings → Display → Text size, everywhere.
+          child: ScaledText(percent: ref.watch(textSizeProvider), child: child!),
         ),
       ),
       home: active == null ? const ProfilePickerScreen() : const AppShell(),

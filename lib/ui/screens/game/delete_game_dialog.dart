@@ -140,7 +140,8 @@ class _DeleteGameDialogState extends ConsumerState<_DeleteGameDialog> {
         borderRadius: BorderRadius.circular(GRadius.lg),
         child: SizedBox(
           width: 520,
-          child: Padding(
+          // #240: scrolls when larger text makes it taller than the window.
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(GSpace.s5),
             child: Column(
               mainAxisSize: MainAxisSize.min,

@@ -40,6 +40,8 @@ import '../helpers/game_fixtures.dart';
 import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
+import 'package:gargosy/ui/theme/text_size.dart';
+
 /// Lets file writes started from a tap finish: real IO and the test's
 /// clock take turns, one round per async step.
 Future<void> settleIo(WidgetTester tester) async {
@@ -288,6 +290,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.read(screensaverMinutesProvider), 0);
     expect(find.text('Off'), findsOneWidget);
+  });
+
+  testWidgets('Display → Text size (#240): 100 % by default, 150 % from the list', (tester) async {
+    await pump(tester, initial: SettingsPage.display);
+    expect(c.read(textSizeProvider), 100);
+    await tester.tap(find.byKey(const ValueKey('textSize')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('150 %'));
+    await tester.pumpAndSettle();
+    expect(c.read(textSizeProvider), 150);
+    expect(find.text('150 %'), findsOneWidget);
   });
 
   testWidgets('Display → Language (#191): Svenska shows at once, the sidebar too; English again', (tester) async {
