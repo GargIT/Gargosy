@@ -8,6 +8,11 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Notifications: Gargosy says when another player shares a save or save
+  state of a game you have on this PC, when a download finishes while
+  you're elsewhere, and when waiting saves go up. Never during a game:
+  they're said after it. Settings → Display → Notifications turns them
+  off.
 - Text size for a TV: Settings → Display → Text size 100, 125 or 150 %,
   everywhere in Gargosy. Cards, Home's boxes and dialogs make room for
   the larger text instead of cutting it off.

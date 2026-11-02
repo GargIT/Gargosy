@@ -16,6 +16,7 @@ import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/download_providers.dart';
+import 'package:gargosy/providers/notification_providers.dart';
 import 'package:gargosy/providers/sound_providers.dart';
 
 import '../helpers/fake_download_service.dart';
@@ -108,6 +109,8 @@ void main() {
       fake.holds['1']!.complete();
       await first;
       expect(heard.count, 1);
+      // #241: and it's news, said by the shell where the player is.
+      expect(c.read(noticesProvider).map((n) => n.text), ['A is downloaded.']);
     });
 
     test('a failed download plays the error sound (#237)', () async {

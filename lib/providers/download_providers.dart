@@ -22,6 +22,7 @@ import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
 import 'sound_providers.dart';
 import '../l10n/tr.dart';
+import 'notification_providers.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
 
@@ -249,7 +250,10 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
       await _ref.read(librarySnapshotProvider)?.remember(game);
-      if (mounted) _ref.read(uiSoundsProvider).play(UiSound.done);
+      if (mounted) {
+        _ref.read(uiSoundsProvider).play(UiSound.done);
+        _ref.read(noticesProvider.notifier).post(Notice.downloaded(game.id, game.displayName));
+      }
     } on DioException catch (e) {
       if (!mounted) return;
       final cancelled = CancelToken.isCancel(e);
