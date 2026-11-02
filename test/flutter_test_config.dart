@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' as io;
 
+import 'package:gargosy/l10n/tr.dart';
 import 'package:gargosy/sigil/sigil_library.dart';
 import 'package:path/path.dart' as p;
 
@@ -16,5 +17,9 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   SigilLibrary.path = candidates
       .map(p.absolute)
       .firstWhere((c) => io.File(c).existsSync(), orElse: () => p.absolute(candidates.first));
+  // #239: --dart-define=GARGOSY_LANG=de shows every test in that language;
+  // with GARGOSY_TEXT_150, it finds text a language makes too long.
+  const lang = String.fromEnvironment('GARGOSY_LANG');
+  if (lang.isNotEmpty) await showLanguage(AppLanguage.values.byName(lang));
   await testMain();
 }

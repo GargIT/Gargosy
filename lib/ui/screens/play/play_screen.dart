@@ -404,9 +404,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                 children: [
                   Icon(resume ? Icons.replay : Icons.play_arrow),
                   const SizedBox(width: GSpace.s2),
-                  Text(
-                    _starting ? tr('Starting…') : (resume ? tr('Resume') : tr('Play')),
-                    style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w800),
+                  Flexible(
+                    child: Text(
+                      _starting ? tr('Starting…') : (resume ? tr('Resume') : tr('Play')),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: GFont.lg, fontWeight: FontWeight.w800),
+                    ),
                   ),
                 ],
               ),

@@ -157,23 +157,29 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 const SizedBox(height: GSpace.s5 - _ring),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: _ring),
-                  child: Row(
+                  // #239: longer words (another language, larger text) wrap.
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    runSpacing: GSpace.s2,
                     children: [
                       _chip(tr('Clear filters'), false, _clear, button: pad ? 'Y' : null),
-                      const Spacer(),
-                      if (widget.offerSave) ...[
-                        KeyedSubtree(
-                          key: const ValueKey('filter-save-smart'),
-                          child: _chip(tr('Save as smart collection…'), false, () => _apply(save: true)),
-                        ),
-                        const SizedBox(width: GSpace.s2),
-                      ],
-                      _chip(
-                        tr('Apply'),
-                        true,
-                        _apply,
-                        autofocus: widget.values.genres.isEmpty && widget.values.regions.isEmpty,
-                        button: pad ? 'X' : null,
+                      Wrap(
+                        spacing: GSpace.s2,
+                        runSpacing: GSpace.s2,
+                        children: [
+                          if (widget.offerSave)
+                            KeyedSubtree(
+                              key: const ValueKey('filter-save-smart'),
+                              child: _chip(tr('Save as smart collection…'), false, () => _apply(save: true)),
+                            ),
+                          _chip(
+                            tr('Apply'),
+                            true,
+                            _apply,
+                            autofocus: widget.values.genres.isEmpty && widget.values.regions.isEmpty,
+                            button: pad ? 'X' : null,
+                          ),
+                        ],
                       ),
                     ],
                   ),
