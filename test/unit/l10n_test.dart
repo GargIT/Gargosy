@@ -1,6 +1,7 @@
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/l10n/l10n_table.dart';
 import 'package:gargosy/l10n/sv.dart';
 import 'package:gargosy/l10n/tr.dart';
 
@@ -23,8 +24,6 @@ Set<String> _trKeys() {
         for (final m in call.allMatches(f.readAsStringSync())) unescape(m[1]!),
   };
 }
-
-Set<String> _placeholders(String s) => {for (final m in RegExp(r'(?<!\{)\{(\d+)\}').allMatches(s)) m[1]!};
 
 void main() {
   tearDown(() => showLanguage(AppLanguage.en));
@@ -52,12 +51,14 @@ void main() {
       final table = l.table!;
       final wrong = [
         for (final k in table.keys)
-          if (!setEquals(_placeholders(k), _placeholders(table[k]!))) k,
+          if (!samePlaceholders(k, table[k]!)) k,
       ];
       expect(wrong, isEmpty);
     });
 
-    test('${l.name} has no text Gargosy no longer has (one table, one set of keys)', () {
+    // Not every text is a tr('…') literal (an enum's label goes through a
+    // field), so a removed text is found by the Swedish table, edited by hand.
+    test('${l.name} has the same texts as the Swedish table, no more', () {
       expect(l.table!.keys.toSet().difference(svText.keys.toSet()), isEmpty);
     });
   }
@@ -97,5 +98,3 @@ void main() {
     expect(AppLanguage.of(prefs), AppLanguage.system);
   });
 }
-
-bool setEquals(Set<String> a, Set<String> b) => a.length == b.length && a.containsAll(b);

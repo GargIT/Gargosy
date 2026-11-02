@@ -75,10 +75,7 @@ Future<void> main(List<String> args) async {
   SharedPreferencesStorePlatform.instance = JsonFilePreferencesStore(io.File(root.settingsFile));
   final prefs = await SharedPreferences.getInstance();
   // #191: the chosen language before the first frame; System is Windows'.
-  await showLanguage(
-    AppLanguage.of(SharedPreferencesAppPreferences(prefs))
-        .resolve(io.Platform.localeName.split(RegExp('[_-]')).first.toLowerCase()),
-  );
+  await showLanguage(AppLanguage.of(SharedPreferencesAppPreferences(prefs)).resolve(windowsLanguageCode()));
   // Started by GargosyUpdate.exe: clean up after the update, or say why it failed.
   final updateOutcome = await appUpdaterFor(
     PlatformInfo.current,

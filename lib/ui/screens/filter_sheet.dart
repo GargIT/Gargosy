@@ -157,13 +157,16 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
                 const SizedBox(height: GSpace.s5 - _ring),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: _ring),
-                  // #239: longer words (another language, larger text) wrap.
-                  child: Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    runSpacing: GSpace.s2,
+                  // #239: when longer words (another language, larger text)
+                  // don't fit, under each other, Apply still at the right.
+                  child: OverflowBar(
+                    alignment: MainAxisAlignment.spaceBetween,
+                    overflowSpacing: GSpace.s2,
+                    overflowAlignment: OverflowBarAlignment.end,
                     children: [
                       _chip(tr('Clear filters'), false, _clear, button: pad ? 'Y' : null),
                       Wrap(
+                        alignment: WrapAlignment.end,
                         spacing: GSpace.s2,
                         runSpacing: GSpace.s2,
                         children: [

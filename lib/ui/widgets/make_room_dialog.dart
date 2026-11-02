@@ -193,10 +193,7 @@ class _MakeRoomState extends State<_MakeRoom> {
                   style: TextStyle(color: enough ? GColors.fgSecondary : GColors.accent),
                 ),
                 const SizedBox(height: GSpace.s4),
-                Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: GSpace.s3,
-                  runSpacing: GSpace.s2,
+                dialogButtonRow(
                   children: [
                     dialogButton(tr('Cancel'), () => Navigator.of(context).pop()),
                     dialogButton(

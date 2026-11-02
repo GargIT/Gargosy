@@ -8,6 +8,10 @@ import '../profiles/profile_providers.dart';
 import 'de.dart';
 import 'sv.dart';
 
+import 'package:intl/number_symbols_data.dart' show numberFormatSymbols;
+
+import 'dart:ui' show PlatformDispatcher;
+
 /// Gargosy's languages (#191). The English text in the code is the key:
 /// [tr] looks it up in the chosen language's table, and English is itself.
 enum AppLanguage {
@@ -90,9 +94,15 @@ String fillPlaceholders(String text, List<Object?> args) {
 /// [value] with [digits] decimals, the shown language's decimal mark.
 String decimal(num value, int digits) {
   final s = value.toStringAsFixed(digits);
-  // Every language but English writes a decimal comma.
-  return _shown.table == null ? s : s.replaceAll('.', ',');
+  // intl names its symbols by language (`sv`), some by locale.
+  final symbols = numberFormatSymbols[_shown.locale] ?? numberFormatSymbols[_shown.locale.split('_').first];
+  final mark = symbols?.DECIMAL_SEP ?? '.';
+  return mark == '.' ? s : s.replaceAll('.', mark);
 }
+
+/// Windows' display language as a code (`sv`, `de`), what System follows:
+/// the same at start and when System is picked again.
+String windowsLanguageCode() => PlatformDispatcher.instance.locale.languageCode.toLowerCase();
 
 /// The language chosen in Settings → Display.
 final languageProvider = Provider<AppLanguage>((ref) => AppLanguage.of(ref.watch(appPreferencesProvider)));
@@ -101,7 +111,7 @@ final languageProvider = Provider<AppLanguage>((ref) => AppLanguage.of(ref.watch
 Future<void> changeLanguage(WidgetRef ref, AppLanguage language) async {
   await ref.read(appPreferencesProvider).setString(AppLanguage.prefKey, language.name);
   ref.invalidate(languageProvider);
-  await showLanguage(language.resolve(WidgetsBinding.instance.platformDispatcher.locale.languageCode));
+  await showLanguage(language.resolve(windowsLanguageCode()));
   void rebuild(Element e) {
     e.markNeedsBuild();
     e.visitChildren(rebuild);
