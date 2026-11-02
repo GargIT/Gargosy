@@ -16,6 +16,8 @@ import '../../theme/tokens.dart';
 import 'settings_rows.dart';
 import 'teach_quit_buttons.dart';
 import '../../../l10n/tr.dart';
+import '../../../providers/notification_providers.dart';
+import '../../../library/notifications.dart' show NotificationSettings;
 
 /// Settings → Controller: the stick deadzone and quitting a game with
 /// held buttons (#141) and teaching them to a controller (#171), this PC's, for
@@ -188,7 +190,8 @@ class _DeadzoneBar extends StatelessWidget {
 }
 
 /// Settings → Display: fullscreen (F11), remembered for the next start, and
-/// the screensaver's wait (#147), the text size (#240), the sounds (#237).
+/// the screensaver's wait (#147), the text size (#240), notifications (#241),
+/// the sounds (#237).
 class DisplaySection extends ConsumerStatefulWidget {
   const DisplaySection({super.key});
 
@@ -260,6 +263,18 @@ class _DisplaySectionState extends ConsumerState<DisplaySection> {
               if (i == null || i < 0) return;
               await ref.read(appPreferencesProvider).setString(TextSize.prefKey, '${choices[i]}');
               ref.invalidate(textSizeProvider);
+            },
+          ),
+          // #241: what happened unseen, said after a game.
+          SettingsToggle(
+            label: tr('Notifications'),
+            note: tr(
+              'Another player shares a save of a game on this PC, a download finishes, waiting saves go up. Said after a game, never during one.',
+            ),
+            on: ref.watch(notificationsOnProvider),
+            onChanged: (on) async {
+              await ref.read(appPreferencesProvider).setBool(NotificationSettings.prefKey, on);
+              ref.invalidate(notificationsOnProvider);
             },
           ),
           // #237: Gargosy's own sounds, app-wide; never while a game runs.

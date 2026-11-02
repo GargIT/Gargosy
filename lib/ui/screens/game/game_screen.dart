@@ -84,9 +84,29 @@ class GameScreen extends ConsumerStatefulWidget {
   ConsumerState<GameScreen> createState() => _GameScreenState();
 }
 
+/// The game pages open now (#241).
+final _openPages = <_GameScreenState>{};
+
+/// Whether [gameId]'s page is the one in front: a notice about it isn't said
+/// there (#241).
+bool gamePageInFront(String gameId) =>
+    _openPages.any((p) => p.mounted && p.widget.game.id == gameId && (ModalRoute.of(p.context)?.isCurrent ?? false));
+
 class _GameScreenState extends ConsumerState<GameScreen> {
   int _tab = 0;
   bool _scrolled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _openPages.add(this);
+  }
+
+  @override
+  void dispose() {
+    _openPages.remove(this);
+    super.dispose();
+  }
 
   PlayMenuKey get _key => PlayMenuKey(widget.game);
 

@@ -32,6 +32,8 @@ import 'screensaver.dart';
 import 'shell_menu.dart';
 import 'top_bar.dart';
 import '../../l10n/tr.dart';
+import 'shell_notices.dart';
+import '../../providers/notification_providers.dart';
 
 /// The signed-in app: v2's top bar over the current tab's page (spec §7).
 class AppShell extends ConsumerStatefulWidget {
@@ -129,12 +131,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final n = await queue.run();
     if (!mounted) return;
     ref.read(uploadQueueVersionProvider.notifier).state++;
-    if (n > 0) {
-      showToast(
-        context,
-        n == 1 ? tr('Uploaded 1 save that was waiting.') : tr('Uploaded {0} saves that were waiting.', [n]),
-      );
-    }
+    if (n > 0) ref.read(noticesProvider.notifier).post(Notice.uploaded(n));
   }
 
   @override
@@ -175,68 +172,71 @@ class _AppShellState extends ConsumerState<AppShell> {
         NextTabIntent: CallbackAction<NextTabIntent>(onInvoke: (_) => _go(_index + 1)),
         MenuIntent: CallbackAction<MenuIntent>(onInvoke: (_) => _menu()),
       },
-      child: IdleScreensaver(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Backdrop(
-            child: Stack(
-              children: [
-                NotificationListener<ScrollNotification>(
-                  onNotification: (n) {
-                    // Only the page scrolling down counts, not a shelf scrolled sideways.
-                    if (n.metrics.axis != Axis.vertical) return false;
-                    final s = n.metrics.pixels > 8;
-                    if (s != _scrolled) setState(() => _scrolled = s);
-                    return false;
-                  },
-                  child: IndexedStack(index: index, children: pages),
-                ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 0,
-                  child: TopBar(
-                    tabs: shellTabs,
-                    index: index,
-                    onTab: _go,
-                    scrolled: _scrolled,
-                    context_: ctx,
-                    onMenu: _menu,
-                    tabFocusNodes: _tabNodes,
+      // #241: what happened unseen, said here.
+      child: ShellNotices(
+        child: IdleScreensaver(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Backdrop(
+              child: Stack(
+                children: [
+                  NotificationListener<ScrollNotification>(
+                    onNotification: (n) {
+                      // Only the page scrolling down counts, not a shelf scrolled sideways.
+                      if (n.metrics.axis != Axis.vertical) return false;
+                      final s = n.metrics.pixels > 8;
+                      if (s != _scrolled) setState(() => _scrolled = s);
+                      return false;
+                    },
+                    child: IndexedStack(index: index, children: pages),
                   ),
-                ),
-                if (offline)
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: GLayout.navHeight,
-                    child: Center(
-                      child: Container(
-                        margin: const EdgeInsets.only(top: GSpace.s2),
-                        padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s2),
-                        decoration: BoxDecoration(
-                          color: GColors.accent.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(GRadius.pill),
-                        ),
-                        child: Text(
-                          tr('RomM can\'t be reached. Games on this PC still play; saves upload when it\'s back.'),
-                          style: const TextStyle(color: GColors.accent, fontWeight: FontWeight.w600),
+                    top: 0,
+                    child: TopBar(
+                      tabs: shellTabs,
+                      index: index,
+                      onTab: _go,
+                      scrolled: _scrolled,
+                      context_: ctx,
+                      onMenu: _menu,
+                      tabFocusNodes: _tabNodes,
+                    ),
+                  ),
+                  if (offline)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: GLayout.navHeight,
+                      child: Center(
+                        child: Container(
+                          margin: const EdgeInsets.only(top: GSpace.s2),
+                          padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s2),
+                          decoration: BoxDecoration(
+                            color: GColors.accent.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(GRadius.pill),
+                          ),
+                          child: Text(
+                            tr('RomM can\'t be reached. Games on this PC still play; saves upload when it\'s back.'),
+                            style: const TextStyle(color: GColors.accent, fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ),
                     ),
+                  Positioned(
+                    left: 0,
+                    bottom: 0,
+                    child: HintBar(
+                      hints: [
+                        Hint(GameAction.l1, tr('Previous tab')),
+                        Hint(GameAction.r1, tr('Next tab')),
+                        Hint(GameAction.start, tr('Menu')),
+                      ],
+                    ),
                   ),
-                Positioned(
-                  left: 0,
-                  bottom: 0,
-                  child: HintBar(
-                    hints: [
-                      Hint(GameAction.l1, tr('Previous tab')),
-                      Hint(GameAction.r1, tr('Next tab')),
-                      Hint(GameAction.start, tr('Menu')),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

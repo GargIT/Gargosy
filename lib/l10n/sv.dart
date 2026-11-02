@@ -56,6 +56,8 @@ const svText = <String, String>{
   'An emulator can\'t be opened on its own with an age limit.':
       'En emulator kan inte öppnas på egen hand med en åldersgräns.',
   'Another': 'Ett till',
+  'Another player': 'En annan spelare',
+  'Another player shares a save of a game on this PC, a download finishes, waiting saves go up. Said after a game, never during one.': 'En annan spelare delar en sparfil i ett spel på den här datorn, en nedladdning blir klar, väntande sparfiler laddas upp. Sägs efter ett spel, aldrig under.',
   'Any time': 'När som helst',
   'Anyone can change it: set a PIN on a parent\'s profile (one without an age limit) to lock it.':
       'Vem som helst kan ändra den: sätt en PIN-kod på en förälders profil (en utan åldersgräns) för att låsa den.',
@@ -465,6 +467,7 @@ const svText = <String, String>{
   'Nothing played yet.': 'Inget spelat än.',
   'Nothing was started.': 'Inget startades.',
   'Nothing was taught.': 'Inget lärdes in.',
+  'Notifications': 'Aviseringar',
   'Now playing': 'Spelar nu',
   'Now playing ✓': 'Spelar nu ✓',
   'ON DISK': 'PÅ DISKEN',
@@ -1030,6 +1033,7 @@ const svText = <String, String>{
   '{0} is already in the way in {1}.': '{0} är redan i vägen i {1}.',
   '{0} is already the newest.': '{0} är redan den senaste.',
   '{0} is available.': '{0} finns.',
+  '{0} is downloaded.': '{0} är nedladdat.',
   '{0} is gone after unpacking': '{0} är borta efter uppackningen',
   '{0} is installed.': '{0} är installerad.',
   '{0} is needed. Install it under Emulators (Start → Emulators).':
@@ -1055,6 +1059,8 @@ const svText = <String, String>{
   '{0} pts': '{0} p',
   '{0} s left': '{0} s kvar',
   '{0} saves can\'t be used by {1}': '{0}-sparfiler kan inte användas av {1}',
+  '{0} shared a save of {1}.': '{0} delade en sparfil i {1}.',
+  '{0} shared a save state of {1}.': '{0} delade ett sparläge i {1}.',
   '{0} states': '{0} sparlägen',
   '{0} tomorrow': '{0} i morgon',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
