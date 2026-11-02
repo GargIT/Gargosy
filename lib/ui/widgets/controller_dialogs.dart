@@ -36,30 +36,35 @@ Widget dialogButton(String label, VoidCallback onPress, {bool primary = false, b
   child: _dialogButton(label, onPress, primary: primary),
 );
 
-Widget _panel({required String title, required List<Widget> children, double width = 480}) => Center(
-  child: Material(
-    color: GColors.panel,
-    borderRadius: BorderRadius.circular(GRadius.lg),
-    child: SizedBox(
-      width: width,
-      child: Padding(
-        padding: const EdgeInsets.all(GSpace.s5),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: GSpace.s3),
-            ...children,
-          ],
-        ),
+/// A dialog's frame. [scrolls]: its content scrolls when larger text (#240)
+/// makes it taller than the window; a dialog with its own list doesn't.
+Widget _panel({required String title, required List<Widget> children, double width = 480, bool scrolls = true}) {
+  final column = Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
+      ),
+      const SizedBox(height: GSpace.s3),
+      ...children,
+    ],
+  );
+  const padding = EdgeInsets.all(GSpace.s5);
+  return Center(
+    child: Material(
+      color: GColors.panel,
+      borderRadius: BorderRadius.circular(GRadius.lg),
+      child: SizedBox(
+        width: width,
+        child: scrolls
+            ? SingleChildScrollView(padding: padding, child: column)
+            : Padding(padding: padding, child: column),
       ),
     ),
-  ),
-);
+  );
+}
 
 /// A yes/no question for the controller: A on the focused button, B is
 /// [no]. [focusYes] false puts focus on [no] (for a question whose yes
@@ -128,6 +133,7 @@ Future<int?> showChoice(BuildContext context, {required String title, required L
     showDialog<int>(
       context: context,
       builder: (c) => _panel(
+        scrolls: false,
         title: title,
         width: 420,
         children: [

@@ -17,6 +17,7 @@ import '../widgets/g_dropdown.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/gallery_bar.dart';
 import '../../l10n/tr.dart';
+import '../theme/text_size.dart';
 
 /// The Collections tab (#121), after RomM v2's: the players' collections
 /// (yours first, favourites at the front, and the ones others share) in a
@@ -145,7 +146,7 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
                       crossAxisCount: columns,
                       mainAxisSpacing: GSpace.s5,
                       crossAxisSpacing: GSpace.s4,
-                      mainAxisExtent: tileW / CollectionTile.coverAspect + _textHeight,
+                      mainAxisExtent: tileW / CollectionTile.coverAspect + scaledText(context, _textHeight),
                     );
                     return FocusTraversalGroup(
                       policy: WrapGridTraversalPolicy(),
@@ -220,7 +221,7 @@ class _CollectionsPageState extends ConsumerState<CollectionsPage> {
       crossAxisCount: columns,
       mainAxisSpacing: grid.mainAxisSpacing,
       crossAxisSpacing: grid.crossAxisSpacing,
-      mainAxisExtent: w / CollectionTile.coverAspect + _textHeight,
+      mainAxisExtent: w / CollectionTile.coverAspect + scaledText(context, _textHeight),
     );
   }
 

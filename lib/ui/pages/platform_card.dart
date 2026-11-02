@@ -11,6 +11,7 @@ import '../theme/tokens.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/platform_logo.dart';
+import '../theme/text_size.dart';
 
 /// A platform on the Platforms page: a fan of up to five covers (the Covers
 /// setting), then its logo, name and "maker · year · N games".
@@ -21,7 +22,8 @@ class PlatformCard extends ConsumerWidget {
   final VoidCallback onOpen;
   final bool autofocus;
 
-  static const height = 190.0;
+  /// The strip and the text under it, as tall as the text size makes it (#240).
+  static double heightIn(BuildContext context) => _stripHeight + scaledText(context, 70);
   static const _stripHeight = 120.0;
 
   /// The five places in the fan, left to right: tilt in degrees and drop.

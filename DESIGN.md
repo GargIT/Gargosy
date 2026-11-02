@@ -210,3 +210,4 @@ Mockups are linked from each issue.
 | 2026-10-31 | Stats is a page of its own from the user menu (under PROFILE), not a Settings section: numbers to read, nothing to change | #236 |
 | 2026-10-31 | The user menu's rows are 35 px and its group headings closer, so it still fits at 1280×720 with Stats | #236 |
 | 2026-11-02 | Sounds are off by default and Gargosy's own, made as samples (no files): soft, under 0.35 s; a move only from the controller or keys, not right after another sound (a page's own focus); never while a game runs | #237 |
+| 2026-11-02 | Text size 100/125/150 % for a TV across the room, app-wide through `MediaQuery`'s text scaler: covers and boxes keep their size, a box sized around its text grows with it (`scaledText`), button rows wrap and dialogs scroll instead of clipping; checked at 1280×720 | #240 |

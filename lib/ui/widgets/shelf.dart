@@ -17,7 +17,7 @@ class Shelf extends StatelessWidget {
     required this.itemCount,
     required this.itemBuilder,
     this.count,
-    this.height = GameCard.height,
+    this.height,
     this.onSeeAll,
     this.seeAllSize = const Size(GameCard.width, GameCard.coverHeight),
     this.itemWidth = GameCard.width,
@@ -29,7 +29,9 @@ class Shelf extends StatelessWidget {
   final int? count;
   final int itemCount;
   final Widget Function(BuildContext context, int i) itemBuilder;
-  final double height;
+
+  /// The row's height; a [GameCard]'s by default.
+  final double? height;
   final VoidCallback? onSeeAll;
   final Size seeAllSize;
   final double itemWidth;
@@ -67,7 +69,7 @@ class Shelf extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: height + GSpace.s3,
+          height: (height ?? GameCard.heightIn(context)) + GSpace.s3,
           child: LayoutBuilder(
             builder: (context, box) {
               final (shown, seeAll) = fit(

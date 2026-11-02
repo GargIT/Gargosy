@@ -10,13 +10,8 @@ import '../profiles/profile_providers.dart';
 final soundPlayerProvider = Provider<SoundPlayer>((ref) => soundPlayerFor(PlatformInfo.current));
 
 final soundsOnProvider = Provider<bool>((ref) {
-  try {
-    return SoundSettings.on(ref.watch(appPreferencesProvider));
-  } on Object catch (e) {
-    // No preferences given (a test's frame without them): no sounds.
-    if ('$e'.contains('overridden in main')) return false;
-    rethrow;
-  }
+  final prefs = watchAppPreferencesOrNull(ref);
+  return prefs != null && SoundSettings.on(prefs);
 });
 
 final soundVolumeProvider = Provider<int>((ref) => SoundSettings.volume(ref.watch(appPreferencesProvider)));

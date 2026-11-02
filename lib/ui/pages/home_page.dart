@@ -32,6 +32,7 @@ import 'home/home_widgets.dart';
 import 'home/playing_now.dart';
 import 'platform_card.dart';
 import '../../l10n/tr.dart';
+import '../theme/text_size.dart';
 
 /// Home (#139), after RomM v2's: the game played last (or a random pick) over
 /// its art, the widgets, then the rows the profile chose, in its order
@@ -105,7 +106,7 @@ class HomePage extends ConsumerWidget {
         title: row.label,
         count: list.length,
         itemCount: list.length,
-        height: GameCard.width / CollectionTile.coverAspect + 48,
+        height: GameCard.width / CollectionTile.coverAspect + scaledText(context, 48),
         seeAllSize: const Size(GameCard.width, GameCard.width / CollectionTile.coverAspect),
         onSeeAll: () => tab(tr('Collections')),
         itemBuilder: (context, i) {
@@ -176,8 +177,8 @@ class HomePage extends ConsumerWidget {
             title: row.label,
             count: list.length,
             itemCount: list.length,
-            height: PlatformCard.height,
-            seeAllSize: const Size(GameCard.width, PlatformCard.height),
+            height: PlatformCard.heightIn(context),
+            seeAllSize: Size(GameCard.width, PlatformCard.heightIn(context)),
             itemWidth: _platformWidth,
             onSeeAll: () => tab(tr('Platforms')),
             itemBuilder: (context, i) => SizedBox(

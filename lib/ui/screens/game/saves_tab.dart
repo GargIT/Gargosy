@@ -298,7 +298,11 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                   style: const TextStyle(color: GColors.accent),
                 ),
               ),
-            Row(
+            // #240: with larger text the buttons go under the segments.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              runSpacing: GSpace.s2,
               children: [
                 Container(
                   padding: const EdgeInsets.all(3),
@@ -315,18 +319,21 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                     ],
                   ),
                 ),
-                const Spacer(),
-                _button(
-                  tr('Upload to RomM'),
-                  Icons.upload,
-                  who == null ? null : () async => _say(await actions.upload(_game, who), tr('Uploaded to RomM.')),
-                ),
-                _button(
-                  tr('Back up now'),
-                  Icons.add,
-                  who == null
-                      ? null
-                      : () async => _say(await actions.backUpNow(_game, who), tr('Backed up on this PC.')),
+                Wrap(
+                  children: [
+                    _button(
+                      tr('Upload to RomM'),
+                      Icons.upload,
+                      who == null ? null : () async => _say(await actions.upload(_game, who), tr('Uploaded to RomM.')),
+                    ),
+                    _button(
+                      tr('Back up now'),
+                      Icons.add,
+                      who == null
+                          ? null
+                          : () async => _say(await actions.backUpNow(_game, who), tr('Backed up on this PC.')),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -29,7 +29,7 @@ class PlayingNowRow extends ConsumerWidget {
       title: HomeRow.playingNow.label,
       count: entries.length,
       itemCount: entries.length,
-      height: PlayingNowCard.height,
+      height: HomeWidgets.heightIn(context),
       itemWidth: PlayingNowCard.width,
       itemBuilder: (context, i) => PlayingNowCard(entries[i]),
     );
@@ -45,7 +45,6 @@ class PlayingNowCard extends ConsumerWidget {
   final ActivityEntry entry;
 
   static const width = 420.0;
-  static const height = HomeWidgets.height;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +57,7 @@ class PlayingNowCard extends ConsumerWidget {
     );
     return SizedBox(
       width: width,
-      height: height,
+      height: HomeWidgets.heightIn(context),
       child: GFocusable(
         borderRadius: GRadius.card,
         semanticLabel: '${you ? 'You' : entry.username}, ${entry.gameName}',

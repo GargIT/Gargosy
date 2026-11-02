@@ -11,6 +11,7 @@ import '../../../providers/sound_providers.dart';
 import '../../shell/screensaver.dart';
 import '../../shell/user_menu.dart';
 import '../../widgets/controller_dialogs.dart';
+import '../../theme/text_size.dart';
 import '../../theme/tokens.dart';
 import 'settings_rows.dart';
 import 'teach_quit_buttons.dart';
@@ -187,7 +188,7 @@ class _DeadzoneBar extends StatelessWidget {
 }
 
 /// Settings → Display: fullscreen (F11), remembered for the next start, and
-/// the screensaver's wait (#147), the sounds (#237).
+/// the screensaver's wait (#147), the text size (#240), the sounds (#237).
 class DisplaySection extends ConsumerStatefulWidget {
   const DisplaySection({super.key});
 
@@ -240,6 +241,25 @@ class _DisplaySectionState extends ConsumerState<DisplaySection> {
               if (i == null || i < 0) return;
               await ref.read(appPreferencesProvider).setString(ScreensaverDelay.prefKey, '${choices[i]}');
               ref.invalidate(screensaverMinutesProvider);
+            },
+          ),
+          // #240: for a TV across the room.
+          SettingsField(
+            key: const ValueKey('textSize'),
+            label: tr('Text size'),
+            value: '${ref.watch(textSizeProvider)} %',
+            action: tr('Change'),
+            onActivate: () async {
+              const choices = TextSize.choices;
+              final i = await showChoice(
+                context,
+                title: tr('Text size'),
+                labels: [for (final n in choices) '$n %'],
+                current: choices.indexOf(ref.read(textSizeProvider)),
+              );
+              if (i == null || i < 0) return;
+              await ref.read(appPreferencesProvider).setString(TextSize.prefKey, '${choices[i]}');
+              ref.invalidate(textSizeProvider);
             },
           ),
           // #237: Gargosy's own sounds, app-wide; never while a game runs.

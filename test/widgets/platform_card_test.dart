@@ -22,10 +22,12 @@ Future<void> _pump(WidgetTester tester, List<Game> covers, {VoidCallback? onOpen
   await tester.pumpWidget(
     testApp(
       Center(
-        child: SizedBox(
-          width: 290,
-          height: PlatformCard.height,
-          child: PlatformCard(platform: _ps2, onOpen: onOpen ?? () {}),
+        child: Builder(
+          builder: (context) => SizedBox(
+            width: 290,
+            height: PlatformCard.heightIn(context),
+            child: PlatformCard(platform: _ps2, onOpen: onOpen ?? () {}),
+          ),
         ),
       ),
       overrides: [

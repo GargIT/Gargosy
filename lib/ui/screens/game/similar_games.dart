@@ -8,6 +8,7 @@ import '../../widgets/cover_image.dart';
 import '../../widgets/g_focusable.dart';
 import 'open_game.dart';
 import '../../../l10n/tr.dart';
+import '../../theme/text_size.dart';
 
 /// The Overview's Similar games in your library (#179), from RomM's
 /// similarity index, as small covers; nothing when RomM has none.
@@ -36,7 +37,7 @@ class SimilarGames extends ConsumerWidget {
           ),
           const SizedBox(height: GSpace.s2),
           SizedBox(
-            height: SmallGameCard.height,
+            height: SmallGameCard.heightIn(context),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
@@ -65,7 +66,9 @@ class SmallGameCard extends StatelessWidget {
 
   static const width = 120.0;
   static const coverHeight = 160.0;
-  static const height = coverHeight + 34;
+
+  /// The cover and its name, as tall as the text size makes it (#240).
+  static double heightIn(BuildContext context) => coverHeight + 6 + scaledText(context, 28);
 
   @override
   Widget build(BuildContext context) => SizedBox(

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +15,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/cover_image.dart';
 import '../../widgets/g_focusable.dart';
 import '../../../l10n/tr.dart';
+import '../../theme/text_size.dart';
 
 /// Home's widgets (#139), those [shown]: Random pick (Y draws another) and
 /// On this day side by side under the header, or stacked beside it
@@ -31,7 +34,9 @@ class HomeWidgets extends ConsumerWidget {
       children: [
         for (var i = 0; i < cards.length; i++) ...[
           if (i > 0) const SizedBox(height: GSpace.s4),
-          SizedBox(height: stackedHeight, child: cards[i]),
+          Builder(
+            builder: (context) => SizedBox(height: stackedHeightIn(context), child: cards[i]),
+          ),
         ],
       ],
     );
@@ -46,10 +51,12 @@ class HomeWidgets extends ConsumerWidget {
   /// Random pick and On this day are beside the header: only Your library here.
   final bool besideHeader;
 
-  static const height = 128.0;
+  /// A card's height: its cover, or its text when that's taller (#240).
+  static double heightIn(BuildContext context) => max(128.0, GSpace.s4 * 2 + scaledText(context, 96));
 
-  /// Each of two stacked cards: the two and the gap as tall as the header's cover.
-  static const stackedHeight = 120.0;
+  /// Each of two stacked cards: the two and the gap as tall as the header's
+  /// cover, or as the text needs.
+  static double stackedHeightIn(BuildContext context) => max(120.0, GSpace.s4 * 2 + scaledText(context, 88));
 
   static List<Widget> _cards(Set<HomeWidget> shown) => [
     if (shown.contains(HomeWidget.randomPick)) const _RandomPick(),
@@ -68,7 +75,7 @@ class HomeWidgets extends ConsumerWidget {
         children: [
           if (cards.isNotEmpty)
             SizedBox(
-              height: height,
+              height: heightIn(context),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

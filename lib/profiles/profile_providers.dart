@@ -19,8 +19,22 @@ import 'profile.dart';
 import 'profile_paths.dart';
 import 'profile_store.dart';
 
+import 'package:flutter_riverpod/misc.dart' show ProviderException;
+
 final appRootProvider = Provider<AppRoot>((ref) => throw UnimplementedError('overridden in main'));
 final appPreferencesProvider = Provider<AppPreferences>((ref) => throw UnimplementedError('overridden in main'));
+
+/// The app-wide preferences, or null where none were given (a test's frame
+/// without them): for a look-and-feel setting that falls back to its default.
+AppPreferences? watchAppPreferencesOrNull(Ref ref) {
+  try {
+    return ref.watch(appPreferencesProvider);
+  } on ProviderException catch (e) {
+    if (e.exception is UnimplementedError) return null;
+    rethrow;
+  }
+}
+
 final secretStoreProvider = Provider<SecretStore>((ref) => secretStoreFor(PlatformInfo.current));
 final pcIdentityProvider = Provider<PcIdentity>((ref) => PcIdentity.current(ref.watch(secretStoreProvider)));
 final rommAuthFactoryProvider = Provider<RommAuth Function(String baseUrl, bool trustSelfSigned)>(

@@ -24,7 +24,9 @@ Widget testApp(
   List<Override> overrides = const [],
   GlobalKey<NavigatorState>? navigatorKey,
   AppRoot? root,
+  double? textScale,
 }) {
+  final scale = textScale ?? _hunt;
   final nav = navigatorKey ?? GlobalKey<NavigatorState>();
   return ProviderScope(
     retry: noRetry,
@@ -37,14 +39,29 @@ Widget testApp(
     child: MaterialApp(
       navigatorKey: nav,
       theme: gargosyTheme(),
-      builder: (context, c) => InputRouter(navigatorKey: nav, startGamepads: false, child: c!),
+      builder: (context, c) => InputRouter(
+        navigatorKey: nav,
+        startGamepads: false,
+        child: scale == null
+            ? c!
+            : MediaQuery(
+                data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+                child: c!,
+              ),
+      ),
       home: Scaffold(body: child),
     ),
   );
 }
 
+/// #240: `flutter test test/widgets --dart-define=GARGOSY_TEXT_150=1` runs
+/// every test framed by [testApp] at 150 % text, and [setDesktopSize] at
+/// 1280 × 720: what overflows there is a layout to fix (some tests fail for
+/// other reasons then: a text scrolled out of view, a narrower window).
+final double? _hunt = const String.fromEnvironment('GARGOSY_TEXT_150').isEmpty ? null : 1.5;
+
 Future<void> setDesktopSize(WidgetTester tester) async {
-  tester.view.physicalSize = const Size(1920, 1080);
+  tester.view.physicalSize = _hunt == null ? const Size(1920, 1080) : const Size(1280, 720);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 }
