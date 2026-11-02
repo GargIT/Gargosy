@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io' as io;
 import 'dart:isolate';
 
@@ -54,11 +55,10 @@ Future<bool> _checked(String target, Future<bool> Function(String) open) async {
 /// on a browser starting or a sleeping network drive.
 Future<bool> shellOpen(String target) async {
   final result = await Isolate.run(() {
-    CoInitializeEx(COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     try {
       return using(
-        (arena) =>
-            ShellExecute(null, null, PCWSTR(target.toNativeUtf16(allocator: arena)), null, null, SW_SHOWNORMAL).address,
+        (arena) => ShellExecute(NULL, nullptr, target.toNativeUtf16(allocator: arena), nullptr, nullptr, SW_SHOWNORMAL),
       );
     } finally {
       CoUninitialize();
