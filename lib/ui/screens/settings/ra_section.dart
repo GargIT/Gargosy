@@ -30,9 +30,9 @@ class _RaSectionState extends ConsumerState<RaSection> {
       await account.connect(user, password);
       if (mounted) showToast(context, tr('Connected as {0}.', [account.username]));
     } on RetroAchievementsAuthException catch (e) {
-      if (mounted) showToast(context, e.message);
+      if (mounted) showToast(context, e.message, error: true);
     } on Object {
-      if (mounted) showToast(context, tr('Couldn\'t reach RetroAchievements. Try again later.'));
+      if (mounted) showToast(context, tr('Couldn\'t reach RetroAchievements. Try again later.'), error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

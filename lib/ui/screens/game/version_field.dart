@@ -39,7 +39,7 @@ class _VersionFieldState extends ConsumerState<VersionField> {
     final other = await gameOfVersion(ref, versions[i].id);
     if (!mounted) return;
     if (other == null) {
-      showToast(context, tr('Couldn\'t open that version.'));
+      showToast(context, tr('Couldn\'t open that version.'), error: true);
       return;
     }
     await Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => GameScreen(game: other)));

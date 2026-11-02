@@ -42,7 +42,7 @@ class ProfileSection extends ConsumerWidget {
   /// since it signed in (deleting games). Refused while a game runs.
   Future<void> _signInAgain(BuildContext context, WidgetRef ref, Profile p) async {
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, tr('Close the game first.'));
+      showToast(context, tr('Close the game first.'), error: true);
       return;
     }
     await Navigator.of(context).push(
@@ -96,7 +96,7 @@ class ProfileSection extends ConsumerWidget {
   Future<void> _delete(BuildContext context, WidgetRef ref, Profile p) async {
     // The game runs on this profile's data, and its saves sync after: both first.
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, tr('Close the game first: a profile can\'t be deleted while a game runs.'));
+      showToast(context, tr('Close the game first: a profile can\'t be deleted while a game runs.'), error: true);
       return;
     }
     // Saves that never reached RomM go with the profile: say which.

@@ -48,7 +48,7 @@ class _StorageSectionState extends ConsumerState<StorageSection> {
     if (ref.read(downloadsProvider.notifier).pending > 0 ||
         ref.read(playControllerProvider).runningGameId != null ||
         ref.read(syncActivityProvider)?.value != null) {
-      showToast(context, tr('Not while a download, a game or a save sync runs.'));
+      showToast(context, tr('Not while a download, a game or a save sync runs.'), error: true);
       return;
     }
     setState(() => _emptying = true);

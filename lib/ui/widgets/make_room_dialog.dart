@@ -32,7 +32,7 @@ Future<bool> makeRoomFor(BuildContext context, WidgetRef ref, Game game) async {
   if (_busy) return false;
   // A running game's ROM, or anything while one runs, is never deleted.
   if (ref.read(playControllerProvider).runningGameId != null) {
-    showToast(context, tr('{0} Close the game first: nothing is deleted while one runs.', [space]));
+    showToast(context, tr('{0} Close the game first: nothing is deleted while one runs.', [space]), error: true);
     return false;
   }
   _busy = true;
@@ -59,7 +59,7 @@ Future<bool> makeRoomFor(BuildContext context, WidgetRef ref, Game game) async {
     final needed = shortfallOf(space);
     final picked = pickToFit(candidates, needed);
     if (picked.isEmpty) {
-      showToast(context, '$space');
+      showToast(context, '$space', error: true);
       return false;
     }
     final chosen = await showDialog<List<RoomCandidate>>(
@@ -73,7 +73,11 @@ Future<bool> makeRoomFor(BuildContext context, WidgetRef ref, Game game) async {
       } on Object catch (e) {
         debugPrint('[Downloads] Make room: ${c.game.displayName} not deleted: $e');
         if (context.mounted) {
-          showToast(context, tr('{0} couldn\'t be deleted, so nothing is downloaded: {1}', [c.game.displayName, e]));
+          showToast(
+            context,
+            tr('{0} couldn\'t be deleted, so nothing is downloaded: {1}', [c.game.displayName, e]),
+            error: true,
+          );
         }
         return false;
       }
@@ -200,7 +204,7 @@ class _MakeRoomState extends State<_MakeRoom> {
                       () => enough
                           ? Navigator.of(context)
                                 .pop(widget.candidates.where((c) => _ticked.contains(c.game.id)).toList())
-                          : showToast(context, tr('Tick more: they don\'t free enough yet.')),
+                          : showToast(context, tr('Tick more: they don\'t free enough yet.'), error: true),
                       greyed: !enough,
                       primary: true,
                     ),

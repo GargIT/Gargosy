@@ -55,7 +55,7 @@ class _DownloadAllButtonState extends ConsumerState<DownloadAllButton> {
       games = ref.read(ageLimitProvider).only(found);
     } on Object catch (e) {
       debugPrint('[Downloads] Download all: $e');
-      if (mounted) showToast(context, tr('RomM\'s games couldn\'t be read.'));
+      if (mounted) showToast(context, tr('RomM\'s games couldn\'t be read.'), error: true);
       return;
     } finally {
       if (mounted) setState(() => _reading = false);
@@ -71,7 +71,7 @@ class _DownloadAllButtonState extends ConsumerState<DownloadAllButton> {
       // With what is queued or running already, as each download is checked.
       checkSpace({ref.read(appRootProvider).roms: size + notifier.stillToCome()}, ref.read(diskInfoProvider));
     } on NotEnoughSpace catch (e) {
-      showToast(context, '$e');
+      showToast(context, '$e', error: true);
       return;
     }
     final ok = await showConfirm(
@@ -84,7 +84,7 @@ class _DownloadAllButtonState extends ConsumerState<DownloadAllButton> {
     try {
       notifier.startAll(games);
     } on NotEnoughSpace catch (e) {
-      if (mounted) showToast(context, '$e');
+      if (mounted) showToast(context, '$e', error: true);
     }
   }
 

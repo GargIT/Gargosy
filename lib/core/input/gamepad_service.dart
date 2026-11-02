@@ -646,7 +646,7 @@ class GamepadService extends WidgetsBindingObserver {
     if (primary != null && primary.context != null) {
       final renderObject = primary.context!.findRenderObject();
       if (renderObject != null && renderObject.attached) {
-        primary.focusInDirection(direction);
+        if (primary.focusInDirection(direction)) focusMovedBus.add(null);
       }
     }
   }

@@ -30,7 +30,7 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
     return;
   }
   if (ref.read(playControllerProvider).runningGameId != null) {
-    showToast(context, tr('Close the game first: Gargosy can\'t update while a game runs.'));
+    showToast(context, tr('Close the game first: Gargosy can\'t update while a game runs.'), error: true);
     return;
   }
   if (ref.read(activeProfileProvider) != null && !await waitForSyncIdle(context, ref)) return;
@@ -52,7 +52,7 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
   // A game or a sync may have started while it downloaded (RomM came back
   // and the upload queue runs): Gargosy quits only once both are done.
   if (ref.read(playControllerProvider).runningGameId != null) {
-    showToast(context, tr('Close the game first: Gargosy can\'t update while a game runs.'));
+    showToast(context, tr('Close the game first: Gargosy can\'t update while a game runs.'), error: true);
     return;
   }
   if (ref.read(activeProfileProvider) != null && !await waitForSyncIdle(context, ref)) return;
@@ -63,7 +63,7 @@ Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release)
   } on Object catch (e) {
     if (context.mounted) {
       Navigator.of(context).pop();
-      showToast(context, tr('The updater couldn\'t start: {0}', [e]));
+      showToast(context, tr('The updater couldn\'t start: {0}', [e]), error: true);
     }
     return;
   }

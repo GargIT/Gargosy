@@ -63,7 +63,7 @@ class _GamePersonalPillsState extends ConsumerState<GamePersonalPills> {
     }
     if (!mounted) return;
     setState(undo);
-    showToast(context, tr('RomM didn\'t save that. It\'s as it was.'));
+    showToast(context, tr('RomM didn\'t save that. It\'s as it was.'), error: true);
   }
 
   Future<void> _pickStatus() async {

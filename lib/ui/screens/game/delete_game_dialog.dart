@@ -25,13 +25,13 @@ typedef GameDeletion = ({bool serverFile, bool thisPc});
 /// to a RomM user who may delete games ([canDeleteGamesProvider]).
 Future<void> deleteGameFromRomm(BuildContext context, WidgetRef ref, Game game, {required bool downloaded}) async {
   if (ref.read(playControllerProvider).runningGameId == game.id) {
-    showToast(context, tr('Close the game first.'));
+    showToast(context, tr('Close the game first.'), error: true);
     return;
   }
   final romId = int.tryParse(game.id);
   final romm = ref.read(rommServiceProvider);
   if (romId == null || romm == null) {
-    showToast(context, tr('Can\'t reach RomM.'));
+    showToast(context, tr('Can\'t reach RomM.'), error: true);
     return;
   }
   final asked = await showDeleteGame(context, game, downloaded: downloaded);
@@ -53,7 +53,7 @@ Future<void> deleteGameFromRomm(BuildContext context, WidgetRef ref, Game game, 
       );
       return;
     case RomDeleteResult.failed:
-      showToast(nav.context, tr('Couldn\'t delete it on RomM. Try again later.'));
+      showToast(nav.context, tr('Couldn\'t delete it on RomM. Try again later.'), error: true);
       return;
     case RomDeleteResult.deleted:
       break;

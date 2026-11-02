@@ -34,7 +34,7 @@ Future<void> onSecondStart(GlobalKey<NavigatorState> nav, WidgetRef ref, List<St
     bool busy() {
       if (_switching) return true;
       if (ref.read(playControllerProvider).runningGameId == null) return false;
-      showToast(context, tr('A game is already running. Close it first.'));
+      showToast(context, tr('A game is already running. Close it first.'), error: true);
       return true;
     }
 

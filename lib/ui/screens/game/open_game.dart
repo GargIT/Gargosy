@@ -39,7 +39,7 @@ Future<void> openGameVersion(BuildContext context, WidgetRef ref, Game game) asy
   final other = await gameOfVersion(ref, pick.id);
   if (!context.mounted) return;
   if (other == null) {
-    showToast(context, tr('Couldn\'t open that version.'));
+    showToast(context, tr('Couldn\'t open that version.'), error: true);
     return;
   }
   return openGame(context, other);

@@ -209,3 +209,4 @@ Mockups are linked from each issue.
 | 2026-10-31 | A game's manual is a page of its own from a button by ♥, not a tab: a page at a time, A zooms (the controller has no second stick in Gargosy's input) | #232 |
 | 2026-10-31 | Stats is a page of its own from the user menu (under PROFILE), not a Settings section: numbers to read, nothing to change | #236 |
 | 2026-10-31 | The user menu's rows are 35 px and its group headings closer, so it still fits at 1280×720 with Stats | #236 |
+| 2026-11-02 | Sounds are off by default and Gargosy's own, made as samples (no files): soft, under 0.35 s; a move only from the controller or keys, not right after another sound (a page's own focus); never while a game runs | #237 |

@@ -7,3 +7,6 @@ import 'gamepad_service.dart';
 /// Instead of simulating keyboard events, we push high-level actions
 /// that screens and widgets can listen to directly.
 final inputActionBus = StreamController<GameAction>.broadcast();
+
+/// Gargosy: told each time the D-pad moved focus (#237: its sound).
+final focusMovedBus = StreamController<void>.broadcast();

@@ -42,7 +42,7 @@ Future<RommCollection?> createCollection(BuildContext context, WidgetRef ref, {S
     ref.invalidate(collectionsProvider);
     return made;
   } on Object catch (e) {
-    if (context.mounted) showToast(context, tr('Couldn\'t make {0}: {1}', [name, e]));
+    if (context.mounted) showToast(context, tr('Couldn\'t make {0}: {1}', [name, e]), error: true);
     return null;
   }
 }
@@ -74,7 +74,9 @@ class _AddToCollectionState extends ConsumerState<_AddToCollection> {
       }
       await ref.read(collectionsProvider.future);
     } on Object catch (e) {
-      if (mounted) showToast(context, tr('Couldn\'t change {0}: {1}', [c.isFavorite ? 'Favourites' : c.name, e]));
+      if (mounted) {
+        showToast(context, tr('Couldn\'t change {0}: {1}', [c.isFavorite ? 'Favourites' : c.name, e]), error: true);
+      }
     } finally {
       if (mounted) setState(() => _busy.remove(c.id));
     }

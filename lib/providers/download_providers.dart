@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:path/path.dart' as p;
 
+import '../core/audio/ui_sound_service.dart';
 import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../library/disk_space.dart';
@@ -19,6 +20,7 @@ import '../library/throttled_download.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
+import 'sound_providers.dart';
 import '../l10n/tr.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
@@ -247,12 +249,16 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
       await _ref.read(librarySnapshotProvider)?.remember(game);
+      if (mounted) _ref.read(uiSoundsProvider).play(UiSound.done);
     } on DioException catch (e) {
       if (!mounted) return;
-      _set(game.id, CancelToken.isCancel(e) ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
+      final cancelled = CancelToken.isCancel(e);
+      _set(game.id, cancelled ? null : DownloadProgress(DownloadPhase.failed, error: e.message ?? '$e'));
+      if (!cancelled) _ref.read(uiSoundsProvider).play(UiSound.error);
     } on Object catch (e) {
       if (!mounted) return;
       _set(game.id, DownloadProgress(DownloadPhase.failed, error: '$e'));
+      _ref.read(uiSoundsProvider).play(UiSound.error);
     } finally {
       _cancels.remove(game.id);
       _startedAt.remove(game.id);

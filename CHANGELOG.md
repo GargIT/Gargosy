@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Sounds: Settings → Display → Sounds (off by default) and their volume.
+  Moving with the controller, A, B, LB/RB, an error and a finished
+  download each have a short sound of Gargosy's own. Never while a game
+  runs.
 - Stats in the user menu: time played this week, this month and in all,
   the longest session, days in a row, games finished and achievements
   this month, the most played games and time by platform, across every

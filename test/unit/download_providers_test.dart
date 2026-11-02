@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/providers/retry.dart';
+import 'package:gargosy/core/audio/ui_sound_service.dart';
+import 'package:gargosy/core/platform/sound_player.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/library/disk_space.dart';
 import 'package:gargosy/library/download_schedule.dart';
@@ -13,6 +16,7 @@ import 'package:gargosy/profiles/login_store.dart';
 import 'package:gargosy/profiles/path_guard.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/providers/download_providers.dart';
+import 'package:gargosy/providers/sound_providers.dart';
 
 import '../helpers/fake_download_service.dart';
 import '../helpers/game_fixtures.dart';
@@ -68,8 +72,10 @@ void main() {
     late DownloadsNotifier downloads;
     int? free;
     final a = game(1, 'A'), b = game(2, 'B'), d = game(3, 'D');
+    late _Heard heard;
 
     setUp(() async {
+      heard = _Heard();
       free = null;
       final root = await tempAppRoot();
       addTearDown(() => io.Directory(root.root).delete(recursive: true));
@@ -84,6 +90,7 @@ void main() {
           appPreferencesProvider.overrideWithValue(MemoryPrefs()),
           downloadServiceProvider.overrideWithValue(fake),
           diskInfoProvider.overrideWithValue(FakeDisk((_) => free)),
+          uiSoundsProvider.overrideWithValue(UiSoundService(heard, on: true, volume: 50, gameRunning: () => false)),
         ],
       );
       addTearDown(c.dispose);
@@ -92,6 +99,25 @@ void main() {
     });
 
     Future<void> tick() => Future<void>.delayed(Duration.zero);
+
+    test('a finished download plays its sound (#237); one still running does not', () async {
+      final first = downloads.start(a);
+      unawaited(downloads.start(b));
+      await tick();
+      expect(heard.count, 0);
+      fake.holds['1']!.complete();
+      await first;
+      expect(heard.count, 1);
+    });
+
+    test('a failed download plays the error sound (#237)', () async {
+      final first = downloads.start(a);
+      await tick();
+      fake.holds['1']!.completeError(StateError('the disk went away'));
+      await first;
+      expect(c.read(downloadsProvider)['1']!.phase, DownloadPhase.failed);
+      expect(heard.count, 1);
+    });
 
     test('one at a time, in the order picked; the next starts when one ends', () async {
       final first = downloads.start(a);
@@ -222,4 +248,11 @@ void main() {
       expect(downloads.queue.map((g) => g.id), ['1'], reason: 'waits for B');
     });
   });
+}
+
+class _Heard implements SoundPlayer {
+  var count = 0;
+
+  @override
+  void play(Uint8List wav) => count++;
 }

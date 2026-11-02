@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/audio/ui_sound_service.dart';
 import '../../../core/input/deadzone_config.dart';
 import '../../../core/input/hid_buttons.dart';
 import '../../../core/platform/window_service.dart';
 import '../../../play/quit_combo.dart';
 import '../../../profiles/profile_providers.dart';
+import '../../../providers/sound_providers.dart';
 import '../../shell/screensaver.dart';
 import '../../shell/user_menu.dart';
 import '../../widgets/controller_dialogs.dart';
@@ -185,7 +187,7 @@ class _DeadzoneBar extends StatelessWidget {
 }
 
 /// Settings → Display: fullscreen (F11), remembered for the next start, and
-/// the screensaver's wait (#147).
+/// the screensaver's wait (#147), the sounds (#237).
 class DisplaySection extends ConsumerStatefulWidget {
   const DisplaySection({super.key});
 
@@ -240,6 +242,37 @@ class _DisplaySectionState extends ConsumerState<DisplaySection> {
               ref.invalidate(screensaverMinutesProvider);
             },
           ),
+          // #237: Gargosy's own sounds, app-wide; never while a game runs.
+          SettingsToggle(
+            label: tr('Sounds'),
+            note: tr('Moving, A, B, LB/RB, errors and a finished download. Never while a game runs.'),
+            on: ref.watch(soundsOnProvider),
+            onChanged: (on) async {
+              await ref.read(appPreferencesProvider).setBool(SoundSettings.onKey, on);
+              ref.invalidate(soundsOnProvider);
+              if (on) ref.read(uiSoundsProvider).play(UiSound.open);
+            },
+          ),
+          if (ref.watch(soundsOnProvider))
+            SettingsField(
+              key: const ValueKey('soundVolume'),
+              label: tr('Volume'),
+              value: '${ref.watch(soundVolumeProvider)} %',
+              action: tr('Change'),
+              onActivate: () async {
+                const choices = SoundSettings.volumes;
+                final i = await showChoice(
+                  context,
+                  title: tr('Volume of the sounds'),
+                  labels: [for (final n in choices) '$n %'],
+                  current: choices.indexOf(ref.read(soundVolumeProvider)),
+                );
+                if (i == null || i < 0) return;
+                await ref.read(appPreferencesProvider).setString(SoundSettings.volumeKey, '${choices[i]}');
+                ref.invalidate(soundVolumeProvider);
+                ref.read(uiSoundsProvider).play(UiSound.done);
+              },
+            ),
           // #191: app-wide, so the profile picker shows it too.
           SettingsField(
             key: const ValueKey('language'),

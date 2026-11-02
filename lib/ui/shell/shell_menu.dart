@@ -65,7 +65,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
 Future<bool> readyToLeaveProfile(BuildContext context, WidgetRef ref) async {
   // The game runs on this profile's emulator data; it must close first.
   if (ref.read(playControllerProvider).runningGameId != null) {
-    showToast(context, tr('Close the game first: a profile can\'t change while a game runs.'));
+    showToast(context, tr('Close the game first: a profile can\'t change while a game runs.'), error: true);
     return false;
   }
   // Downloads belong to this profile: switching stops them (#143).

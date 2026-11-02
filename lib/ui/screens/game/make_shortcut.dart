@@ -40,7 +40,7 @@ Future<void> makeGameShortcut(BuildContext context, WidgetRef ref, Game game) as
     if (context.mounted) showToast(context, tr('Shortcut made on the desktop: {0}', [p.basename(link)]));
   } on Object catch (e) {
     debugPrint('[Shortcut] ${game.displayName}: $e');
-    if (context.mounted) showToast(context, tr('The shortcut couldn\'t be made: {0}', [_short(e)]));
+    if (context.mounted) showToast(context, tr('The shortcut couldn\'t be made: {0}', [_short(e)]), error: true);
   }
 }
 
