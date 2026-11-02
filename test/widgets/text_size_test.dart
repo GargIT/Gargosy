@@ -23,7 +23,7 @@ void main() {
     expect(seen.scale(10), 10);
   });
 
-  testWidgets('ScaledText goes on top of Windows' own text size, never under it', (tester) async {
+  testWidgets('ScaledText goes on top of the Windows text size, never under it', (tester) async {
     late TextScaler seen;
     await tester.pumpWidget(
       MaterialApp(
