@@ -31,6 +31,15 @@ What changed in each release of Gargosy. The format follows
   page. It opens a page at a time; LB/RB turn the page, A zooms, the
   D-pad moves a zoomed page. The manual is kept on this PC once opened, so
   it opens offline too.
+
+## [0.7.0] - 2026-11-02
+
+Downloads checked against RomM, queued all at once, limited in speed and
+hours, and room made when they don't fit; continuing on this PC from
+another, multi-disc games without a playlist, and Report a bug.
+
+### Added
+
 - About → Report a bug opens GitHub's bug form with the versions filled
   in, and the last two logs (redacted) ready to drag in beside it.
 - Multi-disc games without a playlist can switch discs in RetroArch and
@@ -594,7 +603,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.7.0
 [0.6.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.5.0
 [0.4.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.4.0
