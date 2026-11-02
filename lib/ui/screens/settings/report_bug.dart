@@ -29,7 +29,7 @@ Future<void> reportBug(BuildContext context, WidgetRef ref, {required String win
   final form = open(bugFormUrl(version: AppConstants.version, windows: windowsName(windows), romm: romm).toString());
   unawaited(
     form.then((opened) {
-      if (!opened && context.mounted) showToast(context, tr("The bug form couldn't be opened."));
+      if (!opened && context.mounted) showToast(context, tr("The bug form couldn't be opened."), error: true);
     }),
   );
   try {
@@ -41,7 +41,7 @@ Future<void> reportBug(BuildContext context, WidgetRef ref, {required String win
     }
   } on Object catch (e) {
     debugPrint('[About] log for a bug report: $e');
-    if (context.mounted) showToast(context, tr('The log couldn\'t be copied: {0}', [e]));
+    if (context.mounted) showToast(context, tr('The log couldn\'t be copied: {0}', [e]), error: true);
   }
 }
 

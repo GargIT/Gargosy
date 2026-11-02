@@ -28,7 +28,7 @@ Future<void> runOutsideLaunch(BuildContext context, WidgetRef ref) async {
   final game = await ref.read(gameProvider(launch.romId).future).catchError((Object _) => null);
   if (!context.mounted) return;
   if (game == null) {
-    showToast(context, tr('Gargosy couldn\'t find the game {0}.', [launch.romId]));
+    showToast(context, tr('Gargosy couldn\'t find the game {0}.', [launch.romId]), error: true);
     return;
   }
   // Started: the play screen said so (also after Back while it was starting).

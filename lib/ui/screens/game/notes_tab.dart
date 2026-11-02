@@ -26,7 +26,7 @@ class NotesTab extends ConsumerWidget {
     try {
       await ref.read(libraryApiProvider)?.addNote(game.id, title.trim(), content);
     } on Object catch (e) {
-      if (context.mounted) showToast(context, tr('Couldn\'t save the note: {0}', [e]));
+      if (context.mounted) showToast(context, tr('Couldn\'t save the note: {0}', [e]), error: true);
       return;
     }
     ref.invalidate(romNotesProvider(game.id));
@@ -60,7 +60,7 @@ class NotesTab extends ConsumerWidget {
     try {
       await ref.read(libraryApiProvider)?.deleteNote(game.id, note.id);
     } on Object catch (e) {
-      if (context.mounted) showToast(context, tr('Couldn\'t delete the note: {0}', [e]));
+      if (context.mounted) showToast(context, tr('Couldn\'t delete the note: {0}', [e]), error: true);
       return;
     }
     ref.invalidate(romNotesProvider(game.id));

@@ -286,7 +286,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
       if (reason == null) widget.onStarted?.call();
       if (!mounted) return;
       if (reason != null) {
-        showToast(context, reason);
+        showToast(context, reason, error: true);
       } else {
         Navigator.of(context).maybePop();
       }

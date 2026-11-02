@@ -31,12 +31,12 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
   Future<void> _getMissing() async {
     if (_busy) return;
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, tr('A game is running. Close it first.'));
+      showToast(context, tr('A game is running. Close it first.'), error: true);
       return;
     }
     final sync = ref.read(biosSyncProvider);
     if (sync == null) {
-      showToast(context, tr('Can\'t reach RomM.'));
+      showToast(context, tr('Can\'t reach RomM.'), error: true);
       return;
     }
     setState(() => _busy = true);
@@ -44,7 +44,7 @@ class _FirmwareTabState extends ConsumerState<FirmwareTab> {
       final n = await sync.forPlatform(widget.platform.slug);
       if (mounted) showToast(context, n == 0 ? tr('Nothing new came from RomM.') : tr('Got {0} from RomM.', [n]));
     } on Object catch (e) {
-      if (mounted) showToast(context, tr('Couldn\'t get the files: {0}', [e]));
+      if (mounted) showToast(context, tr('Couldn\'t get the files: {0}', [e]), error: true);
     } finally {
       // The rebuild reads bios\ again.
       if (mounted) setState(() => _busy = false);

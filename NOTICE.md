@@ -34,3 +34,6 @@ No RomM code, stylesheets, icons or logos are included.
 Gargosy is built with Flutter and Dart packages under their own licences (BSD, MIT, Apache-2.0 and
 others). Flutter gathers them into `data\flutter_assets\NOTICES.Z` in the app folder (gzip text); in Gargosy,
 About → Dart and Flutter packages lists them.
+
+Gargosy's sounds (Settings → Display → Sounds) are its own: made in code as tones when they play
+(`lib/core/audio/ui_sounds.dart`), with no recorded or third-party sound files.

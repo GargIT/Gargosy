@@ -57,7 +57,7 @@ Future<RommCollection?> saveAsSmartCollection(
     }
     return made;
   } on Object catch (e) {
-    if (context.mounted) showToast(context, tr('Couldn\'t make {0}: {1}', [name, e]));
+    if (context.mounted) showToast(context, tr('Couldn\'t make {0}: {1}', [name, e]), error: true);
     return null;
   }
 }

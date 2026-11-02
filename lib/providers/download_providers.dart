@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:path/path.dart' as p;
 
+import '../core/audio/ui_sound_service.dart';
 import '../core/platform/platform_info.dart';
 import '../core/romm/romm_models.dart';
 import '../library/disk_space.dart';
@@ -19,6 +20,7 @@ import '../library/throttled_download.dart';
 import '../profiles/path_guard.dart';
 import '../profiles/profile_providers.dart';
 import 'romm_providers.dart';
+import 'sound_providers.dart';
 import '../l10n/tr.dart';
 
 final romFilesProvider = Provider<RomFiles>((ref) => RomFiles(ref.watch(appRootProvider)));
@@ -246,6 +248,7 @@ class DownloadsNotifier extends StateNotifier<Map<String, DownloadProgress>> {
         ..removeWhere((g) => g.id == game.id)
         ..insert(0, game);
       if (_finished.length > 20) _finished.removeLast();
+      _ref.read(uiSoundsProvider).play(UiSound.done);
       await _ref.read(librarySnapshotProvider)?.remember(game);
     } on DioException catch (e) {
       if (!mounted) return;

@@ -6,7 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/input/gamepad_service.dart';
+import '../../core/audio/ui_sound_service.dart';
 import '../../core/input/input_action_bus.dart';
+import '../../providers/sound_providers.dart';
 import '../../providers/ui_provider.dart';
 import 'gargosy_intents.dart';
 
@@ -14,6 +16,8 @@ import 'gargosy_intents.dart';
 /// few keys and the mouse's back button (as Escape) into intents on the
 /// focused widget, and tracks the input mode.
 /// The D-pad itself is handled by [GamepadService], which moves focus.
+/// Plays the sounds (#237): A, B, LB/RB and their keys, and a focus moved
+/// with the controller or the keys (never the mouse).
 class InputRouter extends ConsumerStatefulWidget {
   const InputRouter({super.key, required this.child, required this.navigatorKey, this.startGamepads = true});
 
@@ -29,6 +33,7 @@ class InputRouter extends ConsumerStatefulWidget {
 
 class _InputRouterState extends ConsumerState<InputRouter> {
   StreamSubscription<GameAction>? _sub;
+  FocusNode? _focused;
 
   static const _intents = <GameAction, Intent>{
     GameAction.confirm: ActivateIntent(),
@@ -50,31 +55,68 @@ class _InputRouterState extends ConsumerState<InputRouter> {
       if (intent != null) _invoke(intent);
     });
     HardwareKeyboard.instance.addHandler(_onKey);
+    FocusManager.instance.addListener(_onFocus);
+  }
+
+  void _sound(UiSound sound) => ref.read(uiSoundsProvider).play(sound);
+
+  void _onFocus() {
+    final now = FocusManager.instance.primaryFocus;
+    if (identical(now, _focused)) return;
+    final was = _focused;
+    _focused = now;
+    if (was != null && now != null && ref.read(inputModeProvider) != InputMode.mouse) _sound(UiSound.move);
   }
 
   bool _onKey(KeyEvent event) {
     if (event is KeyDownEvent && ref.read(inputModeProvider) != InputMode.keyboard) {
       ref.read(inputModeProvider.notifier).state = InputMode.keyboard;
     }
+    if (event is KeyDownEvent) {
+      final sound = _keySounds[event.logicalKey];
+      if (sound != null) _sound(sound);
+    }
     return false;
   }
 
+  static final _keySounds = {
+    LogicalKeyboardKey.enter: UiSound.open,
+    LogicalKeyboardKey.numpadEnter: UiSound.open,
+    LogicalKeyboardKey.space: UiSound.open,
+    LogicalKeyboardKey.escape: UiSound.back,
+    LogicalKeyboardKey.pageUp: UiSound.tab,
+    LogicalKeyboardKey.pageDown: UiSound.tab,
+  };
+
+  static UiSound? _soundOf(Intent intent) => switch (intent) {
+    ActivateIntent() => UiSound.open,
+    BackIntent() => UiSound.back,
+    PrevTabIntent() || NextTabIntent() => UiSound.tab,
+    _ => null,
+  };
+
   void _invoke(Intent intent) {
+    final sound = _soundOf(intent);
     final context = FocusManager.instance.primaryFocus?.context;
     if (context != null) {
       final action = Actions.maybeFind<Intent>(context, intent: intent);
       if (action != null && action.isEnabled(intent)) {
+        if (sound != null) _sound(sound);
         Actions.invoke(context, intent);
         return;
       }
     }
-    if (intent is BackIntent) widget.navigatorKey.currentState?.maybePop();
+    if (intent is BackIntent) {
+      _sound(UiSound.back);
+      widget.navigatorKey.currentState?.maybePop();
+    }
   }
 
   @override
   void dispose() {
     _sub?.cancel();
     HardwareKeyboard.instance.removeHandler(_onKey);
+    FocusManager.instance.removeListener(_onFocus);
     super.dispose();
   }
 

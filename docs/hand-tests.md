@@ -405,3 +405,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Major package upgrades (#261)
 
 150. [x] The dev build after win32 6 and the other majors: sign in to a profile with a PIN and restart Gargosy (its login is read back: DPAPI); covers and platform logos show (cached_network_image); Settings → Emulators → Import opens the folder picker (file_picker); About shows the version (package_info_plus); in a game, a non-XInput controller (a DualShock 4 or Switch Pro over USB) closes it with the quit buttons (the HID reading); Settings → Storage shows the drive's free space.
+
+## Sounds (#237)
+
+151. [ ] Settings → Display → Sounds on: a sound plays. With a controller, moving, A, B and LB/RB each have their own; the mouse makes none when it moves focus. Holding the D-pad down a long list gives quick, even ticks, and opening a page makes one sound, not two. Volume 25 % is quieter than 100 %, and 100 % isn't loud. Off: nothing.
+
+152. [ ] With sounds on, start a download and go to another page: when it finishes, the download sound plays. Something refused (Delete from RomM while offline, a download that doesn't fit while a game runs) plays the error sound. Start a game with a download running: nothing is heard over the emulator.

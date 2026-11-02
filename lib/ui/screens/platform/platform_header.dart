@@ -42,7 +42,7 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
         openGame(context, game);
       }
     } on Object catch (e) {
-      if (mounted) showToast(context, describeLoadError(e));
+      if (mounted) showToast(context, describeLoadError(e), error: true);
     } finally {
       if (mounted) setState(() => _picking = false);
     }

@@ -55,7 +55,7 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
   Future<void> _delete(List<RomEntry> entries) async {
     if (entries.isEmpty) return;
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, tr('Close the game first: nothing is deleted while one runs.'));
+      showToast(context, tr('Close the game first: nothing is deleted while one runs.'), error: true);
       return;
     }
     final games = _byPath();
@@ -103,7 +103,7 @@ class _StoragePlatformScreenState extends ConsumerState<StoragePlatformScreen> {
     ref.read(romFilesVersionProvider.notifier).state++;
     ref.invalidate(storageUsageProvider);
     if (!mounted) return;
-    if (failed > 0) showToast(context, tr('{0} couldn\'t be deleted (in use?).', [failed]));
+    if (failed > 0) showToast(context, tr('{0} couldn\'t be deleted (in use?).', [failed]), error: true);
     setState(() {
       _marked.clear();
       _entries = _read();

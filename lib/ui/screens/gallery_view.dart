@@ -294,7 +294,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
     final scan = ref.read(platformScanProvider);
     final platformId = _query.platformId;
     if (scan == null || platformId == null || _scanning) {
-      if (scan == null) showToast(context, tr('Can\'t reach RomM.'));
+      if (scan == null) showToast(context, tr('Can\'t reach RomM.'), error: true);
       return;
     }
     setState(() => _scanning = true);
@@ -302,7 +302,7 @@ class _GalleryViewState extends ConsumerState<GalleryView> {
       final n = await scan(platformId);
       if (mounted) showToast(context, n == 0 ? tr('Nothing new found.') : tr('Found {0} more on this PC.', [n]));
     } on Object catch (e) {
-      if (mounted) showToast(context, describeLoadError(e));
+      if (mounted) showToast(context, describeLoadError(e), error: true);
     } finally {
       if (mounted) setState(() => _scanning = false);
     }

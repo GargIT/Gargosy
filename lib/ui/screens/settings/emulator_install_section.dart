@@ -35,7 +35,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     if (firmware == null || _installingFirmware) return;
     // One emulator at a time: RPCS3 can't install while a game runs.
     if (ref.read(playControllerProvider).runningGameId != null) {
-      showToast(context, tr('A game is running. Close it first.'));
+      showToast(context, tr('A game is running. Close it first.'), error: true);
       return;
     }
     setState(() => _installingFirmware = true);
@@ -43,9 +43,9 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
       await firmware.install(exe);
       if (mounted) showToast(context, tr('The PS3 firmware is installed, for every profile.'));
     } on Ps3FirmwareException catch (e) {
-      if (mounted) showToast(context, e.message);
+      if (mounted) showToast(context, e.message, error: true);
     } on Object catch (e) {
-      if (mounted) showToast(context, tr('Couldn\'t install the PS3 firmware: {0}', [e]));
+      if (mounted) showToast(context, tr('Couldn\'t install the PS3 firmware: {0}', [e]), error: true);
     } finally {
       if (mounted) setState(() => _installingFirmware = false);
     }
@@ -78,7 +78,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
       await lib.importFrom(e.id, folder);
       if (mounted) showToast(context, tr('{0} is installed.', [e.name]));
     } on Object catch (err) {
-      if (mounted) showToast(context, tr('Couldn\'t import {0}: {1}', [e.name, err]));
+      if (mounted) showToast(context, tr('Couldn\'t import {0}: {1}', [e.name, err]), error: true);
     } finally {
       if (mounted) setState(() => _busy.remove(e.id));
       ref.invalidate(emulatorsProvider);
@@ -120,7 +120,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     }
     if (!mounted) return;
     if (error != null) {
-      showToast(context, tr('Couldn\'t download {0}: {1}', [e.name, error]));
+      showToast(context, tr('Couldn\'t download {0}: {1}', [e.name, error]), error: true);
       return;
     }
     if (!installed) return;
@@ -169,7 +169,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         _ => tr('Got {0} BIOS files from RomM.', [n]),
       });
     } on Object {
-      if (mounted) showToast(context, tr('Couldn\'t get BIOS files from RomM.'));
+      if (mounted) showToast(context, tr('Couldn\'t get BIOS files from RomM.'), error: true);
     } finally {
       if (mounted) setState(() => _gettingBios = false);
     }

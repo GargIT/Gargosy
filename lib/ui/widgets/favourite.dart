@@ -8,5 +8,5 @@ import 'toast.dart';
 /// [toggleFavourite], telling the user when RomM refused it.
 Future<void> favourite(BuildContext context, WidgetRef ref, Game g) async {
   final error = await toggleFavourite(ref, g);
-  if (error != null && context.mounted) showToast(context, error);
+  if (error != null && context.mounted) showToast(context, error, error: true);
 }

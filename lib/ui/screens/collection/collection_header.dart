@@ -51,7 +51,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
         openGame(context, game);
       }
     } on Object catch (e) {
-      if (mounted) showToast(context, describeLoadError(e));
+      if (mounted) showToast(context, describeLoadError(e), error: true);
     } finally {
       if (mounted) setState(() => _picking = false);
     }
@@ -105,7 +105,7 @@ class _CollectionHeaderState extends ConsumerState<CollectionHeader> {
       ref.invalidate(collectionsProvider);
       ref.invalidate(smartCollectionsProvider);
     } on Object catch (e) {
-      if (mounted) showToast(context, tr('Couldn\'t change {0}: {1}', [c.name, e]));
+      if (mounted) showToast(context, tr('Couldn\'t change {0}: {1}', [c.name, e]), error: true);
     }
   }
 

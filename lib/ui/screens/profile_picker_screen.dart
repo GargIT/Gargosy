@@ -149,7 +149,7 @@ class _ProfilePickerScreenState extends ConsumerState<ProfilePickerScreen> {
         _openForLaunch();
       } else {
         ref.read(outsideLaunchProvider.notifier).state = null;
-        showToast(context, tr('Finish here first, then start the game again.'));
+        showToast(context, tr('Finish here first, then start the game again.'), error: true);
       }
     });
     final lastUsed = ref.read(profileStoreProvider).lastUsedId;

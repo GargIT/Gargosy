@@ -390,6 +390,8 @@ const svText = <String, String>{
   'Missing': 'Saknas',
   'More': 'Mer',
   'Move': 'Flytta',
+  'Moving, A, B, LB/RB, errors and a finished download. Never while a game runs.':
+      'Förflyttning, A, B, LB/RB, fel och en färdig nedladdning. Aldrig medan ett spel körs.',
   'My rating': 'Mitt betyg',
   'Name': 'Namn',
   'Needs a DSi NAND from {0} in the bios folder': 'Behöver en DSi-NAND från {0} i bios-mappen',
@@ -687,6 +689,7 @@ const svText = <String, String>{
   'Sort by {0}': 'Sortera efter {0}',
   'Sort by: {0}': 'Sortera: {0}',
   'Sorted by {0}, {1}': 'Sorterad efter {0}, {1}',
+  'Sounds': 'Ljud',
   'Space': 'Blanksteg',
   'Speed limit': 'Hastighetsgräns',
   'Start (Menu, Options or +)': 'Start (Menu, Options eller +)',
@@ -836,6 +839,8 @@ const svText = <String, String>{
   'Virtual': 'Virtuella',
   'Virtual collections': 'Virtuella samlingar',
   'Virtual · {0}': 'Virtuell · {0}',
+  'Volume': 'Volym',
+  'Volume of the sounds': 'Ljudens volym',
   'WIDGETS': 'WIDGETAR',
   'Waiting for: {0}': 'Väntar på: {0}',
   'Waiting to upload: your save from {0} isn\'t on RomM yet. It goes up when RomM can be reached.':

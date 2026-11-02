@@ -74,5 +74,5 @@ Future<void> resumeNewest(BuildContext context, WidgetRef ref, Game game) async 
           if (context.mounted) showToast(context, m);
         },
       );
-  if (reason != null && context.mounted) showToast(context, reason);
+  if (reason != null && context.mounted) showToast(context, reason, error: true);
 }
