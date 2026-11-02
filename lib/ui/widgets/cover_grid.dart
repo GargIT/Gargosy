@@ -62,6 +62,10 @@ class CoverGrid extends StatefulWidget {
 }
 
 class CoverGridState extends State<CoverGrid> {
+  /// A card's height at the text size, read in build for the scroll and
+  /// focus listeners (#240).
+  double _rowHeight = GameCard.coverHeight + 52;
+
   final _scroll = ScrollController();
   int _top = 0;
 
@@ -95,9 +99,9 @@ class CoverGridState extends State<CoverGrid> {
     for (final e in _nodes.entries) {
       if (!e.value.hasPrimaryFocus || e.value.context == null || e.key >= widget.games.length) continue;
       final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
-      final top = header + GSpace.s4 + (e.key ~/ _columns) * (GameCard.heightIn(context) + CoverGrid.gap);
+      final top = header + GSpace.s4 + (e.key ~/ _columns) * (_rowHeight + CoverGrid.gap);
       final pos = _scroll.position;
-      final shown = top + GameCard.heightIn(context) > pos.pixels && top < pos.pixels + pos.viewportDimension;
+      final shown = top + _rowHeight > pos.pixels && top < pos.pixels + pos.viewportDimension;
       return shown ? e.key : null;
     }
     return null;
@@ -129,9 +133,7 @@ class CoverGridState extends State<CoverGrid> {
     final into = _scroll.position.pixels - header - GSpace.s4;
     if (into <= 0) return 0;
     // A row more than half scrolled away doesn't count as shown.
-    final row =
-        ((into + (GameCard.heightIn(context) + CoverGrid.gap) / 2) / (GameCard.heightIn(context) + CoverGrid.gap))
-            .floor();
+    final row = ((into + (_rowHeight + CoverGrid.gap) / 2) / (_rowHeight + CoverGrid.gap)).floor();
     return (row * _columns).clamp(0, widget.games.length - 1);
   }
 
@@ -143,7 +145,7 @@ class CoverGridState extends State<CoverGrid> {
     if (!mounted || index < 0 || index >= widget.games.length || !_scroll.hasClients) return;
     final header = (_headerKey.currentContext?.findRenderObject() as RenderBox?)?.size.height ?? 0;
     final row = index ~/ _columns;
-    final target = header + GSpace.s4 + row * (GameCard.heightIn(context) + CoverGrid.gap);
+    final target = header + GSpace.s4 + row * (_rowHeight + CoverGrid.gap);
     _scroll.jumpTo(target.clamp(0.0, _scroll.position.maxScrollExtent));
     final node = _nodes[index];
     if (node != null && node.context != null && _scroll.position.pixels >= target - 1) {
@@ -161,6 +163,7 @@ class CoverGridState extends State<CoverGrid> {
 
   @override
   Widget build(BuildContext context) {
+    _rowHeight = GameCard.heightIn(context);
     final w = widget;
     final games = w.games;
     return LayoutBuilder(
@@ -195,7 +198,7 @@ class CoverGridState extends State<CoverGrid> {
                       crossAxisCount: columns,
                       mainAxisSpacing: CoverGrid.gap,
                       crossAxisSpacing: CoverGrid.gap,
-                      mainAxisExtent: GameCard.heightIn(context),
+                      mainAxisExtent: _rowHeight,
                     ),
                     delegate: SliverChildBuilderDelegate((context, i) {
                       if (w.onEndReached != null &&

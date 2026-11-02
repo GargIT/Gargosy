@@ -101,9 +101,9 @@ class _PlatformsPageState extends ConsumerState<PlatformsPage> {
                       child: GridView.builder(
                         padding: const EdgeInsets.fromLTRB(GSpace.rowPad, 0, GSpace.rowPad, GSpace.s14),
                         // About 260–300 px a card: 6 / 4 / 3 per row at 1920 / 1280 / 900 px.
-                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 300,
-                          mainAxisExtent: PlatformCard.height,
+                          mainAxisExtent: PlatformCard.heightIn(context),
                           mainAxisSpacing: GSpace.s4,
                           crossAxisSpacing: GSpace.s4,
                         ),

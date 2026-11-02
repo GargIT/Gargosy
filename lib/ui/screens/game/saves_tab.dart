@@ -319,8 +319,7 @@ class _SavesTabState extends ConsumerState<SavesTab> {
                     ],
                   ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
                   children: [
                     _button(
                       tr('Upload to RomM'),

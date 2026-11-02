@@ -183,60 +183,70 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         : (!installed
               ? e.downloadOff ?? tr('Not installed')
               : (e.version == null ? tr('Installed') : tr('Installed · {0}', [e.version])));
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                e.name,
-                style: TextStyle(
-                  fontSize: GFont.lg,
-                  fontWeight: FontWeight.w700,
-                  color: e.supported ? GColors.fg : GColors.fgMuted,
-                ),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final width = c.maxWidth;
+        return Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    e.name,
+                    style: TextStyle(
+                      fontSize: GFont.lg,
+                      fontWeight: FontWeight.w700,
+                      color: e.supported ? GColors.fg : GColors.fgMuted,
+                    ),
+                  ),
+                  Text(
+                    e.exe,
+                    style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+                  ),
+                ],
               ),
-              Text(
-                e.exe,
-                style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+            ),
+            Text(
+              busy ?? state,
+              style: TextStyle(
+                fontSize: GFont.md,
+                color: installed && e.supported ? GColors.success : GColors.fgSecondary,
+              ),
+            ),
+            if (busy == null && e.supported) ...[
+              const SizedBox(width: GSpace.s4),
+              // #240: with larger text the buttons go onto a second line.
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: width * 0.6),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: GSpace.s2,
+                  runSpacing: GSpace.s2,
+                  children: [
+                    if (installed)
+                      SettingsButton(label: tr('Open'), icon: Icons.open_in_new, onActivate: () => _open(e)),
+                    SettingsButton(
+                      label: tr('Import from folder'),
+                      icon: Icons.folder_open_outlined,
+                      onActivate: () => _import(e),
+                    ),
+                    if (e.downloadOff == null)
+                      SettingsButton(
+                        label: installed ? tr('Update') : tr('Download'),
+                        icon: installed ? Icons.update : Icons.download_outlined,
+                        kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
+                        onActivate: () => _download(e),
+                      ),
+                    if (installed)
+                      SettingsButton(label: tr('Remove'), icon: Icons.delete_outline, onActivate: () => _remove(e)),
+                  ],
+                ),
               ),
             ],
-          ),
-        ),
-        Text(
-          busy ?? state,
-          style: TextStyle(fontSize: GFont.md, color: installed && e.supported ? GColors.success : GColors.fgSecondary),
-        ),
-        if (busy == null && e.supported) ...[
-          const SizedBox(width: GSpace.s4),
-          // #240: with larger text the buttons go onto a second line.
-          Flexible(
-            child: Wrap(
-              alignment: WrapAlignment.end,
-              spacing: GSpace.s2,
-              runSpacing: GSpace.s2,
-              children: [
-                if (installed) SettingsButton(label: tr('Open'), icon: Icons.open_in_new, onActivate: () => _open(e)),
-                SettingsButton(
-                  label: tr('Import from folder'),
-                  icon: Icons.folder_open_outlined,
-                  onActivate: () => _import(e),
-                ),
-                if (e.downloadOff == null)
-                  SettingsButton(
-                    label: installed ? tr('Update') : tr('Download'),
-                    icon: installed ? Icons.update : Icons.download_outlined,
-                    kind: installed ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
-                    onActivate: () => _download(e),
-                  ),
-                if (installed)
-                  SettingsButton(label: tr('Remove'), icon: Icons.delete_outline, onActivate: () => _remove(e)),
-              ],
-            ),
-          ),
-        ],
-      ],
+          ],
+        );
+      },
     );
   }
 

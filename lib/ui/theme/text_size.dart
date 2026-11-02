@@ -20,19 +20,16 @@ class TextSize {
 
 /// The text size in percent; 100 without preferences (a test's frame).
 final textSizeProvider = Provider<int>((ref) {
-  try {
-    return TextSize.of(ref.watch(appPreferencesProvider));
-  } on Object catch (e) {
-    if ('$e'.contains('overridden in main')) return TextSize.fallback;
-    rethrow;
-  }
+  final prefs = watchAppPreferencesOrNull(ref);
+  return prefs == null ? TextSize.fallback : TextSize.of(prefs);
 });
 
 /// [height] of text as tall as the text size makes it: for a box sized
 /// around its text, so it grows with it instead of clipping.
 double scaledText(BuildContext context, double height) => MediaQuery.textScalerOf(context).scale(height);
 
-/// [child] with every text at [percent] of its size.
+/// [child] with every text at [percent] of its size, on top of Windows'
+/// own text size (Accessibility → Text size).
 class ScaledText extends StatelessWidget {
   const ScaledText({super.key, required this.percent, required this.child});
 
@@ -43,7 +40,8 @@ class ScaledText extends StatelessWidget {
   Widget build(BuildContext context) {
     if (percent == 100) return child;
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(percent / 100)),
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: TextScaler.linear(MediaQuery.textScalerOf(context).scale(1) * percent / 100)),
       child: child,
     );
   }

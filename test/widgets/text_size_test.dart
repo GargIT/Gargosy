@@ -23,6 +23,27 @@ void main() {
     expect(seen.scale(10), 10);
   });
 
+  testWidgets('ScaledText goes on top of Windows' own text size, never under it', (tester) async {
+    late TextScaler seen;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.25)),
+          child: ScaledText(
+            percent: 150,
+            child: Builder(
+              builder: (context) {
+                seen = MediaQuery.textScalerOf(context);
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(seen.scale(10), closeTo(18.75, 0.001));
+  });
+
   for (final scale in [1.0, 1.25, 1.5]) {
     testWidgets('at ${(scale * 100).round()} % a shelf of game cards fits its text at 1280 × 720', (tester) async {
       tester.view.physicalSize = const Size(1280, 720);
