@@ -356,19 +356,19 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Make room (#227)
 
-132. [ ] On a nearly full drive (or a game bigger than what's free), Download: "Make room?" lists the games on this PC, the ones not played for longest first, with sizes and last plays; enough of them are ticked to fit. A tick toggles with A; with too little ticked, Delete and download is greyed and says why. While a game runs it refuses. Confirm: they're deleted and the download starts. Cancel deletes nothing. A game whose save is waiting to upload says so and isn't ticked.
+132. [x] On a nearly full drive (or a game bigger than what's free), Download: "Make room?" lists the games on this PC, the ones not played for longest first, with sizes and last plays; enough of them are ticked to fit. A tick toggles with A; with too little ticked, Delete and download is greyed and says why. While a game runs it refuses. Confirm: they're deleted and the download starts. Cancel deletes nothing. A game whose save is waiting to upload says so and isn't ticked.
 
 ## Download speed limit and schedule (#228)
 
-133. [ ] Settings → Storage → Downloads → Speed limit 2 MB/s: a large download's speed in Downloads stays near 2 MB/s; No limit again: it speeds up from the next download. Only download → a window that is closed now: queued games say "waits until …" and nothing starts; A on one downloads it now, the rest wait. Any time: the queue goes on at once.
+133. [x] Settings → Storage → Downloads → Speed limit 2 MB/s: a large download's speed in Downloads stays near 2 MB/s; No limit again: it speeds up from the next download. Only download → a window that is closed now: queued games say "waits until …" and nothing starts; A on one downloads it now, the rest wait. Any time: the queue goes on at once.
 
 ## Continue from another PC (#229)
 
-134. [ ] Play a game with a save on PC A and quit (it syncs). On PC B with the same profile's RomM user, open Gargosy: Home's header says "CONTINUE WHERE YOU LEFT OFF ON <PC A's name>" for that game, Play focused. Play it on B: back on Home, it says LAST PLAYED again.
+134. [x] Play a game with a save on PC A and quit (it syncs). On PC B with the same profile's RomM user, open Gargosy: Home's header says "CONTINUE WHERE YOU LEFT OFF ON <PC A's name>" for that game, Play focused. Play it on B: back on Home, it says LAST PLAYED again.
 
 ## Multi-disc games without an .m3u (#230)
 
-135. [ ] A PS1 game of two discs in one folder without an `.m3u` (for example "Game (Disc 1).chd", "Game (Disc 2).chd"): Play in RetroArch starts disc 1, and RetroArch's Disc Control lists both discs. The same in DuckStation (its Change Disc lists both). A save made there syncs as before, and Resume of a state made on disc 2 comes back on disc 2. No `.m3u` appears in `roms\`.
+135. [x] A PS1 game of two discs in one folder without an `.m3u` (for example "Game (Disc 1).chd", "Game (Disc 2).chd"): Play in RetroArch starts disc 1, and RetroArch's Disc Control lists both discs. The same in DuckStation (its Change Disc lists both). A save made there syncs as before, and Resume of a state made on disc 2 comes back on disc 2. No `.m3u` appears in `roms\`.
 
 ## Report a bug with the log (#231)
 
@@ -400,7 +400,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Stats (#236)
 
 148. [x] Start → Stats (under PROFILE): the tiles show this week, this month, all time, the longest session and days in a row; Games finished matches RomM's games marked Finished or Completed 100%; achievements this month matches RomM's RetroAchievements page. With a controller alone the D-pad walks Most played and A opens a game's page; B goes back.
-149. [ ] A game played on another PC with the same RomM user counts here (its time and platform). With RomM stopped, Stats says it's this PC's play only and the RomM tiles show a dash.
+149. [x] A game played on another PC with the same RomM user counts here (its time and platform). With RomM stopped, Stats says it's this PC's play only and the RomM tiles show a dash.
 
 ## Major package upgrades (#261)
 
