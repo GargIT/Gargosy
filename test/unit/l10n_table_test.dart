@@ -36,6 +36,15 @@ void main() {
     );
   });
 
+  test('a text put together with others keeps its spaces, though the editor stripped them', () {
+    const parts = [' on this PC, in ', 'Play'];
+    final got = parseTranslations('1\t auf diesem PC, in\n2\tSpielen', parts);
+    expect(got[1], ' auf diesem PC, in ');
+    expect(got[2], 'Spielen');
+    expect(sameEdges(' a ', ' b '), isTrue);
+    expect(sameEdges(' a ', ' b'), isFalse);
+  });
+
   test('a byte order mark from a Windows editor is no problem', () {
     final text = '﻿${translated(exportLines(keys), ['a', 'b {0}', 'c', 'd'])}';
     expect(parseTranslations(text, keys)[1], 'a');

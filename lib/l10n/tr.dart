@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
 import 'de.dart';
+import 'nl.dart';
 import 'sv.dart';
 
 import 'package:intl/number_symbols_data.dart' show numberFormatSymbols;
@@ -18,7 +19,8 @@ enum AppLanguage {
   system('System (Windows\' language)', locale: 'en_US'),
   en('English', locale: 'en_US'),
   sv('Svenska', locale: 'sv_SE', table: svText),
-  de('Deutsch', locale: 'de_DE', table: deText);
+  de('Deutsch', locale: 'de_DE', table: deText),
+  nl('Nederlands', locale: 'nl_NL', table: nlText);
 
   const AppLanguage(this._label, {required this.locale, this.table});
   final String _label;

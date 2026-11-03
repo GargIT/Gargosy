@@ -35,6 +35,7 @@ class OnScreenKeyboard extends StatefulWidget {
 List<List<String>> keyboardRowsFor(AppLanguage language) {
   final (top, left, right) = switch (language) {
     AppLanguage.de => ('ü', 'ö', 'ä'),
+    AppLanguage.nl => ('é', 'ë', 'ï'),
     _ => ('å', 'ö', 'ä'),
   };
   return [

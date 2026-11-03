@@ -7,7 +7,7 @@ const deText = <String, String>{
       ' Gargosy wurde in RomM für {0} freigegeben; du kannst dieses Gerät dort entfernen.',
   ' One isn\'t in this profile\'s library: another profile may have downloaded it, and loses it too.': ' Eines ist nicht in der Bibliothek dieses Profils: ein anderes Profil hat es vielleicht heruntergeladen und verliert es ebenfalls.',
   ' on this PC': ' auf diesem PC',
-  ' on this PC, in ': ' auf diesem PC, in',
+  ' on this PC, in ': ' auf diesem PC, in ',
   ' {0} aren\'t in this profile\'s library: another profile may have downloaded them, and loses them too.': ' {0} sind nicht in der Bibliothek dieses Profils: ein anderes Profil hat sie vielleicht heruntergeladen und verliert sie ebenfalls.',
   '(top)': '(oben)',
   '1 achievement earned': '1 Erfolg freigeschaltet',
@@ -391,7 +391,7 @@ const deText = <String, String>{
   'Missable': 'Verpassbar',
   'Missing': 'Fehlt',
   'More': 'Mehr',
-  'Move': 'Bewegen',
+  'Move': 'Verschieben',
   'Moving, A, B, LB/RB, errors and a finished download. Never while a game runs.':
       'Bewegen, A, B, LB/RB, Fehler und ein fertiger Download. Nie während ein Spiel läuft.',
   'My rating': 'Meine Bewertung',

@@ -34,7 +34,7 @@ void main() {
   ];
 
   test('there are languages besides English', () {
-    expect(languages.map((l) => l.name), containsAll(['sv', 'de']));
+    expect(languages.map((l) => l.name), containsAll(['sv', 'de', 'nl']));
   });
 
   for (final l in languages) {
@@ -58,6 +58,14 @@ void main() {
 
     // Not every text is a tr('…') literal (an enum's label goes through a
     // field), so a removed text is found by the Swedish table, edited by hand.
+    test('each ${l.name} text starts and ends with the spaces its English has', () {
+      final table = l.table!;
+      expect([
+        for (final k in table.keys)
+          if (!sameEdges(k, table[k]!)) k,
+      ], isEmpty);
+    });
+
     test('${l.name} has the same texts as the Swedish table, no more', () {
       expect(l.table!.keys.toSet().difference(svText.keys.toSet()), isEmpty);
     });
@@ -66,6 +74,9 @@ void main() {
   test('a language shows its own text, dates and decimal comma', () async {
     await showLanguage(AppLanguage.de);
     expect(tr('Who sees {0}?', ['Couch']), 'Wer sieht Couch?');
+    expect(decimal(9.5, 1), '9,5');
+    await showLanguage(AppLanguage.nl);
+    expect(tr('Who sees {0}?', ['Couch']), 'Wie ziet Couch?');
     expect(decimal(9.5, 1), '9,5');
   });
 
@@ -88,6 +99,7 @@ void main() {
   test("System is Windows' language when Gargosy has it, else English; the pref is app-wide", () {
     expect(AppLanguage.system.resolve('sv'), AppLanguage.sv);
     expect(AppLanguage.system.resolve('de'), AppLanguage.de);
+    expect(AppLanguage.system.resolve('nl'), AppLanguage.nl);
     expect(AppLanguage.system.resolve('ja'), AppLanguage.en);
     expect(AppLanguage.en.resolve('sv'), AppLanguage.en);
     final prefs = MemoryPrefs();

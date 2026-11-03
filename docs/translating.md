@@ -1,7 +1,8 @@
 # Translating Gargosy
 
-Gargosy speaks English, Swedish and German, and more languages come the same way. A
-correction or a new language is welcome as a pull request.
+Gargosy's languages are listed in Settings → Display → Language (`AppLanguage` in
+`lib/l10n/tr.dart`), and more come the same way. A correction or a new language is welcome as a
+pull request.
 
 ## How the text works
 
