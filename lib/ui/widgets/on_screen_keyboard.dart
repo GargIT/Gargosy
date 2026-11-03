@@ -36,6 +36,7 @@ List<List<String>> keyboardRowsFor(AppLanguage language) {
   final (top, left, right) = switch (language) {
     AppLanguage.de => ('ü', 'ö', 'ä'),
     AppLanguage.nl => ('é', 'ë', 'ï'),
+    AppLanguage.nb => ('å', 'ø', 'æ'),
     _ => ('å', 'ö', 'ä'),
   };
   return [

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
 import 'de.dart';
+import 'nb.dart';
 import 'nl.dart';
 import 'sv.dart';
 
@@ -20,9 +21,10 @@ enum AppLanguage {
   en('English', locale: 'en_US'),
   sv('Svenska', locale: 'sv_SE', table: svText),
   de('Deutsch', locale: 'de_DE', table: deText),
-  nl('Nederlands', locale: 'nl_NL', table: nlText);
+  nl('Nederlands', locale: 'nl_NL', table: nlText),
+  nb('Norsk bokmål', locale: 'nb_NO', table: nbText, codes: ['no', 'nn']);
 
-  const AppLanguage(this._label, {required this.locale, this.table});
+  const AppLanguage(this._label, {required this.locale, this.table, this.codes = const []});
   final String _label;
 
   /// Dates and numbers in this language (`intl`'s locale).
@@ -30,6 +32,9 @@ enum AppLanguage {
 
   /// Its text by the English (#191, #239); null for English itself.
   final Map<String, String>? table;
+
+  /// Windows' language codes that mean this one besides its [name].
+  final List<String> codes;
 
   /// The name in the menu: a language's own name, System in the shown one.
   String get label => this == system ? tr(_label) : _label;
@@ -43,7 +48,8 @@ enum AppLanguage {
   /// The language shown: System is Windows' when Gargosy has it, else English.
   AppLanguage resolve(String systemLanguageCode) {
     if (this != system) return this;
-    return AppLanguage.values.where((l) => l != system && l.name == systemLanguageCode).firstOrNull ?? en;
+    bool means(AppLanguage l) => l.name == systemLanguageCode || l.codes.contains(systemLanguageCode);
+    return AppLanguage.values.where((l) => l != system && means(l)).firstOrNull ?? en;
   }
 }
 
