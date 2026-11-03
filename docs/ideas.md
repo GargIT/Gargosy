@@ -32,7 +32,7 @@ Already on the list elsewhere: Linux (`docs/linux-support.md`), RetroArch Cloud 
 
 - **Sounds** (#237). Short navigation, open and back sounds (RomM v2 has none, so they'd be Gargosy's own), with a volume setting and off by default. **S**
 - **Video previews** (#238). Where RomM has a game's video (ScreenScraper's), play it muted behind the game page's art after a second, and in the screensaver. **M**
-- **More languages** (#239). The `tr()` setup takes another language as one file beside `sv.dart`; German, Norwegian, Danish and Finnish are close at hand. A test already fails on a missing text. **S each**
+- **More languages** (#239). Done in 0.9.0: German, Dutch, Norwegian, Danish and Finnish beside Swedish, each one file made with `tool/l10n.dart` (`docs/translating.md`). Another language is the same again. **S each**
 - **Bigger text** (#240). A text size setting (100 %, 125 %, 150 %) for a TV across the room. Every screen has to be checked at 150 %. **M**
 - **Notifications** (#241). A small toast when another player shares a save or state of a game this profile has, or a download finishes while a game runs. **S–M**
 

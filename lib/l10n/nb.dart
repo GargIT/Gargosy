@@ -63,7 +63,7 @@ const nbText = <String, String>{
   'Apply': 'Bruk',
   'As the emulator has it': 'Slik emulatoren har det',
   'Ascending': 'Stigende',
-  'A–Z': 'A–Å',
+  'A–Z': 'A–Z',
   'BIOS': 'BIOS',
   'BY PLATFORM': 'ETTER PLATTFORM',
   'Back': 'Tilbake',
@@ -891,7 +891,7 @@ const nbText = <String, String>{
   'Your {0} save on this PC changed since its last upload (played offline?). Playing {1}{2} from {3} replaces it.\n\nA backup of it is kept on this PC.': '{0}-lagringsfilen din på denne PC-en er endret siden siste opplasting (spilt offline?). Å spille {1}{2} fra {3} erstatter den.\n\nEn sikkerhetskopi av den beholdes på denne PC-en.',
   'Yours': 'Dine',
   'Zoom': 'Zoom',
-  'Z–A': 'Å–A',
+  'Z–A': 'Z–A',
   '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
       '\n\n{0} nådd RomM ennå ({1}) og {2} tapt med profilen.',
   'and {0} more from your library': 'og {0} til fra biblioteket ditt',
