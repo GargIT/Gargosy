@@ -29,8 +29,9 @@ they are (`\'`).
 3. Build the table: `dart --packages=.dart_tool/package_config.json tool/l10n.dart build <code> <English name of the language> <your file>`, from the Gargosy folder (`<code>`: the language as Windows names it, two or three small letters).
    It writes and formats `lib/l10n/<code>.dart`, and refuses a missing line, a number twice, a lost
    placeholder, or a file exported before Gargosy's texts changed (export again then).
-4. Add the language to `AppLanguage` in `lib/l10n/tr.dart` (its own name, its `intl` locale and the
-   table), and the letters it needs to `keyboardRowsFor` in `lib/ui/widgets/on_screen_keyboard.dart`.
+4. Add the language to `AppLanguage` in `lib/l10n/tr.dart`: its own name, its `intl` locale, the
+   table, any other code Windows uses for it (`codes`), and the on-screen keyboard's letters beyond
+   a–z (`letters`, `extraLetter`).
 5. Check that nothing is cut off at 1280 × 720:
    `flutter test test/widgets --dart-define=GARGOSY_LANG=<code>` (and with
    `--dart-define=GARGOSY_TEXT_150=1` for the largest text size). A "RenderFlex overflowed" names

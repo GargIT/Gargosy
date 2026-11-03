@@ -20,11 +20,19 @@ enum AppLanguage {
   system('System (Windows\' language)', locale: 'en_US'),
   en('English', locale: 'en_US'),
   sv('Svenska', locale: 'sv_SE', table: svText),
-  de('Deutsch', locale: 'de_DE', table: deText),
-  nl('Nederlands', locale: 'nl_NL', table: nlText),
-  nb('Norsk bokmål', locale: 'nb_NO', table: nbText, codes: ['no', 'nn']);
+  de('Deutsch', locale: 'de_DE', table: deText, letters: ('ü', 'ö', 'ä'), extraLetter: 'ß'),
+  nl('Nederlands', locale: 'nl_NL', table: nlText, letters: ('é', 'ë', 'ï')),
+  // Windows says nb, no, or nn for Nynorsk, which gets bokmål.
+  nb('Norsk bokmål', locale: 'nb_NO', table: nbText, codes: ['no', 'nn'], letters: ('å', 'ø', 'æ'));
 
-  const AppLanguage(this._label, {required this.locale, this.table, this.codes = const []});
+  const AppLanguage(
+    this._label, {
+    required this.locale,
+    this.table,
+    this.codes = const [],
+    this.letters = ('å', 'ö', 'ä'),
+    this.extraLetter,
+  });
   final String _label;
 
   /// Dates and numbers in this language (`intl`'s locale).
@@ -35,6 +43,13 @@ enum AppLanguage {
 
   /// Windows' language codes that mean this one besides its [name].
   final List<String> codes;
+
+  /// The on-screen keyboard's three letter keys beyond a–z (after p, and
+  /// after l), where this language's own keyboard has them.
+  final (String, String, String) letters;
+
+  /// One more letter, at the end of the symbols (German ß).
+  final String? extraLetter;
 
   /// The name in the menu: a language's own name, System in the shown one.
   String get label => this == system ? tr(_label) : _label;

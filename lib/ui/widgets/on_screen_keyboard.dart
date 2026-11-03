@@ -33,18 +33,13 @@ class OnScreenKeyboard extends StatefulWidget {
 /// The keys, with the letters the shown language needs where its own
 /// keyboard has them (#191, #239).
 List<List<String>> keyboardRowsFor(AppLanguage language) {
-  final (top, left, right) = switch (language) {
-    AppLanguage.de => ('ü', 'ö', 'ä'),
-    AppLanguage.nl => ('é', 'ë', 'ï'),
-    AppLanguage.nb => ('å', 'ø', 'æ'),
-    _ => ('å', 'ö', 'ä'),
-  };
+  final (top, left, right) = language.letters;
   return [
     ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
     ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', top],
     ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', left, right],
     ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '-', '_', '@'],
-    ['/', ':', '!', '?', '#', '&', '=', '+', '%', '~', if (language == AppLanguage.de) 'ß'],
+    ['/', ':', '!', '?', '#', '&', '=', '+', '%', '~', ?language.extraLetter],
   ];
 }
 
