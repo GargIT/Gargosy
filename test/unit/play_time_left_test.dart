@@ -34,6 +34,21 @@ void main() {
       final playing = check.allowanceAt(hour, start, playingSince: start);
       expect(playing, isA<PlayAllowed>());
     });
+
+    test('a count that failed stays refused, not a full day', () {
+      final check = PlayCheck(PlayRefused('not counted', start), used: Duration.zero, at: start);
+      final a = check.allowanceAt(hour, start.add(const Duration(seconds: 15)));
+      expect(a, isA<PlayRefused>());
+      expect(playTimeLeftLabel(a, start.add(const Duration(seconds: 15))), 'Play time not counted');
+    });
+
+    test('the hours over while a game still runs: when play is back, not the last minute', () {
+      const limit = PlayLimit(window: DownloadWindow(15 * 60, 20 * 60));
+      final at = DateTime(2026, 11, 3, 19, 50);
+      final check = PlayCheck(const PlayAllowed(null), used: Duration.zero, at: at);
+      final a = check.allowanceAt(limit, DateTime(2026, 11, 3, 20, 0, 30), playingSince: at);
+      expect((a as PlayRefused).backAt, DateTime(2026, 11, 4, 15));
+    });
   });
 
   group('playTimeLeftLabel', () {

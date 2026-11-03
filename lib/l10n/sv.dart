@@ -66,6 +66,7 @@ const svText = <String, String>{
   'BIOS': 'BIOS',
   'BY PLATFORM': 'PER PLATTFORM',
   'Back': 'Tillbaka',
+  'Back at {0}': 'Tillbaka {0}',
   'Back to the default (15 %)': 'Tillbaka till standard (15 %)',
   'Back to the game': 'Tillbaka till spelet',
   'Back up now': 'Säkerhetskopiera nu',
@@ -519,6 +520,7 @@ const svText = <String, String>{
   'Play time changed.': 'Speltiden ändrad.',
   'Play time couldn\'t be counted: {0}': 'Speltiden kunde inte räknas: {0}',
   'Play time is up for now.': 'Speltiden är slut för nu.',
+  'Play time not counted': 'Speltiden kunde inte räknas',
   'Play {0} in': 'Spela {0} i',
   'Play {0}\'s save?': 'Spela {0}s sparfil?',
   'Played {0} · {1} {2}{3}': 'Spelat {0} · {1} {2}{3}',
@@ -1033,6 +1035,7 @@ const svText = <String, String>{
   '{0} isn\'t in the Gargosy folder.': '{0} finns inte i Gargosy-mappen.',
   '{0} keeps its saves in the game\'s folder, which holds only games. Set its save folder first.':
       '{0} sparar i spelets mapp, som bara innehåller spel. Välj dess sparmapp först.',
+  '{0} left': '{0} kvar',
   '{0} lists {1}, but the zip has no such file.': '{0} listar {1}, men zipen har ingen sådan fil.',
   '{0} min': '{0} min',
   '{0} min a day': '{0} min om dagen',
@@ -1050,9 +1053,6 @@ const svText = <String, String>{
   '{0} s left': '{0} s kvar',
   '{0} saves can\'t be used by {1}': '{0}-sparfiler kan inte användas av {1}',
   '{0} states': '{0} sparlägen',
-  '{0} left': '{0} kvar',
-  'Back at {0}': 'Tillbaka {0}',
-  'Play time not counted': 'Speltiden kunde inte räknas',
   '{0} tomorrow': '{0} i morgon',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} gjordes av {1} {2}; du har {3}. Det kanske inte laddas, eller så beter sig spelet konstigt.',

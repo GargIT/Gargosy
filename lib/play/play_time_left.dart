@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -59,7 +60,13 @@ class PlayTimeLeftNotifier extends StateNotifier<PlayAllowance?> {
     try {
       do {
         _again = false;
-        final check = await count();
+        final PlayCheck check;
+        try {
+          check = await count();
+        } on Object catch (e) {
+          debugPrint('[PlayLimit] time left not counted: $e');
+          return;
+        }
         if (!mounted) return;
         _check = check;
         _show();
@@ -108,8 +115,9 @@ final playTimeCounterProvider = Provider<Future<PlayCheck> Function()>(
       () => checkPlayTime(ref),
 );
 
-/// [PlayTimeLeftNotifier] for the open profile and its limit.
-final playTimeLeftProvider = StateNotifierProvider.autoDispose<PlayTimeLeftNotifier, PlayAllowance?>((ref) {
+/// [PlayTimeLeftNotifier] for the open profile and its limit; kept while
+/// they last, so a page that shows it again doesn't count again.
+final playTimeLeftProvider = StateNotifierProvider<PlayTimeLeftNotifier, PlayAllowance?>((ref) {
   ref.watch(activeProfileProvider.select((c) => c?.profile.id));
   final limit = ref.watch(playLimitProvider);
   final notifier = PlayTimeLeftNotifier(

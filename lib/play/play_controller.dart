@@ -368,6 +368,13 @@ class PlayController extends StateNotifier<PlayState> {
   /// [session]'s end is [_ended]; then what [watch] finds earned (#189),
   /// after the saves' message, never holding it up.
   void _running(Game game, PlaySession session, SessionAchievementsWatch? watch) {
+    // The emulator exited and its session is logged: no longer playing
+    // (the time left stops counting down), though the saves still sync.
+    session.played?.then((_) {
+      if (mounted && state.runningGameId == game.id && state.playingSince != null) {
+        state = PlayState(runningGameId: game.id);
+      }
+    });
     session.finished
         .then(
           (result) => _ended(game, result.message, synced: result.synced, saveProblem: result.saveProblem),
