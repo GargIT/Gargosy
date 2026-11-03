@@ -7,6 +7,7 @@ import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
 import 'da.dart';
 import 'de.dart';
+import 'fi.dart';
 import 'nb.dart';
 import 'nl.dart';
 import 'sv.dart';
@@ -25,7 +26,8 @@ enum AppLanguage {
   nl('Nederlands', locale: 'nl_NL', table: nlText, letters: ('é', 'ë', 'ï')),
   // Windows says nb, no, or nn for Nynorsk, which gets bokmål.
   nb('Norsk bokmål', locale: 'nb_NO', table: nbText, codes: ['no', 'nn'], letters: ('å', 'ø', 'æ')),
-  da('Dansk', locale: 'da_DK', table: daText, letters: ('å', 'æ', 'ø'));
+  da('Dansk', locale: 'da_DK', table: daText, letters: ('å', 'æ', 'ø')),
+  fi('Suomi', locale: 'fi_FI', table: fiText, letters: ('å', 'ö', 'ä'));
 
   const AppLanguage(
     this._label, {
