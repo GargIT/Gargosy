@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
-import 'de.dart';
 import 'da.dart';
+import 'de.dart';
 import 'nb.dart';
 import 'nl.dart';
 import 'sv.dart';
