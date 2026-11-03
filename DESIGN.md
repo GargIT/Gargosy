@@ -179,6 +179,7 @@ Mockups are linked from each issue.
 - German words: save **Spielstand**, state **Savestate**, collection
   **Sammlung**, profile **Profil**, achievement **Erfolg**, This PC
   **dieser PC**.
+- Dutch words: save **savebestand**, state **savestate**, collection **collectie**, profile **profiel**, achievement **prestatie**, This PC **deze pc**.
 - Swedish and German run longer than English: rows of buttons wrap
   rather than overflow, and a label that sits on a button stays short.
   `flutter test test/widgets --dart-define=GARGOSY_LANG=de` shows where

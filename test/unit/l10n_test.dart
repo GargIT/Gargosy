@@ -34,7 +34,7 @@ void main() {
   ];
 
   test('there are languages besides English', () {
-    expect(languages.map((l) => l.name), containsAll(['sv', 'de']));
+    expect(languages.map((l) => l.name), containsAll(['sv', 'de', 'nl']));
   });
 
   for (final l in languages) {
