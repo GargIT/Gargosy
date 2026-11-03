@@ -139,7 +139,8 @@ class GameVideos {
     }
     // Saved, and played at once; the trim runs beside it, and one that
     // can't finish doesn't undo the video (trimmed next time).
-    _trimming = trim(keep: target).catchError((Object _) {});
+    // One trim after another: two at once would each count what the other deletes.
+    _trimming = _trimming.then((_) => trim(keep: target)).catchError((Object _) {});
     return target;
   }
 
