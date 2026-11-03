@@ -67,6 +67,7 @@ const daText = <String, String>{
   'BIOS': 'BIOS',
   'BY PLATFORM': 'EFTER PLATFORM',
   'Back': 'Tilbage',
+  'Back at {0}': 'Tilbage {0}',
   'Back to the default (15 %)': 'Tilbage til standard (15 %)',
   'Back to the game': 'Tilbage til spillet',
   'Back up now': 'Sikkerhedskopiér nu',
@@ -524,6 +525,7 @@ const daText = <String, String>{
   'Play time changed.': 'Spilletid ændret.',
   'Play time couldn\'t be counted: {0}': 'Spilletiden kunne ikke tælles: {0}',
   'Play time is up for now.': 'Spilletiden er brugt op for nu.',
+  'Play time not counted': 'Spilletid ikke talt',
   'Play {0} in': 'Spil {0} i',
   'Play {0}\'s save?': 'Spil {0}s gemmefil?',
   'Played {0} · {1} {2}{3}': 'Spillet {0} · {1} {2}{3}',
@@ -1049,6 +1051,7 @@ const daText = <String, String>{
   '{0} isn\'t in the Gargosy folder.': '{0} er ikke i Gargosy-mappen.',
   '{0} keeps its saves in the game\'s folder, which holds only games. Set its save folder first.':
       '{0} gemmer sine gemmefiler i spillets mappe, som kun indeholder spil. Sæt dens gemmemappe først.',
+  '{0} left': '{0} tilbage',
   '{0} lists {1}, but the zip has no such file.': '{0} angiver {1}, men zip-filen har ingen sådan fil.',
   '{0} min': '{0} min',
   '{0} min a day': '{0} min om dagen',

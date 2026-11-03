@@ -66,6 +66,7 @@ const nlText = <String, String>{
   'BIOS': 'BIOS',
   'BY PLATFORM': 'PER PLATFORM',
   'Back': 'Terug',
+  'Back at {0}': 'Weer vanaf {0}',
   'Back to the default (15 %)': 'Terug naar de standaard (15 %)',
   'Back to the game': 'Terug naar het spel',
   'Back up now': 'Nu back-up maken',
@@ -525,6 +526,7 @@ const nlText = <String, String>{
   'Play time changed.': 'Speeltijd gewijzigd.',
   'Play time couldn\'t be counted: {0}': 'Speeltijd kon niet worden geteld: {0}',
   'Play time is up for now.': 'De speeltijd is voor nu op.',
+  'Play time not counted': 'Speeltijd niet geteld',
   'Play {0} in': '{0} spelen in',
   'Play {0}\'s save?': 'Het savebestand van {0} spelen?',
   'Played {0} · {1} {2}{3}': 'Gespeeld {0} · {1} {2}{3}',
@@ -1050,6 +1052,7 @@ const nlText = <String, String>{
   '{0} isn\'t in the Gargosy folder.': '{0} staat niet in de Gargosy-map.',
   '{0} keeps its saves in the game\'s folder, which holds only games. Set its save folder first.':
       '{0} bewaart zijn savebestanden in de map van het spel, die alleen spellen bevat. Stel eerst de savemap in.',
+  '{0} left': 'Nog {0}',
   '{0} lists {1}, but the zip has no such file.': '{0} vermeldt {1}, maar de zip heeft zo\'n bestand niet.',
   '{0} min': '{0} min',
   '{0} min a day': '{0} min per dag',

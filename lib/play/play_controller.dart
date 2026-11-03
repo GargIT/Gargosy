@@ -24,10 +24,13 @@ import '../l10n/tr.dart';
 import 'session_achievements.dart';
 
 class PlayState {
-  const PlayState({this.runningGameId, this.message, this.preparing, this.saveProblem = false});
+  const PlayState({this.runningGameId, this.message, this.preparing, this.saveProblem = false, this.playingSince});
 
   /// The game being played right now (one at a time, spec §6).
   final String? runningGameId;
+
+  /// When the running game's emulator started; null before and after.
+  final DateTime? playingSince;
 
   /// What the last session said when it ended.
   final String? message;
@@ -332,6 +335,7 @@ class PlayController extends StateNotifier<PlayState> {
     _limit = null;
     _closedByLimit = false;
     final clock = _ref.read(playClockProvider);
+    state = PlayState(runningGameId: game.id, playingSince: clock());
     if (time != null && _ref.read(playLimitProvider).isOn) {
       debugPrint(
         '[PlayLimit] ${game.displayName} may play until ${time.untilAt(_ref.read(playLimitProvider), clock())}',
@@ -364,6 +368,13 @@ class PlayController extends StateNotifier<PlayState> {
   /// [session]'s end is [_ended]; then what [watch] finds earned (#189),
   /// after the saves' message, never holding it up.
   void _running(Game game, PlaySession session, SessionAchievementsWatch? watch) {
+    // The emulator exited and its session is logged: no longer playing
+    // (the time left stops counting down), though the saves still sync.
+    session.played?.then((_) {
+      if (mounted && state.runningGameId == game.id && state.playingSince != null) {
+        state = PlayState(runningGameId: game.id);
+      }
+    });
     session.finished
         .then(
           (result) => _ended(game, result.message, synced: result.synced, saveProblem: result.saveProblem),

@@ -117,6 +117,12 @@ DateTime windowClosesAt(DownloadWindow w, DateTime now) {
   return today.isAfter(now) ? today : _at(_nextDay(now), w.to);
 }
 
+/// [t] as the clock shows it, seen at [now]: `15:00`, or `15:00 tomorrow`.
+String playClockLabel(DateTime t, DateTime now) {
+  final hm = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  return startOfDay(t) == startOfDay(now) ? hm : tr('{0} tomorrow', [hm]);
+}
+
 /// Less than this left counts as used up: a start that could only run for
 /// seconds would never be logged (sessions under 5 s aren't), so the time
 /// would never run out.
@@ -126,10 +132,7 @@ const _leastLeft = Duration(minutes: 1);
 /// in this play day ([playDayStart]), and until when.
 PlayAllowance allowanceFor(PlayLimit limit, Duration used, DateTime now) {
   if (!limit.isOn) return const PlayAllowed(null);
-  String at(DateTime t) {
-    final hm = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-    return startOfDay(t) == startOfDay(now) ? hm : tr('{0} tomorrow', [hm]);
-  }
+  String at(DateTime t) => playClockLabel(t, now);
 
   final window = limit.window;
   if (window != null && !window.allows(now)) {
