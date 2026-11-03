@@ -76,14 +76,16 @@ class PlayCheck {
 
   /// What [limit] allows at [now], counted from this check, with the time
   /// a game running since [playingSince] has played (a running session
-  /// isn't in [used]: it's logged when it ends). While one runs, under a
-  /// minute left is still time left: the limit's timer ends it.
+  /// isn't in [used]: it's logged when it ends). While one runs, minutes
+  /// used up inside the hours are still the last minute: the limit's timer
+  /// ends it. A check that couldn't count stays refused, as it was.
   PlayAllowance allowanceAt(PlayLimit limit, DateTime now, {DateTime? playingSince}) {
+    if (allowance case PlayRefused(:final backAt) when !backAt.isAfter(at)) return allowance;
     var played = used;
     if (playingSince != null && now.isAfter(playingSince)) played += now.difference(playingSince);
-    final allowance = allowanceFor(limit, played, now);
-    if (playingSince != null && allowance is PlayRefused) return PlayAllowed(now);
-    return allowance;
+    final allowed = allowanceFor(limit, played, now);
+    if (playingSince != null && allowed is PlayRefused && (limit.window?.allows(now) ?? true)) return PlayAllowed(now);
+    return allowed;
   }
 
   /// When a game started at [at] has to end at [now] under [limit] (it

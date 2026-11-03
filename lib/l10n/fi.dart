@@ -68,6 +68,7 @@ const fiText = <String, String>{
   'BIOS': 'BIOS',
   'BY PLATFORM': 'ALUSTOITTAIN',
   'Back': 'Takaisin',
+  'Back at {0}': 'Taas klo {0}',
   'Back to the default (15 %)': 'Takaisin oletukseen (15 %)',
   'Back to the game': 'Takaisin peliin',
   'Back up now': 'Varmuuskopioi nyt',
@@ -527,6 +528,7 @@ const fiText = <String, String>{
   'Play time changed.': 'Peliaika muutettu.',
   'Play time couldn\'t be counted: {0}': 'Peliaikaa ei voitu laskea: {0}',
   'Play time is up for now.': 'Peliaika on toistaiseksi käytetty.',
+  'Play time not counted': 'Peliaikaa ei laskettu',
   'Play {0} in': 'Pelaa {0} emulaattorilla',
   'Play {0}\'s save?': 'Pelataanko tallennus: {0}?',
   'Played {0} · {1} {2}{3}': 'Pelattu {0} · {1} {2}{3}',
@@ -1049,6 +1051,7 @@ const fiText = <String, String>{
   '{0} isn\'t in the Gargosy folder.': '{0} ei ole Gargosy-kansiossa.',
   '{0} keeps its saves in the game\'s folder, which holds only games. Set its save folder first.':
       '{0} pitää tallennuksensa pelin kansiossa, jossa on vain pelejä. Aseta sen tallennuskansio ensin.',
+  '{0} left': '{0} jäljellä',
   '{0} lists {1}, but the zip has no such file.':
       '{0} luettelee kohteen {1}, mutta zip-tiedostossa ei ole sellaista tiedostoa.',
   '{0} min': '{0} min',
@@ -1069,9 +1072,6 @@ const fiText = <String, String>{
   '{0} shared a save of {1}.': '{0} jakoi tallennuksen pelistä {1}.',
   '{0} shared a save state of {1}.': '{0} jakoi tilatallennuksen pelistä {1}.',
   '{0} states': '{0} tilatallennusta',
-  '{0} left': '{0} jäljellä',
-  'Back at {0}': 'Taas klo {0}',
-  'Play time not counted': 'Peliaikaa ei laskettu',
   '{0} tomorrow': '{0} huomenna',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} on tehty versiolla {1} {2}; sinulla on {3}. Se ei ehkä lataudu, tai peli voi toimia oudosti.',

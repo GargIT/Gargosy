@@ -61,6 +61,7 @@ class FakeEngine implements PlayEngine {
   bool downloaded = true;
   final steps = <String>[];
   Completer<PlayResult>? running;
+  Completer<void>? played;
   PlayMenu? menu;
   PlayRequest? request;
   String? launchedIn;
@@ -310,7 +311,7 @@ class FakeEngine implements PlayEngine {
     }
     // As the copied launch does: it returns once the emulator has exited.
     if (returnsAfterExit) await running!.future;
-    return PlaySession(running!.future);
+    return PlaySession(running!.future, played: played?.future);
   }
 
   /// The emulator opened on its own, and how to close it.
@@ -337,6 +338,25 @@ void main() {
     c = ProviderContainer(retry: noRetry, overrides: [playEngineProvider.overrideWithValue(engine)]);
   });
   tearDown(() => c.dispose());
+
+  test('playing since the emulator started, until its session is logged; the sync after still runs', () async {
+    engine.closable = true;
+    engine.played = Completer<void>();
+    final c = ProviderContainer(
+      retry: noRetry,
+      overrides: [playEngineProvider.overrideWithValue(engine), quitButtonsProvider.overrideWithValue(null)],
+    );
+    addTearDown(c.dispose);
+    expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), isNull);
+    expect(c.read(playControllerProvider).playingSince, isNotNull);
+    engine.played!.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(playControllerProvider).playingSince, isNull);
+    expect(c.read(playControllerProvider).runningGameId, '1');
+    engine.running!.complete(const PlayResult('Save synced'));
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(playControllerProvider).runningGameId, isNull);
+  });
 
   test('pulls the save, then launches; while it runs the game is marked running', () async {
     expect(await c.read(playControllerProvider.notifier).play(game(1, 'G')), isNull);

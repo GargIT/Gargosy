@@ -61,8 +61,12 @@ class PlayResult {
 
 /// A running game; [finished] completes once it exits and its saves synced.
 class PlaySession {
-  const PlaySession(this.finished);
+  const PlaySession(this.finished, {this.played});
   final Future<PlayResult> finished;
+
+  /// Done once the emulator has exited and the session is in the profile's
+  /// play time log (#235), before the saves sync; null: told by [finished].
+  final Future<void>? played;
 }
 
 /// Asks the running emulator to close, as its window's close button does
@@ -653,11 +657,13 @@ class GargosyPlayEngine implements PlayEngine {
       dirs?.onGameStarted = null;
     }
     final started = session.sessionStart;
-    unawaited(
-      session.process?.exitCode.then((_) async {
-        await _played(game, started, DateTime.now());
-      }),
-    );
+    final logged = Completer<void>();
+    final process = session.process;
+    if (process == null) {
+      logged.complete();
+    } else {
+      unawaited(process.exitCode.then((_) => _played(game, started, DateTime.now(), logged)));
+    }
     final finished = service
         .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
         .then(_describe)
@@ -682,23 +688,33 @@ class GargosyPlayEngine implements PlayEngine {
             }
           }
         });
-    return PlaySession(finished);
+    return PlaySession(finished, played: logged.future);
   }
 
-  /// A session of [game] ended (#146): kept in the profile's log, then
-  /// sent to RomM with any it didn't take before. Shorter than a few
-  /// seconds (it didn't start) isn't kept.
-  Future<void> _played(Game game, DateTime start, DateTime end) async {
-    if (end.difference(start) < const Duration(seconds: 5)) return;
-    final log = _ref.read(playTimeLogProvider);
-    if (log == null) return;
+  /// A session of [game] ended (#146): kept in the profile's log
+  /// ([logged] then done), then sent to RomM with any it didn't take
+  /// before. Shorter than a few seconds (it didn't start) isn't kept.
+  Future<void> _played(Game game, DateTime start, DateTime end, Completer<void> logged) async {
     try {
-      await log.add(PlaySessionRecord(gameId: game.id, start: start, end: end));
-      if (_ref.read(playSessionsApiProvider) case final api?) await log.sendUnsent(api);
-    } on Object catch (e) {
-      debugPrint('[PlayTime] not kept: $e');
+      if (end.difference(start) < const Duration(seconds: 5)) return;
+      final log = _ref.read(playTimeLogProvider);
+      if (log == null) return;
+      try {
+        await log.add(PlaySessionRecord(gameId: game.id, start: start, end: end));
+      } on Object catch (e) {
+        debugPrint('[PlayTime] not kept: $e');
+        return;
+      }
+      if (!logged.isCompleted) logged.complete();
+      try {
+        if (_ref.read(playSessionsApiProvider) case final api?) await log.sendUnsent(api);
+      } on Object catch (e) {
+        debugPrint('[PlayTime] not sent: $e');
+      }
+      _ref.invalidate(playTimeProvider(game.id));
+    } finally {
+      if (!logged.isCompleted) logged.complete();
     }
-    _ref.invalidate(playTimeProvider(game.id));
   }
 
   /// The screenshots taken in [game]'s session (#233), in the profile's

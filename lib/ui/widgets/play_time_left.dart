@@ -22,11 +22,14 @@ String? playTimeLeftLabel(PlayAllowance? allowance, DateTime now) => switch (all
 /// last minutes, red once it's used up or outside the hours. Not focusable:
 /// it only tells.
 class PlayTimeLeftChip extends ConsumerWidget {
-  const PlayTimeLeftChip({super.key, this.gap = 0, this.top = 0});
+  const PlayTimeLeftChip({super.key, this.gap = 0, this.top = 0, this.maxWidth = 260});
 
   /// Space after it (the top bar) and above it (the play screen), only when shown.
   final double gap;
   final double top;
+
+  /// At most this wide: a long translation is cut, not pushed out of the bar.
+  final double maxWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,6 +46,7 @@ class PlayTimeLeftChip extends ConsumerWidget {
       padding: EdgeInsets.only(right: gap, top: top),
       child: Container(
         key: const ValueKey('play-time-left'),
+        constraints: BoxConstraints(maxWidth: maxWidth),
         padding: const EdgeInsets.symmetric(horizontal: GSpace.s3, vertical: GSpace.s1),
         decoration: BoxDecoration(
           color: GColors.surface,
