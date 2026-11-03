@@ -35,6 +35,19 @@ What changed in each release of Gargosy. The format follows
   Moving with the controller, A, B, LB/RB, an error and a finished
   download each have a short sound of Gargosy's own. Never while a game
   runs.
+
+### Changed
+
+- Messages and notifications pop up at the lower right, raised with a
+  coloured edge and an icon (red for an error), easier to see on a TV.
+
+## [0.8.0] - 2026-11-03
+
+Manuals and screenshots with RomM, settings per game, play time limits
+per profile with the time left shown, and a stats page.
+
+### Added
+
 - Stats in the user menu: time played this week, this month and in all,
   the longest session, days in a row, games finished and achievements
   this month, the most played games and time by platform, across every
@@ -60,11 +73,6 @@ What changed in each release of Gargosy. The format follows
   page. It opens a page at a time; LB/RB turn the page, A zooms, the
   D-pad moves a zoomed page. The manual is kept on this PC once opened, so
   it opens offline too.
-
-### Changed
-
-- Messages and notifications pop up at the lower right, raised with a
-  coloured edge and an icon (red for an error), easier to see on a TV.
 
 ## [0.7.0] - 2026-11-02
 
@@ -637,7 +645,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.8.0
 [0.7.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.7.0
 [0.6.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.5.0
