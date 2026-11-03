@@ -34,7 +34,7 @@ void main() {
   ];
 
   test('there are languages besides English', () {
-    expect(languages.map((l) => l.name), containsAll(['sv', 'de', 'nl']));
+    expect(languages.map((l) => l.name), containsAll(['sv', 'de', 'nl', 'nb']));
   });
 
   for (final l in languages) {
@@ -78,6 +78,9 @@ void main() {
     await showLanguage(AppLanguage.nl);
     expect(tr('Who sees {0}?', ['Couch']), 'Wie ziet Couch?');
     expect(decimal(9.5, 1), '9,5');
+    await showLanguage(AppLanguage.nb);
+    expect(tr('Who sees {0}?', ['Couch']), 'Hvem ser Couch?');
+    expect(decimal(9.5, 1), '9,5', reason: 'intl knows nb, not nb_NO');
   });
 
   test('English is the text itself; Swedish from the table; unknown text stays English', () async {
@@ -100,6 +103,9 @@ void main() {
     expect(AppLanguage.system.resolve('sv'), AppLanguage.sv);
     expect(AppLanguage.system.resolve('de'), AppLanguage.de);
     expect(AppLanguage.system.resolve('nl'), AppLanguage.nl);
+    expect(AppLanguage.system.resolve('nb'), AppLanguage.nb);
+    expect(AppLanguage.system.resolve('no'), AppLanguage.nb, reason: 'Windows may say no or nn');
+    expect(AppLanguage.system.resolve('nn'), AppLanguage.nb);
     expect(AppLanguage.system.resolve('ja'), AppLanguage.en);
     expect(AppLanguage.en.resolve('sv'), AppLanguage.en);
     final prefs = MemoryPrefs();

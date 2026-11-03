@@ -429,3 +429,5 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 157. [ ] Settings → Display → Language → Deutsch: every screen is German at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as German. The on-screen keyboard (a search with the controller) has ü, ö, ä and ß. System on a German Windows picks Deutsch; English and Svenska as before.
 
 158. [ ] Settings → Display → Language → Nederlands: every screen is Dutch at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Dutch. The on-screen keyboard has é, ë and ï. System on a Dutch Windows picks Nederlands.
+
+159. [ ] Settings → Display → Language → Norsk bokmål: every screen is Norwegian at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Norwegian. The on-screen keyboard has å, ø and æ. System on a Norwegian Windows picks Norsk bokmål, a Nynorsk one too.
