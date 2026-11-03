@@ -6,6 +6,11 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-03
+
+Manuals and screenshots with RomM, settings per game, play time limits
+per profile with the time left shown, and a stats page.
+
 ### Added
 
 - Stats in the user menu: time played this week, this month and in all,
@@ -605,7 +610,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.8.0
 [0.7.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.7.0
 [0.6.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.5.0
