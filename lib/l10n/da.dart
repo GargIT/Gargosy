@@ -841,6 +841,7 @@ const daText = <String, String>{
   'Username': 'Brugernavn',
   'VIRTUAL · {0}': 'VIRTUEL · {0}',
   'Version: {0}  ({1})': 'Version: {0}  ({1})',
+  'Video cache': 'Videocache',
   'Video previews': 'Videoeksempler',
   'Virtual': 'Virtuel',
   'Virtual collections': 'Virtuelle samlinger',

@@ -841,6 +841,7 @@ const svText = <String, String>{
   'Username': 'Användarnamn',
   'VIRTUAL · {0}': 'VIRTUELLA · {0}',
   'Version: {0}  ({1})': 'Version: {0}  ({1})',
+  'Video cache': 'Videocache',
   'Video previews': 'Videoförhandsvisningar',
   'Virtual': 'Virtuella',
   'Virtual collections': 'Virtuella samlingar',

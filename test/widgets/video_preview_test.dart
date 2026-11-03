@@ -31,8 +31,11 @@ void main() {
     addTearDown(() => io.Directory(root!.root).deleteSync(recursive: true));
     videos = GameVideos(
       guard: PathGuard(root!),
+      root: videoCacheDir(root),
       dir: p.join(videoCacheDir(root), 's'),
-      download: (path, to) async => io.File(to).writeAsBytesSync([1, 2, 3]),
+      download: (path, to, {cancel}) async {
+        io.File(to).writeAsBytesSync([1, 2, 3]);
+      },
     );
     await tester.pumpWidget(
       testApp(
@@ -42,7 +45,7 @@ void main() {
           child: VideoPreview(game: game, active: active, keptOnly: keptOnly),
         ),
         overrides: [
-          videoSurfaceProvider.overrideWithValue((file) => Text('video:${p.basename(file)}')),
+          videoSurfaceProvider.overrideWithValue((file) => Text('video:${p.basename(file).split('-').first}')),
           gameVideosProvider.overrideWithValue(videos),
           videoPreviewsOnProvider.overrideWithValue(on),
         ],
@@ -53,16 +56,20 @@ void main() {
 
   Future<void> wait(WidgetTester tester, Duration d) async {
     await tester.pump(d);
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    // The file work (and the trim's isolate) runs for real.
+    for (var i = 0; i < 40; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 30)));
+      await tester.pump();
+    }
     await tester.pump(const Duration(seconds: 1));
   }
 
   testWidgets('after 1.5 s the game\'s video fades in; not before', (tester) async {
     await pump(tester, _okami);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('video:7.mp4'), findsNothing);
+    expect(find.text('video:7'), findsNothing);
     await wait(tester, const Duration(milliseconds: 600));
-    expect(find.text('video:7.mp4'), findsOneWidget);
+    expect(find.text('video:7'), findsOneWidget);
   });
 
   testWidgets('nothing for a game without a video, with previews off, or on another tab', (tester) async {
@@ -82,7 +89,7 @@ void main() {
   testWidgets('a game started stops it', (tester) async {
     final c = await pump(tester, _okami);
     await wait(tester, const Duration(seconds: 2));
-    expect(find.text('video:7.mp4'), findsOneWidget);
+    expect(find.text('video:7'), findsOneWidget);
     c.read(playControllerProvider.notifier).state = const PlayState(runningGameId: '9');
     await tester.pump();
     await tester.pumpAndSettle();

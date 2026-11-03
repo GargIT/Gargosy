@@ -842,6 +842,7 @@ const fiText = <String, String>{
   'Username': 'Käyttäjänimi',
   'VIRTUAL · {0}': 'VIRTUAALINEN · {0}',
   'Version: {0}  ({1})': 'Versio: {0}  ({1})',
+  'Video cache': 'Videovälimuisti',
   'Video previews': 'Videoesikatselut',
   'Virtual': 'Virtuaalinen',
   'Virtual collections': 'Virtuaaliset kokoelmat',

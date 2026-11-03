@@ -841,6 +841,7 @@ const nlText = <String, String>{
   'Username': 'Gebruikersnaam',
   'VIRTUAL · {0}': 'VIRTUEEL · {0}',
   'Version: {0}  ({1})': 'Versie: {0}  ({1})',
+  'Video cache': 'Videocache',
   'Video previews': 'Videovoorbeelden',
   'Virtual': 'Virtueel',
   'Virtual collections': 'Virtuele collecties',

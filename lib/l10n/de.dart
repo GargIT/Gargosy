@@ -846,6 +846,7 @@ const deText = <String, String>{
   'Username': 'Benutzername',
   'VIRTUAL · {0}': 'VIRTUELL · {0}',
   'Version: {0}  ({1})': 'Version: {0}  ({1})',
+  'Video cache': 'Videocache',
   'Video previews': 'Videovorschauen',
   'Virtual': 'Virtuell',
   'Virtual collections': 'Virtuelle Sammlungen',

@@ -839,6 +839,7 @@ const nbText = <String, String>{
   'Username': 'Brukernavn',
   'VIRTUAL · {0}': 'VIRTUELL · {0}',
   'Version: {0}  ({1})': 'Versjon: {0}  ({1})',
+  'Video cache': 'Videohurtigbuffer',
   'Video previews': 'Videoforhåndsvisninger',
   'Virtual': 'Virtuell',
   'Virtual collections': 'Virtuelle samlinger',

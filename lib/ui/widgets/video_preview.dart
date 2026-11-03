@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/romm/romm_models.dart';
+import '../../library/game_videos.dart';
 import '../../play/play_controller.dart';
 import '../../providers/video_providers.dart';
 
@@ -61,8 +62,13 @@ class _VideoPreviewState extends ConsumerState<VideoPreview> {
   @override
   void dispose() {
     _wait?.cancel();
+    // Left: its download stops (a page opened for a moment fetches nothing).
+    _videos?.cancel(widget.game);
     super.dispose();
   }
+
+  /// The cache asked, for the cancel on leaving.
+  GameVideos? _videos;
 
   bool get _allowed =>
       widget.active &&
@@ -74,11 +80,14 @@ class _VideoPreviewState extends ConsumerState<VideoPreview> {
     _wait?.cancel();
     final ask = ++_ask;
     if (_file != null) setState(() => _file = null);
-    if (!_allowed) return;
+    if (!_allowed) {
+      _videos?.cancel(widget.game);
+      return;
+    }
     _wait = Timer(widget.delay, () async {
-      final videos = ref.read(gameVideosProvider);
+      final videos = _videos = ref.read(gameVideosProvider);
       if (videos == null || !_allowed) return;
-      final file = widget.keptOnly ? videos.kept(widget.game) : await videos.fileFor(widget.game);
+      final file = widget.keptOnly ? await videos.kept(widget.game) : await videos.fileFor(widget.game);
       if (!mounted || ask != _ask || file == null || !_allowed) return;
       setState(() => _file = file);
     });
@@ -115,13 +124,23 @@ class _PlayerSurfaceState extends State<_PlayerSurface> {
   @override
   void initState() {
     super.initState();
-    _player.initialize().then((_) async {
+    unawaited(_open());
+  }
+
+  Future<void> _open() async {
+    try {
+      await _player.initialize();
       if (!mounted) return;
       await _player.setVolume(0);
+      if (!mounted) return;
       await _player.setLooping(true);
+      if (!mounted) return;
       await _player.play();
       if (mounted) setState(() => _ready = true);
-    }, onError: (Object e) => debugPrint('[Video] ${widget.file}: $e'));
+    } on Object catch (e) {
+      // A file the player can't open, or the page closed half way.
+      if (mounted) debugPrint('[Video] ${widget.file}: $e');
+    }
   }
 
   @override
