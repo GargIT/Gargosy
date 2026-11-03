@@ -131,6 +131,7 @@ void main() {
     String letters(AppLanguage l) => keyboardRowsFor(l).expand((r) => r).join();
     expect(letters(AppLanguage.sv), allOf(contains('å'), contains('ä'), contains('ö')));
     expect(letters(AppLanguage.de), allOf(contains('ü'), contains('ö'), contains('ä'), contains('ß')));
+    expect(letters(AppLanguage.nl), allOf(contains('é'), contains('ë'), contains('ï')));
     expect(letters(AppLanguage.en), isNot(contains('ß')));
   });
 }

@@ -167,8 +167,8 @@ Mockups are linked from each issue.
 
 ## Language
 
-- Gargosy's own text is in English, Swedish or German (#239; Settings →
-  Display → Language; System follows Windows). Names, descriptions,
+- Gargosy's own text is in English or another of its languages (#191,
+  #239; Settings → Display → Language; System follows Windows). Names, descriptions,
   genres and regions from RomM are shown as RomM sends them.
 - Every text the player sees goes through `tr()`; nothing is hard-coded.
   The English text is the key; `sv.dart`, `de.dart` … hold each
@@ -180,8 +180,8 @@ Mockups are linked from each issue.
   **Sammlung**, profile **Profil**, achievement **Erfolg**, This PC
   **dieser PC**.
 - Dutch words: save **savebestand**, state **savestate**, collection **collectie**, profile **profiel**, achievement **prestatie**, This PC **deze pc**.
-- Swedish and German run longer than English: rows of buttons wrap
-  rather than overflow, and a label that sits on a button stays short.
+- Most languages run longer than English: rows of buttons wrap rather
+  than overflow, and a label that sits on a button stays short.
   `flutter test test/widgets --dart-define=GARGOSY_LANG=de` shows where
   one doesn't fit.
 
