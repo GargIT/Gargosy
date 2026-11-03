@@ -1050,6 +1050,9 @@ const svText = <String, String>{
   '{0} s left': '{0} s kvar',
   '{0} saves can\'t be used by {1}': '{0}-sparfiler kan inte användas av {1}',
   '{0} states': '{0} sparlägen',
+  '{0} left': '{0} kvar',
+  'Back at {0}': 'Tillbaka {0}',
+  'Play time not counted': 'Speltiden kunde inte räknas',
   '{0} tomorrow': '{0} i morgon',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} gjordes av {1} {2}; du har {3}. Det kanske inte laddas, eller så beter sig spelet konstigt.',

@@ -27,6 +27,7 @@ import '../../widgets/cover_image.dart';
 import '../../widgets/error_retry.dart';
 import '../../widgets/g_focusable.dart';
 import '../../widgets/hint_bar.dart';
+import '../../widgets/play_time_left.dart';
 import '../../widgets/save_list/save_labels.dart';
 import '../../widgets/save_list/save_list.dart';
 import '../../widgets/save_list/state_list.dart';
@@ -421,6 +422,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: GFont.sm, color: GColors.fgSecondary),
           ),
+          const PlayTimeLeftChip(top: GSpace.s3),
           const Spacer(),
           OutlinedBackButton(key: const ValueKey('play-back'), label: tr('Back to the game')),
           const SizedBox(height: GSpace.s4),

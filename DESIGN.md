@@ -209,3 +209,4 @@ Mockups are linked from each issue.
 | 2026-10-31 | A game's manual is a page of its own from a button by ♥, not a tab: a page at a time, A zooms (the controller has no second stick in Gargosy's input) | #232 |
 | 2026-10-31 | Stats is a page of its own from the user menu (under PROFILE), not a Settings section: numbers to read, nothing to change | #236 |
 | 2026-10-31 | The user menu's rows are 35 px and its group headings closer, so it still fits at 1280×720 with Stats | #236 |
+| 2026-11-03 | Under a play time limit the top bar (before the avatar) and the play screen (under Play) show a chip with the time left, counting down while a game runs; amber in the last 5 minutes, red with when play is back once it's used up or outside the hours. Not focusable: it only tells | #235 |
