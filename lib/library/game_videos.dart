@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io' as io;
 import 'dart:isolate';
@@ -73,6 +72,12 @@ class GameVideos {
   Future<String?>? _current;
   final _failed = <String>{};
 
+  /// The trim a download started, running beside it.
+  Future<void> _trimming = Future.value();
+
+  /// When the trim the last download started is done (tests).
+  Future<void> get trimmed => _trimming;
+
   String _fileOf(Game game) => guard.check(p.join(dir, videoFileName(game)));
 
   /// The game's video kept on this PC (now counted as played), or null.
@@ -134,7 +139,7 @@ class GameVideos {
     }
     // Saved, and played at once; the trim runs beside it, and one that
     // can't finish doesn't undo the video (trimmed next time).
-    unawaited(trim(keep: target).catchError((Object _) {}));
+    _trimming = trim(keep: target).catchError((Object _) {});
     return target;
   }
 

@@ -59,6 +59,11 @@ What changed in each release of Gargosy. The format follows
   D-pad moves a zoomed page. The manual is kept on this PC once opened, so
   it opens offline too.
 
+### Changed
+
+- Messages and notifications pop up at the lower right, raised with a
+  coloured edge and an icon (red for an error), easier to see on a TV.
+
 ## [0.7.0] - 2026-11-02
 
 Downloads checked against RomM, queued all at once, limited in speed and

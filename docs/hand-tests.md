@@ -441,3 +441,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 162. [ ] On a RomM that scans ScreenScraper video (its media includes video), open a game that has one: after a second and a half its video plays muted behind the page, the art still dimmed over it. Another tab or the play screen stops it; back on Overview it plays again (at once, now it's on this PC). A game without a video looks as before.
 
 163. [ ] Leave Home for the screensaver with games whose videos played before: their slides show the video. Start a game from a page that plays one: it stops. Settings → Display → Video previews off: none play. Videos are kept in `userdata\app\cache\videos\`.
+
+## Toasts at the lower right (0.9.0)
+
+164. [ ] A message (favourite a game while RomM is stopped) and a notification (a download finishing on Home) pop up at the lower right, above the hint bar, raised with a purple edge and a bell; an error has a red edge and icon. Easy to see from the couch, and nothing on the page is hidden behind it that the controller needs.
