@@ -85,7 +85,7 @@ void main() {
     expect(tr('Who sees {0}?', ['Couch']), 'Hvem ser Couch?');
     expect(decimal(9.5, 1), '9,5');
     await showLanguage(AppLanguage.fi);
-    expect(tr('Who sees {0}?', ['Couch']), 'Kuka näkee: Couch?');
+    expect(tr('Who sees {0}?', ['Couch']), 'Kuka näkee kokoelman Couch?');
     expect(decimal(9.5, 1), '9,5');
   });
 

@@ -665,7 +665,7 @@ const daText = <String, String>{
   'Search “{0}”': 'Søg efter "{0}"',
   'Security policy': 'Sikkerhedspolitik',
   'See all': 'Se alle',
-  'Select': 'Select',
+  'Select': 'Vælg',
   'Select (Back, View, Share, Create or −)': 'Select (Back, View, Share, Create eller −)',
   'Self-signed certificate: allowed': 'Selvsigneret certifikat: tilladt',
   'Self-signed certificate: not allowed': 'Selvsigneret certifikat: ikke tilladt',
@@ -894,8 +894,10 @@ const daText = <String, String>{
   'Yours': 'Dine',
   'Zoom': 'Zoom',
   'Z–A': 'Z–A',
-  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
-      '\n\n{0} nået RomM endnu ({1}) og {2} tabt med profilen.',
+  '\n\n1 save hasn\'t reached RomM yet ({0}) and is lost with the profile.':
+      '\n\n1 gemmefil har ikke nået RomM endnu ({0}) og går tabt med profilen.',
+  '\n\n{0} saves haven\'t reached RomM yet ({1}) and are lost with the profile.':
+      '\n\n{0} gemmefiler har ikke nået RomM endnu ({1}) og går tabt med profilen.',
   'and {0} more from your library': 'og {0} mere fra dit bibliotek',
   'another PC': 'en anden pc',
   'another player\'s save isn\'t yours to delete': 'en anden spillers gemmefil er ikke din at slette',

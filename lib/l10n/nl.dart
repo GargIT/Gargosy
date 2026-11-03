@@ -663,7 +663,7 @@ const nlText = <String, String>{
   'Search “{0}”': 'Zoek "{0}"',
   'Security policy': 'Beveiligingsbeleid',
   'See all': 'Alles bekijken',
-  'Select': 'Select',
+  'Select': 'Kiezen',
   'Select (Back, View, Share, Create or −)': 'Select (Back, View, Share, Create of −)',
   'Self-signed certificate: allowed': 'Zelfondertekend certificaat: toegestaan',
   'Self-signed certificate: not allowed': 'Zelfondertekend certificaat: niet toegestaan',
@@ -893,8 +893,10 @@ const nlText = <String, String>{
   'Yours': 'Van jou',
   'Zoom': 'Zoom',
   'Z–A': 'Z–A',
-  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
-      '\n\n{0} RomM al bereikt ({1}) en {2} verloren met het profiel.',
+  '\n\n1 save hasn\'t reached RomM yet ({0}) and is lost with the profile.':
+      '\n\n1 savebestand heeft RomM nog niet bereikt ({0}) en gaat verloren met het profiel.',
+  '\n\n{0} saves haven\'t reached RomM yet ({1}) and are lost with the profile.':
+      '\n\n{0} savebestanden hebben RomM nog niet bereikt ({1}) en gaan verloren met het profiel.',
   'and {0} more from your library': 'en nog {0} uit je bibliotheek',
   'another PC': 'een andere pc',
   'another player\'s save isn\'t yours to delete':

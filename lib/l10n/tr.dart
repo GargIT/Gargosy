@@ -27,7 +27,7 @@ enum AppLanguage {
   // Windows says nb, no, or nn for Nynorsk, which gets bokmål.
   nb('Norsk bokmål', locale: 'nb_NO', table: nbText, codes: ['no', 'nn'], letters: ('å', 'ø', 'æ')),
   da('Dansk', locale: 'da_DK', table: daText, letters: ('å', 'æ', 'ø')),
-  fi('Suomi', locale: 'fi_FI', table: fiText, letters: ('å', 'ö', 'ä'));
+  fi('Suomi', locale: 'fi_FI', table: fiText);
 
   const AppLanguage(
     this._label, {
