@@ -121,14 +121,15 @@ void main() {
       'a partial one a crash left goes too', () async {
     final a = videos(maxBytes: 25), b = videos(maxBytes: 25, server: 'b');
     await a.fileFor(_game('1'));
+    await a.trimmed;
     final old = io.File(p.join(root, 'a', videoFileName(_game('1'))))..setLastModifiedSync(DateTime(2020));
     final part = io.File(p.join(root, 'a', '9.mp4.part'))
       ..writeAsBytesSync([1])
       ..setLastModifiedSync(DateTime(2020));
     await a.fileFor(_game('2'));
+    await a.trimmed;
     await b.fileFor(_game('3'));
-    // The trim runs beside the download; once more here, to wait for it.
-    await b.trim(keep: p.join(root, 'b', videoFileName(_game('3'))));
+    await b.trimmed;
     expect(old.existsSync(), isFalse);
     expect(part.existsSync(), isFalse);
     expect(io.File(p.join(root, 'a', videoFileName(_game('2')))).existsSync(), isTrue);

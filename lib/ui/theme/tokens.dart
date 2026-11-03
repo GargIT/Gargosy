@@ -83,6 +83,15 @@ abstract final class GFocusRing {
   static const double mouse = 2, key = 2.5, pad = 3.5, offset = 3;
 }
 
+/// A toast (`showToast`): at the lower right, raised, a lit edge (#241).
+abstract final class GToast {
+  static const double width = 440, edgeGap = 24, elevation = 12, edgeWidth = 1.5, edgeAlpha = 0.7, iconSize = 22;
+
+  /// The hint bar's height at 100 % text above its padding: the toast's gap
+  /// grows from it with the text size.
+  static const double hintBarText = 40;
+}
+
 abstract final class GLayout {
   static const double navHeight = 58, navPillHeight = 38, touchTarget = 44;
 }

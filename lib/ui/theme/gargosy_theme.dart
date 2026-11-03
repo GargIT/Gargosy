@@ -28,6 +28,14 @@ ThemeData gargosyTheme() {
       linearMinHeight: 6,
       borderRadius: BorderRadius.all(Radius.circular(3)),
     ),
+    // Toasts: the snack bar is only their row; showToast draws the box at
+    // its right (`toast.dart`).
+    snackBarTheme: const SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: EdgeInsets.zero,
+    ),
     focusColor: GColors.focus,
     hoverColor: GColors.surfaceHover,
     splashFactory: NoSplash.splashFactory,
