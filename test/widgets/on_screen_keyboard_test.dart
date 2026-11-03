@@ -133,6 +133,7 @@ void main() {
     expect(letters(AppLanguage.de), allOf(contains('ü'), contains('ö'), contains('ä'), contains('ß')));
     expect(letters(AppLanguage.nl), allOf(contains('é'), contains('ë'), contains('ï')));
     expect(letters(AppLanguage.nb), allOf(contains('å'), contains('ø'), contains('æ')));
+    expect(letters(AppLanguage.da), allOf(contains('å'), contains('æ'), contains('ø')));
     expect(letters(AppLanguage.en), isNot(contains('ß')));
   });
 }
