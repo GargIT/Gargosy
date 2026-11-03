@@ -167,16 +167,22 @@ Mockups are linked from each issue.
 
 ## Language
 
-- Gargosy's own text is in English or Swedish (Settings → Display →
-  Language; System follows Windows). Names, descriptions, genres and
-  regions from RomM are shown as RomM sends them.
+- Gargosy's own text is in English, Swedish or German (#239; Settings →
+  Display → Language; System follows Windows). Names, descriptions,
+  genres and regions from RomM are shown as RomM sends them.
 - Every text the player sees goes through `tr()`; nothing is hard-coded.
-  The English text is the key, and `sv.dart` holds its Swedish.
+  The English text is the key; `sv.dart`, `de.dart` … hold each
+  language's (`docs/translating.md`).
 - Words: game **spel**, save **sparfil**, state **sparläge**, collection
   **samling**, platform **plattform**, profile **profil**, achievement
   **prestation**, On this PC **På datorn** (short, it sits on buttons).
-- Swedish runs longer than English: rows of buttons wrap rather than
-  overflow, and a label that sits on a button stays short.
+- German words: save **Spielstand**, state **Savestate**, collection
+  **Sammlung**, profile **Profil**, achievement **Erfolg**, This PC
+  **dieser PC**.
+- Swedish and German run longer than English: rows of buttons wrap
+  rather than overflow, and a label that sits on a button stays short.
+  `flutter test test/widgets --dart-define=GARGOSY_LANG=de` shows where
+  one doesn't fit.
 
 ## Branding
 

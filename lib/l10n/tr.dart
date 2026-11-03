@@ -5,17 +5,29 @@ import 'package:intl/intl.dart';
 
 import '../core/storage/app_preferences.dart';
 import '../profiles/profile_providers.dart';
+import 'de.dart';
 import 'sv.dart';
+
+import 'package:intl/number_symbols_data.dart' show numberFormatSymbols;
+
+import 'dart:ui' show PlatformDispatcher;
 
 /// Gargosy's languages (#191). The English text in the code is the key:
 /// [tr] looks it up in the chosen language's table, and English is itself.
 enum AppLanguage {
-  system('System (Windows\' language)'),
-  en('English'),
-  sv('Svenska');
+  system('System (Windows\' language)', locale: 'en_US'),
+  en('English', locale: 'en_US'),
+  sv('Svenska', locale: 'sv_SE', table: svText),
+  de('Deutsch', locale: 'de_DE', table: deText);
 
-  const AppLanguage(this._label);
+  const AppLanguage(this._label, {required this.locale, this.table});
   final String _label;
+
+  /// Dates and numbers in this language (`intl`'s locale).
+  final String locale;
+
+  /// Its text by the English (#191, #239); null for English itself.
+  final Map<String, String>? table;
 
   /// The name in the menu: a language's own name, System in the shown one.
   String get label => this == system ? tr(_label) : _label;
@@ -27,7 +39,10 @@ enum AppLanguage {
       AppLanguage.values.where((l) => l.name == prefs.getString(prefKey)).firstOrNull ?? system;
 
   /// The language shown: System is Windows' when Gargosy has it, else English.
-  AppLanguage resolve(String systemLanguageCode) => this != system ? this : (systemLanguageCode == 'sv' ? sv : en);
+  AppLanguage resolve(String systemLanguageCode) {
+    if (this != system) return this;
+    return AppLanguage.values.where((l) => l != system && l.name == systemLanguageCode).firstOrNull ?? en;
+  }
 }
 
 var _shown = AppLanguage.en;
@@ -37,8 +52,8 @@ AppLanguage get shownLanguage => _shown;
 
 /// Shows [language] from the next build on; dates and numbers follow it.
 Future<void> showLanguage(AppLanguage language) async {
-  _shown = language == AppLanguage.sv ? AppLanguage.sv : AppLanguage.en;
-  final locale = _shown == AppLanguage.sv ? 'sv_SE' : 'en_US';
+  _shown = language == AppLanguage.system ? AppLanguage.en : language;
+  final locale = _shown.locale;
   await initializeDateFormatting(locale);
   Intl.defaultLocale = locale;
 }
@@ -46,7 +61,7 @@ Future<void> showLanguage(AppLanguage language) async {
 /// [english] in the shown language, with `{0}`, `{1}` … filled from [args]
 /// (`{{` and `}}` are braces). Text without a translation stays English.
 String tr(String english, [List<Object?> args = const []]) {
-  final text = _shown == AppLanguage.sv ? (svText[english] ?? english) : english;
+  final text = _shown.table?[english] ?? english;
   return fillPlaceholders(text, args);
 }
 
@@ -79,8 +94,15 @@ String fillPlaceholders(String text, List<Object?> args) {
 /// [value] with [digits] decimals, the shown language's decimal mark.
 String decimal(num value, int digits) {
   final s = value.toStringAsFixed(digits);
-  return _shown == AppLanguage.sv ? s.replaceAll('.', ',') : s;
+  // intl names its symbols by language (`sv`), some by locale.
+  final symbols = numberFormatSymbols[_shown.locale] ?? numberFormatSymbols[_shown.locale.split('_').first];
+  final mark = symbols?.DECIMAL_SEP ?? '.';
+  return mark == '.' ? s : s.replaceAll('.', mark);
 }
+
+/// Windows' display language as a code (`sv`, `de`), what System follows:
+/// the same at start and when System is picked again.
+String windowsLanguageCode() => PlatformDispatcher.instance.locale.languageCode.toLowerCase();
 
 /// The language chosen in Settings → Display.
 final languageProvider = Provider<AppLanguage>((ref) => AppLanguage.of(ref.watch(appPreferencesProvider)));
@@ -89,7 +111,7 @@ final languageProvider = Provider<AppLanguage>((ref) => AppLanguage.of(ref.watch
 Future<void> changeLanguage(WidgetRef ref, AppLanguage language) async {
   await ref.read(appPreferencesProvider).setString(AppLanguage.prefKey, language.name);
   ref.invalidate(languageProvider);
-  await showLanguage(language.resolve(WidgetsBinding.instance.platformDispatcher.locale.languageCode));
+  await showLanguage(language.resolve(windowsLanguageCode()));
   void rebuild(Element e) {
     e.markNeedsBuild();
     e.visitChildren(rebuild);

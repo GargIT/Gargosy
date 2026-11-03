@@ -30,17 +30,27 @@ class OnScreenKeyboard extends StatefulWidget {
   State<OnScreenKeyboard> createState() => _OnScreenKeyboardState();
 }
 
+/// The keys, with the letters the shown language needs where its own
+/// keyboard has them (#191, #239).
+List<List<String>> keyboardRowsFor(AppLanguage language) {
+  final (top, left, right) = switch (language) {
+    AppLanguage.de => ('ü', 'ö', 'ä'),
+    _ => ('å', 'ö', 'ä'),
+  };
+  return [
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', top],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', left, right],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '-', '_', '@'],
+    ['/', ':', '!', '?', '#', '&', '=', '+', '%', '~', if (language == AppLanguage.de) 'ß'],
+  ];
+}
+
 class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
   late String _text = widget.initial;
   bool _shift = false;
 
-  static const _rows = [
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'å'],
-    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'],
-    ['z', 'x', 'c', 'v', 'b', 'n', 'm', '.', '-', '_', '@'],
-    ['/', ':', '!', '?', '#', '&', '=', '+', '%', '~'],
-  ];
+  final _rows = keyboardRowsFor(shownLanguage);
 
   void _type(String s) => setState(() => _text += s);
 
@@ -54,7 +64,8 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
 
   void _done() => widget.onDone(_text);
 
-  String _label(String k) => _shift ? k.toUpperCase() : k;
+  // ß has no capital a key can type.
+  String _label(String k) => _shift && k != 'ß' ? k.toUpperCase() : k;
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) return KeyEventResult.ignored;

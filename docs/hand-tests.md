@@ -423,3 +423,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 155. [ ] Start a download and go to Home: when it finishes, "<game> is downloaded." shows there. Stay on the game's own page for another download: no toast (its button says it). With RomM stopped, play a game so its save waits, start RomM: "Uploaded 1 save that was waiting." Several at once come one after another; several downloads finishing in a row are one toast ("3 downloads finished.").
 
 156. [ ] While a game runs, let a download finish: nothing shows over the emulator; when the game ends, the toast comes. Settings → Display → Notifications off: none of these show.
+
+## More languages (#239)
+
+157. [ ] Settings → Display → Language → Deutsch: every screen is German at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as German. The on-screen keyboard (a search with the controller) has ü, ö, ä and ß. System on a German Windows picks Deutsch; English and Svenska as before.

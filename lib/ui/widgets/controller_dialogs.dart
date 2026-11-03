@@ -38,6 +38,16 @@ Widget dialogButton(String label, VoidCallback onPress, {bool primary = false, b
 
 /// A dialog's frame. [scrolls]: its content scrolls when larger text (#240)
 /// makes it taller than the window; a dialog with its own list doesn't.
+/// A dialog's buttons at its right: on one line when they fit, else under
+/// each other, still at the right (#191, #239: longer words, larger text).
+Widget dialogButtonRow({required List<Widget> children}) => OverflowBar(
+  alignment: MainAxisAlignment.end,
+  spacing: GSpace.s2,
+  overflowSpacing: GSpace.s2,
+  overflowAlignment: OverflowBarAlignment.end,
+  children: children,
+);
+
 Widget _panel({required String title, required List<Widget> children, double width = 480, bool scrolls = true}) {
   final column = Column(
     mainAxisSize: MainAxisSize.min,
@@ -85,11 +95,7 @@ Future<bool> showConfirm(
       children: [
         Text(body, style: const TextStyle(color: GColors.fgSecondary)),
         const SizedBox(height: GSpace.s5),
-        // Wraps when the labels are long (#191: Swedish ones are).
-        Wrap(
-          alignment: WrapAlignment.end,
-          spacing: GSpace.s2,
-          runSpacing: GSpace.s2,
+        dialogButtonRow(
           children: [
             _dialogButton(tr(no), () => Navigator.of(c).pop(false), autofocus: !focusYes),
             _dialogButton(
@@ -118,10 +124,7 @@ Future<void> showNotice(BuildContext context, {required String title, required S
         children: [
           Text(body, style: const TextStyle(color: GColors.fgSecondary)),
           const SizedBox(height: GSpace.s5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [_dialogButton(ok, () => Navigator.of(c).pop(), autofocus: true, primary: true)],
-          ),
+          dialogButtonRow(children: [_dialogButton(ok, () => Navigator.of(c).pop(), autofocus: true, primary: true)]),
           const SizedBox(height: GSpace.s3),
           const HintBar(hints: [Hint(GameAction.confirm, 'OK')]),
         ],

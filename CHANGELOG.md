@@ -8,6 +8,9 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Gargosy in German: Settings → Display → Language → Deutsch, and System
+  picks it on a German Windows. The on-screen keyboard has ü and ß.
+  Corrections and new languages are welcome: `docs/translating.md`.
 - Notifications: Gargosy says when another player shares a save or save
   state of a game you have on this PC, when a download finishes while
   you're elsewhere, and when waiting saves go up. Never during a game:

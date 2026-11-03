@@ -193,11 +193,9 @@ class _MakeRoomState extends State<_MakeRoom> {
                   style: TextStyle(color: enough ? GColors.fgSecondary : GColors.accent),
                 ),
                 const SizedBox(height: GSpace.s4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                dialogButtonRow(
                   children: [
                     dialogButton(tr('Cancel'), () => Navigator.of(context).pop()),
-                    const SizedBox(width: GSpace.s3),
                     dialogButton(
                       tr('Delete and download'),
                       // Not enough ticked: greyed, and A says why.

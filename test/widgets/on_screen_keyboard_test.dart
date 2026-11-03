@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/l10n/tr.dart';
 import 'package:gargosy/providers/retry.dart';
 import 'package:gargosy/ui/input/gargosy_intents.dart';
 import 'package:gargosy/ui/widgets/on_screen_keyboard.dart';
@@ -124,5 +125,12 @@ void main() {
     await pump(tester, initial: 'secret', obscure: true);
     expect(find.text('secret'), findsNothing);
     expect(find.text('••••••'), findsOneWidget);
+  });
+
+  test('each language gets its letters where its own keyboard has them (#239)', () {
+    String letters(AppLanguage l) => keyboardRowsFor(l).expand((r) => r).join();
+    expect(letters(AppLanguage.sv), allOf(contains('å'), contains('ä'), contains('ö')));
+    expect(letters(AppLanguage.de), allOf(contains('ü'), contains('ö'), contains('ä'), contains('ß')));
+    expect(letters(AppLanguage.en), isNot(contains('ß')));
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/l10n/l10n_table.dart';
 import 'package:gargosy/l10n/sv.dart';
 import 'package:gargosy/l10n/tr.dart';
 
@@ -24,26 +25,48 @@ Set<String> _trKeys() {
   };
 }
 
-Set<String> _placeholders(String s) => {for (final m in RegExp(r'(?<!\{)\{(\d+)\}').allMatches(s)) m[1]!};
-
 void main() {
   tearDown(() => showLanguage(AppLanguage.en));
 
-  test("every tr() text in lib/ has its Swedish (#191)", () {
-    final keys = _trKeys();
-    expect(keys.length, greaterThan(700), reason: 'the scan found the calls');
-    expect([
-      for (final k in keys)
-        if (!svText.containsKey(k)) k,
-    ], isEmpty);
+  final languages = [
+    for (final l in AppLanguage.values)
+      if (l.table != null) l,
+  ];
+
+  test('there are languages besides English', () {
+    expect(languages.map((l) => l.name), containsAll(['sv', 'de']));
   });
 
-  test('each Swedish text has the same placeholders as its English', () {
-    final wrong = [
-      for (final k in svText.keys)
-        if (!setEquals(_placeholders(k), _placeholders(svText[k]!))) k,
-    ];
-    expect(wrong, isEmpty);
+  for (final l in languages) {
+    test('every tr() text in lib/ is in ${l.name} (#191, #239)', () {
+      final keys = _trKeys();
+      expect(keys.length, greaterThan(700), reason: 'the scan found the calls');
+      expect([
+        for (final k in keys)
+          if (!l.table!.containsKey(k)) k,
+      ], isEmpty);
+    });
+
+    test('each ${l.name} text has the same placeholders as its English', () {
+      final table = l.table!;
+      final wrong = [
+        for (final k in table.keys)
+          if (!samePlaceholders(k, table[k]!)) k,
+      ];
+      expect(wrong, isEmpty);
+    });
+
+    // Not every text is a tr('…') literal (an enum's label goes through a
+    // field), so a removed text is found by the Swedish table, edited by hand.
+    test('${l.name} has the same texts as the Swedish table, no more', () {
+      expect(l.table!.keys.toSet().difference(svText.keys.toSet()), isEmpty);
+    });
+  }
+
+  test('a language shows its own text, dates and decimal comma', () async {
+    await showLanguage(AppLanguage.de);
+    expect(tr('Who sees {0}?', ['Couch']), 'Wer sieht Couch?');
+    expect(decimal(9.5, 1), '9,5');
   });
 
   test('English is the text itself; Swedish from the table; unknown text stays English', () async {
@@ -64,7 +87,8 @@ void main() {
 
   test("System is Windows' language when Gargosy has it, else English; the pref is app-wide", () {
     expect(AppLanguage.system.resolve('sv'), AppLanguage.sv);
-    expect(AppLanguage.system.resolve('de'), AppLanguage.en);
+    expect(AppLanguage.system.resolve('de'), AppLanguage.de);
+    expect(AppLanguage.system.resolve('ja'), AppLanguage.en);
     expect(AppLanguage.en.resolve('sv'), AppLanguage.en);
     final prefs = MemoryPrefs();
     expect(AppLanguage.of(prefs), AppLanguage.system);
@@ -74,5 +98,3 @@ void main() {
     expect(AppLanguage.of(prefs), AppLanguage.system);
   });
 }
-
-bool setEquals(Set<String> a, Set<String> b) => a.length == b.length && a.containsAll(b);
