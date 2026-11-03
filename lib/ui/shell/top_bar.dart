@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../profiles/profile_providers.dart';
 import '../theme/tokens.dart';
 import '../widgets/g_focusable.dart';
+import '../widgets/play_time_left.dart';
 import '../widgets/profile_badge.dart';
 import '../widgets/update_dot.dart';
 
@@ -82,6 +83,7 @@ class TopBar extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            const PlayTimeLeftChip(gap: GSpace.s3),
             UpdateDot(
               child: ProfileBadge(
                 profile: context_.profile,

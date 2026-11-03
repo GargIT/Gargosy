@@ -24,10 +24,13 @@ import '../l10n/tr.dart';
 import 'session_achievements.dart';
 
 class PlayState {
-  const PlayState({this.runningGameId, this.message, this.preparing, this.saveProblem = false});
+  const PlayState({this.runningGameId, this.message, this.preparing, this.saveProblem = false, this.playingSince});
 
   /// The game being played right now (one at a time, spec §6).
   final String? runningGameId;
+
+  /// When the running game's emulator started; null before and after.
+  final DateTime? playingSince;
 
   /// What the last session said when it ended.
   final String? message;
@@ -332,6 +335,7 @@ class PlayController extends StateNotifier<PlayState> {
     _limit = null;
     _closedByLimit = false;
     final clock = _ref.read(playClockProvider);
+    state = PlayState(runningGameId: game.id, playingSince: clock());
     if (time != null && _ref.read(playLimitProvider).isOn) {
       debugPrint(
         '[PlayLimit] ${game.displayName} may play until ${time.untilAt(_ref.read(playLimitProvider), clock())}',

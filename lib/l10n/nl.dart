@@ -1069,6 +1069,9 @@ const nlText = <String, String>{
   '{0} shared a save of {1}.': '{0} deelde een savebestand van {1}.',
   '{0} shared a save state of {1}.': '{0} deelde een savestate van {1}.',
   '{0} states': '{0} savestates',
+  '{0} left': 'Nog {0}',
+  'Back at {0}': 'Weer vanaf {0}',
+  'Play time not counted': 'Speeltijd niet geteld',
   '{0} tomorrow': '{0} morgen',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} is gemaakt met {1} {2}; jij hebt {3}. Hij laadt misschien niet, of het spel gedraagt zich vreemd.',

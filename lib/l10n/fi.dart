@@ -1069,6 +1069,9 @@ const fiText = <String, String>{
   '{0} shared a save of {1}.': '{0} jakoi tallennuksen pelistä {1}.',
   '{0} shared a save state of {1}.': '{0} jakoi tilatallennuksen pelistä {1}.',
   '{0} states': '{0} tilatallennusta',
+  '{0} left': '{0} jäljellä',
+  'Back at {0}': 'Taas klo {0}',
+  'Play time not counted': 'Peliaikaa ei laskettu',
   '{0} tomorrow': '{0} huomenna',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} on tehty versiolla {1} {2}; sinulla on {3}. Se ei ehkä lataudu, tai peli voi toimia oudosti.',

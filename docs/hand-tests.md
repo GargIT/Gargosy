@@ -395,6 +395,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 145. [x] A child's profile, with a parent's profile (made before it, with a PIN): Settings → Profile → Play time → Play time a day → 30 min asks for the parent's PIN; a wrong one changes nothing. Set it to 30 min.
 146. [ ] Play a game as the child for 25 minutes: Windows' alert sound plays once over the game. At 30 minutes the game closes by itself (RetroArch, DuckStation and PCSX2 keep a state), its save syncs, and the message starts "Play time is up for now." Play again says the time is used up and is back at 00:00 tomorrow.
+165. [ ] The child's profile with 30 min a day: the top bar (Home, a game's page) and the play screen show "30 min left" with an hourglass. Play for 10 minutes, then Alt+Tab back to Gargosy: it says about 20 min left and goes down each minute; amber from 5 min left. When it's used up it says "Back at 00:00 tomorrow" in red. A profile without a limit shows nothing.
 147. [x] Play between 15:00–20:00 with the clock outside it: Play says when it's back, and Settings → Emulators → Open is refused. A session played on another PC with the same RomM user today counts toward the minutes here.
 
 ## Stats (#236)

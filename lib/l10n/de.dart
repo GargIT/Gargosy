@@ -1073,6 +1073,9 @@ const deText = <String, String>{
   '{0} shared a save of {1}.': '{0} hat einen Spielstand von {1} geteilt.',
   '{0} shared a save state of {1}.': '{0} hat einen Savestate von {1} geteilt.',
   '{0} states': '{0} Savestates',
+  '{0} left': 'Noch {0}',
+  'Back at {0}': 'Wieder ab {0}',
+  'Play time not counted': 'Spielzeit nicht gezählt',
   '{0} tomorrow': '{0} morgen',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} wurde mit {1} {2} erstellt; du hast {3}. Er lädt vielleicht nicht, oder das Spiel verhält sich seltsam.',

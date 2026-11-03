@@ -1066,6 +1066,9 @@ const nbText = <String, String>{
   '{0} shared a save of {1}.': '{0} delte en lagringsfil for {1}.',
   '{0} shared a save state of {1}.': '{0} delte en savestate for {1}.',
   '{0} states': '{0} savestates',
+  '{0} left': '{0} igjen',
+  'Back at {0}': 'Tilbake {0}',
+  'Play time not counted': 'Spilletid ikke telt',
   '{0} tomorrow': '{0} i morgen',
   '{0} was made by {1} {2}; you have {3}. It may not load, or the game may misbehave.':
       '{0} ble laget av {1} {2}; du har {3}. Den lastes kanskje ikke, eller spillet kan oppføre seg rart.',
