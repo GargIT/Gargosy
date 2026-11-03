@@ -89,6 +89,7 @@ Future<StorageUsage> readStorage(AppRoot root) {
         'BIOS': sizeOf(at.bios),
         "Profiles' saves, backups and emulator data": sizeOf(at.profiles),
         'Image cache': sizeOf(p.join(at.appData, 'cache', 'images')),
+        'Video cache': sizeOf(p.join(at.appData, 'cache', 'videos')),
         'Temp': sizeOf(p.join(at.appData, 'temp')),
       },
       platforms: platforms,

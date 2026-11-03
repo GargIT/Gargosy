@@ -37,3 +37,6 @@ About → Dart and Flutter packages lists them.
 
 Gargosy's sounds (Settings → Display → Sounds) are its own: made in code as tones when they play
 (`lib/core/audio/ui_sounds.dart`), with no recorded or third-party sound files.
+
+Game videos (Settings → Display → Video previews) play through video_player_win (BSD-3-Clause, ©
+jakky1), Windows' own Media Foundation; its licence is among the Dart and Flutter packages.

@@ -25,6 +25,7 @@ const fiText = <String, String>{
   'A download is running. Switching profile stops it.': 'Lataus on käynnissä. Profiilin vaihto pysäyttää sen.',
   'A game is already running. Close it first.': 'Peli on jo käynnissä. Sulje se ensin.',
   'A game is running. Close it first.': 'Peli on käynnissä. Sulje se ensin.',
+  'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.': 'Pelin video RomMista toistuu äänettömänä sen sivun takana ja näytönsäästäjässä, kun RomMissa on sellainen. Ei koskaan pelin ollessa käynnissä.',
   'A live list: nothing is downloaded until you put a save on this PC or play it.':
       'Elävä lista: mitään ei ladata, ennen kuin laitat tallennuksen tälle tietokoneelle tai pelaat sitä.',
   'A opens it · any other button goes back': 'A avaa sen · mikä tahansa muu painike palaa',
@@ -841,6 +842,8 @@ const fiText = <String, String>{
   'Username': 'Käyttäjänimi',
   'VIRTUAL · {0}': 'VIRTUAALINEN · {0}',
   'Version: {0}  ({1})': 'Versio: {0}  ({1})',
+  'Video cache': 'Videovälimuisti',
+  'Video previews': 'Videoesikatselut',
   'Virtual': 'Virtuaalinen',
   'Virtual collections': 'Virtuaaliset kokoelmat',
   'Virtual · {0}': 'Virtuaalinen · {0}',

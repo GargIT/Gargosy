@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   gamepads_windows
   screen_retriever_windows
   url_launcher_windows
+  video_player_win
   window_manager
   zstandard_windows
 )

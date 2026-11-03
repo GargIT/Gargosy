@@ -28,6 +28,20 @@ mixin _RommLibrary on _RommBase {
     return data is Uint8List ? data : Uint8List.fromList(data);
   }
 
+  /// Gargosy (#238): the game's video, [pathVideo] (`Game.pathVideo`), from
+  /// RomM's resources with the token, into [toFile]. Throws when RomM sends
+  /// none.
+  Future<void> downloadVideo(String pathVideo, String toFile, {CancelToken? cancel}) async {
+    final path = pathVideo.startsWith('/') ? pathVideo.substring(1) : pathVideo;
+    final response = await _dio.download(
+      '/assets/romm/resources/$path',
+      toFile,
+      cancelToken: cancel,
+      options: _authOptions.copyWith(receiveTimeout: const Duration(minutes: 5)),
+    );
+    if (response.statusCode != 200) throw StateError('RomM sent no video (${response.statusCode}).');
+  }
+
   /// Gargosy (#236): how many games the player marked with one of
   /// [statuses] (RomM 5.4's `statuses` filter), a game's versions (regions,
   /// revisions) counted once, as the gallery shows them. Throws when RomM

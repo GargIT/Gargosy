@@ -40,6 +40,8 @@ dependencies:
   flutter_cache_manager: 3.4.6
   flutter_markdown_plus: ^1.0.12
   pdfrx: ^2.11.0
+  video_player: ^2.14.1
+  video_player_win: ^3.3.1
 
 dev_dependencies:
   flutter_test:

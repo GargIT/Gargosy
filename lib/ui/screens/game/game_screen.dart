@@ -25,6 +25,7 @@ import 'notes_tab.dart';
 import 'overview_tab.dart';
 import 'saves_tab.dart';
 import '../../../l10n/tr.dart';
+import '../../widgets/video_preview.dart';
 
 /// The game page (spec Part 1), after Freegosy's in the v2 style: the art
 /// behind the page, the cover column (▶ Play, ♥, ⋯), the title, the
@@ -172,6 +173,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         backgroundColor: GColors.bg,
         body: GameArtBackdrop(
           game: game,
+          // #238: on the Overview, while this page is in front.
+          video: VideoPreview(game: game, active: _tab == 0 && (_route?.isCurrent ?? true)),
           child: Stack(
             children: [
               Column(

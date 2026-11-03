@@ -21,6 +21,7 @@ import '../theme/tokens.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/game_transition.dart';
 import '../../l10n/tr.dart';
+import '../widgets/video_preview.dart';
 
 /// The screensaver's wait (#147), this PC's setting (Settings → Display):
 /// minutes, 0 for off; 5 by default.
@@ -268,6 +269,8 @@ class _Slide extends ConsumerWidget {
     final cover = CoverImage(url: coverUrlFor(ref, game), title: game.displayName, width: 240, height: 324);
     return GameArtBackdrop(
       game: game,
+      // #238: a video already on this PC plays behind the slide.
+      video: VideoPreview(game: game, delay: Duration.zero, keptOnly: true),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
         duration: every,
