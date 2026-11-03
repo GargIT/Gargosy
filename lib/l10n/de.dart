@@ -665,7 +665,7 @@ const deText = <String, String>{
   'Search “{0}”': '„{0}“ suchen',
   'Security policy': 'Sicherheitsrichtlinie',
   'See all': 'Alle ansehen',
-  'Select': 'Select',
+  'Select': 'Auswählen',
   'Select (Back, View, Share, Create or −)': 'Select (Back, View, Share, Create oder −)',
   'Self-signed certificate: allowed': 'Selbstsigniertes Zertifikat: erlaubt',
   'Self-signed certificate: not allowed': 'Selbstsigniertes Zertifikat: nicht erlaubt',
@@ -897,8 +897,10 @@ const deText = <String, String>{
   'Yours': 'Deine',
   'Zoom': 'Zoom',
   'Z–A': 'Z–A',
-  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
-      '\n\n{0} noch zu RomM gelangt ({1}) und {2} mit dem Profil verloren.',
+  '\n\n1 save hasn\'t reached RomM yet ({0}) and is lost with the profile.':
+      '\n\n1 Spielstand ist noch nicht bei RomM ({0}) und geht mit dem Profil verloren.',
+  '\n\n{0} saves haven\'t reached RomM yet ({1}) and are lost with the profile.':
+      '\n\n{0} Spielstände sind noch nicht bei RomM ({1}) und gehen mit dem Profil verloren.',
   'and {0} more from your library': 'und {0} weitere aus deiner Bibliothek',
   'another PC': 'ein anderer PC',
   'another player\'s save isn\'t yours to delete': 'der Spielstand eines anderen Spielers ist nicht deiner zum Löschen',

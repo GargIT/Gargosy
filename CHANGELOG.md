@@ -8,6 +8,8 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Gargosy in Finnish: Settings → Display → Language → Suomi, and System
+  picks it on a Finnish Windows. The on-screen keyboard has å, ö and ä.
 - Gargosy in Danish: Settings → Display → Language → Dansk, and System
   picks it on a Danish Windows. The on-screen keyboard has æ, ø and å.
 - Gargosy in Norwegian: Settings → Display → Language → Norsk bokmål, and System

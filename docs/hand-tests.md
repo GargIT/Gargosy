@@ -433,3 +433,5 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 159. [ ] Settings → Display → Language → Norsk bokmål: every screen is Norwegian at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Norwegian. The on-screen keyboard has å, ø and æ. System on a Norwegian Windows picks Norsk bokmål, a Nynorsk one too.
 
 160. [ ] Settings → Display → Language → Dansk: every screen is Danish at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Danish. The on-screen keyboard has æ, ø and å. System on a Danish Windows picks Dansk.
+
+161. [ ] Settings → Display → Language → Suomi: every screen is Finnish at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Finnish. The on-screen keyboard has å, ö and ä. System on a Finnish Windows picks Suomi.

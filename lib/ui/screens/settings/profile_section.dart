@@ -108,10 +108,11 @@ class ProfileSection extends ConsumerWidget {
     ];
     final lost = waiting.isEmpty
         ? ''
-        : tr('\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.', [
-            waiting.length == 1 ? "1 save hasn't" : "${waiting.length} saves haven't",
+        : waiting.length == 1
+        ? tr('\n\n1 save hasn\'t reached RomM yet ({0}) and is lost with the profile.', [names.join(', ')])
+        : tr('\n\n{0} saves haven\'t reached RomM yet ({1}) and are lost with the profile.', [
+            waiting.length,
             names.join(', '),
-            waiting.length == 1 ? 'is' : 'are',
           ]);
     if (!context.mounted) return;
     final ok = await showConfirm(

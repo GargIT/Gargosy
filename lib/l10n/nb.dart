@@ -664,7 +664,7 @@ const nbText = <String, String>{
   'Search “{0}”': 'Søk etter «{0}»',
   'Security policy': 'Sikkerhetspolicy',
   'See all': 'Se alle',
-  'Select': 'Select',
+  'Select': 'Velg',
   'Select (Back, View, Share, Create or −)': 'Select (Back, View, Share, Create eller −)',
   'Self-signed certificate: allowed': 'Selvsignert sertifikat: tillatt',
   'Self-signed certificate: not allowed': 'Selvsignert sertifikat: ikke tillatt',
@@ -892,8 +892,10 @@ const nbText = <String, String>{
   'Yours': 'Dine',
   'Zoom': 'Zoom',
   'Z–A': 'Z–A',
-  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
-      '\n\n{0} nådd RomM ennå ({1}) og {2} tapt med profilen.',
+  '\n\n1 save hasn\'t reached RomM yet ({0}) and is lost with the profile.':
+      '\n\n1 lagringsfil har ikke nådd RomM ennå ({0}) og går tapt med profilen.',
+  '\n\n{0} saves haven\'t reached RomM yet ({1}) and are lost with the profile.':
+      '\n\n{0} lagringsfiler har ikke nådd RomM ennå ({1}) og går tapt med profilen.',
   'and {0} more from your library': 'og {0} til fra biblioteket ditt',
   'another PC': 'en annen PC',
   'another player\'s save isn\'t yours to delete': 'en annen spillers lagringsfil er ikke din å slette',

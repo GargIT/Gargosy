@@ -182,6 +182,7 @@ Mockups are linked from each issue.
 - Dutch words: save **savebestand**, state **savestate**, collection **collectie**, profile **profiel**, achievement **prestatie**, This PC **deze pc**.
 - Norwegian words: save **lagringsfil**, state **savestate**, collection **samling**, profile **profil**, achievement **prestasjon**, This PC **denne PC-en**.
 - Danish words: save **gemmefil**, state **savestate**, collection **samling**, profile **profil**, achievement **præstation**, This PC **denne pc**.
+- Finnish words: save **tallennus**, state **tilatallennus**, collection **kokoelma**, profile **profiili**, achievement **saavutus**, This PC **tämä tietokone**.
 - Most languages run longer than English: rows of buttons wrap rather
   than overflow, and a label that sits on a button stays short.
   `flutter test test/widgets --dart-define=GARGOSY_LANG=de` shows where

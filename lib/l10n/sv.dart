@@ -893,8 +893,10 @@ const svText = <String, String>{
   'Yours': 'Dina',
   'Zoom': 'Zooma',
   'Z–A': 'Ö–A',
-  '\n\n{0} reached RomM yet ({1}) and {2} lost with the profile.':
-      '\n\n{0} nått RomM än ({1}) och {2} förlorade med profilen.',
+  '\n\n1 save hasn\'t reached RomM yet ({0}) and is lost with the profile.':
+      '\n\n1 sparfil har inte nått RomM än ({0}) och försvinner med profilen.',
+  '\n\n{0} saves haven\'t reached RomM yet ({1}) and are lost with the profile.':
+      '\n\n{0} sparfiler har inte nått RomM än ({1}) och försvinner med profilen.',
   'and {0} more from your library': 'och {0} till från ditt bibliotek',
   'another PC': 'en annan dator',
   'another player\'s save isn\'t yours to delete': 'en annan spelares sparfil är inte din att ta bort',
