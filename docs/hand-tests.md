@@ -445,4 +445,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Toasts at the lower right (#241)
 
-164. [ ] A message (favourite a game while RomM is stopped) and a notification (a download finishing on Home) pop up at the lower right, above the hint bar, raised with a purple edge and a bell; an error has a red edge and icon. Easy to see from the couch, and nothing on the page is hidden behind it that the controller needs.
+164. [x] A message (favourite a game while RomM is stopped) and a notification (a download finishing on Home) pop up at the lower right, above the hint bar, raised with a purple edge and a bell; an error has a red edge and icon. Easy to see from the couch, and nothing on the page is hidden behind it that the controller needs.
