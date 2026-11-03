@@ -14,9 +14,12 @@ import 'cover_image.dart';
 
 /// The game's art, blurred and dimmed, behind [child].
 class GameArtBackdrop extends ConsumerWidget {
-  const GameArtBackdrop({super.key, required this.game, required this.child});
+  const GameArtBackdrop({super.key, required this.game, required this.child, this.video});
   final Game game;
   final Widget child;
+
+  /// Over the art, under the shade (#238): the game's video, when it plays.
+  final Widget? video;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,6 +36,7 @@ class GameArtBackdrop extends ConsumerWidget {
                 child: Opacity(opacity: 0.35, child: CoverImage(url: art, radius: 0)),
               ),
             ),
+          if (video != null) Positioned.fill(child: Opacity(opacity: 0.5, child: video)),
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(

@@ -22,6 +22,7 @@ const deText = <String, String>{
   'A download is running. Switching profile stops it.': 'Ein Download läuft. Ein Profilwechsel stoppt ihn.',
   'A game is already running. Close it first.': 'Es läuft bereits ein Spiel. Schließe es zuerst.',
   'A game is running. Close it first.': 'Ein Spiel läuft. Schließe es zuerst.',
+  'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.': 'Das Video eines Spiels aus RomM läuft stumm hinter seiner Seite und im Bildschirmschoner, wenn RomM eines hat. Nie während ein Spiel läuft.',
   'A live list: nothing is downloaded until you put a save on this PC or play it.':
       'Eine Live-Liste: nichts wird heruntergeladen, bis du einen Spielstand auf diesen PC holst oder spielst.',
   'A opens it · any other button goes back': 'A öffnet es · jede andere Taste geht zurück',
@@ -845,6 +846,7 @@ const deText = <String, String>{
   'Username': 'Benutzername',
   'VIRTUAL · {0}': 'VIRTUELL · {0}',
   'Version: {0}  ({1})': 'Version: {0}  ({1})',
+  'Video previews': 'Videovorschauen',
   'Virtual': 'Virtuell',
   'Virtual collections': 'Virtuelle Sammlungen',
   'Virtual · {0}': 'Virtuell · {0}',

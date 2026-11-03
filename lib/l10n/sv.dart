@@ -25,6 +25,7 @@ const svText = <String, String>{
   'A download is running. Switching profile stops it.': 'En nedladdning pågår. Att byta profil stoppar den.',
   'A game is already running. Close it first.': 'Ett spel körs redan. Stäng det först.',
   'A game is running. Close it first.': 'Ett spel körs. Stäng det först.',
+  'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.': 'Ett spels video från RomM spelas utan ljud bakom dess sida och i skärmsläckaren, när RomM har en. Aldrig medan ett spel körs.',
   'A live list: nothing is downloaded until you put a save on this PC or play it.':
       'En levande lista: inget laddas ner förrän du lägger en sparfil på den här datorn eller spelar den.',
   'A opens it · any other button goes back': 'A öppnar det · alla andra knappar går tillbaka',
@@ -840,6 +841,7 @@ const svText = <String, String>{
   'Username': 'Användarnamn',
   'VIRTUAL · {0}': 'VIRTUELLA · {0}',
   'Version: {0}  ({1})': 'Version: {0}  ({1})',
+  'Video previews': 'Videoförhandsvisningar',
   'Virtual': 'Virtuella',
   'Virtual collections': 'Virtuella samlingar',
   'Virtual · {0}': 'Virtuell · {0}',

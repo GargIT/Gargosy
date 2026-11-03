@@ -18,6 +18,8 @@ import 'teach_quit_buttons.dart';
 import '../../../l10n/tr.dart';
 import '../../../providers/notification_providers.dart';
 import '../../../library/notifications.dart' show NotificationSettings;
+import '../../../providers/video_providers.dart';
+import '../../../library/game_videos.dart' show VideoPreviews;
 
 /// Settings → Controller: the stick deadzone and quitting a game with
 /// held buttons (#141) and teaching them to a controller (#171), this PC's, for
@@ -263,6 +265,18 @@ class _DisplaySectionState extends ConsumerState<DisplaySection> {
               if (i == null || i < 0) return;
               await ref.read(appPreferencesProvider).setString(TextSize.prefKey, '${choices[i]}');
               ref.invalidate(textSizeProvider);
+            },
+          ),
+          // #238: a game's video behind its page and the screensaver.
+          SettingsToggle(
+            label: tr('Video previews'),
+            note: tr(
+              'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.',
+            ),
+            on: ref.watch(videoPreviewsOnProvider),
+            onChanged: (on) async {
+              await ref.read(appPreferencesProvider).setBool(VideoPreviews.prefKey, on);
+              ref.invalidate(videoPreviewsOnProvider);
             },
           ),
           // #241: what happened unseen, said after a game.

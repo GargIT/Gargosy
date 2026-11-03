@@ -6,6 +6,15 @@ import 'save_target_layout.dart';
 export 'romm_config.dart';
 export 'save_target_layout.dart';
 
+/// #238: RomM's `path_video`, else ScreenScraper's `ss_metadata.video_path`.
+String? _videoPathOf(Map<String, dynamic> json) {
+  final top = json['path_video'];
+  if (top is String && top.isNotEmpty) return top;
+  final ss = json['ss_metadata'];
+  final nested = ss is Map ? ss['video_path'] : null;
+  return nested is String && nested.isNotEmpty ? nested : null;
+}
+
 class Game {
   final String id;
   final String name;
@@ -54,6 +63,12 @@ class Game {
   final List<GameVersion> siblings; // RomM's other versions of this game (regions, revisions)
   final GameOverview overview; // age ratings, HowLongToBeat, IGDB's related games (#179)
   final String? pathManual; // the manual in RomM's resources, e.g. roms/4/123/manual/123.pdf (#232)
+
+  /// #238: the game's gameplay video RomM keeps (ScreenScraper's, an MP4 in
+  /// its resources), when RomM scans video media.
+  final String? pathVideo;
+
+  bool get hasVideo => pathVideo != null && pathVideo!.toLowerCase().endsWith('.mp4');
   final List<String> userScreenshots; // the player's own on RomM (user_screenshots' download_path, #233)
 
   bool get isMultiFile => hasMultipleFiles;
@@ -128,6 +143,7 @@ class Game {
     this.siblings = const [],
     this.overview = GameOverview.empty,
     this.pathManual,
+    this.pathVideo,
     this.userScreenshots = const [],
   });
 
@@ -188,6 +204,7 @@ class Game {
           for (final s in json['user_screenshots'] as List)
             if (s is Map && s['download_path'] is String && s['missing_from_fs'] != true) s['download_path'] as String,
       ],
+      pathVideo: _videoPathOf(json),
       pathManual: json['path_manual'] is String && (json['path_manual'] as String).isNotEmpty
           ? json['path_manual'] as String
           : null,
@@ -261,6 +278,7 @@ class Game {
       'created_at': createdAt?.toIso8601String(),
       'hltb_metadata': {'main_story': hltbMainStory},
       'path_manual': pathManual,
+      'path_video': pathVideo,
       'user_screenshots': [
         for (final s in userScreenshots) {'download_path': s},
       ],

@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Video previews: a game whose video RomM has (ScreenScraper's, when RomM
+  scans video media) plays it muted behind its page after a moment, and
+  the screensaver shows it once it's on this PC. Settings → Display →
+  Video previews turns them off.
 - Gargosy in Finnish: Settings → Display → Language → Suomi, and System
   picks it on a Finnish Windows. The on-screen keyboard has å, ö and ä.
 - Gargosy in Danish: Settings → Display → Language → Dansk, and System

@@ -25,6 +25,7 @@ const nbText = <String, String>{
   'A download is running. Switching profile stops it.': 'En nedlasting pågår. Å bytte profil stopper den.',
   'A game is already running. Close it first.': 'Et spill kjører allerede. Lukk det først.',
   'A game is running. Close it first.': 'Et spill kjører. Lukk det først.',
+  'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.': 'Et spills video fra RomM spilles uten lyd bak siden og i skjermspareren, når RomM har en. Aldri mens et spill kjører.',
   'A live list: nothing is downloaded until you put a save on this PC or play it.':
       'En levende liste: ingenting lastes ned før du legger en lagringsfil på denne PC-en eller spiller den.',
   'A opens it · any other button goes back': 'A åpner den · alle andre knapper går tilbake',
@@ -838,6 +839,7 @@ const nbText = <String, String>{
   'Username': 'Brukernavn',
   'VIRTUAL · {0}': 'VIRTUELL · {0}',
   'Version: {0}  ({1})': 'Versjon: {0}  ({1})',
+  'Video previews': 'Videoforhåndsvisninger',
   'Virtual': 'Virtuell',
   'Virtual collections': 'Virtuelle samlinger',
   'Virtual · {0}': 'Virtuell · {0}',

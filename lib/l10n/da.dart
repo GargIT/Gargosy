@@ -25,6 +25,7 @@ const daText = <String, String>{
   'A download is running. Switching profile stops it.': 'En download er i gang. Skift af profil stopper den.',
   'A game is already running. Close it first.': 'Et spil kører allerede. Luk det først.',
   'A game is running. Close it first.': 'Et spil kører. Luk det først.',
+  'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.': 'Et spils video fra RomM afspilles uden lyd bag dets side og i pauseskærmen, når RomM har en. Aldrig mens et spil kører.',
   'A live list: nothing is downloaded until you put a save on this PC or play it.':
       'En levende liste: intet downloades, før du lægger en gemmefil på denne pc eller spiller den.',
   'A opens it · any other button goes back': 'A åbner den · enhver anden knap går tilbage',
@@ -840,6 +841,7 @@ const daText = <String, String>{
   'Username': 'Brugernavn',
   'VIRTUAL · {0}': 'VIRTUEL · {0}',
   'Version: {0}  ({1})': 'Version: {0}  ({1})',
+  'Video previews': 'Videoeksempler',
   'Virtual': 'Virtuel',
   'Virtual collections': 'Virtuelle samlinger',
   'Virtual · {0}': 'Virtuel · {0}',

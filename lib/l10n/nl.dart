@@ -23,6 +23,7 @@ const nlText = <String, String>{
   'A download is running. Switching profile stops it.': 'Er loopt een download. Van profiel wisselen stopt hem.',
   'A game is already running. Close it first.': 'Er draait al een spel. Sluit het eerst.',
   'A game is running. Close it first.': 'Er draait een spel. Sluit het eerst.',
+  'A game\'s video from RomM plays muted behind its page and in the screensaver, when RomM has one. Never while a game runs.': 'De video van een spel uit RomM speelt zonder geluid achter zijn pagina en in de schermbeveiliging, als RomM er een heeft. Nooit terwijl een spel draait.',
   'A live list: nothing is downloaded until you put a save on this PC or play it.':
       'Een live lijst: niets wordt gedownload tot je een savebestand op deze pc zet of het speelt.',
   'A opens it · any other button goes back': 'A opent het · elke andere knop gaat terug',
@@ -840,6 +841,7 @@ const nlText = <String, String>{
   'Username': 'Gebruikersnaam',
   'VIRTUAL · {0}': 'VIRTUEEL · {0}',
   'Version: {0}  ({1})': 'Versie: {0}  ({1})',
+  'Video previews': 'Videovoorbeelden',
   'Virtual': 'Virtueel',
   'Virtual collections': 'Virtuele collecties',
   'Virtual · {0}': 'Virtueel · {0}',
