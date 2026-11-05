@@ -409,39 +409,39 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Sounds (#237)
 
-151. [ ] Settings → Display → Sounds on: a sound plays. With a controller, moving, A, B and LB/RB each have their own; the mouse makes none when it moves focus. Holding the D-pad down a long list gives quick, even ticks, and opening a page makes one sound, not two. Volume 25 % is quieter than 100 %, and 100 % isn't loud. Off: nothing.
+151. [x] Settings → Display → Sounds on: a sound plays. With a controller, moving, A, B and LB/RB each have their own; the mouse makes none when it moves focus. Holding the D-pad down a long list gives quick, even ticks, and opening a page makes one sound, not two. Volume 25 % is quieter than 100 %, and 100 % isn't loud. Off: nothing.
 
-152. [ ] With sounds on, start a download and go to another page: when it finishes, the download sound plays. A failed download, or something refused (Delete from RomM while offline, a download that doesn't fit), plays the error sound. Start a game with a download running: nothing is heard over the emulator. Typing in a search box makes no sound; with the keyboard, the arrows, Enter, Escape and PgUp/PgDn sound only when they do something.
+152. [x] With sounds on, start a download and go to another page: when it finishes, the download sound plays. A failed download, or something refused (Delete from RomM while offline, a download that doesn't fit), plays the error sound. Start a game with a download running: nothing is heard over the emulator. Typing in a search box makes no sound; with the keyboard, the arrows, Enter, Escape and PgUp/PgDn sound only when they do something.
 
 ## Text size (#240)
 
-153. [ ] At 1280 × 720 (or Windows' display at that size), Settings → Display → Text size 150 %: every text is larger at once. Walk Home (header, Random pick and On this day, Playing now, the rows), a platform's gallery, Collections, Search, a game page and its tabs, the play screen's three panels, Settings' sections (Emulators' buttons go onto a second line) and a dialog (Delete from RomM): no text is cut off or overlaps, and the controller still reaches everything. 125 % the same; 100 % as before.
+153. [x] At 1280 × 720 (or Windows' display at that size), Settings → Display → Text size 150 %: every text is larger at once. Walk Home (header, Random pick and On this day, Playing now, the rows), a platform's gallery, Collections, Search, a game page and its tabs, the play screen's three panels, Settings' sections (Emulators' buttons go onto a second line) and a dialog (Delete from RomM): no text is cut off or overlaps, and the controller still reaches everything. 125 % the same; 100 % as before.
 
 ## Notifications (#241)
 
-154. [ ] With a game on this PC that another RomM user can play: open Gargosy once (nothing is said about shares made before). That user plays it, saves, shares the save (RomM's web UI or their Gargosy) and quits. Within 5 minutes (sooner with few games on this PC; or at the next start of this profile), a toast says "<name> shared a save of <game>."; a shared state says "save state". Each is said once, not again at the next start.
+154. [x] With a game on this PC that another RomM user can play: open Gargosy once (nothing is said about shares made before). That user plays it, saves, shares the save (RomM's web UI or their Gargosy) and quits. Within 5 minutes (sooner with few games on this PC; or at the next start of this profile), a toast says "<name> shared a save of <game>."; a shared state says "save state". Each is said once, not again at the next start.
 
-155. [ ] Start a download and go to Home: when it finishes, "<game> is downloaded." shows there. Stay on the game's own page for another download: no toast (its button says it). With RomM stopped, play a game so its save waits, start RomM: "Uploaded 1 save that was waiting." Several at once come one after another; several downloads finishing in a row are one toast ("3 downloads finished.").
+155. [x] Start a download and go to Home: when it finishes, "<game> is downloaded." shows there. Stay on the game's own page for another download: no toast (its button says it). With RomM stopped, play a game so its save waits, start RomM: "Uploaded 1 save that was waiting." Several at once come one after another; several downloads finishing in a row are one toast ("3 downloads finished.").
 
-156. [ ] While a game runs, let a download finish: nothing shows over the emulator; when the game ends, the toast comes. Settings → Display → Notifications off: none of these show.
+156. [x] While a game runs, let a download finish: nothing shows over the emulator; when the game ends, the toast comes. Settings → Display → Notifications off: none of these show.
 
 ## More languages (#239)
 
-157. [ ] Settings → Display → Language → Deutsch: every screen is German at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as German. The on-screen keyboard (a search with the controller) has ü, ö, ä and ß. System on a German Windows picks Deutsch; English and Svenska as before.
+157. [x] Settings → Display → Language → Deutsch: every screen is German at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as German. The on-screen keyboard (a search with the controller) has ü, ö, ä and ß. System on a German Windows picks Deutsch; English and Svenska as before.
 
-158. [ ] Settings → Display → Language → Nederlands: every screen is Dutch at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Dutch. The on-screen keyboard has é, ë and ï. System on a Dutch Windows picks Nederlands.
+158. [x] Settings → Display → Language → Nederlands: every screen is Dutch at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Dutch. The on-screen keyboard has é, ë and ï. System on a Dutch Windows picks Nederlands.
 
-159. [ ] Settings → Display → Language → Norsk bokmål: every screen is Norwegian at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Norwegian. The on-screen keyboard has å, ø and æ. System on a Norwegian Windows picks Norsk bokmål, a Nynorsk one too.
+159. [x] Settings → Display → Language → Norsk bokmål: every screen is Norwegian at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Norwegian. The on-screen keyboard has å, ø and æ. System on a Norwegian Windows picks Norsk bokmål, a Nynorsk one too.
 
-160. [ ] Settings → Display → Language → Dansk: every screen is Danish at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Danish. The on-screen keyboard has æ, ø and å. System on a Danish Windows picks Dansk.
+160. [x] Settings → Display → Language → Dansk: every screen is Danish at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Danish. The on-screen keyboard has æ, ø and å. System on a Danish Windows picks Dansk.
 
-161. [ ] Settings → Display → Language → Suomi: every screen is Finnish at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Finnish. The on-screen keyboard has å, ö and ä. System on a Finnish Windows picks Suomi.
+161. [x] Settings → Display → Language → Suomi: every screen is Finnish at once (Home, a gallery, a game page and its tabs, the play screen, Settings, the user menu, a dialog). At 1280 × 720 nothing is cut off; dates read as Finnish. The on-screen keyboard has å, ö and ä. System on a Finnish Windows picks Suomi.
 
 ## Video previews (#238)
 
-162. [ ] On a RomM that scans ScreenScraper video (its media includes video), open a game that has one: after a second and a half its video plays muted behind the page, the art still dimmed over it. Another tab or the play screen stops it; back on Overview it plays again (at once, now it's on this PC). A game without a video looks as before.
+162. [x] On a RomM that scans ScreenScraper video (its media includes video), open a game that has one: after a second and a half its video plays muted behind the page, the art still dimmed over it. Another tab or the play screen stops it; back on Overview it plays again (at once, now it's on this PC). A game without a video looks as before.
 
-163. [ ] Leave Home for the screensaver with games whose videos played before: their slides show the video. Start a game from a page that plays one: it stops. Settings → Display → Video previews off: none play. Videos are kept in `userdata\app\cache\videos\`.
+163. [x] Leave Home for the screensaver with games whose videos played before: their slides show the video. Start a game from a page that plays one: it stops. Settings → Display → Video previews off: none play. Videos are kept in `userdata\app\cache\videos\`.
 
 ## Toasts at the lower right (#241)
 

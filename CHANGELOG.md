@@ -6,6 +6,11 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-05
+
+Sounds, larger text for a TV, notifications, video previews, and Gargosy
+in German, Dutch, Norwegian, Danish and Finnish.
+
 ### Added
 
 - Video previews: a game whose video RomM has (ScreenScraper's, when RomM
@@ -645,7 +650,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.9.0
 [0.8.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.8.0
 [0.7.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.7.0
 [0.6.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.6.0
