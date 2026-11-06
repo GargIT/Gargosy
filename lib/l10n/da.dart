@@ -1098,8 +1098,7 @@ const daText = <String, String>{
       'RomM har installation på enheder slået fra eller er ældre end 5.4.',
   'RomM didn\'t let this login take them: sign in again and pair this PC.':
       'RomM lod ikke dette login modtage dem: log ind igen, og par denne pc.',
-  '{0} was sent from RomM and is downloading.': '{0} blev sendt fra RomM og downloades.',
-  'RomM didn\'t give the game to this PC.': 'RomM gav ikke spillet til denne pc.',
+  '{0} was sent from RomM and is in Downloads.': '{0} blev sendt fra RomM og ligger i Downloads.',
   'The game is above this profile\'s age limit.': 'Spillet er over denne profils aldersgrænse.',
   'The download was cancelled on this PC.': 'Downloaden blev annulleret på denne pc.',
 };

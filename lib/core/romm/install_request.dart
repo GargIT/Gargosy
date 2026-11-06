@@ -1,12 +1,11 @@
 /// RomM's install requests (#288, RomM 5.4): a game the player sent to this
 /// PC from RomM's web page, for Gargosy to download.
 class InstallRequest {
-  const InstallRequest({required this.id, required this.romId, required this.createdAt});
+  const InstallRequest({required this.id, required this.romId});
 
   /// RomM's id of the request, which the report names.
   final String id;
   final String romId;
-  final DateTime? createdAt;
 
   /// One of RomM's requests as `claim` lists it; null when it isn't one.
   static InstallRequest? fromJson(Object? json) {
@@ -14,12 +13,7 @@ class InstallRequest {
     final id = json['id'];
     final rom = json['rom_id'];
     if (id is! String || id.isEmpty || rom is! int) return null;
-    final created = json['created_at'];
-    return InstallRequest(
-      id: id,
-      romId: '$rom',
-      createdAt: created is String ? DateTime.tryParse(created)?.toUtc() : null,
-    );
+    return InstallRequest(id: id, romId: '$rom');
   }
 }
 

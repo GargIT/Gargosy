@@ -1096,8 +1096,7 @@ const nbText = <String, String>{
       'RomM har installering til enheter slått av, eller er eldre enn 5.4.',
   'RomM didn\'t let this login take them: sign in again and pair this PC.':
       'RomM lot ikke denne innloggingen ta imot dem: logg inn på nytt og par denne PC-en.',
-  '{0} was sent from RomM and is downloading.': '{0} ble sendt fra RomM og lastes ned.',
-  'RomM didn\'t give the game to this PC.': 'RomM ga ikke spillet til denne PC-en.',
+  '{0} was sent from RomM and is in Downloads.': '{0} ble sendt fra RomM og ligger i Nedlastinger.',
   'The game is above this profile\'s age limit.': 'Spillet er over denne profilens aldersgrense.',
   'The download was cancelled on this PC.': 'Nedlastingen ble avbrutt på denne PC-en.',
 };

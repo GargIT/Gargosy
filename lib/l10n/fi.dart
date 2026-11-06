@@ -1098,8 +1098,7 @@ const fiText = <String, String>{
   'RomM has installs to devices turned off, or is older than 5.4.':
       'RomMissa asennus laitteisiin on poistettu käytöstä, tai se on vanhempi kuin 5.4.',
   'RomM didn\'t let this login take them: sign in again and pair this PC.': 'RomM ei antanut tämän kirjautumisen vastaanottaa niitä: kirjaudu uudelleen ja muodosta pariliitos tähän tietokoneeseen.',
-  '{0} was sent from RomM and is downloading.': '{0} lähetettiin RomMista ja latautuu.',
-  'RomM didn\'t give the game to this PC.': 'RomM ei antanut peliä tälle tietokoneelle.',
+  '{0} was sent from RomM and is in Downloads.': '{0} lähetettiin RomMista ja on Latauksissa.',
   'The game is above this profile\'s age limit.': 'Peli on tämän profiilin ikärajan yläpuolella.',
   'The download was cancelled on this PC.': 'Lataus peruttiin tällä tietokoneella.',
 };

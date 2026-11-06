@@ -449,7 +449,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Install from RomM (#288)
 
-165. [ ] On a RomM 5.4 with installs on, with a profile signed in by pairing: Settings → Profile shows Install from RomM on. In RomM's web page the PC is offered as a device for a game; send a game not on this PC. Within a minute Gargosy says it was sent from RomM and is downloading; it shows in Downloads, and once done RomM's notification says it's installed.
+165. [ ] On a RomM 5.4 with installs on, with a profile signed in by pairing: Settings → Profile shows Install from RomM on. In RomM's web page the PC is offered as a device for a game; send a game not on this PC. Within a minute Gargosy says it was sent from RomM and is in Downloads, and once done RomM's notification says it's installed.
 
 166. [ ] Send a game already on this PC: nothing downloads and RomM says it was already installed. Send a game above the profile's age limit: nothing downloads and RomM says why it failed. Cancel a sent game in Downloads: RomM says the download was cancelled on this PC.
 

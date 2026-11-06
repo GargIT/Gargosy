@@ -1100,8 +1100,7 @@ const nlText = <String, String>{
       'RomM heeft installeren op apparaten uitgeschakeld, of is ouder dan 5.4.',
   'RomM didn\'t let this login take them: sign in again and pair this PC.':
       'RomM liet deze aanmelding ze niet ontvangen: meld je opnieuw aan en koppel deze pc.',
-  '{0} was sent from RomM and is downloading.': '{0} is vanuit RomM gestuurd en wordt gedownload.',
-  'RomM didn\'t give the game to this PC.': 'RomM heeft de game niet aan deze pc gegeven.',
+  '{0} was sent from RomM and is in Downloads.': '{0} is vanuit RomM gestuurd en staat in Downloads.',
   'The game is above this profile\'s age limit.': 'De game valt boven de leeftijdsgrens van dit profiel.',
   'The download was cancelled on this PC.': 'De download is op deze pc geannuleerd.',
 };

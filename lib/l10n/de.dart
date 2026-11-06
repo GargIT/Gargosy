@@ -1104,8 +1104,7 @@ const deText = <String, String>{
       'RomM hat Installationen auf Geräte ausgeschaltet oder ist älter als 5.4.',
   'RomM didn\'t let this login take them: sign in again and pair this PC.':
       'RomM lässt diese Anmeldung sie nicht empfangen: Melde dich erneut an und kopple diesen PC.',
-  '{0} was sent from RomM and is downloading.': '{0} wurde aus RomM gesendet und wird heruntergeladen.',
-  'RomM didn\'t give the game to this PC.': 'RomM hat das Spiel diesem PC nicht gegeben.',
+  '{0} was sent from RomM and is in Downloads.': '{0} wurde aus RomM gesendet und ist in Downloads.',
   'The game is above this profile\'s age limit.': 'Das Spiel liegt über der Altersgrenze dieses Profils.',
   'The download was cancelled on this PC.': 'Der Download wurde auf diesem PC abgebrochen.',
 };
