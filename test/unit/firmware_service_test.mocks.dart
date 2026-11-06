@@ -135,7 +135,7 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
   ) as _i11.Future<_i3.RommCapabilities>);
 
   @override
-  _i11.Future<String?> registerDevice({
+  _i11.Future<({bool created, String id})?> registerDevice({
     required String? name,
     required String? platform,
     String? hostname,
@@ -151,8 +151,8 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
       #allowExisting: allowExisting,
       #allowDuplicate: allowDuplicate,
     }),
-    returnValue: _i11.Future<String?>.value(),
-  ) as _i11.Future<String?>);
+    returnValue: _i11.Future<({bool created, String id})?>.value(),
+  ) as _i11.Future<({bool created, String id})?>);
 
   @override
   _i11.Future<_i3.Game?> getGame(String? id) =>

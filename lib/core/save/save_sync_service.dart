@@ -593,14 +593,15 @@ class SaveSyncService {
     }
   }
 
-  /// After RomM's [save] was pulled (#293): tells RomM this PC's hash of its
-  /// save as it now is, as the push after a session would upload it (mode
-  /// 'both', the engine's), so RomM's record of this device has its hash and
-  /// not only the server's. The download alone records only RomM's.
-  Future<void> _confirmPulled(SaveStrategy strategy, Game game, String romPath, Map<String, dynamic> save) async {
-    final deviceId = _getDeviceId();
-    if (deviceId == null || deviceId.isEmpty || save['id'] is! int) return;
-    final hash = await _rommHashOf(strategy, game, romPath, 'both');
+  /// After RomM's [save] was pulled (#293): tells RomM this PC has the version
+  /// it [downloaded], by RomM's hash of those bytes, so RomM's record of this
+  /// device has the device's hash and not only the server's (the download
+  /// alone records only RomM's). The bytes, not the files on disk: nothing is
+  /// read again, and a launch that went ahead can't be hashed mid-write. Only
+  /// on a RomM with device sync.
+  Future<void> _confirmPulled(Map<String, dynamic> save, Uint8List downloaded) async {
+    if (!(await _rommService.fetchCapabilities()).hasDeviceSaveSync) return;
+    final hash = rommHashOfUpload(downloaded);
     if (hash != null) await confirmRommCopy(save, hash: hash);
   }
 
@@ -1066,7 +1067,7 @@ class SaveSyncService {
     await _setLastPullTime(game.id);
     if (own) {
       await _recordSyncedRommId(game, strategy, save['id']);
-      await _confirmPulled(strategy, game, romPath, save);
+      await _confirmPulled(save, downloaded);
     }
   }
 
@@ -1624,7 +1625,7 @@ class SaveSyncService {
       if (await _haveRommSave(strategy, game, romPath, save, rommHashOfUpload(bytes))) {
         debugPrint('[SaveSync] [pull] The downloaded save is the one on this PC — kept as it is');
         await _setLastPullTime(game.id);
-        await _confirmPulled(strategy, game, romPath, save);
+        await _confirmPulled(save, downloaded);
         return true;
       }
       // A strategy can take a download and keep nothing of it (DuckStation and
@@ -1645,7 +1646,7 @@ class SaveSyncService {
       }
       if (await _restoredNothing(strategy, game, romPath, before)) return false;
       await _recordSyncedRommId(game, strategy, save['id']);
-      await _confirmPulled(strategy, game, romPath, save);
+      await _confirmPulled(save, downloaded);
       debugPrint('[SaveSync] ─── PULL END ─── restored OK');
       return ok;
     } on io.FileSystemException catch (e) {

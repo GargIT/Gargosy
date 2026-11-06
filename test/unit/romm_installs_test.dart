@@ -88,4 +88,15 @@ void main() {
       'capabilities': {'remote_install': true},
     });
   });
+
+  test('registration says whether RomM made the device now or gave back one it had (#293)', () async {
+    status = 201;
+    body = {'device_id': 'd1'};
+    expect(await romm.registerDevice(name: 'PC', platform: 'Windows', allowDuplicate: true), (id: 'd1', created: true));
+    status = 200;
+    expect(await romm.registerDevice(name: 'PC', platform: 'Windows', allowDuplicate: true), (
+      id: 'd1',
+      created: false,
+    ));
+  });
 }

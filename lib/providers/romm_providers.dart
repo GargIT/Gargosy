@@ -98,13 +98,16 @@ Future<void> registerRommDevice(WidgetRef ref) async {
   final romm = ref.read(rommServiceProvider);
   if (ctx == null || romm == null || ctx.login.hasOwnDevice) return;
   final pc = ref.read(pcIdentityProvider);
-  final id = await romm.registerDevice(
+  final device = await romm.registerDevice(
     name: tr('Gargosy on {0} ({1})', [pc.machineName, ctx.profile.name]),
     platform: 'Windows',
     hostname: pc.machineName,
     allowDuplicate: true,
   );
-  if (id == null || id.isEmpty) return;
-  debugPrint('[RomM] this PC is device $id');
-  await ref.read(activeProfileProvider.notifier).setDeviceId(ctx.profile.id, id);
+  if (device == null) return;
+  // Only a device RomM made now is the profile's own; one it gave back (a RomM
+  // that doesn't know allow_duplicate) may be shared, so it's asked again.
+  debugPrint('[RomM] this PC is device ${device.id}${device.created ? '' : ' (RomM gave back one it had)'}');
+  if (!device.created && device.id == ctx.login.deviceId) return;
+  await ref.read(activeProfileProvider.notifier).setDeviceId(ctx.profile.id, device.id, own: device.created);
 }
