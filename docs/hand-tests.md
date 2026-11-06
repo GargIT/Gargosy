@@ -446,3 +446,11 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Toasts at the lower right (#241)
 
 164. [x] A message (favourite a game while RomM is stopped) and a notification (a download finishing on Home) pop up at the lower right, above the hint bar, raised with a purple edge and a bell; an error has a red edge and icon. Easy to see from the couch, and nothing on the page is hidden behind it that the controller needs.
+
+## Install from RomM (#288)
+
+166. [x] On a RomM 5.4 with installs on, with a profile signed in by pairing: Settings → Profile shows Install from RomM on. In RomM's web page the PC is offered as a device for a game; send a game not on this PC. Within a minute Gargosy says it was sent from RomM and is in Downloads, and once done RomM's notification says it's installed.
+
+167. [x] Send a game already on this PC: nothing downloads and RomM says it was already installed. Send a game above the profile's age limit: nothing downloads and RomM says why it failed. Cancel a sent game in Downloads: RomM says the download was cancelled on this PC.
+
+168. [x] Turn Install from RomM off: RomM no longer offers this PC as a device. A profile signed in with a password says to sign in again and pair this PC.

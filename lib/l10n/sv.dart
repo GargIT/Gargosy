@@ -1089,4 +1089,16 @@ const svText = <String, String>{
   '⊘ Locked': '⊘ Låsta',
   '♥ Favourites': '♥ Favoriter',
   '✓ Earned': '✓ Upplåsta',
+  'Install from RomM': 'Installera från RomM',
+  'Games you send to this PC from RomM\'s web page download here.':
+      'Spel du skickar till den här datorn från RomMs webbsida laddas ner hit.',
+  'Only a profile signed in by pairing can take them: sign in again and pair this PC.':
+      'Bara en profil som loggat in genom parkoppling kan ta emot dem: logga in igen och parkoppla den här datorn.',
+  'RomM has installs to devices turned off, or is older than 5.4.':
+      'RomM har installation till enheter avstängd, eller är äldre än 5.4.',
+  'RomM didn\'t let this login take them: sign in again and pair this PC.':
+      'RomM lät inte den här inloggningen ta emot dem: logga in igen och parkoppla den här datorn.',
+  '{0} was sent from RomM and is in Downloads.': '{0} skickades från RomM och finns i Nedladdningar.',
+  'The game is above this profile\'s age limit.': 'Spelet är över den här profilens åldersgräns.',
+  'The download was cancelled on this PC.': 'Nedladdningen avbröts på den här datorn.',
 };

@@ -1087,4 +1087,16 @@ const nbText = <String, String>{
   '⊘ Locked': '⊘ Låst',
   '♥ Favourites': '♥ Favoritter',
   '✓ Earned': '✓ Låst opp',
+  'Install from RomM': 'Installer fra RomM',
+  'Games you send to this PC from RomM\'s web page download here.':
+      'Spill du sender til denne PC-en fra RomMs nettside, lastes ned hit.',
+  'Only a profile signed in by pairing can take them: sign in again and pair this PC.':
+      'Bare en profil som er logget inn ved paring kan ta imot dem: logg inn på nytt og par denne PC-en.',
+  'RomM has installs to devices turned off, or is older than 5.4.':
+      'RomM har installering til enheter slått av, eller er eldre enn 5.4.',
+  'RomM didn\'t let this login take them: sign in again and pair this PC.':
+      'RomM lot ikke denne innloggingen ta imot dem: logg inn på nytt og par denne PC-en.',
+  '{0} was sent from RomM and is in Downloads.': '{0} ble sendt fra RomM og ligger i Nedlastinger.',
+  'The game is above this profile\'s age limit.': 'Spillet er over denne profilens aldersgrense.',
+  'The download was cancelled on this PC.': 'Nedlastingen ble avbrutt på denne PC-en.',
 };

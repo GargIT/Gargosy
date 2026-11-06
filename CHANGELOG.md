@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Install from RomM: a game sent to this PC from RomM's web page (RomM 5.4)
+  downloads here, and RomM says when it's installed or why it isn't. For a
+  profile signed in by pairing; Settings → Profile → Install from RomM turns
+  it off.
+
 ## [0.9.0] - 2026-11-05
 
 Sounds, larger text for a TV, notifications, video previews, and Gargosy

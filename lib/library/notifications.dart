@@ -29,6 +29,10 @@ class Notice {
   /// Several downloads that finished one after another, in one notice.
   factory Notice.downloadsFinished(int n) => Notice(tr('{0} downloads finished.', [n]), downloads: n);
 
+  /// A game sent to this PC from RomM's web page (#288) went into the queue.
+  factory Notice.sentFromRomm(String gameId, String name) =>
+      Notice(tr('{0} was sent from RomM and is in Downloads.', [name]), gameId: gameId);
+
   factory Notice.uploaded(int n) =>
       Notice(n == 1 ? tr('Uploaded 1 save that was waiting.') : tr('Uploaded {0} saves that were waiting.', [n]));
 
