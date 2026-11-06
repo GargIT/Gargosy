@@ -50,6 +50,38 @@ void main() {
     expect((post.data as Map)['client'], 'Gargosy');
   });
 
+  test('the device asks for its existing registration in the body, where RomM reads it', () async {
+    await romm.registerDevice(name: 'PC', platform: 'windows');
+    final post = sent.singleWhere((o) => o.path == '/api/devices');
+    expect((post.data as Map)['allow_existing'], isTrue);
+    expect(post.queryParameters, isNot(contains('allow_existing')));
+  });
+
+  test("an upload from a device sends its hash, RomM's baseline for that device", () async {
+    final tmp = await io.Directory.systemTemp.createTemp('gargosy_names');
+    addTearDown(() => tmp.delete(recursive: true));
+    final file = io.File(p.join(tmp.path, 'G.srm'))..writeAsStringSync('x');
+    await romm.uploadSave('42', file, deviceId: 'dev-1', contentHash: 'abc');
+    final post = sent.singleWhere((o) => o.method == 'POST' && o.path == '/api/saves');
+    expect(post.queryParameters['device_id'], 'dev-1');
+    expect(post.queryParameters['content_hash'], 'abc');
+  });
+
+  test('an upload without a device sends no hash', () async {
+    final tmp = await io.Directory.systemTemp.createTemp('gargosy_names');
+    addTearDown(() => tmp.delete(recursive: true));
+    final file = io.File(p.join(tmp.path, 'G.srm'))..writeAsStringSync('x');
+    await romm.uploadSave('42', file, contentHash: 'abc');
+    final post = sent.singleWhere((o) => o.method == 'POST' && o.path == '/api/saves');
+    expect(post.queryParameters, isNot(contains('content_hash')));
+  });
+
+  test("confirming a copy sends RomM's hash with the device", () async {
+    await romm.confirmSaveDownloaded(7, deviceId: 'dev-1', contentHash: 'abc');
+    final post = sent.singleWhere((o) => o.path == '/api/saves/7/downloaded');
+    expect(post.data, {'device_id': 'dev-1', 'content_hash': 'abc'});
+  });
+
   test("pruning removes only Gargosy's slot, never saves in Freegosy's old slot", () async {
     saves = [
       for (var i = 1; i <= 3; i++) {'id': i, 'slot': 'gargosy', 'created_at': '2026-10-0${4 - i}T10:00:00Z'},

@@ -586,7 +586,8 @@ class SaveSyncService {
     final id = save['id'];
     final deviceId = _getDeviceId();
     if (id is! int || deviceId == null || deviceId.isEmpty) return;
-    if (!await _rommService.confirmSaveDownloaded(id, deviceId: deviceId)) {
+    final hash = save['content_hash'];
+    if (!await _rommService.confirmSaveDownloaded(id, deviceId: deviceId, contentHash: hash is String ? hash : null)) {
       debugPrint('[SaveSync] RomM wasn\'t told this device has save $id');
     }
   }
@@ -1483,6 +1484,7 @@ class SaveSyncService {
         finalUploadFile,
         emulator: _saveEmulatorTag(strategy, game, emulatorId),
         deviceId: deviceId,
+        contentHash: localHash,
         slot: strategy.uploadSlotFor(game),
         autocleanup: true,
         autocleanupLimit: 5,
