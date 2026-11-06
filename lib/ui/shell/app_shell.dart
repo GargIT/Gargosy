@@ -12,6 +12,7 @@ import '../../core/input/gamepad_service.dart';
 import '../../library/upload_queue.dart';
 import '../../play/outside_launch.dart';
 import '../../play/screenshot_uploads.dart';
+import '../../providers/remote_install_providers.dart';
 import '../../providers/library_providers.dart';
 import '../../play/session_achievements.dart';
 import '../../providers/romm_providers.dart';
@@ -138,6 +139,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final ctx = ref.watch(activeProfileProvider);
     if (ctx == null) return const SizedBox.shrink();
+    // Games sent to this PC from RomM's web page (#288), while the shell is up.
+    ref.watch(remoteInstallsProvider);
     final index = ref.watch(shellTabProvider);
     // A page's top bar chose a tab: its focus follows.
     ref.listen<int>(shellTabProvider, (_, i) {

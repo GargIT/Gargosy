@@ -22,6 +22,7 @@ import '../../widgets/toast.dart';
 import '../login_step.dart';
 import 'age_limit_card.dart';
 import 'play_limit_card.dart';
+import 'remote_install_toggle.dart';
 import 'settings_rows.dart';
 import '../../../l10n/tr.dart';
 
@@ -197,6 +198,7 @@ class ProfileSection extends ConsumerWidget {
               actionIcon: Icons.login,
               onActivate: () => _signInAgain(context, ref, p),
             ),
+            const RemoteInstallToggle(),
           ],
         ),
         SettingsCard(

@@ -1091,4 +1091,17 @@ const nlText = <String, String>{
   '⊘ Locked': '⊘ Vergrendeld',
   '♥ Favourites': '♥ Favorieten',
   '✓ Earned': '✓ Behaald',
+  'Install from RomM': 'Installeren vanuit RomM',
+  'Games you send to this PC from RomM\'s web page download here.':
+      'Games die je vanaf de webpagina van RomM naar deze pc stuurt, worden hier gedownload.',
+  'Only a profile signed in by pairing can take them: sign in again and pair this PC.':
+      'Alleen een profiel dat via koppelen is aangemeld kan ze ontvangen: meld je opnieuw aan en koppel deze pc.',
+  'RomM has installs to devices turned off, or is older than 5.4.':
+      'RomM heeft installeren op apparaten uitgeschakeld, of is ouder dan 5.4.',
+  'RomM didn\'t let this login take them: sign in again and pair this PC.':
+      'RomM liet deze aanmelding ze niet ontvangen: meld je opnieuw aan en koppel deze pc.',
+  '{0} was sent from RomM and is downloading.': '{0} is vanuit RomM gestuurd en wordt gedownload.',
+  'RomM didn\'t give the game to this PC.': 'RomM heeft de game niet aan deze pc gegeven.',
+  'The game is above this profile\'s age limit.': 'De game valt boven de leeftijdsgrens van dit profiel.',
+  'The download was cancelled on this PC.': 'De download is op deze pc geannuleerd.',
 };

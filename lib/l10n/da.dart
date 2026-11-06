@@ -1089,4 +1089,17 @@ const daText = <String, String>{
   '⊘ Locked': '⊘ Låst',
   '♥ Favourites': '♥ Favoritter',
   '✓ Earned': '✓ Låst op',
+  'Install from RomM': 'Installér fra RomM',
+  'Games you send to this PC from RomM\'s web page download here.':
+      'Spil, du sender til denne pc fra RomMs webside, downloades hertil.',
+  'Only a profile signed in by pairing can take them: sign in again and pair this PC.':
+      'Kun en profil, der er logget ind ved parring, kan modtage dem: log ind igen, og par denne pc.',
+  'RomM has installs to devices turned off, or is older than 5.4.':
+      'RomM har installation på enheder slået fra eller er ældre end 5.4.',
+  'RomM didn\'t let this login take them: sign in again and pair this PC.':
+      'RomM lod ikke dette login modtage dem: log ind igen, og par denne pc.',
+  '{0} was sent from RomM and is downloading.': '{0} blev sendt fra RomM og downloades.',
+  'RomM didn\'t give the game to this PC.': 'RomM gav ikke spillet til denne pc.',
+  'The game is above this profile\'s age limit.': 'Spillet er over denne profils aldersgrænse.',
+  'The download was cancelled on this PC.': 'Downloaden blev annulleret på denne pc.',
 };

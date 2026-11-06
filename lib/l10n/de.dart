@@ -1095,4 +1095,17 @@ const deText = <String, String>{
   '⊘ Locked': '⊘ Gesperrt',
   '♥ Favourites': '♥ Favoriten',
   '✓ Earned': '✓ Freigeschaltet',
+  'Install from RomM': 'Aus RomM installieren',
+  'Games you send to this PC from RomM\'s web page download here.':
+      'Spiele, die du auf RomMs Webseite an diesen PC sendest, werden hierher heruntergeladen.',
+  'Only a profile signed in by pairing can take them: sign in again and pair this PC.':
+      'Nur ein Profil, das per Kopplung angemeldet ist, kann sie empfangen: Melde dich erneut an und kopple diesen PC.',
+  'RomM has installs to devices turned off, or is older than 5.4.':
+      'RomM hat Installationen auf Geräte ausgeschaltet oder ist älter als 5.4.',
+  'RomM didn\'t let this login take them: sign in again and pair this PC.':
+      'RomM lässt diese Anmeldung sie nicht empfangen: Melde dich erneut an und kopple diesen PC.',
+  '{0} was sent from RomM and is downloading.': '{0} wurde aus RomM gesendet und wird heruntergeladen.',
+  'RomM didn\'t give the game to this PC.': 'RomM hat das Spiel diesem PC nicht gegeben.',
+  'The game is above this profile\'s age limit.': 'Das Spiel liegt über der Altersgrenze dieses Profils.',
+  'The download was cancelled on this PC.': 'Der Download wurde auf diesem PC abgebrochen.',
 };
