@@ -581,13 +581,14 @@ class SaveSyncService {
   /// without downloading it: the save on this PC is the same bytes. Like a
   /// download, this updates RomM's device sync, so this device's next upload
   /// isn't refused as made from an older save. Does nothing without a device
-  /// id (RomM before device sync); never throws.
-  Future<void> confirmRommCopy(Map<String, dynamic> save) async {
+  /// id (RomM before device sync); never throws. [hash]: this PC's RomM hash
+  /// of its save, only when it was computed (RomM then keeps it as this
+  /// device's baseline); a save matched by its sync record sends none.
+  Future<void> confirmRommCopy(Map<String, dynamic> save, {String? hash}) async {
     final id = save['id'];
     final deviceId = _getDeviceId();
     if (id is! int || deviceId == null || deviceId.isEmpty) return;
-    final hash = save['content_hash'];
-    if (!await _rommService.confirmSaveDownloaded(id, deviceId: deviceId, contentHash: hash is String ? hash : null)) {
+    if (!await _rommService.confirmSaveDownloaded(id, deviceId: deviceId, contentHash: hash)) {
       debugPrint('[SaveSync] RomM wasn\'t told this device has save $id');
     }
   }
@@ -612,7 +613,7 @@ class SaveSyncService {
     if (remote == null || remote.isEmpty) return false;
     if (!await _haveRommSave(strategy, game, romPath, save, remote)) return false;
     debugPrint('[SaveSync] [pull] RomM already has the save on this PC (same content_hash) — nothing to download');
-    await confirmRommCopy(save);
+    await confirmRommCopy(save, hash: remote);
     return true;
   }
 
@@ -1467,7 +1468,8 @@ class SaveSyncService {
 
       // RomM's hash of the upload (a zip by its contents): an unchanged save
       // keeps it even when its emulator rewrote the files.
-      final String localHash = await rommHashOfSaveFile(finalUploadFile) ?? await _hashFile(finalUploadFile);
+      final String? rommHash = await rommHashOfSaveFile(finalUploadFile);
+      final String localHash = rommHash ?? await _hashFile(finalUploadFile);
       final String? storedHash = _getStoredHash(game.id, uploadFilename);
 
       if (!force && storedHash != null && localHash == storedHash) {
@@ -1484,7 +1486,8 @@ class SaveSyncService {
         finalUploadFile,
         emulator: _saveEmulatorTag(strategy, game, emulatorId),
         deviceId: deviceId,
-        contentHash: localHash,
+        // Only RomM's own kind of hash: a zip RomM can't read has none.
+        contentHash: rommHash,
         slot: strategy.uploadSlotFor(game),
         autocleanup: true,
         autocleanupLimit: 5,

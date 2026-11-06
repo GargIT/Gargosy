@@ -746,10 +746,16 @@ void main() {
             overwrite: anyNamed('overwrite'),
             screenshotFile: anyNamed('screenshotFile'),
             overrideFilename: anyNamed('overrideFilename'),
-            contentHash: anyNamed('contentHash'),
+            contentHash: captureAnyNamed('contentHash'),
           ),
         ).captured;
-        expect(captured.first, 'test-device-uuid', reason: 'Device path must pass stored deviceId');
+        expect(captured, contains('test-device-uuid'), reason: 'Device path must pass stored deviceId');
+        // RomM's hash of the upload, the device's baseline for the save.
+        expect(
+          captured,
+          contains(rommHashOfFile(Uint8List.fromList(('x' * 150).codeUnits))),
+          reason: "The upload's RomM hash goes with it",
+        );
 
         await tempDir.delete(recursive: true);
       });
