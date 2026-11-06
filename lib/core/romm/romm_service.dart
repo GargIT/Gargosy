@@ -316,7 +316,9 @@ class RommService extends _RommBase
   // ---------------------------------------------------------------------------
 
   /// Registers this Gargosy install as a device and returns the persistent UUID.
-  /// [allowExisting] = true recovers an existing registration on re-install.
+  /// [allowExisting] = true recovers an existing registration on re-install
+  /// (RomM matches it by hostname and platform). A body field: RomM ignores it
+  /// as a query parameter.
   Future<String?> registerDevice({
     required String name,
     required String platform,
@@ -331,10 +333,10 @@ class RommService extends _RommBase
         'client': 'Gargosy',
         'client_version': clientVersion ?? AppConstants.version,
         'hostname': ?hostname,
+        'allow_existing': allowExisting,
       };
       final response = await _dio.post(
         '/api/devices',
-        queryParameters: allowExisting ? {'allow_existing': 'true'} : null,
         data: body,
         options: _authOptions.copyWith(contentType: 'application/json'),
       );

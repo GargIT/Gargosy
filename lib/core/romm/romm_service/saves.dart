@@ -29,12 +29,15 @@ mixin _RommSaves on _RommBase {
   /// like `duckstation`); RomM's in-browser player only offers saves tagged
   /// with its core. `gargosy` when unknown.
   /// [saved]: RomM's record of the uploaded save (its `id`), when it sent one.
+  /// [contentHash]: this device's hash of the save, which RomM keeps with
+  /// [deviceId] as the version this device last synced (its baseline).
   Future<({bool ok, Map<String, dynamic>? conflict, Map<String, dynamic>? saved})> uploadSave(
     String gameId,
     io.File saveFile, {
     String? emulator,
     String? slot,
     String? deviceId,
+    String? contentHash,
     bool autocleanup = false,
     int autocleanupLimit = 5,
     bool overwrite = false,
@@ -58,6 +61,7 @@ mixin _RommSaves on _RommBase {
       // Autocleanup and overwrite are now available for ALL paths (not just 4.9+).
       // This ensures legacy RomM instances also get proper save management.
       if (deviceId != null) queryParams['device_id'] = deviceId;
+      if (deviceId != null && contentHash != null) queryParams['content_hash'] = contentHash;
       if (autocleanup) {
         queryParams['autocleanup'] = 'true';
         queryParams['autocleanup_limit'] = autocleanupLimit.toString();
@@ -103,12 +107,14 @@ mixin _RommSaves on _RommBase {
   /// Tells RomM that device [deviceId] has save [saveId] (POST
   /// /api/saves/{id}/downloaded), as a download would: RomM's device sync
   /// then doesn't take this device's next upload for a stale one. For a save
-  /// this device already had byte for byte. False when it fails.
-  Future<bool> confirmSaveDownloaded(int saveId, {required String deviceId}) async {
+  /// this device already had byte for byte. [contentHash] is RomM's hash of
+  /// it: without it RomM keeps no baseline for this device's copy. False when
+  /// it fails.
+  Future<bool> confirmSaveDownloaded(int saveId, {required String deviceId, String? contentHash}) async {
     try {
       final response = await _dio.post(
         '/api/saves/$saveId/downloaded',
-        data: {'device_id': deviceId},
+        data: {'device_id': deviceId, 'content_hash': ?contentHash},
         options: _authOptions.copyWith(contentType: 'application/json', validateStatus: (s) => s != null && s < 500),
       );
       return response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300;

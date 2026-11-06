@@ -113,6 +113,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -132,6 +133,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -156,6 +158,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -200,6 +203,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -219,6 +223,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -245,6 +250,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -267,6 +273,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -308,6 +315,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -344,6 +352,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -380,6 +389,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -397,6 +407,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -413,7 +424,9 @@ void main() {
 
       final ok = await service.pushSaves(game, romPath);
       expect(ok, isTrue, reason: 'Should return true (success) even if skipping due to matching hash');
-      verifyNever(mockRommService.uploadSave(any, any, emulator: anyNamed('emulator')));
+      verifyNever(
+        mockRommService.uploadSave(any, any, emulator: anyNamed('emulator'), contentHash: anyNamed('contentHash')),
+      );
 
       await tempDir.delete(recursive: true);
     });
@@ -431,6 +444,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -584,6 +598,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -653,6 +668,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -677,6 +693,7 @@ void main() {
             overwrite: anyNamed('overwrite'),
             screenshotFile: anyNamed('screenshotFile'),
             overrideFilename: anyNamed('overrideFilename'),
+            contentHash: anyNamed('contentHash'),
           ),
         ).captured;
         expect(captured.first, isNull, reason: 'Legacy path must not pass deviceId');
@@ -705,6 +722,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -728,9 +746,16 @@ void main() {
             overwrite: anyNamed('overwrite'),
             screenshotFile: anyNamed('screenshotFile'),
             overrideFilename: anyNamed('overrideFilename'),
+            contentHash: captureAnyNamed('contentHash'),
           ),
         ).captured;
-        expect(captured.first, 'test-device-uuid', reason: 'Device path must pass stored deviceId');
+        expect(captured, contains('test-device-uuid'), reason: 'Device path must pass stored deviceId');
+        // RomM's hash of the upload, the device's baseline for the save.
+        expect(
+          captured,
+          contains(rommHashOfFile(Uint8List.fromList(('x' * 150).codeUnits))),
+          reason: "The upload's RomM hash goes with it",
+        );
 
         await tempDir.delete(recursive: true);
       });
@@ -752,6 +777,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -789,6 +815,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -833,6 +860,7 @@ void main() {
             emulator: anyNamed('emulator'),
             slot: anyNamed('slot'),
             deviceId: anyNamed('deviceId'),
+            contentHash: anyNamed('contentHash'),
             autocleanup: anyNamed('autocleanup'),
             autocleanupLimit: anyNamed('autocleanupLimit'),
             overwrite: anyNamed('overwrite'),
@@ -909,6 +937,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -935,6 +964,7 @@ void main() {
           emulator: captureAnyNamed('emulator'),
           slot: captureAnyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -980,6 +1010,7 @@ void main() {
           emulator: anyNamed('emulator'),
           slot: anyNamed('slot'),
           deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
           autocleanup: anyNamed('autocleanup'),
           autocleanupLimit: anyNamed('autocleanupLimit'),
           overwrite: anyNamed('overwrite'),
@@ -1265,10 +1296,18 @@ void main() {
           'content_hash': rommHashOfFile(local),
         },
       );
-      when(mockRommService.confirmSaveDownloaded(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => true);
+      when(
+        mockRommService.confirmSaveDownloaded(
+          any,
+          deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
+        ),
+      ).thenAnswer((_) async => true);
 
       expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isFalse);
-      verify(mockRommService.confirmSaveDownloaded(79, deviceId: 'dev-1')).called(1);
+      // RomM's hash too: without it RomM keeps no baseline for this device's copy.
+      verify(mockRommService.confirmSaveDownloaded(79, deviceId: 'dev-1', contentHash: rommHashOfFile(local)))
+          .called(1);
     });
 
     for (final (label, capabilities) in [
