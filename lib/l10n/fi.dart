@@ -1101,4 +1101,5 @@ const fiText = <String, String>{
   '{0} was sent from RomM and is in Downloads.': '{0} lähetettiin RomMista ja on Latauksissa.',
   'The game is above this profile\'s age limit.': 'Peli on tämän profiilin ikärajan yläpuolella.',
   'The download was cancelled on this PC.': 'Lataus peruttiin tällä tietokoneella.',
+  'Gargosy on {0} ({1})': 'Gargosy laitteella {0} ({1})',
 };

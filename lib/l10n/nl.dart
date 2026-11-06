@@ -1103,4 +1103,5 @@ const nlText = <String, String>{
   '{0} was sent from RomM and is in Downloads.': '{0} is vanuit RomM gestuurd en staat in Downloads.',
   'The game is above this profile\'s age limit.': 'De game valt boven de leeftijdsgrens van dit profiel.',
   'The download was cancelled on this PC.': 'De download is op deze pc geannuleerd.',
+  'Gargosy on {0} ({1})': 'Gargosy op {0} ({1})',
 };

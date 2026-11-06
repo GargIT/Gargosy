@@ -1310,6 +1310,37 @@ void main() {
           .called(1);
     });
 
+    test("a pull that restores RomM's save tells RomM this PC's hash of it (#293)", () async {
+      when(mockRommService.fetchCapabilities()).thenAnswer((_) async => RommCapabilities(version: '4.9.0'));
+      (await SharedPreferences.getInstance()).setString('romm_device_id', 'dev-1');
+      await File(p.join(retroarchSaves, '$romName.srm')).writeAsBytes(pattern(4096, 3));
+      final remote = pattern(4096, 4);
+      when(mockRommService.getLatestSave(any, deviceId: anyNamed('deviceId'))).thenAnswer(
+        (_) async => {
+          'id': 80,
+          'download_path': 'https://example.test/w.srm',
+          'file_name': '$romName.srm',
+          'emulator': 'mupen64plus_next',
+          'content_hash': rommHashOfFile(remote),
+          // Newer than the save on this PC, so it's pulled.
+          'updated_at': DateTime.now().add(const Duration(hours: 1)).toUtc().toIso8601String(),
+        },
+      );
+      when(mockRommService.downloadSave(any, deviceId: anyNamed('deviceId'))).thenAnswer((_) async => remote);
+      when(
+        mockRommService.confirmSaveDownloaded(
+          any,
+          deviceId: anyNamed('deviceId'),
+          contentHash: anyNamed('contentHash'),
+        ),
+      ).thenAnswer((_) async => true);
+
+      expect(await sync.pullSave(n64Game(), romPath(), emulatorId: 'retroarch'), isTrue);
+      expect(await File(p.join(retroarchSaves, '$romName.srm')).readAsBytes(), remote);
+      verify(mockRommService.confirmSaveDownloaded(80, deviceId: 'dev-1', contentHash: rommHashOfFile(remote)))
+          .called(1);
+    });
+
     for (final (label, capabilities) in [
       ('legacy', RommCapabilities.unknown()),
       ('4.9', RommCapabilities(version: '4.9.0')),

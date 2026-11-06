@@ -12,20 +12,36 @@ import 'pc_identity.dart';
 /// A profile's RomM token on this PC. [kind] is `device` (device pairing) or
 /// `client-token` (made after a password login). The password is never kept.
 /// [deviceId] is this PC as a RomM device: a paired login's own, or one
-/// registered for a password login once the profile opens.
+/// registered for a password login once the profile opens. [ownDevice]: a
+/// registered device made for this profile alone (#293); one registered
+/// before could be shared with another profile of the same RomM user.
 class ProfileLogin {
-  const ProfileLogin({required this.token, required this.kind, this.deviceId});
+  const ProfileLogin({required this.token, required this.kind, this.deviceId, this.ownDevice = false});
 
   final String token;
   final String kind;
   final String? deviceId;
+  final bool ownDevice;
 
-  ProfileLogin withDeviceId(String id) => ProfileLogin(token: token, kind: kind, deviceId: id);
+  /// A paired login's device is its own; a registered one is when [ownDevice].
+  bool get hasOwnDevice => deviceId != null && (kind == 'device' || ownDevice);
 
-  Map<String, dynamic> toJson() => {'token': token, 'kind': kind, if (deviceId != null) 'deviceId': deviceId};
+  ProfileLogin withDeviceId(String id, {bool own = true}) =>
+      ProfileLogin(token: token, kind: kind, deviceId: id, ownDevice: own);
 
-  factory ProfileLogin.fromJson(Map<String, dynamic> json) =>
-      ProfileLogin(token: json['token'] as String, kind: json['kind'] as String, deviceId: json['deviceId'] as String?);
+  Map<String, dynamic> toJson() => {
+    'token': token,
+    'kind': kind,
+    if (deviceId != null) 'deviceId': deviceId,
+    if (ownDevice) 'deviceOwn': true,
+  };
+
+  factory ProfileLogin.fromJson(Map<String, dynamic> json) => ProfileLogin(
+    token: json['token'] as String,
+    kind: json['kind'] as String,
+    deviceId: json['deviceId'] as String?,
+    ownDevice: json['deviceOwn'] == true,
+  );
 }
 
 /// `login.<PC>-<user>-<id>.dpapi` in a profile's folder: one file per PC and

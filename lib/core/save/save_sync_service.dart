@@ -593,6 +593,17 @@ class SaveSyncService {
     }
   }
 
+  /// After RomM's [save] was pulled (#293): tells RomM this PC's hash of its
+  /// save as it now is, as the push after a session would upload it (mode
+  /// 'both', the engine's), so RomM's record of this device has its hash and
+  /// not only the server's. The download alone records only RomM's.
+  Future<void> _confirmPulled(SaveStrategy strategy, Game game, String romPath, Map<String, dynamic> save) async {
+    final deviceId = _getDeviceId();
+    if (deviceId == null || deviceId.isEmpty || save['id'] is! int) return;
+    final hash = await _rommHashOf(strategy, game, romPath, 'both');
+    if (hash != null) await confirmRommCopy(save, hash: hash);
+  }
+
   /// Whether a restore left [strategy]'s save as it was ([before] is its
   /// fingerprint then): the strategy kept nothing of the download, so the
   /// pull counts as not done (no RomM id, no synced mark).
@@ -1053,7 +1064,10 @@ class SaveSyncService {
     );
     if (!ok) throw SaveChoiceException("$filename couldn't be put in place for $emulatorId.");
     await _setLastPullTime(game.id);
-    if (own) await _recordSyncedRommId(game, strategy, save['id']);
+    if (own) {
+      await _recordSyncedRommId(game, strategy, save['id']);
+      await _confirmPulled(strategy, game, romPath, save);
+    }
   }
 
   /// Converts the save [fromEmulatorId] keeps for [game] on this machine
@@ -1610,6 +1624,7 @@ class SaveSyncService {
       if (await _haveRommSave(strategy, game, romPath, save, rommHashOfUpload(bytes))) {
         debugPrint('[SaveSync] [pull] The downloaded save is the one on this PC — kept as it is');
         await _setLastPullTime(game.id);
+        await _confirmPulled(strategy, game, romPath, save);
         return true;
       }
       // A strategy can take a download and keep nothing of it (DuckStation and
@@ -1630,6 +1645,7 @@ class SaveSyncService {
       }
       if (await _restoredNothing(strategy, game, romPath, before)) return false;
       await _recordSyncedRommId(game, strategy, save['id']);
+      await _confirmPulled(strategy, game, romPath, save);
       debugPrint('[SaveSync] ─── PULL END ─── restored OK');
       return ok;
     } on io.FileSystemException catch (e) {

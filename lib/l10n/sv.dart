@@ -1101,4 +1101,5 @@ const svText = <String, String>{
   '{0} was sent from RomM and is in Downloads.': '{0} skickades från RomM och finns i Nedladdningar.',
   'The game is above this profile\'s age limit.': 'Spelet är över den här profilens åldersgräns.',
   'The download was cancelled on this PC.': 'Nedladdningen avbröts på den här datorn.',
+  'Gargosy on {0} ({1})': 'Gargosy på {0} ({1})',
 };

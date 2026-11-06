@@ -1101,4 +1101,5 @@ const daText = <String, String>{
   '{0} was sent from RomM and is in Downloads.': '{0} blev sendt fra RomM og ligger i Downloads.',
   'The game is above this profile\'s age limit.': 'Spillet er over denne profils aldersgrænse.',
   'The download was cancelled on this PC.': 'Downloaden blev annulleret på denne pc.',
+  'Gargosy on {0} ({1})': 'Gargosy på {0} ({1})',
 };

@@ -13,6 +13,13 @@ What changed in each release of Gargosy. The format follows
   profile signed in by pairing; Settings → Profile → Install from RomM turns
   it off.
 
+### Changed
+
+- Each profile signed in with a password is its own device in RomM, named
+  "Gargosy on <PC> (<profile>)": two profiles of one RomM user no longer
+  share one device and its sync records. RomM also keeps this PC's version
+  of a save it pulled, so its per-device records are complete.
+
 ## [0.9.0] - 2026-11-05
 
 Sounds, larger text for a TV, notifications, video previews, and Gargosy

@@ -336,6 +336,7 @@ class RommService extends _RommBase
     String? hostname,
     String? clientVersion,
     bool allowExisting = true,
+    bool allowDuplicate = false,
   }) async {
     try {
       final body = {
@@ -345,6 +346,7 @@ class RommService extends _RommBase
         'client_version': clientVersion ?? AppConstants.version,
         'hostname': ?hostname,
         'allow_existing': allowExisting,
+        if (allowDuplicate) 'allow_duplicate': true,
       };
       final response = await _dio.post(
         '/api/devices',
