@@ -145,6 +145,25 @@ void main() {
       await tempDir.delete(recursive: true);
     });
 
+    test("negotiate is told this PC's save as the push would upload it (#294)", () async {
+      final tempDir = await Directory.systemTemp.createTemp('save_sync_test');
+      addTearDown(() => tempDir.delete(recursive: true));
+      final romPath = p.join(tempDir.path, 'game.gba');
+      final game = Game(id: '42', name: 'game', platformSlug: 'gba', fileSize: 0);
+      final none = await service.negotiateLocal(game, romPath, emulatorId: 'mgba');
+      expect((none?.emulator, none?.slot), ('mgba', 'gargosy'));
+      expect(none?.save, isNull);
+
+      final bytes = Uint8List.fromList(List.filled(150, 120));
+      await File(p.join(tempDir.path, 'game.sav')).writeAsBytes(bytes);
+      final local = (await service.negotiateLocal(game, romPath, emulatorId: 'mgba'))!.save!;
+      expect(local.fileName, 'game.sav');
+      expect(local.contentHash, rommHashOfFile(bytes));
+      expect(local.sizeBytes, 150);
+      expect(local.toJson()['rom_id'], 42);
+      expect(local.toJson()['slot'], 'gargosy');
+    });
+
     test('a push records which RomM save holds this PC\'s save, until the save changes', () async {
       final tempDir = await Directory.systemTemp.createTemp('save_sync_test');
       final romPath = p.join(tempDir.path, 'game.gba');

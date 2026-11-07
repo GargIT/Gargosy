@@ -43,6 +43,7 @@ import 'play_menu.dart';
 import 'play_time.dart';
 import 'pre_launch_pull.dart';
 import 'save_deletion.dart';
+import 'shadow_negotiate.dart';
 import 'state_copies.dart';
 import '../l10n/tr.dart';
 
@@ -432,6 +433,8 @@ class GargosyPlayEngine implements PlayEngine {
     // A moved Gargosy folder: the stored settings point here again first.
     _ref.read(launchDirectoriesProvider)?.repoint(strategy.emulatorId);
     final preparer = PlayPreparer(sync: sync, backups: backups, repository: repo);
+    // What RomM's negotiate would do, logged beside what Gargosy does (#294).
+    final look = await _shadow('launch', game, romPath, strategy.emulatorId, coreOverride);
     if (request != null) {
       await placeChosenSave(
         request,
@@ -445,11 +448,26 @@ class GargosyPlayEngine implements PlayEngine {
           coreOverride: coreOverride,
         ),
       );
+      unawaited(look?.told(describeChoice(request)));
       return;
     }
     await pullBeforeLaunch(
       backUp: () => preparer.backUp(game, romPath, SaveMaker(strategy.emulatorId, coreId: _bareCore(coreOverride))),
-      pull: () => sync.pullSave(game, romPath, emulatorId: strategy.emulatorId, coreOverride: coreOverride),
+      pull: () async {
+        try {
+          final pulled = await sync.pullSave(
+            game,
+            romPath,
+            emulatorId: strategy.emulatorId,
+            coreOverride: coreOverride,
+          );
+          unawaited(look?.told(describePull(pulled)));
+          return pulled;
+        } catch (e) {
+          unawaited(look?.told(describePull(null, e)));
+          rethrow;
+        }
+      },
       markSynced: () => sync.markSaveSynced(
         game,
         romPath,
@@ -463,6 +481,22 @@ class GargosyPlayEngine implements PlayEngine {
       mustFinish: () async => true,
       onProblem: onProblem,
     );
+  }
+
+  /// Asks RomM's negotiate for [game] at [point] (#294): this PC's save
+  /// described under the save lock, the question sent in the background.
+  /// Null when it isn't asked (no device id, RomM offline); never throws.
+  Future<ShadowLook?> _shadow(String point, Game game, String romPath, String emulatorId, String? coreOverride) async {
+    final shadow = _ref.read(shadowNegotiateProvider);
+    final sync = _ref.read(saveSyncServiceProvider);
+    if (shadow == null || sync == null || _ref.read(rommOfflineProvider)) return null;
+    try {
+      final local = await sync.negotiateLocal(game, romPath, emulatorId: emulatorId, coreOverride: coreOverride);
+      return shadow.look(point, game, local);
+    } catch (e) {
+      debugPrint('[Negotiate] $point ${game.displayName}: not asked: $e');
+      return null;
+    }
   }
 
   Future<String> _romPath(Game game) async =>
@@ -664,9 +698,21 @@ class GargosyPlayEngine implements PlayEngine {
     } else {
       unawaited(process.exitCode.then((_) => _played(game, started, DateTime.now(), logged)));
     }
+    // Asked as the emulator exits, before the push takes the save lock (#294).
+    Future<ShadowLook?>? pushLook;
     final finished = service
-        .awaitExitAndSync(session, game, romPath, syncMode: _syncMode, overrideCoreId: coreOverride)
-        .then(_describe)
+        .awaitExitAndSync(
+          session,
+          game,
+          romPath,
+          syncMode: _syncMode,
+          overrideCoreId: coreOverride,
+          onExited: () => pushLook = _shadow('push', game, romPath, strategy.emulatorId, coreOverride),
+        )
+        .then((r) {
+          unawaited(pushLook?.then((look) => look?.told(describePush(r))));
+          return _describe(r);
+        })
         .whenComplete(() async {
           // Queued before the session counts as over, so a `--play` that
           // quits Gargosy after it doesn't lose them; sent in the background.

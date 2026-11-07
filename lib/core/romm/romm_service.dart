@@ -14,6 +14,7 @@ import '../platform/platform_info.dart';
 import 'install_request.dart';
 import 'romm_models.dart';
 import 'romm_state.dart';
+import 'sync_negotiate.dart';
 
 part 'romm_service/library.dart';
 part 'romm_service/users.dart';
@@ -24,6 +25,7 @@ part 'romm_service/play.dart';
 part 'romm_service/firmware.dart';
 part 'romm_service/screenshots.dart';
 part 'romm_service/installs.dart';
+part 'romm_service/negotiate.dart';
 
 /// Gargosy: what deleting a game on RomM came to. [notAllowed]: RomM
 /// refused (the user may not delete, or the profile's sign-in predates Gargosy
@@ -52,7 +54,8 @@ class RommService extends _RommBase
         _RommPlay,
         _RommFirmware,
         _RommScreenshots,
-        _RommInstalls
+        _RommInstalls,
+        _RommNegotiate
     implements RommStatesApi {
   @override
   RomMConfig _config;

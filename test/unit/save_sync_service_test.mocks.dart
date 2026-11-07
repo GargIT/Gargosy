@@ -10,15 +10,16 @@ import 'dart:typed_data' as _i12;
 
 import 'package:dio/dio.dart' as _i4;
 import 'package:flutter/foundation.dart' as _i2;
-import 'package:gargosy/core/emulator/emulator_strategy.dart' as _i17;
+import 'package:gargosy/core/emulator/emulator_strategy.dart' as _i18;
 import 'package:gargosy/core/emulator/linux_strategies/linux_environment_strategy.dart' as _i8;
-import 'package:gargosy/core/emulator/strategy_registry.dart' as _i16;
+import 'package:gargosy/core/emulator/strategy_registry.dart' as _i17;
 import 'package:gargosy/core/romm/install_request.dart' as _i14;
 import 'package:gargosy/core/romm/romm_models.dart' as _i3;
 import 'package:gargosy/core/romm/romm_service.dart' as _i9;
 import 'package:gargosy/core/romm/romm_state.dart' as _i5;
+import 'package:gargosy/core/romm/sync_negotiate.dart' as _i15;
 import 'package:gargosy/core/storage/app_preferences.dart' as _i7;
-import 'package:gargosy/core/storage/directory_service.dart' as _i15;
+import 'package:gargosy/core/storage/directory_service.dart' as _i16;
 import 'package:gargosy/core/storage/file_system_index.dart' as _i6;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i10;
@@ -640,12 +641,37 @@ class MockRommService extends _i1.Mock implements _i9.RommService {
     Invocation.method(#setRemoteInstall, [deviceId, on]),
     returnValue: _i11.Future<bool>.value(false),
   ) as _i11.Future<bool>);
+
+  @override
+  _i11.Future<_i15.NegotiateResult?> negotiateSync({
+    required String? deviceId,
+    required List<_i15.NegotiateSave>? saves,
+    required List<String>? romIds,
+    bool? restoreUnlisted = false,
+    List<String>? emulators,
+  }) => (super.noSuchMethod(
+    Invocation.method(#negotiateSync, [], {
+      #deviceId: deviceId,
+      #saves: saves,
+      #romIds: romIds,
+      #restoreUnlisted: restoreUnlisted,
+      #emulators: emulators,
+    }),
+    returnValue: _i11.Future<_i15.NegotiateResult?>.value(),
+  ) as _i11.Future<_i15.NegotiateResult?>);
+
+  @override
+  _i11.Future<void> completeSync(int? sessionId, {int? completed = 0, int? failed = 0}) => (super.noSuchMethod(
+    Invocation.method(#completeSync, [sessionId], {#completed: completed, #failed: failed}),
+    returnValue: _i11.Future<void>.value(),
+    returnValueForMissingStub: _i11.Future<void>.value(),
+  ) as _i11.Future<void>);
 }
 
 /// A class which mocks [DirectoryService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDirectoryService extends _i1.Mock implements _i15.DirectoryService {
+class MockDirectoryService extends _i1.Mock implements _i16.DirectoryService {
   MockDirectoryService() {
     _i1.throwOnMissingStub(this);
   }
@@ -975,7 +1001,7 @@ class MockDirectoryService extends _i1.Mock implements _i15.DirectoryService {
 /// A class which mocks [StrategyRegistry].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockStrategyRegistry extends _i1.Mock implements _i16.StrategyRegistry {
+class MockStrategyRegistry extends _i1.Mock implements _i17.StrategyRegistry {
   MockStrategyRegistry() {
     _i1.throwOnMissingStub(this);
   }
@@ -985,16 +1011,16 @@ class MockStrategyRegistry extends _i1.Mock implements _i16.StrategyRegistry {
       (super.noSuchMethod(Invocation.getter(#coreOverrides), returnValue: <String, String>{}) as Map<String, String>);
 
   @override
-  List<_i17.EmulatorStrategy> get allStrategies =>
-      (super.noSuchMethod(Invocation.getter(#allStrategies), returnValue: <_i17.EmulatorStrategy>[])
-          as List<_i17.EmulatorStrategy>);
+  List<_i18.EmulatorStrategy> get allStrategies =>
+      (super.noSuchMethod(Invocation.getter(#allStrategies), returnValue: <_i18.EmulatorStrategy>[])
+          as List<_i18.EmulatorStrategy>);
 
   @override
-  Map<String, ({List<String> mergedSlugs, List<_i17.EmulatorStrategy> strategies})> detectConflicts() =>
+  Map<String, ({List<String> mergedSlugs, List<_i18.EmulatorStrategy> strategies})> detectConflicts() =>
       (super.noSuchMethod(
         Invocation.method(#detectConflicts, []),
-        returnValue: <String, ({List<String> mergedSlugs, List<_i17.EmulatorStrategy> strategies})>{},
-      ) as Map<String, ({List<String> mergedSlugs, List<_i17.EmulatorStrategy> strategies})>);
+        returnValue: <String, ({List<String> mergedSlugs, List<_i18.EmulatorStrategy> strategies})>{},
+      ) as Map<String, ({List<String> mergedSlugs, List<_i18.EmulatorStrategy> strategies})>);
 
   @override
   String? getPreferredEmulatorId(String? slug) =>
@@ -1075,19 +1101,19 @@ class MockStrategyRegistry extends _i1.Mock implements _i16.StrategyRegistry {
   ) as _i11.Future<void>);
 
   @override
-  _i17.EmulatorStrategy? getStrategyForSlug(String? platformSlug, {String? gameId}) =>
+  _i18.EmulatorStrategy? getStrategyForSlug(String? platformSlug, {String? gameId}) =>
       (super.noSuchMethod(Invocation.method(#getStrategyForSlug, [platformSlug], {#gameId: gameId}))
-          as _i17.EmulatorStrategy?);
+          as _i18.EmulatorStrategy?);
 
   @override
-  List<_i17.EmulatorStrategy> getAllStrategiesForSlug(String? platformSlug) => (super.noSuchMethod(
+  List<_i18.EmulatorStrategy> getAllStrategiesForSlug(String? platformSlug) => (super.noSuchMethod(
     Invocation.method(#getAllStrategiesForSlug, [platformSlug]),
-    returnValue: <_i17.EmulatorStrategy>[],
-  ) as List<_i17.EmulatorStrategy>);
+    returnValue: <_i18.EmulatorStrategy>[],
+  ) as List<_i18.EmulatorStrategy>);
 
   @override
-  _i17.EmulatorStrategy? getStrategyById(String? id) =>
-      (super.noSuchMethod(Invocation.method(#getStrategyById, [id])) as _i17.EmulatorStrategy?);
+  _i18.EmulatorStrategy? getStrategyById(String? id) =>
+      (super.noSuchMethod(Invocation.method(#getStrategyById, [id])) as _i18.EmulatorStrategy?);
 
   @override
   void setNdsCore(String? core) =>

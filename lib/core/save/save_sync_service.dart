@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import '../storage/app_preferences.dart';
 import '../romm/romm_models.dart';
 import '../romm/romm_service.dart';
+import '../romm/sync_negotiate.dart';
 import '../storage/directory_service.dart';
 import '../storage/profile_rooted.dart';
 import 'formats/rzip.dart';
@@ -20,6 +21,7 @@ import 'romm_content_hash.dart';
 import 'save_content_hash.dart';
 import 'save_strategy.dart';
 import 'strategy_lock.dart';
+import 'upload_stats.dart';
 import 'strategies/retroarch_save_strategy.dart';
 import 'strategies/dolphin_save_strategy.dart';
 import 'strategies/eden_save_strategy.dart';
@@ -545,6 +547,46 @@ class SaveSyncService {
       }
     }
     return hashes;
+  });
+
+  /// What RomM's negotiate is told of [emulatorId]'s save for [game] (#294,
+  /// asked only to compare): the emulator tag and slot a push uses, and the
+  /// save as the session's push would upload it (mode 'both'): its name, RomM
+  /// hash, newest change and size; no save when there's none on this PC.
+  /// Null when Gargosy has no save strategy for it.
+  Future<({String emulator, String slot, NegotiateSave? save})?> negotiateLocal(
+    Game game,
+    String romPath, {
+    required String emulatorId,
+    String? coreOverride,
+  }) => _lock.run(() async {
+    final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
+    if (strategy == null) return null;
+    final emulator = _saveEmulatorTag(strategy, game, emulatorId);
+    final slot = strategy.uploadSlotFor(game);
+    try {
+      final files = await _uploadFiles(strategy, game, romPath, 'both');
+      final stats = files.isEmpty ? null : await uploadStats(files.keys);
+      if (stats == null) return (emulator: emulator, slot: slot, save: null);
+      final single = files.length == 1 && !await io.FileSystemEntity.isDirectory(files.keys.single.path);
+      final stem = game.displayName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+      return (
+        emulator: emulator,
+        slot: slot,
+        save: NegotiateSave(
+          romId: game.id,
+          fileName: single ? p.basename(files.keys.single.path) : '$stem.zip',
+          slot: slot,
+          emulator: emulator,
+          contentHash: await _rommHashOfFiles(strategy, game, romPath, files),
+          updatedAt: stats.newest,
+          sizeBytes: stats.bytes,
+        ),
+      );
+    } catch (e) {
+      debugPrint('[SaveSync] ${game.displayName}\'s save not described for negotiate: $e');
+      return (emulator: emulator, slot: slot, save: null);
+    }
   });
 
   /// The files a push in [syncMode] uploads: the strategy's, filtered, RZIP

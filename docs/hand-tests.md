@@ -458,3 +458,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## One RomM device per profile (#293)
 
 169. [ ] Two profiles signed in with a password as the same RomM user: open each once. RomM's devices list (its profile page) shows two devices, "Gargosy on <PC> (<profile>)" each; a profile that had the old shared "Gargosy on <PC>" gets its own, the old one stays until deleted in RomM. Play a game in each: saves sync as before.
+
+## Shadow negotiate (#294)
+
+170. [ ] On RomM 5.4, play a game from the play screen and quit. The newest log in `userdata\app\logs\` has two `[Negotiate]` lines for it, `launch` and `push`, each with what RomM would do and what Gargosy did. Starting and saving felt as quick as before.
