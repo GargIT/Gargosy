@@ -457,7 +457,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## One RomM device per profile (#293)
 
-169. [ ] Two profiles signed in with a password as the same RomM user: open each once. RomM's devices list (its profile page) shows two devices, "Gargosy on <PC> (<profile>)" each; a profile that had the old shared "Gargosy on <PC>" gets its own, the old one stays until deleted in RomM. Play a game in each: saves sync as before.
+169. [x] Two profiles signed in with a password as the same RomM user: open each once. RomM's devices list (its profile page) shows two devices, "Gargosy on <PC> (<profile>)" each; a profile that had the old shared "Gargosy on <PC>" gets its own, the old one stays until deleted in RomM. Play a game in each: saves sync as before.
 
 ## Shadow negotiate (#294)
 

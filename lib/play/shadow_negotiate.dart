@@ -27,8 +27,9 @@ typedef NegotiateAsk = Future<NegotiateResult?> Function({
 /// that game only (its scope, `restore_unlisted`, the save's emulator), and
 /// its answer is logged as `[Negotiate]` lines beside what Gargosy then did.
 /// Nothing it says changes anything; it never throws, and the question goes
-/// in the background (the save is described only when no save operation
-/// runs, `SaveSyncService.negotiateLocal`). RomM's session is always
+/// in the background (the save is described under the save lock,
+/// `SaveSyncService.negotiateLocal`: at launch waiting at most 5 s for it,
+/// at the push not at all; a look not asked says so). RomM's session is always
 /// completed, a late answer's too. Once RomM answers it has no negotiate
 /// (before 5.4), it isn't asked again this run.
 class ShadowNegotiate {

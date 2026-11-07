@@ -1,4 +1,5 @@
 // Adapted from Freegosy (MIT, © 2026 abduznik).
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -160,6 +161,34 @@ void main() {
       expect(local.sizeBytes, 150);
       expect(local.toJson()['rom_id'], 42);
       expect(local.toJson()['slot'], 'gargosy');
+    });
+
+    test('negotiate waits for a busy save lock only when told to, and only so long (#294)', () async {
+      final tempDir = await Directory.systemTemp.createTemp('save_sync_test');
+      addTearDown(() => tempDir.delete(recursive: true));
+      final romPath = p.join(tempDir.path, 'game.gba');
+      final game = Game(id: '42', name: 'game', platformSlug: 'gba', fileSize: 0);
+      await File(p.join(tempDir.path, 'game.sav')).writeAsBytes(List.filled(150, 120));
+
+      final release = Completer<void>();
+      final held = service.exclusive(() => release.future);
+      // The push's look: never waits.
+      expect(await service.negotiateLocal(game, romPath, emulatorId: 'mgba'), isNull);
+      // The launch's look: given up on after its wait.
+      expect(
+        await service.negotiateLocal(game, romPath, emulatorId: 'mgba', waitAtMost: const Duration(milliseconds: 50)),
+        isNull,
+      );
+      // And waits for a lock let go in time.
+      final waiting = service.negotiateLocal(
+        game,
+        romPath,
+        emulatorId: 'mgba',
+        waitAtMost: const Duration(seconds: 30),
+      );
+      release.complete();
+      await held;
+      expect((await waiting)!.save!.fileName, 'game.sav');
     });
 
     test('a push records which RomM save holds this PC\'s save, until the save changes', () async {

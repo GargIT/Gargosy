@@ -504,7 +504,17 @@ class GargosyPlayEngine implements PlayEngine {
     final sync = _ref.read(saveSyncServiceProvider);
     if (shadow == null || sync == null || _ref.read(rommOfflineProvider)) return null;
     try {
-      final local = await sync.negotiateLocal(game, romPath, emulatorId: emulatorId, coreOverride: coreOverride);
+      final local = await sync.negotiateLocal(
+        game,
+        romPath,
+        emulatorId: emulatorId,
+        coreOverride: coreOverride,
+        // The launch's pull waits for the lock anyway; the push never waits.
+        waitAtMost: point == 'launch' ? const Duration(seconds: 5) : null,
+      );
+      if (local == null) {
+        debugPrint('[Negotiate] $point ${game.displayName}: not asked (this PC\'s save not described)');
+      }
       return shadow.look(point, game, local);
     } catch (e) {
       debugPrint('[Negotiate] $point ${game.displayName}: not asked: $e');
