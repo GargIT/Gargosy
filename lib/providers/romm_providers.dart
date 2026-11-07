@@ -86,20 +86,28 @@ final rommOfflineProvider = Provider<bool>((ref) {
 
 /// Registers this PC as a RomM device for the active profile, once: a paired
 /// login has its own, a password login has none. RomM then knows which PC a
-/// save, a play session or "now playing" came from. The id stays in the PC's
-/// login file ([ActiveProfileNotifier.setDeviceId]). Offline or refused (an
-/// older RomM, a token without `devices.write`), it's tried at the next start.
+/// save, a play session or "now playing" came from. The device is the
+/// profile's own (#293, `allow_duplicate`, named with the profile): RomM
+/// would otherwise hand two profiles of one RomM user the same device, by
+/// hostname, and so the same sync records. A profile registered before that
+/// gets its own once. The id stays in the PC's login file
+/// ([ActiveProfileNotifier.setDeviceId]). Offline or refused (an older RomM,
+/// a token without `devices.write`), it's tried at the next start.
 Future<void> registerRommDevice(WidgetRef ref) async {
   final ctx = ref.read(activeProfileProvider);
   final romm = ref.read(rommServiceProvider);
-  if (ctx == null || romm == null || ctx.login.deviceId != null) return;
+  if (ctx == null || romm == null || ctx.login.hasOwnDevice) return;
   final pc = ref.read(pcIdentityProvider);
-  final id = await romm.registerDevice(
-    name: tr('Gargosy on {0}', [pc.machineName]),
+  final device = await romm.registerDevice(
+    name: tr('Gargosy on {0} ({1})', [pc.machineName, ctx.profile.name]),
     platform: 'Windows',
     hostname: pc.machineName,
+    allowDuplicate: true,
   );
-  if (id == null || id.isEmpty) return;
-  debugPrint('[RomM] this PC is device $id');
-  await ref.read(activeProfileProvider.notifier).setDeviceId(ctx.profile.id, id);
+  if (device == null) return;
+  // Only a device RomM made now is the profile's own; one it gave back (a RomM
+  // that doesn't know allow_duplicate) may be shared, so it's asked again.
+  debugPrint('[RomM] this PC is device ${device.id}${device.created ? '' : ' (RomM gave back one it had)'}');
+  if (!device.created && device.id == ctx.login.deviceId) return;
+  await ref.read(activeProfileProvider.notifier).setDeviceId(ctx.profile.id, device.id, own: device.created);
 }

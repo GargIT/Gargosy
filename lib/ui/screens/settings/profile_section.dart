@@ -56,7 +56,14 @@ class ProfileSection extends ConsumerWidget {
             expectedUserId: p.rommUserId,
             expectedUsername: p.rommUsername,
             onBack: () => Navigator.of(routeContext).pop(),
-            onLoggedIn: (login, me) async {
+            onLoggedIn: (fresh, me) async {
+              // The same RomM user (LoginStep checks): a password login keeps
+              // the profile's own device, not a new one each time (#293). A
+              // paired login comes with its own.
+              final before = ref.read(activeProfileProvider)?.login;
+              final login = fresh.kind != 'device' && before != null && before.hasOwnDevice
+                  ? fresh.withDeviceId(before.deviceId!)
+                  : fresh;
               await loginStoreForWidget(ref, p).write(ProfilePaths(ref.read(appRootProvider), p.id).guard, login);
               if (routeContext.mounted) Navigator.of(routeContext).pop();
               await ref.read(activeProfileProvider.notifier).activate(p, login);

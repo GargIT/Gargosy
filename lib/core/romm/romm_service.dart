@@ -326,16 +326,19 @@ class RommService extends _RommBase
   // Device registration (RomM 4.9+)
   // ---------------------------------------------------------------------------
 
-  /// Registers this Gargosy install as a device and returns the persistent UUID.
-  /// [allowExisting] = true recovers an existing registration on re-install
-  /// (RomM matches it by hostname and platform). A body field: RomM ignores it
-  /// as a query parameter.
-  Future<String?> registerDevice({
+  /// Registers this Gargosy install as a device and returns its persistent
+  /// UUID, and whether RomM made it now (201) rather than giving back one it
+  /// had (200). [allowExisting] = true recovers an existing registration on
+  /// re-install (RomM matches it by hostname and platform); [allowDuplicate]
+  /// asks for a new one whatever matches (a RomM that doesn't know it gives
+  /// the match back). Body fields: RomM ignores them as query parameters.
+  Future<({String id, bool created})?> registerDevice({
     required String name,
     required String platform,
     String? hostname,
     String? clientVersion,
     bool allowExisting = true,
+    bool allowDuplicate = false,
   }) async {
     try {
       final body = {
@@ -345,6 +348,7 @@ class RommService extends _RommBase
         'client_version': clientVersion ?? AppConstants.version,
         'hostname': ?hostname,
         'allow_existing': allowExisting,
+        if (allowDuplicate) 'allow_duplicate': true,
       };
       final response = await _dio.post(
         '/api/devices',
@@ -353,8 +357,9 @@ class RommService extends _RommBase
       );
       if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
         final deviceId = response.data['device_id']?.toString() ?? response.data['id']?.toString();
-        debugPrint('[RomM] Registered device: $deviceId');
-        return deviceId;
+        debugPrint('[RomM] Registered device: $deviceId (${response.statusCode})');
+        if (deviceId == null || deviceId.isEmpty) return null;
+        return (id: deviceId, created: response.statusCode == 201);
       }
     } catch (e) {
       debugPrint('[RomM] registerDevice error: $e');

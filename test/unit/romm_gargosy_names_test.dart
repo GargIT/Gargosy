@@ -57,6 +57,14 @@ void main() {
     expect(post.queryParameters, isNot(contains('allow_existing')));
   });
 
+  test("a device made for one profile asks RomM for a new one, not the PC's shared one (#293)", () async {
+    await romm.registerDevice(name: 'PC', platform: 'windows', allowDuplicate: true);
+    final post = sent.singleWhere((o) => o.path == '/api/devices');
+    expect((post.data as Map)['allow_duplicate'], isTrue);
+    await romm.registerDevice(name: 'PC', platform: 'windows');
+    expect((sent.last.data as Map), isNot(contains('allow_duplicate')));
+  });
+
   test("an upload from a device sends its hash, RomM's baseline for that device", () async {
     final tmp = await io.Directory.systemTemp.createTemp('gargosy_names');
     addTearDown(() => tmp.delete(recursive: true));

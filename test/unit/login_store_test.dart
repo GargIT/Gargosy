@@ -60,4 +60,17 @@ void main() {
     await store().clear(paths.guard);
     expect(io.File(store().filePath).existsSync(), isFalse);
   });
+
+  test("a registered device is the profile's own only when made for it (#293)", () async {
+    const before = ProfileLogin(token: 't', kind: 'client-token', deviceId: 'shared');
+    expect(before.hasOwnDevice, isFalse, reason: 'registered before #293: maybe shared');
+    final own = before.withDeviceId('mine');
+    expect(own.hasOwnDevice, isTrue);
+    await store().write(paths.guard, own);
+    final back = (await store().read())!;
+    expect((back.deviceId, back.hasOwnDevice), ('mine', true));
+    expect(ProfileLogin.fromJson(before.toJson()).hasOwnDevice, isFalse);
+    expect(const ProfileLogin(token: 't', kind: 'device', deviceId: 'paired').hasOwnDevice, isTrue);
+    expect(const ProfileLogin(token: 't', kind: 'client-token').hasOwnDevice, isFalse);
+  });
 }

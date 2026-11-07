@@ -454,3 +454,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 167. [x] Send a game already on this PC: nothing downloads and RomM says it was already installed. Send a game above the profile's age limit: nothing downloads and RomM says why it failed. Cancel a sent game in Downloads: RomM says the download was cancelled on this PC.
 
 168. [x] Turn Install from RomM off: RomM no longer offers this PC as a device. A profile signed in with a password says to sign in again and pair this PC.
+
+## One RomM device per profile (#293)
+
+169. [ ] Two profiles signed in with a password as the same RomM user: open each once. RomM's devices list (its profile page) shows two devices, "Gargosy on <PC> (<profile>)" each; a profile that had the old shared "Gargosy on <PC>" gets its own, the old one stays until deleted in RomM. Play a game in each: saves sync as before.

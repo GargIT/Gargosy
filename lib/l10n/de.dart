@@ -1107,4 +1107,5 @@ const deText = <String, String>{
   '{0} was sent from RomM and is in Downloads.': '{0} wurde aus RomM gesendet und ist in Downloads.',
   'The game is above this profile\'s age limit.': 'Das Spiel liegt über der Altersgrenze dieses Profils.',
   'The download was cancelled on this PC.': 'Der Download wurde auf diesem PC abgebrochen.',
+  'Gargosy on {0} ({1})': 'Gargosy auf {0} ({1})',
 };
