@@ -461,4 +461,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Shadow negotiate (#294)
 
-170. [ ] On RomM 5.4, play a game from the play screen and quit. The newest log in `userdata\app\logs\` has two `[Negotiate]` lines for it, `launch` and `push`, each with what RomM would do and what Gargosy did. Starting and saving felt as quick as before.
+170. [x] On RomM 5.4, play a game from the play screen and quit. The newest log in `userdata\app\logs\` has two `[Negotiate]` lines for it, `launch` and `push`, each with what RomM would do and what Gargosy did. Starting and saving felt as quick as before.
