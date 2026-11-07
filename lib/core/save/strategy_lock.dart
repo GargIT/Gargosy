@@ -27,9 +27,15 @@ class StrategyLock {
 
   Future<void> _tail = Future<void>.value();
   final Object _held = Object();
+  int _pending = 0;
+
+  /// Whether an operation runs or waits now (Gargosy, #294: a look that
+  /// mustn't wait for one).
+  bool get busy => _pending > 0;
 
   Future<T> run<T>(Future<T> Function() body) {
     if (Zone.current[_held] == true) return body();
+    _pending++;
     final previous = _tail;
     final done = Completer<void>();
     _tail = done.future;
@@ -44,6 +50,9 @@ class StrategyLock {
           slow.cancel();
           return runZoned(body, zoneValues: {_held: true});
         })
-        .whenComplete(() => done.complete());
+        .whenComplete(() {
+          _pending--;
+          done.complete();
+        });
   }
 }
