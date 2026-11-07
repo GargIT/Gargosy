@@ -26,14 +26,18 @@ typedef NegotiateAsk = Future<NegotiateResult?> Function({
 /// pull and before its push, RomM's negotiate is asked what it would do for
 /// that game only (its scope, `restore_unlisted`, the save's emulator), and
 /// its answer is logged as `[Negotiate]` lines beside what Gargosy then did.
-/// Nothing it says changes anything; it never throws or holds Gargosy up
-/// (asked in the background, at most [timeout]). Once RomM answers it has no
-/// negotiate (before 5.4), it isn't asked again this run.
+/// Nothing it says changes anything; it never throws, and the question goes
+/// in the background (the save is described only when no save operation
+/// runs, `SaveSyncService.negotiateLocal`). RomM's session is always
+/// completed, a late answer's too. Once RomM answers it has no negotiate
+/// (before 5.4), it isn't asked again this run.
 class ShadowNegotiate {
   ShadowNegotiate({required this.ask, required this.complete, this.timeout = const Duration(seconds: 15)});
 
   final NegotiateAsk ask;
   final Future<void> Function(int sessionId) complete;
+
+  /// How long [ShadowLook.told] waits for the answer to log it.
   final Duration timeout;
   bool _off = false;
 
@@ -41,43 +45,54 @@ class ShadowNegotiate {
   /// logs it beside what Gargosy did. Null when there's nothing to ask.
   ShadowLook? look(String point, Game game, NegotiateLocal? local) {
     if (_off || local == null) return null;
-    final answer = ask(saves: [?local.save], romIds: [game.id], emulators: [local.emulator])
-        .timeout(timeout)
-        .then<NegotiateResult?>(
-          (r) {
-            if (r == null && !_off) {
-              _off = true;
-              debugPrint('[Negotiate] RomM has no negotiate (older than 5.4): not asked again');
-            }
-            return r;
-          },
-          onError: (Object e) {
-            debugPrint('[Negotiate] $point ${game.displayName}: RomM could not be asked: $e');
-            return null;
-          },
-        );
-    return ShadowLook._(point, game, local, answer, complete);
+    final answer = ask(saves: [?local.save], romIds: [game.id], emulators: [local.emulator]).then<NegotiateResult?>(
+      (r) {
+        if (r == null && !_off) {
+          _off = true;
+          debugPrint('[Negotiate] RomM has no negotiate (older than 5.4): not asked again');
+        }
+        return r;
+      },
+      onError: (Object e) {
+        debugPrint('[Negotiate] $point ${game.displayName}: RomM could not be asked: $e');
+        return null;
+      },
+    );
+    return ShadowLook._(point, game, local, answer, complete, timeout);
   }
 }
 
 /// One question to negotiate, waiting for what Gargosy did.
 class ShadowLook {
-  ShadowLook._(this.point, this.game, this.local, this._answer, this._complete);
+  ShadowLook._(this.point, this.game, this.local, this._answer, this._complete, this._timeout);
 
   final String point;
   final Game game;
   final NegotiateLocal local;
   final Future<NegotiateResult?> _answer;
   final Future<void> Function(int) _complete;
+  final Duration _timeout;
+  bool _told = false;
 
   /// RomM's answer, once it came (for tests).
   Future<NegotiateResult?> get answer => _answer;
 
-  /// Logs RomM's answer beside [gargosyDid], then closes RomM's session.
-  /// Never throws.
+  /// Logs RomM's answer beside [gargosyDid], then completes RomM's session.
+  /// Only the first call counts (a later one says the launch or push
+  /// stopped). An answer later than the timeout isn't logged, but its
+  /// session is still completed. Never throws.
   Future<void> told(String gargosyDid) async {
+    if (_told) return;
+    _told = true;
+    final NegotiateResult? r;
     try {
-      final r = await _answer;
+      r = await _answer.timeout(_timeout);
+    } on TimeoutException {
+      debugPrint('[Negotiate] $point ${game.displayName}: RomM answered too late to compare | Gargosy: $gargosyDid');
+      unawaited(_answer.then((late) => late == null ? null : _complete(late.sessionId)));
+      return;
+    }
+    try {
       if (r == null) return;
       final save = local.save;
       final here = save == null
@@ -112,15 +127,16 @@ String describePull(bool? pulled, [Object? error]) => error != null
     ? 'the pull failed ($error)'
     : pulled == true
     ? "pulled RomM's save"
-    : "kept this PC's save";
+    : "didn't pull (RomM's save is the same, older, or none)";
 
-/// What the push after a session did, in words for the log.
+/// What the push after a session did, in words for the log. A push that
+/// uploaded nothing and one that failed look the same from here.
 String describePush(LaunchResult? r) {
   if (r == null) return 'no session';
   if (r.saveSyncBlocked != null) return 'not pushed (${r.saveSyncBlocked})';
   if (r.saveConflict != null) return 'conflict (RomM has a newer save)';
   if (r.saveUnchanged) return 'nothing to push (RomM has this save)';
-  return r.syncOk ? 'pushed, or nothing to push' : 'push failed';
+  return r.syncOk ? 'pushed' : 'nothing pushed (no save to upload, or the push failed)';
 }
 
 /// The open profile's shadow negotiate: only with a device id and RomM.

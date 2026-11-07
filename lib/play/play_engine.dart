@@ -436,23 +436,36 @@ class GargosyPlayEngine implements PlayEngine {
     // What RomM's negotiate would do, logged beside what Gargosy does (#294).
     final look = await _shadow('launch', game, romPath, strategy.emulatorId, coreOverride);
     if (request != null) {
-      await placeChosenSave(
-        request,
-        putInPlace: (save) => preparer.prepare(game, romPath, save, target: request.emulator),
-        confirmRommCopy: sync.confirmRommCopy,
-        markSynced: () => sync.markSaveSynced(
-          game,
-          romPath,
-          emulatorId: strategy.emulatorId,
-          syncMode: _syncMode,
-          coreOverride: coreOverride,
-        ),
-      );
+      try {
+        await placeChosenSave(
+          request,
+          putInPlace: (save) => preparer.prepare(game, romPath, save, target: request.emulator),
+          confirmRommCopy: sync.confirmRommCopy,
+          markSynced: () => sync.markSaveSynced(
+            game,
+            romPath,
+            emulatorId: strategy.emulatorId,
+            syncMode: _syncMode,
+            coreOverride: coreOverride,
+          ),
+        );
+      } catch (e) {
+        unawaited(look?.told('the chosen save could not be put in place ($e)'));
+        rethrow;
+      }
       unawaited(look?.told(describeChoice(request)));
       return;
     }
     await pullBeforeLaunch(
-      backUp: () => preparer.backUp(game, romPath, SaveMaker(strategy.emulatorId, coreId: _bareCore(coreOverride))),
+      backUp: () async {
+        try {
+          await preparer.backUp(game, romPath, SaveMaker(strategy.emulatorId, coreId: _bareCore(coreOverride)));
+        } catch (e) {
+          // The pull doesn't run after a failed backup.
+          unawaited(look?.told('no pull: the backup before it failed ($e)'));
+          rethrow;
+        }
+      },
       pull: () async {
         try {
           final pulled = await sync.pullSave(
@@ -714,6 +727,8 @@ class GargosyPlayEngine implements PlayEngine {
           return _describe(r);
         })
         .whenComplete(() async {
+          // A push that threw: told so (the normal answer came first otherwise).
+          unawaited(pushLook?.then((look) => look?.told('the push stopped with an error')));
           // Queued before the session counts as over, so a `--play` that
           // quits Gargosy after it doesn't lose them; sent in the background.
           if (shots != null && shotsDir != null) {

@@ -88,6 +88,22 @@ slot is never paired. `conflict` comes with no resolution.
   to what Gargosy did; nothing changes. The logs say whether negotiate would
   ever decide better.
 
+## Reading the shadow's logs (#294)
+
+Each `[Negotiate]` line is RomM's answer for one game next to what Gargosy
+did. Its limits:
+
+- It's skipped when a save operation runs or waits (the upload queue, a
+  push), so it never holds a launch or a push up; a gap in the logs is that.
+- The question goes out just before Gargosy's own pull or push. RomM
+  usually answers first, but if Gargosy's download or upload reaches RomM
+  before it, RomM answers from the state after Gargosy's change.
+- `file_size_bytes` is the files' own size; a bundle uploads as a zip, so
+  RomM's size differs. RomM doesn't decide by size.
+- At exit the save is gathered and hashed once for the shadow and again for
+  the push.
+- "nothing pushed" covers both no save to upload and a failed push.
+
 ## When to look again
 
 - Shadow logs show RomM deciding better than Gargosy (a conflict Gargosy

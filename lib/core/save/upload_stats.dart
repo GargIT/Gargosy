@@ -15,7 +15,10 @@ Future<({DateTime newest, int bytes})?> uploadStats(Iterable<io.File> entries) a
     try {
       if (await io.FileSystemEntity.isDirectory(entry.path)) {
         await for (final f in io.Directory(entry.path).list(recursive: true, followLinks: false)) {
-          if (f is io.File) count(await f.stat());
+          if (f is! io.File) continue;
+          final stat = await f.stat();
+          // A locked or vanished file is left out, the rest still counted.
+          if (stat.type != io.FileSystemEntityType.notFound) count(stat);
         }
       } else {
         final stat = await entry.stat();

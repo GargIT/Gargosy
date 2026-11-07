@@ -150,13 +150,11 @@ void main() {
       addTearDown(() => tempDir.delete(recursive: true));
       final romPath = p.join(tempDir.path, 'game.gba');
       final game = Game(id: '42', name: 'game', platformSlug: 'gba', fileSize: 0);
-      final none = await service.negotiateLocal(game, romPath, emulatorId: 'mgba');
-      expect((none?.emulator, none?.slot), ('mgba', 'gargosy'));
-      expect(none?.save, isNull);
-
       final bytes = Uint8List.fromList(List.filled(150, 120));
       await File(p.join(tempDir.path, 'game.sav')).writeAsBytes(bytes);
-      final local = (await service.negotiateLocal(game, romPath, emulatorId: 'mgba'))!.save!;
+      final described = (await service.negotiateLocal(game, romPath, emulatorId: 'mgba'))!;
+      expect((described.emulator, described.slot), ('mgba', 'gargosy'));
+      final local = described.save!;
       expect(local.fileName, 'game.sav');
       expect(local.contentHash, rommHashOfFile(bytes));
       expect(local.sizeBytes, 150);

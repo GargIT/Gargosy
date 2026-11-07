@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -6,6 +7,7 @@ import 'package:gargosy/core/emulator/game_launch_service.dart';
 import 'package:gargosy/core/romm/romm_models.dart';
 import 'package:gargosy/core/romm/romm_service.dart';
 import 'package:gargosy/core/romm/sync_negotiate.dart';
+import 'package:gargosy/core/save/strategy_lock.dart';
 import 'package:gargosy/core/save/upload_stats.dart';
 import 'package:gargosy/play/shadow_negotiate.dart';
 import 'package:path/path.dart' as p;
@@ -77,9 +79,31 @@ void main() {
       expect(completed, isEmpty);
     });
 
+    test('only the first word on what Gargosy did counts', () async {
+      final look = make().look('push', _game(), (emulator: 'mgba', slot: 'gargosy', save: null))!;
+      await look.told('pushed');
+      await look.told('the push stopped with an error');
+      expect(completed, [5]);
+    });
+
+    test("an answer later than the wait isn't logged, but its session is still completed", () async {
+      final late = Completer<NegotiateResult?>();
+      answer = () => late.future;
+      final shadow = ShadowNegotiate(
+        ask: ({required saves, required romIds, required emulators}) => answer(),
+        complete: (id) async => completed.add(id),
+        timeout: const Duration(milliseconds: 10),
+      );
+      await shadow.look('launch', _game(), (emulator: 'mgba', slot: 'gargosy', save: null))!.told('x');
+      expect(completed, isEmpty);
+      late.complete(const NegotiateResult(8, []));
+      await Future<void>.delayed(Duration.zero);
+      expect(completed, [8]);
+    });
+
     test("what Gargosy did is said in words", () {
       expect(describePull(true), contains('pulled'));
-      expect(describePull(false), contains('kept'));
+      expect(describePull(false), contains("didn't pull"));
       expect(describePull(null, 'x'), contains('failed'));
       expect(describePush(null), 'no session');
       expect(describePush(LaunchResult(syncOk: true, saveUnchanged: true)), contains('nothing to push'));
@@ -169,5 +193,18 @@ void main() {
     expect(stats.bytes, 18);
     expect(stats.newest, DateTime(2030));
     expect(await uploadStats([File(p.join(dir.path, 'gone'))]), isNull);
+  });
+
+  test('the save lock says when an operation runs or waits', () async {
+    final lock = StrategyLock();
+    expect(lock.busy, isFalse);
+    final gate = Completer<void>();
+    final first = lock.run(() => gate.future);
+    final second = lock.run(() async {});
+    expect(lock.busy, isTrue);
+    gate.complete();
+    await first;
+    await second;
+    expect(lock.busy, isFalse);
   });
 }
