@@ -579,6 +579,8 @@ class SaveSyncService {
       final slot = strategy.uploadSlotFor(game);
       try {
         final files = await _uploadFiles(strategy, game, romPath, 'both');
+        // Given up on while the files were listed: not hashed for nothing.
+        if (givenUp) return null;
         if (files.isEmpty) return (emulator: emulator, slot: slot, save: null);
         // There but unreadable (held by the emulator, a scanner): not described.
         final stats = await uploadStats(files.keys);
