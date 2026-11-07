@@ -554,45 +554,70 @@ class SaveSyncService {
   /// save as the session's push would upload it (mode 'both'): its name, RomM
   /// hash, newest change and size; no save when there's none on this PC.
   /// Null when Gargosy has no save strategy for it, when its files can't be
-  /// read, or (it never waits) when a save operation runs or waits.
+  /// read, or when the save lock isn't free in time. Without [waitAtMost] it
+  /// doesn't wait at all (the push: a session's end mustn't wait); with it,
+  /// at most that long (the launch: the pull after it waits for the lock
+  /// anyway, and the saves are often being read as a game starts). A
+  /// description given up on isn't made once the lock comes.
   Future<({String emulator, String slot, NegotiateSave? save})?> negotiateLocal(
     Game game,
     String romPath, {
     required String emulatorId,
     String? coreOverride,
-  }) async => _lock.busy
-      ? null
-      : _lock.run(() async {
-          final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
-          if (strategy == null) return null;
-          final emulator = _saveEmulatorTag(strategy, game, emulatorId);
-          final slot = strategy.uploadSlotFor(game);
-          try {
-            final files = await _uploadFiles(strategy, game, romPath, 'both');
-            if (files.isEmpty) return (emulator: emulator, slot: slot, save: null);
-            // There but unreadable (held by the emulator, a scanner): not described.
-            final stats = await uploadStats(files.keys);
-            if (stats == null) return null;
-            final single = files.length == 1 && !await io.FileSystemEntity.isDirectory(files.keys.single.path);
-            final stem = game.displayName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
-            return (
-              emulator: emulator,
-              slot: slot,
-              save: NegotiateSave(
-                romId: game.id,
-                fileName: single ? p.basename(files.keys.single.path) : '$stem.zip',
-                slot: slot,
-                emulator: emulator,
-                contentHash: await _rommHashOfFiles(strategy, game, romPath, files),
-                updatedAt: stats.newest,
-                sizeBytes: stats.bytes,
-              ),
-            );
-          } catch (e) {
-            debugPrint('[SaveSync] ${game.displayName}\'s save not described for negotiate: $e');
-            return null;
-          }
-        });
+    Duration? waitAtMost,
+  }) async {
+    if (waitAtMost == null && _lock.busy) {
+      debugPrint('[SaveSync] ${game.displayName}\'s save not described for negotiate: another save operation runs');
+      return null;
+    }
+    var givenUp = false;
+    final described = _lock.run(() async {
+      if (givenUp) return null;
+      final strategy = _saveStrategyFor(game, emulatorId, coreOverride: coreOverride);
+      if (strategy == null) return null;
+      final emulator = _saveEmulatorTag(strategy, game, emulatorId);
+      final slot = strategy.uploadSlotFor(game);
+      try {
+        final files = await _uploadFiles(strategy, game, romPath, 'both');
+        // Given up on while the files were listed: not hashed for nothing.
+        if (givenUp) return null;
+        if (files.isEmpty) return (emulator: emulator, slot: slot, save: null);
+        // There but unreadable (held by the emulator, a scanner): not described.
+        final stats = await uploadStats(files.keys);
+        if (stats == null) return null;
+        final single = files.length == 1 && !await io.FileSystemEntity.isDirectory(files.keys.single.path);
+        final stem = game.displayName.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_');
+        return (
+          emulator: emulator,
+          slot: slot,
+          save: NegotiateSave(
+            romId: game.id,
+            fileName: single ? p.basename(files.keys.single.path) : '$stem.zip',
+            slot: slot,
+            emulator: emulator,
+            contentHash: await _rommHashOfFiles(strategy, game, romPath, files),
+            updatedAt: stats.newest,
+            sizeBytes: stats.bytes,
+          ),
+        );
+      } catch (e) {
+        debugPrint('[SaveSync] ${game.displayName}\'s save not described for negotiate: $e');
+        return null;
+      }
+    });
+    if (waitAtMost == null) return described;
+    return described.timeout(
+      waitAtMost,
+      onTimeout: () {
+        givenUp = true;
+        debugPrint(
+          '[SaveSync] ${game.displayName}\'s save not described for negotiate: '
+          'the save lock was busy for over ${waitAtMost.inSeconds} s',
+        );
+        return null;
+      },
+    );
+  }
 
   /// The files a push in [syncMode] uploads: the strategy's, filtered, RZIP
   /// unpacked.
