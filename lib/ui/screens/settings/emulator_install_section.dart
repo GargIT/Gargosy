@@ -13,6 +13,7 @@ import '../../../play/play_controller.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/controller_dialogs.dart';
 import '../../widgets/toast.dart';
+import 'emulator_templates_card.dart';
 import 'settings_rows.dart';
 import '../../../l10n/tr.dart';
 
@@ -368,6 +369,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
                 for (final e in supported) _row(e, newer: newer.contains(e)),
               ],
             ),
+            EmulatorTemplatesCard(emulators: supported),
             if (notYet.isNotEmpty)
               SettingsCard(
                 title: tr('Not supported yet'),

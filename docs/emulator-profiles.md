@@ -113,6 +113,34 @@ What Gargosy wrote itself (exactly Standard's or Nintendo-style's values) never 
 
 Not yet: Wii remotes in Dolphin, and every other emulator (they keep their own settings; the play screen says so). One PR each, added to this table.
 
+## Templates (#301)
+
+Settings → Emulators → New profiles → Use this profile's copies the profile's settings for one emulator into `userdata\templates\<emu>\` (`EmulatorTemplates`, `lib/emulators/emulator_templates.dart`); `ProfileStore.create` copies that into every profile made after. Forget removes it. Only these, relative to the profile's `emulators\<emu>\` (`templateSettings`):
+
+| Emulator | Settings copied |
+| --- | --- |
+| RetroArch | `retroarch.cfg`, `config\` (core options, overrides, remaps) |
+| PCSX2 | `PCSX2\inis\`, `PCSX2\inputprofiles\`, `PCSX2\gamesettings\` |
+| DuckStation | `settings.ini`, `gamesettings\`, `inputprofiles\` |
+| Dolphin | `Config\`, `GameSettings\` |
+| PPSSPP | `PSP\SYSTEM\ppsspp.ini`, `PSP\SYSTEM\controls.ini` |
+| mGBA | `config.ini`, `qt.ini` |
+| Flycast | `emu.cfg` |
+| MAME | `mame.ini`, `ui.ini`, `ini\`, `cfg\` |
+| ares | `settings.bml` |
+| Xenia Canary | `storage\xenia-canary.config.toml` |
+| xemu | `xemu.toml` |
+| ScummVM | `scummvm.ini` |
+| Cemu | `portable\settings.xml`, `portable\controllerProfiles\` |
+| Eden, Azahar | `user\config\` |
+| melonDS | `portable\melonDS.toml` |
+| RPCS3 | `config\config.yml`, `config\input_configs\`, `config\custom_configs\` |
+| Ryujinx | `Config.json` |
+
+Never copied: saves, states, memory cards, NAND, caches, logs, keys, and the files that hold only a sign-in (`secrets.ini`, `rpcn.yml`, `ppsspp_retroachievements.dat`). In what is copied, every key whose name ends in token, password, username, stream key, API key or secret (or is a login time) is emptied (`withoutSignIns`; ini, cfg, TOML, YAML and JSON lines, in UTF-8 or else read as Latin-1 so Windows' code page keeps its bytes; Cemu's `settings.xml` holds no sign-in): RetroArch's `cheevos_*`, `*_stream_key` and the `webdav_*`/`netplay_*` passwords (with `cheevos_enable` off until the new profile's own login turns it on at launch), PCSX2's and DuckStation's achievements user and login time, Dolphin's `ApiToken`, PPSSPP's `AchievementsUserName`, Eden's and Azahar's web service login.
+
+Paths into the profile the template came from are kept as markers (`{{gargosy:profile}}`, and a form for `/` and for doubled `\\`, as the file wrote them; `lib/profiles/template_paths.dart`) and become the new profile's folder when it's copied, so its emulator never writes into the other profile. Something in `userdata\templates\<emu>\` that Gargosy didn't make (a folder an install had in the way, `folder_link.dart`) is moved to `userdata\app\set-aside\` before a template replaces it, never deleted, and Forget leaves it; a new profile gets such a folder copied as it is, never read for markers. A template replaced is kept aside (`.<emu>.old`) until the new one is in place. The card lists an emulator removed since while it has a template, so it can still be forgotten. A template's mapping is kept by the controller layout's default, which only fills in where nothing is mapped (#246).
+
 ## Not supported in v1
 
 None so far. Every installed emulator passed with one of the two mechanisms.

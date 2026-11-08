@@ -21,6 +21,10 @@ What changed in each release of Gargosy. The format follows
   each emulator. Settings → Controller → Controller layout: Standard where
   nothing is set up (the default; a mapping made by hand stays), Standard,
   Nintendo-style (A/B and X/Y swapped), or each emulator's own.
+- New profiles can start with your emulator settings: Settings → Emulators →
+  New profiles copies this profile's settings for an emulator (buttons,
+  hotkeys, graphics) for every profile made after. Saves, states, memory
+  cards and sign-ins are never copied; Forget goes back to the emulator's own.
 
 ### Changed
 

@@ -1115,4 +1115,24 @@ const daText = <String, String>{
   "Controller layout": "Controllerlayout",
   "Layout": "Layout",
   "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Spiller 1's knapper i emulatorerne, skrevet når et spil starter, så en ny profils controller virker med det samme. {0} indtil videre; de andre beholder deres egne indstillinger. Denne profils indstilling.",
+  "Replace the settings new profiles start with?": "Erstat de indstillinger, nye profiler starter med?",
+  "New profiles start with {0}'s settings for {1} now. They're replaced by {2}'s.":
+      "Nye profiler starter nu med {0}s indstillinger for {1}. De erstattes af {2}s.",
+  "Replace": "Erstat",
+  "This profile has no settings for {0} yet. Open it or play a game in it first.":
+      "Denne profil har ingen indstillinger for {0} endnu. Åbn den eller spil et spil i den først.",
+  "New profiles start with these settings for {0}, without sign-ins.":
+      "Nye profiler starter med disse indstillinger for {0}, uden logins.",
+  "Couldn't copy the settings for {0}: {1}": "Kunne ikke kopiere indstillingerne for {0}: {1}",
+  "New profiles start with {0}'s own settings.": "Nye profiler starter med {0}s egne indstillinger.",
+  "Couldn't forget the settings for {0}: {1}": "Kunne ikke glemme indstillingerne for {0}: {1}",
+  "Its own settings": "Egne indstillinger",
+  "{0}'s settings, {1}": "{0}s indstillinger, {1}",
+  "Use this profile's": "Brug denne profils",
+  "Forget": "Glem",
+  "New profiles": "Nye profiler",
+  "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Hvad en ny profil starter med i hver emulator: dens egne indstillinger eller en kopi af en profils (knapper, genvejstaster, grafik). Gemte spil, gemte tilstande, hukommelseskort og logins kopieres aldrig.",
+  "Forget the settings new profiles start with?": "Glem de indstillinger, nye profiler starter med?",
+  "New profiles start with {0}'s own settings again. Profiles made before keep theirs.":
+      "Nye profiler starter med {0}s egne indstillinger igen. Profiler oprettet før beholder deres.",
 };

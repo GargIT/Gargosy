@@ -77,7 +77,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Dolphin'), findsOneWidget);
+    // Its row, and again under New profiles (#301), which lists only installed ones.
+    expect(find.text('Dolphin'), findsNWidgets(2));
+    expect(find.text('PCSX2'), findsOneWidget);
+    expect(find.text('NEW PROFILES'), findsOneWidget);
     expect(find.text('Installed'), findsOneWidget);
     expect(find.text('Import from folder'), findsWidgets);
     expect(find.text('Not supported yet'), findsOneWidget);
