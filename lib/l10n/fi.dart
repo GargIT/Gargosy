@@ -1102,4 +1102,9 @@ const fiText = <String, String>{
   'The game is above this profile\'s age limit.': 'Peli on tämän profiilin ikärajan yläpuolella.',
   'The download was cancelled on this PC.': 'Lataus peruttiin tällä tietokoneella.',
   'Gargosy on {0} ({1})': 'Gargosy laitteella {0} ({1})',
+  '{0} · update available': '{0} · päivitys saatavilla',
+  'Check for updates': 'Tarkista päivitykset',
+  'Checking for updates…': 'Tarkistetaan päivityksiä…',
+  'Update all ({0})': 'Päivitä kaikki ({0})',
+  'Updating…': 'Päivitetään…',
 };

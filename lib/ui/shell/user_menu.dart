@@ -34,7 +34,8 @@ class UserMenuChoice {
 /// under PROFILE. [update]
 /// ("Update available: 0.2.0") is an item of its own that opens About;
 /// Downloads (#143), only when there's something to see: [downloads],
-/// those waiting or running (null: none, and none failed or done).
+/// those waiting or running (null: none, and none failed or done);
+/// Emulators shows how many have a newer release, [emulatorUpdates] (#243).
 /// Focus starts on Profile; the menu scrolls when the window is short.
 Future<UserMenuChoice?> showUserMenu(
   BuildContext context, {
@@ -42,6 +43,7 @@ Future<UserMenuChoice?> showUserMenu(
   String? avatarPath,
   String? update,
   int? downloads,
+  int emulatorUpdates = 0,
 }) {
   Widget item(
     BuildContext c,
@@ -165,6 +167,9 @@ Future<UserMenuChoice?> showUserMenu(
                         page.icon,
                         UserMenuChoice.settings(page),
                         autofocus: page == SettingsPage.values.first,
+                        trailing: page == SettingsPage.emulators && emulatorUpdates > 0
+                            ? _KeyChip('$emulatorUpdates')
+                            : null,
                       ),
                     // The profile's play in numbers (#236).
                     if (group == SettingsGroup.profile)

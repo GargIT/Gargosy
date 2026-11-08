@@ -1104,4 +1104,9 @@ const nlText = <String, String>{
   'The game is above this profile\'s age limit.': 'De game valt boven de leeftijdsgrens van dit profiel.',
   'The download was cancelled on this PC.': 'De download is op deze pc geannuleerd.',
   'Gargosy on {0} ({1})': 'Gargosy op {0} ({1})',
+  '{0} · update available': '{0} · update beschikbaar',
+  'Check for updates': 'Controleren op updates',
+  'Checking for updates…': 'Zoeken naar updates…',
+  'Update all ({0})': 'Alles bijwerken ({0})',
+  'Updating…': 'Bijwerken…',
 };

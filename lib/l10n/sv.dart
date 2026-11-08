@@ -1102,4 +1102,9 @@ const svText = <String, String>{
   'The game is above this profile\'s age limit.': 'Spelet är över den här profilens åldersgräns.',
   'The download was cancelled on this PC.': 'Nedladdningen avbröts på den här datorn.',
   'Gargosy on {0} ({1})': 'Gargosy på {0} ({1})',
+  '{0} · update available': '{0} · uppdatering finns',
+  'Check for updates': 'Sök efter uppdateringar',
+  'Checking for updates…': 'Söker efter uppdateringar…',
+  'Update all ({0})': 'Uppdatera alla ({0})',
+  'Updating…': 'Uppdaterar…',
 };

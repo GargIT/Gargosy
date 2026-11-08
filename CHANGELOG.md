@@ -12,6 +12,10 @@ What changed in each release of Gargosy. The format follows
   downloads here, and RomM says when it's installed or why it isn't. For a
   profile signed in by pairing; Settings → Profile → Install from RomM turns
   it off.
+- Emulator updates: once a day Gargosy looks for newer releases of the
+  emulators it downloaded. Settings → Emulators says which have one, with
+  Update all and Check for updates; a dot on the avatar and a count on
+  Emulators in the menu. Nothing updates by itself.
 
 ### Changed
 

@@ -1,11 +1,14 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/emulators/bios_sync.dart';
 import 'package:gargosy/emulators/emulator_installer.dart';
 import 'package:gargosy/emulators/emulator_library.dart';
+import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/play/play_controller.dart';
 import 'package:gargosy/play/play_engine.dart';
 import 'package:gargosy/ui/screens/settings/emulator_install_section.dart';
 
+import '../helpers/profile_test_env.dart';
 import '../helpers/widget_env.dart';
 
 /// Only opens emulators; anything else isn't expected here.
@@ -199,6 +202,92 @@ void main() {
     expect(installer.installed, ['dolphin https://example/dolphin-3.zip']);
     expect(biosFor, ['dolphin']);
     expect(find.textContaining('Dolphin is installed'), findsOneWidget);
+  });
+
+  testWidgets('a newer release shows on its row, and Update all installs each (#243)', (tester) async {
+    final installer = _FakeInstaller('https://example/new.zip');
+    await setDesktopSize(tester);
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          appPreferencesProvider.overrideWithValue(MemoryPrefs()),
+          emulatorInstallerProvider.overrideWithValue(installer),
+          biosSyncProvider.overrideWithValue(_Bios([])),
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'dolphin',
+                name: 'Dolphin',
+                exe: 'Dolphin.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
+                installedFrom: 'https://example/dolphin-2.zip',
+              ),
+              EmulatorInfo(
+                id: 'pcsx2',
+                name: 'PCSX2',
+                exe: 'pcsx2-qt.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\pcsx2\pcsx2-qt.exe',
+                installedFrom: 'https://example/pcsx2-1.zip',
+              ),
+              EmulatorInfo(
+                id: 'mgba',
+                name: 'mGBA',
+                exe: 'mGBA.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\mgba\mGBA.exe',
+                installedFrom: EmulatorLibrary.imported,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('emulator-update-all')), findsNothing);
+    await tester.tap(find.byKey(const Key('emulator-check-updates')));
+    await tester.pumpAndSettle();
+    expect(find.text('Installed · update available'), findsNWidgets(2), reason: 'not the imported mGBA');
+    expect(find.text('Update all (2)'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('emulator-update-all')));
+    await tester.pumpAndSettle();
+    expect(installer.installed, ['dolphin https://example/new.zip', 'pcsx2 https://example/new.zip']);
+  });
+
+  testWidgets("Update is refused while a game runs: its program can't be replaced", (tester) async {
+    final installer = _FakeInstaller('https://example/dolphin-3.zip');
+    await setDesktopSize(tester);
+    await tester.pumpWidget(
+      testApp(
+        const EmulatorInstallSection(),
+        overrides: [
+          // Opened and never closed: the emulator stays running.
+          playEngineProvider.overrideWithValue(_OpenOnlyEngine()),
+          emulatorInstallerProvider.overrideWithValue(installer),
+          emulatorsProvider.overrideWith(
+            (ref) async => const [
+              EmulatorInfo(
+                id: 'dolphin',
+                name: 'Dolphin',
+                exe: 'Dolphin.exe',
+                supported: true,
+                installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
+                installedFrom: 'https://example/dolphin-2.zip',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Update'));
+    await tester.pumpAndSettle();
+    expect(find.text('A game is running. Close it first.'), findsOneWidget);
+    expect(installer.installed, isEmpty);
   });
 }
 

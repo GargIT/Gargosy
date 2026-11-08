@@ -1108,4 +1108,9 @@ const deText = <String, String>{
   'The game is above this profile\'s age limit.': 'Das Spiel liegt über der Altersgrenze dieses Profils.',
   'The download was cancelled on this PC.': 'Der Download wurde auf diesem PC abgebrochen.',
   'Gargosy on {0} ({1})': 'Gargosy auf {0} ({1})',
+  '{0} · update available': '{0} · Update verfügbar',
+  'Check for updates': 'Nach Updates suchen',
+  'Checking for updates…': 'Suche nach Updates…',
+  'Update all ({0})': 'Alle aktualisieren ({0})',
+  'Updating…': 'Wird aktualisiert…',
 };
