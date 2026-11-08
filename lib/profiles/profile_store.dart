@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,7 @@ import 'path_guard.dart';
 import 'pin.dart';
 import 'profile.dart';
 import 'profile_paths.dart';
+import 'template_paths.dart';
 
 /// The profiles in `userdata\profiles\`. A profile exists once its
 /// `profile.json` is written, which is the last step of [create].
@@ -104,13 +106,29 @@ class ProfileStore {
   Future<void> _copyTemplates(PathGuard guard, ProfilePaths paths) async {
     final templates = io.Directory(root.templates);
     if (!await templates.exists()) return;
-    await for (final entry in templates.list(recursive: true)) {
+    await for (final entry in templates.list(recursive: true, followLinks: false)) {
       if (entry is! io.File) continue;
       final rel = p.relative(entry.path, from: root.templates);
+      // A template being saved (`.<emu>.saving`) and a template's own note
+      // (#301) aren't settings.
+      if (p.split(rel).first.startsWith('.') || p.basename(rel) == templateManifest) continue;
       final target = io.File(guard.join(paths.emulatorsDir, rel));
       await target.parent.create(recursive: true);
       await entry.copy(target.path);
+      await _fillProfilePaths(target, paths.dir);
     }
+  }
+
+  /// A template's paths into the profile it was made from become this
+  /// profile's (`template_paths.dart`). A file that isn't text stays as copied.
+  static Future<void> _fillProfilePaths(io.File file, String profileDir) async {
+    final String text;
+    try {
+      text = utf8.decode(await file.readAsBytes());
+    } on FormatException {
+      return;
+    }
+    if (hasTemplateMarker(text)) await file.writeAsString(fromTemplateText(text, profileDir));
   }
 
   Future<void> save(Profile profile) {

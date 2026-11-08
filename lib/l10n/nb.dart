@@ -1113,4 +1113,21 @@ const nbText = <String, String>{
   "Controller layout": "Kontrolleroppsett",
   "Layout": "Oppsett",
   "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Spiller 1s knapper i emulatorene, skrevet når et spill starter, så en ny profils kontroller virker med en gang. {0} foreløpig; de andre beholder sine egne innstillinger. Denne profilens innstilling.",
+  "Replace the settings new profiles start with?": "Erstatte innstillingene nye profiler starter med?",
+  "New profiles start with {0}'s settings for {1} now. They're replaced by {2}'s.":
+      "Nye profiler starter nå med {0} sine innstillinger for {1}. De erstattes av {2} sine.",
+  "Replace": "Erstatt",
+  "This profile has no settings for {0} yet. Open it or play a game in it first.":
+      "Denne profilen har ingen innstillinger for {0} ennå. Åpne den eller spill et spill i den først.",
+  "New profiles start with these settings for {0}, without sign-ins.":
+      "Nye profiler starter med disse innstillingene for {0}, uten innlogginger.",
+  "Couldn't copy the settings for {0}: {1}": "Kunne ikke kopiere innstillingene for {0}: {1}",
+  "New profiles start with {0}'s own settings.": "Nye profiler starter med {0} sine egne innstillinger.",
+  "Couldn't forget the settings for {0}: {1}": "Kunne ikke glemme innstillingene for {0}: {1}",
+  "Its own settings": "Egne innstillinger",
+  "{0}'s settings, {1}": "{0} sine innstillinger, {1}",
+  "Use this profile's": "Bruk denne profilens",
+  "Forget": "Glem",
+  "New profiles": "Nye profiler",
+  "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Hva en ny profil starter med i hver emulator: dens egne innstillinger, eller en kopi av en profils (knapper, hurtigtaster, grafikk). Lagringer, lagringstilstander, minnekort og innlogginger kopieres aldri.",
 };

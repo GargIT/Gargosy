@@ -1117,4 +1117,21 @@ const nlText = <String, String>{
   "Controller layout": "Controllerindeling",
   "Layout": "Indeling",
   "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "De knoppen van speler 1 in de emulators, geschreven als een spel start, zodat de controller van een nieuw profiel meteen werkt. Voorlopig {0}; de andere houden hun eigen instellingen. Instelling van dit profiel.",
+  "Replace the settings new profiles start with?": "De instellingen vervangen waarmee nieuwe profielen beginnen?",
+  "New profiles start with {0}'s settings for {1} now. They're replaced by {2}'s.":
+      "Nieuwe profielen beginnen nu met de instellingen van {0} voor {1}. Ze worden vervangen door die van {2}.",
+  "Replace": "Vervangen",
+  "This profile has no settings for {0} yet. Open it or play a game in it first.":
+      "Dit profiel heeft nog geen instellingen voor {0}. Open het of speel er eerst een game in.",
+  "New profiles start with these settings for {0}, without sign-ins.":
+      "Nieuwe profielen beginnen met deze instellingen voor {0}, zonder aanmeldingen.",
+  "Couldn't copy the settings for {0}: {1}": "Kon de instellingen voor {0} niet kopiëren: {1}",
+  "New profiles start with {0}'s own settings.": "Nieuwe profielen beginnen met de eigen instellingen van {0}.",
+  "Couldn't forget the settings for {0}: {1}": "Kon de instellingen voor {0} niet vergeten: {1}",
+  "Its own settings": "Eigen instellingen",
+  "{0}'s settings, {1}": "Instellingen van {0}, {1}",
+  "Use this profile's": "Die van dit profiel gebruiken",
+  "Forget": "Vergeten",
+  "New profiles": "Nieuwe profielen",
+  "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Waarmee een nieuw profiel in elke emulator begint: de eigen instellingen ervan, of een kopie van die van een profiel (knoppen, sneltoetsen, graphics). Saves, states, geheugenkaarten en aanmeldingen worden nooit gekopieerd.",
 };

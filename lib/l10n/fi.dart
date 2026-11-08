@@ -1115,4 +1115,20 @@ const fiText = <String, String>{
   "Controller layout": "Ohjaimen asettelu",
   "Layout": "Asettelu",
   "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Pelaajan 1 painikkeet emulaattoreissa, kirjoitetaan pelin alkaessa, jotta uuden profiilin ohjain toimii heti. Toistaiseksi {0}; muut pitävät omat asetuksensa. Tämän profiilin asetus.",
+  "Replace the settings new profiles start with?": "Korvataanko asetukset, joilla uudet profiilit alkavat?",
+  "New profiles start with {0}'s settings for {1} now. They're replaced by {2}'s.": "Uudet profiilit alkavat nyt profiilin {0} asetuksilla emulaattorissa {1}. Ne korvataan profiilin {2} asetuksilla.",
+  "Replace": "Korvaa",
+  "This profile has no settings for {0} yet. Open it or play a game in it first.":
+      "Tällä profiililla ei ole vielä asetuksia emulaattorille {0}. Avaa se tai pelaa sillä ensin peli.",
+  "New profiles start with these settings for {0}, without sign-ins.":
+      "Uudet profiilit alkavat näillä asetuksilla emulaattorissa {0}, ilman kirjautumisia.",
+  "Couldn't copy the settings for {0}: {1}": "Asetusten kopiointi emulaattorille {0} epäonnistui: {1}",
+  "New profiles start with {0}'s own settings.": "Uudet profiilit alkavat emulaattorin {0} omilla asetuksilla.",
+  "Couldn't forget the settings for {0}: {1}": "Asetusten unohtaminen emulaattorille {0} epäonnistui: {1}",
+  "Its own settings": "Omat asetukset",
+  "{0}'s settings, {1}": "Profiilin {0} asetukset, {1}",
+  "Use this profile's": "Käytä tämän profiilin",
+  "Forget": "Unohda",
+  "New profiles": "Uudet profiilit",
+  "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Millä uusi profiili alkaa kussakin emulaattorissa: sen omilla asetuksilla tai kopiolla profiilin asetuksista (painikkeet, pikanäppäimet, grafiikka). Tallennuksia, tilatallennuksia, muistikortteja ja kirjautumisia ei koskaan kopioida.",
 };

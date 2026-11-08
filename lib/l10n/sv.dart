@@ -1115,4 +1115,21 @@ const svText = <String, String>{
   "Controller layout": "Handkontrollens layout",
   "Layout": "Layout",
   "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Spelare 1:s knappar i emulatorerna, skrivna när ett spel startar, så att en ny profils handkontroll fungerar direkt. {0} än så länge; de andra behåller sina egna inställningar. Den här profilens inställning.",
+  "Replace the settings new profiles start with?": "Ersätta inställningarna nya profiler börjar med?",
+  "New profiles start with {0}'s settings for {1} now. They're replaced by {2}'s.":
+      "Nya profiler börjar nu med {0}s inställningar för {1}. De ersätts av {2}s.",
+  "Replace": "Ersätt",
+  "This profile has no settings for {0} yet. Open it or play a game in it first.":
+      "Den här profilen har inga inställningar för {0} än. Öppna den eller spela ett spel i den först.",
+  "New profiles start with these settings for {0}, without sign-ins.":
+      "Nya profiler börjar med de här inställningarna för {0}, utan inloggningar.",
+  "Couldn't copy the settings for {0}: {1}": "Kunde inte kopiera inställningarna för {0}: {1}",
+  "New profiles start with {0}'s own settings.": "Nya profiler börjar med {0}s egna inställningar.",
+  "Couldn't forget the settings for {0}: {1}": "Kunde inte glömma inställningarna för {0}: {1}",
+  "Its own settings": "Egna inställningar",
+  "{0}'s settings, {1}": "{0}s inställningar, {1}",
+  "Use this profile's": "Använd den här profilens",
+  "Forget": "Glöm",
+  "New profiles": "Nya profiler",
+  "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Vad en ny profil börjar med i varje emulator: dess egna inställningar, eller en kopia av en profils (knappar, snabbtangenter, grafik). Sparfiler, sparlägen, minneskort och inloggningar kopieras aldrig.",
 };

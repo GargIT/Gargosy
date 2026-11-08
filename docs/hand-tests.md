@@ -473,3 +473,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 173. [ ] Make a new profile and, with an Xbox-type controller, play a game in each of PCSX2, DuckStation, Dolphin (GameCube) and RetroArch without opening their settings: the controller works at once, the bottom button is Cross (PS) or A (GameCube).
 174. [ ] In a profile whose PCSX2 was mapped by hand (a button changed), play again with the default layout: the hand-made mapping is still there. Pick Nintendo-style in Settings → Controller → Controller layout: in each of the four, the bottom and right buttons (and left and top) are swapped. Pick Standard: back.
 175. [ ] Play a game in an emulator not in the list (mGBA, PPSSPP …): the play screen says it plays with its own controller settings. With "Each emulator's own", it doesn't say so.
+
+## Emulator settings for new profiles (#301)
+
+176. [ ] In a profile signed in to RetroAchievements, change a button or hotkey in PCSX2 and in RetroArch (Open on Settings → Emulators, or in a game), then Settings → Emulators → New profiles → Use this profile's on both. Make a new profile and play a game in each: the changed button is there, no save, state or memory card came along, and neither emulator is signed in to RetroAchievements until the new profile signs in.
+177. [ ] In that new profile, take a screenshot in RetroArch and save in PCSX2: they land in the new profile's folder (`userdata\profiles\<new id>\emulators\…`), not the first one's. Forget on the first emulator: the next new profile starts with its own settings again.

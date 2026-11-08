@@ -1121,4 +1121,21 @@ const deText = <String, String>{
   "Controller layout": "Controller-Layout",
   "Layout": "Layout",
   "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Die Tasten von Spieler 1 in den Emulatoren, beim Spielstart geschrieben, damit der Controller eines neuen Profils sofort funktioniert. Vorerst {0}; die anderen behalten ihre eigenen Einstellungen. Einstellung dieses Profils.",
+  "Replace the settings new profiles start with?": "Die Einstellungen ersetzen, mit denen neue Profile beginnen?",
+  "New profiles start with {0}'s settings for {1} now. They're replaced by {2}'s.":
+      "Neue Profile beginnen jetzt mit den Einstellungen von {0} für {1}. Sie werden durch die von {2} ersetzt.",
+  "Replace": "Ersetzen",
+  "This profile has no settings for {0} yet. Open it or play a game in it first.":
+      "Dieses Profil hat noch keine Einstellungen für {0}. Öffne es oder spiele zuerst ein Spiel darin.",
+  "New profiles start with these settings for {0}, without sign-ins.":
+      "Neue Profile beginnen mit diesen Einstellungen für {0}, ohne Anmeldungen.",
+  "Couldn't copy the settings for {0}: {1}": "Die Einstellungen für {0} konnten nicht kopiert werden: {1}",
+  "New profiles start with {0}'s own settings.": "Neue Profile beginnen mit den eigenen Einstellungen von {0}.",
+  "Couldn't forget the settings for {0}: {1}": "Die Einstellungen für {0} konnten nicht vergessen werden: {1}",
+  "Its own settings": "Eigene Einstellungen",
+  "{0}'s settings, {1}": "Einstellungen von {0}, {1}",
+  "Use this profile's": "Die dieses Profils verwenden",
+  "Forget": "Vergessen",
+  "New profiles": "Neue Profile",
+  "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Womit ein neues Profil in jedem Emulator beginnt: mit dessen eigenen Einstellungen oder einer Kopie der Einstellungen eines Profils (Tasten, Tastenkürzel, Grafik). Spielstände, Speicherstände, Memory Cards und Anmeldungen werden nie kopiert.",
 };
