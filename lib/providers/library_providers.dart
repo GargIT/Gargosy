@@ -12,6 +12,7 @@ import '../library/platform_covers.dart';
 import '../library/recent_searches.dart';
 import 'engine_providers.dart';
 import 'download_providers.dart';
+import '../core/romm/romm_admin.dart';
 import '../core/romm/romm_library_api.dart';
 import '../core/romm/romm_models.dart';
 import '../core/romm/romm_state.dart';
@@ -276,12 +277,18 @@ final platformCoversChoiceProvider = StateNotifierProvider<PlatformCoversChoice,
   (ref) => PlatformCoversChoice(ref.watch(profilePrefsProvider)),
 );
 
+/// What the profile's RomM user may change in the library (#245: scan,
+/// upload, fix a match; #135: delete); nothing offline.
+final rommRightsProvider = FutureProvider<RommRights>((ref) async {
+  final romm = ref.watch(rommServiceProvider);
+  return romm == null ? RommRights.none : romm.rights();
+});
+
 /// Whether the profile's RomM user may delete games (RomM's own permission:
 /// an admin or editor); false offline.
-final canDeleteGamesProvider = FutureProvider<bool>((ref) async {
-  final romm = ref.watch(rommServiceProvider);
-  return romm != null && await romm.canDeleteGames();
-});
+final canDeleteGamesProvider = FutureProvider<bool>(
+  (ref) async => (await ref.watch(rommRightsProvider.future)).deleteGames,
+);
 
 /// Games deleted from RomM this session, left out of galleries already loaded.
 final deletedGameIdsProvider = StateProvider<Set<String>>((ref) => const {});

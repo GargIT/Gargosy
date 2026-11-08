@@ -226,6 +226,8 @@ void main() {
     await press(tester, GameAction.r1);
     expect(find.text('WHICH EMULATOR PLAYS'), findsOneWidget, reason: 'Emulator settings');
     await press(tester, GameAction.r1);
+    expect(find.text('SCAN LIBRARY'), findsOneWidget, reason: 'RomM library (#245)');
+    await press(tester, GameAction.r1);
     expect(find.textContaining('Stick deadzone'), findsOneWidget, reason: 'Controller');
     await press(tester, GameAction.r1);
     expect(find.text('Fullscreen (F11)'), findsOneWidget, reason: 'Display');

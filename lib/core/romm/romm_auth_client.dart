@@ -25,6 +25,8 @@ const gargosyScopes = [
   'firmware.read',
   'collections.read',
   'collections.write',
+  // #245: an admin's Scan library (asked; only a user who has it gets it).
+  'tasks.run',
 ];
 
 class RommUser {

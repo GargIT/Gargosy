@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/romm/romm_library_api.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../library/library_snapshot.dart';
+import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/download_all_button.dart';
@@ -13,6 +14,7 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/platform_logo.dart';
 import '../../widgets/toast.dart';
 import '../game/open_game.dart';
+import 'upload_game.dart';
 import '../../../l10n/tr.dart';
 
 /// The platform page's header (RomM v2's): the logo, the name with RomM's
@@ -101,6 +103,16 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
           const SizedBox(width: GSpace.s4),
           DownloadAllButton(query: GalleryQuery(platformId: widget.platform.id)),
           const SizedBox(width: GSpace.s2),
+          // A RomM admin's Upload (#245).
+          if (ref.watch(rommRightsProvider).value?.upload ?? false) ...[
+            _Pill(
+              key: const ValueKey('platform-upload'),
+              icon: Icons.upload_outlined,
+              label: tr('Upload'),
+              onActivate: () => uploadGamesTo(context, ref, widget.platform),
+            ),
+            const SizedBox(width: GSpace.s2),
+          ],
           GFocusable(
             key: const ValueKey('platform-random'),
             borderRadius: GRadius.pill,
@@ -129,6 +141,37 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
       ),
     );
   }
+}
+
+/// A pill button of the header (Upload).
+class _Pill extends StatelessWidget {
+  const _Pill({super.key, required this.icon, required this.label, required this.onActivate});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onActivate;
+
+  @override
+  Widget build(BuildContext context) => GFocusable(
+    borderRadius: GRadius.pill,
+    onActivate: onActivate,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
+      decoration: BoxDecoration(
+        color: GColors.surface,
+        borderRadius: BorderRadius.circular(GRadius.pill),
+        border: Border.all(color: GColors.borderStrong),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: GSpace.s2),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Chip extends StatelessWidget {

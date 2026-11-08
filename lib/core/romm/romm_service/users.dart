@@ -87,32 +87,4 @@ mixin _RommUsers on _RommBase {
       return null;
     }
   }
-
-  /// Gargosy: whether the user may delete games on RomM: RomM 5.4's
-  /// `/api/permissions/me` (an admin, or the `rom.delete` action), else on an
-  /// older RomM an admin's or editor's role. False when RomM can't say.
-  Future<bool> canDeleteGames() async {
-    try {
-      final data = (await _dio.get('/api/permissions/me', options: _authOptions)).data;
-      if (data is! Map) return false;
-      final grants = data['grants'];
-      return data['is_admin'] == true || (grants is List && grants.any((g) => g is Map && g['action'] == 'rom.delete'));
-    } on DioException catch (e) {
-      if (e.response?.statusCode != 404) {
-        debugPrint('[RomM] permissions not read: ${e.response?.statusCode ?? e.type}');
-        return false;
-      }
-    } catch (e) {
-      debugPrint('[RomM] permissions not read: $e');
-      return false;
-    }
-    try {
-      final data = (await _dio.get('/api/users/me', options: _authOptions)).data;
-      final role = data is Map ? data['role'] : null;
-      return role == 'admin' || role == 'editor';
-    } catch (e) {
-      debugPrint('[RomM] role not read: $e');
-      return false;
-    }
-  }
 }
