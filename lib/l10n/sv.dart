@@ -1132,4 +1132,7 @@ const svText = <String, String>{
   "Forget": "Glöm",
   "New profiles": "Nya profiler",
   "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Vad en ny profil börjar med i varje emulator: dess egna inställningar, eller en kopia av en profils (knappar, snabbtangenter, grafik). Sparfiler, sparlägen, minneskort och inloggningar kopieras aldrig.",
+  "Forget the settings new profiles start with?": "Glömma inställningarna nya profiler börjar med?",
+  "New profiles start with {0}'s own settings again. Profiles made before keep theirs.":
+      "Nya profiler börjar med {0}s egna inställningar igen. Profiler som redan finns behåller sina.",
 };

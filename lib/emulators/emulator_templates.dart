@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' as io;
+import 'dart:isolate';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -40,8 +41,41 @@ const templateSettings = <String, List<String>>{
 /// RetroAchievements token.
 const templateLeftOut = {'secrets.ini', 'rpcn.yml', 'ppsspp_retroachievements.dat'};
 
-/// A `key = value` (or `key: value`) line of an ini, cfg, TOML or YAML file.
-final _keyLine = RegExp(r'^(\s*)([A-Za-z0-9_.\\/ -]+?)(\s*[=:]\s*)(.*?)(\r?)$', multiLine: true);
+/// The settings files that are read as text (sign-ins emptied, paths into
+/// the profile marked); any other file is copied as it is.
+const templateTextExtensions = {
+  '.ini',
+  '.cfg',
+  '.toml',
+  '.yml',
+  '.yaml',
+  '.bml',
+  '.json',
+  '.xml',
+  '.txt',
+  '.opt',
+  '.rmp',
+  '.conf',
+  '.slangp',
+  '.glslp',
+  '.cgp',
+};
+
+/// [bytes] of a settings file as text, and how to write it back unchanged
+/// where nothing was replaced: UTF-8, else Latin-1 (an ini in Windows' own
+/// code page, which UTF-8 refuses; Latin-1 gives every byte back).
+(String, Encoding) decodeSettings(List<int> bytes) {
+  try {
+    return (utf8.decode(bytes), utf8);
+  } on FormatException {
+    return (latin1.decode(bytes), latin1);
+  }
+}
+
+/// A `key = value` (or `key: value`) line of an ini, cfg, TOML or YAML file,
+/// or a `"key": "value",` line of a JSON file (Ryujinx). XML isn't read:
+/// Cemu's `settings.xml` holds no sign-in (its account is in `mlc01`).
+final _keyLine = RegExp(r'^(\s*)("?)([A-Za-z0-9_.\\/ -]+?)\2(\s*[=:]\s*)(.*?)(,?)(\r?)$', multiLine: true);
 
 /// Whether [key] holds a sign-in: its last part (after `.`, `\` or `/`, as
 /// QSettings and Flycast write sections into keys) ends in token, password or
@@ -53,13 +87,18 @@ final _keyLine = RegExp(r'^(\s*)([A-Za-z0-9_.\\/ -]+?)(\s*[=:]\s*)(.*?)(\r?)$', 
 /// `LoginTimestamp`; Dolphin `RetroAchievements.ini` `Username`, `ApiToken`;
 /// PPSSPP `AchievementsUserName`; Flycast's achievements `UserName`, `Token`;
 /// Eden `yuzu_username`, `web_api_token`; Azahar `citra_username`,
-/// `citra_token`.
+/// `citra_token`. Also a key ending in a stream key, an API key or a secret
+/// (RetroArch's `twitch_stream_key`, `youtube_stream_key`).
 bool isSignInKey(String key) {
   final last = key.trim().split(RegExp(r'[.\\/]')).last.toLowerCase();
   return last.endsWith('token') ||
       last.endsWith('password') ||
       last.endsWith('username') ||
       last.endsWith('user_name') ||
+      last.endsWith('stream_key') ||
+      last.endsWith('api_key') ||
+      last.endsWith('apikey') ||
+      last.endsWith('secret') ||
       last == 'logintimestamp';
 }
 
@@ -68,16 +107,16 @@ bool isSignInKey(String key) {
 /// login turns them on at launch.
 String withoutSignIns(String text, {bool toml = false}) {
   return text.replaceAllMapped(_keyLine, (m) {
-    final key = m[2]!;
-    final value = m[4]!;
-    if (key.trim() == 'cheevos_enable') return '${m[1]}$key${m[3]}"false"${m[5]}';
+    final (indent, q, key, sep, value, comma, cr) = (m[1]!, m[2]!, m[3]!, m[4]!, m[5]!, m[6]!, m[7]!);
+    String line(String v) => '$indent$q$key$q$sep$v$comma$cr';
+    if (key.trim() == 'cheevos_enable') return line('"false"');
     if (!isSignInKey(key) || value.isEmpty) return m[0]!;
-    final quote = value.startsWith('"')
-        ? '""'
-        : value.startsWith("'")
-        ? "''"
-        : (toml ? '""' : '');
-    return '${m[1]}$key${m[3]}$quote${m[5]}';
+    if (value.startsWith('"')) return line('""');
+    if (value.startsWith("'")) return line("''");
+    // A JSON value that isn't a string (a number, true) is no sign-in, and
+    // an empty one would break the file.
+    if (q.isNotEmpty) return m[0]!;
+    return line(toml ? '""' : '');
   });
 }
 
@@ -144,42 +183,42 @@ class EmulatorTemplates {
   /// replacing the one before. Returns how many files went in; none when the
   /// profile has no settings for it yet (nothing changes then). Something
   /// else in the template's place (not Gargosy's) goes to
-  /// `userdata\app\set-aside\`, never deleted.
-  int save(String id, ProfilePaths paths, {required String profileName, DateTime? now}) {
+  /// `userdata\app\set-aside\`, never deleted. Off the UI isolate.
+  Future<int> save(String id, ProfilePaths paths, {required String profileName, DateTime? now}) {
+    final savedAt = (now ?? DateTime.now()).toIso8601String();
+    return Isolate.run(() => _save(id, paths, profileName, savedAt));
+  }
+
+  int _save(String id, ProfilePaths paths, String profileName, String savedAt) {
     final guard = paths.guard;
     final data = paths.emulatorDir(id);
     final files = settingsIn(id, data);
     if (files.isEmpty) return 0;
     final target = guard.check(_dir(id));
     final staging = guard.check(p.join(root.templates, '.$id.saving'));
+    final old = guard.check(p.join(root.templates, '.$id.old'));
     _delete(staging);
+    _delete(old);
     try {
       for (final rel in files) {
         final from = io.File(p.join(data, rel));
         final to = io.File(guard.join(staging, rel));
         to.parent.createSync(recursive: true);
-        final bytes = from.readAsBytesSync();
-        final String text;
-        try {
-          text = utf8.decode(bytes);
-        } on FormatException {
-          to.writeAsBytesSync(bytes); // not text: no keys to read in it
+        if (!templateTextExtensions.contains(p.extension(rel).toLowerCase())) {
+          from.copySync(to.path);
           continue;
         }
+        final (text, encoding) = decodeSettings(from.readAsBytesSync());
         final clean = withoutSignIns(text, toml: rel.toLowerCase().endsWith('.toml'));
-        to.writeAsStringSync(toTemplateText(clean, paths.dir));
+        to.writeAsBytesSync(encoding.encode(toTemplateText(clean, paths.dir)));
       }
       io.File(guard.join(staging, templateManifest)).writeAsStringSync(
-        jsonEncode({
-          'emulator': id,
-          'profile': paths.id,
-          'profileName': profileName,
-          'savedAt': (now ?? DateTime.now()).toIso8601String(),
-        }),
+        jsonEncode({'emulator': id, 'profile': paths.id, 'profileName': profileName, 'savedAt': savedAt}),
       );
       if (io.Directory(target).existsSync()) {
         if (info(id) != null) {
-          _delete(target);
+          // Gargosy's own: kept aside until the new one is in place.
+          io.Directory(target).renameSync(old);
         } else {
           final aside = guard.check(
             p.join(root.appData, 'set-aside', 'template-$id-${DateTime.now().millisecondsSinceEpoch}'),
@@ -188,7 +227,15 @@ class EmulatorTemplates {
           io.Directory(target).renameSync(aside);
         }
       }
-      io.Directory(staging).renameSync(target);
+      try {
+        io.Directory(staging).renameSync(target);
+      } on Object {
+        if (io.Directory(old).existsSync() && !io.Directory(target).existsSync()) {
+          io.Directory(old).renameSync(target);
+        }
+        rethrow;
+      }
+      _delete(old);
       return files.length;
     } finally {
       _delete(staging);

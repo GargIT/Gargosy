@@ -115,20 +115,33 @@ class ProfileStore {
       final target = io.File(guard.join(paths.emulatorsDir, rel));
       await target.parent.create(recursive: true);
       await entry.copy(target.path);
-      await _fillProfilePaths(target, paths.dir);
+      // Only a template Gargosy made has markers; a folder an install had in
+      // the way (NAND, saves) is copied as it is, never read whole.
+      final emulator = p.split(rel).first;
+      if (await io.File(p.join(root.templates, emulator, templateManifest)).exists() &&
+          await entry.length() <= _markedMaxBytes) {
+        await _fillProfilePaths(target, paths.dir);
+      }
     }
   }
 
+  /// Settings files are small; anything larger isn't read for markers.
+  static const _markedMaxBytes = 4 * 1024 * 1024;
+
   /// A template's paths into the profile it was made from become this
-  /// profile's (`template_paths.dart`). A file that isn't text stays as copied.
+  /// profile's (`template_paths.dart`), in the file's own encoding (UTF-8,
+  /// else Latin-1, which gives every byte back).
   static Future<void> _fillProfilePaths(io.File file, String profileDir) async {
-    final String text;
+    final bytes = await file.readAsBytes();
+    String text;
+    Encoding encoding = utf8;
     try {
-      text = utf8.decode(await file.readAsBytes());
+      text = utf8.decode(bytes);
     } on FormatException {
-      return;
+      text = latin1.decode(bytes);
+      encoding = latin1;
     }
-    if (hasTemplateMarker(text)) await file.writeAsString(fromTemplateText(text, profileDir));
+    if (hasTemplateMarker(text)) await file.writeAsBytes(encoding.encode(fromTemplateText(text, profileDir)));
   }
 
   Future<void> save(Profile profile) {

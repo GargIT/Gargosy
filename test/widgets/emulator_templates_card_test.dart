@@ -26,7 +26,7 @@ void main() {
       testApp(
         const SingleChildScrollView(
           child: EmulatorTemplatesCard(
-            installed: [
+            emulators: [
               EmulatorInfo(
                 id: 'dolphin',
                 name: 'Dolphin',
@@ -34,6 +34,7 @@ void main() {
                 supported: true,
                 installedExe: r'C:\G\emulators\dolphin\Dolphin.exe',
               ),
+              EmulatorInfo(id: 'mame', name: 'MAME', exe: 'mame.exe', supported: true),
               EmulatorInfo(
                 id: 'pcsx2',
                 name: 'PCSX2',
@@ -67,19 +68,25 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Its own settings'), findsNWidgets(2));
+    expect(find.text('Its own settings'), findsNWidgets(2), reason: 'MAME is not installed and has no template');
+    expect(find.text('MAME'), findsNothing);
     expect(find.text('Forget'), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('template-use-pcsx2')));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
     await tester.pumpAndSettle();
     expect(find.textContaining('This profile has no settings for PCSX2 yet'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('template-use-dolphin')));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
     await tester.pumpAndSettle();
     expect(find.textContaining("Anna's settings"), findsOneWidget);
     expect(io.File(p.join(root.templates, 'dolphin', 'Config', 'GCPadNew.ini')).existsSync(), isTrue);
 
     await tester.tap(find.byKey(const ValueKey('template-forget-dolphin')));
+    await tester.pumpAndSettle();
+    expect(find.text('Forget the settings new profiles start with?'), findsOneWidget);
+    await tester.tap(find.text('Forget').last);
     await tester.pumpAndSettle();
     expect(find.text('Its own settings'), findsNWidgets(2));
     expect(io.Directory(p.join(root.templates, 'dolphin')).existsSync(), isFalse);

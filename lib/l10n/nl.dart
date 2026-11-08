@@ -1134,4 +1134,7 @@ const nlText = <String, String>{
   "Forget": "Vergeten",
   "New profiles": "Nieuwe profielen",
   "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Waarmee een nieuw profiel in elke emulator begint: de eigen instellingen ervan, of een kopie van die van een profiel (knoppen, sneltoetsen, graphics). Saves, states, geheugenkaarten en aanmeldingen worden nooit gekopieerd.",
+  "Forget the settings new profiles start with?": "De instellingen vergeten waarmee nieuwe profielen beginnen?",
+  "New profiles start with {0}'s own settings again. Profiles made before keep theirs.":
+      "Nieuwe profielen beginnen weer met de eigen instellingen van {0}. Bestaande profielen houden de hunne.",
 };

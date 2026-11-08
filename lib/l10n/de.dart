@@ -1138,4 +1138,7 @@ const deText = <String, String>{
   "Forget": "Vergessen",
   "New profiles": "Neue Profile",
   "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Womit ein neues Profil in jedem Emulator beginnt: mit dessen eigenen Einstellungen oder einer Kopie der Einstellungen eines Profils (Tasten, Tastenkürzel, Grafik). Spielstände, Speicherstände, Memory Cards und Anmeldungen werden nie kopiert.",
+  "Forget the settings new profiles start with?": "Die Einstellungen vergessen, mit denen neue Profile beginnen?",
+  "New profiles start with {0}'s own settings again. Profiles made before keep theirs.":
+      "Neue Profile beginnen wieder mit den eigenen Einstellungen von {0}. Bestehende Profile behalten ihre.",
 };

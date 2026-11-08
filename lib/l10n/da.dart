@@ -1132,4 +1132,7 @@ const daText = <String, String>{
   "Forget": "Glem",
   "New profiles": "Nye profiler",
   "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Hvad en ny profil starter med i hver emulator: dens egne indstillinger eller en kopi af en profils (knapper, genvejstaster, grafik). Gemte spil, gemte tilstande, hukommelseskort og logins kopieres aldrig.",
+  "Forget the settings new profiles start with?": "Glem de indstillinger, nye profiler starter med?",
+  "New profiles start with {0}'s own settings again. Profiles made before keep theirs.":
+      "Nye profiler starter med {0}s egne indstillinger igen. Profiler oprettet før beholder deres.",
 };

@@ -37,17 +37,12 @@ final _nameChar = RegExp('[A-Za-z0-9_-]');
 /// [text] with [find] (any case) replaced by [by], except where a longer
 /// name starts the same (`p1` in `p12`).
 String _replaceIgnoringCase(String text, String find, String by) {
-  // A letter whose lower case is longer would shift the positions: then
-  // the case must match.
-  final folds = text.toLowerCase().length == text.length && find.toLowerCase().length == find.length;
-  final lower = folds ? text.toLowerCase() : text;
-  final key = folds ? find.toLowerCase() : find;
   final out = StringBuffer();
   var from = 0;
   while (true) {
-    final at = lower.indexOf(key, from);
+    final at = _indexIgnoringCase(text, find, from);
     if (at < 0) break;
-    final end = at + key.length;
+    final end = at + find.length;
     if (end < text.length && _nameChar.hasMatch(text[end])) {
       out.write(text.substring(from, end));
     } else {
@@ -59,6 +54,22 @@ String _replaceIgnoringCase(String text, String find, String by) {
   }
   out.write(text.substring(from));
   return out.toString();
+}
+
+/// Where [find] is in [text] from [start], any case, compared one character
+/// at a time (lower-casing a whole text can change its length, `İ`).
+int _indexIgnoringCase(String text, String find, int start) {
+  if (find.isEmpty) return -1;
+  final first = find[0].toLowerCase();
+  for (var i = start; i + find.length <= text.length; i++) {
+    if (text[i].toLowerCase() != first) continue;
+    var j = 1;
+    while (j < find.length && text[i + j].toLowerCase() == find[j].toLowerCase()) {
+      j++;
+    }
+    if (j == find.length) return i;
+  }
+  return -1;
 }
 
 /// [text] with every marker replaced by [profileDir], spelled as the marker says.

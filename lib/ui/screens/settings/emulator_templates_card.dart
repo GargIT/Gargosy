@@ -16,10 +16,12 @@ import 'settings_rows.dart';
 /// settings in this profile become what every new profile starts with
 /// (`userdata\templates\<emu>\`), or that is forgotten again.
 class EmulatorTemplatesCard extends ConsumerStatefulWidget {
-  const EmulatorTemplatesCard({super.key, required this.installed});
+  const EmulatorTemplatesCard({super.key, required this.emulators});
 
-  /// The installed emulators, as Settings → Emulators lists them.
-  final List<EmulatorInfo> installed;
+  /// The supported emulators, as Settings → Emulators lists them. Shown: the
+  /// installed ones, and any with a template (removed since, so its template
+  /// can still be seen and forgotten).
+  final List<EmulatorInfo> emulators;
 
   @override
   ConsumerState<EmulatorTemplatesCard> createState() => _EmulatorTemplatesCardState();
@@ -27,6 +29,9 @@ class EmulatorTemplatesCard extends ConsumerStatefulWidget {
 
 class _EmulatorTemplatesCardState extends ConsumerState<EmulatorTemplatesCard> {
   late Map<String, TemplateInfo> _templates = ref.read(emulatorTemplatesProvider).all();
+
+  /// A copy is being made: one at a time.
+  bool _busy = false;
 
   bool _gameRunning() {
     if (ref.read(playControllerProvider).runningGameId == null) return false;
@@ -53,8 +58,9 @@ class _EmulatorTemplatesCardState extends ConsumerState<EmulatorTemplatesCard> {
       );
       if (!ok || !mounted || _gameRunning()) return;
     }
+    setState(() => _busy = true);
     try {
-      final n = templates.save(e.id, profile.paths, profileName: profile.profile.name);
+      final n = await templates.save(e.id, profile.paths, profileName: profile.profile.name);
       if (!mounted) return;
       if (n == 0) {
         showToast(
@@ -62,17 +68,32 @@ class _EmulatorTemplatesCardState extends ConsumerState<EmulatorTemplatesCard> {
           tr('This profile has no settings for {0} yet. Open it or play a game in it first.', [e.name]),
           error: true,
         );
-        return;
+      } else {
+        showToast(context, tr('New profiles start with these settings for {0}, without sign-ins.', [e.name]));
       }
-      showToast(context, tr('New profiles start with these settings for {0}, without sign-ins.', [e.name]));
     } on Object catch (err) {
       if (mounted) showToast(context, tr('Couldn\'t copy the settings for {0}: {1}', [e.name, err]), error: true);
     }
-    if (mounted) setState(() => _templates = templates.all());
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        _templates = templates.all();
+      });
+    }
   }
 
-  void _forget(EmulatorInfo e) {
+  Future<void> _forget(EmulatorInfo e) async {
     final templates = ref.read(emulatorTemplatesProvider);
+    final ok = await showConfirm(
+      context,
+      title: tr('Forget the settings new profiles start with?'),
+      body: tr('New profiles start with {0}\'s own settings again. Profiles made before keep theirs.', [e.name]),
+      yes: tr('Forget'),
+      no: tr('Keep'),
+      focusYes: false,
+      danger: true,
+    );
+    if (!ok || !mounted) return;
     try {
       templates.forget(e.id);
       showToast(context, tr('New profiles start with {0}\'s own settings.', [e.name]));
@@ -111,18 +132,19 @@ class _EmulatorTemplatesCardState extends ConsumerState<EmulatorTemplatesCard> {
               spacing: GSpace.s2,
               runSpacing: GSpace.s2,
               children: [
-                SettingsButton(
-                  key: ValueKey('template-use-${e.id}'),
-                  label: tr('Use this profile\'s'),
-                  icon: Icons.content_copy,
-                  onActivate: () => _use(e),
-                ),
+                if (e.installedExe != null)
+                  SettingsButton(
+                    key: ValueKey('template-use-${e.id}'),
+                    label: tr('Use this profile\'s'),
+                    icon: Icons.content_copy,
+                    onActivate: _busy ? null : () => _use(e),
+                  ),
                 if (t != null)
                   SettingsButton(
                     key: ValueKey('template-forget-${e.id}'),
                     label: tr('Forget'),
                     icon: Icons.delete_outline,
-                    onActivate: () => _forget(e),
+                    onActivate: _busy ? null : () => _forget(e),
                   ),
               ],
             ),
@@ -135,8 +157,8 @@ class _EmulatorTemplatesCardState extends ConsumerState<EmulatorTemplatesCard> {
   @override
   Widget build(BuildContext context) {
     final shown = [
-      for (final e in widget.installed)
-        if (templateSettings.containsKey(e.id)) e,
+      for (final e in widget.emulators)
+        if (templateSettings.containsKey(e.id) && (e.installedExe != null || _templates.containsKey(e.id))) e,
     ];
     if (shown.isEmpty) return const SizedBox.shrink();
     return SettingsCard(

@@ -116,8 +116,8 @@ void main() {
     put(anna, 'pcsx2', 'PCSX2/inis/secrets.ini', '[Achievements]\nToken = abc\n');
     put(anna, 'pcsx2', 'PCSX2/memcards/Mcd001.ps2', 'card');
 
-    expect(templates.save('retroarch', anna, profileName: 'Anna', now: DateTime(2026, 11, 8)), 2);
-    expect(templates.save('pcsx2', anna, profileName: 'Anna'), 1);
+    expect(await templates.save('retroarch', anna, profileName: 'Anna', now: DateTime(2026, 11, 8)), 2);
+    expect(await templates.save('pcsx2', anna, profileName: 'Anna'), 1);
     expect(templates.info('retroarch')?.profileName, 'Anna');
     expect(templates.info('retroarch')?.savedAt, DateTime(2026, 11, 8));
 
@@ -141,13 +141,13 @@ void main() {
 
   test('no settings yet: nothing is saved; a new save replaces the template, Forget removes it', () async {
     final anna = await profile('Anna');
-    expect(templates.save('dolphin', anna, profileName: 'Anna'), 0);
+    expect(await templates.save('dolphin', anna, profileName: 'Anna'), 0);
     expect(templates.info('dolphin'), isNull);
     put(anna, 'dolphin', 'Config/Dolphin.ini', '[General]\n');
     put(anna, 'dolphin', 'Config/Hotkeys.ini', '[Hotkeys]\n');
-    templates.save('dolphin', anna, profileName: 'Anna');
+    await templates.save('dolphin', anna, profileName: 'Anna');
     io.File(p.join(anna.emulatorDir('dolphin'), 'Config', 'Hotkeys.ini')).deleteSync();
-    expect(templates.save('dolphin', anna, profileName: 'Anna 2'), 1);
+    expect(await templates.save('dolphin', anna, profileName: 'Anna 2'), 1);
     expect(io.File(p.join(root.templates, 'dolphin', 'Config', 'Hotkeys.ini')).existsSync(), isFalse);
     expect(templates.all().keys, ['dolphin']);
     expect(templates.forget('dolphin'), isTrue);
@@ -163,10 +163,49 @@ void main() {
     expect(templates.forget('eden'), isFalse);
     expect(theirs.existsSync(), isTrue);
     put(anna, 'eden', 'user/config/qt-config.ini', '[UI]\n');
-    templates.save('eden', anna, profileName: 'Anna');
+    await templates.save('eden', anna, profileName: 'Anna');
     final aside = io.Directory(p.join(root.appData, 'set-aside')).listSync().single;
     expect(io.File(p.join(aside.path, 'user', 'nand', 'save.bin')).readAsStringSync(), 'old');
     expect(jsonDecode(io.File(p.join(root.templates, 'eden', templateManifest)).readAsStringSync())['profile'], 'p1');
+  });
+
+  test('stream keys, JSON strings, and a file in Windows code page lose their sign-ins too', () async {
+    expect(
+      withoutSignIns('twitch_stream_key = "live_1"\ninput_enable_hotkey = "nul"\n'),
+      'twitch_stream_key = ""\ninput_enable_hotkey = "nul"\n',
+    );
+    expect(
+      withoutSignIns('{\n  "api_key": "abc",\n  "user_token": 5,\n  "volume": 1\n}\n'),
+      '{\n  "api_key": "",\n  "user_token": 5,\n  "volume": 1\n}\n',
+    );
+    final anna = await profile('Anna');
+    // Latin-1 ("Användare"), which UTF-8 refuses: still cleaned, other bytes as they were.
+    final cfg = io.File(p.join(anna.emulatorDir('retroarch'), 'retroarch.cfg'))..createSync(recursive: true);
+    cfg.writeAsBytesSync([
+      ...'cheevos_token = "abc"\nrgui_browser_directory = "C:\\Anv'.codeUnits,
+      0xE4,
+      ...'ndare"\n'.codeUnits,
+    ]);
+    await templates.save('retroarch', anna, profileName: 'Anna');
+    final copied = io.File(p.join(root.templates, 'retroarch', 'retroarch.cfg')).readAsBytesSync();
+    expect(String.fromCharCodes(copied), 'cheevos_token = ""\nrgui_browser_directory = "C:\\Anv\u00e4ndare"\n');
+  });
+
+  test('a letter that grows when lower-cased elsewhere in the file still lets the path match any case', () {
+    const dir = r'C:\G\userdata\profiles\p1';
+    expect(
+      toTemplateText('title = \u0130stanbul\npath = C:\\G\\USERDATA\\profiles\\P1\\x\n', dir),
+      'title = \u0130stanbul\npath = {{gargosy:profile}}\\x\n',
+    );
+  });
+
+  test("a folder an install had in the way is copied into new profiles as it is, not read for markers", () async {
+    final nand = io.File(p.join(root.templates, 'eden', 'user', 'nand', 'a.ini'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('x = {{gargosy:profile}}\n');
+    final bob = await profile('Bob');
+    expect(read(bob, 'eden', 'user/nand/a.ini'), 'x = {{gargosy:profile}}\n');
+    expect(nand.existsSync(), isTrue);
   });
 
   test('every emulator with a template lists only settings', () {

@@ -369,12 +369,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
                 for (final e in supported) _row(e, newer: newer.contains(e)),
               ],
             ),
-            EmulatorTemplatesCard(
-              installed: [
-                for (final e in supported)
-                  if (e.installedExe != null) e,
-              ],
-            ),
+            EmulatorTemplatesCard(emulators: supported),
             if (notYet.isNotEmpty)
               SettingsCard(
                 title: tr('Not supported yet'),

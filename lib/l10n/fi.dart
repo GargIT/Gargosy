@@ -1131,4 +1131,7 @@ const fiText = <String, String>{
   "Forget": "Unohda",
   "New profiles": "Uudet profiilit",
   "What a new profile starts with in each emulator: its own settings, or a copy of a profile's (buttons, hotkeys, graphics). Saves, states, memory cards and sign-ins are never copied.": "Millä uusi profiili alkaa kussakin emulaattorissa: sen omilla asetuksilla tai kopiolla profiilin asetuksista (painikkeet, pikanäppäimet, grafiikka). Tallennuksia, tilatallennuksia, muistikortteja ja kirjautumisia ei koskaan kopioida.",
+  "Forget the settings new profiles start with?": "Unohdetaanko asetukset, joilla uudet profiilit alkavat?",
+  "New profiles start with {0}'s own settings again. Profiles made before keep theirs.":
+      "Uudet profiilit alkavat taas emulaattorin {0} omilla asetuksilla. Aiemmin tehdyt profiilit pitävät omansa.",
 };
