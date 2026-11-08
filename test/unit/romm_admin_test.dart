@@ -46,7 +46,9 @@ void main() {
           (q) => q.path.endsWith('/permissions/me') ? (status: 404, body: {}) : (status: 200, body: {'role': r}),
         ),
       ).rights();
-      expect((await role('editor')).upload, isTrue);
+      final editor = await role('editor');
+      // An older RomM has no REST scan or chunked upload (5.4): only match and delete.
+      expect([editor.scan, editor.upload, editor.match, editor.deleteGames], [false, false, true, true]);
       expect((await role('viewer')).any, isFalse);
       expect((await romm(FakeDioAdapter((q) => (status: -1, body: null))).rights()).any, isFalse);
     });
@@ -97,12 +99,13 @@ void main() {
       expect(await refused(404, {}), contains('5.4'));
     });
 
-    test('the notifier follows a scan until it ends, then reads the library again', () async {
+    test('the notifier follows a scan until it ends, past a passing 502, then reads the library again', () async {
       var looks = 0;
       final a = FakeDioAdapter((r) {
         if (r.method == 'POST') return (status: 202, body: {'task_id': 'job-2'});
         looks++;
-        return (status: 200, body: {'status': looks < 2 ? 'started' : 'finished', 'meta': {}});
+        if (looks == 2) return (status: 502, body: 'Bad Gateway');
+        return (status: 200, body: {'status': looks < 3 ? 'started' : 'finished', 'meta': {}});
       });
       var finished = 0;
       final scan = LibraryScanNotifier(romm(a), () => finished++, every: const Duration(milliseconds: 10));
@@ -116,6 +119,21 @@ void main() {
       expect(finished, 1);
       expect(scan.state.running, isFalse);
       expect(scanLine(scan.state), startsWith('Scan done.'));
+    });
+
+    test('a task RomM no longer has stops the following, and says so', () async {
+      final a = FakeDioAdapter((r) {
+        if (r.method == 'POST') return (status: 202, body: {'task_id': 'job-3'});
+        return (status: 404, body: {'detail': "Task with ID 'job-3' not found"});
+      });
+      final scan = LibraryScanNotifier(romm(a), () {}, every: const Duration(milliseconds: 10));
+      addTearDown(scan.dispose);
+      await scan.start(ScanKind.quick);
+      for (var i = 0; i < 50 && scan.state.error == null; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(scan.state.running, isFalse);
+      expect(scan.state.error, contains('not found'));
     });
   });
 
@@ -145,6 +163,12 @@ void main() {
       expect(start.headers['X-Upload-Total-Chunks'], '3');
       expect(start.headers['X-Upload-Filename'], Uri.encodeComponent('Café (Europe).zip'));
       expect(start.data, {'filename': 'Café (Europe).zip'});
+      // The login goes with every call (headers beside it, not instead), and
+      // the client never sends one of them twice by itself.
+      for (final r in a.requests) {
+        expect(r.headers['Authorization'], isNotNull, reason: r.path);
+        expect(r.extra['no_retry'], isTrue, reason: r.path);
+      }
       final puts = a.requests.where((r) => r.method == 'PUT').toList();
       expect([for (final r in puts) r.headers['X-Chunk-Index']], ['0', '1', '2']);
       expect(puts.every((r) => r.path == '/api/roms/upload/up-1'), isTrue);
@@ -163,6 +187,15 @@ void main() {
         throwsA(isA<RommAdminRefused>().having((e) => e.message, 'message', contains('Chunk exceeds'))),
       );
       expect(a.requests.last.path, '/api/roms/upload/up-2/cancel');
+    });
+
+    test('an empty file is refused before RomM hears of it', () async {
+      final a = FakeDioAdapter((r) => (status: 201, body: {'upload_id': 'x'}));
+      await expectLater(
+        romm(a).uploadGame(4, game(0)),
+        throwsA(isA<RommAdminRefused>().having((e) => e.message, 'message', contains('is empty'))),
+      );
+      expect(a.requests, isEmpty);
     });
 
     test('a file name RomM has already is refused before anything is sent', () async {

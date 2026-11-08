@@ -104,38 +104,23 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
           DownloadAllButton(query: GalleryQuery(platformId: widget.platform.id)),
           const SizedBox(width: GSpace.s2),
           // A RomM admin's Upload (#245).
-          if (ref.watch(rommRightsProvider).value?.upload ?? false) ...[
+          if ((ref.watch(rommRightsProvider).value?.upload ?? false) && !ref.watch(rommOfflineProvider)) ...[
             _Pill(
               key: const ValueKey('platform-upload'),
-              icon: Icons.upload_outlined,
+              icon: const Icon(Icons.upload_outlined, size: 18),
               label: tr('Upload'),
               onActivate: () => uploadGamesTo(context, ref, widget.platform),
             ),
             const SizedBox(width: GSpace.s2),
           ],
-          GFocusable(
+          _Pill(
             key: const ValueKey('platform-random'),
-            borderRadius: GRadius.pill,
-            onActivate: _random,
+            icon: _picking
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.shuffle, size: 18),
+            label: tr('Random'),
             semanticLabel: 'Random game',
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
-              decoration: BoxDecoration(
-                color: GColors.surface,
-                borderRadius: BorderRadius.circular(GRadius.pill),
-                border: Border.all(color: GColors.borderStrong),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _picking
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.shuffle, size: 18),
-                  const SizedBox(width: GSpace.s2),
-                  Text(tr('Random'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
+            onActivate: _random,
           ),
         ],
       ),
@@ -143,18 +128,20 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
   }
 }
 
-/// A pill button of the header (Upload).
+/// A pill button of the header (Upload, Random).
 class _Pill extends StatelessWidget {
-  const _Pill({super.key, required this.icon, required this.label, required this.onActivate});
+  const _Pill({super.key, required this.icon, required this.label, required this.onActivate, this.semanticLabel});
 
-  final IconData icon;
+  final Widget icon;
   final String label;
   final VoidCallback onActivate;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) => GFocusable(
     borderRadius: GRadius.pill,
     onActivate: onActivate,
+    semanticLabel: semanticLabel,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
       decoration: BoxDecoration(
@@ -165,7 +152,7 @@ class _Pill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18),
+          icon,
           const SizedBox(width: GSpace.s2),
           Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],

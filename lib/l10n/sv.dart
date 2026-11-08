@@ -1182,4 +1182,7 @@ const svText = <String, String>{
   "Nothing found. Try another name.": "Inget hittades. Prova ett annat namn.",
   "Fix match…": "Rätta matchning…",
   "RomM library": "RomM-bibliotek",
+  "{0} is empty.": "{0} är tom.",
+  "{0} wasn't uploaded: RomM can't be reached.": "{0} laddades inte upp: RomM går inte att nå.",
+  "{0} wasn't uploaded. {1}": "{0} laddades inte upp. {1}",
 };

@@ -1180,4 +1180,7 @@ const nbText = <String, String>{
   "Nothing found. Try another name.": "Ingenting funnet. Prøv et annet navn.",
   "Fix match…": "Rett treff…",
   "RomM library": "RomM-bibliotek",
+  "{0} is empty.": "{0} er tom.",
+  "{0} wasn't uploaded: RomM can't be reached.": "{0} ble ikke lastet opp: RomM kan ikke nås.",
+  "{0} wasn't uploaded. {1}": "{0} ble ikke lastet opp. {1}",
 };

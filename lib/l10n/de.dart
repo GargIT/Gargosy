@@ -1187,4 +1187,7 @@ const deText = <String, String>{
   "Nothing found. Try another name.": "Nichts gefunden. Versuche einen anderen Namen.",
   "Fix match…": "Zuordnung korrigieren…",
   "RomM library": "RomM-Bibliothek",
+  "{0} is empty.": "{0} ist leer.",
+  "{0} wasn't uploaded: RomM can't be reached.": "{0} wurde nicht hochgeladen: RomM ist nicht erreichbar.",
+  "{0} wasn't uploaded. {1}": "{0} wurde nicht hochgeladen. {1}",
 };

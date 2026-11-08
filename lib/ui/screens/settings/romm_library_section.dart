@@ -7,7 +7,6 @@ import '../../../library/library_scan.dart';
 import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
-import '../../widgets/toast.dart';
 import 'settings_rows.dart';
 
 /// Settings → RomM library (#245): a RomM admin's Scan library, quick or
@@ -15,10 +14,8 @@ import 'settings_rows.dart';
 class RommLibrarySection extends ConsumerWidget {
   const RommLibrarySection({super.key});
 
-  Future<void> _scan(BuildContext context, WidgetRef ref, ScanKind kind) async {
-    final why = await ref.read(libraryScanProvider.notifier).start(kind);
-    if (why != null && context.mounted) showToast(context, why, error: true);
-  }
+  /// A refusal shows in the card's line (red), not in a toast as well.
+  Future<void> _scan(WidgetRef ref, ScanKind kind) => ref.read(libraryScanProvider.notifier).start(kind);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,13 +50,13 @@ class RommLibrarySection extends ConsumerWidget {
                     label: tr('Quick scan'),
                     icon: Icons.bolt,
                     kind: SettingsButtonKind.primary,
-                    onActivate: scan.running ? null : () => _scan(context, ref, ScanKind.quick),
+                    onActivate: scan.running ? null : () => _scan(ref, ScanKind.quick),
                   ),
                   SettingsButton(
                     key: const Key('scan-complete'),
                     label: tr('Complete scan'),
                     icon: Icons.manage_search,
-                    onActivate: scan.running ? null : () => _scan(context, ref, ScanKind.complete),
+                    onActivate: scan.running ? null : () => _scan(ref, ScanKind.complete),
                   ),
                 ],
               ),

@@ -42,10 +42,10 @@ class RommRights {
   }
 
   /// An older RomM without `/api/permissions/me`: an admin or an editor
-  /// changes the library.
-  factory RommRights.fromRole(Object? role) => role == 'admin' || role == 'editor'
-      ? const RommRights(scan: true, upload: true, match: true, deleteGames: true)
-      : none;
+  /// changes the library. It has no REST scan or chunked upload (5.4), so
+  /// only Fix match and Delete.
+  factory RommRights.fromRole(Object? role) =>
+      role == 'admin' || role == 'editor' ? const RommRights(match: true, deleteGames: true) : none;
 }
 
 /// RomM refused an admin call: [message] says why, in words for the player

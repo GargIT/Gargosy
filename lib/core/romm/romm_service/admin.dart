@@ -9,6 +9,19 @@ mixin _RommAdmin on _RommBase {
 
   Options get _adminOptions => _authOptions.copyWith(validateStatus: (s) => s != null && s < 600);
 
+  /// For a call that mustn't be sent twice (start a scan or an upload, a
+  /// piece, complete, a match): the client's own retry is off. [headers] go
+  /// beside the login's (`copyWith` would replace them, the token with them).
+  Options _once({String? contentType, Map<String, Object?> headers = const {}, Duration? send, Duration? receive}) =>
+      _authOptions.copyWith(
+        validateStatus: (s) => s != null && s < 600,
+        contentType: contentType,
+        sendTimeout: send,
+        receiveTimeout: receive,
+        headers: {...?_authOptions.headers, ...headers},
+        extra: {...?_authOptions.extra, 'no_retry': true},
+      );
+
   /// What the profile's RomM user may change; [RommRights.none] when it
   /// can't be read.
   Future<RommRights> rights() async {
@@ -44,7 +57,7 @@ mixin _RommAdmin on _RommBase {
     final r = await _dio.post<dynamic>(
       '/api/tasks/scan',
       data: {'type': kind.wire, if (platformIds.isNotEmpty) 'platforms': platformIds},
-      options: _adminOptions.copyWith(contentType: Headers.jsonContentType),
+      options: _once(contentType: Headers.jsonContentType),
     );
     _refusedUnlessOk(r, tr('RomM didn\'t start the scan'));
     final id = r.data is Map ? r.data['task_id'] : null;
@@ -75,12 +88,15 @@ mixin _RommAdmin on _RommBase {
     final file = io.File(path);
     final size = await file.length();
     final name = p.basename(path);
+    // An empty file is a mistake, never a game: refused before RomM hears of it.
+    if (size == 0) throw RommAdminRefused(0, tr('{0} is empty.', [name]));
     final chunks = (size / uploadChunkBytes).ceil();
     final start = await _dio.post<dynamic>(
       '/api/roms/upload/start',
-      // The header can't hold a name outside Latin-1: the body has the real one.
+      // The header can't hold a name outside Latin-1: the body has the real
+      // one, which RomM takes first (as its web UI sends both).
       data: {'filename': name},
-      options: _adminOptions.copyWith(
+      options: _once(
         contentType: Headers.jsonContentType,
         headers: {
           'X-Upload-Platform': '$platformId',
@@ -102,14 +118,16 @@ mixin _RommAdmin on _RommBase {
       for (var i = 0; i < chunks; i++) {
         final bytes = await raf.read(uploadChunkBytes);
         Response<dynamic>? r;
+        // Three tries, a moment more between each; a new stream each time.
         for (var attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) await Future<void>.delayed(Duration(seconds: 2 * attempt));
           try {
             r = await _dio.put<dynamic>(
               at,
               data: Stream<List<int>>.value(bytes),
-              options: _adminOptions.copyWith(
+              options: _once(
                 contentType: 'application/octet-stream',
-                sendTimeout: const Duration(minutes: 2),
+                send: const Duration(minutes: 2),
                 headers: {'X-Chunk-Index': '$i', Headers.contentLengthHeader: bytes.length},
               ),
               cancelToken: cancel,
@@ -123,7 +141,12 @@ mixin _RommAdmin on _RommBase {
         sent += bytes.length;
         onProgress?.call(sent, size);
       }
-      final done = await _dio.post<dynamic>('$at/complete', options: _adminOptions, cancelToken: cancel);
+      // RomM puts the pieces together before it answers: minutes for a disc.
+      final done = await _dio.post<dynamic>(
+        '$at/complete',
+        options: _once(receive: const Duration(minutes: 15)),
+        cancelToken: cancel,
+      );
       _refusedUnlessOk(done, tr('RomM didn\'t take the upload'));
     } catch (_) {
       try {
@@ -165,10 +188,8 @@ mixin _RommAdmin on _RommBase {
         'summary': match.summary,
         'url_cover': match.coverForGame,
       }),
-      options: _adminOptions.copyWith(
-        sendTimeout: const Duration(minutes: 2),
-        receiveTimeout: const Duration(minutes: 2),
-      ),
+      // A FormData can't be sent twice; RomM fetches from the sources first.
+      options: _once(send: const Duration(minutes: 2), receive: const Duration(minutes: 2)),
     );
     _refusedUnlessOk(r, tr('RomM didn\'t change the match'));
   }

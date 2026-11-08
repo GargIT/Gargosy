@@ -279,9 +279,17 @@ final platformCoversChoiceProvider = StateNotifierProvider<PlatformCoversChoice,
 
 /// What the profile's RomM user may change in the library (#245: scan,
 /// upload, fix a match; #135: delete); nothing offline.
+/// Read again when RomM comes back: an answer while out of reach is none.
 final rommRightsProvider = FutureProvider<RommRights>((ref) async {
   final romm = ref.watch(rommServiceProvider);
-  return romm == null ? RommRights.none : romm.rights();
+  if (romm == null) return RommRights.none;
+  void back() {
+    if (!romm.isOffline.value) ref.invalidateSelf();
+  }
+
+  romm.isOffline.addListener(back);
+  ref.onDispose(() => romm.isOffline.removeListener(back));
+  return romm.rights();
 });
 
 /// Whether the profile's RomM user may delete games (RomM's own permission:

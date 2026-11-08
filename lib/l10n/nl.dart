@@ -1183,4 +1183,7 @@ const nlText = <String, String>{
   "Nothing found. Try another name.": "Niets gevonden. Probeer een andere naam.",
   "Fix match…": "Koppeling herstellen…",
   "RomM library": "RomM-bibliotheek",
+  "{0} is empty.": "{0} is leeg.",
+  "{0} wasn't uploaded: RomM can't be reached.": "{0} is niet geüpload: RomM is niet bereikbaar.",
+  "{0} wasn't uploaded. {1}": "{0} is niet geüpload. {1}",
 };

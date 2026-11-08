@@ -1180,4 +1180,7 @@ const fiText = <String, String>{
   "Nothing found. Try another name.": "Mitään ei löytynyt. Kokeile toista nimeä.",
   "Fix match…": "Korjaa tunnistus…",
   "RomM library": "RomM-kirjasto",
+  "{0} is empty.": "{0} on tyhjä.",
+  "{0} wasn't uploaded: RomM can't be reached.": "{0} ei latautunut: RomMiin ei saada yhteyttä.",
+  "{0} wasn't uploaded. {1}": "{0} ei latautunut. {1}",
 };

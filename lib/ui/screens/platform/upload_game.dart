@@ -32,6 +32,9 @@ Future<void> uploadGamesTo(BuildContext context, WidgetRef ref, Platform platfor
   if (romm == null) return;
   final files = await ref.read(uploadFilePickerProvider)(tr('Games to upload to {0}', [platform.nameForDisplay]));
   if (files.isEmpty || !context.mounted) return;
+  // Read now: the header may be gone when the uploads end.
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final scan = ref.read(libraryScanProvider.notifier);
   final cancel = CancelToken();
   final progress = ValueNotifier<(String, int, int)>((p.basename(files.first), 0, 0));
   final dialog = showDialog<void>(
@@ -45,41 +48,47 @@ Future<void> uploadGamesTo(BuildContext context, WidgetRef ref, Platform platfor
     for (final path in files) {
       final name = p.basename(path);
       progress.value = (name, 0, 0);
-      await romm.uploadGame(
-        platform.id,
-        path,
-        cancel: cancel,
-        onProgress: (done, total) => progress.value = (name, done, total),
-      );
+      try {
+        await romm.uploadGame(
+          platform.id,
+          path,
+          cancel: cancel,
+          onProgress: (done, total) => progress.value = (name, done, total),
+        );
+      } on DioException catch (e) {
+        if (CancelToken.isCancel(e)) break;
+        failed = tr('{0} wasn\'t uploaded: RomM can\'t be reached.', [name]);
+        break;
+      } on RommAdminRefused catch (e) {
+        failed = tr('{0} wasn\'t uploaded. {1}', [name, e.message]);
+        break;
+      }
       sent++;
     }
-  } on DioException catch (e) {
-    failed = CancelToken.isCancel(e) ? null : '${e.message ?? e.type}';
   } on Object catch (e) {
     failed = '$e';
   } finally {
-    if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+    navigator.pop();
     await dialog;
     progress.dispose();
   }
-  if (!context.mounted) return;
-  if (failed != null) {
-    showToast(context, tr('Couldn\'t upload: {0}', [failed]), error: true);
-  } else if (sent < files.length) {
-    showToast(context, tr('Upload cancelled.'));
+  final what = sent == 1 ? p.basename(files.first) : tr('{0} games', [sent]);
+  if (context.mounted) {
+    if (failed != null) {
+      showToast(context, failed, error: true);
+    } else if (sent < files.length) {
+      showToast(context, tr('Upload cancelled.'));
+    }
   }
   if (sent == 0) return;
   // RomM adds a file to the library when it scans its platform.
-  final why = await ref.read(libraryScanProvider.notifier).start(ScanKind.quick, platformIds: [platform.id]);
+  final why = await scan.start(ScanKind.quick, platformIds: [platform.id]);
   if (!context.mounted) return;
   showToast(
     context,
     why == null
-        ? tr('Uploaded {0} to {1}. RomM is adding it to the library.', [
-            sent == 1 ? p.basename(files.first) : tr('{0} games', [sent]),
-            platform.nameForDisplay,
-          ])
-        : tr('Uploaded {0}, but RomM didn\'t scan: {1}', [sent, why]),
+        ? tr('Uploaded {0} to {1}. RomM is adding it to the library.', [what, platform.nameForDisplay])
+        : tr('Uploaded {0}, but RomM didn\'t scan: {1}', [what, why]),
     queued: true,
   );
 }

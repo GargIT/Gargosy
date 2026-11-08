@@ -58,7 +58,9 @@ class LibraryScanNotifier extends StateNotifier<LibraryScanState> {
       unawaited(_look());
       return null;
     } on Object catch (e) {
-      final why = '$e';
+      // RomM's reason as it gave it; a network error in words, not Dio's.
+      final why = e is RommAdminRefused ? e.message : tr("RomM can't be reached.");
+      debugPrint('[Scan] not started: $e');
       if (mounted) state = LibraryScanState(error: why);
       return why;
     }
@@ -79,12 +81,15 @@ class LibraryScanNotifier extends StateNotifier<LibraryScanState> {
         _timer?.cancel();
         _onFinished();
       }
-    } on RommAdminRefused catch (e) {
-      // RomM no longer has the task (a restart, its record expired).
-      _timer?.cancel();
-      if (mounted) state = LibraryScanState(error: e.message);
     } on Object catch (e) {
-      // Out of reach for now: asked again at the next look.
+      if (e is RommAdminRefused && e.status == 404) {
+        // RomM no longer has the task (a restart, its record expired).
+        _timer?.cancel();
+        if (mounted) state = LibraryScanState(error: e.message);
+        return;
+      }
+      // A proxy's 502, a busy worker's 503, or out of reach for now: the
+      // scan goes on on RomM, so it's asked again at the next look.
       debugPrint('[Scan] $id not read: $e');
     } finally {
       _looking = false;
@@ -101,7 +106,9 @@ class LibraryScanNotifier extends StateNotifier<LibraryScanState> {
 /// The scan of the profile's RomM; the library is read again when it ends.
 final libraryScanProvider = StateNotifierProvider<LibraryScanNotifier, LibraryScanState>((ref) {
   return LibraryScanNotifier(ref.watch(rommServiceProvider), () {
+    // What a gallery already loaded holds stays until it's opened again.
     ref.invalidate(platformsProvider);
+    ref.invalidate(galleryScopeProvider);
   });
 });
 

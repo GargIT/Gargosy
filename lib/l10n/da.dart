@@ -1182,4 +1182,7 @@ const daText = <String, String>{
   "Nothing found. Try another name.": "Intet fundet. Prøv et andet navn.",
   "Fix match…": "Ret match…",
   "RomM library": "RomM-bibliotek",
+  "{0} is empty.": "{0} er tom.",
+  "{0} wasn't uploaded: RomM can't be reached.": "{0} blev ikke uploadet: RomM kan ikke nås.",
+  "{0} wasn't uploaded. {1}": "{0} blev ikke uploadet. {1}",
 };
