@@ -1107,4 +1107,12 @@ const daText = <String, String>{
   'Checking for updates…': 'Søger efter opdateringer…',
   'Update all ({0})': 'Opdater alle ({0})',
   'Updating…': 'Opdaterer…',
+  "Standard where nothing is set up": "Standard hvor intet er sat op",
+  "Standard": "Standard",
+  "Nintendo-style (A/B and X/Y swapped)": "Nintendo-stil (A/B og X/Y byttet)",
+  "Each emulator's own": "Hver emulators egen",
+  "Controller: {0}'s own settings (no layout yet)": "Controller: {0}s egne indstillinger (intet layout endnu)",
+  "Controller layout": "Controllerlayout",
+  "Layout": "Layout",
+  "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Spiller 1's knapper i emulatorerne, skrevet når et spil starter, så en ny profils controller virker med det samme. {0} indtil videre; de andre beholder deres egne indstillinger. Denne profils indstilling.",
 };

@@ -3,6 +3,7 @@ import 'dart:io' as io;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/emulator/emulator_strategy.dart';
+import 'package:gargosy/emulators/pad_layout.dart';
 import 'package:gargosy/emulators/profile_directories.dart';
 import 'package:gargosy/emulators/profile_launch_config.dart';
 import 'package:gargosy/profiles/app_root.dart';
@@ -19,7 +20,13 @@ void main() {
   setUp(() async => root = await tempAppRoot());
   tearDown(() => io.Directory(root.root).delete(recursive: true));
 
-  LaunchContext ctx(String emulator, {String profile = 'aaa', String? subfolder, List<String> gameFolders = const []}) {
+  LaunchContext ctx(
+    String emulator, {
+    String profile = 'aaa',
+    String? subfolder,
+    List<String> gameFolders = const [],
+    PadLayout padLayout = PadLayout.own,
+  }) {
     final paths = ProfilePaths(root, profile);
     final exeDir = p.join(root.emulators, emulator, subfolder ?? '');
     io.Directory(exeDir).createSync(recursive: true);
@@ -32,6 +39,7 @@ void main() {
       guard: PathGuard(root, activeProfileId: profile),
       roms: root.roms,
       gameFolders: gameFolders,
+      padLayout: padLayout,
     );
   }
 
@@ -96,6 +104,48 @@ void main() {
     expect(text, contains('SetupWizardIncomplete = true'));
     expect(text, contains('ConfirmShutdown = false'), reason: 'the quit buttons close it without asking (#141)');
     expect(text, contains('SaveStateOnShutdown = true'), reason: 'closing keeps a resume state');
+  });
+
+  test("a new profile's controller is mapped at its first launch, a hand-made mapping stays (#246)", () async {
+    // PCSX2: written into PCSX2.ini.
+    final pcsx2 = ctx('pcsx2', padLayout: PadLayout.fillIn);
+    await ProfileLaunchConfig.of('pcsx2')!.prepare(pcsx2);
+    final pcsx2Ini = io.File(p.join(pcsx2.data, 'PCSX2', 'inis', 'PCSX2.ini'));
+    expect(pcsx2Ini.readAsStringSync(), contains('Cross = SDL-0/FaceSouth'));
+    pcsx2Ini.writeAsStringSync(
+      pcsx2Ini.readAsStringSync().replaceAll('Cross = SDL-0/FaceSouth', 'Cross = SDL-0/FaceWest'),
+    );
+    await ProfileLaunchConfig.of('pcsx2')!.prepare(pcsx2);
+    expect(pcsx2Ini.readAsStringSync(), contains('Cross = SDL-0/FaceWest'), reason: 'mapped by hand: kept');
+
+    // DuckStation: in the settings swapped in, and kept in the profile after.
+    final duck = ctx('duckstation', padLayout: PadLayout.fillIn);
+    final duckCfg = ProfileLaunchConfig.of('duckstation')!;
+    await duckCfg.prepare(duck);
+    expect(io.File(p.join(duck.exeDir, 'settings.ini')).readAsStringSync(), contains('Cross = SDL-0/A'));
+    await duckCfg.finish(duck);
+    expect(io.File(p.join(duck.data, 'settings.ini')).readAsStringSync(), contains('Cross = SDL-0/A'));
+
+    // Dolphin: GameCube pad 1 on the first XInput pad.
+    final dolphin = ctx('dolphin', padLayout: PadLayout.fillIn);
+    await ProfileLaunchConfig.of('dolphin')!.prepare(dolphin);
+    final pad = io.File(p.join(dolphin.data, 'Config', 'GCPadNew.ini')).readAsStringSync();
+    expect(pad, contains('Device = XInput/0/Gamepad'));
+    expect(pad, contains('Buttons/A = `Button A`'));
+
+    // RetroArch: its controller profiles map it; Nintendo-style swaps over them.
+    final ra = ctx('retroarch', padLayout: PadLayout.nintendo);
+    await ProfileLaunchConfig.of('retroarch')!.prepare(ra);
+    expect(io.File(p.join(ra.data, 'retroarch.cfg')).readAsStringSync(), contains('input_player1_a_btn = "0"'));
+  });
+
+  test("each emulator's own: nothing is written (#246)", () async {
+    final pcsx2 = ctx('pcsx2');
+    await ProfileLaunchConfig.of('pcsx2')!.prepare(pcsx2);
+    expect(io.File(p.join(pcsx2.data, 'PCSX2', 'inis', 'PCSX2.ini')).readAsStringSync(), isNot(contains('[Pad1]')));
+    final dolphin = ctx('dolphin');
+    await ProfileLaunchConfig.of('dolphin')!.prepare(dolphin);
+    expect(io.File(p.join(dolphin.data, 'Config', 'GCPadNew.ini')).existsSync(), isFalse);
   });
 
   test('dolphin stops without asking when closed (#141)', () async {

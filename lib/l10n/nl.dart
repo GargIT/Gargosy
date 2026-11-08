@@ -1109,4 +1109,12 @@ const nlText = <String, String>{
   'Checking for updates…': 'Zoeken naar updates…',
   'Update all ({0})': 'Alles bijwerken ({0})',
   'Updating…': 'Bijwerken…',
+  "Standard where nothing is set up": "Standaard waar niets is ingesteld",
+  "Standard": "Standaard",
+  "Nintendo-style (A/B and X/Y swapped)": "Nintendo-stijl (A/B en X/Y omgewisseld)",
+  "Each emulator's own": "Eigen instellingen per emulator",
+  "Controller: {0}'s own settings (no layout yet)": "Controller: eigen instellingen van {0} (nog geen indeling)",
+  "Controller layout": "Controllerindeling",
+  "Layout": "Indeling",
+  "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "De knoppen van speler 1 in de emulators, geschreven als een spel start, zodat de controller van een nieuw profiel meteen werkt. Voorlopig {0}; de andere houden hun eigen instellingen. Instelling van dit profiel.",
 };

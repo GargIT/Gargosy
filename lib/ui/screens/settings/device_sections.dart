@@ -5,6 +5,8 @@ import '../../../core/audio/ui_sound_service.dart';
 import '../../../core/input/deadzone_config.dart';
 import '../../../core/input/hid_buttons.dart';
 import '../../../core/platform/window_service.dart';
+import '../../../emulators/pad_layout.dart';
+import '../../../providers/engine_providers.dart';
 import '../../../play/quit_combo.dart';
 import '../../../profiles/profile_providers.dart';
 import '../../../providers/sound_providers.dart';
@@ -23,7 +25,7 @@ import '../../../library/game_videos.dart' show VideoPreviews;
 
 /// Settings → Controller: the stick deadzone and quitting a game with
 /// held buttons (#141) and teaching them to a controller (#171), this PC's, for
-/// every profile.
+/// every profile; and the profile's controller layout in the emulators (#246).
 class ControllerSection extends ConsumerStatefulWidget {
   const ControllerSection({super.key});
 
@@ -84,6 +86,34 @@ class _ControllerSectionState extends ConsumerState<ControllerSection> {
           ),
         ],
       ),
+      if (ref.watch(profilePrefsProvider) case final prefs?)
+        SettingsCard(
+          title: tr('Controller layout'),
+          icon: Icons.sports_esports,
+          note: tr(
+            "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.",
+            [padLayoutEmulators],
+          ),
+          children: [
+            SettingsField(
+              key: const ValueKey('pad-layout'),
+              label: tr('Layout'),
+              value: PadLayout.read(prefs).label,
+              action: tr('Change'),
+              onActivate: () async {
+                final i = await showChoice(
+                  context,
+                  title: tr('Controller layout'),
+                  labels: [for (final l in PadLayout.values) l.label],
+                  current: PadLayout.read(prefs).index,
+                );
+                if (i == null || i < 0) return;
+                await PadLayout.write(prefs, PadLayout.values[i]);
+                if (mounted) setState(() {});
+              },
+            ),
+          ],
+        ),
       SettingsCard(
         title: tr('Quit a game'),
         icon: Icons.power_settings_new,

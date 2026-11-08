@@ -17,8 +17,10 @@ import '../../../core/save/catalog/save_entry.dart';
 import '../../../core/save/catalog/save_fit.dart';
 import '../../../core/save/catalog/save_maker.dart';
 import '../../../core/save/resume_service.dart';
+import '../../../emulators/pad_layout.dart';
 import '../../../play/play_controller.dart';
 import '../../../play/play_menu.dart';
+import '../../../providers/engine_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../input/gargosy_intents.dart';
 import '../../theme/tokens.dart';
@@ -157,6 +159,17 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     final i = await showDropdown(context, field: field, labels: labels, current: current < 0 ? null : current);
     if (mounted) setState(() => _openField = null);
     return i;
+  }
+
+  /// Said when the profile's controller layout (#246) isn't written for
+  /// [picked]'s emulator: it plays with its own controller settings.
+  String? _padNoteOf(PlayMenu menu, SaveMaker picked) {
+    final prefs = ref.read(profilePrefsProvider);
+    if (prefs == null || PadLayout.read(prefs) == PadLayout.own) return null;
+    // Dolphin's layout is the GameCube pad's: a Wii game keeps its remotes.
+    final wii = picked.emulatorId == 'dolphin' && (widget.game.platformSlug ?? '').startsWith('wii');
+    if (PadLayout.usedBy.contains(picked.emulatorId) && !wii) return null;
+    return tr("Controller: {0}'s own settings (no layout yet)", [menu.nameOf(picked)]);
   }
 
   bool? _fullscreenOf(PlayMenu menu, SaveMaker picked) {
@@ -477,6 +490,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             fullscreen: _fullscreenOf(menu, picked),
             onFullscreen: (on) => _setFullscreen(picked.emulatorId, on),
             gameSettings: _gameSettingsOf(picked.emulatorId),
+            padNote: _padNoteOf(menu, picked),
             onGameSettings: () => _openGameSettings(menu, picked),
           );
     final middle = Column(

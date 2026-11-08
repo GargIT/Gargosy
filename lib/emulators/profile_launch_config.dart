@@ -13,6 +13,7 @@ import '../profiles/profile_paths.dart';
 import 'bios_links.dart';
 import 'config_files.dart';
 import 'linked_emulators.dart';
+import 'pad_layout.dart';
 import 'rpcs3_config.dart';
 
 /// Where one launch happens: the profile's data folder for the emulator, the
@@ -30,6 +31,7 @@ class LaunchContext {
     this.gameFolders = const [],
     this.fullscreen = true,
     this.resumeAutoState = false,
+    this.padLayout = PadLayout.own,
   });
 
   final String data;
@@ -58,6 +60,10 @@ class LaunchContext {
   /// start" setting is on for this launch, and off for every other one
   /// (`EmulatorStrategy.resumeAutoStateArg`).
   final bool resumeAutoState;
+
+  /// The profile's controller layout (#246), written into the input
+  /// settings of the emulators in [PadLayout.usedBy].
+  final PadLayout padLayout;
 }
 
 class UnsupportedEmulatorException implements Exception {
@@ -99,6 +105,7 @@ abstract class ProfileLaunchConfig {
       before: (c) async {
         _dolphinGameFolders(c);
         _dolphinNoStopQuestion(c);
+        _dolphinPadLayout(c);
       },
     ),
     'pcsx2': _Args(
@@ -238,6 +245,8 @@ void _pcsx2Settings(LaunchContext c) {
     secrets.set('Achievements', 'Token', ra.token);
     secretsFile.writeAsStringSync(secrets.toText());
   }
+  // Player 1's controller (#246).
+  applyPcsx2Layout(settings, c.padLayout);
   ini.writeAsStringSync(settings.toText());
 }
 
@@ -264,6 +273,15 @@ void _dolphinNoStopQuestion(LaunchContext c) {
   final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '');
   if (ini.get('Interface', 'ConfirmStop') == 'False') return;
   ini.set('Interface', 'ConfirmStop', 'False');
+  file.parent.createSync(recursive: true);
+  file.writeAsStringSync(ini.toText());
+}
+
+/// Dolphin's GameCube player 1 (#246): `Config\GCPadNew.ini`.
+void _dolphinPadLayout(LaunchContext c) {
+  final file = io.File(c.guard.check(p.join(c.data, 'Config', 'GCPadNew.ini')));
+  final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '');
+  if (!applyDolphinLayout(ini, c.padLayout)) return;
   file.parent.createSync(recursive: true);
   file.writeAsStringSync(ini.toText());
 }
@@ -392,55 +410,55 @@ class _RetroArch extends ProfileLaunchConfig {
     if (RegExp(r'^\s*sort_savefiles(_by_content)?_enable\s*=\s*"true"', multiLine: true).hasMatch(text)) {
       flattenRetroArchSaves(p.join(c.data, 'saves'), c.guard);
     }
-    cfg.writeAsStringSync(
-      setRetroArchKeys(text, {
-        'savefile_directory': p.join(c.data, 'saves'),
-        // Saves flat in saves\, never in a core or content subfolder, nor next
-        // to the ROM: sigil's save root (issue #7) and the old strategy both
-        // read them there, and roms\ holds only ROMs.
-        'sort_savefiles_enable': 'false',
-        'sort_savefiles_by_content_enable': 'false',
-        'savefiles_in_content_dir': 'false',
-        'savestates_in_content_dir': 'false',
-        'savestate_directory': p.join(c.data, 'states'),
-        // Screenshots in the profile, not beside the exe (shared) or the ROM
-        // (#233): Gargosy sends them to RomM after the game.
-        'screenshot_directory': p.join(c.data, 'screenshots'),
-        'screenshots_in_content_dir': 'false',
-        // States sorted by core, as RetroArch does by default and the save code
-        // assumes: pinned before its first exit writes them (state-sync plan
-        // S0.2); a choice already in the profile's config stays.
-        if (!_hasKey(text, 'sort_savestates_enable')) 'sort_savestates_enable': 'true',
-        if (!_hasKey(text, 'sort_savestates_by_content_enable')) 'sort_savestates_by_content_enable': 'false',
-        // Auto Load State only when Resume starts the auto slot, which
-        // --entryslot can't load; off for every other launch, so a plain Play
-        // never starts in it.
-        'savestate_auto_load': '${c.resumeAutoState}',
-        // Closing the game keeps where it was in the auto slot, which syncs
-        // and resumes like the other states.
-        'savestate_auto_save': 'true',
-        'system_directory': systemDir(c),
-        if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
-        'playlist_directory': p.join(c.data, 'playlists'),
-        'content_history_directory': p.join(c.data, 'playlists'),
-        'input_remapping_directory': p.join(c.data, 'config', 'remaps'),
-        'rgui_config_directory': p.join(c.data, 'config'),
-        'log_dir': p.join(c.data, 'logs'),
-        'core_info_cache_enable': 'false',
-        'config_save_on_exit': 'true',
-        // On is --fullscreen at launch; off has no flag, so it goes here.
-        if (!c.fullscreen) 'video_fullscreen': 'false',
-        // The profile's RetroAchievements login, in its own config (Gargosy
-        // owns it, so RetroArch may save it on exit).
-        if (c.raLogin case final ra?) ...{
-          'cheevos_enable': 'true',
-          'cheevos_username': ra.username,
-          'cheevos_password': '',
-          'cheevos_token': ra.token,
-          'cheevos_hardcore_mode_enable': '${ra.hardcore ?? false}',
-        },
-      }),
-    );
+    final written = setRetroArchKeys(text, {
+      'savefile_directory': p.join(c.data, 'saves'),
+      // Saves flat in saves\, never in a core or content subfolder, nor next
+      // to the ROM: sigil's save root (issue #7) and the old strategy both
+      // read them there, and roms\ holds only ROMs.
+      'sort_savefiles_enable': 'false',
+      'sort_savefiles_by_content_enable': 'false',
+      'savefiles_in_content_dir': 'false',
+      'savestates_in_content_dir': 'false',
+      'savestate_directory': p.join(c.data, 'states'),
+      // Screenshots in the profile, not beside the exe (shared) or the ROM
+      // (#233): Gargosy sends them to RomM after the game.
+      'screenshot_directory': p.join(c.data, 'screenshots'),
+      'screenshots_in_content_dir': 'false',
+      // States sorted by core, as RetroArch does by default and the save code
+      // assumes: pinned before its first exit writes them (state-sync plan
+      // S0.2); a choice already in the profile's config stays.
+      if (!_hasKey(text, 'sort_savestates_enable')) 'sort_savestates_enable': 'true',
+      if (!_hasKey(text, 'sort_savestates_by_content_enable')) 'sort_savestates_by_content_enable': 'false',
+      // Auto Load State only when Resume starts the auto slot, which
+      // --entryslot can't load; off for every other launch, so a plain Play
+      // never starts in it.
+      'savestate_auto_load': '${c.resumeAutoState}',
+      // Closing the game keeps where it was in the auto slot, which syncs
+      // and resumes like the other states.
+      'savestate_auto_save': 'true',
+      'system_directory': systemDir(c),
+      if (c.roms.isNotEmpty) 'rgui_browser_directory': c.roms,
+      'playlist_directory': p.join(c.data, 'playlists'),
+      'content_history_directory': p.join(c.data, 'playlists'),
+      'input_remapping_directory': p.join(c.data, 'config', 'remaps'),
+      'rgui_config_directory': p.join(c.data, 'config'),
+      'log_dir': p.join(c.data, 'logs'),
+      'core_info_cache_enable': 'false',
+      'config_save_on_exit': 'true',
+      // On is --fullscreen at launch; off has no flag, so it goes here.
+      if (!c.fullscreen) 'video_fullscreen': 'false',
+      // The profile's RetroAchievements login, in its own config (Gargosy
+      // owns it, so RetroArch may save it on exit).
+      if (c.raLogin case final ra?) ...{
+        'cheevos_enable': 'true',
+        'cheevos_username': ra.username,
+        'cheevos_password': '',
+        'cheevos_token': ra.token,
+        'cheevos_hardcore_mode_enable': '${ra.hardcore ?? false}',
+      },
+    });
+    // Player 1's face buttons over RetroArch's controller profiles (#246).
+    cfg.writeAsStringSync(applyRetroArchLayout(written, c.padLayout) ?? written);
     return cfg;
   }
 }
@@ -526,6 +544,8 @@ IniFile _duckstationFolders(IniFile ini, LaunchContext c) {
   // Closing the game keeps where it was in `<serial>_resume.sav`, which
   // syncs and resumes like the other states.
   ini.set('Main', 'SaveStateOnExit', 'true');
+  // Player 1's controller (#246).
+  applyDuckstationLayout(ini, c.padLayout);
   for (final key in const [
     'Cache',
     'Cheats',

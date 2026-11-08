@@ -16,6 +16,11 @@ What changed in each release of Gargosy. The format follows
   emulators it downloaded. Settings → Emulators says which have one, with
   Update all and Check for updates; a dot on the avatar and a count on
   Emulators in the menu. Nothing updates by itself.
+- Controller layout: a new profile's controller works at its first game in
+  RetroArch, PCSX2, DuckStation and Dolphin (GameCube), without setting up
+  each emulator. Settings → Controller → Controller layout: Standard where
+  nothing is set up (the default; a mapping made by hand stays), Standard,
+  Nintendo-style (A/B and X/Y swapped), or each emulator's own.
 
 ### Changed
 

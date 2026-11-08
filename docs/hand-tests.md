@@ -467,3 +467,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 171. [ ] With an emulator downloaded by an older Gargosy release (or its `.gargosy-install.json` `from` edited to an older download), start Gargosy: the avatar has a dot, the user menu's Emulators a count, and Settings → Emulators says "update available" on its row. Update all installs it, and the dot and the count go. An emulator imported from a folder never says so.
 172. [ ] Check for updates on Settings → Emulators while offline: nothing breaks, and what was found before stays. Start Gargosy again within a day: the log has no new `[EmulatorUpdates]` check.
+
+## Controller layout (#246)
+
+173. [ ] Make a new profile and, with an Xbox-type controller, play a game in each of PCSX2, DuckStation, Dolphin (GameCube) and RetroArch without opening their settings: the controller works at once, the bottom button is Cross (PS) or A (GameCube).
+174. [ ] In a profile whose PCSX2 was mapped by hand (a button changed), play again with the default layout: the hand-made mapping is still there. Pick Nintendo-style in Settings → Controller → Controller layout: in each of the four, the bottom and right buttons (and left and top) are swapped. Pick Standard: back.
+175. [ ] Play a game in an emulator not in the list (mGBA, PPSSPP …): the play screen says it plays with its own controller settings. With "Each emulator's own", it doesn't say so.
