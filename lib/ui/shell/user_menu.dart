@@ -44,6 +44,7 @@ Future<UserMenuChoice?> showUserMenu(
   String? update,
   int? downloads,
   int emulatorUpdates = 0,
+  bool rommLibrary = false,
 }) {
   Widget item(
     BuildContext c,
@@ -160,7 +161,11 @@ Future<UserMenuChoice?> showUserMenu(
                   // Every section of Settings, one item each, in its groups.
                   for (final group in SettingsGroup.values.where((g) => g != SettingsGroup.gargosy)) ...[
                     heading(group.heading),
-                    for (final page in SettingsPage.values.where((p) => p.group == group))
+                    for (final page in SettingsPage.values.where(
+                      // RomM library only for a user who may scan (#245): the
+                      // menu still fits a 720 px window for everyone else.
+                      (p) => p.group == group && (p != SettingsPage.rommLibrary || rommLibrary),
+                    ))
                       item(
                         c,
                         page.label,

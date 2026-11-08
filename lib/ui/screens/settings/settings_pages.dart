@@ -24,6 +24,7 @@ enum SettingsPage {
   home(SettingsGroup.profile, 'Home', Icons.home_outlined),
   emulators(SettingsGroup.library, 'Emulators', Icons.download_outlined),
   emulatorSettings(SettingsGroup.library, 'Emulator settings', Icons.tune),
+  rommLibrary(SettingsGroup.library, 'RomM library', Icons.dns_outlined),
   controller(SettingsGroup.thisPc, 'Controller', Icons.gamepad_outlined),
   display(SettingsGroup.thisPc, 'Display', Icons.desktop_windows_outlined),
   storage(SettingsGroup.thisPc, 'Storage', Icons.storage_outlined),

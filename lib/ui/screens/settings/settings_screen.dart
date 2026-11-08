@@ -16,6 +16,7 @@ import 'storage_section.dart';
 import 'profile_section.dart';
 import 'ra_section.dart';
 import 'settings_pages.dart';
+import 'romm_library_section.dart';
 import 'settings_rows.dart';
 import '../../../l10n/tr.dart';
 
@@ -51,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ),
     SettingsPage.emulators => const EmulatorInstallSection(),
     SettingsPage.emulatorSettings => const EmulatorsSection(),
+    SettingsPage.rommLibrary => const RommLibrarySection(),
     SettingsPage.controller => const ControllerSection(),
     SettingsPage.display => const DisplaySection(),
     SettingsPage.storage => const StorageSection(),

@@ -478,3 +478,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 176. [ ] In a profile signed in to RetroAchievements, change a button or hotkey in PCSX2 and in RetroArch (Open on Settings → Emulators, or in a game), then Settings → Emulators → New profiles → Use this profile's on both. Make a new profile and play a game in each: the changed button is there, no save, state or memory card came along, and neither emulator is signed in to RetroAchievements until the new profile signs in.
 177. [ ] In that new profile, take a screenshot in RetroArch and save in PCSX2: they land in the new profile's folder (`userdata\profiles\<new id>\emulators\…`), not the first one's. Forget on the first emulator: the next new profile starts with its own settings again.
+
+## Admin tools for RomM (#245)
+
+178. [ ] In a profile of a RomM admin (Sign in again first if it was paired before this build, so its login gets `tasks.run`), Settings → RomM library → Quick scan: the line counts the games as RomM scans and ends with "Scan done."; a second press while it runs is refused. In a profile of a viewer, the page says it may not scan and none of the three tools shows.
+179. [ ] On a platform's page, Upload, pick two games (one over 10 MB): the dialog shows each with its bytes; then the toast says RomM is adding them, and after the scan they are in the platform's games. B during an upload cancels it, and nothing of it is left on RomM.
+180. [ ] On a game RomM matched wrong (or not at all), ⋯ → Fix match…: RomM's finds by its file name are listed, Search for another name finds others; pick one and Match: the page shows the new name, cover and details, and the ROM's file on RomM keeps its name.

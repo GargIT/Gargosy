@@ -1,7 +1,11 @@
 import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/romm/romm_admin.dart';
+import 'package:gargosy/core/romm/romm_service.dart';
+import 'package:gargosy/ui/screens/platform/upload_game.dart';
 import 'package:gargosy/core/emulator/retroarch_core_list.dart';
 import 'package:gargosy/core/emulator/strategy_registry.dart';
 import 'package:gargosy/core/input/gamepad_service.dart';
@@ -21,6 +25,7 @@ import 'package:gargosy/ui/screens/settings/settings_screen.dart';
 import 'package:gargosy/ui/widgets/game_card.dart';
 import 'package:path/path.dart' as p;
 
+import '../helpers/fake_dio_adapter.dart';
 import '../helpers/fake_library_api.dart';
 import '../helpers/fake_secret_store.dart';
 import '../helpers/game_fixtures.dart';
@@ -65,7 +70,7 @@ void main() {
   });
   final games = [for (var i = 1; i <= 120; i++) game(i, 'Game ${i.toString().padLeft(3, '0')}')];
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {List<Override> extra = const []}) async {
     await setDesktopSize(tester);
     root = (await tester.runAsync(tempAppRoot))!;
     addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
@@ -104,6 +109,7 @@ void main() {
               EmulatorInfo(id: 'pcsx2', name: 'PCSX2', exe: 'pcsx2-qt.exe', supported: true),
             ],
           ),
+          ...extra,
         ],
       ),
     );
@@ -122,6 +128,57 @@ void main() {
     final onPc = find.ancestor(of: find.text('ON THIS PC'), matching: find.byType(Column)).first;
     expect(find.descendant(of: onPc, matching: find.text('2')), findsOneWidget); // Halo is another platform's
     expect(focusedCard(), 'Game 001');
+    // Upload (#245) only for a RomM user who may.
+    expect(find.byKey(const ValueKey('platform-upload')), findsNothing);
+  });
+
+  testWidgets('Upload (#245): only for a RomM user who may; sends the picked file, then RomM scans the platform', (
+    tester,
+  ) async {
+    final dir = (await tester.runAsync(() => io.Directory.systemTemp.createTemp('up')))!;
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final file = io.File(p.join(dir.path, 'Ico (Europe).iso'))..writeAsBytesSync([1, 2, 3]);
+    final a = FakeDioAdapter((r) {
+      if (r.path.endsWith('/start')) return (status: 201, body: {'upload_id': 'u'});
+      if (r.path == '/api/tasks/scan') return (status: 202, body: {'task_id': 'job'});
+      if (r.path.startsWith('/api/tasks/')) return (status: 200, body: {'status': 'started', 'meta': {}});
+      return (status: 201, body: {});
+    });
+    final romm = RommService(
+      RomMConfig(baseUrl: 'https://romm.example', username: '', password: '', apiKey: 't'),
+      dio: fakeDio(a),
+      skipConnectivityCheck: true,
+    );
+    await pump(
+      tester,
+      extra: [
+        rommRightsProvider.overrideWith((ref) async => const RommRights(upload: true)),
+        rommServiceProvider.overrideWithValue(romm),
+        rommOfflineProvider.overrideWithValue(false),
+        uploadFilePickerProvider.overrideWithValue((title) async => [file.path]),
+      ],
+    );
+    await tester.tap(find.byKey(const ValueKey('platform-upload')));
+    // Real file reads between the requests.
+    for (var i = 0; i < 200 && !a.requests.any((r) => r.path == '/api/tasks/scan'); i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(
+      a.requests.map((r) => r.path),
+      containsAllInOrder([
+        '/api/roms/upload/start',
+        '/api/roms/upload/u',
+        '/api/roms/upload/u/complete',
+        '/api/tasks/scan',
+      ]),
+    );
+    expect(a.requests.firstWhere((r) => r.path == '/api/tasks/scan').data, {
+      'type': 'quick',
+      'platforms': [1],
+    });
+    expect(find.textContaining('Uploaded Ico (Europe).iso to PlayStation 2'), findsOneWidget);
   });
 
   testWidgets('Random opens one of the platform\'s games', (tester) async {

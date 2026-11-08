@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gargosy/core/romm/romm_admin.dart';
 import 'package:gargosy/core/romm/romm_service.dart';
 import 'package:gargosy/providers/romm_providers.dart';
 import 'package:gargosy/ui/widgets/game_transition.dart';
@@ -341,7 +342,7 @@ void main() {
   group('Delete from RomM', () {
     late FakeDioAdapter server;
 
-    Future<void> pumpDeletable(WidgetTester tester, {required bool allowed, int status = 200}) {
+    Future<void> pumpDeletable(WidgetTester tester, {required bool allowed, int status = 200, bool match = false}) {
       server = FakeDioAdapter(
         (_) => (status: status, body: status == 200 ? {'successful_items': 1, 'failed_items': 0} : {}),
       );
@@ -355,7 +356,9 @@ void main() {
         downloaded: true,
         extra: [
           canDeleteGamesProvider.overrideWith((ref) async => allowed),
+          rommRightsProvider.overrideWith((ref) async => RommRights(deleteGames: allowed, match: match)),
           rommServiceProvider.overrideWithValue(romm),
+          rommOfflineProvider.overrideWithValue(false),
           // Only the delete is asked of this server.
           playSessionsApiProvider.overrideWithValue(null),
           similarGamesProvider.overrideWith((ref, id) async => const []),
@@ -382,12 +385,23 @@ void main() {
       );
     });
 
+    testWidgets('Fix match (#245): only for a RomM user who may, before the Delete items', (tester) async {
+      await pumpDeletable(tester, allowed: true, match: true);
+      await tester.tap(find.byKey(const ValueKey('game-more')));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.text('Fix match…')).dy,
+        lessThan(tester.getTopLeft(find.text('Delete from this PC…')).dy),
+      );
+    });
+
     testWidgets('not for a RomM user who may not delete games', (tester) async {
       await pumpDeletable(tester, allowed: false);
       await tester.tap(find.byKey(const ValueKey('game-more')));
       await tester.pumpAndSettle();
       expect(find.text('Delete from this PC…'), findsOneWidget);
       expect(find.text('Delete from RomM…'), findsNothing);
+      expect(find.text('Fix match…'), findsNothing);
     });
 
     testWidgets('the prompt: permanent, Cancel focused, a press of Delete does nothing, holding it deletes', (

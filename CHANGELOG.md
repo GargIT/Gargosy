@@ -25,6 +25,11 @@ What changed in each release of Gargosy. The format follows
   New profiles copies this profile's settings for an emulator (buttons,
   hotkeys, graphics) for every profile made after. Saves, states, memory
   cards and sign-ins are never copied; Forget goes back to the emulator's own.
+- Admin tools for RomM, for a RomM user who may change the library: Settings →
+  RomM library → Scan library (quick or complete, with RomM's progress), a
+  platform's Upload (games from this PC into RomM, then RomM scans that
+  platform), and the game page's ⋯ → Fix match (search the metadata sources
+  and pick the right game). Hidden for everyone else.
 
 ### Changed
 

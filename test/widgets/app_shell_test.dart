@@ -245,7 +245,8 @@ void main() {
 
   testWidgets('the menu has one item per Settings section, and each opens that section', (tester) async {
     await pump(tester);
-    for (final page in SettingsPage.values) {
+    // RomM library only for a user who may scan (#245); this one may not.
+    for (final page in SettingsPage.values.where((p) => p != SettingsPage.rommLibrary)) {
       await send(tester, GameAction.start);
       final item = find.byKey(ValueKey('user-menu-${page.name}'));
       expect(item, findsOneWidget, reason: page.name);
@@ -283,7 +284,8 @@ void main() {
     await send(tester, GameAction.start);
     final last = tester.getRect(find.byKey(const ValueKey('user-menu-switchProfile')));
     final others = [
-      for (final page in SettingsPage.values) page.name,
+      for (final page in SettingsPage.values)
+        if (page != SettingsPage.rommLibrary) page.name,
       for (final a in UserMenuAction.values)
         // Downloads shows only while there are some (#143).
         if (a != UserMenuAction.switchProfile && a != UserMenuAction.downloads) a.name,

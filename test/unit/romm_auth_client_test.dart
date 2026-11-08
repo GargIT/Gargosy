@@ -25,6 +25,7 @@ const meJson = {
     'firmware.read',
     'collections.read',
     'collections.write',
+    'tasks.run',
   ],
 };
 

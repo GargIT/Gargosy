@@ -6,6 +6,7 @@ import '../../emulators/emulator_updates.dart';
 import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
 import '../../providers/download_providers.dart';
+import '../../providers/library_providers.dart';
 import '../../providers/update_providers.dart';
 import '../screens/doc_reader_screen.dart';
 import '../screens/downloads_screen.dart';
@@ -38,6 +39,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     update: available == null ? null : tr('Update available: {0}', [available.release.version]),
     downloads: downloads.anything ? downloads.pending : null,
     emulatorUpdates: ref.read(emulatorUpdatesProvider).available.length,
+    rommLibrary: ref.read(rommRightsProvider).value?.scan ?? false,
   );
   if (!context.mounted) return;
   if (choice == null) return;

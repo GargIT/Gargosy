@@ -28,6 +28,7 @@ import '../manual/manual_screen.dart';
 import '../play/play_screen.dart';
 import 'add_to_collection.dart';
 import 'delete_game_dialog.dart';
+import 'fix_match_dialog.dart';
 import 'make_shortcut.dart';
 import '../../../l10n/tr.dart';
 import '../../../providers/about_providers.dart';
@@ -139,6 +140,8 @@ class GameCoverColumn extends ConsumerWidget {
             ref.invalidate(playMenuProvider(PlayMenuKey(game)));
           },
         ),
+      if ((ref.read(rommRightsProvider).value?.match ?? false) && !ref.read(rommOfflineProvider))
+        (label: tr('Fix match…'), danger: false, run: () => fixMatch(context, ref, game)),
       if (downloaded)
         (
           label: tr('Delete from this PC…'),
@@ -209,6 +212,7 @@ class GameCoverColumn extends ConsumerWidget {
     final progress = ref.watch(downloadsProvider)[game.id];
     final downloaded = watchDownloaded(ref, game);
     ref.watch(canDeleteGamesProvider); // asked once, ready for ⋯
+    ref.watch(rommRightsProvider);
     final isFavourite = ref.watch(favouriteIdsProvider).contains(game.id);
     final playing = ref.watch(playControllerProvider.select((s) => s.runningGameId == game.id));
     // When this game's session ends, say how its saves went.

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/romm/romm_library_api.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../library/library_snapshot.dart';
+import '../../../providers/library_providers.dart';
 import '../../../providers/romm_providers.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/download_all_button.dart';
@@ -13,6 +14,7 @@ import '../../widgets/g_focusable.dart';
 import '../../widgets/platform_logo.dart';
 import '../../widgets/toast.dart';
 import '../game/open_game.dart';
+import 'upload_game.dart';
 import '../../../l10n/tr.dart';
 
 /// The platform page's header (RomM v2's): the logo, the name with RomM's
@@ -101,34 +103,62 @@ class _PlatformHeaderState extends ConsumerState<PlatformHeader> {
           const SizedBox(width: GSpace.s4),
           DownloadAllButton(query: GalleryQuery(platformId: widget.platform.id)),
           const SizedBox(width: GSpace.s2),
-          GFocusable(
-            key: const ValueKey('platform-random'),
-            borderRadius: GRadius.pill,
-            onActivate: _random,
-            semanticLabel: 'Random game',
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
-              decoration: BoxDecoration(
-                color: GColors.surface,
-                borderRadius: BorderRadius.circular(GRadius.pill),
-                border: Border.all(color: GColors.borderStrong),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _picking
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.shuffle, size: 18),
-                  const SizedBox(width: GSpace.s2),
-                  Text(tr('Random'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                ],
-              ),
+          // A RomM admin's Upload (#245).
+          if ((ref.watch(rommRightsProvider).value?.upload ?? false) && !ref.watch(rommOfflineProvider)) ...[
+            _Pill(
+              key: const ValueKey('platform-upload'),
+              icon: const Icon(Icons.upload_outlined, size: 18),
+              label: tr('Upload'),
+              onActivate: () => uploadGamesTo(context, ref, widget.platform),
             ),
+            const SizedBox(width: GSpace.s2),
+          ],
+          _Pill(
+            key: const ValueKey('platform-random'),
+            icon: _picking
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.shuffle, size: 18),
+            label: tr('Random'),
+            semanticLabel: 'Random game',
+            onActivate: _random,
           ),
         ],
       ),
     );
   }
+}
+
+/// A pill button of the header (Upload, Random).
+class _Pill extends StatelessWidget {
+  const _Pill({super.key, required this.icon, required this.label, required this.onActivate, this.semanticLabel});
+
+  final Widget icon;
+  final String label;
+  final VoidCallback onActivate;
+  final String? semanticLabel;
+
+  @override
+  Widget build(BuildContext context) => GFocusable(
+    borderRadius: GRadius.pill,
+    onActivate: onActivate,
+    semanticLabel: semanticLabel,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: GSpace.s5, vertical: GSpace.s3),
+      decoration: BoxDecoration(
+        color: GColors.surface,
+        borderRadius: BorderRadius.circular(GRadius.pill),
+        border: Border.all(color: GColors.borderStrong),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(width: GSpace.s2),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Chip extends StatelessWidget {
