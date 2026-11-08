@@ -89,31 +89,35 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
     }
   }
 
-  /// Download, or Update: the newest build, unless it's the one installed.
-  Future<void> _download(EmulatorInfo e) async {
+  /// Download, or Update: the newest build ([newest] when the update check
+  /// just found it), unless it's the one installed. Once started it runs to
+  /// the end even when the page closes: a half-replaced program doesn't run.
+  Future<void> _download(EmulatorInfo e, {String? newest}) async {
     final installer = ref.read(emulatorInstallerProvider);
-    if (installer == null) return;
+    if (installer == null || _busy.containsKey(e.id)) return;
     // Its program can't be replaced while it runs.
     if (ref.read(playControllerProvider).runningGameId != null) {
       showToast(context, tr('A game is running. Close it first.'), error: true);
       return;
     }
+    // Read now: the page may be gone when the install ends.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final library = ref.read(emulatorLibraryProvider);
     setState(() => _busy[e.id] = tr('Looking for the newest…'));
     String? error;
     var installed = false;
     try {
-      final url = await installer.latestUrl(e.id);
-      if (!mounted) return;
+      final url = newest ?? await installer.latestUrl(e.id);
       if (url == null) {
         error = tr('no download was found');
       } else if (url == e.installedFrom) {
-        showToast(context, tr('{0} is already the newest.', [e.name]));
+        if (mounted) showToast(context, tr('{0} is already the newest.', [e.name]));
       } else {
-        await ref.read(emulatorLibraryProvider)?.clearIfNoProgram(e.id);
+        await library?.clearIfNoProgram(e.id);
         await for (final pr in installer.install(e.id, url)) {
-          if (!mounted) return;
           if (pr.error != null) error = pr.error;
           if (pr.status == 'done' && pr.error == null) installed = true;
+          if (!mounted) continue;
           setState(
             () => _busy[e.id] = pr.status.startsWith(tr('Extracting'))
                 ? tr('Unpacking…')
@@ -125,8 +129,8 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
       error = '$err';
     } finally {
       if (mounted) setState(() => _busy.remove(e.id));
-      ref.invalidate(emulatorsProvider);
-      unawaited(ref.read(emulatorUpdatesProvider.notifier).refresh());
+      container.invalidate(emulatorsProvider);
+      unawaited(container.read(emulatorUpdatesProvider.notifier).refresh());
     }
     if (!mounted) return;
     if (error != null) {
@@ -178,7 +182,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
           showToast(context, tr('A game is running. Close it first.'), error: true);
           return;
         }
-        await _download(e);
+        await _download(e, newest: ref.read(emulatorUpdatesProvider).available[e.id]);
       }
     } finally {
       if (mounted) setState(() => _updatingAll = false);
@@ -246,7 +250,8 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
                     : (installed && e.supported ? GColors.success : GColors.fgSecondary),
               ),
             ),
-            if (busy == null && e.supported) ...[
+            // During Update all, no row's own buttons: one install per emulator.
+            if (busy == null && e.supported && !_updatingAll) ...[
               const SizedBox(width: GSpace.s4),
               // #240: with larger text the buttons go onto a second line.
               ConstrainedBox(
@@ -269,7 +274,8 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
                         label: installed ? tr('Update') : tr('Download'),
                         icon: installed ? Icons.update : Icons.download_outlined,
                         kind: installed && !newer ? SettingsButtonKind.tonal : SettingsButtonKind.primary,
-                        onActivate: () => _download(e),
+                        onActivate: () =>
+                            _download(e, newest: newer ? ref.read(emulatorUpdatesProvider).available[e.id] : null),
                       ),
                     if (installed)
                       SettingsButton(label: tr('Remove'), icon: Icons.delete_outline, onActivate: () => _remove(e)),
@@ -306,7 +312,7 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
         final updates = ref.watch(emulatorUpdatesProvider);
         final newer = [
           for (final e in supported)
-            if (updates.available.containsKey(e.id) && e.installedExe != null) e,
+            if (updates.available.containsKey(e.id) && EmulatorUpdateCheck.checkable(e)) e,
         ];
         final ps3Firmware = ref.watch(ps3FirmwareProvider);
         return ListView(

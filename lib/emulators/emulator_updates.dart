@@ -55,25 +55,41 @@ class EmulatorUpdateCheck {
   }
 
   /// Checks [installed] (unless one ran within [every] and it isn't
-  /// [force]d) and gives the emulators with a newer release, by id. An
-  /// emulator whose release list can't be read keeps what was found before;
-  /// when none could be read (offline), the next start checks again.
+  /// [force]d; a last check in the future, a clock put back, counts as
+  /// none) and gives the emulators with a newer release, by id. An emulator
+  /// whose release list can't be read (an error, or no download: the
+  /// release service gives none when offline or rate-limited) keeps what was
+  /// found before; when none could be read, the next start checks again.
+  /// The release lists are asked together.
   Future<Map<String, String>> check(List<EmulatorInfo> installed, {bool force = false}) async {
     final last = lastCheck;
-    if (!force && last != null && _clock().difference(last) < every) return remembered(installed);
+    final now = _clock();
+    if (!force && last != null && !last.isAfter(now) && now.difference(last) < every) {
+      return remembered(installed);
+    }
     final before = _stored();
     final found = <String, String>{};
     var reached = false;
-    for (final e in installed.where(checkable)) {
-      try {
-        final latest = await latestUrl(e.id);
-        reached = true;
-        if (latest != null && latest != e.installedFrom) found[e.id] = latest;
-      } on Object catch (err) {
-        debugPrint('[EmulatorUpdates] ${e.id}: newest release not read: $err');
+    final checked = installed.where(checkable).toList();
+    final latest = await Future.wait([
+      for (final e in checked)
+        latestUrl(e.id).then<String?>(
+          (url) => url,
+          onError: (Object err) {
+            debugPrint('[EmulatorUpdates] ${e.id}: newest release not read: $err');
+            return null;
+          },
+        ),
+    ]);
+    for (final (i, e) in checked.indexed) {
+      final url = latest[i];
+      if (url == null) {
         final kept = before[e.id];
         if (kept != null && kept != e.installedFrom) found[e.id] = kept;
+        continue;
       }
+      reached = true;
+      if (url != e.installedFrom) found[e.id] = url;
     }
     await prefs.setString(foundKey, jsonEncode(found));
     if (reached) await prefs.setString(lastKey, _clock().toUtc().toIso8601String());
@@ -112,16 +128,17 @@ class EmulatorUpdatesNotifier extends StateNotifier<EmulatorUpdatesState> {
     return EmulatorUpdateCheck(prefs: _ref.read(appPreferencesProvider), latestUrl: installer.latestUrl);
   }
 
-  /// The check when a profile opens: none when Gargosy's own check at start
-  /// is off, at most one in 24 h. Never throws.
+  /// The check when a profile opens, at most one in 24 h; with Gargosy's
+  /// own check at start off, only what an earlier check found. Never throws.
   Future<void> startupCheck() async {
+    bool auto;
     try {
-      if (!_ref.read(updateAutoCheckEnabledProvider) || !_ref.read(updateCheckerProvider).autoCheck) return;
+      auto = _ref.read(updateAutoCheckEnabledProvider) && _ref.read(updateCheckerProvider).autoCheck;
     } on Object catch (e) {
       debugPrint('[EmulatorUpdates] not checked: $e');
       return;
     }
-    await _run(force: false);
+    await (auto ? _run(force: false) : refresh());
   }
 
   /// Settings → Emulators' Check for updates. Never throws.
@@ -153,7 +170,10 @@ class EmulatorUpdatesNotifier extends StateNotifier<EmulatorUpdatesState> {
     state = EmulatorUpdatesState(checking: true, available: state.available);
     var available = state.available;
     try {
-      available = await check.check(await _ref.read(emulatorsProvider.future), force: force);
+      await check.check(await _ref.read(emulatorsProvider.future), force: force);
+      // Against the emulators as they are now: one installed while it ran
+      // isn't marked again.
+      available = check.remembered(await _ref.read(emulatorsProvider.future));
     } on Object catch (e) {
       debugPrint('[EmulatorUpdates] check failed: $e');
     } finally {

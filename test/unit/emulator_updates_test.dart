@@ -94,6 +94,25 @@ void main() {
     expect(checker().lastCheck, stamped, reason: 'offline: not counted as a check');
   });
 
+  test('no download given (the release service says nothing when offline) counts as not read', () async {
+    final list = [_emu('dolphin', from: 'u/dolphin-2.zip')];
+    releases = {'dolphin': 'u/dolphin-3.zip'};
+    await checker().check(list);
+    final stamped = checker().lastCheck;
+    now = now.add(const Duration(days: 2));
+    releases = {'dolphin': null};
+    expect(await checker().check(list), {'dolphin': 'u/dolphin-3.zip'});
+    expect(checker().lastCheck, stamped);
+  });
+
+  test('a last check in the future (a clock put back) is no reason to wait', () async {
+    final list = [_emu('dolphin', from: 'u/dolphin-2.zip')];
+    prefs.values[EmulatorUpdateCheck.lastKey] = DateTime.utc(2027, 6, 1).toIso8601String();
+    releases = {'dolphin': 'u/dolphin-3.zip'};
+    expect(await checker().check(list), {'dolphin': 'u/dolphin-3.zip'});
+    expect(asked, ['dolphin']);
+  });
+
   test('a damaged record reads as nothing found', () {
     prefs.values[EmulatorUpdateCheck.foundKey] = 'not json';
     expect(checker().remembered([_emu('dolphin', from: 'u/dolphin-2.zip')]), isEmpty);
