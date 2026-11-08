@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../emulators/emulator_updates.dart';
 import '../../play/play_controller.dart';
 import '../../profiles/profile_providers.dart';
 import '../../providers/download_providers.dart';
@@ -36,6 +37,7 @@ Future<void> openUserMenu(BuildContext context, WidgetRef ref) async {
     avatarPath: ctx.paths.avatarFile,
     update: available == null ? null : tr('Update available: {0}', [available.release.version]),
     downloads: downloads.anything ? downloads.pending : null,
+    emulatorUpdates: ref.read(emulatorUpdatesProvider).available.length,
   );
   if (!context.mounted) return;
   if (choice == null) return;

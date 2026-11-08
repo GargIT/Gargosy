@@ -462,3 +462,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## Shadow negotiate (#294)
 
 170. [x] On RomM 5.4, play a game from the play screen and quit. The newest log in `userdata\app\logs\` has two `[Negotiate]` lines for it, `launch` and `push`, each with what RomM would do and what Gargosy did. Starting and saving felt as quick as before.
+
+## Emulator updates (#243)
+
+171. [ ] With an emulator downloaded by an older Gargosy release (or its `.gargosy-install.json` `from` edited to an older download), start Gargosy: the avatar has a dot, the user menu's Emulators a count, and Settings → Emulators says "update available" on its row. Update all installs it, and the dot and the count go. An emulator imported from a folder never says so.
+172. [ ] Check for updates on Settings → Emulators while offline: nothing breaks, and what was found before stays. Start Gargosy again within a day: the log has no new `[EmulatorUpdates]` check.

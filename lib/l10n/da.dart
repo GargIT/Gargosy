@@ -1102,4 +1102,9 @@ const daText = <String, String>{
   'The game is above this profile\'s age limit.': 'Spillet er over denne profils aldersgrænse.',
   'The download was cancelled on this PC.': 'Downloaden blev annulleret på denne pc.',
   'Gargosy on {0} ({1})': 'Gargosy på {0} ({1})',
+  '{0} · update available': '{0} · opdatering tilgængelig',
+  'Check for updates': 'Søg efter opdateringer',
+  'Checking for updates…': 'Søger efter opdateringer…',
+  'Update all ({0})': 'Opdater alle ({0})',
+  'Updating…': 'Opdaterer…',
 };

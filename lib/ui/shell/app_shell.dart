@@ -9,6 +9,7 @@ export 'shell_menu.dart' show shellTabs, shellTabProvider;
 import '../../changelog/whats_new.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/input/gamepad_service.dart';
+import '../../emulators/emulator_updates.dart';
 import '../../library/upload_queue.dart';
 import '../../play/outside_launch.dart';
 import '../../play/screenshot_uploads.dart';
@@ -81,6 +82,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         _whatsNew();
       }
       unawaited(registerRommDevice(ref));
+      // Newer emulator releases (#243): at most once a day, only shown.
+      unawaited(ref.read(emulatorUpdatesProvider.notifier).startupCheck());
     });
   }
 

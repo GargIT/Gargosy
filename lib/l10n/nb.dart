@@ -1100,4 +1100,9 @@ const nbText = <String, String>{
   'The game is above this profile\'s age limit.': 'Spillet er over denne profilens aldersgrense.',
   'The download was cancelled on this PC.': 'Nedlastingen ble avbrutt på denne PC-en.',
   'Gargosy on {0} ({1})': 'Gargosy på {0} ({1})',
+  '{0} · update available': '{0} · oppdatering tilgjengelig',
+  'Check for updates': 'Se etter oppdateringer',
+  'Checking for updates…': 'Ser etter oppdateringer…',
+  'Update all ({0})': 'Oppdater alle ({0})',
+  'Updating…': 'Oppdaterer…',
 };

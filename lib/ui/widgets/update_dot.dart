@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../emulators/emulator_updates.dart';
 import '../../providers/update_providers.dart';
 import '../theme/tokens.dart';
 
-/// A dot on [child] (the avatar) while an update is available: the quiet
-/// sign of the check at start, never a popup (issue #16).
+/// A dot on [child] (the avatar) while an update of Gargosy (issue #16) or
+/// of an installed emulator (#243) is available: the quiet sign of the
+/// checks at start, never a popup.
 class UpdateDot extends ConsumerWidget {
   const UpdateDot({super.key, required this.child});
   final Widget child;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final available = ref.watch(updateStateProvider.select((s) => s.available != null));
+    final available =
+        ref.watch(updateStateProvider.select((s) => s.available != null)) ||
+        ref.watch(emulatorUpdatesProvider.select((s) => s.available.isNotEmpty));
     if (!available) return child;
     return Stack(
       clipBehavior: Clip.none,
