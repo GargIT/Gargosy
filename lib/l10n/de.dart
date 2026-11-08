@@ -1113,4 +1113,12 @@ const deText = <String, String>{
   'Checking for updates…': 'Suche nach Updates…',
   'Update all ({0})': 'Alle aktualisieren ({0})',
   'Updating…': 'Wird aktualisiert…',
+  "Standard where nothing is set up": "Standard, wo nichts eingerichtet ist",
+  "Standard": "Standard",
+  "Nintendo-style (A/B and X/Y swapped)": "Nintendo-Stil (A/B und X/Y vertauscht)",
+  "Each emulator's own": "Eigene des Emulators",
+  "Controller: {0}'s own settings (no layout yet)": "Controller: eigene Einstellungen von {0} (noch kein Layout)",
+  "Controller layout": "Controller-Layout",
+  "Layout": "Layout",
+  "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Die Tasten von Spieler 1 in den Emulatoren, beim Spielstart geschrieben, damit der Controller eines neuen Profils sofort funktioniert. Vorerst {0}; die anderen behalten ihre eigenen Einstellungen. Einstellung dieses Profils.",
 };

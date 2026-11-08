@@ -1107,4 +1107,12 @@ const svText = <String, String>{
   'Checking for updates…': 'Söker efter uppdateringar…',
   'Update all ({0})': 'Uppdatera alla ({0})',
   'Updating…': 'Uppdaterar…',
+  "Standard where nothing is set up": "Standard där inget är inställt",
+  "Standard": "Standard",
+  "Nintendo-style (A/B and X/Y swapped)": "Nintendo-stil (A/B och X/Y bytta)",
+  "Each emulator's own": "Varje emulators egen",
+  "Controller: {0}'s own settings (no layout yet)": "Handkontroll: {0}s egna inställningar (ingen layout än)",
+  "Controller layout": "Handkontrollens layout",
+  "Layout": "Layout",
+  "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Spelare 1:s knappar i emulatorerna, skrivna när ett spel startar, så att en ny profils handkontroll fungerar direkt. {0} än så länge; de andra behåller sina egna inställningar. Den här profilens inställning.",
 };

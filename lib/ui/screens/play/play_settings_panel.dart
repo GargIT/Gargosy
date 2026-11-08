@@ -29,6 +29,7 @@ class PlaySettingsPanel extends StatelessWidget {
     required this.coreField,
     this.fullscreen,
     this.gameSettings,
+    this.padNote,
     this.openField,
     this.compact = false,
   });
@@ -49,6 +50,10 @@ class PlaySettingsPanel extends StatelessWidget {
 
   /// What they are, in a line; null when the game has none.
   final String? gameSettings;
+
+  /// Said when the profile's controller layout (#246) isn't written for
+  /// the picked emulator; null when it is, or the profile chose none.
+  final String? padNote;
 
   /// Where the dropdowns open their lists.
   final GlobalKey emulatorField;
@@ -196,13 +201,23 @@ class PlaySettingsPanel extends StatelessWidget {
               ),
             ),
           );
+    final pad = padNote == null
+        ? null
+        : Padding(
+            key: const ValueKey('play-pad-note'),
+            padding: const EdgeInsets.all(GSpace.s2),
+            child: Text(
+              padNote!,
+              style: const TextStyle(fontSize: GFont.sm, color: GColors.fgMuted),
+            ),
+          );
     if (compact) {
       return Wrap(
         key: const ValueKey('play-settings'),
         spacing: GSpace.s2,
         runSpacing: GSpace.s2,
         crossAxisAlignment: WrapCrossAlignment.center,
-        children: [emulator, if (hasCores) core, _fullscreen(), _gameSettings(), _always(), ?hiddenNote],
+        children: [emulator, if (hasCores) core, _fullscreen(), _gameSettings(), _always(), ?pad, ?hiddenNote],
       );
     }
     return Container(
@@ -236,6 +251,7 @@ class PlaySettingsPanel extends StatelessWidget {
           Align(alignment: Alignment.centerLeft, child: _fullscreen()),
           Align(alignment: Alignment.centerLeft, child: _gameSettings()),
           Align(alignment: Alignment.centerLeft, child: _always()),
+          ?pad,
           if (hiddenNote != null) ...[const SizedBox(height: GSpace.s2), hiddenNote],
         ],
       ),

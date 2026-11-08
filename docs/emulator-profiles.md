@@ -94,6 +94,23 @@ Where each emulator writes the screenshots taken in a game, in a profile (`Emula
 
 Not yet: Flycast, ares, xemu, Xenia, Cemu, Eden, Azahar, melonDS, RPCS3, Ryujinx (their screenshot folders aren't pointed at the profile or looked through).
 
+## Controller layout (#246)
+
+Settings → Controller → Controller layout, the profile's own (`prefs.json` key `controller.layout`, `PadLayout` in `lib/emulators/pad_layout.dart`). Written at launch into the profile's input settings, player 1, the first controller, by position:
+
+- **Standard where nothing is set up** (the default): Standard, only when player 1 has no controller binding yet (a new profile, an emulator never set up). A mapping made by hand stays.
+- **Standard** / **Nintendo-style** (the bottom and right face buttons swapped, and the left and top): written at every launch.
+- **Each emulator's own**: nothing is written; what was written before stays.
+
+| Emulator | File | Keys | "Mapped" means |
+| --- | --- | --- | --- |
+| PCSX2 | `PCSX2\inis\PCSX2.ini` | `[Pad1]` as PCSX2's automatic mapping writes it: `SDL-0/FaceSouth` …, sticks, triggers, motors; `Type = DualShock2` when missing | a `[Pad1]` key on a controller (`SDL-`, `XInput-`, `DInput-`) |
+| DuckStation | `settings.ini` (swapped in) | `[Pad1]` with SDL's names: `SDL-0/A` …; the pad's `Type` stays | the same |
+| Dolphin | `Config\GCPadNew.ini` | `[GCPad1]` on `XInput/0/Gamepad` (any Xbox-type pad): `Button A` …, `Shoulder R` as Z | a `Device` that isn't the keyboard (Dolphin's default) |
+| RetroArch | `retroarch.cfg` | nothing for Standard where nothing is set up: its own controller profiles (`autoconfig\`) map every known pad. Nintendo-style writes `input_player1_{b,a,y,x}_btn` over them; Standard puts them back to `nul` | not looked at |
+
+Not yet: Wii remotes in Dolphin, and every other emulator (they keep their own settings; the play screen says so). One PR each, added to this table.
+
 ## Not supported in v1
 
 None so far. Every installed emulator passed with one of the two mechanisms.

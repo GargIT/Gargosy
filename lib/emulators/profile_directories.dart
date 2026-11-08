@@ -22,6 +22,7 @@ import '../profiles/profile_paths.dart';
 import 'emulator_layout.dart';
 import 'fullscreen.dart';
 import 'game_settings.dart';
+import 'pad_layout.dart';
 import 'profile_launch_config.dart';
 
 /// Starts a process; tests pass a recorder.
@@ -321,6 +322,7 @@ class ProfileLaunchDirectories extends DirectoryService with _GargosyFolders imp
     gameFolders: gameFoldersFor(emulatorId),
     fullscreen: Fullscreen.isOn(prefs, emulatorId),
     resumeAutoState: resumeAutoState,
+    padLayout: PadLayout.read(prefs),
   );
 
   /// Takes the RetroAchievements login out of the profile's emulator

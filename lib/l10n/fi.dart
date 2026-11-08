@@ -1107,4 +1107,12 @@ const fiText = <String, String>{
   'Checking for updates…': 'Tarkistetaan päivityksiä…',
   'Update all ({0})': 'Päivitä kaikki ({0})',
   'Updating…': 'Päivitetään…',
+  "Standard where nothing is set up": "Vakio, missä mitään ei ole asetettu",
+  "Standard": "Vakio",
+  "Nintendo-style (A/B and X/Y swapped)": "Nintendo-tyyli (A/B ja X/Y vaihdettu)",
+  "Each emulator's own": "Kunkin emulaattorin oma",
+  "Controller: {0}'s own settings (no layout yet)": "Ohjain: emulaattorin {0} omat asetukset (ei asettelua vielä)",
+  "Controller layout": "Ohjaimen asettelu",
+  "Layout": "Asettelu",
+  "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Pelaajan 1 painikkeet emulaattoreissa, kirjoitetaan pelin alkaessa, jotta uuden profiilin ohjain toimii heti. Toistaiseksi {0}; muut pitävät omat asetuksensa. Tämän profiilin asetus.",
 };

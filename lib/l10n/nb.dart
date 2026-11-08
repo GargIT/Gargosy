@@ -1105,4 +1105,12 @@ const nbText = <String, String>{
   'Checking for updates…': 'Ser etter oppdateringer…',
   'Update all ({0})': 'Oppdater alle ({0})',
   'Updating…': 'Oppdaterer…',
+  "Standard where nothing is set up": "Standard der ingenting er satt opp",
+  "Standard": "Standard",
+  "Nintendo-style (A/B and X/Y swapped)": "Nintendo-stil (A/B og X/Y byttet)",
+  "Each emulator's own": "Hver emulators egen",
+  "Controller: {0}'s own settings (no layout yet)": "Kontroller: {0}s egne innstillinger (ingen oppsett ennå)",
+  "Controller layout": "Kontrolleroppsett",
+  "Layout": "Oppsett",
+  "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.": "Spiller 1s knapper i emulatorene, skrevet når et spill starter, så en ny profils kontroller virker med en gang. {0} foreløpig; de andre beholder sine egne innstillinger. Denne profilens innstilling.",
 };
