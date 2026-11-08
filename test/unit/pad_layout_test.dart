@@ -94,6 +94,24 @@ void main() {
     });
   });
 
+  test("back to the default after Nintendo-style: Gargosy's own mapping isn't a hand-made one", () {
+    final pcsx2 = IniFile('');
+    applyPcsx2Layout(pcsx2, PadLayout.nintendo);
+    expect(applyPcsx2Layout(pcsx2, PadLayout.fillIn), isTrue);
+    expect(pcsx2.get('Pad1', 'Cross'), 'SDL-0/FaceSouth');
+    final duck = IniFile('');
+    applyDuckstationLayout(duck, PadLayout.nintendo);
+    expect(applyDuckstationLayout(duck, PadLayout.fillIn), isTrue);
+    expect(duck.get('Pad1', 'Cross'), 'SDL-0/A');
+    final dolphin = IniFile('');
+    applyDolphinLayout(dolphin, PadLayout.nintendo);
+    expect(applyDolphinLayout(dolphin, PadLayout.fillIn), isTrue);
+    expect(dolphin.get('GCPad1', 'Buttons/A'), '`Button A`');
+    // One key changed by hand: a hand-made mapping, kept.
+    dolphin.set('GCPad1', 'Buttons/Z', '`Shoulder L`');
+    expect(applyDolphinLayout(dolphin, PadLayout.fillIn), isFalse);
+  });
+
   group('RetroArch', () {
     test("its controller profiles stay under fill-in and own; Nintendo-style swaps the face buttons over them", () {
       const cfg = 'video_driver = "gl"\n';
@@ -104,6 +122,12 @@ void main() {
       expect(swapped, contains('input_player1_a_btn = "0"'));
       expect(swapped, contains('input_player1_y_btn = "3"'));
       expect(swapped, contains('input_player1_x_btn = "2"'));
+      expect(swapped, contains('input_joypad_driver = "sdl2"'), reason: "SDL numbers every pad's face buttons alike");
+      expect(
+        applyRetroArchLayout(swapped, PadLayout.fillIn),
+        contains('input_player1_a_btn = "nul"'),
+        reason: "Gargosy's own swap goes back with the default",
+      );
       final standard = applyRetroArchLayout(swapped, PadLayout.standard)!;
       expect(standard, contains('input_player1_b_btn = "nul"'));
       expect(standard, contains('video_driver = "gl"'));

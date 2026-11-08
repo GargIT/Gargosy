@@ -107,7 +107,9 @@ Settings → Controller → Controller layout, the profile's own (`prefs.json` k
 | PCSX2 | `PCSX2\inis\PCSX2.ini` | `[Pad1]` as PCSX2's automatic mapping writes it: `SDL-0/FaceSouth` …, sticks, triggers, motors; `Type = DualShock2` when missing | a `[Pad1]` key on a controller (`SDL-`, `XInput-`, `DInput-`) |
 | DuckStation | `settings.ini` (swapped in) | `[Pad1]` with SDL's names: `SDL-0/A` …; the pad's `Type` stays | the same |
 | Dolphin | `Config\GCPadNew.ini` | `[GCPad1]` on `XInput/0/Gamepad` (any Xbox-type pad): `Button A` …, `Shoulder R` as Z | a `Device` that isn't the keyboard (Dolphin's default) |
-| RetroArch | `retroarch.cfg` | nothing for Standard where nothing is set up: its own controller profiles (`autoconfig\`) map every known pad. Nintendo-style writes `input_player1_{b,a,y,x}_btn` over them; Standard puts them back to `nul` | not looked at |
+| RetroArch | `retroarch.cfg` | nothing for Standard where nothing is set up: its own controller profiles (`autoconfig\`) map every known pad. Nintendo-style writes `input_player1_{b,a,y,x}_btn` over them and `input_joypad_driver = "sdl2"` (SDL numbers every pad's face buttons alike; XInput's driver doesn't for other pads); Standard, or the default over Gargosy's swap, puts them back to `nul` | Gargosy's swap |
+
+What Gargosy wrote itself (exactly Standard's or Nintendo-style's values) never counts as mapped, so going back to the default puts Standard back; one key changed by hand makes it the player's. A keyboard-only player 1 counts as unmapped (PCSX2's and Dolphin's own defaults are the keyboard): someone who plays on the keyboard picks Each emulator's own. Dolphin is written only for an Xbox-type pad (`XInput/0/Gamepad`); another pad is mapped in Dolphin once, and that stays.
 
 Not yet: Wii remotes in Dolphin, and every other emulator (they keep their own settings; the play screen says so). One PR each, added to this table.
 

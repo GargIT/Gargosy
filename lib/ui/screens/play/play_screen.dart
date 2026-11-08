@@ -8,8 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/input/gamepad_service.dart';
-import '../../../emulators/pad_layout.dart';
-import '../../../providers/engine_providers.dart';
 import '../../../core/romm/romm_models.dart';
 import '../../../core/save/catalog/play_choice.dart';
 import '../../../core/save/catalog/save_count.dart';
@@ -19,8 +17,10 @@ import '../../../core/save/catalog/save_entry.dart';
 import '../../../core/save/catalog/save_fit.dart';
 import '../../../core/save/catalog/save_maker.dart';
 import '../../../core/save/resume_service.dart';
+import '../../../emulators/pad_layout.dart';
 import '../../../play/play_controller.dart';
 import '../../../play/play_menu.dart';
+import '../../../providers/engine_providers.dart';
 import '../../../providers/library_providers.dart';
 import '../../input/gargosy_intents.dart';
 import '../../theme/tokens.dart';
@@ -166,7 +166,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   String? _padNoteOf(PlayMenu menu, SaveMaker picked) {
     final prefs = ref.read(profilePrefsProvider);
     if (prefs == null || PadLayout.read(prefs) == PadLayout.own) return null;
-    if (PadLayout.usedBy.contains(picked.emulatorId)) return null;
+    // Dolphin's layout is the GameCube pad's: a Wii game keeps its remotes.
+    final wii = picked.emulatorId == 'dolphin' && (widget.game.platformSlug ?? '').startsWith('wii');
+    if (PadLayout.usedBy.contains(picked.emulatorId) && !wii) return null;
     return tr("Controller: {0}'s own settings (no layout yet)", [menu.nameOf(picked)]);
   }
 

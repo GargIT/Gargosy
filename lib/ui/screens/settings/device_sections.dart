@@ -92,7 +92,7 @@ class _ControllerSectionState extends ConsumerState<ControllerSection> {
           icon: Icons.sports_esports,
           note: tr(
             "Player 1's buttons in the emulators, written when a game starts, so a new profile's controller works at once. {0} for now; the others keep their own settings. This profile's setting.",
-            ['RetroArch, PCSX2, DuckStation, Dolphin (GameCube)'],
+            [padLayoutEmulators],
           ),
           children: [
             SettingsField(

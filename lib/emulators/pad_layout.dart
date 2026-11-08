@@ -46,14 +46,15 @@ enum PadLayout {
     own => null,
     _ => this,
   };
-
-  bool get _swapped => this == nintendo;
 }
+
+/// The emulators that write it, by name, as Settings says them.
+const padLayoutEmulators = 'RetroArch, PCSX2, DuckStation, Dolphin (GameCube)';
 
 /// A face button by where it sits on the pad.
 enum _Face { south, east, west, north }
 
-_Face _swap(_Face f, PadLayout l) => !l._swapped
+_Face _swap(_Face f, PadLayout l) => l != PadLayout.nintendo
     ? f
     : switch (f) {
         _Face.south => _Face.east,
@@ -62,103 +63,93 @@ _Face _swap(_Face f, PadLayout l) => !l._swapped
         _Face.north => _Face.west,
       };
 
-bool _isController(String? binding) =>
-    binding != null && RegExp(r'^\s*(SDL|XInput|DInput|DInput8|Evdev)-\d', caseSensitive: false).hasMatch(binding);
+final _controllerBinding = RegExp(r'^\s*(SDL|XInput|DInput|DInput8|Evdev)-\d', caseSensitive: false);
 
-// ── PCSX2: inis\PCSX2.ini [Pad1], as its own automatic mapping writes it ──
+/// Writes [values] of [layout] into [section] of [ini]: player 1 counts as
+/// mapped when [mapped] says so, unless it holds exactly what Gargosy writes
+/// for Standard or Nintendo-style (Gargosy's own, so going back to the
+/// default puts Standard back). Whether it wrote.
+bool _apply(
+  IniFile ini,
+  String section,
+  PadLayout layout,
+  Map<String, String> Function(PadLayout) values, {
+  required bool mapped,
+}) {
+  final ours = [
+    PadLayout.standard,
+    PadLayout.nintendo,
+  ].any((l) => values(l).entries.every((e) => ini.get(section, e.key) == e.value));
+  final l = layout.writes(mapped: mapped && !ours);
+  if (l == null) return false;
+  for (final MapEntry(:key, :value) in values(l).entries) {
+    ini.set(section, key, value);
+  }
+  return true;
+}
 
-const _pcsx2Face = {'Cross': _Face.south, 'Circle': _Face.east, 'Square': _Face.west, 'Triangle': _Face.north};
+// ── A PlayStation pad: PCSX2's and DuckStation's [Pad1], as their own ──
+// ── automatic mapping writes it; only the face buttons' names differ.  ──
+
+const _psFace = {'Cross': _Face.south, 'Circle': _Face.east, 'Square': _Face.west, 'Triangle': _Face.north};
+const _psRest = {
+  'Up': 'DPadUp',
+  'Right': 'DPadRight',
+  'Down': 'DPadDown',
+  'Left': 'DPadLeft',
+  'Select': 'Back',
+  'Start': 'Start',
+  'L1': 'LeftShoulder',
+  'L2': '+LeftTrigger',
+  'R1': 'RightShoulder',
+  'R2': '+RightTrigger',
+  'L3': 'LeftStick',
+  'R3': 'RightStick',
+  'Analog': 'Guide',
+  'LUp': '-LeftY',
+  'LRight': '+LeftX',
+  'LDown': '+LeftY',
+  'LLeft': '-LeftX',
+  'RUp': '-RightY',
+  'RRight': '+RightX',
+  'RDown': '+RightY',
+  'RLeft': '-RightX',
+  'LargeMotor': 'LargeMotor',
+  'SmallMotor': 'SmallMotor',
+};
+
+Map<String, String> _psPad(PadLayout l, Map<_Face, String> faceName) => {
+  for (final MapEntry(:key, :value) in _psFace.entries) key: 'SDL-0/${faceName[_swap(value, l)]}',
+  for (final MapEntry(:key, :value) in _psRest.entries) key: 'SDL-0/$value',
+};
+
+bool _psMapped(IniFile ini) => [..._psFace.keys, ..._psRest.keys].any((k) {
+  final binding = ini.get('Pad1', k);
+  return binding != null && _controllerBinding.hasMatch(binding);
+});
+
 const _pcsx2FaceName = {
   _Face.south: 'FaceSouth',
   _Face.east: 'FaceEast',
   _Face.west: 'FaceWest',
   _Face.north: 'FaceNorth',
 };
-const _pcsx2Rest = {
-  'Up': 'DPadUp',
-  'Right': 'DPadRight',
-  'Down': 'DPadDown',
-  'Left': 'DPadLeft',
-  'Select': 'Back',
-  'Start': 'Start',
-  'L1': 'LeftShoulder',
-  'L2': '+LeftTrigger',
-  'R1': 'RightShoulder',
-  'R2': '+RightTrigger',
-  'L3': 'LeftStick',
-  'R3': 'RightStick',
-  'Analog': 'Guide',
-  'LUp': '-LeftY',
-  'LRight': '+LeftX',
-  'LDown': '+LeftY',
-  'LLeft': '-LeftX',
-  'RUp': '-RightY',
-  'RRight': '+RightX',
-  'RDown': '+RightY',
-  'RLeft': '-RightX',
-  'LargeMotor': 'LargeMotor',
-  'SmallMotor': 'SmallMotor',
-};
 
 /// PCSX2's player 1 in [ini] (`PCSX2.ini`) by [layout]; whether it wrote.
+/// Mapped is a controller on any of its buttons (PCSX2's own defaults are
+/// the keyboard's).
 bool applyPcsx2Layout(IniFile ini, PadLayout layout) {
-  final mapped = [..._pcsx2Face.keys, ..._pcsx2Rest.keys].any((k) => _isController(ini.get('Pad1', k)));
-  final l = layout.writes(mapped: mapped);
-  if (l == null) return false;
-  if (ini.get('Pad1', 'Type') == null) ini.set('Pad1', 'Type', 'DualShock2');
-  for (final MapEntry(:key, :value) in _pcsx2Face.entries) {
-    ini.set('Pad1', key, 'SDL-0/${_pcsx2FaceName[_swap(value, l)]}');
-  }
-  for (final MapEntry(:key, :value) in _pcsx2Rest.entries) {
-    ini.set('Pad1', key, 'SDL-0/$value');
-  }
-  return true;
+  final wrote = _apply(ini, 'Pad1', layout, (l) => _psPad(l, _pcsx2FaceName), mapped: _psMapped(ini));
+  if (wrote && ini.get('Pad1', 'Type') == null) ini.set('Pad1', 'Type', 'DualShock2');
+  return wrote;
 }
 
-// ── DuckStation: settings.ini [Pad1], SDL's button names ──
-
-const _duckFace = {'Cross': _Face.south, 'Circle': _Face.east, 'Square': _Face.west, 'Triangle': _Face.north};
 const _sdlFaceName = {_Face.south: 'A', _Face.east: 'B', _Face.west: 'X', _Face.north: 'Y'};
-const _duckRest = {
-  'Up': 'DPadUp',
-  'Right': 'DPadRight',
-  'Down': 'DPadDown',
-  'Left': 'DPadLeft',
-  'Select': 'Back',
-  'Start': 'Start',
-  'L1': 'LeftShoulder',
-  'L2': '+LeftTrigger',
-  'R1': 'RightShoulder',
-  'R2': '+RightTrigger',
-  'L3': 'LeftStick',
-  'R3': 'RightStick',
-  'Analog': 'Guide',
-  'LUp': '-LeftY',
-  'LRight': '+LeftX',
-  'LDown': '+LeftY',
-  'LLeft': '-LeftX',
-  'RUp': '-RightY',
-  'RRight': '+RightX',
-  'RDown': '+RightY',
-  'RLeft': '-RightX',
-  'LargeMotor': 'LargeMotor',
-  'SmallMotor': 'SmallMotor',
-};
 
 /// DuckStation's player 1 in [ini] (`settings.ini`) by [layout]; whether it
 /// wrote. The pad's type stays DuckStation's.
-bool applyDuckstationLayout(IniFile ini, PadLayout layout) {
-  final mapped = [..._duckFace.keys, ..._duckRest.keys].any((k) => _isController(ini.get('Pad1', k)));
-  final l = layout.writes(mapped: mapped);
-  if (l == null) return false;
-  for (final MapEntry(:key, :value) in _duckFace.entries) {
-    ini.set('Pad1', key, 'SDL-0/${_sdlFaceName[_swap(value, l)]}');
-  }
-  for (final MapEntry(:key, :value) in _duckRest.entries) {
-    ini.set('Pad1', key, 'SDL-0/$value');
-  }
-  return true;
-}
+bool applyDuckstationLayout(IniFile ini, PadLayout layout) =>
+    _apply(ini, 'Pad1', layout, (l) => _psPad(l, _sdlFaceName), mapped: _psMapped(ini));
 
 // ── Dolphin: Config\GCPadNew.ini [GCPad1] on the first XInput pad ──
 
@@ -199,28 +190,33 @@ const _dolphinRest = {
   'Rumble/Motor': '`Motor L` | `Motor R`',
 };
 
+Map<String, String> _dolphinPad(PadLayout l) => {
+  'Device': dolphinPadDevice,
+  for (final MapEntry(:key, :value) in _dolphinFace.entries) key: _xinputFaceName[_swap(value, l)]!,
+  ..._dolphinRest,
+};
+
 /// Dolphin's GameCube player 1 in [ini] (`GCPadNew.ini`) by [layout];
 /// whether it wrote. Mapped is a controller as its device (Dolphin's
-/// default is the keyboard). Wii remotes keep Dolphin's own settings.
+/// default is the keyboard). Only an Xbox-type pad is written; another
+/// pad is mapped in Dolphin once, and then stays. Wii remotes keep
+/// Dolphin's own settings.
 bool applyDolphinLayout(IniFile ini, PadLayout layout) {
   final device = ini.get('GCPad1', 'Device') ?? '';
-  final mapped = device.isNotEmpty && !device.toLowerCase().contains('keyboard');
-  final l = layout.writes(mapped: mapped);
-  if (l == null) return false;
-  ini.set('GCPad1', 'Device', dolphinPadDevice);
-  for (final MapEntry(:key, :value) in _dolphinFace.entries) {
-    ini.set('GCPad1', key, _xinputFaceName[_swap(value, l)]!);
-  }
-  for (final MapEntry(:key, :value) in _dolphinRest.entries) {
-    ini.set('GCPad1', key, value);
-  }
-  return true;
+  return _apply(
+    ini,
+    'GCPad1',
+    layout,
+    _dolphinPad,
+    mapped: device.isNotEmpty && !device.toLowerCase().contains('keyboard'),
+  );
 }
 
 // ── RetroArch: its controller profiles (autoconfig) map every known pad ──
 
-/// RetroPad's face buttons in RetroArch's cfg, and the XInput/SDL button
-/// number at each position (both drivers number A, B, X, Y as 0–3).
+/// RetroPad's face buttons in RetroArch's cfg, and SDL's number for the
+/// button at each position (SDL numbers every pad it knows A, B, X, Y as
+/// 0–3; XInput's driver doesn't for a pad that isn't XInput).
 const _retroArchFace = {
   'input_player1_b_btn': _Face.south,
   'input_player1_a_btn': _Face.east,
@@ -229,14 +225,29 @@ const _retroArchFace = {
 };
 const _padButtonNumber = {_Face.south: '0', _Face.east: '1', _Face.west: '2', _Face.north: '3'};
 
-/// RetroArch's player 1 in [text] (`retroarch.cfg`) by [layout]: its own
+final _retroArchKey = RegExp(r'^\s*(input_player1_[abxy]_btn)\s*=\s*"([^"]*)"', multiLine: true);
+
+/// RetroArch's player 1 in [text] (`retroarch.cfg`) by [layout]. Its own
 /// controller profiles already map a new profile's pad (Standard), so only
-/// the face buttons are written, over them: swapped for Nintendo-style, put
-/// back to the profiles' (`nul`) for Standard. Null when nothing changes.
+/// the face buttons are written over them: swapped for Nintendo-style, on
+/// SDL's driver (the same numbers for every pad), and put back to the
+/// profiles' (`nul`) for Standard, or by the default when Gargosy's
+/// swap is there. Null when nothing changes.
 String? applyRetroArchLayout(String text, PadLayout layout) {
-  if (layout == PadLayout.fillIn || layout == PadLayout.own) return null;
+  final now = {for (final m in _retroArchKey.allMatches(text)) m.group(1)!: m.group(2)!};
+  final swapped = _retroArchFace.entries.every(
+    (e) => now[e.key] == _padButtonNumber[_swap(e.value, PadLayout.nintendo)],
+  );
+  final write = switch (layout) {
+    PadLayout.nintendo => PadLayout.nintendo,
+    PadLayout.standard => PadLayout.standard,
+    PadLayout.fillIn when swapped => PadLayout.standard,
+    _ => null,
+  };
+  if (write == null) return null;
   return setRetroArchKeys(text, {
+    if (write == PadLayout.nintendo) 'input_joypad_driver': 'sdl2',
     for (final MapEntry(:key, :value) in _retroArchFace.entries)
-      key: layout == PadLayout.standard ? 'nul' : _padButtonNumber[_swap(value, layout)]!,
+      key: write == PadLayout.standard ? 'nul' : _padButtonNumber[_swap(value, write)]!,
   });
 }
