@@ -115,7 +115,11 @@ void main() {
     addTearDown(() => io.Directory(temp.root).deleteSync(recursive: true));
     // Inside a package manager's folder (#244).
     root = packageFolder == null ? temp : AppRoot(p.join(temp.root, packageFolder));
-    if (packageFolder != null) await tester.runAsync(root.ensureLayout);
+    if (packageFolder != null) {
+      await tester.runAsync(root.ensureLayout);
+      // Scoop writes its manifest.json into the app's folder.
+      io.File(p.join(root.root, 'manifest.json')).writeAsStringSync('{}');
+    }
     if (shipUpdater) io.File(p.join(root.root, 'GargosyUpdate.exe')).writeAsStringSync('MZ updater');
     final zip = _releaseZip();
     github = _GitHub(zip)

@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 import 'package:path/path.dart' as p;
 
 import '../core/storage/app_preferences.dart';
@@ -30,12 +32,34 @@ enum PackageManager {
 
   /// The package manager whose folder [root] (the Gargosy folder) is in,
   /// or null for a Gargosy unzipped by hand.
-  static PackageManager? of(String root) {
+  /// Scoop's: `apps\gargosy\<version or current>\` holding Scoop's own
+  /// `manifest.json` (a folder unzipped by hand into `apps\gargosy\` isn't).
+  static PackageManager? of(String root, {bool Function(String path)? exists}) {
     final parts = p.split(p.normalize(root)).map((s) => s.toLowerCase()).toList();
     if (parts.any((s) => s.startsWith(wingetFolder))) return winget;
-    final n = parts.length;
-    if (n >= 3 && parts[n - 2] == 'gargosy' && parts[n - 3] == 'apps') return scoop;
+    if (_inScoopApp(parts) && (exists ?? _exists)(p.join(root, 'manifest.json'))) return scoop;
     return null;
+  }
+
+  static bool _exists(String path) => io.File(path).existsSync();
+
+  static bool _inScoopApp(List<String> parts) {
+    final n = parts.length;
+    return n >= 3 && parts[n - 2] == 'gargosy' && parts[n - 3] == 'apps';
+  }
+
+  /// [exe] (Gargosy.exe as Windows resolved it) through Scoop's `current`
+  /// link when it's in one of Scoop's version folders: the folder Gargosy
+  /// works from, and what shortcuts point at, outlive an update (Scoop moves
+  /// the player's folders on to the next version). Else [exe] itself.
+  static String stableExecutable(String exe, {bool Function(String path)? exists, bool Function(String dir)? isDir}) {
+    final dir = p.dirname(exe);
+    final parts = p.split(p.normalize(dir)).map((s) => s.toLowerCase()).toList();
+    if (!_inScoopApp(parts) || parts.last == 'current') return exe;
+    final current = p.join(p.dirname(dir), 'current');
+    final hasCurrent = (isDir ?? (d) => io.Directory(d).existsSync())(current);
+    if (!hasCurrent || !(exists ?? _exists)(p.join(dir, 'manifest.json'))) return exe;
+    return p.join(current, p.basename(exe));
   }
 
   /// "Installed with Scoop: update it with `scoop update gargosy`."

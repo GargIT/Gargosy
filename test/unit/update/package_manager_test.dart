@@ -11,10 +11,18 @@ import 'package:path/path.dart' as p;
 import '../../helpers/profile_test_env.dart';
 
 void main() {
+  bool yes(String _) => true;
+  bool no(String _) => false;
+
   group('PackageManager.of (#244)', () {
-    test("Scoop's app folder, by version or current", () {
-      expect(PackageManager.of(r'C:\Users\a\scoop\apps\gargosy\current'), PackageManager.scoop);
-      expect(PackageManager.of(r'D:\Scoop\Apps\Gargosy\0.10.0'), PackageManager.scoop);
+    test("Scoop's app folder, by version or current, with Scoop's manifest.json", () {
+      expect(PackageManager.of(r'C:\Users\a\scoop\apps\gargosy\current', exists: yes), PackageManager.scoop);
+      expect(PackageManager.of(r'D:\Scoop\Apps\Gargosy\0.10.0', exists: yes), PackageManager.scoop);
+      expect(
+        PackageManager.of(r'D:\apps\gargosy\Gargosy', exists: no),
+        isNull,
+        reason: r'unzipped by hand into apps\gargosy: no manifest.json',
+      );
     });
 
     test("winget's package folder, with any source, user or machine", () {
@@ -31,10 +39,32 @@ void main() {
     });
 
     test('a folder unzipped by hand is no package', () {
-      expect(PackageManager.of(r'C:\Retro\apps\gargosy'), isNull, reason: 'apps\\gargosy itself, not inside it');
-      expect(PackageManager.of(r'D:\Games\Gargosy'), isNull);
-      expect(PackageManager.of(r'D:\scoop\apps\other\current'), isNull);
+      expect(PackageManager.of(r'C:\Retro\apps\gargosy', exists: yes), isNull, reason: r'apps\gargosy itself');
+      expect(PackageManager.of(r'D:\Games\Gargosy', exists: yes), isNull);
+      expect(PackageManager.of(r'D:\scoop\apps\other\current', exists: yes), isNull);
       expect(PackageManager.of(r'D:\WinGet\Packages\Other.App_x\Gargosy'), isNull);
+    });
+
+    test("Scoop's version folder is worked from through current", () {
+      const exe = r'C:\s\apps\gargosy\0.10.0\Gargosy.exe';
+      expect(
+        PackageManager.stableExecutable(exe, exists: yes, isDir: yes),
+        p.join(r'C:\s\apps\gargosy', 'current', 'Gargosy.exe'),
+      );
+      expect(
+        PackageManager.stableExecutable(exe, exists: no, isDir: yes),
+        exe,
+        reason: "not Scoop's",
+      );
+      expect(
+        PackageManager.stableExecutable(exe, exists: yes, isDir: no),
+        exe,
+        reason: 'no current',
+      );
+      const current = r'C:\s\apps\gargosy\current\Gargosy.exe';
+      expect(PackageManager.stableExecutable(current, exists: yes, isDir: yes), current);
+      const other = r'D:\Games\Gargosy\Gargosy.exe';
+      expect(PackageManager.stableExecutable(other, exists: yes, isDir: yes), other);
     });
 
     test('the winget warning is due once, and only for winget', () {
@@ -52,6 +82,7 @@ void main() {
     addTearDown(() => deleteTempDir(base.path));
     final root = AppRoot(p.join(base.path, 'scoop', 'apps', 'gargosy', 'current'));
     await root.ensureLayout();
+    io.File(p.join(root.root, 'manifest.json')).writeAsStringSync('{}');
     // The updater is there: only the package manager stops it.
     io.File(UpdatePaths(root).installedUpdater).createSync(recursive: true);
     final installer = UpdateInstaller(

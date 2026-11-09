@@ -13,6 +13,7 @@ import '../profiles/profile_providers.dart';
 import '../update/update_checker.dart';
 import '../update/update_downloader.dart';
 import '../update/app_updater.dart';
+import '../update/package_manager.dart';
 import '../update/update_installer.dart';
 import '../update/update_version.dart';
 
@@ -20,7 +21,10 @@ import '../update/update_version.dart';
 final launchArgsProvider = Provider<List<String>>((ref) => const []);
 
 /// This Gargosy's exe, which a desktop shortcut starts (#223); tests replace it.
-final appExecutableProvider = Provider<String>((ref) => io.Platform.resolvedExecutable);
+final appExecutableProvider = Provider<String>(
+  // Scoop's `current` (#244): a desktop shortcut outlives an update.
+  (ref) => PackageManager.stableExecutable(io.Platform.resolvedExecutable),
+);
 
 /// What the last update did, read from [launchArgsProvider] in main.
 final updateOutcomeProvider = Provider<UpdateOutcome?>((ref) => null);

@@ -82,9 +82,9 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (ref.read(outsideLaunchProvider) != null) {
         unawaited(runOutsideLaunch(context, ref));
       } else {
-        _whatsNew();
+        // Under winget, its warning first (#244), then What's new.
+        unawaited(_wingetWarning().then((_) => mounted ? _whatsNew() : null));
       }
-      _wingetWarning();
       unawaited(registerRommDevice(ref));
       // Newer emulator releases (#243): at most once a day, only shown.
       unawaited(ref.read(emulatorUpdatesProvider.notifier).startupCheck());
@@ -96,8 +96,10 @@ class _AppShellState extends ConsumerState<AppShell> {
   Future<void> _wingetWarning() async {
     final prefs = ref.read(appPreferencesProvider);
     if (!PackageManager.wingetWarningDue(ref.read(appUpdaterProvider).packageManager, prefs)) return;
-    await showNotice(context, title: tr('Installed with {0}', ['winget']), body: PackageManager.wingetWarning);
+    // Kept first: a notice left open by a quit or a profile switch counts as shown.
     await prefs.setBool(PackageManager.wingetWarnedKey, true);
+    if (!mounted) return;
+    await showNotice(context, title: tr('Installed with {0}', ['winget']), body: PackageManager.wingetWarning);
   }
 
   /// The first start of a newer version: its changelog since the last one

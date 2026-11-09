@@ -42,4 +42,14 @@ void main() {
     expect(sizeOf(root.emulators), 0);
     expect(sizeOf(root.profiles), 1000);
   });
+
+  test("a junctioned folder itself is counted: Scoop's persist (#244)", () async {
+    final persisted = p.join(root.root, '..', '${p.basename(root.root)}-persist', 'bios');
+    file(p.join(persisted, 'scph1001.bin'), 50);
+    io.Directory(root.bios).deleteSync(recursive: true);
+    final r = await io.Process.run('cmd', ['/c', 'mklink', '/J', root.bios, p.normalize(persisted)]);
+    addTearDown(() => io.Directory(p.dirname(p.normalize(persisted))).deleteSync(recursive: true));
+    if (r.exitCode != 0) return markTestSkipped('no junctions here');
+    expect(sizeOf(root.bios), 50);
+  });
 }

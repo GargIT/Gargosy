@@ -40,8 +40,13 @@ class StorageUsage {
 
 /// The bytes under [path], a file or a folder. Links (the emulators' folder
 /// junctions to a profile) aren't followed, so nothing is counted twice.
+/// [path] itself is followed when it's a link to a folder: Scoop keeps the
+/// player's folders (`emulators\`, `bios\` …) as junctions (#244).
 int sizeOf(String path) {
-  final type = io.FileSystemEntity.typeSync(path, followLinks: false);
+  var type = io.FileSystemEntity.typeSync(path, followLinks: false);
+  if (type == io.FileSystemEntityType.link && io.FileSystemEntity.isDirectorySync(path)) {
+    type = io.FileSystemEntityType.directory;
+  }
   if (type == io.FileSystemEntityType.file) return io.File(path).lengthSync();
   if (type != io.FileSystemEntityType.directory) return 0;
   var n = 0;
