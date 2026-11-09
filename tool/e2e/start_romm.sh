@@ -62,8 +62,10 @@ curl -fsS -u "$admin_user:$admin_pass" -H 'Content-Type: application/json' \
   -d "{\"username\":\"$player_user\",\"email\":\"player@gargosy.invalid\",\"password\":\"$player_pass\",\"role\":\"viewer\"}" > /dev/null
 echo "Users $admin_user (admin) and $player_user (viewer) made"
 
+# No metadata sources: offline and the same every run (a name lookup in
+# RomM's online sources failed on made-up games and left them without files).
 task="$(curl -fsS -u "$admin_user:$admin_pass" -H 'Content-Type: application/json' \
-  -X POST "$url/api/tasks/scan" -d '{"type":"quick"}' \
+  -X POST "$url/api/tasks/scan" -d '{"type":"quick","apis":[],"launchbox_remote_enabled":false}' \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["task_id"])')"
 for i in $(seq 1 90); do
   status="$(curl -fsS -u "$admin_user:$admin_pass" "$url/api/tasks/$task" \

@@ -484,3 +484,7 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 178. [ ] In a profile of a RomM admin (Sign in again first if it was paired before this build, so its login gets `tasks.run`), Settings → RomM library → Quick scan: the line counts the games as RomM scans and ends with "Scan done."; a second press while it runs is refused. In a profile of a viewer, the page says it may not scan and none of the three tools shows.
 179. [ ] On a platform's page, Upload, pick two games (one over 10 MB): the dialog shows each with its bytes; then the toast says RomM is adding them, and after the scan they are in the platform's games. B during an upload cancels it, and nothing of it is left on RomM.
 180. [ ] On a game RomM matched wrong (or not at all), ⋯ → Fix match…: RomM's finds by its file name are listed, Search for another name finds others; pick one and Match: the page shows the new name, cover and details, and the ROM's file on RomM keeps its name.
+
+## End-to-end tests against a real RomM (#242)
+
+181. [ ] Following `docs/e2e-tests.md`, make a viewer test user and a small test platform on your own RomM, set the `ROMM_E2E_*` variables and run `flutter test --tags e2e test/e2e`: every test passes (with an admin user too, or the admin ones are skipped). Afterwards, nothing named `Gargosy E2E` is left on RomM: no save, state, collection, uploaded game or client token of the test users.

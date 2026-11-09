@@ -69,7 +69,8 @@ Then set these variables and run the tests (PowerShell):
 ```
 $env:ROMM_E2E_URL = 'https://romm.example.com'
 $env:ROMM_E2E_USER = 'gargosy-test'
-$env:ROMM_E2E_PASSWORD = '…'
+$env:ROMM_E2E_PASSWORD = '…'             # or, instead of both:
+$env:ROMM_E2E_TOKEN = 'rmm_…'             # a client token of the test user (it stays)
 $env:ROMM_E2E_PLATFORM = 'gb'             # the test platform's slug (gb by default)
 $env:ROMM_E2E_ADMIN_USER = '…'            # optional
 $env:ROMM_E2E_ADMIN_PASSWORD = '…'        # optional

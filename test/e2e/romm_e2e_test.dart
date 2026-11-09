@@ -36,7 +36,7 @@ void main() {
   setUpAll(() async {
     if (env == null) return;
     temp = await io.Directory.systemTemp.createTemp('gargosy-e2e');
-    player = await E2eLogin.signIn(env.url, env.user, env.password);
+    player = await env.signIn();
     final platforms = await player.romm.getPlatforms();
     platform = platforms.firstWhere(
       (p) => p.slug == env.platform || p.fsSlug == env.platform,
@@ -65,9 +65,9 @@ void main() {
   }
 
   group('a player', skip: E2eEnv.skip, () {
-    test('signs in with a client token RomM made from the password', () async {
+    test('signs in with a client token', () async {
       final me = await RommAuthClient(env!.url).fetchMe(player.token);
-      expect(me.username, env.user);
+      if (env.user != null) expect(me.username, env.user);
       expect(me.oauthScopes, containsAll(['roms.read', 'assets.write', 'collections.write']));
       final caps = await player.romm.fetchCapabilities();
       expect(caps, isNotNull);
