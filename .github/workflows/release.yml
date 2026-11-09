@@ -52,3 +52,34 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "${{ github.ref_name }}" "dist/Gargosy-${{ env.VERSION }}.zip" --title "Gargosy ${{ env.VERSION }}" --notes-file release_notes.md
+      # Scoop and winget (#244): their manifests for this release.
+      - run: pwsh tool/fill_package_manifests.ps1 -Version $env:VERSION -Zip "dist/Gargosy-$env:VERSION.zip" -Out dist/packages
+      - name: Scoop bucket
+        shell: pwsh
+        env:
+          # A token that may push to GargIT/scoop-gargosy.
+          SCOOP_BUCKET_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true # a failed git call fails the step
+          if (-not $env:SCOOP_BUCKET_TOKEN) { Write-Host '::warning::No SCOOP_BUCKET_TOKEN secret: the Scoop bucket was not updated'; exit 0 }
+          git clone --depth 1 "https://x-access-token:$($env:SCOOP_BUCKET_TOKEN)@github.com/GargIT/scoop-gargosy.git" bucket-repo
+          Copy-Item dist/packages/scoop/gargosy.json bucket-repo/bucket/gargosy.json
+          git -C bucket-repo config user.name 'github-actions[bot]'
+          git -C bucket-repo config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C bucket-repo add bucket/gargosy.json
+          git -C bucket-repo commit -m "gargosy: Update to version $env:VERSION"
+          git -C bucket-repo push
+      - name: winget
+        shell: pwsh
+        env:
+          # A classic token with public_repo, for wingetcreate's pull request to microsoft/winget-pkgs.
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          if (-not $env:WINGET_TOKEN) { Write-Host '::warning::No WINGET_TOKEN secret: nothing was sent to winget'; exit 0 }
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          # A pinned wingetcreate, checked: it runs with the token.
+          Invoke-WebRequest https://github.com/microsoft/winget-create/releases/download/v1.12.13.0/wingetcreate.exe -OutFile wingetcreate.exe
+          if ((Get-FileHash wingetcreate.exe -Algorithm SHA256).Hash -ne '24042BD37915805615E6CF969AC57C6439124C3FE85823327F5F3FB24BD9FFEA') { throw 'wingetcreate.exe isn''t the pinned v1.12.13.0' }
+          ./wingetcreate.exe submit --token $env:WINGET_TOKEN --prtitle "New version: GargIT.Gargosy version $env:VERSION" dist/packages/winget

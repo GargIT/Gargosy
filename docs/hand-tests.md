@@ -488,3 +488,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 ## End-to-end tests against a real RomM (#242)
 
 181. [x] Following `docs/e2e-tests.md`, make a viewer test user and a small test platform on your own RomM, set the `ROMM_E2E_*` variables and run `flutter test --tags e2e test/e2e`: every test passes (with an admin user too, or the admin ones are skipped). Afterwards, nothing named `Gargosy E2E` is left on RomM: no save, state, collection, uploaded game or client token of the test users.
+
+## Scoop and winget (#244)
+
+182. [ ] `scoop bucket add gargosy https://github.com/GargIT/scoop-gargosy`, then `scoop install gargosy/gargosy`: Gargosy is in the Start menu's Scoop Apps and starts. Add a profile and download a game: `roms\`, `emulators\` and `userdata\` are in `scoop\persist\gargosy\`. With this branch's build in its place (or the next release), About says Installed with Scoop, and Update (when one is available) says to run `scoop update gargosy`. After `scoop update gargosy` (or `scoop reset gargosy`), the profile, its saves and the game are still there.
+183. [ ] With the next release in winget (or a local manifest: `winget settings --enable LocalManifestFiles` as admin, then `winget install --manifest <folder>` with the manifests `tool/fill_package_manifests.ps1` writes): `gargosy` starts Gargosy from a new terminal. At the first start it says once that winget keeps the folder in its package folder; About says Installed with winget with the same warning. Download a game, then `winget upgrade` to a newer version (or install the same manifest again with `--force`): the game and the profile are still there.

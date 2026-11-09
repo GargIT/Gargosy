@@ -1186,4 +1186,8 @@ const nlText = <String, String>{
   "{0} is empty.": "{0} is leeg.",
   "{0} wasn't uploaded: RomM can't be reached.": "{0} is niet geüpload: RomM is niet bereikbaar.",
   "{0} wasn't uploaded. {1}": "{0} is niet geüpload. {1}",
+  "Installed with {0}": "Geïnstalleerd met {0}",
+  "Installed with {0}: update it with {1}": "Geïnstalleerd met {0}: werk bij met {1}",
+  "Update with {0}": "Bijwerken met {0}",
+  "winget keeps this Gargosy folder in its own package folder. Uninstalling with --purge, or from Windows' Installed apps, can delete your ROMs, emulators and saves with it. Back up the userdata folder first.": "winget bewaart deze Gargosy-map in zijn eigen pakketmap. Verwijderen met --purge, of via Geïnstalleerde apps in Windows, kan je ROM's, emulators en saves meeverwijderen. Maak eerst een back-up van de map userdata.",
 };

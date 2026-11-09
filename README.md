@@ -35,6 +35,19 @@ Download it from [Releases](https://github.com/GargIT/Gargosy/releases); what ch
 pre-release: it's rebuilt each time an issue of that version's milestone is done. Take it to try
 what's coming; take the latest release for everyday use.
 
+**With Scoop or winget.** Scoop keeps your games, emulators and profiles apart from the app, so an
+update or uninstall leaves them:
+
+```
+scoop bucket add gargosy https://github.com/GargIT/scoop-gargosy
+scoop install gargosy/gargosy
+```
+
+winget keeps the whole Gargosy folder in its own package folder: `winget install GargIT.Gargosy`.
+Uninstalling with `--purge`, or from Windows' Installed apps, can delete your games and saves with
+it, so back up `userdata\` first. Either way, update with the package manager (`scoop update
+gargosy`, `winget upgrade GargIT.Gargosy`); Gargosy's own Update tells you to.
+
 **RomM version.** Gargosy needs RomM 4.8 or newer, and works best with 5.3 or newer (tested on 5.3.1).
 Pairing with a phone needs 5.0; before that you log in with username and password. Before 5.3, RomM
 doesn't send game ids (disc serials, title ids), so Gargosy reads them from the ROM itself.

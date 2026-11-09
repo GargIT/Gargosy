@@ -1,0 +1,39 @@
+{
+    "version": "{{VERSION}}",
+    "description": "A RomM desktop client for Windows, controller-first, in the look of RomM's v2 UI.",
+    "homepage": "https://github.com/GargIT/Gargosy",
+    "license": "MIT",
+    "notes": [
+        "Your games, emulators, BIOS and profiles are kept in $persist_dir (roms, emulators, bios, userdata).",
+        "Update Gargosy with: scoop update gargosy"
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "{{URL}}",
+            "hash": "{{SHA256}}"
+        }
+    },
+    "extract_dir": "Gargosy",
+    "shortcuts": [
+        [
+            "Gargosy.exe",
+            "Gargosy"
+        ]
+    ],
+    "persist": [
+        "roms",
+        "emulators",
+        "bios",
+        "userdata"
+    ],
+    "checkver": {
+        "github": "https://github.com/GargIT/Gargosy"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/GargIT/Gargosy/releases/download/v$version/Gargosy-$version.zip"
+            }
+        }
+    }
+}

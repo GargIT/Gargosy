@@ -8,6 +8,10 @@ What changed in each release of Gargosy. The format follows
 
 ### Added
 
+- Scoop and winget: `scoop install gargosy/gargosy` from the GargIT/scoop-gargosy bucket keeps
+  your games, emulators and profiles apart from the app; `winget install GargIT.Gargosy` too,
+  once winget has taken it. Installed this way, About says so and Update tells you the command to run.
+  Under winget, About warns that uninstalling with --purge can delete your games and saves.
 - Install from RomM: a game sent to this PC from RomM's web page (RomM 5.4)
   downloads here, and RomM says when it's installed or why it isn't. For a
   profile signed in by pairing; Settings → Profile → Install from RomM turns

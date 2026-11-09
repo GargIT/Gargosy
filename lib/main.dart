@@ -28,6 +28,7 @@ import 'providers/update_providers.dart';
 import 'sigil/sigil_library.dart';
 import 'core/platform/platform_info.dart';
 import 'update/app_updater.dart';
+import 'update/package_manager.dart';
 import 'core/platform/app_instance.dart';
 import 'play/outside_launch.dart';
 import 'ui/screens/startup_error_app.dart';
@@ -38,7 +39,8 @@ Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   // The version from pubspec.yaml: shown in the user menu, sent to RomM and RetroAchievements.
   await AppConstants.init();
-  final root = AppRoot.fromArgs(args, io.Platform.resolvedExecutable);
+  // Scoop's `current`, not the version folder it points at (#244).
+  final root = AppRoot.fromArgs(args, PackageManager.stableExecutable(io.Platform.resolvedExecutable));
   try {
     await root.ensureLayout();
   } on io.FileSystemException catch (e) {

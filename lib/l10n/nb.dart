@@ -1183,4 +1183,8 @@ const nbText = <String, String>{
   "{0} is empty.": "{0} er tom.",
   "{0} wasn't uploaded: RomM can't be reached.": "{0} ble ikke lastet opp: RomM kan ikke nås.",
   "{0} wasn't uploaded. {1}": "{0} ble ikke lastet opp. {1}",
+  "Installed with {0}": "Installert med {0}",
+  "Installed with {0}: update it with {1}": "Installert med {0}: oppdater med {1}",
+  "Update with {0}": "Oppdater med {0}",
+  "winget keeps this Gargosy folder in its own package folder. Uninstalling with --purge, or from Windows' Installed apps, can delete your ROMs, emulators and saves with it. Back up the userdata folder first.": "winget har denne Gargosy-mappen i sin egen pakkemappe. Avinstallerer du med --purge, eller fra Installerte apper i Windows, kan ROM-ene, emulatorene og lagringene dine slettes med den. Ta sikkerhetskopi av mappen userdata først.",
 };
