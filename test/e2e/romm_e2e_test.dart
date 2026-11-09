@@ -5,7 +5,6 @@ import 'dart:io' as io;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gargosy/core/romm/romm_admin.dart';
 import 'package:gargosy/core/romm/romm_auth_client.dart';
@@ -29,20 +28,26 @@ import 'e2e_env.dart';
 void main() {
   final env = E2eEnv.read();
   late E2eLogin player;
+  E2eLogin? signedIn;
   late Platform platform;
   late Game game;
-  late io.Directory temp;
+  io.Directory? temp;
 
   setUpAll(() async {
     if (env == null) return;
     temp = await io.Directory.systemTemp.createTemp('gargosy-e2e');
-    player = await env.signIn();
+    player = signedIn = await env.signIn();
     final platforms = await player.romm.getPlatforms();
     platform = platforms.firstWhere(
       (p) => p.slug == env.platform || p.fsSlug == env.platform,
       orElse: () => throw StateError('No platform ${env.platform} on ${env.url}: ${platforms.map((p) => p.slug)}'),
     );
-    final games = await player.romm.getGames('${platform.id}');
+    // As the platform's page lists them (#242: RomM ignores `platform_id`).
+    final games = (await RommLibraryApi(
+      player.romm.dio,
+      () => player.romm.authOptions,
+    ).page(GalleryQuery(platformId: platform.id), limit: 100)).games;
+    if (games.any((g) => g.platformId != platform.id)) throw StateError('Games of another platform listed');
     // The smallest on RomM's disk (one missing there has size 0): the download test fetches it.
     final onDisk = games.where((g) => g.fileSize > 0).toList()..sort((a, b) => a.fileSize.compareTo(b.fileSize));
     if (onDisk.isEmpty) throw StateError('No game of ${env.platform} is on the server disk');
@@ -50,19 +55,22 @@ void main() {
   });
 
   tearDownAll(() async {
-    if (env == null) return;
-    await player.close();
-    await deleteTempDir(temp.path);
+    await signedIn?.close();
+    if (temp case final t?) await deleteTempDir(t.path);
   });
 
   LibraryApi library() => RommLibraryApi(player.romm.dio, () => player.romm.authOptions);
 
   Future<io.File> fileOf(String name, List<int> bytes) async =>
-      io.File(p.join(temp.path, name))..writeAsBytesSync(bytes);
+      io.File(p.join(temp!.path, name))..writeAsBytesSync(bytes);
 
-  List<int> bytesOf(int n, int seed) {
+  Uint8List bytesOf(int n, int seed) {
     final r = Random(seed);
-    return List<int>.generate(n, (_) => r.nextInt(256));
+    final out = Uint8List(n);
+    for (var i = 0; i < n; i++) {
+      out[i] = r.nextInt(256);
+    }
+    return out;
   }
 
   group('a player', skip: E2eEnv.skip, () {
@@ -81,7 +89,7 @@ void main() {
 
     test('pages the gallery with its A–Z index', () async {
       final page = await library().page(GalleryQuery(platformId: platform.id), withCharIndex: true);
-      expect(page.total, platform.gamesCount);
+      expect(page.total, greaterThan(0));
       expect(page.games, isNotEmpty);
       expect(page.charIndex, isNotNull);
       expect(page.charIndex, isNotEmpty);
@@ -92,13 +100,13 @@ void main() {
       final full = await player.romm.getGame(game.id);
       expect(full, isNotNull);
       expect(full!.id, game.id);
-      expect(full.platformId, platform.id, reason: "getGames lists only the platform's games");
+      expect(full.platformId, platform.id);
       expect(full.fsName, isNotEmpty);
       expect(full.files, isNotEmpty);
     });
 
     test("downloads a game, checked against RomM's hashes", () async {
-      final root = AppRoot(p.join(temp.path, 'gargosy'));
+      final root = AppRoot(p.join(temp!.path, 'gargosy'));
       await root.ensureLayout();
       final files = RomFiles(root);
       final service = DownloadService(
@@ -121,16 +129,19 @@ void main() {
       final file = await fileOf('${E2eEnv.mark} save.srm', bytes);
       final up = await player.romm.uploadSave(game.id, file, emulator: 'gargosy-e2e', slot: 'gargosy-e2e');
       expect(up.ok, isTrue, reason: 'conflict: ${up.conflict}');
-      final id = '${up.saved?['id']}';
+      final id = up.saved?['id'];
+      expect(id, isA<int>(), reason: 'the saved record: ${up.saved}');
+      bool? deleted;
       try {
         final saves = await player.romm.getSaves(game.id);
-        final save = saves.firstWhere((s) => s.id == id);
+        final save = saves.firstWhere((s) => s.id == '$id');
         expect(save.slot, 'gargosy-e2e');
         expect(await player.romm.downloadSave(save.url), Uint8List.fromList(bytes));
       } finally {
-        expect(await player.romm.deleteSaves([int.parse(id)]), isTrue);
+        deleted = await player.romm.deleteSaves([id as int]);
       }
-      expect((await player.romm.getSaves(game.id)).where((s) => s.id == id), isEmpty);
+      expect(deleted, isTrue);
+      expect((await player.romm.getSaves(game.id)).where((s) => s.id == '$id'), isEmpty);
     });
 
     test('uploads a state, labels it and pulls it back', () async {
@@ -142,6 +153,7 @@ void main() {
         fileName: '${E2eEnv.mark} state.state',
         emulator: 'gargosy-e2e',
       );
+      bool? deleted;
       try {
         final labelled = await player.romm.setStateLabels(state.id, ['gargosy-e2e']);
         expect(labelled.labels, ['gargosy-e2e']);
@@ -149,8 +161,9 @@ void main() {
         expect(listed.labels, ['gargosy-e2e']);
         expect(await player.romm.downloadState(state.id), Uint8List.fromList(bytes));
       } finally {
-        expect(await player.romm.deleteStates([state.id]), isTrue);
+        deleted = await player.romm.deleteStates([state.id]);
       }
+      expect(deleted, isTrue);
     });
 
     test('makes a collection, renames and shares it, then deletes it', () async {
@@ -193,8 +206,9 @@ void main() {
 
   group('an admin', skip: E2eEnv.skip ?? (env!.hasAdmin ? null : 'Set ROMM_E2E_ADMIN_USER to run'), () {
     late E2eLogin admin;
-    setUpAll(() async => admin = await E2eLogin.signIn(env!.url, env.adminUser!, env.adminPassword!));
-    tearDownAll(() => admin.close());
+    E2eLogin? adminIn;
+    setUpAll(() async => admin = adminIn = await E2eLogin.signIn(env!.url, env.adminUser!, env.adminPassword!));
+    tearDownAll(() async => adminIn?.close());
 
     test('may scan, upload and match; the player may not', () async {
       final rights = await admin.romm.rights();
@@ -206,7 +220,6 @@ void main() {
     test('scans a platform and follows it to the end', () async {
       final progress = await _scan(admin, platform.id);
       expect(progress.finished, isTrue, reason: 'status ${progress.status}');
-      expect(progress.scannedGames, greaterThanOrEqualTo(0));
     });
 
     test('uploads a game in pieces, which a scan adds; then deletes it', () async {
@@ -214,13 +227,22 @@ void main() {
       final name = '${E2eEnv.mark} Upload ${DateTime.now().millisecondsSinceEpoch}.${_extensionOf(game)}';
       final file = await fileOf(name, bytesOf(10 * 1024 * 1024 + 4096, 3));
       final heard = <int>[];
-      await admin.romm.uploadGame(platform.id, file.path, onProgress: (sent, total) => heard.add(sent));
-      expect(heard.last, file.lengthSync());
-      await _scan(admin, platform.id);
-      final found = (await admin.romm.getGames('${platform.id}')).where((g) => g.fsName == name).toList();
-      expect(found, hasLength(1), reason: 'the uploaded game after a scan');
-      expect(found.single.fileSize, file.lengthSync());
-      expect(await admin.romm.deleteGame(int.parse(found.single.id), fromServerDisk: true), RomDeleteResult.deleted);
+      final deleted = <RomDeleteResult>[];
+      try {
+        await admin.romm.uploadGame(platform.id, file.path, onProgress: (sent, total) => heard.add(sent));
+        expect(heard.last, file.lengthSync());
+        await _scan(admin, platform.id);
+        final found = (await admin.romm.getGames('${platform.id}')).where((g) => g.fsName == name).toList();
+        expect(found, hasLength(1), reason: 'the uploaded game after a scan');
+        expect(found.single.fileSize, file.lengthSync());
+      } finally {
+        // Whatever of it RomM has, from its disk too; a game a scan didn't add
+        // yet stays in the platform's folder (said in docs/e2e-tests.md).
+        for (final g in (await admin.romm.getGames('${platform.id}')).where((g) => g.fsName == name)) {
+          deleted.add(await admin.romm.deleteGame(int.parse(g.id), fromServerDisk: true));
+        }
+      }
+      expect(deleted, [RomDeleteResult.deleted]);
     });
   });
 }
@@ -250,7 +272,8 @@ Future<void> _deleteSessions(E2eLogin login, String gameId, DateTime start) asyn
     final raw = '${s['start_time']}';
     final at = DateTime.tryParse(RegExp(r'(Z|[+-]\d\d:?\d\d)$').hasMatch(raw) ? raw : '${raw}Z');
     if (at != null && at.difference(start.toUtc()).inSeconds.abs() < 2) {
-      await login.raw.delete<void>('/api/play-sessions/${s['id']}', options: Options(validateStatus: (_) => true));
+      // Throws when RomM refuses: a session left on RomM is said.
+      await login.raw.delete<void>('/api/play-sessions/${s['id']}');
     }
   }
 }

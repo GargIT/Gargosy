@@ -189,7 +189,7 @@ mixin _RommLibrary on _RommBase {
     if (sha1 != null) params['sha1'] = sha1;
     if (md5 != null) params['md5'] = md5;
     if (search != null) params['search_term'] = search;
-    if (platformId != null) params['platform_ids'] = [int.parse(platformId)];
+    if (int.tryParse(platformId ?? '') case final id?) params['platform_ids'] = [id];
 
     try {
       final response = await _dio.get('/api/roms', queryParameters: params, options: _authOptions);
@@ -228,7 +228,7 @@ mixin _RommLibrary on _RommBase {
       'with_filter_values': withFilterValues,
     };
     if (lastPlayed != null) params['last_played'] = lastPlayed;
-    if (platformId != null) params['platform_ids'] = [int.parse(platformId)];
+    if (int.tryParse(platformId ?? '') case final id?) params['platform_ids'] = [id];
     if (search != null && search.isNotEmpty) params['search_term'] = search;
     if (genres.isNotEmpty) params['genres'] = genres;
     if (regions.isNotEmpty) params['regions'] = regions;

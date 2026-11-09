@@ -8,6 +8,12 @@ on:
   push:
     branches: [main]
   pull_request:
+    paths:
+      - 'lib/**'
+      - 'test/e2e/**'
+      - 'tool/e2e/**'
+      - 'pubspec.*'
+      - '.github/workflows/e2e.yml'
   schedule:
     - cron: '17 4 * * 1' # Mondays
   workflow_dispatch:
@@ -21,9 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         romm: ['5.4.1', 'latest']
-    # RomM's newest breaking a call is news, not a reason to hold a PR; the
-    # weekly run shows it.
-    continue-on-error: ${{ matrix.romm == 'latest' }}
+    # RomM's newest breaking a call is news, not a reason to hold a PR; on
+    # main and the weekly run it fails, so it's seen.
+    continue-on-error: ${{ matrix.romm == 'latest' && github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2

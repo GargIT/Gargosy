@@ -77,7 +77,9 @@ $env:ROMM_E2E_ADMIN_PASSWORD = '…'        # optional
 flutter test --tags e2e test/e2e
 ```
 
-Each test deletes what it made, even when it fails. Every name it gives
+Each test deletes what it made, even when it fails. The one exception is an
+uploaded game that RomM's scan didn't add: it stays as a file in the test
+platform's folder on the server. Every name it gives
 starts with `Gargosy E2E`, so you can find anything a stopped run left
 behind. Each sign-in makes a client token, which is deleted at the end; a
 stopped run leaves its token in the user's Client tokens. A RomM with a
