@@ -102,12 +102,20 @@ void main() {
     }
   }
 
-  Future<void> pump(WidgetTester tester, {bool shipUpdater = true, Map<String, String> env = const {}}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    bool shipUpdater = true,
+    Map<String, String> env = const {},
+    String? packageFolder,
+  }) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    root = (await tester.runAsync(tempAppRoot))!;
-    addTearDown(() => io.Directory(root.root).deleteSync(recursive: true));
+    final temp = (await tester.runAsync(tempAppRoot))!;
+    addTearDown(() => io.Directory(temp.root).deleteSync(recursive: true));
+    // Inside a package manager's folder (#244).
+    root = packageFolder == null ? temp : AppRoot(p.join(temp.root, packageFolder));
+    if (packageFolder != null) await tester.runAsync(root.ensureLayout);
     if (shipUpdater) io.File(p.join(root.root, 'GargosyUpdate.exe')).writeAsStringSync('MZ updater');
     final zip = _releaseZip();
     github = _GitHub(zip)
@@ -165,6 +173,26 @@ void main() {
   }
 
   String status(WidgetTester tester) => tester.widget<Text>(find.byKey(const Key('update-status'))).data!;
+
+  testWidgets('installed with winget: About says so and warns; Update hands over (#244)', (tester) async {
+    await pump(tester, packageFolder: p.join('GargIT.Gargosy_Microsoft.Winget.Source_8wekyb3d8bbwe', 'Gargosy'));
+    expect(find.text('Installed with winget'), findsOneWidget);
+    expect(find.byKey(const Key('winget-warning')), findsOneWidget);
+    await checkNow(tester);
+    expect(find.byKey(const Key('update-now')), findsNothing);
+    expect(find.text('Installed with winget: update it with winget upgrade GargIT.Gargosy'), findsOneWidget);
+  });
+
+  testWidgets('installed with Scoop: no winget warning', (tester) async {
+    await pump(tester, packageFolder: p.join('scoop', 'apps', 'gargosy', 'current'));
+    expect(find.text('Installed with Scoop'), findsOneWidget);
+    expect(find.byKey(const Key('winget-warning')), findsNothing);
+  });
+
+  testWidgets('unzipped by hand: no package manager line', (tester) async {
+    await pump(tester);
+    expect(find.byKey(const Key('package-manager')), findsNothing);
+  });
 
   testWidgets('before a check, then up to date', (tester) async {
     await pump(tester);

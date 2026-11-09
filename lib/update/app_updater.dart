@@ -2,6 +2,7 @@ import 'package:pub_semver/pub_semver.dart';
 
 import '../core/platform/platform_info.dart';
 import '../profiles/app_root.dart';
+import 'package_manager.dart';
 import 'update_installer.dart';
 
 /// Installs a downloaded update and tidies up after it (#203). Gargosy
@@ -13,6 +14,10 @@ abstract class AppUpdater {
 
   /// Why [canInstall] is false, for the UI.
   String? get whyNot;
+
+  /// The package manager that installed Gargosy (#244); it updates it, not
+  /// Gargosy.
+  PackageManager? get packageManager;
 
   /// The version a release asset named [name] holds for this OS, or null
   /// when it isn't this OS's (`Gargosy-<version>.zip` on Windows).

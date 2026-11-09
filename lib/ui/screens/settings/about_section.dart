@@ -16,6 +16,7 @@ import '../doc_reader_screen.dart';
 import 'report_bug.dart';
 import 'settings_rows.dart';
 import 'updates_block.dart';
+import '../../../update/package_manager.dart';
 import '../../../l10n/tr.dart';
 
 const gargosyRepoUrl = 'https://github.com/GargIT/Gargosy';
@@ -103,6 +104,21 @@ class AboutSection extends ConsumerWidget {
                     ),
                     const SizedBox(height: GSpace.s1),
                     Text('RomM $rommText', style: const TextStyle(color: GColors.fgSecondary)),
+                    // Installed with a package manager (#244).
+                    if (ref.watch(appUpdaterProvider).packageManager case final pm?) ...[
+                      const SizedBox(height: GSpace.s1),
+                      Text(
+                        tr('Installed with {0}', [pm.label]),
+                        key: const Key('package-manager'),
+                        style: const TextStyle(color: GColors.fgSecondary),
+                      ),
+                      if (pm == PackageManager.winget)
+                        Text(
+                          PackageManager.wingetWarning,
+                          key: const Key('winget-warning'),
+                          style: const TextStyle(color: GColors.warning),
+                        ),
+                    ],
                     if (outcome != null) ...[
                       const SizedBox(height: GSpace.s1),
                       Text(

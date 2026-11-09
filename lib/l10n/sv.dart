@@ -1185,4 +1185,8 @@ const svText = <String, String>{
   "{0} is empty.": "{0} är tom.",
   "{0} wasn't uploaded: RomM can't be reached.": "{0} laddades inte upp: RomM går inte att nå.",
   "{0} wasn't uploaded. {1}": "{0} laddades inte upp. {1}",
+  "Installed with {0}": "Installerad med {0}",
+  "Installed with {0}: update it with {1}": "Installerad med {0}: uppdatera med {1}",
+  "Update with {0}": "Uppdatera med {0}",
+  "winget keeps this Gargosy folder in its own package folder. Uninstalling with --purge, or from Windows' Installed apps, can delete your ROMs, emulators and saves with it. Back up the userdata folder first.": "winget har den här Gargosy-mappen i sin egen paketmapp. Avinstallerar du med --purge, eller från Windows Installerade appar, kan dina ROM:ar, emulatorer och sparningar raderas med den. Säkerhetskopiera mappen userdata först.",
 };

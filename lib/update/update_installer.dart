@@ -8,6 +8,7 @@ import '../core/platform/platform_info.dart';
 import '../profiles/app_root.dart';
 import '../profiles/path_guard.dart';
 import 'app_updater.dart';
+import 'package_manager.dart';
 import 'update_paths.dart';
 import 'update_version.dart';
 import '../l10n/tr.dart';
@@ -71,13 +72,19 @@ class UpdateInstaller implements AppUpdater {
   /// Windows), where it couldn't replace the files. Elsewhere a folder that
   /// can't be written makes the updater roll back and say so.
   @override
-  late final bool canInstall = io.File(paths.installedUpdater).existsSync() && !_inProtectedFolder;
+  late final bool canInstall =
+      packageManager == null && io.File(paths.installedUpdater).existsSync() && !_inProtectedFolder;
+
+  /// The package manager Gargosy was installed with (#244), which updates it.
+  @override
+  late final PackageManager? packageManager = PackageManager.of(root.root);
 
   /// Why [canInstall] is false, for the UI.
   @override
   late final String? whyNot = _whyNot();
 
   String? _whyNot() {
+    if (packageManager case final pm?) return pm.updateHint;
     if (!io.File(paths.installedUpdater).existsSync()) {
       return tr('This Gargosy has no {0}: update it by hand from the release page this once.', [
         UpdatePaths.updaterExe,

@@ -10,6 +10,9 @@ import '../../changelog/whats_new.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/input/gamepad_service.dart';
 import '../../emulators/emulator_updates.dart';
+import '../../update/package_manager.dart';
+import '../../providers/update_providers.dart';
+import '../widgets/controller_dialogs.dart';
 import '../../library/upload_queue.dart';
 import '../../play/outside_launch.dart';
 import '../../play/screenshot_uploads.dart';
@@ -81,10 +84,20 @@ class _AppShellState extends ConsumerState<AppShell> {
       } else {
         _whatsNew();
       }
+      _wingetWarning();
       unawaited(registerRommDevice(ref));
       // Newer emulator releases (#243): at most once a day, only shown.
       unawaited(ref.read(emulatorUpdatesProvider.notifier).startupCheck());
     });
+  }
+
+  /// Installed with winget (#244): once, that its package folder holds the
+  /// player's games and saves, which a purge deletes.
+  Future<void> _wingetWarning() async {
+    final prefs = ref.read(appPreferencesProvider);
+    if (!PackageManager.wingetWarningDue(ref.read(appUpdaterProvider).packageManager, prefs)) return;
+    await showNotice(context, title: tr('Installed with {0}', ['winget']), body: PackageManager.wingetWarning);
+    await prefs.setBool(PackageManager.wingetWarnedKey, true);
   }
 
   /// The first start of a newer version: its changelog since the last one

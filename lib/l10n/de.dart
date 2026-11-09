@@ -1190,4 +1190,8 @@ const deText = <String, String>{
   "{0} is empty.": "{0} ist leer.",
   "{0} wasn't uploaded: RomM can't be reached.": "{0} wurde nicht hochgeladen: RomM ist nicht erreichbar.",
   "{0} wasn't uploaded. {1}": "{0} wurde nicht hochgeladen. {1}",
+  "Installed with {0}": "Installiert mit {0}",
+  "Installed with {0}: update it with {1}": "Installiert mit {0}: aktualisiere mit {1}",
+  "Update with {0}": "Mit {0} aktualisieren",
+  "winget keeps this Gargosy folder in its own package folder. Uninstalling with --purge, or from Windows' Installed apps, can delete your ROMs, emulators and saves with it. Back up the userdata folder first.": "winget legt diesen Gargosy-Ordner in seinem eigenen Paketordner ab. Eine Deinstallation mit --purge oder über „Installierte Apps“ in Windows kann deine ROMs, Emulatoren und Spielstände mit löschen. Sichere zuerst den Ordner userdata.",
 };

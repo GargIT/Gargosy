@@ -25,6 +25,11 @@ import '../../l10n/tr.dart';
 /// `GargosyUpdate.exe` and quits. Without the updater, the release page opens.
 Future<void> runUpdate(BuildContext context, WidgetRef ref, ReleaseInfo release) async {
   final installer = ref.read(appUpdaterProvider);
+  // Installed with Scoop or winget (#244): it updates Gargosy.
+  if (installer.packageManager case final pm?) {
+    await showNotice(context, title: tr('Update with {0}', [pm.label]), body: pm.updateHint);
+    return;
+  }
   if (!installer.canInstall) {
     ref.read(externalOpenerProvider)(release.htmlUrl);
     return;
