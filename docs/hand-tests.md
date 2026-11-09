@@ -487,4 +487,4 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## End-to-end tests against a real RomM (#242)
 
-181. [ ] Following `docs/e2e-tests.md`, make a viewer test user and a small test platform on your own RomM, set the `ROMM_E2E_*` variables and run `flutter test --tags e2e test/e2e`: every test passes (with an admin user too, or the admin ones are skipped). Afterwards, nothing named `Gargosy E2E` is left on RomM: no save, state, collection, uploaded game or client token of the test users.
+181. [x] Following `docs/e2e-tests.md`, make a viewer test user and a small test platform on your own RomM, set the `ROMM_E2E_*` variables and run `flutter test --tags e2e test/e2e`: every test passes (with an admin user too, or the admin ones are skipped). Afterwards, nothing named `Gargosy E2E` is left on RomM: no save, state, collection, uploaded game or client token of the test users.

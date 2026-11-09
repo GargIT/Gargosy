@@ -43,9 +43,10 @@ void main() {
       orElse: () => throw StateError('No platform ${env.platform} on ${env.url}: ${platforms.map((p) => p.slug)}'),
     );
     final games = await player.romm.getGames('${platform.id}');
-    if (games.isEmpty) throw StateError('No games on ${env.platform}');
-    // The smallest: the download test fetches it.
-    game = (games.toList()..sort((a, b) => a.fileSize.compareTo(b.fileSize))).first;
+    // The smallest on RomM's disk (one missing there has size 0): the download test fetches it.
+    final onDisk = games.where((g) => g.fileSize > 0).toList()..sort((a, b) => a.fileSize.compareTo(b.fileSize));
+    if (onDisk.isEmpty) throw StateError('No game of ${env.platform} is on the server disk');
+    game = onDisk.first;
   });
 
   tearDownAll(() async {
@@ -91,6 +92,7 @@ void main() {
       final full = await player.romm.getGame(game.id);
       expect(full, isNotNull);
       expect(full!.id, game.id);
+      expect(full.platformId, platform.id, reason: "getGames lists only the platform's games");
       expect(full.fsName, isNotEmpty);
       expect(full.files, isNotEmpty);
     });

@@ -118,11 +118,18 @@ mixin _RommLibrary on _RommBase {
   }
 
   Future<List<Game>> getGames(String platformId) async {
-    return _fetchPaginatedGames({'platform_id': int.parse(platformId)});
+    // RomM 5.4 filters by `platform_ids`; it ignores `platform_id` and lists every game (#242).
+    return _fetchPaginatedGames({
+      'platform_ids': [int.parse(platformId)],
+    });
   }
 
   Future<List<Game>> getAllGames({String? platformId}) async {
-    final params = platformId != null ? {'platform_id': int.parse(platformId)} : <String, dynamic>{};
+    final params = platformId != null
+        ? {
+            'platform_ids': [int.parse(platformId)],
+          }
+        : <String, dynamic>{};
     return _fetchPaginatedGames(params);
   }
 
@@ -182,7 +189,7 @@ mixin _RommLibrary on _RommBase {
     if (sha1 != null) params['sha1'] = sha1;
     if (md5 != null) params['md5'] = md5;
     if (search != null) params['search_term'] = search;
-    if (platformId != null) params['platform_id'] = platformId;
+    if (platformId != null) params['platform_ids'] = [int.parse(platformId)];
 
     try {
       final response = await _dio.get('/api/roms', queryParameters: params, options: _authOptions);
