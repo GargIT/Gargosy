@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-09
+
+Scoop and winget, games sent from RomM's web page, emulator updates, a
+controller layout that works at the first game, new profiles that start
+with your emulator settings, and RomM's admin tools.
+
 ### Added
 
 - Scoop and winget: `scoop install gargosy/gargosy` from the GargIT/scoop-gargosy bucket keeps
@@ -686,7 +692,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.10.0
 [0.9.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.9.0
 [0.8.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.8.0
 [0.7.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.7.0
