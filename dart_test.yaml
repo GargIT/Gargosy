@@ -1,0 +1,4 @@
+# Tags of the tests (#242). e2e: against a real RomM, skipped without
+# ROMM_E2E_URL (docs/e2e-tests.md); `flutter test --tags e2e test/e2e`.
+tags:
+  e2e:

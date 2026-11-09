@@ -1,0 +1,46 @@
+name: E2E
+
+# Gargosy's RomM calls against a real RomM in Docker (#242): the version
+# Gargosy is pinned to, and RomM's newest. On every PR, on main, and weekly,
+# so a change in RomM's newest release shows before players find it.
+# The same tests run against any RomM by hand: docs/e2e-tests.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1' # Mondays
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: RomM ${{ matrix.romm }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        romm: ['5.4.1', 'latest']
+    # RomM's newest breaking a call is news, not a reason to hold a PR; the
+    # weekly run shows it.
+    continue-on-error: ${{ matrix.romm == 'latest' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.2
+          cache: true
+      - run: flutter pub get
+      - name: Start RomM
+        env:
+          ROMM_VERSION: ${{ matrix.romm }}
+          E2E_DIR: ${{ runner.temp }}/romm-e2e
+        run: bash tool/e2e/start_romm.sh
+      - run: flutter test --tags e2e test/e2e
+      - name: RomM's log
+        if: failure()
+        run: docker compose -p gargosy-e2e -f tool/e2e/docker-compose.yml logs romm | tail -300
+        env:
+          E2E_DIR: ${{ runner.temp }}/romm-e2e
+          ROMM_AUTH_SECRET_KEY: unused

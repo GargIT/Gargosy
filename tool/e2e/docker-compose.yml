@@ -1,0 +1,36 @@
+# RomM for Gargosy's end-to-end tests (#242), started by start_romm.sh.
+# Throwaway: no volumes kept, a test library from make_roms.py.
+services:
+  romm:
+    image: rommapp/romm:${ROMM_VERSION:-5.4.1}
+    environment:
+      - DB_HOST=romm-db
+      - DB_NAME=romm
+      - DB_USER=romm-user
+      - DB_PASSWD=gargosy-e2e-db
+      - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET_KEY:?set by start_romm.sh}
+      - HASHEOUS_API_ENABLED=false
+      - SCAN_WORKERS=1
+    volumes:
+      - ${E2E_DIR:?set by start_romm.sh}/library:/romm/library
+      - ${E2E_DIR}/assets:/romm/assets
+    ports:
+      - 8080:8080
+    depends_on:
+      romm-db:
+        condition: service_healthy
+
+  romm-db:
+    image: mariadb:11.4
+    environment:
+      - MARIADB_ROOT_PASSWORD=gargosy-e2e-root
+      - MARIADB_DATABASE=romm
+      - MARIADB_USER=romm-user
+      - MARIADB_PASSWORD=gargosy-e2e-db
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      start_interval: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 10

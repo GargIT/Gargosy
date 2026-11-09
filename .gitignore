@@ -57,3 +57,4 @@ devtools_options.yaml
 # Claude Code: per-user files
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+tool/e2e/.work/
