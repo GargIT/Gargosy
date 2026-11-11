@@ -212,8 +212,10 @@ class HomePage extends ConsumerWidget {
     // Asked for with the rows, not before.
     final added = shown > 0 ? ref.watch(recentlyAddedProvider) : const AsyncLoading<List<Game>>();
     final error = offline ? null : played.error ?? added.error;
-    final loading = !offline && (played.isLoading || added.isLoading);
+    // Before the rows start, `added` isn't asked yet: it says nothing.
+    final loading = !offline && (played.isLoading || (shown > 0 && added.isLoading));
     final empty =
+        shown > 0 &&
         !loading &&
         error == null &&
         headerGame == null &&
@@ -326,7 +328,7 @@ class HomePage extends ConsumerWidget {
       if (shown == 0) WidgetsBinding.instance.addPostFrameCallback((_) => reveal.artShown());
       return page;
     }
-    return GameArtBackdrop(game: headerGame, onArtShown: reveal.artShown, child: page);
+    return GameArtBackdrop(game: headerGame, onArtShown: shown == 0 ? reveal.artShown : null, child: page);
   }
 }
 

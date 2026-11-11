@@ -182,8 +182,10 @@ class _BakedArtPainter extends CustomPainter {
   static const _scale = 8;
 
   // A few pictures kept: the game page and the play screen share one, Home
-  // has another.
-  static const _kept = 4;
+  // has another, each with its cover's until the art comes, and the least
+  // used goes first. A frame already drawn keeps its own reference to one
+  // that goes.
+  static const _kept = 6;
   static final _baked = <(Object, Size), ui.Image>{};
 
   ui.Image _bake(Size small) {
