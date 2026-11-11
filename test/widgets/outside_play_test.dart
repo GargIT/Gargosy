@@ -24,6 +24,8 @@ import 'package:gargosy/ui/screens/play/play_screen.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
 import 'package:gargosy/ui/shell/second_start.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
+import 'package:gargosy/ui/pages/home/home_reveal.dart';
+import 'package:gargosy/ui/widgets/baked_art.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 
 import '../helpers/fake_library_api.dart';
@@ -68,6 +70,8 @@ void main() {
         appRootProvider.overrideWithValue(root!),
         appPreferencesProvider.overrideWithValue(MemoryPrefs()),
         coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+        artImageProvider.overrideWithValue((url) => null),
+        homeRevealStepProvider.overrideWithValue(Duration.zero),
         recentlyPlayedProvider.overrideWith((ref) async => const []),
         recentlyAddedProvider.overrideWith((ref) async => const []),
         favouriteGamesProvider.overrideWith((ref) async => const []),

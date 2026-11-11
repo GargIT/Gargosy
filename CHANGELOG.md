@@ -11,6 +11,13 @@ What changed in each release of Gargosy. The format follows
 - Pages draw faster: the background's glow is painted once instead of on
   every frame, which took about a third of each frame on a large window
   (#308).
+- Home has the blurred art of its header's game behind the whole page, like
+  the game page, instead of the purple glow; the blur is a little lighter
+  everywhere (#310).
+- The game page and the play screen open and go back faster: their art is
+  blurred once instead of on every frame (#310).
+- Home's first start shows the header and its art first, then the rows one
+  after another (#310).
 
 ## [0.10.0] - 2026-11-09
 

@@ -13,6 +13,8 @@ import 'package:gargosy/profiles/app_root.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
 import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
+import 'package:gargosy/ui/pages/home/home_reveal.dart';
+import 'package:gargosy/ui/widgets/baked_art.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 
 /// [child] in Gargosy's app frame (theme, controller input), with covers
@@ -32,6 +34,8 @@ Widget testApp(
     retry: noRetry,
     overrides: lastWins([
       coverImageBuilderProvider.overrideWithValue((url) => ColoredBox(key: ValueKey('cover:$url'), color: Colors.grey)),
+      artImageProvider.overrideWithValue((url) => null),
+      homeRevealStepProvider.overrideWithValue(Duration.zero),
       platformLogoBuilderProvider.overrideWithValue((url, size, fallback) => fallback),
       appRootProvider.overrideWithValue(root ?? AppRoot(r'C:\gargosy-tests-nowhere')),
       ...overrides,

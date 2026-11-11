@@ -171,14 +171,11 @@ class HomeHeader extends ConsumerWidget {
       _button(tr('Game page'), null, () => openGame(context, game), key: const ValueKey('home-game-page')),
     ];
 
-    // As tall as what it holds (a long name, buttons on two lines), the art
-    // behind all of it.
+    // As tall as what it holds (a long name, buttons on two lines); its art
+    // is behind the whole of Home (`HomePage`).
     return Stack(
       key: const ValueKey('home-header'),
       children: [
-        Positioned.fill(
-          child: GameArtBackdrop(game: game, child: const SizedBox.shrink()),
-        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(GSpace.rowPad, GLayout.navHeight + GSpace.s10, GSpace.rowPad, GSpace.s6),
           child: Row(
