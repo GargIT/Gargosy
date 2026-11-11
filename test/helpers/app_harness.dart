@@ -16,6 +16,7 @@ import 'package:gargosy/profiles/pc_identity.dart';
 import 'package:gargosy/profiles/profile.dart';
 import 'package:gargosy/profiles/profile_paths.dart';
 import 'package:gargosy/profiles/profile_providers.dart';
+import 'package:gargosy/ui/pages/home/home_reveal.dart';
 
 import 'fake_secret_store.dart';
 import 'fake_romm_auth.dart';
@@ -54,6 +55,8 @@ class AppHarness {
         // Never GitHub from app tests.
         updateAutoCheckEnabledProvider.overrideWithValue(false),
         uploadQueueProvider.overrideWith((ref) async => null),
+        // Home's rows at once, no reveal timers.
+        homeRevealStepProvider.overrideWithValue(Duration.zero),
       ],
     );
     addTearDown(container.dispose);

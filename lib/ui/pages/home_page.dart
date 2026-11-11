@@ -25,9 +25,11 @@ import '../widgets/error_retry.dart';
 import '../widgets/favourite.dart';
 import '../widgets/g_focusable.dart';
 import '../widgets/game_card.dart';
+import '../widgets/game_transition.dart';
 import '../widgets/shelf.dart';
 import 'home/customize_home.dart';
 import 'home/home_header.dart';
+import 'home/home_reveal.dart';
 import 'home/home_widgets.dart';
 import 'home/playing_now.dart';
 import 'platform_card.dart';
@@ -55,6 +57,8 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(homeLayoutProvider);
+    // The header first, then the widgets and rows one by one (first start).
+    final shown = ref.watch(homeRowsShownProvider);
     final offline = ref.watch(rommOfflineProvider);
     final installed = ref.watch(shownGamesOnThisPcProvider);
     final played = ref.watch(recentlyPlayedProvider);
@@ -65,7 +69,11 @@ class HomePage extends ConsumerWidget {
         ? ref.watch(randomGameProvider).value
         : null;
 
-    final playedList = offline ? playedHere(installed) : played.value ?? const <Game>[];
+    // While RomM's list loads, the games played on this PC: the header and
+    // its art (kept on disk) show at once instead of after RomM answers.
+    final playedList = offline || (played.isLoading && !played.hasValue)
+        ? playedHere(installed)
+        : played.value ?? const <Game>[];
     final last = playedList.firstOrNull;
     final (Game? headerGame, bool headerRandom) = switch (layout.top) {
       HomeTop.nothing => (null, false),
@@ -201,7 +209,8 @@ class HomePage extends ConsumerWidget {
       }
     }
 
-    final added = ref.watch(recentlyAddedProvider);
+    // Asked for with the rows, not before.
+    final added = shown > 0 ? ref.watch(recentlyAddedProvider) : const AsyncLoading<List<Game>>();
     final error = offline ? null : played.error ?? added.error;
     final loading = !offline && (played.isLoading || added.isLoading);
     final empty =
@@ -222,7 +231,7 @@ class HomePage extends ConsumerWidget {
         ? HomeWidgets.beside(widgets)
         : null;
 
-    return Actions(
+    final page = Actions(
       actions: {
         // Y: another random pick (a focused game's Y is its ♥).
         FavoriteIntent: CallbackAction<FavoriteIntent>(onInvoke: (_) => ref.invalidate(randomGameProvider)),
@@ -249,9 +258,11 @@ class HomePage extends ConsumerWidget {
                 style: const TextStyle(fontSize: GFont.xxxl, fontWeight: FontWeight.w800),
               ),
             ),
-          if (!offline)
+          if (!offline && shown > 0)
             _RevealOnFocus(
-              child: HomeWidgets(shown: widgets, besideHeader: beside != null),
+              child: FadeInOnce(
+                child: HomeWidgets(shown: widgets, besideHeader: beside != null),
+              ),
             ),
           if (loading) const Padding(padding: EdgeInsets.all(GSpace.rowPad), child: LinearProgressIndicator()),
           if (error != null)
@@ -275,7 +286,9 @@ class HomePage extends ConsumerWidget {
                 style: const TextStyle(fontSize: GFont.lg, color: GColors.fgMuted),
               ),
             ),
-          for (final row in showRows) _RevealOnFocus(child: rowOf(row)),
+          // Each row only once its turn comes: it isn't asked for before.
+          for (final (i, row) in showRows.indexed)
+            if (i + 1 < shown) _RevealOnFocus(child: FadeInOnce(child: rowOf(row))),
           Padding(
             padding: const EdgeInsets.only(top: GSpace.s8),
             child: Center(
@@ -305,6 +318,15 @@ class HomePage extends ConsumerWidget {
         ],
       ),
     );
+    // The header's game's art behind the whole page, as on the game page; it
+    // stays put while the rows scroll.
+    // The rows come once the art is drawn (`homeRowsShownProvider`).
+    final reveal = ref.read(homeRowsShownProvider.notifier);
+    if (headerGame == null) {
+      if (shown == 0) WidgetsBinding.instance.addPostFrameCallback((_) => reveal.artShown());
+      return page;
+    }
+    return GameArtBackdrop(game: headerGame, onArtShown: reveal.artShown, child: page);
   }
 }
 

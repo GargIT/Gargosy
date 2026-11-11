@@ -31,6 +31,8 @@ import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/screens/settings/settings_screen.dart';
 import 'package:gargosy/ui/screens/settings/settings_rows.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
+import 'package:gargosy/ui/pages/home/home_reveal.dart';
+import 'package:gargosy/ui/widgets/baked_art.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 import 'package:gargosy/ui/widgets/g_focusable.dart';
 
@@ -73,6 +75,8 @@ void main() {
         appRootProvider.overrideWithValue(root!),
         appPreferencesProvider.overrideWithValue(MemoryPrefs()),
         coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+        artImageProvider.overrideWithValue((url) => null),
+        homeRevealStepProvider.overrideWithValue(Duration.zero),
         rommHeartbeatEnabledProvider.overrideWithValue(false),
         uploadQueueProvider.overrideWith((ref) async => queue),
         biosSyncProvider.overrideWithValue(bios),

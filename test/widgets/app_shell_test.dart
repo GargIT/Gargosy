@@ -29,6 +29,8 @@ import 'package:gargosy/ui/input/input_router.dart';
 import 'package:gargosy/ui/shell/app_shell.dart';
 import 'package:gargosy/ui/shell/user_menu.dart';
 import 'package:gargosy/ui/theme/gargosy_theme.dart';
+import 'package:gargosy/ui/pages/home/home_reveal.dart';
+import 'package:gargosy/ui/widgets/baked_art.dart';
 import 'package:gargosy/ui/widgets/cover_image.dart';
 
 import '../helpers/overrides.dart';
@@ -57,6 +59,8 @@ void main() {
         appPreferencesProvider.overrideWithValue(prefs ?? MemoryPrefs()),
         // The real pages, with a library that never touches RomM.
         coverImageBuilderProvider.overrideWithValue((url) => const ColoredBox(color: Colors.grey)),
+        artImageProvider.overrideWithValue((url) => null),
+        homeRevealStepProvider.overrideWithValue(Duration.zero),
         recentlyPlayedProvider.overrideWith((ref) async => [for (var i = 21; i <= 30; i++) game(i, 'G$i')]),
         recentlyAddedProvider.overrideWith((ref) async => [for (var i = 1; i <= 20; i++) game(i, 'G$i')]),
         favouriteGamesProvider.overrideWith((ref) async => [for (var i = 31; i <= 40; i++) game(i, 'G$i')]),

@@ -74,7 +74,12 @@ when a token exists.
 
 - **Page:** `rowPad` (36 px) on both sides. Under the top bar (58 px, glass
   once the page has scrolled).
-- **Header:** the art blurred behind; the cover on the left, then label,
+- **Art behind a page:** the game's art (fanart, else a screenshot, else
+  the cover) blurred (sigma 28), at 35 % over `bg`, shaded from clear-ish at
+  the top to `bg` at the bottom. Behind the whole game page, play screen and
+  Home (the header's game), still while the page scrolls. Other pages keep
+  the purple glow.
+- **Header:** the cover on the left, then label,
   title, a line of facts, chips, buttons. Game page and play screen share
   the cover's place, so going between them doesn't move it.
 - **Breakpoints:**
@@ -230,3 +235,4 @@ Mockups are linked from each issue.
 | 2026-11-08 | Settings → Emulators gets a New profiles card under the emulators (not more buttons on each row): each installed emulator says whose settings new profiles start with, with Use this profile's and Forget; replacing another profile's asks first | #301 |
 | 2026-11-09 | A RomM admin's tools (#245) sit where the thing is: Settings → RomM library (its own LIBRARY page: always in the Settings sidebar, saying when the user may not scan; in the user menu only for a user who may, so the menu still fits 720 px), an Upload pill beside Random on a platform's header (no ⋯ there yet), and Fix match… in the game page's ⋯ before the Delete items. Shown only with RomM's permission (`/api/permissions/me`) | #245 |
 | 2026-11-09 | Installed with Scoop or winget (#244), About says so under the versions, and Update says the package manager's command instead of updating (no button that would fight it). Under winget About also warns, in the warning colour, that a purge deletes the games and saves, and the first start says it once in a notice. | #244 |
+| 2026-11-11 | Home has its header game's blurred art behind the whole page, like the game page, instead of the purple glow; the blur is 28 (was 40) everywhere. On the first start Home shows the header and its art first (this PC's last game while RomM's list loads, the cover's blur until the fanart comes), then the widgets and rows fade in one after another | #310 |
