@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Pages draw faster: the background's glow is painted once instead of on
+  every frame, which took about a third of each frame on a large window
+  (#308).
+
 ## [0.10.0] - 2026-11-09
 
 Scoop and winget, games sent from RomM's web page, emulator updates, a
