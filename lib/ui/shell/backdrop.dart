@@ -2,8 +2,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../theme/tokens.dart';
-
 const _glow = RadialGradient(
   center: Alignment(-0.6, -0.9),
   radius: 1.4,
@@ -31,25 +29,27 @@ class _GlowPainter extends CustomPainter {
 
   static const _scale = 4;
 
-  // Every page has the window's size, so one image serves them all.
-  static ui.Image? _image;
-  static Size? _imageSize;
+  // Pages mostly have the window's size; a few sizes are kept so backdrops
+  // of different sizes on screen together don't make theirs every frame.
+  static const _kept = 4;
+  static final _images = <Size, ui.Image>{};
 
   static ui.Image _imageFor(Size small) {
-    final image = _image;
-    if (image != null && _imageSize == small) return image;
+    final kept = _images.remove(small);
+    if (kept != null) return _images[small] = kept;
+    // Only the gradient, as `BoxDecoration` drew it (it ignores its colour
+    // when it has a gradient): the edge stays clear over the page's colour.
     final recorder = ui.PictureRecorder();
     final rect = Offset.zero & small;
-    Canvas(recorder)
-      ..drawRect(rect, Paint()..color = GColors.bg)
-      ..drawRect(rect, Paint()..shader = _glow.createShader(rect));
+    Canvas(recorder).drawRect(rect, Paint()..shader = _glow.createShader(rect));
     final picture = recorder.endRecording();
-    // A frame already drawn keeps its own reference to the old image.
-    image?.dispose();
-    _imageSize = small;
-    _image = picture.toImageSync(small.width.toInt(), small.height.toInt());
+    final image = picture.toImageSync(small.width.toInt(), small.height.toInt());
     picture.dispose();
-    return _image!;
+    if (_images.length >= _kept) {
+      // A frame already drawn keeps its own reference to the image.
+      _images.remove(_images.keys.first)?.dispose();
+    }
+    return _images[small] = image;
   }
 
   @override
