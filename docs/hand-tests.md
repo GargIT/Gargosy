@@ -496,9 +496,9 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## The background glow drawn once (#308)
 
-184. [ ] Fullscreen on a large screen: the purple glow at the top left of Home, the Platforms tab, Settings and the profile picker looks as it did in 0.10.0, soft, without bands or blocks. Resize the window (out of fullscreen) and drag it smaller and larger: the glow follows the window's shape. Moving through a platform's games and switching tabs feels smoother than before.
+184. [x] Fullscreen on a large screen: the purple glow at the top left of Home, the Platforms tab, Settings and the profile picker looks as it did in 0.10.0, soft, without bands or blocks. Resize the window (out of fullscreen) and drag it smaller and larger: the glow follows the window's shape. Moving through a platform's games and switching tabs feels smoother than before.
 
 ## Home with the game's art, loaded in order (#310)
 
-185. [ ] Start Gargosy (after a game was played on this PC): Home shows the header game and its blurred art first, then Random pick / On this day and the rows fade in one after another. The art stays still while Home scrolls, and no purple glow shows on Home; the other tabs still have it. Going to another tab and back shows every row at once.
-186. [ ] Open a game page and its play screen and go back: the art is the same blur (a little lighter than 0.10.0), it fades in, and opening and going back feel smoother. On the Overview a game with a video still plays it under the shade.
+185. [x] Start Gargosy (after a game was played on this PC): Home shows the header game and its blurred art first, then Random pick / On this day and the rows fade in one after another. The art stays still while Home scrolls, and no purple glow shows on Home; the other tabs still have it. Going to another tab and back shows every row at once.
+186. [x] Open a game page and its play screen and go back: the art is the same blur (a little lighter than 0.10.0), it fades in, and opening and going back feel smoother. On the Overview a game with a video still plays it under the shade.
