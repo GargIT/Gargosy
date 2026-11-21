@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,18 +67,50 @@ class CoverImage extends ConsumerWidget {
   }
 }
 
-/// v2's placeholder art: what shows where a cover isn't (yet).
+/// v2's placeholder art: what shows where a cover isn't (yet). The gradient is
+/// painted once into a small picture and stretched (the same diagonal at any
+/// size): drawn as a gradient behind every cover it cost a Collections frame
+/// about 25 ms (#315).
 class CoverArt extends StatelessWidget {
   const CoverArt({super.key});
 
   @override
-  Widget build(BuildContext context) => const DecoratedBox(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [GColors.coverArtBase, GColors.coverArtShade],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => const CustomPaint(painter: _CoverArtPainter(), child: SizedBox.expand());
+}
+
+class _CoverArtPainter extends CustomPainter {
+  const _CoverArtPainter();
+
+  static const _w = 48, _h = 64;
+  static ui.Image? _image;
+
+  static ui.Image get image => _image ??= () {
+    final recorder = ui.PictureRecorder();
+    final rect = Rect.fromLTWH(0, 0, _w.toDouble(), _h.toDouble());
+    Canvas(recorder).drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [GColors.coverArtBase, GColors.coverArtShade],
+        ).createShader(rect),
+    );
+    final picture = recorder.endRecording();
+    try {
+      return picture.toImageSync(_w, _h);
+    } finally {
+      picture.dispose();
+    }
+  }();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final src = Rect.fromLTWH(0, 0, _w.toDouble(), _h.toDouble());
+    canvas.drawImageRect(image, src, Offset.zero & size, Paint()..filterQuality = FilterQuality.low);
+  }
+
+  @override
+  bool shouldRepaint(_CoverArtPainter oldDelegate) => false;
 }
