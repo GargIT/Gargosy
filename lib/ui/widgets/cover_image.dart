@@ -14,7 +14,9 @@ final coverImageBuilderProvider = Provider<Widget Function(String url)>((ref) {
     cacheManager: cache,
     fit: BoxFit.cover,
     fadeInDuration: GMotion.fast,
-    errorWidget: (context, url, error) => const SizedBox.shrink(),
+    fadeOutDuration: GMotion.fast,
+    placeholder: (context, url) => const CoverArt(),
+    errorWidget: (context, url, error) => const CoverArt(),
   );
 });
 
@@ -38,15 +40,10 @@ class CoverImage extends ConsumerWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [GColors.coverArtBase, GColors.coverArtShade],
-                ),
-              ),
-            ),
+            // Under a loaded cover the gradient was never seen, and drawing it under every
+            // cover cost a Collections frame about 25 ms (#315): the builder shows it while
+            // the cover loads or when it doesn't.
+            if (url == null) const CoverArt(),
             if (url == null && title != null)
               Padding(
                 padding: const EdgeInsets.all(GSpace.s3),
@@ -66,4 +63,20 @@ class CoverImage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// v2's placeholder art: what shows where a cover isn't (yet).
+class CoverArt extends StatelessWidget {
+  const CoverArt({super.key});
+
+  @override
+  Widget build(BuildContext context) => const DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [GColors.coverArtBase, GColors.coverArtShade],
+      ),
+    ),
+  );
 }

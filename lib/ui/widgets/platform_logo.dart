@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:vector_graphics/vector_graphics_compat.dart' show RenderingStrategy;
 
 import '../../providers/romm_providers.dart';
 import '../theme/tokens.dart';
@@ -81,6 +82,9 @@ class _CachedLogoState extends ConsumerState<_CachedLogo> {
             svg,
             width: widget.size,
             height: widget.size,
+            // Drawn into an image once and reused: drawn as vectors every frame, the logos
+            // cost a Platforms frame about 25 ms (#315).
+            renderingStrategy: RenderingStrategy.raster,
             placeholderBuilder: (_) => widget.fallback,
             errorBuilder: (_, _, _) => widget.fallback,
           );
