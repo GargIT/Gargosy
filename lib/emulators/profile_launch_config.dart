@@ -154,6 +154,10 @@ abstract class ProfileLaunchConfig {
         'Paths/Saves=${p.join(c.data, 'saves')}\\',
         '--setting',
         'Paths/Firmware=${c.bios}\\',
+        // Screenshots in the profile (#233): ares' own default is beside the
+        // ROM, and roms\ holds only ROMs. It adds a folder per system.
+        '--setting',
+        'Paths/Screenshots=${p.join(c.data, 'screenshots')}\\',
       ],
     ),
     'xemu': const _Xemu(),
@@ -473,16 +477,18 @@ class _Xemu extends ProfileLaunchConfig {
     final text = toml.existsSync() ? toml.readAsStringSync() : '';
     final hdd = p.join(c.data, 'xbox_hdd.qcow2');
     _seedHdd(c, hdd);
+    // Screenshots in the profile (#233): xemu's own default is its working
+    // folder, and it can't write into a folder that isn't there.
+    final shots = io.Directory(c.guard.check(p.join(c.data, 'screenshots')))..createSync(recursive: true);
     final bootrom = _rom(c, text, 'bootrom_path', const ['mcpx_1.0.bin']);
     final flashrom = _rom(c, text, 'flashrom_path', const ['Complex_4627.bin', 'Complex_4627v1.03.bin', 'Complex.bin']);
-    toml.writeAsStringSync(
-      setTomlKeys(text, 'sys.files', {
-        'eeprom_path': p.join(c.data, 'eeprom.bin'),
-        'hdd_path': hdd,
-        'bootrom_path': ?bootrom,
-        'flashrom_path': ?flashrom,
-      }),
-    );
+    final files = setTomlKeys(text, 'sys.files', {
+      'eeprom_path': p.join(c.data, 'eeprom.bin'),
+      'hdd_path': hdd,
+      'bootrom_path': ?bootrom,
+      'flashrom_path': ?flashrom,
+    });
+    toml.writeAsStringSync(setTomlKeys(files, 'general', {'screenshot_dir': shots.path}));
     return ['-config_path', toml.path];
   }
 
