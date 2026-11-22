@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-22
+
+A smoother Gargosy: pages, the game page, the play screen and the Platforms
+and Collections tabs draw several times faster, and Home has its game's art
+behind it.
+
 ### Changed
 
 - Pages draw faster: the background's glow is painted once instead of on
@@ -708,7 +714,8 @@ played with a controller, portable, with a profile per player.
   that folder: the app, `roms\`, `emulators\`, `bios\` and `userdata\`.
   Nothing goes in AppData.
 
-[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/GargIT/Gargosy/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.11.0
 [0.10.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.10.0
 [0.9.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.9.0
 [0.8.0]: https://github.com/GargIT/Gargosy/releases/tag/v0.8.0
