@@ -11,10 +11,10 @@ void main() {
     expect(find.text('Tetris'), findsOneWidget);
   });
 
-  testWidgets('a cover is drawn without the placeholder art under it (#315)', (tester) async {
+  testWidgets('a cover is drawn over the placeholder art, without the title', (tester) async {
     await tester.pumpWidget(testApp(const CoverImage(url: 'https://romm/c.png', title: 'Tetris', width: 140)));
     expect(find.byKey(const ValueKey('cover:https://romm/c.png')), findsOneWidget);
-    expect(find.byType(CoverArt), findsNothing);
+    expect(find.byType(CoverArt), findsOneWidget);
     expect(find.text('Tetris'), findsNothing);
   });
 

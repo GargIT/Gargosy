@@ -16,9 +16,7 @@ final coverImageBuilderProvider = Provider<Widget Function(String url)>((ref) {
     cacheManager: cache,
     fit: BoxFit.cover,
     fadeInDuration: GMotion.fast,
-    fadeOutDuration: GMotion.fast,
-    placeholder: (context, url) => const CoverArt(),
-    errorWidget: (context, url, error) => const CoverArt(),
+    errorWidget: (context, url, error) => const SizedBox.shrink(),
   );
 });
 
@@ -42,10 +40,7 @@ class CoverImage extends ConsumerWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Under a loaded cover the gradient was never seen, and drawing it under every
-            // cover cost a Collections frame about 25 ms (#315): the builder shows it while
-            // the cover loads or when it doesn't.
-            if (url == null) const CoverArt(),
+            const CoverArt(),
             if (url == null && title != null)
               Padding(
                 padding: const EdgeInsets.all(GSpace.s3),
@@ -67,9 +62,10 @@ class CoverImage extends ConsumerWidget {
   }
 }
 
-/// v2's placeholder art: what shows where a cover isn't (yet). The gradient is
-/// painted once into a small picture and stretched (the same diagonal at any
-/// size): drawn as a gradient behind every cover it cost a Collections frame
+/// v2's placeholder art, under every cover: what shows while it loads, when it
+/// doesn't, and through a transparent one. The gradient is painted once into a
+/// small 3:4 picture and stretched (exact for a cover's shape, close for
+/// others): drawn as a gradient behind every cover it cost a Collections frame
 /// about 25 ms (#315).
 class CoverArt extends StatelessWidget {
   const CoverArt({super.key});
