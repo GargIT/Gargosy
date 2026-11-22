@@ -26,7 +26,9 @@ Future<void> reportBug(BuildContext context, WidgetRef ref, {required String win
   final root = ref.read(appRootProvider);
   final open = ref.read(externalOpenerProvider);
   final romm = ref.read(rommServerVersionProvider).value;
-  final form = open(bugFormUrl(version: AppConstants.version, windows: windowsName(windows), romm: romm).toString());
+  final form = open(
+    bugFormUrl(version: AppConstants.displayVersion, windows: windowsName(windows), romm: romm).toString(),
+  );
   unawaited(
     form.then((opened) {
       if (!opened && context.mounted) showToast(context, tr("The bug form couldn't be opened."), error: true);
