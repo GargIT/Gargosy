@@ -385,6 +385,16 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 140. [x] The same with one standalone emulator (DuckStation F10, PCSX2 F8, Dolphin F9 or mGBA F12): its screenshot reaches RomM after the game. With mGBA, nothing new appears beside the ROM in `roms\`.
 141. [x] With RomM stopped, take a screenshot and quit: nothing is lost. Start RomM again (or restart Gargosy): the screenshot reaches RomM. Settings → Emulator settings → Upload screenshots off: a new screenshot stays on this PC only.
 
+The other emulators (`docs/emulator-profiles.md` "Screenshots"; read from their sources, not probed). In each: start a game from Gargosy, take a screenshot with the emulator's own screenshot command (its menu or hotkey), quit. It is in the folder named, reaches RomM after the game, and nothing new appears in `roms\`, beside the emulator's exe or in Pictures.
+
+189. [ ] ares: in `userdata\profiles\<id>\emulators\ares\screenshots\<system>\`.
+190. [ ] xemu: in `…\emulators\xemu\screenshots\`; the profile's `xemu.toml` has `screenshot_dir` under `[general]`.
+191. [ ] Cemu (Save screenshot on in its General settings, the default): in `…\emulators\cemu\portable\screenshots\`.
+192. [ ] Eden: in `…\emulators\eden\user\screenshots\`, also after Eden's own Configure → UI was opened and saved.
+193. [ ] Azahar, in a profile that never ran it: in `…\emulators\azahar\user\screenshots\`, never at the root of the drive; Azahar's Configure → General shows that folder.
+194. [ ] RPCS3: in `…\emulators\rpcs3\screenshots\<title id>\`.
+195. [ ] Ryujinx: in `…\emulators\ryujinx\screenshots\`.
+
 ## Settings per game (#234)
 
 142. [x] A PS2 game in PCSX2: Play → Game settings → Widescreen On (with a controller alone). The game starts in widescreen (16:9); another PS2 game without the setting starts as PCSX2 had it before. The play screen's line says "Game settings: widescreen".

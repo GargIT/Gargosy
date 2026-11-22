@@ -88,7 +88,42 @@ void _eden(LaunchContext c) {
     ],
     platforms: const ['switch'],
   );
-  _qtGameDirs(c, p.join(user, 'config', 'qt-config.ini'));
+  final ini = p.join(user, 'config', 'qt-config.ini');
+  _qtGameDirs(c, ini);
+  // Screenshots in the profile (#233). Eden's own default is already
+  // user\screenshots\, but a path it saved before (another folder, or an
+  // install from before the link) would win: pinned once Eden has its file.
+  // Eden ignores a path that isn't a folder, so it's made first.
+  final shots = io.Directory(c.guard.check(p.join(user, 'screenshots')))..createSync(recursive: true);
+  _setQtKey(c, ini, 'Screenshots', 'screenshot_path', _qtPath(shots.path), onlyIfThere: true);
+}
+
+/// [path] as Qt and Eden write paths: forward slashes.
+String _qtPath(String path) => path.replaceAll(r'\', '/');
+
+/// [key] in [section] of the ini at [iniPath] set to [value]; with
+/// [onlyIfThere], only when the emulator has made the file.
+void _setQtKey(
+  LaunchContext c,
+  String iniPath,
+  String section,
+  String key,
+  String value, {
+  bool onlyIfThere = false,
+  Map<String, String> also = const {},
+}) {
+  final file = io.File(iniPath);
+  if (onlyIfThere && !file.existsSync()) return;
+  final ini = IniFile(file.existsSync() ? file.readAsStringSync() : '');
+  var changed = false;
+  for (final e in {...also, key: value}.entries) {
+    if (ini.get(section, e.key) == e.value) continue;
+    ini.set(section, e.key, e.value);
+    changed = true;
+  }
+  if (!changed) return;
+  io.File(c.guard.check(iniPath)).parent.createSync(recursive: true);
+  io.File(c.guard.check(iniPath)).writeAsStringSync(ini.toText());
 }
 
 void _azahar(LaunchContext c) {
@@ -103,7 +138,21 @@ void _azahar(LaunchContext c) {
     ],
     platforms: const ['3ds'],
   );
-  _qtGameDirs(c, p.join(user, 'config', 'qt-config.ini'));
+  final ini = p.join(user, 'config', 'qt-config.ini');
+  _qtGameDirs(c, ini);
+  // Screenshots in the profile (#233). Azahar has no folder until one is
+  // chosen in its settings: with none it writes to the drive's root. So it's
+  // set from the first launch (`[UI] Paths\screenshotPath`, `\default`
+  // false or Azahar reads its empty default instead).
+  final shots = io.Directory(c.guard.check(p.join(user, 'screenshots')))..createSync(recursive: true);
+  _setQtKey(
+    c,
+    ini,
+    'UI',
+    r'Paths\screenshotPath',
+    qtQuote('${_qtPath(shots.path)}/'),
+    also: const {r'Paths\screenshotPath\default': 'false'},
+  );
 }
 
 /// The profile's MLC (Wii U NAND, with the saves): never shared.
