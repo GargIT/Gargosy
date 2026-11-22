@@ -140,7 +140,7 @@ Future<UserMenuChoice?> showUserMenu(
                                   ),
                                   const SizedBox(width: GSpace.s2),
                                   Text(
-                                    'v${AppConstants.version}',
+                                    'v${AppConstants.displayVersion}',
                                     style: const TextStyle(fontSize: GFont.xs, color: GColors.fgSecondary),
                                   ),
                                 ],

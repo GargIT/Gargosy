@@ -110,7 +110,7 @@ Future<void> main(List<String> args) async {
 void startFileLog(AppRoot root) {
   final sink = FileLogSink.open(PathGuard(root).check(root.logs));
   LoggerService.init(sink: sink, tag: () => LoggerService.profileTag);
-  LoggerService.writeRaw('Gargosy ${AppConstants.version}');
+  LoggerService.writeRaw('Gargosy ${AppConstants.displayVersion}');
   LoggerService.writeRaw('Windows ${io.Platform.operatingSystemVersion}');
   LoggerService.writeRaw('Folder ${root.root}');
   LoggerService.writeRaw('Started ${DateTime.now().toIso8601String()}');

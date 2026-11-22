@@ -40,12 +40,14 @@ void main() {
 
   Future<void> load(WidgetTester tester) => tester.pumpAndSettle();
 
-  Future<void> pump(WidgetTester tester, {String? rommVersion = '4.9.0'}) async {
+  Future<void> pump(WidgetTester tester, {String? rommVersion = '4.9.0', String buildNumber = '7'}) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     opened.clear();
     AppConstants.version = '1.2.3';
+    AppConstants.buildNumber = buildNumber;
+    addTearDown(() => AppConstants.buildNumber = '');
     final nav = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
       ProviderScope(
@@ -87,6 +89,12 @@ void main() {
     await pump(tester);
     expect(find.text('Gargosy v1.2.3'), findsOneWidget);
     expect(find.text('RomM v4.9.0'), findsOneWidget);
+  });
+
+  testWidgets('a handtest build shows its build metadata; a release build number stays hidden', (tester) async {
+    await pump(tester, buildNumber: 'handtest.43aa4b1');
+    expect(find.text('Gargosy v1.2.3+handtest.43aa4b1'), findsOneWidget);
+    expect(AppConstants.version, '1.2.3');
   });
 
   testWidgets('says so when RomM cannot be asked', (tester) async {

@@ -6,6 +6,12 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- About and the user menu show a test build's label after its version
+  (`0.11.0+handtest.43aa4b1`), so a test build can be told from a release.
+  Releases look the same as before.
+
 ## [0.11.0] - 2026-11-22
 
 A smoother Gargosy: pages, the game page, the play screen and the Platforms
