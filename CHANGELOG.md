@@ -6,6 +6,13 @@ What changed in each release of Gargosy. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Screenshots taken in ares, xemu, Cemu, Eden, Azahar, RPCS3 and Ryujinx go
+  to RomM after the game too, as they already did from RetroArch, Dolphin,
+  PCSX2, DuckStation, PPSSPP, mGBA, MAME and ScummVM. ares and Azahar no
+  longer put them beside the ROM or at the root of the drive (#233).
+
 ## [0.11.0] - 2026-11-22
 
 A smoother Gargosy: pages, the game page, the play screen and the Platforms

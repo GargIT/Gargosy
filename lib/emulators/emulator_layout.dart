@@ -112,22 +112,45 @@ class EmulatorLayout {
       screenshots: ['screenshots'],
     ),
     'xenia_canary': EmulatorLayout('xenia_canary', seed: ['content']),
-    'ares': EmulatorLayout('ares', seed: ['saves']),
+    // --setting Paths/Screenshots: screenshots\<system>\ (its default is beside the ROM).
+    'ares': EmulatorLayout('ares', seed: ['saves'], screenshots: ['screenshots']),
     'mgba': EmulatorLayout('mgba', saveView: '_view', seed: ['saves', 'states'], screenshots: ['screenshots']),
     'flycast': EmulatorLayout('flycast', seed: ['saves', 'vmu', 'states']),
     // A folder link next to the exe points at <data>\user or <data>\portable
     // (issue #8): the save code's "install" is <data>, where that folder is.
-    'cemu': EmulatorLayout('cemu', saveView: '_view', seed: ['mlc01/usr/save', 'portable']),
-    'eden': EmulatorLayout('eden', seed: ['user/nand/user/save', 'user/keys', 'user/config']),
-    'azahar': EmulatorLayout('azahar', seed: ['user/sdmc', 'user/sysdata', 'user/config']),
+    'cemu': EmulatorLayout(
+      'cemu',
+      saveView: '_view',
+      seed: ['mlc01/usr/save', 'portable'],
+      screenshots: ['portable/screenshots'],
+    ),
+    'eden': EmulatorLayout(
+      'eden',
+      seed: ['user/nand/user/save', 'user/keys', 'user/config'],
+      screenshots: ['user/screenshots'],
+    ),
+    'azahar': EmulatorLayout(
+      'azahar',
+      seed: ['user/sdmc', 'user/sysdata', 'user/config'],
+      screenshots: ['user/screenshots'],
+    ),
     'melonds': EmulatorLayout('melonds', saveView: '_view', seed: ['portable/saves', 'portable/states']),
     // Started with -r <data> (issue #9): saves in bis\user\save, keys in system\.
-    'ryujinx': EmulatorLayout('ryujinx', saveView: '_view', seed: ['bis/user/save', 'system']),
+    // Its screenshots in <root>\screenshots\ (AppHost.cs).
+    'ryujinx': EmulatorLayout(
+      'ryujinx',
+      saveView: '_view',
+      seed: ['bis/user/save', 'system'],
+      screenshots: ['screenshots'],
+    ),
     // RPCS3_CONFIG_DIR=<data> (issue #10): $(EmulatorDir) is <data>, so the
-    // save code's <install>\dev_hdd0 is the profile's.
-    'rpcs3': EmulatorLayout('rpcs3', seed: ['dev_hdd0/home/00000001/savedata']),
+    // save code's <install>\dev_hdd0 is the profile's; screenshots go to
+    // <config dir>\screenshots\<title id>\ (rpcs3qt/gs_frame.cpp).
+    'rpcs3': EmulatorLayout('rpcs3', seed: ['dev_hdd0/home/00000001/savedata'], screenshots: ['screenshots']),
     // --config and --savepath into the profile (issue #11).
     'scummvm': EmulatorLayout('scummvm', seed: ['saves', 'screenshots'], screenshots: ['screenshots']),
+    // [general] screenshot_dir in the profile's xemu.toml.
+    'xemu': EmulatorLayout('xemu', screenshots: ['screenshots']),
     // -snapshot_directory into the profile (snap\<driver>\).
     'mame': EmulatorLayout('mame', screenshots: ['snap']),
   };

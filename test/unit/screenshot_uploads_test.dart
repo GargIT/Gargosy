@@ -50,6 +50,7 @@ void main() {
     });
 
     test('an emulator without screenshot folders, or none made yet: nothing', () {
+      expect(screenshotsTaken(paths.emulatorDir('melonds'), EmulatorLayout.of('melonds'), start, end), isEmpty);
       expect(screenshotsTaken(paths.emulatorDir('xemu'), EmulatorLayout.of('xemu'), start, end), isEmpty);
       expect(screenshotsTaken(paths.emulatorDir('retroarch'), EmulatorLayout.of('retroarch'), start, end), isEmpty);
     });
@@ -113,6 +114,72 @@ void main() {
       await ProfileLaunchConfig.of('ppsspp')!.prepare(c);
       final stick = io.File(p.join(c.exeDir, 'installed.txt')).readAsStringSync().trim();
       expect(folder('ppsspp'), p.normalize(p.join(stick, 'PSP', 'SCREENSHOT')));
+    });
+
+    test('ares: --setting Paths/Screenshots (its own default is beside the ROM)', () async {
+      final args = await ProfileLaunchConfig.of('ares')!.prepare(ctx('ares'));
+      expect(args, contains('Paths/Screenshots=${folder('ares')}\\'));
+      // ares adds a folder per system: a shot in one is found.
+      final a = shot(
+        'ares',
+        r'screenshots\Super Famicom\Game 2026-10-31 20-05-00.png',
+        start.add(const Duration(minutes: 5)),
+      );
+      expect(screenshotsTaken(paths.emulatorDir('ares'), EmulatorLayout.of('ares'), start, end), [a]);
+    });
+
+    test("xemu: [general] screenshot_dir in the profile's toml, made before it runs", () async {
+      final args = await ProfileLaunchConfig.of('xemu')!.prepare(ctx('xemu'));
+      final toml = io.File(args[args.indexOf('-config_path') + 1]).readAsStringSync();
+      expect(toml, contains('[general]'));
+      expect(toml, contains("screenshot_dir = '${folder('xemu')}'"));
+      expect(io.Directory(folder('xemu')).existsSync(), isTrue);
+      // Run again: the key once, the other keys kept.
+      await ProfileLaunchConfig.of('xemu')!.prepare(ctx('xemu'));
+      final again = io.File(args[args.indexOf('-config_path') + 1]).readAsStringSync();
+      expect(RegExp('screenshot_dir').allMatches(again).length, 1);
+      expect(again, contains('hdd_path'));
+    });
+
+    test('Eden: [Screenshots] screenshot_path once it has its qt-config.ini, the folder made first', () async {
+      final c = ctx('eden');
+      final ini = p.join(c.data, 'user', 'config', 'qt-config.ini');
+      await ProfileLaunchConfig.of('eden')!.prepare(c);
+      expect(io.File(ini).existsSync(), isFalse, reason: 'before its first run its own default is the same folder');
+      expect(io.Directory(folder('eden')).existsSync(), isTrue);
+      (io.File(ini)..createSync(recursive: true)).writeAsStringSync(
+        '[Screenshots]\nscreenshot_path=D:/elsewhere/screenshots\nwidth=0\n',
+      );
+      await ProfileLaunchConfig.of('eden')!.prepare(c);
+      final read = IniFile(io.File(ini).readAsStringSync());
+      expect(read.get('Screenshots', 'screenshot_path'), folder('eden').replaceAll(r'\', '/'));
+      expect(read.get('Screenshots', 'width'), '0');
+    });
+
+    test(r'Azahar: [UI] Paths\screenshotPath from the first launch (none set, it writes to the drive root)', () async {
+      final c = ctx('azahar');
+      await ProfileLaunchConfig.of('azahar')!.prepare(c);
+      final ini = IniFile(io.File(p.join(c.data, 'user', 'config', 'qt-config.ini')).readAsStringSync());
+      expect(ini.get('UI', r'Paths\screenshotPath'), '${folder('azahar').replaceAll(r'\', '/')}/');
+      expect(ini.get('UI', r'Paths\screenshotPath\default'), 'false');
+      expect(io.Directory(folder('azahar')).existsSync(), isTrue);
+    });
+
+    test("Cemu, RPCS3, Ryujinx: their own folders inside the data they're pointed at", () async {
+      // Cemu: portable\screenshots (portable\ is the profile's, the link).
+      expect(folder('cemu'), p.join(paths.emulatorDir('cemu'), 'portable', 'screenshots'));
+      // RPCS3: <config dir>\screenshots\<title id>\, the config dir by RPCS3_CONFIG_DIR.
+      final rpcs3 = ProfileLaunchConfig.of('rpcs3')!.environment(ctx('rpcs3'))['RPCS3_CONFIG_DIR']!;
+      expect(folder('rpcs3'), p.join(p.normalize(rpcs3), 'screenshots'));
+      // Ryujinx: <root>\screenshots\, the root by -r.
+      final ryujinx = await ProfileLaunchConfig.of('ryujinx')!.prepare(ctx('ryujinx'));
+      expect(folder('ryujinx'), p.join(ryujinx[ryujinx.indexOf('-r') + 1], 'screenshots'));
+    });
+
+    test('Flycast, melonDS, Xenia: none looked through (see docs/emulator-profiles.md)', () {
+      for (final id in ['flycast', 'melonds', 'xenia_canary']) {
+        expect(EmulatorLayout.of(id).screenshots, isEmpty, reason: id);
+      }
     });
   });
 

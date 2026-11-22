@@ -91,8 +91,21 @@ Where each emulator writes the screenshots taken in a game, in a profile (`Emula
 | mgba | `<data>\screenshots\` | `-C screenshotPath=` (its default is beside the ROM, in `roms\`) |
 | mame | `<data>\snap\<driver>\` | `-snapshot_directory` |
 | scummvm | `<data>\screenshots\` | `[scummvm] screenshotpath` |
+| ares | `<data>\screenshots\<system>\` | `--setting Paths/Screenshots=` (its default is beside the ROM, in `roms\`; `desktop-ui/program/utility.cpp`, `Emulator::locate`) |
+| xemu | `<data>\screenshots\` | `[general] screenshot_dir` in the profile's `xemu.toml` (its default is its working folder; the folder is made first, since xemu doesn't make it; `ui/xui/gl-helpers.cc`) |
+| cemu | `<data>\portable\screenshots\` | `portable\` (the link) is Cemu's user data folder (`ActiveSettings::GetUserDataPath("screenshots")`, `gui/wxgui/input/HotkeySettings.cpp`). Only with Save screenshot on, its default; off, a screenshot goes to the clipboard only |
+| eden | `<data>\user\screenshots\` | `user\` (the link) is its default; `[Screenshots] screenshot_path` in `user\config\qt-config.ini` pinned there once Eden has made that file, so a path it saved before can't win (`frontend_common/config.cpp`; a path that isn't a folder is ignored, so the folder is made first) |
+| azahar | `<data>\user\screenshots\` | `[UI] Paths\screenshotPath` (and `Paths\screenshotPath\default=false`) in `user\config\qt-config.ini`, from the first launch: Azahar's default is empty, and with it a screenshot goes to the drive's root (`citra_qt.cpp`, `OnCaptureScreenshot`) |
+| rpcs3 | `<data>\screenshots\<title id>\` | `RPCS3_CONFIG_DIR` (`fs::get_config_dir() + "screenshots/"`, `rpcs3qt/gs_frame.cpp`) |
+| ryujinx | `<data>\screenshots\` | `-r <data>` (`AppDataManager.BaseDirPath`, `Systems/AppHost.cs`) |
 
-Not yet: Flycast, ares, xemu, Xenia, Cemu, Eden, Azahar, melonDS, RPCS3, Ryujinx (their screenshot folders aren't pointed at the profile or looked through).
+The last seven rows were read from each emulator's source on 2026-11-22 (Eden's on `git.eden-emu.dev`, Ryujinx's on `git.ryujinx.app`, the others' on GitHub), not probed yet: `docs/hand-tests.md` has a test for each.
+
+Not looked through:
+
+- **Flycast**: on Windows it writes to Windows' own Screenshots folder (`SHGetKnownFolderPath(FOLDERID_Screenshots)`, else Pictures; `core/oslib/oslib.cpp`), with no setting or argument to move it. That folder is outside Gargosy and shared by every profile (and by Windows' own Win+PrtScn), so nothing there is sent.
+- **melonDS**: it has no screenshot command (nothing in its `src/`).
+- **Xenia Canary**: it writes to `screenshots\<title id>\` beside its exe (`GetExecutableFolder()`, `src/xenia/app/emulator_window.cc`), with no setting. Pointing that at the profile needs a folder link, which would make Xenia refuse to start on a FAT32/exFAT drive, where it starts today: left for a change of its own.
 
 ## Controller layout (#246)
 
