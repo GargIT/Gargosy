@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../emulators/bios_sync.dart';
 import '../../../emulators/emulator_installer.dart';
@@ -76,8 +77,10 @@ class _EmulatorInstallSectionState extends ConsumerState<EmulatorInstallSection>
   Future<void> _import(EmulatorInfo e) async {
     final lib = ref.read(emulatorLibraryProvider);
     if (lib == null) return;
-    final folder = await FilePicker.getDirectoryPath(dialogTitle: tr('The folder {0} is installed in', [e.name]));
-    if (folder == null || !mounted) return;
+    final picked = await FilePicker.pickDirectory(dialogTitle: tr('The folder {0} is installed in', [e.name]));
+    if (picked == null || !mounted) return;
+    // A directory URI; the path without its trailing separator.
+    final folder = p.normalize(picked.toFilePath());
     setState(() => _busy[e.id] = tr('Importing…'));
     try {
       await lib.importFrom(e.id, folder);
