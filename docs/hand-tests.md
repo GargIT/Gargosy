@@ -505,5 +505,5 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 ## Smoother Platforms and Collections tabs (#315)
 
-187. [ ] On the Platforms tab, the platform logos look as sharp as in 0.10.0 (at 100 % and 150 % text, and in fullscreen), and so does a platform without covers, whose logo is drawn large, and the focused card's logo (a little larger). Moving through the platforms and switching to Collections and back feels smoother than before.
-188. [ ] Covers on Home, the Collections tab, a gallery and a platform's fan look as in 0.10.0. A cover still loading shows the dark placeholder art and fades in over it; a game without a cover shows the placeholder with its title; a collection whose cover RomM doesn't have shows the placeholder in that place. Achievement badges on a game page look as before.
+187. [x] On the Platforms tab, the platform logos look as sharp as in 0.10.0 (at 100 % and 150 % text, and in fullscreen), and so does a platform without covers, whose logo is drawn large, and the focused card's logo (a little larger). Moving through the platforms and switching to Collections and back feels smoother than before.
+188. [x] Covers on Home, the Collections tab, a gallery and a platform's fan look as in 0.10.0. A cover still loading shows the dark placeholder art and fades in over it; a game without a cover shows the placeholder with its title; a collection whose cover RomM doesn't have shows the placeholder in that place. Achievement badges on a game page look as before.
