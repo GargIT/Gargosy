@@ -61,6 +61,7 @@ class AboutSection extends ConsumerWidget {
     final root = ref.watch(appRootProvider);
     final romm = ref.watch(rommServerVersionProvider);
     final version = AppConstants.version;
+    final shown = AppConstants.displayVersion;
     final outcome = updateOutcomeLine(ref.watch(updateOutcomeProvider), version);
     final rommText = romm.when(
       data: (v) => v == null ? tr('not reachable') : 'v$v',
@@ -99,7 +100,7 @@ class AboutSection extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Gargosy v$version',
+                      'Gargosy v$shown',
                       style: const TextStyle(fontSize: GFont.xl, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: GSpace.s1),
@@ -141,7 +142,7 @@ class AboutSection extends ConsumerWidget {
           icon: Icons.inventory_2_outlined,
           label: tr('Dart and Flutter packages'),
           onActivate: () =>
-              showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$version'),
+              showLicensePage(context: context, applicationName: 'Gargosy', applicationVersion: 'v$shown'),
         ),
         SettingsLinkRow(
           key: const ValueKey('report-bug'),
