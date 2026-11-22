@@ -18,6 +18,9 @@ What changed in each release of Gargosy. The format follows
   blurred once instead of on every frame (#310).
 - Home's first start shows the header and its art first, then the rows one
   after another (#310).
+- The Platforms and Collections tabs, and Home, move more smoothly: the
+  platform logos are drawn once instead of on every frame, and the shade
+  behind covers is drawn only where no cover is (#315).
 
 ## [0.10.0] - 2026-11-09
 

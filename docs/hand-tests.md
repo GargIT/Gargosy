@@ -502,3 +502,8 @@ For these, a second RomM user (player A) on the same server, with a save of a ga
 
 185. [x] Start Gargosy (after a game was played on this PC): Home shows the header game and its blurred art first, then Random pick / On this day and the rows fade in one after another. The art stays still while Home scrolls, and no purple glow shows on Home; the other tabs still have it. Going to another tab and back shows every row at once.
 186. [x] Open a game page and its play screen and go back: the art is the same blur (a little lighter than 0.10.0), it fades in, and opening and going back feel smoother. On the Overview a game with a video still plays it under the shade.
+
+## Smoother Platforms and Collections tabs (#315)
+
+187. [ ] On the Platforms tab, the platform logos look as sharp as in 0.10.0 (at 100 % and 150 % text, and in fullscreen), and so does a platform without covers, whose logo is drawn large. Moving through the platforms and switching to Collections and back feels smoother than before.
+188. [ ] Covers on Home, the Collections tab, a gallery and a platform's fan look as in 0.10.0. A cover still loading shows the dark placeholder art and fades in over it; a game without a cover shows the placeholder with its title; a collection whose cover RomM doesn't have shows the placeholder in that place.
