@@ -39,7 +39,7 @@ dependencies:
   flutter_svg: ^2.5.0
   flutter_cache_manager: 3.4.6
   flutter_markdown_plus: ^1.0.12
-  pdfrx: ^2.11.0
+  pdfrx: ^3.0.0
   video_player: ^2.14.1
   video_player_win: ^3.3.1
   vector_graphics: ^1.3.1
